@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/version-comparison-report.schema.json",
+  "title": "VersionComparisonReport (payload)",
+  "description": "Brief §10 比較報告：unchanged / changed / added / removed / impacted requirement",
+  "type": "object",
+  "required": ["change_impact_id", "comparisons", "retire_recommendations", "summary"],
+  "properties": {
+    "change_impact_id": {"$ref": "../common/defs.schema.json#/$defs/ChangeImpactId"},
+    "comparisons": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["testcase_id", "old_version", "new_draft_id", "verdict", "field_diffs", "impacted_requirement_ids"], "properties": {
+      "testcase_id": {"anyOf": [{"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, {"type": "null"}], "description": "null = added（全新 TC）"},
+      "old_version": {"type": ["integer", "null"]},
+      "new_draft_id": {"anyOf": [{"$ref": "../common/defs.schema.json#/$defs/TestCaseDraftId"}, {"type": "null"}], "description": "null = removed"},
+      "verdict": {"type": "string", "enum": ["unchanged", "changed", "added", "removed"]},
+      "field_diffs": {"type": "array", "items": {"type": "object", "required": ["field", "old", "new"], "properties": {"field": {"type": "string"}, "old": {}, "new": {}}}},
+      "impacted_requirement_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}},
+      "recommendation": {"type": "string"}
+    }}},
+    "retire_recommendations": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "reason"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "reason": {"type": "string"}}}},
+    "summary": {"type": "object", "required": ["unchanged", "changed", "added", "removed"], "additionalProperties": {"type": "integer"}}
+  },
+  "additionalProperties": false
+}

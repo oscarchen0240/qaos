@@ -1,0 +1,45 @@
+id: agent-bug-analyst
+name: Bug Analyst
+version: "1.0.0"
+purpose: 依 RequirementModel 推導 Expected Behavior，對照 Actual Behavior 與 Evidence，產出可追溯（Requirement / SpecVersion / TestCase / Execution / Evidence）的 Bug Draft。
+responsibilities:
+  - 從 Requirement / AC 推導 expected_result（必附 requirement_id + spec_reference）
+  - 從 Execution / Evidence 整理 actual_result（每一句 actual 都要指向 evidence_id）
+  - 撰寫最小可重現 reproduction_steps、preconditions、environment
+  - 建議 severity / priority（附理由；最終由 Human 決定）
+  - 標 suspected_area、impact
+  - 若 expected 無法從 spec 推導 → 標 ambiguity_suspected=true 而非猜測
+  - 初步 duplicate 搜尋（bugs/ 同 area）
+input_schema: schemas/artifact/bug-analyst-input.schema.json
+output_schema: schemas/artifact/bug-draft.schema.json
+allowed_actions:
+  - READ_SPEC
+  - READ_SPEC_VERSION
+  - READ_REQUIREMENT
+  - READ_TESTCASE
+  - READ_EXECUTION
+  - READ_EVIDENCE
+  - READ_BUG
+  - READ_ARTIFACT
+  - READ_APPROVAL
+  - CREATE_ARTIFACT
+  - UPDATE_DRAFT
+  - CREATE_BUG_DRAFT
+forbidden_actions:
+  - VALIDATE_BUG
+  - COMMIT_BUG / 寫入 bugs/
+  - 判定最終 severity / priority
+  - 關閉 Bug
+  - 將推論、截圖描述以外的想像當 Evidence
+  - MODIFY_SPEC
+dependencies:
+  skills: [bug-analysis, bug-report(render), traceability]
+  agents: [agent-spec-analyst (upstream, conditional)]
+consumes: [RequirementModel, TestExecution, Evidence, TestCaseVersion(optional), BugValidationReport(FAIL, for revision)]
+produces: [BugDraft]
+quality_gate: G-BVAL (by Bug Validator)
+failure_handling:
+  no_evidence: 停止，回報「No Evidence, No Formal Bug」（不得產出 Draft）
+  gate_fail: 依 BugValidationReport 修訂
+human_approval_required: []
+write_paths: ["artifacts/bug-analysis/<run_id>/**"]

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/approval/approval-request.schema.json",
+  "title": "ApprovalRequest",
+  "description": "approvals/<apr_id>.yaml — Supervisor/Runtime 建立 request；Human 寫入 decision。亦作為 ApprovalRequest artifact 的 payload。",
+  "type": "object",
+  "required": ["approval_id", "type", "run_id", "status", "summary", "impact", "options", "requested_by", "requested_at"],
+  "properties": {
+    "approval_id": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"},
+    "type": {"$ref": "../common/defs.schema.json#/$defs/ApprovalType"},
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "task_id": {"$ref": "../common/defs.schema.json#/$defs/TaskId"},
+    "status": {"$ref": "../common/defs.schema.json#/$defs/ApprovalStatus"},
+    "summary": {"type": "string", "description": "一句話：要批准什麼"},
+    "impact": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EntityRef"}, "description": "受影響的 TC / Bug / Suite / Requirement"},
+    "artifact_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"}, "description": "支撐此 request 的 artifacts（validation report、comparison report…）"},
+    "diff_summary": {"type": "string"},
+    "trace": {"type": "array", "items": {"type": "string"}, "description": "qaos trace 輸出"},
+    "agent_recommendation": {"type": "object", "properties": {"recommend": {"type": "string"}, "rationale": {"type": "string"}}},
+    "options": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["key", "label"], "properties": {"key": {"type": "string"}, "label": {"type": "string"}, "consequence": {"type": "string"}}}, "description": "approve / reject / override 或 NEEDS_DECISION 的 Option A/B"},
+    "batch_items": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EntityRef"}, "description": "批次 approval 時可逐項決定"},
+    "requested_by": {"type": "string", "description": "agent-supervisor | system"},
+    "requested_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "expires_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "decision": {
+      "type": "object",
+      "required": ["decision", "decided_by", "decided_at"],
+      "properties": {
+        "decision": {"$ref": "../common/defs.schema.json#/$defs/Decision"},
+        "selected_option": {"type": "string"},
+        "decided_by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+        "decided_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+        "rationale": {"type": "string"},
+        "per_item": {"type": "array", "items": {"type": "object", "required": ["id", "decision"], "properties": {"id": {"type": "string"}, "decision": {"$ref": "../common/defs.schema.json#/$defs/Decision"}, "rationale": {"type": "string"}}}},
+        "adjustments": {"type": "object", "description": "例如 OPEN_BUG 時 Human 改定的 severity/priority"}
+      },
+      "additionalProperties": false,
+      "allOf": [{"if": {"properties": {"decision": {"const": "override"}}}, "then": {"required": ["rationale"]}}]
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "DECIDED"}}}, "then": {"required": ["decision"]}},
+    {"properties": {"decision": {"properties": {"decided_by": {"not": {"pattern": "^agent-"}}}}}}
+  ]
+}

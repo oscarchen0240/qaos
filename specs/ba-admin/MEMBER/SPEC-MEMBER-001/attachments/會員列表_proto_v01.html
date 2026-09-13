@@ -1,0 +1,3135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>會員列表 — bl'ac 後台</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-page: #0d0d0b;
+  --bg-sidebar: #111110;
+  --bg-panel: #141412;
+  --bg-card: #181816;
+  --bg-hover: #1e1e1c;
+  --bg-active: #232320;
+  --border: #242422;
+  --border-light: #3d3d3b;
+  --text-primary: #dedad2;
+  --text-secondary: #6b6965;
+  --text-muted: #3d3d3b;
+  --accent: #378ADD;
+  --green: #1D9E75;
+  --red: #F09595;
+  --amber: #EF9F27;
+  --sidebar-width: 160px;
+  --topbar-height: 48px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Noto Sans TC', sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* topbar 之下的 sidebar + main 兩欄 */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── Sidebar ─── */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sidebar::-webkit-scrollbar { width: 0; }
+
+.sidebar-group {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px; font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; transition: color 0.12s, background 0.12s;
+  user-select: none; white-space: nowrap;
+}
+.sidebar-group:hover, .sidebar-group.active { color: var(--text-primary); }
+.sidebar-group .arr { font-size: 10px; opacity: 0.4; }
+.sidebar-item {
+  padding: 6px 14px 6px 26px; font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; transition: color 0.12s, background 0.12s;
+  user-select: none; white-space: nowrap;
+}
+.sidebar-item:hover { color: var(--text-primary); background: var(--bg-hover); }
+.sidebar-item.active { color: var(--text-primary); }
+.nav-sub { display: none; }
+.nav-sub.open { display: block; }
+
+/* ─── Main ─── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ─── Topbar ─── */
+.topbar {
+  height: var(--topbar-height);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+}
+.topbar-logo { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+.topbar-logo span { opacity: 0.4; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.topbar-tag {
+  font-size: 12px; color: var(--text-secondary);
+  background: var(--bg-hover); border: 1px solid var(--border);
+  padding: 3px 9px; border-radius: 4px;
+}
+
+/* ─── Breadcrumb（章節 / 功能名）─── */
+.breadcrumb {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 14px 24px 0;
+  flex-shrink: 0;
+}
+.breadcrumb span { opacity: 0.35; margin: 0 5px; }
+
+/* ─── Page system ─── */
+.page { display: none; height: 100%; overflow: hidden; flex-direction: column; }
+.page.active { display: flex; }
+
+.page-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+/* 框架層（breadcrumb 下方）的標題列自帶左右內距 */
+.main > .page-header { padding: 0 24px 14px; margin-bottom: 0; }
+
+.page-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.page-header-right { display: flex; align-items: center; gap: 10px; }
+
+/* ─── Filter bar ─── */
+.filter-bar {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 20px 12px;
+  flex-shrink: 0;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.filter-input, .filter-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+  height: 30px;
+  font-family: var(--font);
+}
+
+.filter-input { min-width: 130px; }
+.filter-select { min-width: 110px; color: var(--text-secondary); cursor: pointer; }
+.filter-input:focus, .filter-select:focus { border-color: var(--accent); }
+.filter-input::placeholder { color: var(--text-muted); }
+
+.filter-btn-group {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.btn {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-light);
+  font-family: var(--font);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.1s;
+}
+
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #3a8ef0; }
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ─── Table ─── */
+.table-container {
+  flex: 1;
+  overflow: hidden;
+  margin: 0 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.table-scroll::-webkit-scrollbar { height: 5px; width: 5px; }
+.table-scroll::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+thead tr {
+  position: sticky; top: 0;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+
+th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+th:hover { color: var(--text-secondary); }
+
+td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+tbody tr { background: var(--bg-page); transition: background 0.1s; cursor: pointer; }
+tbody tr:hover { background: var(--bg-hover); }
+tbody tr:last-child td { border-bottom: none; }
+
+.member-id-cell {
+  display: flex; align-items: center; gap: 6px;
+}
+
+.member-id-link {
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+.member-id-link:hover { text-decoration: underline; }
+
+.detail-btn {
+  width: 16px; height: 16px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.detail-btn:hover { color: var(--accent); }
+
+.kyc-icons { display: flex; gap: 3px; }
+
+.kyc-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  font-size: 7px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.kyc-dot.ok { background: rgba(62,207,142,0.2); color: var(--green); }
+.kyc-dot.wait { background: rgba(251,191,36,0.2); color: var(--amber); }
+.kyc-dot.fail { background: rgba(248,113,113,0.2); color: var(--red); }
+.kyc-dot.na { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); }
+
+.status-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 10.5px; font-weight: 500;
+}
+.status-badge.on { background: rgba(62,207,142,0.12); color: var(--green); }
+.status-badge.off { background: rgba(248,113,113,0.12); color: var(--red); }
+
+.table-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.pagination { display: flex; align-items: center; gap: 4px; }
+
+.page-btn {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px;
+  border: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.1s;
+}
+.page-btn:hover { background: var(--bg-hover); }
+.page-btn.cur { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ─── Side panel ─── */
+.side-panel {
+  position: absolute;
+  top: 0; right: 0;
+  width: 300px;
+  height: 100%;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  z-index: 10;
+  overflow-y: auto;
+}
+.side-panel.open { transform: translateX(0); }
+.side-panel::-webkit-scrollbar { width: 4px; }
+.side-panel::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+.sp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: sticky; top: 0;
+  background: var(--bg-sidebar);
+  z-index: 1;
+}
+
+.sp-id {
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.sp-close {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-muted); border-radius: 4px;
+}
+.sp-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.sp-section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sp-section-title {
+  font-size: 10px; font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 10px;
+}
+
+.sp-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 8px; margin-bottom: 7px; font-size: 11.5px;
+}
+.sp-row:last-child { margin-bottom: 0; }
+.sp-key { color: var(--text-muted); flex-shrink: 0; }
+.sp-val { color: var(--text-primary); text-align: right; }
+.sp-val.link { color: var(--accent); cursor: pointer; }
+.sp-val.link:hover { text-decoration: underline; }
+
+.sp-kyc-list { display: flex; flex-direction: column; gap: 6px; }
+.sp-kyc-item {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px;
+}
+.sp-kyc-name { color: var(--text-secondary); }
+.sp-kyc-status {
+  font-size: 10.5px; font-weight: 500;
+  padding: 1px 7px; border-radius: 4px;
+}
+.sp-kyc-status.ok { background: rgba(62,207,142,0.12); color: var(--green); }
+.sp-kyc-status.wait { background: rgba(251,191,36,0.12); color: var(--amber); }
+.sp-kyc-status.none { background: var(--bg-card); color: var(--text-muted); }
+
+
+/* ─── Content ─── */
+.content {
+  flex: 1; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+/* ─── Dashboard ─── */
+.dashboard {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px;
+  gap: 16px;
+  border-right: 1px solid var(--border);
+}
+.dashboard-left::-webkit-scrollbar { width: 4px; }
+.dashboard-left::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+/* KPI grid - v1 style */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.kpi-card:nth-child(1)::after { background: var(--accent); }
+.kpi-card:nth-child(2)::after { background: var(--green); }
+.kpi-card:nth-child(3)::after { background: #a78bfa; }
+.kpi-card:nth-child(4)::after { background: var(--amber); }
+.kpi-card:nth-child(5)::after { background: var(--red); }
+.kpi-card:nth-child(6)::after { background: #34d399; }
+
+.kpi-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.4;
+  min-height: 28px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.kpi-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.kpi-desc {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* Chart panel */
+.chart-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.chart-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.chart-wrap {
+  display: flex;
+  height: 200px;
+}
+
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 22px;
+  width: 28px;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.y-axis span {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1;
+}
+
+.chart-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-svg-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.chart-svg-wrap svg {
+  width: 100%; height: 100%;
+}
+
+.x-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  height: 16px;
+}
+.x-axis span { font-size: 10px; color: var(--text-muted); }
+
+/* Notification panel */
+.dashboard-right {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.notif-title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.notif-view-all { font-size: 11px; color: var(--accent); cursor: pointer; }
+
+.notif-list { flex: 1; overflow-y: auto; }
+.notif-list::-webkit-scrollbar { width: 0; }
+
+.notif-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.notif-item:hover { background: var(--bg-hover); }
+
+.notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+.notif-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.notif-item.read .notif-dot {
+  background: transparent;
+  border: 1px solid var(--border-light);
+}
+.notif-name {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+.notif-item.read .notif-name { color: var(--text-secondary); font-weight: 400; }
+.notif-body {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 12px;
+  font-family: monospace;
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+.notif-date { font-size: 10px; color: var(--text-muted); text-align: right; }
+
+/* ── Member Level ── */
+.ml-active-name { text-decoration:underline; font-weight:600; color:var(--text-primary); cursor:pointer; }
+
+/* ── KYC Settings ── */
+.kyc-settings-section { max-width:800px; }
+.kyc-settings-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--border-light); }
+.kyc-settings-row:last-child { border-bottom:none; }
+.kyc-stage-label { font-size:13px; color:var(--text-primary); font-weight:500; margin-bottom:3px; }
+.kyc-stage-desc { font-size:11.5px; color:var(--text-muted); }
+.kyc-stage-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
+.kyc-stage-limit { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); }
+.kyc-limit-input { width:90px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius); padding:4px 8px; color:var(--text-primary); font-size:12px; text-align:left; }
+.kyc-limit-input:focus { outline:none; border-color:var(--accent); }
+/* ─── Checkbox（統一為設計系統的方框樣式；原檔各頁分別是瀏覽器預設藍勾、
+   inline accent-color、或自訂 appearance，三種混用）─── */
+input[type=checkbox] {
+  appearance: none; -webkit-appearance: none;
+  width: 15px; height: 15px; flex-shrink: 0; margin: 0;
+  border: 1px solid var(--border); border-radius: 3px;
+  background: var(--bg-input); cursor: pointer;
+  position: relative; vertical-align: middle;
+  transition: background 0.12s, border-color 0.12s;
+}
+input[type=checkbox]:hover { border-color: var(--border-focus); }
+input[type=checkbox]:checked { background: var(--text-primary); border-color: var(--text-primary); }
+input[type=checkbox]:checked::after {
+  content: ''; position: absolute; left: 4px; top: 1px;
+  width: 4px; height: 8px;
+  border: 2px solid var(--bg-page); border-top: none; border-left: none;
+  transform: rotate(40deg);
+}
+input[type=checkbox]:focus { outline: none; border-color: var(--border-focus); }
+input[type=checkbox]:disabled { opacity: 0.4; cursor: not-allowed; }
+
+input[type=radio] {
+  appearance: none; -webkit-appearance: none;
+  width: 14px; height: 14px; flex-shrink: 0; margin: 0;
+  border: 1px solid var(--border); border-radius: 50%;
+  background: var(--bg-input); cursor: pointer;
+  position: relative; vertical-align: middle;
+  transition: border-color 0.12s;
+}
+input[type=radio]:hover { border-color: var(--border-focus); }
+input[type=radio]:checked { border-color: var(--text-primary); }
+input[type=radio]:checked::after {
+  content: ''; position: absolute; inset: 3px;
+  border-radius: 50%; background: var(--text-primary);
+}
+input[type=radio]:focus { outline: none; }
+
+.kyc-toggle-wrap { display:flex; align-items:center; gap:6px; }
+.kyc-toggle { position:relative; width:40px; height:22px; cursor:pointer; }
+.kyc-toggle input { opacity:0; width:0; height:0; }
+.kyc-toggle-slider { position:absolute; inset:0; background:var(--bg-hover); border-radius:22px; transition:.2s; border:1px solid var(--border-light); }
+.kyc-toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:2px; top:2px; background:#5a5a58; border-radius:50%; transition:.2s; }
+.kyc-toggle input:checked + .kyc-toggle-slider { background:rgba(62,207,142,0.2); border-color:var(--green); }
+.kyc-toggle input:checked + .kyc-toggle-slider:before { background:var(--green); transform:translateX(18px); }
+.kyc-toggle.disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+
+/* ── Game Provider ── */
+.gp-vendor-group { border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:12px; overflow:hidden; }
+.gp-vendor-header { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg-panel); border-bottom:1px solid var(--border); cursor:pointer; }
+.gp-vendor-name { font-weight:600; font-size:13px; color:var(--text-primary); flex:1; }
+.gp-vendor-toggle { font-size:11px; color:var(--text-muted); }
+.gp-type-row { display:flex; align-items:center; gap:12px; padding:8px 14px 8px 38px; border-bottom:1px solid var(--border-light); }
+.gp-type-row:last-child { border-bottom:none; }
+.gp-type-name { flex:1; font-size:12px; color:var(--text-secondary); }
+.gp-type-count { font-size:11px; color:var(--text-muted); width:60px; }
+.gp-status-on { font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(62,207,142,0.12); color:var(--green); }
+.gp-status-off { font-size:11px; padding:2px 8px; border-radius:4px; background:var(--bg-hover); color:var(--text-muted); }
+.gp-vendor-link { color:var(--accent); cursor:pointer; text-decoration:underline; font-size:13px; }
+
+/* ── Game Contrib ── */
+.gc-inline-input { width:70px; background:var(--bg-input); border:1px solid var(--accent); border-radius:4px; padding:3px 6px; color:var(--text-primary); font-size:12px; text-align:left; }
+
+/* ── Wallet ── */
+.wallet-edit-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; padding:0 4px; margin-left:4px; }
+.wallet-edit-btn:hover { color:var(--accent); }
+.wallet-inline-input { width:60px; background:var(--bg-input); border:1px solid var(--accent); border-radius:4px; padding:3px 6px; color:var(--text-primary); font-size:12px; text-align:left; }
+.wallet-status-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 10px; border-radius:4px; cursor:pointer; }
+.wallet-status-badge.enabled { background:rgba(62,207,142,0.12); color:var(--green); }
+.wallet-status-badge.closed { background:rgba(251,191,36,0.12); color:var(--amber); }
+.wallet-status-badge.disabled { background:rgba(248,113,113,0.12); color:var(--red-text); }
+.wallet-status-dropdown { position:absolute; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:4px; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,0.4); min-width:90px; }
+.wallet-status-option { padding:6px 10px; font-size:12px; color:var(--text-secondary); cursor:pointer; border-radius:4px; }
+.wallet-status-option:hover { background:var(--bg-hover); color:var(--text-primary); }
+.wallet-empty-row td { text-align:center; color:var(--text-muted); padding:32px; font-size:12px; }
+
+/* ── Audit ── */
+.audit-badge { display:inline-block; background:var(--bg-hover); color:var(--text-muted); font-size:10px; border-radius:10px; padding:0 6px; margin-left:4px; }
+.audit-pass-btn { background:rgba(62,207,142,0.15); color:var(--green); border:1px solid rgba(62,207,142,0.3); border-radius:4px; padding:2px 10px; font-size:11px; cursor:pointer; }
+.audit-pass-btn:hover { background:rgba(62,207,142,0.25); }
+.audit-reject-btn { background:rgba(248,113,113,0.12); color:var(--red-text); border:1px solid rgba(248,113,113,0.3); border-radius:4px; padding:2px 10px; font-size:11px; cursor:pointer; margin-left:4px; }
+.audit-reject-btn:hover { background:rgba(248,113,113,0.22); }
+.audit-status { font-size:11px; padding:2px 8px; border-radius:4px; }
+.audit-status.pass { background:rgba(62,207,142,0.12); color:var(--green); }
+.audit-status.reject { background:rgba(248,113,113,0.12); color:var(--red-text); }
+.audit-status.waiting { background:rgba(251,191,36,0.12); color:var(--amber); }
+.audit-status.fail { background:rgba(100,100,100,0.15); color:var(--text-muted); }
+.reject-reason-row { background:var(--bg-hover); }
+.reject-reason-input { width:100%; background:var(--bg-input); border:1px solid var(--border-light); border-radius:4px; padding:6px 10px; color:var(--text-primary); font-size:12px; font-family:var(--font); resize:none; }
+.reject-reason-input:focus { outline:none; border-color:var(--accent); }
+
+/* ── Referral ── */
+.ref-code { font-family:monospace; font-size:12px; display:flex; align-items:center; gap:6px; }
+.ref-copy-btn { cursor:pointer; color:var(--text-muted); font-size:12px; }
+.ref-copy-btn:hover { color:var(--accent); }
+.ref-inline-input { width:70px; background:var(--bg-input); border:1px solid var(--accent); border-radius:4px; padding:3px 6px; color:var(--text-primary); font-size:12px; text-align:left; }
+.ref-action-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:13px; padding:0 3px; }
+.ref-action-btn:hover { color:var(--accent); }
+.ref-del-btn:hover { color:var(--red-text); }
+
+/* ── Nickname ── */
+.nick-tab { padding:8px 18px; font-size:13px; cursor:pointer; color:var(--text-muted); border-bottom:2px solid transparent; margin-bottom:-1px; }
+.nick-tab.active { color:var(--text-primary); border-bottom-color:var(--accent); font-weight:500; }
+.nick-panel { display:none; }
+.nick-panel.active { display:block; }
+.nick-input-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:10px 12px; min-height:120px; cursor:text; display:flex; flex-wrap:wrap; gap:6px; align-content:flex-start; }
+.nick-input-wrap:focus-within { border-color:var(--accent); }
+.nick-tags { display:contents; }
+.nick-tag { display:inline-flex; align-items:center; gap:4px; background:var(--bg-hover); border:1px solid var(--border-light); border-radius:4px; padding:2px 8px; font-size:12px; color:var(--text-primary); }
+.nick-tag-x { cursor:pointer; color:var(--text-muted); font-size:11px; }
+.nick-tag-x:hover { color:var(--red-text); }
+.nick-input { background:none; border:none; outline:none; color:var(--text-primary); font-size:12px; min-width:120px; flex:1; padding:2px 4px; font-family:var(--font); }
+
+/* ── Affiliate List ── */
+.aff-toggle { font-size:12px; font-weight:500; cursor:pointer; padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.aff-toggle.on { color:var(--green); background:rgba(62,207,142,0.12); }
+.aff-toggle.off { color:var(--text-muted); background:var(--bg-card); }
+.aff-partner-badge {
+  display:inline-block; font-size:11px; padding:3px 10px; border-radius:4px;
+  border:1px solid var(--border-light); white-space:nowrap; font-family:monospace;
+}
+.aff-partner-badge.active {
+  background:#d8d8d8; color:#111; border-color:#bbb; font-weight:600;
+}
+.aff-partner-badge.reached {
+  background:#3a3a38; color:#aaa; border-color:#4a4a48;
+}
+.aff-partner-badge.unreached {
+  background:#1a1a18; color:#555; border-color:#2a2a28;
+}
+.aff-partner-badge.inactive { opacity:0.4; background:#1a1a18; color:#555; }
+.aff-s-badge {
+  display:inline-block; font-size:11px; padding:2px 8px; border-radius:4px;
+  border:1px solid var(--border-light); color:var(--text-muted);
+  background:var(--bg-card); cursor:pointer; white-space:nowrap; margin-left:4px;
+}
+.aff-s-badge.active {
+  background:#e8e8e8; color:#111; border-color:#ccc; font-weight:500;
+}
+.aff-edit-btn {
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
+  font-size:13px; padding:0 4px; margin-left:2px;
+}
+.aff-edit-btn:hover { color:var(--accent); }
+.aff-s-btn { font-size:10.5px; padding:2px 8px; border-radius:4px; border:1px solid var(--border-light); background:var(--bg-card); color:var(--text-secondary); cursor:pointer; white-space:nowrap; margin-left:6px; }
+.aff-s-btn:hover, .aff-s-btn.active { border-color:var(--accent); color:var(--accent); }
+.aff-inline-input { width:60px; background:var(--bg-input); border:1px solid var(--accent); border-radius:4px; padding:3px 6px; color:var(--text-primary); font-size:12px; text-align:left; }
+.aff-confirm-btn { background:var(--green); color:#fff; border:none; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px; margin-right:4px; }
+.aff-cancel-btn { background:var(--bg-card); color:var(--text-secondary); border:1px solid var(--border-light); border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px; }
+
+/* ── KYC View Modal ── */
+.kyc-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+}
+.kyc-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 680px; max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 80px);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.kyc-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.kyc-modal-title {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+}
+.kyc-modal-close {
+  background: none; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 16px; padding: 2px 6px; border-radius: 4px;
+}
+.kyc-modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.kyc-modal-body {
+  padding: 20px; overflow-y: auto;
+}
+.kyc-modal-grid {
+  display: flex; flex-wrap: wrap; gap: 16px;
+}
+.kyc-modal-field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.kyc-modal-field.half { width: calc(50% - 8px); }
+.kyc-modal-field.full { width: 100%; }
+.kyc-modal-label {
+  font-size: 11.5px; color: var(--text-muted);
+}
+.kyc-modal-val {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 13px; color: var(--text-primary);
+  font-family: monospace;
+  min-height: 36px;
+}
+
+/* ── Date Picker ── */
+.date-picker-wrap { position: relative; }
+.date-picker-trigger {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; padding: 5px 10px; height: 30px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); cursor: pointer;
+  font-size: 12px; color: var(--text-secondary);
+  min-width: 120px;
+}
+.date-picker-trigger:hover { border-color: var(--border-focus); }
+.date-picker-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px;
+  z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  min-width: 280px;
+}
+.date-picker-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.date-picker-label { font-size: 12px; color: var(--text-secondary); width: 70px; flex-shrink: 0; }
+.date-picker-input {
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 4px 8px;
+  color: var(--text-primary); font-size: 12px; height: 28px; flex: 1;
+}
+.date-picker-input:focus { outline: none; border-color: var(--accent); }
+.date-picker-actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+/* ── MEMBER LIST STYLES ── */
+
+/* ── KYC icon 狀態色（補充到主框架 :root）── */
+:root {
+  --kyc-approved:#5DCAA5;
+  --kyc-review:#E8894A;
+  --kyc-incomplete:#F09595;
+  --kyc-none:#55534e;
+  --kyc-disabled:#2a2a28;
+  --bg-input: #111110;
+  --border-focus: #3d3d3b;
+  --green-text:#5DCAA5;--green-dim:#0F2E23;
+  --blue:#378ADD;--blue-dim:#0C2A4A;--blue-text:#85B7EB;
+  --red-text:#F09595;--red-dim:#3A1818;
+  --orange-text:#E8894A;--orange-dim:#2E1800;
+  --yellow-text:#EF9F27;--yellow-dim:#2E2000;
+  --purple-text:#B09FE8;--purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --radius:6px;--radius-lg:8px;
+}
+
+/* ─── 共用表單／控件（自基準 proto 補齊：整站原檔缺這幾條，modal 內的欄位標籤會與輸入框疊在一起）─── */
+button { font-family:inherit;cursor:pointer; }
+.field { margin-bottom:13px; }
+label.field-label { display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px; }
+.req { color:#F09595; }
+input[type=text],input[type=datetime-local],select,textarea { width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color 0.15s; }
+input::placeholder,textarea::placeholder { color:var(--text-muted); }
+
+/* ─── 共用欄位驗證／Modal 尺寸（自基準 proto 補齊：整站原檔只有 #page 範圍內的版本，modal 在 page 之外會失效）─── */
+.field-error input,.field-error select,.field-error textarea { border-color:var(--red-text) !important; }
+.field-error-msg { font-size:11px;color:var(--red-text);margin-top:4px;display:none; }
+.field-error .field-error-msg { display:block; }
+.field-row-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px; }
+.modal-wide { width:640px; }
+.modal-sm { width:380px; }
+.warn-box { background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.15);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--yellow-text);margin-bottom:12px; }
+input:focus,select:focus,textarea:focus { border-color:var(--border-focus); }
+select option { background:#181816; }
+textarea { resize:vertical;min-height:80px;font-family:inherit; }
+.filter-search::before { content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;opacity:0.5; }
+.filter-search input:focus { border-color:var(--border-focus); }
+.filter-search input::placeholder { color:var(--text-muted); }
+
+/* ── Page header ── */
+.btn-report{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:5px 11px;font-size:12px;font-family:inherit;color:var(--text-secondary);cursor:pointer;transition:all .15s;text-align:left;line-height:1.4;}
+.btn-report:hover{border-color:var(--border-focus);color:var(--text-primary);background:var(--bg-hover);}
+.btn-report .report-sub{font-size:10px;color:var(--text-muted);display:block;}
+.btn-otp{background:var(--text-primary);border:none;border-radius:var(--radius);padding:6px 12px;font-size:12px;font-family:inherit;color:#0d0d0b;cursor:pointer;font-weight:500;transition:opacity .15s;}
+.btn-otp:hover{opacity:.8;}
+
+/* ── Filter card ── */
+.filter-wrap{padding:12px 24px;flex-shrink:0;}
+.filter-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.filter-row+.filter-row{margin-top:10px;}
+.f-field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.f-field label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.f-input{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;width:100%;}
+.f-input:focus{border-color:var(--border-focus);}
+.f-input::placeholder{color:var(--text-muted);}
+.f-select{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233d3d3b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;width:100%;}
+.f-select option{background:#181816;}
+.f-range{display:flex;align-items:center;gap:4px;}
+.f-range input{padding:6px 8px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;width:72px;text-align:center;transition:border-color .15s;}
+.f-range input:focus{border-color:var(--border-focus);}
+.f-range input::placeholder{color:var(--text-muted);}
+.f-sep{font-size:11px;color:var(--text-muted);}
+.filter-actions{display:flex;gap:6px;align-items:flex-end;margin-left:auto;}
+.btn-search{background:var(--text-primary);color:#0d0d0b;border:none;padding:6px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+.btn-search:hover{opacity:.8;}
+.btn-clear{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:5px 12px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-clear:hover{color:var(--text-primary);border-color:var(--border-focus);}
+
+/* ── Table area ── */
+.table-area{flex:1;padding:0 24px 32px;min-width:0;display:flex;flex-direction:column;}
+.table-meta{display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px;}
+.table-count{font-size:12px;color:var(--text-muted);}
+.table-count strong{color:var(--text-primary);}
+.pager{display:flex;align-items:center;gap:6px;}
+.pager-info{font-size:12px;color:var(--text-secondary);}
+.pager-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-size:13px;padding:3px 9px;cursor:pointer;transition:all .15s;font-family:inherit;}
+.pager-btn:hover:not(:disabled){color:var(--text-primary);border-color:var(--border-focus);}
+.pager-btn:disabled{opacity:.3;cursor:not-allowed;}
+.table-outer{overflow-x:auto;flex:1;}
+.mem-table{width:100%;border-collapse:collapse;min-width:1300px;}
+.mem-table thead th{padding:7px 12px;font-size:11px;color:var(--text-muted);letter-spacing:.04em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-page);position:sticky;top:0;z-index:2;user-select:none;}
+.mem-table thead th.sortable{cursor:pointer;transition:color .12s;}
+.mem-table thead th.sortable:hover{color:var(--text-secondary);}
+.mem-table thead th .sort-icon{font-size:9px;margin-left:3px;opacity:.4;}
+.mem-table thead th.sort-asc .sort-icon::after{content:'↑';opacity:.9;}
+.mem-table thead th.sort-desc .sort-icon::after{content:'↓';opacity:.9;}
+.mem-table thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'↕';}
+.mem-table thead th.num { text-align:left; }
+.mem-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+.mem-table tbody tr:hover{background:var(--bg-hover);}
+.mem-table tbody td{padding:9px 12px;font-size:12px;color:var(--text-secondary);white-space:nowrap;vertical-align:middle;}
+.mem-table tbody td.num { text-align:left;font-variant-numeric:tabular-nums; }
+.mem-table tfoot td{padding:10px 12px;font-size:12px;font-weight:500;color:var(--text-primary);border-top:2px solid var(--border-light);background:var(--bg-sidebar);white-space:nowrap;}
+.mem-table tfoot td.num { text-align:left;font-variant-numeric:tabular-nums; }
+.mem-table tfoot td:first-child{font-size:12px;color:var(--text-secondary);}
+
+/* ── Member ID cell ── */
+.mid-cell{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mid-link{font-size:12px;color:var(--blue-text);cursor:pointer;text-decoration:none;font-weight:500;transition:color .12s;white-space:nowrap;}
+.mid-link:hover{color:#b3d4f5;}
+.status-badge{font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.status-on{background:var(--green-dim);color:var(--green-text);}
+.status-off{background:var(--red-dim);color:var(--red-text);}
+.detail-btn{background:transparent;border:none;color:var(--text-muted);cursor:pointer;padding:2px 3px;border-radius:4px;display:inline-flex;align-items:center;line-height:1;transition:color .12s,background .12s;flex-shrink:0;}
+.detail-btn:hover{color:var(--text-primary);background:var(--bg-hover);}
+/* ── KYC stage icons ── */
+.kyc-stages{display:flex;gap:5px;align-items:center;}
+.kyc-stage{
+  position:relative;
+  width:26px;height:26px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;letter-spacing:-.01em;
+  cursor:default;border:1px solid transparent;
+  transition:transform .1s;
+  flex-shrink:0;
+}
+.kyc-stage:hover{transform:scale(1.15);}
+/* 已核準 — 綠 */
+.kyc-s-approved{background:var(--green-dim);color:var(--kyc-approved);border-color:rgba(93,202,165,.2);}
+/* 審核中 — 橘 */
+.kyc-s-review{background:var(--orange-dim);color:var(--kyc-review);border-color:rgba(232,137,74,.2);}
+/* 待補件 — 紅 */
+.kyc-s-incomplete{background:var(--red-dim);color:var(--kyc-incomplete);border-color:rgba(240,149,149,.2);}
+/* 未申請 — 淺灰 */
+.kyc-s-none{background:#1c1c1a;color:var(--kyc-none);border-color:rgba(85,83,78,.15);}
+/* 未開啟 — 深灰（幾乎不可見） */
+.kyc-s-disabled{background:#161614;color:var(--kyc-disabled);border-color:rgba(42,42,40,.4);}
+
+/* Tooltip — fixed 定位，完全由 JS 控制，避免被 thead 遮擋 */
+.kyc-tip{
+  display:none;position:fixed;
+  background:#0a0a09;border:1px solid var(--border);border-radius:var(--radius);
+  padding:5px 9px;font-size:11px;color:var(--text-secondary);white-space:nowrap;z-index:9999;
+  pointer-events:none;line-height:1.5;text-align:center;
+  transform:translateX(-50%);
+}
+.kyc-tip::before{
+  content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-bottom-color:#242422;
+}
+.kyc-tip::after{
+  content:'';position:absolute;bottom:calc(100% - 1px);left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-bottom-color:#0a0a09;
+}
+.kyc-tip-stage{font-size:10px;color:var(--text-muted);display:block;margin-bottom:2px;}
+
+/* ── Side panel ── */
+.side-overlay{position:fixed;inset:0;z-index:100;pointer-events:none;}
+.side-overlay.open{pointer-events:auto;}
+.side-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;transition:opacity .25s;}
+.side-overlay.open .side-backdrop{opacity:1;}
+.side-panel{position:absolute;top:0;right:0;height:100%;width:340px;background:var(--bg-card);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+.side-overlay.open .side-panel{transform:translateX(0);}
+.side-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
+.side-head-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.side-head-title{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;}
+.side-head-icon{color:var(--text-muted);display:inline-flex;align-items:center;}
+.side-close{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;transition:color .12s;flex-shrink:0;}
+.side-close:hover{color:var(--text-primary);}
+.side-body{padding:0;overflow-y:auto;flex:1;}
+/* 邀請鏈 */
+.side-invite{display:flex;align-items:center;gap:6px;padding:7px 16px;background:rgba(55,138,221,.07);border-bottom:1px solid rgba(55,138,221,.12);font-size:11px;color:var(--text-secondary);}
+/* section */
+.side-section{padding:14px 18px 4px;border-bottom:1px solid var(--border);}
+.side-section:last-child{border-bottom:none;}
+.side-section-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:10px;}
+/* row */
+.side-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;}
+.side-label{font-size:12px;color:var(--text-muted);flex-shrink:0;padding-right:8px;}
+.side-val{font-size:12px;color:var(--text-primary);text-align:right;word-break:break-all;}
+.side-val.green{color:var(--green-text);}
+.side-val.red{color:var(--red-text);}
+.side-val.blue{color:var(--blue-text);cursor:pointer;}
+.side-val.muted{color:var(--text-muted);}
+/* 等級 section 特殊 */
+.side-level-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.side-level-name{font-size:12px;color:var(--text-primary);}
+.side-level-row{display:flex;justify-content:space-between;padding:3px 0 3px 8px;}
+.side-level-label{font-size:12px;color:var(--text-muted);}
+.side-level-val{font-size:12px;color:var(--text-primary);}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);width:380px;max-width:calc(100vw - 32px);box-shadow:0 16px 48px rgba(0,0,0,.7);}
+.modal-head{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-head h2{font-size:14px;font-weight:500;color:var(--text-primary);}
+.modal-close{background:none;border:none;font-size:17px;color:var(--text-secondary);cursor:pointer;padding:2px 5px;line-height:1;transition:color .12s;}
+.modal-close:hover{color:var(--text-primary);}
+.modal-body{padding:1rem;}
+.modal-foot{padding:.7rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.otp-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;}
+.otp-field{flex:1;}
+.otp-field label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:5px;}
+.otp-field input,.otp-field select{width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;}
+.otp-field input:focus,.otp-field select:focus{border-color:var(--border-focus);}
+.otp-field select option{background:#181816;}
+.otp-result{background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;display:none;}
+.otp-result.show{display:block;}
+.otp-result-label{font-size:12px;color:var(--text-secondary);margin-bottom:4px;}
+.otp-result-count{font-size:28px;font-weight:600;color:var(--text-primary);letter-spacing:-.02em;}
+.otp-result-unit{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;transition:opacity .15s;}
+.btn-primary:hover{opacity:.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);}
+/* 小按鈕（編輯／刪除等）沿用基準 proto：整站原檔的 .btn-sm 只有尺寸，沒有底色與邊框，單獨使用時會變成瀏覽器預設的白底按鈕 */
+.btn-sm { height:auto; padding:3px 9px; border-radius:var(--radius); font-size:12px; font-family:inherit; cursor:pointer; white-space:nowrap; transition:background 0.12s,color 0.12s,border-color 0.12s; }
+/* 主要按鈕的小尺寸版（btn-primary btn-sm）保留亮底，不套用外框樣式 */
+.btn-sm:not(.btn-primary) { background:transparent; color:var(--text-secondary); border:1px solid var(--border); }
+.btn-sm:hover { color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover); }
+.btn-sm.danger:hover { color:var(--red-text);border-color:var(--red-text); }
+
+/* ── KYC legend ── */
+.kyc-legend{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--text-muted);padding:0 24px 8px;flex-shrink:0;flex-wrap:wrap;}
+.kyc-legend-item{display:flex;align-items:center;gap:4px;}
+.kyc-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* ── Toast ── */
+.toast{display:none;position:fixed;bottom:24px;right:24px;background:var(--green-dim);border:1px solid rgba(93,202,165,.25);border-radius:var(--radius-lg);padding:11px 16px;font-size:13px;color:var(--green-text);z-index:300;}
+.toast.show{display:block;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+
+/* ── Detail page ── */
+#page-member-list #view-list{display:flex;flex-direction:column;flex:1;min-height:0;}
+#page-member-list #view-detail{display:none;flex-direction:column;flex:1;overflow-y:auto;padding:0 24px 48px;}
+#page-member-list #view-detail.active{display:flex;}
+.det-breadcrumb{font-size:12px;color:var(--text-secondary);padding:14px 0 12px;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.det-breadcrumb a{color:var(--text-secondary);text-decoration:none;cursor:pointer;transition:color .12s;}
+.det-breadcrumb a:hover{color:var(--text-primary);}
+.det-breadcrumb .sep{opacity:.35;}
+.det-breadcrumb .cur{color:var(--text-primary);}
+.det-invite{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;margin-bottom:20px;background:rgba(55,138,221,.07);border:1px solid rgba(55,138,221,.15);border-radius:var(--radius);font-size:12px;color:var(--text-secondary);}
+/* MEMO */
+.det-block{margin-bottom:24px;}
+.det-block-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.det-edit-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px;font-size:13px;transition:color .12s;}
+.det-edit-btn:hover{color:var(--text-primary);}
+.det-memo{width:100%;min-height:80px;padding:10px 12px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);resize:vertical;outline:none;transition:border-color .15s;}
+.det-memo:focus{border-color:var(--border-focus);}
+/* 會員啟用狀態 */
+.det-status-val{font-size:13px;color:var(--green-text);}
+.det-status-val.off{color:var(--red-text);}
+/* KYC */
+.det-kyc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+.det-kyc-col{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 14px 12px;}
+.det-kyc-col-title{font-size:12px;color:var(--text-primary);font-weight:500;margin-bottom:4px;}
+.det-kyc-col-disabled{font-size:12px;color:var(--text-muted);margin-bottom:8px;}
+.det-kyc-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:3px;margin-bottom:10px;}
+.det-kyc-badge-pending{background:#1e1c14;color:var(--yellow-text);border:1px solid rgba(239,159,39,.2);}
+.det-kyc-badge-approved{background:var(--green-dim);color:var(--green-text);}
+.det-kyc-badge-incomplete{background:var(--red-dim);color:var(--red-text);}
+.det-kyc-badge-none{background:#1a1a18;color:var(--text-muted);}
+.det-kyc-view{font-size:11px;color:var(--blue-text);cursor:pointer;text-decoration:none;margin-bottom:10px;display:inline-flex;align-items:center;gap:3px;}
+.det-kyc-view:hover{color:#b3d4f5;}
+.det-kyc-radio{display:flex;flex-direction:column;gap:6px;}
+.det-kyc-radio label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer;}
+.det-kyc-radio input[type=radio]{cursor:pointer;}
+/* 兩欄 layout */
+.det-two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.det-info-block{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;}
+.det-info-title{font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:12px;}
+.det-info-row{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(36,36,34,.4);}
+.det-info-row:last-child{border-bottom:none;}
+.det-info-label{font-size:12px;color:var(--text-muted);flex-shrink:0;padding-right:12px;}
+.det-info-val{font-size:12px;color:var(--text-primary);text-align:right;word-break:break-all;}
+.det-info-val.muted{color:var(--text-muted);}
+.det-info-val.blue{color:var(--blue-text);cursor:pointer;}
+.det-info-val.blue:hover{color:#b3d4f5;}
+/* 等級資訊特殊 */
+.det-level-head{display:flex;align-items:center;justify-content:space-between;padding:5px 0 10px;border-bottom:1px solid rgba(36,36,34,.4);margin-bottom:4px;}
+.det-level-name{font-size:12px;color:var(--text-primary);}
+.det-level-edit{background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:2px 8px;font-size:11px;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:all .12s;}
+.det-level-edit:hover{color:var(--text-primary);border-color:var(--border-focus);}
+.det-level-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0 4px 10px;border-bottom:1px solid rgba(36,36,34,.3);}
+.det-level-row:last-child{border-bottom:none;}
+.det-level-label{font-size:12px;color:var(--text-muted);}
+.det-level-val{font-size:12px;color:var(--text-primary);}
+/* 帳務資訊 */
+.det-acct-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.det-acct-btns{display:flex;gap:6px;}
+.det-acct-btn{background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px;font-size:11px;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:all .12s;}
+.det-acct-btn:hover{color:var(--text-primary);border-color:var(--border-focus);}
+/* 四欄 grid（加盟商/全民代理/返水/優惠） */
+.det-four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px;}
+
+
+
+
+
+
+
+/* ── Promo Form ── */
+.promo-section { padding:14px 0; border-bottom:1px solid var(--border-light); }
+.promo-section-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:10px; }
+.promo-radio-group { display:flex; gap:20px; flex-wrap:wrap; }
+.promo-radio { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-primary); cursor:pointer; }
+.promo-radio input[type=radio] { cursor:pointer; }
+.promo-check-group { display:flex; gap:10px; flex-wrap:wrap; }
+.promo-check { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-primary); cursor:pointer; }
+.promo-check input[type=checkbox] { cursor:pointer; }
+.promo-reward-row { display:grid; grid-template-columns:160px 100px 80px 90px 28px; gap:8px; align-items:center; margin-bottom:8px; }
+
+
+/* ── 畫面管理 ── */
+.sm-scope .breadcrumb span {opacity:0.35;margin:0 5px;}.sm-scope .hint {font-size:12px;color:var(--text-muted);}.sm-scope .tab-bar {display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;}.sm-scope .tab {padding:8px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.12s,border-color 0.12s;}.sm-scope .tab:hover {color:var(--text-primary);}.sm-scope .tab.active {color:var(--text-primary);border-bottom-color:var(--text-primary);}.sm-scope .tab-panel {display:none;}.sm-scope .tab-panel.active {display:block;}.sm-scope .placeholder-panel {padding:48px 0;text-align:center;font-size:13px;color:var(--text-muted);}.sm-scope .cat-card {background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;overflow:hidden;transition:border-color 0.15s;}.sm-scope .cat-card.drag-over {border-color:var(--blue);}.sm-scope .cat-card.dragging {opacity:0.3;}.sm-scope .cat-head {display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;transition:background 0.12s;}.sm-scope .cat-head:hover {background:var(--bg-hover);}.sm-scope .drag-handle {color:var(--text-muted);font-size:14px;user-select:none;flex-shrink:0;cursor:grab;line-height:1;}.sm-scope .drag-handle:active {cursor:grabbing;}.sm-scope .cat-icon {display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-secondary);}.sm-scope .cat-name {font-size:14px;font-weight:500;color:var(--text-primary);flex:1;}.sm-scope .cat-count {font-size:12px;color:var(--text-secondary);margin-right:12px;}.sm-scope .cat-chevron {color:var(--text-muted);font-size:10px;margin-left:8px;transition:transform 0.2s;}.sm-scope .cat-chevron.open {transform:rotate(180deg);}.sm-scope .cat-body {padding:12px 14px 14px;border-top:1px solid var(--border);}
+/* ↑ 原檔這條規則被截斷成 `.sm-scope .cat-`，等於沒有內距，展開內容會貼齊卡片邊緣 */
+.sm-scope .cat-body-header {display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}.sm-scope .cat-body-label {font-size:12px;color:var(--text-secondary);}.sm-scope .chips-wrap {min-height:28px;display:flex;flex-wrap:wrap;gap:6px;}.sm-scope .chip {display:inline-flex;align-items:center;gap:5px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--text-secondary);margin:2px;cursor:grab;transition:border-color 0.12s,color 0.12s;}.sm-scope .chip:hover {border-color:var(--border-focus);color:var(--text-primary);}.sm-scope .chip:active {cursor:grabbing;}.sm-scope .chip-x {cursor:pointer;color:var(--text-muted);font-size:11px;line-height:1;transition:color 0.12s;}.sm-scope .chip-x:hover {color:var(--red-text);}.sm-scope .empty-chips {font-size:12px;color:var(--text-muted);padding:3px 2px;}.sm-scope .sw-track {display:inline-flex;align-items:center;width:44px;height:24px;border-radius:12px;cursor:pointer;transition:background 0.25s;position:relative;flex-shrink:0;user-select:none;}.sm-scope .sw-track.on {background:#c8c6be;}.sm-scope .sw-track.off {background:#2a2a28;}.sm-scope .sw-dot {position:absolute;top:3px;width:18px;height:18px;border-radius:50%;transition:left 0.25s,background 0.25s;}.sm-scope .sw-track.on .sw-dot {left:23px;background:#3a3a38;}.sm-scope .sw-track.off .sw-dot {left:3px;background:#5a5a58;}.sm-scope .sw-lbl {display:none;}.sm-scope .icon-grid {display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}.sm-scope .icon-opt {display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:background 0.12s,border-color 0.12s;color:var(--text-secondary);}.sm-scope .icon-opt:hover {background:var(--bg-hover);}.sm-scope .icon-opt.sel {border-color:var(--blue);background:var(--blue-dim);}.sm-scope .picker-modal {width:480px;}.sm-scope .picker-search {padding:8px 12px;border-bottom:1px solid var(--border);}.sm-scope .picker-cols {display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}.sm-scope .picker-col {padding:9px 11px;max-height:210px;overflow-y:auto;}.sm-scope .picker-col:first-child {border-right:1px solid var(--border);}.sm-scope .picker-col-label {font-size:11px;color:var(--text-muted);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}.sm-scope .picker-cats {display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border);}.sm-scope .lang-row {display:flex;align-items:center;gap:8px;margin-bottom:8px;}.sm-scope .lang-tag {font-size:11px;padding:2px 7px;border-radius:4px;background:#2a2a28;color:var(--text-secondary);white-space:nowrap;min-width:28px;text-align:center;}.sm-scope .lang-default-badge {font-size:10px;padding:1px 5px;border-radius:3px;background:#2e2000;color:#EF9F27;margin-left:4px;}.sm-scope .i18n-add-btn {font-size:12px;background:none;border:1px dashed var(--border);color:var(--text-secondary);padding:4px 10px;border-radius:var(--radius);cursor:pointer;width:100%;margin-top:4px;font-family:inherit;transition:border-color 0.12s,color 0.12s;}.sm-scope .i18n-add-btn:hover {border-color:var(--border-focus);color:var(--text-primary);}.sm-scope .default-lang-note {font-size:11px;color:var(--text-muted);margin-top:6px;}.sm-scope .picker-cat-btn {font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:background 0.12s,color 0.12s,border-color 0.12s;font-family:inherit;}.sm-scope .picker-cat-btn:hover {color:var(--text-primary);border-color:var(--border-focus);}.sm-scope .picker-cat-btn.active {background:var(--blue-dim);color:var(--blue-text);border-color:var(--blue);}.sm-scope .picker-row {display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:var(--radius);font-size:13px;cursor:pointer;color:var(--text-secondary);transition:background 0.12s,color 0.12s;}.sm-scope .picker-row:hover {background:var(--bg-hover);color:var(--text-primary);}.sm-scope .picker-row.sel {background:var(--blue-dim);color:var(--blue-text);}.sm-scope .picker-row .pi {font-size:12px;color:var(--text-muted);}.sm-scope .picker-row.sel .pi {color:var(--blue-text);}.sm-scope .picker-foot {padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;}.sm-scope .picker-foot-note {font-size:12px;color:var(--text-secondary);}.sm-scope .sel-row {display:flex;align-items:center;justify-content:space-between;padding:5px 3px;font-size:13px;color:var(--text-secondary);}.sm-scope .sel-rm {cursor:pointer;color:var(--text-muted);font-size:12px;transition:color 0.12s;}.sm-scope .sel-rm:hover {color:var(--red-text);}.sm-scope .empty-sel {font-size:12px;color:var(--text-muted);}.sm-scope ::-webkit-scrollbar {width:4px;}.sm-scope ::-webkit-scrollbar-track {background:transparent;}.sm-scope ::-webkit-scrollbar-thumb {background:var(--border);border-radius:2px;}.sm-scope .visibility-checks {display:flex;gap:16px;flex-wrap:wrap;}.sm-scope .vis-label {display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);cursor:pointer;user-select:none;}.sm-scope .vis-label input[type=checkbox] {appearance:none;width:15px;height:15px;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);cursor:pointer;position:relative;flex-shrink:0;transition:background 0.15s,border-color 0.15s;}.sm-scope .vis-label input[type=checkbox]:checked {background:var(--text-primary);border-color:var(--text-primary);}.sm-scope .vis-label input[type=checkbox]:checked::after {content:'';position:absolute;left:3px;top:0px;width:4px;height:8px;border:2px solid #0d0d0b;border-top:none;border-left:none;transform:rotate(45deg);}.sm-scope .vis-label input[type=checkbox]:focus {outline:none;border-color:var(--border-focus);}.sm-scope .vis-tag {font-size:10px;padding:1px 6px;border-radius:3px;white-space:nowrap;}.sm-scope .vis-tag-pre {background:#1a2e1a;color:#7DD87D;}.sm-scope .vis-tag-post {background:#0C2A4A;color:#85B7EB;}.sm-scope .vis-tag-both {background:#1e1e2e;color:#9999EE;}
+
+
+
+/* ── 公告設定 ── */
+.ann-scope .filter-bar { background:transparent; border:none; border-radius:0; padding:0; margin:0 0 14px 0; flex-shrink:unset; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#ann-edit-overlay .modal { width:560px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+#ann-edit-overlay .modal-body { overflow-y:auto; flex:1; padding:.875rem 1rem; }
+#ann-edit-overlay .modal-head { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+#ann-edit-overlay .sw-track {display:inline-flex;align-items:center;width:44px;height:24px;border-radius:12px;cursor:pointer;transition:background 0.25s;position:relative;flex-shrink:0;user-select:none;}
+#ann-edit-overlay .sw-track.on {background:#c8c6be;}
+#ann-edit-overlay .sw-track.off {background:#2a2a28;}
+#ann-edit-overlay .sw-dot {position:absolute;top:3px;width:18px;height:18px;border-radius:50%;transition:left 0.25s,background 0.25s;}
+#ann-edit-overlay .sw-track.on .sw-dot {left:23px;background:#3a3a38;}
+#ann-edit-overlay .sw-track.off .sw-dot {left:3px;background:#5a5a58;}
+#ann-edit-overlay .field-row {display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+#ann-edit-overlay .field-hint {font-size:11px;color:var(--text-muted);margin-top:4px;}
+#ann-edit-overlay .option-group {display:flex;gap:6px;flex-wrap:wrap;}
+#ann-edit-overlay .option-card {flex:1;min-width:0;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:background 0.12s,border-color 0.12s;background:var(--bg-input);}
+#ann-edit-overlay .option-card:hover {border-color:var(--border-focus);background:var(--bg-hover);}
+#ann-edit-overlay .option-card.sel {border-color:var(--blue);background:var(--blue-dim);}
+#ann-edit-overlay .option-card-title {font-size:13px;color:var(--text-primary);margin-bottom:3px;}
+#ann-edit-overlay .option-card.sel .option-card-title {color:var(--blue-text);}
+#ann-edit-overlay .option-card-desc {font-size:11px;color:var(--text-muted);}
+#ann-edit-overlay .cb-group {display:flex;flex-direction:column;gap:6px;}
+#ann-edit-overlay .cb-row {display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);cursor:pointer;transition:background 0.12s,border-color 0.12s;}
+#ann-edit-overlay .cb-row:hover {border-color:var(--border-focus);}
+#ann-edit-overlay .cb-row.sel {border-color:var(--blue);background:var(--blue-dim);}
+#ann-edit-overlay .cb-box {width:14px;height:14px;border:1px solid var(--text-muted);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.12s,border-color 0.12s;}
+#ann-edit-overlay .cb-row.sel .cb-box {background:var(--blue);border-color:var(--blue);}
+#ann-edit-overlay .cb-box-tick {font-size:9px;color:#fff;opacity:0;transition:opacity 0.12s;line-height:1;}
+#ann-edit-overlay .cb-row.sel .cb-box-tick {opacity:1;}
+#ann-edit-overlay .cb-label {font-size:13px;color:var(--text-primary);flex:1;}
+#ann-edit-overlay .cb-desc {font-size:11px;color:var(--text-muted);margin-left:auto;}
+#ann-edit-overlay .section-label {font-size:11px;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);}
+#ann-edit-overlay .section-label:first-child {margin-top:0;padding-top:0;border-top:none;}
+#ann-edit-overlay .modal-foot { padding:.7rem 1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+#ann-confirm-overlay .modal { width:420px; max-width:calc(100vw - 32px); }
+.breadcrumb span {opacity:0.35;margin:0 5px;}.hint {font-size:12px;color:var(--text-muted);}.filter-bar {display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}.filter-chip {font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:background 0.12s,color 0.12s,border-color 0.12s;font-family:inherit;}.filter-chip:hover {color:var(--text-primary);border-color:var(--border-focus);}.filter-chip.active {background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-focus);}.filter-divider {width:1px;height:18px;background:var(--border);margin:0 4px;}.filter-search {flex:1;max-width:280px;min-width:160px;position:relative;}.filter-search input {width:100%;padding:6px 10px 6px 30px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;font-family:inherit;transition:border-color 0.15s;}.filter-search 
+.filter-search 
+.filter-search::before {content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;opacity:0.5;}.list-header {display:grid;grid-template-columns:60px 1fr 140px 180px 90px 100px;align-items:center;gap:0;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);}.list-header span {font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}.ann-card {background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;overflow:hidden;transition:border-color 0.15s;}.ann-card:hover {border-color:var(--border-focus);}.ann-row {display:grid;grid-template-columns:60px 1fr 140px 180px 90px 100px;align-items:center;gap:0;padding:11px 14px;}.drag-handle {color:var(--text-muted);font-size:14px;user-select:none;flex-shrink:0;cursor:grab;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;transition:color 0.12s;}.drag-handle:hover {color:var(--text-secondary);}.drag-handle:active {cursor:grabbing;}.ann-card.dragging {opacity:0.3;}.ann-card {position:relative;}.ann-card.drag-over-top::before, .ann-card.drag-over-bottom::after {
+  content:'';position:absolute;left:0;right:0;height:2px;background:var(--blue);border-radius:1px;pointer-events:none;z-index:5;
+}.ann-card.drag-over-top::before {top:-4px;}.ann-card.drag-over-bottom::after {bottom:-4px;}.sort-num {font-size:12px;color:var(--text-muted);width:16px;text-align:center;font-variant-numeric:tabular-nums;}.ann-title {font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}.ann-preview {font-size:12px;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}.ann-tag {display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;flex-shrink:0;letter-spacing:0.04em;}.tag-notice {background:var(--green-dim);color:var(--green-text);}.tag-maintain {background:var(--red-dim);color:var(--red-text);}.tag-event {background:var(--yellow-dim);color:var(--yellow-text);}.audience-tag {display:inline-flex;align-items:center;font-size:11px;color:var(--text-secondary);background:var(--bg-hover);padding:2px 7px;border-radius:4px;}.time-range {font-size:12px;color:var(--text-secondary);line-height:1.5;}.time-range .time-row {display:flex;align-items:center;gap:4px;}.time-range .time-label {font-size:10px;color:var(--text-muted);width:24px;flex-shrink:0;}.status-cell {display:flex;align-items:center;gap:6px;font-size:12px;}.status-dot {width:6px;height:6px;border-radius:50%;flex-shrink:0;}.status-active .status-dot {background:var(--green-text);box-shadow:0 0 6px rgba(93,202,165,0.4);}.status-active {color:var(--green-text);}.status-expired .status-dot {background:var(--text-muted);}.status-expired {color:var(--text-muted);}.status-disabled .status-dot {background:var(--text-muted);}.status-disabled {color:var(--text-secondary);}.ops-cell { display:flex;gap:6px;justify-content:flex-start; }.sw-track {display:inline-flex;align-items:center;width:44px;height:24px;border-radius:12px;cursor:pointer;transition:background 0.25s;position:relative;flex-shrink:0;user-select:none;}.sw-track.on {background:#c8c6be;}.sw-track.off {background:#2a2a28;}.sw-dot {position:absolute;top:3px;width:18px;height:18px;border-radius:50%;transition:left 0.25s,background 0.25s;}.sw-track.on .sw-dot {left:23px;background:#3a3a38;}.sw-track.off .sw-dot {left:3px;background:#5a5a58;}.empty-state {padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}.empty-state-title {font-size:14px;color:var(--text-secondary);margin-bottom:6px;}.field-row {display:grid;grid-template-columns:1fr 1fr;gap:10px;}.field-hint {font-size:11px;color:var(--text-muted);margin-top:4px;}.option-group {display:flex;gap:6px;flex-wrap:wrap;}.option-card {flex:1;min-width:0;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:background 0.12s,border-color 0.12s;background:var(--bg-input);}.option-card:hover {border-color:var(--border-focus);background:var(--bg-hover);}.option-card.sel {border-color:var(--blue);background:var(--blue-dim);}.option-card-title {font-size:13px;color:var(--text-primary);margin-bottom:3px;}.option-card.sel .option-card-title {color:var(--blue-text);}.option-card-desc {font-size:11px;color:var(--text-muted);}.cb-group {display:flex;flex-direction:column;gap:6px;}.cb-row {display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);cursor:pointer;transition:background 0.12s,border-color 0.12s;}.cb-row:hover {border-color:var(--border-focus);}.cb-row.sel {border-color:var(--blue);background:var(--blue-dim);}.cb-box {width:14px;height:14px;border:1px solid var(--text-muted);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.12s,border-color 0.12s;}.cb-row.sel .cb-box {background:var(--blue);border-color:var(--blue);}.cb-box-tick {font-size:9px;color:#fff;opacity:0;transition:opacity 0.12s;line-height:1;}.cb-row.sel .cb-box-tick {opacity:1;}.cb-label {font-size:13px;color:var(--text-primary);flex:1;}.cb-desc {font-size:11px;color:var(--text-muted);margin-left:auto;}.section-label {font-size:11px;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);}.section-label:first-child {margin-top:0;padding-top:0;border-top:none;}.preview-box {border:1px dashed var(--border);border-radius:var(--radius);padding:10px 12px;background:var(--bg-page);}.preview-box-label {font-size:11px;color:var(--text-muted);margin-bottom:6px;}::-webkit-scrollbar {width:4px;}::-webkit-scrollbar-track {background:transparent;}::-webkit-scrollbar-thumb {background:var(--border);border-radius:2px;}
+
+
+/* ── Free Spin 管理 ── */
+.fs-scope .filter-bar { background:transparent; border:none; border-radius:0; padding:0; margin:0 0 12px 0; flex-shrink:unset; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#fs-edit-overlay .modal { width:640px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+#fs-edit-overlay .modal-body { padding:.875rem 1rem; overflow-y:auto; flex:1; }
+#fs-edit-overlay .modal-head { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+#fs-edit-overlay .modal-foot { padding:.7rem 1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+#fs-detail-overlay .modal { width:600px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+#fs-detail-overlay .modal-body { padding:.875rem 1rem; overflow-y:auto; flex:1; }
+#fs-detail-overlay .modal-head { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+#fs-cancel-overlay .modal { width:380px; max-width:calc(100vw - 32px); }
+#fs-picker-overlay .modal { width:480px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+.fs-scope .breadcrumb span {opacity:0.35;margin:0 5px;}.fs-scope .hint {font-size:12px;color:var(--text-muted);}.fs-scope .filter-bar {display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}.fs-scope .filter-chip {font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:background 0.12s,color 0.12s,border-color 0.12s;font-family:inherit;}.fs-scope .filter-chip:hover {color:var(--text-primary);border-color:var(--border-focus);}.fs-scope .filter-chip.active {background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-focus);}.fs-scope .filter-divider {width:1px;height:18px;background:var(--border);margin:0 4px;}.fs-scope .filter-search {flex:1;max-width:280px;min-width:160px;position:relative;}.fs-scope .filter-search input {width:100%;padding:6px 10px 6px 30px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;font-family:inherit;transition:border-color 0.15s;}.fs-scope .filter-search 
+.filter-search 
+.filter-search::before {content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;opacity:0.5;}.fs-scope .list-header {display:grid;grid-template-columns:200px 140px 110px 160px 80px 200px;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);}.fs-scope .list-header span {font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}.fs-scope .fs-card {background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;overflow:hidden;transition:border-color 0.15s;}.fs-scope .fs-card:hover {border-color:var(--border-focus);}.fs-scope .fs-row {display:grid;grid-template-columns:200px 140px 110px 160px 80px 200px;align-items:center;padding:11px 14px;}.fs-scope .sort-num {font-size:12px;color:var(--text-muted);text-align:center;}.fs-scope .fs-tag {display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;flex-shrink:0;letter-spacing:0.04em;}.fs-scope .tag-rounds {background:var(--purple-dim);color:var(--purple-text);}.fs-scope .tag-time {background:var(--blue-dim);color:var(--blue-text);}.fs-scope .tag-feature {background:var(--yellow-dim);color:var(--yellow-text);}.fs-scope .game-chip {display:inline-flex;align-items:center;background:var(--bg-hover);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:11px;color:var(--text-secondary);margin:1px 2px 1px 0;}.fs-scope .time-range {font-size:12px;color:var(--text-secondary);line-height:1.55;}.fs-scope .time-row {display:flex;align-items:center;gap:4px;}.fs-scope .time-label {font-size:10px;color:var(--text-muted);width:20px;flex-shrink:0;}.fs-scope .status-cell {display:flex;align-items:center;gap:6px;font-size:12px;}.fs-scope .status-dot {width:6px;height:6px;border-radius:50%;flex-shrink:0;}.fs-scope .status-active .status-dot {background:var(--green-text);box-shadow:0 0 6px rgba(93,202,165,0.4);}.fs-scope .status-active {color:var(--green-text);}.fs-scope .status-expired .status-dot {background:var(--text-muted);}.fs-scope .status-expired {color:var(--text-muted);}.fs-scope .status-disabled .status-dot {background:var(--text-muted);}.fs-scope .status-disabled {color:var(--text-secondary);}.fs-scope .status-cancelled .status-dot {background:var(--red-text);}.fs-scope .status-cancelled {color:var(--red-text);}.fs-scope .ops-cell {display:flex;gap:6px;justify-content:flex-start;}.fs-scope .progress-bar {height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}.fs-scope .progress-fill {height:3px;background:var(--green);border-radius:2px;}.fs-scope .sw-track {display:inline-flex;align-items:center;width:44px;height:24px;border-radius:12px;cursor:pointer;transition:background 0.25s;position:relative;flex-shrink:0;user-select:none;}.fs-scope .sw-track.on {background:#c8c6be;}.fs-scope .sw-track.off {background:#2a2a28;}.fs-scope .sw-dot {position:absolute;top:3px;width:18px;height:18px;border-radius:50%;transition:left 0.25s,background 0.25s;}.fs-scope .sw-track.on .sw-dot {left:23px;background:#3a3a38;}.fs-scope .sw-track.off .sw-dot {left:3px;background:#5a5a58;}.fs-scope .empty-state {padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}.fs-scope .empty-state-title {font-size:14px;color:var(--text-secondary);margin-bottom:6px;}.fs-scope .field-error input, .fs-scope .field-error select, .fs-scope .field-error 
+.field-error-msg {font-size:11px;color:var(--red-text);margin-top:4px;display:none;}.fs-scope .field-error .field-error-msg {display:block;}.fs-scope .field-row {display:grid;grid-template-columns:1fr 1fr;gap:10px;}.fs-scope .field-row-3 {display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}.fs-scope .field-hint {font-size:11px;color:var(--text-muted);margin-top:4px;}.fs-scope .option-group {display:flex;gap:6px;flex-wrap:wrap;}.fs-scope .option-card {flex:1;min-width:0;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:background 0.12s,border-color 0.12s;background:var(--bg-input);}.fs-scope .option-card:hover {border-color:var(--border-focus);background:var(--bg-hover);}.fs-scope .option-card.sel {border-color:var(--blue);background:var(--blue-dim);}.fs-scope .option-card-title {font-size:13px;color:var(--text-primary);margin-bottom:3px;}.fs-scope .option-card.sel .option-card-title {color:var(--blue-text);}.fs-scope .option-card-desc {font-size:11px;color:var(--text-muted);}.fs-scope .section-label {font-size:11px;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);}.fs-scope .section-label:first-child {margin-top:0;padding-top:0;border-top:none;}.fs-scope .warn-box {background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.15);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--yellow-text);margin-bottom:10px;}.fs-scope .player-tbl {width:100%;border-collapse:collapse;font-size:12px;}.fs-scope .player-tbl th {padding:6px 10px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:left;letter-spacing:0.04em;}.fs-scope .player-tbl td {padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text-secondary);}.fs-scope .player-tbl tr:last-child td {border-bottom:none;}.fs-scope .player-tbl tr:hover td {background:var(--bg-hover);}.fs-scope .stat-mini {background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;}.fs-scope .stat-mini-lbl {font-size:11px;color:var(--text-muted);margin-bottom:3px;}.fs-scope .stat-mini-val {font-size:20px;font-weight:500;color:var(--text-primary);}.fs-scope .picker-modal {width:640px;}.fs-scope .picker-search {padding:8px 12px;border-bottom:1px solid var(--border);}.fs-scope .picker-cols {display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);}.fs-scope .picker-col {padding:9px 11px;max-height:220px;overflow-y:auto;}.fs-scope .picker-col+.picker-col {border-left:1px solid var(--border);}.fs-scope .picker-col-label {font-size:11px;color:var(--text-muted);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}.fs-scope .picker-cats {display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border);}.fs-scope .picker-cat-btn {font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:background 0.12s,color 0.12s,border-color 0.12s;font-family:inherit;}.fs-scope .picker-cat-btn:hover {color:var(--text-primary);border-color:var(--border-focus);}.fs-scope .picker-cat-btn.active {background:var(--blue-dim);color:var(--blue-text);border-color:var(--blue);}.fs-scope .picker-row {display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:var(--radius);font-size:13px;cursor:pointer;color:var(--text-secondary);transition:background 0.12s,color 0.12s;}.fs-scope .picker-row:hover {background:var(--bg-hover);color:var(--text-primary);}.fs-scope .picker-row.sel {background:var(--blue-dim);color:var(--blue-text);}.fs-scope .picker-row .pi {font-size:12px;color:var(--text-muted);}.fs-scope .picker-row.sel .pi {color:var(--blue-text);}.fs-scope .picker-foot {padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;}.fs-scope .picker-foot-note {font-size:12px;color:var(--text-secondary);}.fs-scope .sel-row {display:flex;align-items:center;justify-content:space-between;padding:5px 3px;font-size:13px;color:var(--text-secondary);}.fs-scope .sel-rm {cursor:pointer;color:var(--text-muted);font-size:12px;transition:color 0.12s;}.fs-scope .sel-rm:hover {color:var(--red-text);}.fs-scope .empty-sel {font-size:12px;color:var(--text-muted);}.fs-scope ::-webkit-scrollbar {width:2px;height:2px;}.fs-scope ::-webkit-scrollbar-track {background:transparent;}.fs-scope ::-webkit-scrollbar-thumb {background:var(--border);border-radius:2px;}
+
+
+
+
+/* ─── 列表（ba-proto 規範：.list-header + 每筆一張 .xx-card > .xx-row）─── */
+/* 列表可橫向捲動：各頁的 .xx-row 有 min-width（最寬 1218px），外層 .table-container 是 overflow:hidden，沒有這條會被裁掉（跑版） */
+.list-wrap { padding: 8px 10px 10px; flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto; }
+.list-wrap > .list-header, .list-wrap > .list-body { min-width: max-content; }
+.list-header {
+  display: grid; align-items: center;
+  padding: 5px 14px 6px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg-page);
+}
+.list-header > span {
+  font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em;
+  white-space: nowrap; user-select: none; padding-right: 12px;
+}
+.list-header > span.sortable { cursor: pointer; transition: color 0.12s; }
+.list-header > span.sortable:hover { color: var(--text-secondary); }
+.list-header > span.num { text-align: left; }
+.list-header .sort-icon { font-size: 9px; margin-left: 3px; opacity: 0.4; }
+.list-header .sortable.sort-asc .sort-icon::after { content: '↑'; opacity: 0.9; }
+.list-header .sortable.sort-desc .sort-icon::after { content: '↓'; opacity: 0.9; }
+.list-header .sortable:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: '↕'; }
+.list-wrap .empty-state {
+  padding: 40px 0; text-align: center;
+  color: var(--text-muted); font-size: 13px;
+}
+
+.mem-card, .afl-card, .ld-card, .ref-card, .wd-card, .bn-card, .wal-card, .tx-card, .bet-card, .rb-card, .ad-card, .lv-card, .afc1-card, .afc2-card, .afc3-card, .ar1-card, .ar2-card, .ar3-card, .gp2-card, .gp3-card, .gc-card, .ml-card, .mllv-card, .as-card, .afs-card, .psc-card, .au-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); margin-bottom: 7px;
+  transition: border-color 0.15s;
+}
+.mem-card:hover, .afl-card:hover, .ld-card:hover, .ref-card:hover, .wd-card:hover, .bn-card:hover, .wal-card:hover, .tx-card:hover, .bet-card:hover, .rb-card:hover, .ad-card:hover, .lv-card:hover, .afc1-card:hover, .afc2-card:hover, .afc3-card:hover, .ar1-card:hover, .ar2-card:hover, .ar3-card:hover, .gp2-card:hover, .gp3-card:hover, .gc-card:hover, .ml-card:hover, .mllv-card:hover, .as-card:hover, .afs-card:hover, .psc-card:hover, .au-card:hover {
+  border-color: var(--border-focus);
+}
+.mem-row, .afl-row, .ld-row, .ref-row, .wd-row, .bn-row, .wal-row, .tx-row, .bet-row, .rb-row, .ad-row, .lv-row, .afc1-row, .afc2-row, .afc3-row, .ar1-row, .ar2-row, .ar3-row, .gp2-row, .gp3-row, .gc-row, .ml-row, .mllv-row, .as-row, .afs-row, .psc-row, .au-row {
+  display: grid; align-items: center; padding: 11px 14px;
+}
+.mem-row > div, .afl-row > div, .ld-row > div, .ref-row > div, .wd-row > div, .bn-row > div, .wal-row > div, .tx-row > div, .bet-row > div, .rb-row > div, .ad-row > div, .lv-row > div, .afc1-row > div, .afc2-row > div, .afc3-row > div, .ar1-row > div, .ar2-row > div, .ar3-row > div, .gp2-row > div, .gp3-row > div, .gc-row > div, .ml-row > div, .mllv-row > div, .as-row > div, .afs-row > div, .psc-row > div, .au-row > div {
+  font-size: 12px; color: var(--text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 12px;
+}
+.mem-row { grid-template-columns: 240px 170px 180px 130px 110px 150px 140px 140px 130px 100px 130px 100px minmax(130px,1fr); min-width: 1878px; }
+.afl-row { grid-template-columns: 150px 90px 110px 110px 90px 90px 110px 110px 90px minmax(160px,1fr); min-width: 1138px; }
+.ld-row { grid-template-columns: 200px 220px minmax(200px,1fr); min-width: 648px; }
+.ref-row { grid-template-columns: 170px 140px 170px 110px minmax(180px,1fr); min-width: 798px; }
+.wd-row { grid-template-columns: 200px 150px 130px 80px 220px 120px 130px 150px minmax(150px,1fr); min-width: 1358px; }
+.bn-row { grid-template-columns: 200px 150px 130px 110px 120px 130px 150px minmax(150px,1fr); min-width: 1168px; }
+.wal-row { grid-template-columns: 150px 110px 140px 130px 120px minmax(120px,1fr); min-width: 798px; }
+.tx-row { grid-template-columns: 200px 130px 120px 80px 130px 130px minmax(160px,1fr); min-width: 978px; }
+.bet-row { grid-template-columns: 140px 180px 130px 110px 120px 100px 130px 110px 110px 160px 100px 150px 120px minmax(150px,1fr); min-width: 1838px; }
+.rb-row { grid-template-columns: 140px 180px 130px 130px 100px 120px 90px 150px minmax(150px,1fr); min-width: 1218px; }
+.ad-row { grid-template-columns: 200px 130px 100px 120px 150px minmax(160px,1fr); min-width: 888px; }
+.lv-row { grid-template-columns: 130px 140px 110px 120px 130px 160px minmax(160px,1fr); min-width: 978px; }
+.afc1-row { grid-template-columns: 160px 150px 140px 150px 140px minmax(90px,1fr); min-width: 858px; }
+.afc2-row { grid-template-columns: 130px 100px 110px 140px 130px 140px 130px 130px 140px 110px 150px 90px minmax(150px,1fr); min-width: 1678px; }
+.afc3-row { grid-template-columns: 130px 100px 130px 120px 120px 120px minmax(130px,1fr); min-width: 878px; }
+.ar1-row { grid-template-columns: 130px 100px 140px 110px 150px minmax(90px,1fr); min-width: 748px; }
+.ar2-row { grid-template-columns: 150px 100px 140px 160px 160px 160px 180px minmax(150px,1fr); min-width: 1228px; }
+.ar3-row { grid-template-columns: 130px 140px 100px 140px 160px 160px 160px 90px minmax(150px,1fr); min-width: 1258px; }
+.gp2-row { grid-template-columns: 36px 110px 220px 130px 90px minmax(100px,1fr); min-width: 714px; }
+.gp3-row { grid-template-columns: 170px 140px minmax(260px,1fr); min-width: 598px; }
+.gc-row { grid-template-columns: 160px 160px minmax(200px,1fr); min-width: 548px; }
+.list-wrap.batch .gc-row { grid-template-columns: 36px 160px 160px minmax(200px,1fr); min-width: 584px; }
+.ml-row { grid-template-columns: 220px 170px 130px 170px minmax(160px,1fr); min-width: 878px; }
+.mllv-row { grid-template-columns: 90px 140px 90px 140px 170px 140px 170px 110px minmax(120px,1fr); min-width: 1198px; }
+.as-row { grid-template-columns: 220px 170px 130px 170px minmax(160px,1fr); min-width: 878px; }
+.afs-row { grid-template-columns: 220px 170px 130px 170px minmax(160px,1fr); min-width: 878px; }
+.psc-row { grid-template-columns: 220px 260px minmax(120px,1fr); min-width: 628px; }
+.au-row { grid-template-columns: 200px 150px minmax(180px,1fr); min-width: 558px; }
+
+/* 遊戲貢獻值：非批次模式時整欄（含表頭）不佔 grid 欄位 */
+.list-wrap:not(.batch) #gc-check-th { display: none; }
+/* 卡片列自己就有邊框，外層容器不再重複描邊 */
+.table-container:has(.list-wrap) { border: none; border-radius: 0; }
+.table-container:has(.list-wrap) .table-footer { border-top: 1px solid var(--border); border-radius: var(--radius); }
+.list-wrap .num { text-align: left; font-variant-numeric: tabular-nums; }
+/* 會員列表的總計列 */
+.mem-total {
+  border-top: 2px solid var(--border-light);
+  background: var(--bg-sidebar);
+  border-radius: var(--radius-lg);
+  margin-top: 4px;
+}
+.mem-total > div { color: var(--text-primary); font-weight: 500; }
+/* 多幣別錢包：收合顯示核心貨幣錢包餘額，站台啟用一種以上幣別時可展開 */
+.wal-cell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.wal-cell.right { align-items: flex-end; }
+.wal-main { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.wal-caret { font-size: 9px; color: var(--text-muted); line-height: 1; transition: transform .15s; }
+.wal-main:hover .wal-caret { color: var(--text-secondary); }
+.wal-cell.open .wal-caret { transform: rotate(180deg); }
+.wal-detail { display: none; flex-direction: column; gap: 2px; padding-top: 1px; }
+.wal-cell.open .wal-detail { display: flex; }
+.wal-line { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--text-secondary); }
+.wal-cell.right .wal-line { justify-content: flex-end; }
+.wal-ccy { font-size: 10px; color: var(--text-muted); letter-spacing: 0.04em; }
+.wal-amt { font-variant-numeric: tabular-nums; }
+
+/* 出金／彩金審核：卡片內的駁回原因展開區 */
+.wd-expand, .bn-expand { border-top: 1px solid var(--border); }
+</style>
+
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-group active" onclick="navTo('dashboard', '資訊看板', this)">資訊看板</div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">會員與加盟商 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('member-list', '會員列表', this)">會員列表</div>
+    <div class="sidebar-item" onclick="navTo('affiliate-list', '加盟列表', this)">加盟列表</div>
+    <div class="sidebar-item" onclick="navTo('login-domain', '登入網域查詢', this)">登入網域查詢</div>
+    <div class="sidebar-item" onclick="navTo('referral', '推薦註冊金設定', this)">推薦註冊金設定</div>
+    <div class="sidebar-item" onclick="navTo('nickname', '暱稱禁用詞設定', this)">暱稱禁用詞設定</div>
+  </div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">帳務管理 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('wallet', '鏈上錢包管理', this)">鏈上錢包管理</div>
+    <div class="sidebar-item" onclick="navTo('withdrawal', '出金審核', this)">出金審核</div>
+    <div class="sidebar-item" onclick="navTo('bonus', '優惠彩金審核', this)">優惠彩金審核</div>
+  </div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">各式報表 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('tx-query', '交易紀錄查詢', this)">交易紀錄查詢</div>
+    <div class="sidebar-item" onclick="navTo('bet-query', '注單查詢', this)">注單查詢</div>
+    <div class="sidebar-item" onclick="navTo('rebate-detail', '返水明細', this)">返水明細</div>
+    <div class="sidebar-item" onclick="navTo('audit-detail', '稽核明細', this)">稽核明細</div>
+    <div class="sidebar-item" onclick="navTo('aff-commission', '加盟傭金發放紀錄', this)">加盟傭金發放紀錄</div>
+    <div class="sidebar-item" onclick="navTo('agent-rebate', '代理返傭發放紀錄', this)">代理返傭發放紀錄</div>
+    <div class="sidebar-item" onclick="navTo('level-log', '會員等級異動紀錄', this)">會員等級異動紀錄</div>
+  </div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">遊戲商管理 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('game-provider', '遊戲商管理', this)">遊戲商管理</div>
+    <div class="sidebar-item" onclick="navTo('game-contrib', '遊戲貢獻值設定', this)">遊戲貢獻值設定</div>
+  </div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">系統管理 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('kyc-settings', 'KYC 設定', this)">KYC 設定</div>
+    <div class="sidebar-item" onclick="navTo('member-level', '會員等級設定', this)">會員等級設定</div>
+    <div class="sidebar-item" onclick="navTo('agent-settings', '代理設定', this)">代理設定</div>
+    <div class="sidebar-item" onclick="navTo('affiliate-settings', '加盟商設定', this)">加盟商設定</div>
+    <div class="sidebar-item" onclick="navTo('promo', '優惠活動管理', this)">優惠活動管理</div>
+    <div class="sidebar-item" onclick="navTo('screen-mgmt', '畫面管理', this)">畫面管理</div>
+    <div class="sidebar-item" onclick="navTo('announcement', '公告設定', this)">公告設定</div>
+    <div class="sidebar-item" onclick="navTo('freespin', 'Free Spin 管理', this)">Free Spin 管理</div>
+    <div class="sidebar-item" onclick="navTo('banner', '橫幅管理', this)">橫幅管理</div>
+    <div class="sidebar-item" onclick="navTo('deaudit', '消稽核設定', this)">消稽核設定</div>
+  </div>
+  <div class="sidebar-group" onclick="toggleGroup(this)">後台管理員系統 <span class="arr">›</span></div>
+  <div class="nav-sub">
+    <div class="sidebar-item" onclick="navTo('admin-users', '系統使用者列表', this)">系統使用者列表</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="breadcrumb" id="breadcrumb">資訊看板</div>
+  <div class="page-header">
+    <h1 class="page-title" id="page-title">資訊看板</h1>
+    <div class="page-header-right" id="page-actions"></div>
+  </div>
+
+  <div class="content" style="position:relative; overflow:hidden;">
+
+    <!-- Page: 會員列表 -->
+    <div class="page" id="page-member-list" style="position:relative; display:none; flex-direction:column; height:100%; overflow:hidden;">
+      <div id="view-list" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+
+    <div class="page-header" style="padding:0 24px 14px;">
+      <div class="page-header-right" style="margin-left:auto;">
+        <button class="btn-report" onclick="toggleSiteWallets()" title="proto 模擬用：切換本站台已啟用的幣別數">
+          模擬幣別<span class="report-sub" id="wal-sim-label">多幣別 USDT／TWD</span>
+        </button>
+        <button class="btn-otp" onclick="openOtp()">OTP 報表</button>
+        <button class="btn-report" onclick="showToast('✓ 已開啟站台報表（新分頁）')">
+          站台報表<span class="report-sub">Update Data</span>
+        </button>
+        <button class="btn-report" onclick="showToast('✓ 已開啟使用者報表（新分頁）')">
+          使用者報表<span class="report-sub">Update Data</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-wrap">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="f-field" style="flex:1 1 120px;max-width:160px;">
+            <label>會員編號</label>
+            <input class="f-input" id="f-id" type="text" placeholder="請輸入"/>
+          </div>
+          <div class="f-field" style="flex:1 1 150px;max-width:195px;">
+            <label>電子信箱</label>
+            <input class="f-input" id="f-email" type="text" placeholder="請輸入"/>
+          </div>
+          <div class="f-field" style="flex:1 1 120px;max-width:155px;">
+            <label>電話號碼</label>
+            <input class="f-input" id="f-phone" type="text" placeholder="請輸入"/>
+          </div>
+          <div class="f-field" style="flex:1 1 140px;max-width:195px;">
+            <label>KYC 階段</label>
+            <select class="f-select" id="f-kyc-stage">
+              <option value="">請選擇</option>
+              <option value="0">個人基本訊息驗證</option>
+              <option value="1">身分證明文件驗證</option>
+              <option value="2">身分證件自拍驗證</option>
+              <option value="3">居住地址驗證</option>
+              <option value="4">資產證明</option>
+            </select>
+          </div>
+          <div class="f-field" style="flex:1 1 115px;max-width:150px;">
+            <label>KYC 狀態</label>
+            <select class="f-select" id="f-kyc-status">
+              <option value="">請選擇</option>
+              <option value="approved">已核準</option>
+              <option value="review">審核中</option>
+              <option value="incomplete">待補件</option>
+              <option value="none">未申請</option>
+            </select>
+          </div>
+          <div class="f-field" style="flex:1 1 105px;max-width:145px;">
+            <label>會員等級</label>
+            <select class="f-select" id="f-level">
+              <option value="">請選擇</option>
+              <option>Starter</option><option>Bronze</option>
+              <option>Silver</option><option>Gold</option><option>Platinum</option>
+            </select>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>帳戶餘額（主錢包）</label>
+            <div class="f-range">
+              <input type="number" placeholder="min" id="f-bal-min"/>
+              <span class="f-sep">～</span>
+              <input type="number" placeholder="max" id="f-bal-max"/>
+            </div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="f-field" style="flex:1 1 115px;max-width:150px;">
+            <label>註冊日期</label>
+            <div class="date-picker-wrap" id="reg-picker-wrap">
+              <div class="date-picker-trigger" id="reg-trigger" onclick="toggleRegPicker()">
+                <span id="reg-display">請選擇</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="date-picker-dropdown" id="reg-dropdown" style="display:none;">
+                <div class="date-picker-row">
+                  <span class="date-picker-label">Start Time:</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <input type="date" id="f-reg-start" class="date-picker-input" style="flex:1.2;"/>
+                  <input type="time" id="f-reg-start-time" class="date-picker-input" step="1" placeholder="HH:mm:ss" style="flex:1;"/>
+                </div>
+                <div class="date-picker-row">
+                  <span class="date-picker-label">End Time:</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <input type="date" id="f-reg-end" class="date-picker-input" style="flex:1.2;"/>
+                  <input type="time" id="f-reg-end-time" class="date-picker-input" step="1" placeholder="HH:mm:ss" style="flex:1;"/>
+                </div>
+                <div class="date-picker-actions">
+                  <button class="btn-ghost btn-sm" onclick="clearRegPicker()">清除</button>
+                  <button class="btn-primary btn-sm" onclick="confirmRegPicker()">確定</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>月有效投注額</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-bet-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-bet-max"/></div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>月損益量</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-pnl-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-pnl-max"/></div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>存款次數</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-dc-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-dc-max"/></div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>存款金額</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-da-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-da-max"/></div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>提款次數</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-wc-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-wc-max"/></div>
+          </div>
+          <div class="f-field" style="flex:0 0 auto;">
+            <label>提款金額</label>
+            <div class="f-range"><input type="number" placeholder="min" id="f-wa-min"/><span class="f-sep">～</span><input type="number" placeholder="max" id="f-wa-max"/></div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn-clear" onclick="clearFilter()">清除</button>
+            <button class="btn-search" onclick="doSearch()">搜尋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC legend -->
+    <div class="kyc-legend">
+      <span>KYC 狀態說明：</span>
+      <span class="kyc-legend-item"><span class="kyc-legend-dot" style="background:var(--kyc-approved);"></span>已核準</span>
+      <span class="kyc-legend-item"><span class="kyc-legend-dot" style="background:var(--kyc-review);"></span>審核中</span>
+      <span class="kyc-legend-item"><span class="kyc-legend-dot" style="background:var(--kyc-incomplete);"></span>待補件</span>
+      <span class="kyc-legend-item"><span class="kyc-legend-dot" style="background:var(--kyc-none);"></span>未申請</span>
+      <span class="kyc-legend-item"><span class="kyc-legend-dot" style="background:#2a2a28;border:1px solid #333;"></span>未開啟</span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-area">
+      <div class="table-meta">
+        <span class="table-count">總筆數：<strong id="total-count">28010</strong></span>
+        <div class="pager">
+          <button class="pager-btn" id="prev-btn" onclick="changePage(-1)" disabled>‹</button>
+          <span class="pager-info" id="pager-info">1 / 2801</span>
+          <button class="pager-btn" id="next-btn" onclick="changePage(1)">›</button>
+        </div>
+      </div>
+      <div class="table-outer">
+        <div class="list-wrap">
+          <div class="list-header mem-row">
+            <span style="min-width:240px;">會員編號</span>
+            <span style="min-width:170px;">KYC 狀態</span>
+            <span>電子信箱</span>
+            <span>電話號碼</span>
+            <span>會員等級</span>
+            <span class="num sortable" onclick="sortBy('bal')">帳戶餘額（主錢包）<span class="sort-icon"></span></span>
+            <span class="sortable" onclick="sortBy('reg')">註冊日期<span class="sort-icon"></span></span>
+            <span class="num">月有效投注額</span>
+            <span class="num">月損益量</span>
+            <span class="num sortable" onclick="sortBy('dep_cnt')">存款次數<span class="sort-icon"></span></span>
+            <span class="num sortable" onclick="sortBy('dep_amt')">存款金額<span class="sort-icon"></span></span>
+            <span class="num sortable" onclick="sortBy('wd_cnt')">提款次數<span class="sort-icon"></span></span>
+            <span class="num sortable" onclick="sortBy('wd_amt')">提款金額<span class="sort-icon"></span></span>
+          </div>
+          <div class="list-body" id="table-body"></div>
+          <div class="mem-row mem-total">
+            <div style="color:var(--text-secondary);">總計</div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div class="num">$10,099.31</div>
+            <div></div>
+            <div class="num">$5.65</div>
+            <div class="num">—</div>
+            <div class="num">—</div>
+            <div class="num">$139,132.66</div>
+            <div class="num">—</div>
+            <div class="num">$205,355.71</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+      </div><!-- /view-list -->
+      <div id="view-detail"></div>
+
+    </div><!-- end page-member-list -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<div class="side-overlay" id="side-overlay">
+  <div class="side-backdrop" onclick="closePanel()"></div>
+  <div class="side-panel" id="side-panel">
+    <div class="side-head">
+      <div class="side-head-left">
+        <span class="side-head-title" id="side-title">會員資料</span>
+        <button class="side-head-icon" id="side-detail-btn" title="詳細頁面" onclick="goDetailFromPanel()" style="background:none;border:none;cursor:pointer;padding:2px;border-radius:4px;display:inline-flex;align-items:center;color:var(--text-muted);transition:color .12s,background .12s;">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" width="13" height="13"><rect x="1.5" y="1.5" width="11" height="11" rx="1.5"/><line x1="4" y1="5" x2="10" y2="5"/><line x1="4" y1="7.5" x2="10" y2="7.5"/><line x1="4" y1="10" x2="7" y2="10"/></svg>
+        </button>
+      </div>
+      <button class="side-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="side-body" id="side-body"></div>
+  </div>
+</div>
+
+
+<!-- OTP Modal -->
+<div class="overlay" id="otp-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>OTP 報表</h2>
+      <button class="modal-close" onclick="closeOtp()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="otp-row">
+        <div class="otp-field">
+          <label>年</label>
+          <input type="number" id="otp-year" value="2026" min="2020" max="2099"/>
+        </div>
+        <div class="otp-field">
+          <label>月</label>
+          <select id="otp-month">
+            <option value="1">1月</option><option value="2">2月</option>
+            <option value="3">3月</option><option value="4">4月</option>
+            <option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option>
+            <option value="9">9月</option><option value="10">10月</option>
+            <option value="11">11月</option><option value="12" selected>12月</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="queryOtp()">查詢</button>
+      </div>
+      <div class="otp-result" id="otp-result">
+        <div class="otp-result-label" id="otp-result-label"></div>
+        <div class="otp-result-count" id="otp-result-count"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeOtp()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 共用工具 ──
+function fmt(n){ return '$' + Math.abs(n).toFixed(2); }
+function fmtSigned(n){ return (n < 0 ? '-$' : '$') + Math.abs(n).toFixed(2); }
+
+// ── KYC Settings ──
+const KYC_STAGES = [
+  { id:'stage0', label:'個人基本訊息驗證', desc:'驗證用戶提供的個人基本資訊以確保身份真實性', enabled:true, limit:500, lockedWhenAuto:true },
+  { id:'stage1', label:'身份證明文件驗證', desc:'驗證用戶提供的身份證明文件以確認身份有效性', enabled:true, limit:2000, lockedWhenAuto:true },
+  { id:'stage2', label:'身份證件自拍驗證', desc:'比對用戶與身份證件的自拍照片以完成身份驗證', enabled:true, limit:5000, lockedWhenAuto:true },
+  { id:'stage3', label:'居住地址驗證', desc:'核實用戶提供的居住地址以確保地址真實與準確', enabled:true, limit:10000, lockedWhenAuto:false },
+  { id:'stage4', label:'資產證明', desc:'審核用戶提供的資產證明文件以確認資金來源和合法性', enabled:false, limit:0, lockedWhenAuto:false },
+];
+let kycAutoEnabled = false;
+let kycSnapshot = null;
+
+function renderKycSettingsPage() {
+  const list = document.getElementById('kyc-stages-list');
+  if (!list) return;
+  list.innerHTML = KYC_STAGES.map((s, i) => {
+    const locked = kycAutoEnabled && s.lockedWhenAuto;
+    const card = `<div style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:center;gap:16px;">
+      <!-- Toggle -->
+      <div class="kyc-toggle-wrap">
+        <label class="kyc-toggle ${locked?'disabled':''}">
+          <input type="checkbox" id="kyc-toggle-${i}" ${s.enabled?'checked':''} ${locked?'disabled':''} onchange="onKycStageToggle(${i},this)"/>
+          <span class="kyc-toggle-slider"></span>
+        </label>
+        <span style="font-size:11px;width:20px;color:${s.enabled?'var(--green)':'var(--text-muted)'};">${s.enabled?'on':'off'}</span>
+      </div>
+      <!-- 標題描述 -->
+      <div style="flex:1;">
+        <div class="kyc-stage-label">${s.label}</div>
+        <div class="kyc-stage-desc">${s.desc}</div>
+      </div>
+      <!-- 出金上限 -->
+      <div style="flex-shrink:0;min-width:200px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">達成該階段 KYC 可出金金額上限</div>
+        <input class="kyc-limit-input" type="number" min="0" id="kyc-limit-${i}" value="${s.limit}" placeholder="0" style="width:100%;"/>
+      </div>
+    </div>`;
+
+    // 最後一個不加箭頭
+    const arrow = i < KYC_STAGES.length - 1
+      ? `<div style="text-align:center;padding:6px 0;color:var(--text-muted);font-size:16px;">∨</div>`
+      : '';
+
+    return card + arrow;
+  }).join('');
+}
+
+function onKycStageToggle(idx, el) {
+  KYC_STAGES[idx].enabled = el.checked;
+  renderKycSettingsPage();
+}
+
+function onKycAutoChange() {
+  kycAutoEnabled = document.getElementById('kyc-auto').value === 'on';
+  if (kycAutoEnabled) {
+    KYC_STAGES.filter(s => s.lockedWhenAuto).forEach(s => s.enabled = true);
+  }
+  renderKycSettingsPage();
+}
+
+function saveKyc() {
+  KYC_STAGES.forEach((s, i) => {
+    s.limit = parseFloat(document.getElementById('kyc-limit-'+i).value) || 0;
+  });
+  showToast('✓ KYC 設定已儲存');
+}
+
+function cancelKyc() {
+  if (kycSnapshot) {
+    KYC_STAGES.forEach((s, i) => { s.enabled = kycSnapshot[i].enabled; s.limit = kycSnapshot[i].limit; });
+    kycAutoEnabled = kycSnapshot.autoEnabled;
+    document.getElementById('kyc-auto').value = kycAutoEnabled ? 'on' : 'off';
+    renderKycSettingsPage();
+  }
+  showToast('已取消變更');
+}
+
+// ── Audit common ──
+function toggleAuditPicker(prefix) {
+  const dd = document.getElementById(prefix + '-dropdown');
+  if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function clearAuditPicker(prefix) {
+  ['start','start-time','end','end-time'].forEach(s => {
+    const el = document.getElementById(prefix + '-' + s);
+    if (el) el.value = '';
+  });
+  const disp = document.getElementById(prefix + '-display');
+  if (disp) { disp.textContent = '請選擇'; disp.style.color = ''; }
+}
+function confirmAuditPicker(prefix) {
+  const start = document.getElementById(prefix+'-start')?.value || '';
+  const startTime = document.getElementById(prefix+'-start-time')?.value || '';
+  const end = document.getElementById(prefix+'-end')?.value || '';
+  const endTime = document.getElementById(prefix+'-end-time')?.value || '';
+  const startStr = start ? start + (startTime ? ' ' + startTime : '') : '';
+  const endStr = end ? end + (endTime ? ' ' + endTime : '') : '';
+  const disp = document.getElementById(prefix+'-display');
+  if (disp) {
+    if (startStr || endStr) {
+      disp.textContent = (startStr||'—') + ' ～ ' + (endStr||'—');
+      disp.style.color = 'var(--text-primary)';
+    } else {
+      disp.textContent = '請選擇'; disp.style.color = '';
+    }
+  }
+  document.getElementById(prefix+'-dropdown').style.display = 'none';
+}
+
+function switchAuditTab(type, idx) {
+  const prefix = type === 'withdrawal' ? 'wd' : 'bn';
+  const count = type === 'withdrawal' ? 5 : 3;
+  for (let i = 0; i < count; i++) {
+    document.getElementById(prefix+'-tab-'+i)?.classList.toggle('active', i===idx);
+  }
+  // @split-ignore-start
+  try {
+    if (type === 'withdrawal') { wdCurrentTab = idx; wdPage = 1; renderWdTable(); }
+    else { bnCurrentTab = idx; bnPage = 1; renderBnTable(); }
+  } catch (e) { /* 拆分後：該分頁不在本檔 */ }
+  // @split-ignore-end
+}
+
+// ── Login Domain ──
+const LD_DATA = (() => {
+  const members = ['OAAE28000','OAAE28000','OAAE28000','OAAE27999','OAAE27998','OAAE27997','OAAE27997','OAAE27996','OAAE27995','OAAE27994','OAAE27993','OAAE27992','OAAE27991','OAAE28000','OAAE27990','OAAE27989','OAAE27988','OAAE27987','OAAE27986','OAAE27985'];
+  const ips = ['220.130.175.30','220.130.175.30','2402:7500:95a:ed48:fdd3:57aa:2766:9518','2402:7500:95a:ed48:316b:75c8:1dfa:527a','180.218.34.91','59.120.44.12','59.120.44.12','203.69.215.88','114.32.167.55','1.164.93.220','2402:7500:95a:ed48:fdd3:57aa:2766:9518','60.251.88.34','111.235.194.72','220.130.175.30','58.114.32.11','180.218.34.91','114.32.167.55','203.75.192.45','59.120.44.12','1.164.93.220'];
+  const rows = [];
+  let d = new Date('2026-06-29T10:22:26');
+  for (let i = 0; i < 20; i++) {
+    rows.push({ id: members[i], ip: ips[i], updatedAt: d.toISOString().replace('T',' ').slice(0,19) });
+    d = new Date(d.getTime() - Math.floor(Math.random()*3600+600)*1000);
+  }
+  return rows;
+})();
+
+let ldFiltered = [...LD_DATA];
+let ldPage = 1;
+const LD_PER_PAGE = 10;
+
+function renderLdTable() {
+  const start = (ldPage - 1) * LD_PER_PAGE;
+  const rows = ldFiltered.slice(start, start + LD_PER_PAGE);
+  const tbody = document.getElementById('ld-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = rows.map(r => `<div class="ld-card"><div class="ld-row">
+    <div><span class="mid-link" style="color:var(--accent);font-weight:500;cursor:pointer;" onclick="openPanel('${r.id}')">${r.id}</span></div>
+    <div style="font-family:monospace;font-size:12px;cursor:pointer;color:var(--accent);" onclick="filterByIp('${r.ip}')" title="點擊以此 IP 篩選">${r.ip}</div>
+    <div style="color:var(--text-muted);font-size:12px;">${r.updatedAt}</div>
+  </div></div>`).join('');
+
+  document.getElementById('ld-total').textContent = ldFiltered.length.toLocaleString();
+  const totalPages = Math.max(1, Math.ceil(ldFiltered.length / LD_PER_PAGE));
+  document.getElementById('ld-pager').textContent = ldPage + ' / ' + totalPages;
+  document.getElementById('ld-prev').disabled = ldPage <= 1;
+  document.getElementById('ld-next').disabled = ldPage >= totalPages;
+}
+
+// 從其他頁面帶入 IP 自動篩選
+function navToLoginDomain(ip) {
+  navTo('login-domain', '登入網域查詢', document.querySelector('[onclick*="login-domain"]'));
+  setTimeout(() => {
+    if (ip) {
+      document.getElementById('ld-f-ip').value = ip;
+      searchLd();
+    } else {
+      renderLdTable();
+    }
+  }, 50);
+}
+
+// 點擊 IP 欄位直接篩選
+function filterByIp(ip) {
+  document.getElementById('ld-f-ip').value = ip;
+  searchLd();
+}
+
+function toggleLdPicker() {
+  const dd = document.getElementById('ld-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function clearLdPicker() {
+  ['ld-f-start','ld-f-start-time','ld-f-end','ld-f-end-time'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('ld-display').textContent = '請選擇';
+  document.getElementById('ld-display').style.color = '';
+}
+function confirmLdPicker() {
+  const start = document.getElementById('ld-f-start').value;
+  const startTime = document.getElementById('ld-f-start-time').value;
+  const end = document.getElementById('ld-f-end').value;
+  const endTime = document.getElementById('ld-f-end-time').value;
+  const startStr = start ? start + (startTime ? ' ' + startTime : '') : '';
+  const endStr = end ? end + (endTime ? ' ' + endTime : '') : '';
+  if (startStr || endStr) {
+    document.getElementById('ld-display').textContent = (startStr || '—') + ' ～ ' + (endStr || '—');
+    document.getElementById('ld-display').style.color = 'var(--text-primary)';
+  } else {
+    document.getElementById('ld-display').textContent = '請選擇';
+    document.getElementById('ld-display').style.color = '';
+  }
+  document.getElementById('ld-dropdown').style.display = 'none';
+}
+
+function searchLd() {
+  const idRaw = document.getElementById('ld-f-id').value.trim();
+  const ids = idRaw ? idRaw.split(',').map(s => s.trim().toUpperCase()).filter(s => s) : [];
+  const ip = document.getElementById('ld-f-ip').value.trim();
+  const start = document.getElementById('ld-f-start').value;
+  const startTime = document.getElementById('ld-f-start-time').value;
+  const end = document.getElementById('ld-f-end').value;
+  const endTime = document.getElementById('ld-f-end-time').value;
+  const startFull = start ? (start + (startTime ? ' ' + startTime : ' 00:00:00')) : '';
+  const endFull   = end   ? (end   + (endTime   ? ' ' + endTime   : ' 23:59:59')) : '';
+
+  ldFiltered = LD_DATA.filter(r => {
+    if (ids.length > 0) {
+      const match = ids.length === 1 ? r.id.includes(ids[0]) : ids.some(q => r.id === q);
+      if (!match) return false;
+    }
+    if (ip && !r.ip.includes(ip)) return false;
+    if (startFull && r.updatedAt < startFull) return false;
+    if (endFull && r.updatedAt > endFull) return false;
+    return true;
+  });
+  ldPage = 1;
+  renderLdTable();
+  showToast('✓ 搜尋完成，共 ' + ldFiltered.length + ' 筆');
+}
+
+function clearLdFilter() {
+  document.getElementById('ld-f-id').value = '';
+  document.getElementById('ld-f-ip').value = '';
+  clearLdPicker();
+  ldFiltered = [...LD_DATA];
+  ldPage = 1;
+  renderLdTable();
+}
+
+function ldChangePage(dir) {
+  const total = Math.max(1, Math.ceil(ldFiltered.length / LD_PER_PAGE));
+  ldPage = Math.min(total, Math.max(1, ldPage + dir));
+  renderLdTable();
+}
+
+// ── Date Picker ──
+function toggleRegPicker() {
+  const dd = document.getElementById('reg-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function clearRegPicker() {
+  document.getElementById('f-reg-start').value = '';
+  document.getElementById('f-reg-start-time').value = '';
+  document.getElementById('f-reg-end').value = '';
+  document.getElementById('f-reg-end-time').value = '';
+  document.getElementById('reg-display').textContent = '請選擇';
+  document.getElementById('reg-display').style.color = '';
+}
+function confirmRegPicker() {
+  const start = document.getElementById('f-reg-start').value;
+  const startTime = document.getElementById('f-reg-start-time').value;
+  const end = document.getElementById('f-reg-end').value;
+  const endTime = document.getElementById('f-reg-end-time').value;
+  const startStr = start ? start + (startTime ? ' ' + startTime : '') : '';
+  const endStr = end ? end + (endTime ? ' ' + endTime : '') : '';
+  if (startStr || endStr) {
+    document.getElementById('reg-display').textContent = (startStr || '—') + ' ～ ' + (endStr || '—');
+    document.getElementById('reg-display').style.color = 'var(--text-primary)';
+  } else {
+    document.getElementById('reg-display').textContent = '請選擇';
+    document.getElementById('reg-display').style.color = '';
+  }
+  document.getElementById('reg-dropdown').style.display = 'none';
+}
+
+// 點擊外部關閉日曆
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.date-picker-wrap')) {
+    const dd = document.getElementById('reg-dropdown');
+    if (dd) dd.style.display = 'none';
+    const ld = document.getElementById('ld-dropdown');
+    if (ld) ld.style.display = 'none';
+  }
+  if (!e.target.closest('.wallet-status-badge') && !e.target.closest('.wallet-status-dropdown')) {
+    if (typeof walletEditingField !== 'undefined' && walletEditingField && walletEditingField.field === 'status') {
+      // @split-ignore-start
+      walletEditingField = null;
+      // @split-ignore-end
+      if (typeof renderWalletTable === 'function') renderWalletTable();
+    }
+  }
+});
+
+// 由側邊欄結構推出 pageId -> 所屬章節名（第一次呼叫時建表）
+let _navGroupMap = null;
+function navGroupMap() {
+  if (_navGroupMap) return _navGroupMap;
+  _navGroupMap = {};
+  document.querySelectorAll('.sidebar [onclick^="navTo("]').forEach(item => {
+    const m = /navTo\('([\w-]+)'/.exec(item.getAttribute('onclick'));
+    if (!m) return;
+    const sub = item.closest('.nav-sub');
+    const head = sub && sub.previousElementSibling;
+    _navGroupMap[m[1]] = head ? head.textContent.replace(/[›∨]/g, '').trim() : '';
+  });
+  return _navGroupMap;
+}
+
+function updateBreadcrumb(pageId, title) {
+  const el = document.getElementById('breadcrumb');
+  if (!el) return;
+  const group = navGroupMap()[pageId] || '';
+  el.innerHTML = group && group !== title
+    ? group + ' <span>/</span> ' + title
+    : title;
+  const h = document.getElementById('page-title');
+  if (h) h.textContent = title;
+  // 把該頁的動作按鈕列搬到標題右側（基準 proto 的 page-header 排法）
+  const slot = document.getElementById('page-actions');
+  const page = document.getElementById('page-' + pageId);
+  if (slot && page) {
+    if (!page._actions) page._actions = page.querySelector('.page-header > .page-header-right');
+    if (page._actions) {
+      slot.appendChild(page._actions);
+      const hdr = page.querySelector('.page-header');
+      if (hdr && !hdr.querySelector('.page-header-right')) hdr.style.display = 'none';
+    }
+  }
+}
+
+function navTo(pageId, title, navEl) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  const page = document.getElementById('page-' + pageId);
+  if (page) {
+    page.classList.add('active');
+    page.style.display = 'flex';
+  }
+  updateBreadcrumb(pageId, title);
+  document.querySelectorAll('.sidebar-group, .sidebar-item').forEach(i => i.classList.remove('active'));
+  if (navEl) {
+    navEl.classList.add('active');
+    const sub = navEl.closest('.nav-sub');
+    if (sub && sub.previousElementSibling) sub.previousElementSibling.classList.add('active');
+  }
+  // 重置會員列表 view（回到列表視圖）
+  const viewList = document.getElementById('view-list');
+  const viewDetail = document.getElementById('view-detail');
+  if (viewList) viewList.style.display = 'flex';
+  if (viewDetail) viewDetail.style.display = 'none';
+  // 切換到會員列表時重新渲染
+  // @split-ignore-start
+  try {
+    if (pageId === 'member-list') {
+      setTimeout(() => { if (typeof renderTable === 'function') renderTable(); }, 0);
+    }
+    if (pageId === 'affiliate-list') {
+      setTimeout(() => { if (typeof renderAffTable === 'function') renderAffTable(); }, 0);
+    }
+    if (pageId === 'login-domain') {
+      setTimeout(() => { if (typeof renderLdTable === 'function') renderLdTable(); }, 0);
+    }
+    if (pageId === 'withdrawal') {
+      setTimeout(() => { if (typeof renderWdTable === 'function') renderWdTable(); }, 0);
+    }
+    if (pageId === 'wallet') {
+      setTimeout(() => { if (typeof renderWalletTable === 'function') renderWalletTable(); }, 0);
+    }
+    if (pageId === 'tx-query') {
+      setTimeout(() => { if (typeof renderTxTable === 'function') renderTxTable(); }, 0);
+    }
+    if (pageId === 'bet-query') {
+      setTimeout(() => { if (typeof renderBetTable === 'function') renderBetTable(); }, 0);
+    }
+    if (pageId === 'rebate-detail') {
+      setTimeout(() => { if (typeof renderRbTable === 'function') renderRbTable(); }, 0);
+    }
+    if (pageId === 'audit-detail') {
+      setTimeout(() => { if (typeof renderAdTable === 'function') renderAdTable(); }, 0);
+    }
+    if (pageId === 'freespin') {
+      setTimeout(() => { if (typeof renderFreeSpin === 'function') renderFreeSpin(); }, 0);
+    }
+    if (pageId === 'announcement') {
+      setTimeout(() => { if (typeof renderAnnouncement === 'function') renderAnnouncement(); }, 0);
+    }
+    if (pageId === 'screen-mgmt') {
+      setTimeout(() => { if (typeof renderScreenMgmt === 'function') renderScreenMgmt(); }, 0);
+    }
+    if (pageId === 'deaudit') {
+      setTimeout(() => { if (typeof renderDeauditPage === 'function') renderDeauditPage(); }, 0);
+    }
+    if (pageId === 'admin-users') {
+      setTimeout(() => { if (typeof renderAdminUsers === 'function') renderAdminUsers(); }, 0);
+    }
+    if (pageId === 'promo') {
+      setTimeout(() => {
+        document.getElementById('promo-view-1').style.display = 'flex';
+        document.getElementById('promo-view-2').style.display = 'none';
+        switchPromoTab('schedule');
+        renderPromoSchedule();
+      }, 0);
+    }
+    if (pageId === 'banner') {
+      setTimeout(() => {
+        document.getElementById('ban-view-1').style.display = 'flex';
+        document.getElementById('ban-view-2').style.display = 'none';
+        if (typeof renderBanContent === 'function') renderBanContent();
+      }, 0);
+    }
+    if (pageId === 'affiliate-settings') {
+      setTimeout(() => {
+        document.getElementById('afs-view-1').style.display = 'flex';
+        document.getElementById('afs-view-2').style.display = 'none';
+        if (typeof renderAfsTable === 'function') renderAfsTable();
+      }, 0);
+    }
+    if (pageId === 'agent-settings') {
+      setTimeout(() => {
+        closeAsPanel();
+        if (typeof renderAsTable === 'function') renderAsTable();
+      }, 0);
+    }
+    if (pageId === 'member-level') {
+      setTimeout(() => {
+        document.getElementById('ml-view-1').style.display = 'flex';
+        document.getElementById('ml-view-2').style.display = 'none';
+        if (typeof renderMlList === 'function') renderMlList();
+      }, 0);
+    }
+    if (pageId === 'kyc-settings') {
+      setTimeout(() => {
+        kycSnapshot = KYC_STAGES.map(s => ({ enabled:s.enabled, limit:s.limit }));
+        kycSnapshot.autoEnabled = kycAutoEnabled;
+        if (typeof renderKycSettingsPage === 'function') renderKycSettingsPage();
+      }, 0);
+    }
+    if (pageId === 'game-provider') {
+      setTimeout(() => {
+        const v1 = document.getElementById('gp-view-1');
+        const v2 = document.getElementById('gp-view-2');
+        const v3 = document.getElementById('gp-view-3');
+        if (v1) v1.style.display = 'flex';
+        if (v2) v2.style.display = 'none';
+        if (v3) v3.style.display = 'none';
+        if (typeof renderGpList === 'function') renderGpList();
+      }, 0);
+    }
+    if (pageId === 'game-contrib') {
+      setTimeout(() => { if (typeof renderGcTable === 'function') renderGcTable(); }, 0);
+    }
+    if (pageId === 'aff-commission') {
+      setTimeout(() => {
+        document.getElementById('aff-view-1').style.display = 'flex';
+        document.getElementById('aff-view-2').style.display = 'none';
+        document.getElementById('aff-view-3').style.display = 'none';
+        if (typeof renderAffCommTable === 'function') renderAffCommTable();
+      }, 0);
+    }
+    if (pageId === 'agent-rebate') {
+      setTimeout(() => {
+        const v1 = document.getElementById('ar-view-1');
+        const v2 = document.getElementById('ar-view-2');
+        const v3 = document.getElementById('ar-view-3');
+        if (v1) v1.style.display = 'flex';
+        if (v2) v2.style.display = 'none';
+        if (v3) v3.style.display = 'none';
+        if (typeof renderArTable === 'function') renderArTable();
+      }, 0);
+    }
+    if (pageId === 'level-log') {
+      setTimeout(() => { if (typeof renderLvTable === 'function') renderLvTable(); }, 0);
+    }
+    if (pageId === 'bonus') {
+      setTimeout(() => { if (typeof renderBnTable === 'function') renderBnTable(); }, 0);
+    }
+    if (pageId === 'referral') {
+      setTimeout(() => { if (typeof renderRefTable === 'function') renderRefTable(); }, 0);
+    }
+    if (pageId === 'nickname') {
+      setTimeout(() => { [0,1,2,3].forEach(i => renderNickTags(i)); }, 0);
+    }
+  } catch (e) { /* 拆分後：其他章節的初始化不在本檔 */ }
+  // @split-ignore-end
+}
+
+// @split-ignore-start
+function openSidePanel(memberId) {
+  document.getElementById('sp-member-id').textContent = memberId;
+  document.getElementById('side-panel').classList.add('open');
+}
+
+function closeSidePanel() {
+  const panel = document.getElementById('side-panel');
+  if (panel) panel.classList.remove('open');
+}
+// @split-ignore-end
+
+function toggleGroup(el) {
+  const sub = el.nextElementSibling;
+  const isOpen = sub.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  sub.classList.toggle('open', !isOpen);
+  const arr = el.querySelector('.arr');
+  if (arr) { arr.textContent = isOpen ? '›' : '∨'; arr.style.opacity = isOpen ? '' : '0.7'; }
+}
+
+// ── KYC 設定（哪些階段開啟審核） ──
+// true = 開啟，false = 未開啟（深灰）
+const KYC_ENABLED = [true, true, true, true, false];
+
+const KYC_STAGE_LABELS = [
+  '個人基本訊息驗證',
+  '身分證明文件驗證',
+  '身分證件自拍驗證',
+  '居住地址驗證',
+  '資產證明',
+];
+
+// ── KYC SVG icons（語意對應） ──
+const KYC_ICONS = [
+  // 個人基本訊息驗證 — 人頭輪廓
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="8" cy="5.5" r="2.5"/><path d="M2.5 13.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>`,
+  // 身分證明文件驗證 — 身分證
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="1.5" y="4" width="13" height="8" rx="1.2"/><circle cx="5.5" cy="8" r="1.5"/><line x1="8.5" y1="7" x2="12.5" y2="7"/><line x1="8.5" y1="9.5" x2="11" y2="9.5"/></svg>`,
+  // 身分證件自拍驗證 — 相機
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1.5 5.5h1.8l1.2-2h5l1.2 2h1.8a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z"/><circle cx="8" cy="8.5" r="2"/></svg>`,
+  // 居住地址驗證 — 定位針
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5z"/><circle cx="8" cy="6" r="1.5"/></svg>`,
+  // 資產證明 — 錢幣
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="8" cy="8" r="6"/><path d="M8 5v1m0 4v1"/><path d="M6 6.5c0-.8.9-1.5 2-1.5s2 .7 2 1.5-1 1.2-2 1.5-2 .8-2 1.5.9 1.5 2 1.5 2-.7 2-1.5"/></svg>`,
+];
+// 每個階段的可能狀態（未開啟階段強制 disabled）
+const KYC_STAGE_STATUSES = ['approved','review','incomplete','none'];
+
+const STATUS_META = {
+  approved:   { cls:'kyc-s-approved',   label:'已核準' },
+  review:     { cls:'kyc-s-review',     label:'審核中' },
+  incomplete: { cls:'kyc-s-incomplete', label:'待補件' },
+  none:       { cls:'kyc-s-none',       label:'未申請' },
+  disabled:   { cls:'kyc-s-disabled',   label:'未開啟' },
+};
+
+const LEVELS = ['Starter','Starter','Starter','Bronze','Silver','Gold','Platinum'];
+const EMAILS = ['tsimpos1920@gmail.com','darren662266@gmail.com','masrangga288@gmail.com',
+  'enob20xx2019@gmail.com','makmallatte230@gmail.com','imakemadbeatz@gmail.com',
+  'zinhoapp@gmail.com','dalunchen106@gmail.com','ulc5u3411qq@gmail.com','1622015184@qq.com'];
+
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function randF(a,b){ return Math.random()*(b-a)+a; }
+
+// 產生該會員各階段的 KYC 狀態
+function genKycStages() {
+  return KYC_ENABLED.map(enabled => {
+    if (!enabled) return 'disabled';
+    return KYC_STAGE_STATUSES[rand(0, KYC_STAGE_STATUSES.length-1)];
+  });
+}
+
+const ALL_MEMBERS = Array.from({length:28010}, (_,i) => {
+  const num = 28104 - i;
+  const kycStages = genKycStages();
+  const d = new Date(2026, 4, 31 - Math.floor(i/10));
+  return {
+    id: 'OAAE' + String(num).padStart(5,'0'),
+    status: rand(0,10) > 0 ? 'on' : 'off',
+    email: EMAILS[rand(0, EMAILS.length-1)],
+    phone: rand(0,1) === 0 ? '' : '09' + String(rand(10000000,99999999)),
+    kycStages,
+    level: LEVELS[rand(0, LEVELS.length-1)],
+    bal:  randF(0, 200),
+    balTwd: rand(0,3) === 0 ? 0 : randF(0, 6000),   // 非核心貨幣錢包（各自獨立記帳，非換算）
+    bet:  randF(0, 500),
+    pnl:  randF(-50, 50),
+    reg:  d.toISOString().slice(0,10),
+    dc:   rand(0, 20),
+    da:   randF(0, 5000),
+    wc:   rand(0, 15),
+    wa:   randF(0, 3000),
+  };
+});
+
+// ── 站台幣別設定（多幣別錢包）──
+// 幣別清單來源＝「帳務管理 > 鏈上錢包管理」已啟用的幣種；核心貨幣固定列於第一列。
+// 收合時顯示核心貨幣錢包的餘額（不換算匯率、不是各幣別加總）；啟用超過一種才顯示展開箭頭。
+const SITE_CORE_CCY = 'USDT';
+let SITE_WALLETS = ['USDT', 'TWD'];   // proto 模擬用：頁首「模擬幣別」鈕可切成單一幣別
+
+// amounts: { USDT: 12.34, TWD: 0 }；align='right' 用於側邊面板與詳細頁的 label-value
+function walletCell(amounts, cls, align) {
+  const core = amounts[SITE_CORE_CCY] || 0;
+  const valCls = cls || '';
+  if (SITE_WALLETS.length <= 1) return `<span class="${valCls}">${fmt(core)}</span>`;
+  const lines = SITE_WALLETS.map(c =>
+    `<span class="wal-line"><span class="wal-ccy">${c}</span><span class="wal-amt">${fmt(amounts[c] || 0)}</span></span>`
+  ).join('');
+  return `<span class="wal-cell${align === 'right' ? ' right' : ''}">
+    <span class="wal-main" onclick="toggleWallet(event)"><span class="${valCls}">${fmt(core)}</span><span class="wal-caret">⌄</span></span>
+    <span class="wal-detail">${lines}</span>
+  </span>`;
+}
+
+function toggleWallet(e) {
+  e.stopPropagation();
+  e.currentTarget.closest('.wal-cell').classList.toggle('open');
+}
+
+function toggleSiteWallets() {
+  SITE_WALLETS = SITE_WALLETS.length > 1 ? ['USDT'] : ['USDT', 'TWD'];
+  const multi = SITE_WALLETS.length > 1;
+  document.getElementById('wal-sim-label').textContent = multi ? '多幣別 USDT／TWD' : '單一幣別 USDT';
+  renderTable();
+  showToast(multi ? '✓ 已切為多幣別站台（餘額欄可展開）' : '✓ 已切為單一幣別站台（不顯示展開箭頭）');
+}
+
+const PER_PAGE = 10;
+let filtered = [...ALL_MEMBERS];
+let currentPage = 1;
+let sortField = null;
+let sortDir = 'desc';
+
+// ── KYC icon HTML ──
+function renderKycStages(stages) {
+  return '<div class="kyc-stages">' +
+    stages.map((status, i) => {
+      const meta = STATUS_META[status];
+      return `<div class="kyc-stage ${meta.cls}" data-kyc-i="${i}" data-kyc-s="${meta.label}" onmouseenter="showKycTip(event,${i},'${meta.label}')" onmouseleave="hideKycTip()">
+        ${KYC_ICONS[i]}
+      </div>`;
+    }).join('') +
+  '</div>';
+}
+
+// ── Render table ──
+
+function renderTable() {
+  const start = (currentPage-1)*PER_PAGE;
+  const rows = filtered.slice(start, start+PER_PAGE);
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = rows.map(m => {
+    const emailDisp = m.email;
+    const phoneDisp = m.phone || '—';
+    const statusBadge = m.status === 'on'
+      ? '<span class="status-badge status-on">啟用</span>'
+      : '<span class="status-badge status-off">停用</span>';
+    return `<div class="mem-card"><div class="mem-row">
+      <div>
+        <div class="mid-cell">
+          <a class="mid-link" onclick="openPanel('${m.id}')">${m.id}</a>
+          <button class="detail-btn" title="詳細頁面" onclick="openDetail('${m.id}')">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" width="13" height="13">
+              <rect x="1.5" y="1.5" width="11" height="11" rx="1.5"/>
+              <line x1="4.5" y1="5" x2="9.5" y2="5"/>
+              <line x1="4.5" y1="7.5" x2="9.5" y2="7.5"/>
+              <line x1="4.5" y1="10" x2="7.5" y2="10"/>
+            </svg>
+          </button>
+          ${statusBadge}
+        </div>
+      </div>
+      <div>${renderKycStages(m.kycStages)}</div>
+      <div style="color:var(--text-primary);max-width:200px;overflow:hidden;text-overflow:ellipsis;">${emailDisp}</div>
+      <div>${phoneDisp}</div>
+      <div>${m.level}</div>
+      <div class="num" style="color:var(--text-primary);">${walletCell({USDT:m.bal, TWD:m.balTwd})}</div>
+      <div>${m.reg}</div>
+      <div class="num">${fmt(m.bet)}</div>
+      <div class="num" style="color:${m.pnl<0?'var(--red-text)':'inherit'};">${fmtSigned(m.pnl)}</div>
+      <div class="num">${m.dc}</div>
+      <div class="num">${fmt(m.da)}</div>
+      <div class="num">${m.wc}</div>
+      <div class="num">${fmt(m.wa)}</div>
+    </div></div>`;
+  }).join('');
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total/PER_PAGE));
+  document.getElementById('total-count').textContent = total.toLocaleString();
+  document.getElementById('pager-info').textContent = currentPage + ' / ' + totalPages;
+  document.getElementById('prev-btn').disabled = currentPage <= 1;
+  document.getElementById('next-btn').disabled = currentPage >= totalPages;
+}
+
+function changePage(dir) {
+  const totalPages = Math.max(1, Math.ceil(filtered.length/PER_PAGE));
+  currentPage = Math.min(totalPages, Math.max(1, currentPage+dir));
+  renderTable();
+}
+
+// ── Sort ──
+const KEY_MAP = {bal:'bal',reg:'reg',dep_cnt:'dc',dep_amt:'da',wd_cnt:'wc',wd_amt:'wa'};
+function sortBy(field) {
+  if (sortField === field) { sortDir = sortDir==='asc'?'desc':'asc'; }
+  else { sortField = field; sortDir = 'asc'; }
+  const k = KEY_MAP[field];
+  filtered.sort((a,b) => {
+    const av=a[k], bv=b[k];
+    if (typeof av==='string') return sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    return sortDir==='asc'?av-bv:bv-av;
+  });
+  currentPage = 1;
+  renderTable();
+  document.querySelectorAll('.list-header .sortable').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  const idx = Object.keys(KEY_MAP).indexOf(field);
+  document.querySelectorAll('.list-header .sortable')[idx].classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
+}
+
+// ── Filter ──
+function doSearch() {
+  // 會員編號：支援多筆，以「,」分隔
+  const idRaw = document.getElementById('f-id').value.trim();
+  const ids = idRaw ? idRaw.split(',').map(s => s.trim().toLowerCase()).filter(s => s) : [];
+
+  const email   = document.getElementById('f-email').value.trim().toLowerCase();
+  const phone   = document.getElementById('f-phone').value.trim();
+  const kycStageIdx = document.getElementById('f-kyc-stage').value;
+  const kycStatus   = document.getElementById('f-kyc-status').value;
+  const level   = document.getElementById('f-level').value;
+
+  const balMin  = parseFloat(document.getElementById('f-bal-min').value);
+  const balMax  = parseFloat(document.getElementById('f-bal-max').value);
+  const betMin  = parseFloat(document.getElementById('f-bet-min').value);
+  const betMax  = parseFloat(document.getElementById('f-bet-max').value);
+  const pnlMin  = parseFloat(document.getElementById('f-pnl-min').value);
+  const pnlMax  = parseFloat(document.getElementById('f-pnl-max').value);
+  const dcMin   = parseFloat(document.getElementById('f-dc-min').value);
+  const dcMax   = parseFloat(document.getElementById('f-dc-max').value);
+  const daMin   = parseFloat(document.getElementById('f-da-min').value);
+  const daMax   = parseFloat(document.getElementById('f-da-max').value);
+  const wcMin   = parseFloat(document.getElementById('f-wc-min').value);
+  const wcMax   = parseFloat(document.getElementById('f-wc-max').value);
+  const waMin   = parseFloat(document.getElementById('f-wa-min').value);
+  const waMax   = parseFloat(document.getElementById('f-wa-max').value);
+  const regStart = document.getElementById('f-reg-start') ? document.getElementById('f-reg-start').value : '';
+  const regStartTime = document.getElementById('f-reg-start-time') ? document.getElementById('f-reg-start-time').value : '';
+  const regEnd   = document.getElementById('f-reg-end') ? document.getElementById('f-reg-end').value : '';
+  const regEndTime = document.getElementById('f-reg-end-time') ? document.getElementById('f-reg-end-time').value : '';
+  const regStartFull = regStart ? regStart + (regStartTime ? 'T' + regStartTime : 'T00:00:00') : '';
+  const regEndFull   = regEnd   ? regEnd   + (regEndTime   ? 'T' + regEndTime   : 'T23:59:59') : '';
+
+  filtered = ALL_MEMBERS.filter(m => {
+    // 會員編號：多筆 OR 邏輯，單筆模糊搜尋
+    if (ids.length > 0) {
+      const match = ids.length === 1
+        ? m.id.toLowerCase().includes(ids[0])
+        : ids.some(q => m.id.toLowerCase() === q);
+      if (!match) return false;
+    }
+    if (email && !m.email.toLowerCase().includes(email)) return false;
+    if (phone && !m.phone.includes(phone)) return false;
+    if (level && m.level !== level) return false;
+    if (regStartFull && m.reg < regStartFull.replace('T', ' ')) return false;
+    if (regEndFull && m.reg > regEndFull.replace('T', ' ')) return false;
+
+    // 金額範圍
+    if (!isNaN(balMin) && m.bal < balMin) return false;
+    if (!isNaN(balMax) && m.bal > balMax) return false;
+    if (!isNaN(betMin) && m.bet < betMin) return false;
+    if (!isNaN(betMax) && m.bet > betMax) return false;
+    if (!isNaN(pnlMin) && m.pnl < pnlMin) return false;
+    if (!isNaN(pnlMax) && m.pnl > pnlMax) return false;
+    if (!isNaN(dcMin) && m.dc < dcMin) return false;
+    if (!isNaN(dcMax) && m.dc > dcMax) return false;
+    if (!isNaN(daMin) && m.da < daMin) return false;
+    if (!isNaN(daMax) && m.da > daMax) return false;
+    if (!isNaN(wcMin) && m.wc < wcMin) return false;
+    if (!isNaN(wcMax) && m.wc > wcMax) return false;
+    if (!isNaN(waMin) && m.wa < waMin) return false;
+    if (!isNaN(waMax) && m.wa > waMax) return false;
+
+    // KYC 階段 + 狀態
+    if (kycStageIdx !== '' && kycStatus !== '') {
+      const idx = parseInt(kycStageIdx);
+      if (m.kycStages[idx] !== kycStatus) return false;
+    } else if (kycStageIdx !== '') {
+      const idx = parseInt(kycStageIdx);
+      if (m.kycStages[idx] === 'disabled') return false;
+    } else if (kycStatus !== '') {
+      if (!m.kycStages.some(s => s === kycStatus)) return false;
+    }
+    return true;
+  });
+
+  sortField = null; sortDir = 'desc';
+  currentPage = 1;
+  renderTable();
+  showToast('✓ 搜尋完成，共 ' + filtered.length.toLocaleString() + ' 筆');
+}
+
+function clearFilter() {
+  ['f-id','f-email','f-phone','f-bal-min','f-bal-max',
+   'f-bet-min','f-bet-max','f-pnl-min','f-pnl-max',
+   'f-dc-min','f-dc-max','f-da-min','f-da-max',
+   'f-wc-min','f-wc-max','f-wa-min','f-wa-max'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  ['f-kyc-stage','f-kyc-status','f-level','f-reg-start','f-reg-start-time','f-reg-end','f-reg-end-time'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  const regDisplay = document.getElementById('reg-display');
+  if (regDisplay) { regDisplay.textContent = '請選擇'; regDisplay.style.color = ''; }
+  filtered = [...ALL_MEMBERS];
+  currentPage = 1; sortField = null;
+  renderTable();
+}
+
+// ── Side panel ──
+function openPanel(id) {
+  const m = ALL_MEMBERS.find(x => x.id === id);
+  document.getElementById('side-title').textContent = id;
+  document.getElementById('side-detail-btn').dataset.mid = id;
+
+  if (!m) {
+    // 找不到完整資料，顯示基本面板
+    document.getElementById('side-body').innerHTML = `
+      <div class="side-section">
+        <div class="side-row"><span class="side-label">會員編號</span><span class="side-val">${id}</span></div>
+        <div class="side-row" style="color:var(--text-muted);font-size:12px;margin-top:8px;">詳細資料請前往會員列表查詢</div>
+      </div>`;
+    document.getElementById('side-overlay').classList.add('open');
+    return;
+  }
+  const emailDisp = m.email;
+
+  const kycRows = m.kycStages.map((s,i) => {
+    const meta = STATUS_META[s];
+    const dotColor = {
+      approved:'var(--kyc-approved)', review:'var(--kyc-review)',
+      incomplete:'var(--kyc-incomplete)', none:'var(--kyc-none)', disabled:'#2a2a28'
+    }[s];
+    return `<div class="side-row">
+      <span class="side-label">${KYC_STAGE_LABELS[i]}</span>
+      <span class="side-val" style="display:flex;align-items:center;gap:5px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
+        ${meta.label}
+      </span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('side-body').innerHTML = `
+    <div class="side-invite">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" width="12" height="12" style="flex-shrink:0;opacity:.5;"><circle cx="7" cy="7" r="5.5"/><path d="M7 4.5v2.5l1.5 1.5"/></svg>
+      邀請鏈：站長 → ${m.id} → 會員 0 人
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">個人資訊</div>
+      <div class="side-row"><span class="side-label">姓名</span><span class="side-val">—</span></div>
+      <div class="side-row"><span class="side-label">電話號碼</span><span class="side-val">${m.phone||'—'}</span></div>
+      <div class="side-row"><span class="side-label">性別</span><span class="side-val">—</span></div>
+      <div class="side-row"><span class="side-label">電子信箱</span><span class="side-val">${emailDisp}</span></div>
+      <div class="side-row"><span class="side-label">生日</span><span class="side-val">—</span></div>
+      <div class="side-row"><span class="side-label">國籍</span><span class="side-val">—</span></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">注冊資訊</div>
+      <div class="side-row"><span class="side-label">注冊時間</span><span class="side-val">${m.reg} 08:22:01</span></div>
+      <div class="side-row"><span class="side-label">注冊域名</span><span class="side-val">https://www.oasisworld.io</span></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">登入訊息</div>
+      <div class="side-row"><span class="side-label">最後登入時間</span><span class="side-val">${m.reg} 08:43:07</span></div>
+      <div class="side-row"><span class="side-label">最後登入域名</span><span class="side-val">—</span></div>
+      ${(() => {
+        const ldRecord = typeof LD_DATA !== 'undefined' ? LD_DATA.find(r => r.id === m.id) : null;
+        const ip = ldRecord ? ldRecord.ip : '—';
+        return ip !== '—'
+          ? `<div class="side-row"><span class="side-label">最後登入IP</span><span class="side-val blue" style="cursor:pointer;" onclick="navToLoginDomain('${ip}')" title="點擊查詢此 IP 登入紀錄">${ip}</span></div>`
+          : `<div class="side-row"><span class="side-label">最後登入IP</span><span class="side-val">—</span></div>`;
+      })()}
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">等級資訊</div>
+      <div class="side-row"><span class="side-label">會員等級</span><span class="side-val">${m.level}</span></div>
+      <div class="side-row"><span class="side-label">總有效投注</span><span class="side-val">$0.00</span></div>
+      <div class="side-row"><span class="side-label">當前有效投注</span><span class="side-val">$0.00</span></div>
+      <div class="side-row"><span class="side-label">總入金金額</span><span class="side-val">$0.00</span></div>
+      <div class="side-row"><span class="side-label">當前入金金額</span><span class="side-val">$0.00</span></div>
+      <div class="side-row"><span class="side-label">代理等級</span><span class="side-val">—</span></div>
+      <div class="side-row"><span class="side-label">加盟等級</span><span class="side-val">—</span></div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">帳戶資訊</div>
+      <div class="side-row"><span class="side-label">帳戶餘額（主錢包）</span>${walletCell({USDT:m.bal, TWD:m.balTwd}, 'side-val', 'right')}</div>
+      <div class="side-row"><span class="side-label">提領所需有效投注額（流水錢包）</span>${walletCell({USDT:0, TWD:0}, 'side-val', 'right')}</div>
+      <div class="side-row"><span class="side-label">可提領餘額</span>${walletCell({USDT:0, TWD:0}, 'side-val', 'right')}</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-section-title">投注資訊</div>
+      <div class="side-row"><span class="side-label">月有效投注額</span><span class="side-val">${fmt(m.bet)}</span></div>
+      <div class="side-row"><span class="side-label">月損益量</span><span class="side-val ${m.pnl<0?'red':''}">${fmtSigned(m.pnl)}</span></div>
+      <div class="side-row"><span class="side-label">累計投注額</span><span class="side-val">${fmt(m.da)}</span></div>
+      <div class="side-row"><span class="side-label">累計有效投注額</span><span class="side-val">$0.00</span></div>
+      <div class="side-row"><span class="side-label">累計損益量</span><span class="side-val">$0.00</span></div>
+    </div>
+
+  `;
+  document.getElementById('side-overlay').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('side-overlay').classList.remove('open');
+}
+function goDetailFromPanel() {
+  const mid = document.getElementById('side-detail-btn').dataset.mid;
+  if (mid) { closePanel(); openDetail(mid); }
+}
+
+// ── Detail page ──
+function openDetail(id) {
+  const m = ALL_MEMBERS.find(x => x.id === id);
+  if (!m) return;
+  closePanel();
+
+  const emailDisp = m.email;
+
+  // KYC 欄位
+  const KYC_BADGE = {
+    approved: '<span class="det-kyc-badge det-kyc-badge-approved">已核準</span>',
+    review:   '<span class="det-kyc-badge det-kyc-badge-pending">審核中</span>',
+    incomplete:'<span class="det-kyc-badge det-kyc-badge-incomplete">待補件</span>',
+    none:     '<span class="det-kyc-badge det-kyc-badge-none">未申請</span>',
+    disabled: '',
+  };
+
+  const kycCols = m.kycStages.map((s, i) => {
+    const isDisabled = s === 'disabled';
+    const badge = KYC_BADGE[s] || '';
+    const viewLink = !isDisabled
+      ? `<a class="det-kyc-view" onclick="openKycModal(${i},'${m.id}')">☍ 查看</a>`
+      : `<span style="font-size:11px;color:var(--text-muted);">——</span>`;
+    const radios = !isDisabled ? `
+      <div class="det-kyc-radio">
+        <label><input type="radio" name="kyc-${i}" ${s==='approved'?'checked':''}/> 通過</label>
+        <label><input type="radio" name="kyc-${i}" ${s==='incomplete'?'checked':''}/> 駁回</label>
+      </div>` : '';
+    return `<div class="det-kyc-col">
+      <div class="det-kyc-col-title">${KYC_STAGE_LABELS[i]}</div>
+      ${badge}
+      <div style="margin-bottom:8px;">${viewLink}</div>
+      ${radios}
+    </div>`;
+  }).join('');
+
+  const det = document.getElementById('view-detail');
+  det.innerHTML = `
+    <div class="det-breadcrumb">
+      <a onclick="closeDetail()">‹ 會員列表</a>
+      <span class="sep">/</span>
+      <span class="cur">${m.id}</span>
+    </div>
+
+    <div class="det-invite">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" width="12" height="12" style="opacity:.5;flex-shrink:0;"><circle cx="7" cy="7" r="5.5"/><path d="M7 4.5v2.5l1.5 1.5"/></svg>
+      邀請鏈：站長 → ${m.id} → 會員 0 人
+    </div>
+
+    <!-- MEMO -->
+    <div class="det-block">
+      <div class="det-block-title">
+        MEMO
+        <button class="det-edit-btn" id="memo-edit-btn" onclick="toggleMemo()" title="編輯">✎</button>
+      </div>
+      <div id="memo-display" style="font-size:13px;color:var(--text-muted);min-height:32px;">尚無備注內容...</div>
+      <div id="memo-edit-area" style="display:none;">
+        <textarea class="det-memo" id="memo-textarea" placeholder="尚無備注內容..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+          <button class="btn-ghost" onclick="cancelMemo()">取消</button>
+          <button class="btn-primary" onclick="saveMemo()">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 會員啟用狀態 -->
+    <div class="det-block">
+      <div class="det-block-title">
+        會員啟用狀態
+        <button class="det-edit-btn" onclick="toggleMemberStatus(this)" title="切換狀態">✎</button>
+      </div>
+      <div class="det-status-val ${m.status==='on'?'':'off'}" id="member-status-val">${m.status==='on'?'啟用':'停用'}</div>
+    </div>
+
+    <!-- KYC 狀態 -->
+    <div class="det-block">
+      <div class="det-block-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>KYC 狀態</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-ghost" style="font-size:11px;height:26px;padding:0 10px;" onclick="cancelKyc()">取消</button>
+          <button class="btn-primary" style="font-size:11px;height:26px;padding:0 10px;" onclick="saveKyc()">儲存</button>
+        </div>
+      </div>
+      <div class="det-kyc-grid">${kycCols}</div>
+    </div>
+
+    <!-- 個人資訊 + 註冊與登入資訊 -->
+    <div class="det-two-col">
+      <div class="det-info-block">
+        <div class="det-info-title">個人資訊</div>
+        <div class="det-info-row"><span class="det-info-label">姓名</span><span class="det-info-val muted">—</span></div>
+        <div class="det-info-row"><span class="det-info-label">電話號碼</span><span class="det-info-val">${m.phone||'—'}</span></div>
+        <div class="det-info-row"><span class="det-info-label">性別</span><span class="det-info-val muted">—</span></div>
+        <div class="det-info-row"><span class="det-info-label">電子信箱</span><span class="det-info-val">${emailDisp}</span></div>
+        <div class="det-info-row"><span class="det-info-label">生日</span><span class="det-info-val muted">—</span></div>
+        <div class="det-info-row"><span class="det-info-label">國籍</span><span class="det-info-val muted">—</span></div>
+      </div>
+      <div class="det-info-block">
+        <div class="det-info-title">註冊與登入資訊</div>
+        <div class="det-info-row"><span class="det-info-label">註冊時間</span><span class="det-info-val">${m.reg} 08:22:01</span></div>
+        <div class="det-info-row"><span class="det-info-label">註冊域名</span><span class="det-info-val">https://www.oasisworld.io</span></div>
+        <div class="det-info-row"><span class="det-info-label">最後登入時間</span><span class="det-info-val">${m.reg} 08:43:07</span></div>
+        <div class="det-info-row"><span class="det-info-label">最後登入域名</span><span class="det-info-val muted">—</span></div>
+        <div class="det-info-row"><span class="det-info-label">最後登入 IP</span><span class="det-info-val blue" onclick="navToLoginDomain('79.127.181.14')" style="cursor:pointer;" title="點擊查詢此 IP 登入紀錄">79.127.181.14</span></div>
+      </div>
+    </div>
+
+    <!-- 等級資訊 -->
+    <div class="det-block">
+      <div class="det-block-title">等級資訊</div>
+      <div class="det-info-block" style="margin-bottom:0;">
+        <div class="det-level-head">
+          <span class="det-level-name" id="det-level-display">會員等級：${m.level}</span>
+          <button class="det-level-edit" onclick="openLevelPanel('${m.id}','${m.level}')">編輯</button>
+        </div>
+        <div class="det-level-row"><span class="det-level-label">總有效投注</span><span class="det-level-val">$0.00</span></div>
+        <div class="det-level-row"><span class="det-level-label">當前有效投注</span><span class="det-level-val">$0.00</span></div>
+        <div class="det-level-row"><span class="det-level-label">總入金金額</span><span class="det-level-val">$0.00</span></div>
+        <div class="det-level-row"><span class="det-level-label">當前入金金額</span><span class="det-level-val">$0.00</span></div>
+        <div class="det-level-row"><span class="det-level-label">代理等級</span><span class="det-level-val" style="color:var(--text-muted);">—</span></div>
+        <div class="det-level-row"><span class="det-level-label">加盟等級</span><span class="det-level-val" style="color:var(--text-muted);">—</span></div>
+      </div>
+    </div>
+
+    <!-- 帳務資訊 + 投注資訊 -->
+    <div class="det-two-col">
+      <div class="det-info-block">
+        <div class="det-acct-head">
+          <div class="det-info-title" style="margin-bottom:0;">帳務資訊</div>
+          <div class="det-acct-btns">
+            <button class="det-acct-btn" onclick="openTransferPanel('存入','${m.id}')">人工存入</button>
+            <button class="det-acct-btn" onclick="openTransferPanel('提出','${m.id}')">人工提出</button>
+          </div>
+        </div>
+        <div class="det-info-row"><span class="det-info-label">帳戶餘額（主錢包）</span>${walletCell({USDT:m.bal, TWD:m.balTwd}, 'det-info-val', 'right')}</div>
+        <div class="det-info-row"><span class="det-info-label">提領所需有效投注額（流水錢包）</span>${walletCell({USDT:0, TWD:0}, 'det-info-val', 'right')}</div>
+        <div class="det-info-row"><span class="det-info-label">可提領餘額</span>${walletCell({USDT:0, TWD:0}, 'det-info-val', 'right')}</div>
+      </div>
+      <div class="det-info-block">
+        <div class="det-info-title">投注資訊</div>
+        <div class="det-info-row"><span class="det-info-label">月有效投注額</span><span class="det-info-val">${fmt(m.bet)}</span></div>
+        <div class="det-info-row"><span class="det-info-label">月損益量</span><span class="det-info-val" style="color:${m.pnl<0?'var(--red-text)':'var(--green-text)'};">${fmtSigned(m.pnl)}</span></div>
+        <div class="det-info-row"><span class="det-info-label">累計投注額</span><span class="det-info-val">$0.00</span></div>
+        <div class="det-info-row"><span class="det-info-label">累計有效投注額</span><span class="det-info-val">$0.00</span></div>
+        <div class="det-info-row"><span class="det-info-label">累計損益量</span><span class="det-info-val">$0.00</span></div>
+      </div>
+    </div>
+
+    <!-- 加盟商 / 全民代理 / 返水獎勵 / 優惠獎勵 -->
+    <div class="det-four-col">
+      <div class="det-info-block">
+        <div class="det-info-title">加盟商</div>
+        <div style="font-size:12px;color:var(--text-muted);padding:8px 0;">📌 尚未串接資料</div>
+      </div>
+      <div class="det-info-block">
+        <div class="det-info-title">全民代理</div>
+        <div style="font-size:12px;color:var(--text-muted);padding:8px 0;">📌 尚未串接資料</div>
+      </div>
+      <div class="det-info-block">
+        <div class="det-info-title">返水獎勵</div>
+        <div style="font-size:12px;color:var(--text-muted);padding:8px 0;">📌 尚未串接資料</div>
+      </div>
+      <div class="det-info-block">
+        <div class="det-info-title">優惠獎勵</div>
+        <div style="font-size:12px;color:var(--text-muted);padding:8px 0;">📌 尚未串接資料</div>
+      </div>
+    </div>
+
+    <!-- 等級編輯右側面板 -->
+    <div id="level-panel" style="position:fixed;top:0;right:0;height:100%;width:320px;background:var(--bg-card);border-left:1px solid var(--border);display:none;flex-direction:column;z-index:200;overflow-y:auto;">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <span style="font-size:13px;font-weight:500;color:var(--text-primary);">會員等級編輯</span>
+        <button onclick="closeLevelPanel()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div style="padding:18px;">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">會員編號（唯讀）</label>
+          <div style="font-size:13px;color:var(--text-muted);padding:6px 0;" id="level-mid-display"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">會員等級</label>
+          <select id="level-select" class="f-select" style="width:100%;">
+            <option>Starter</option><option>Bronze</option><option>Silver</option><option>Gold</option><option>Platinum</option><option>Diamond</option><option>Prestige</option><option>Elite Master</option><option>Grandmaster</option><option>Legend</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">後台備注（選填）</label>
+          <textarea class="det-memo" style="min-height:60px;" id="level-note" placeholder="填寫備注..."></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">操作人員（唯讀）</label>
+          <div style="font-size:13px;color:var(--text-muted);padding:6px 0;">OAAE27852</div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+          <button class="btn-ghost" onclick="closeLevelPanel()">取消</button>
+          <button class="btn-primary" onclick="saveLevelPanel()">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 人工存入/提出右側面板 -->
+    <div id="transfer-panel" style="position:fixed;top:0;right:0;height:100%;width:320px;background:var(--bg-card);border-left:1px solid var(--border);display:none;flex-direction:column;z-index:200;overflow-y:auto;">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <span style="font-size:13px;font-weight:500;color:var(--text-primary);" id="transfer-title">人工存入</span>
+        <button onclick="closeTransferPanel()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div style="padding:18px;">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">會員編號</label>
+          <input class="f-input" id="transfer-mid" placeholder="可填多筆，以,分隔" style="width:100%;"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">幣種選擇</label>
+          <div style="font-size:13px;color:var(--text-muted);padding:6px 0;">USDT（固定）</div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">金額（USDT）</label>
+          <input class="f-input" id="transfer-amount" type="number" placeholder="請輸入金額" style="width:100%;"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">稽核倍數</label>
+          <input class="f-input" id="transfer-audit" type="number" value="1" placeholder="預設為 1" style="width:100%;"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">前台備注（必填）</label>
+          <textarea class="det-memo" style="min-height:60px;" id="transfer-front-note" placeholder="會員端可見的說明..."></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">後台備注（必填）</label>
+          <textarea class="det-memo" style="min-height:60px;" id="transfer-back-note" placeholder="後台內部說明..."></textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:5px;">操作人員（唯讀）</label>
+          <div style="font-size:13px;color:var(--text-muted);padding:6px 0;">OAAE27852</div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+          <button class="btn-ghost" onclick="closeTransferPanel()">取消</button>
+          <button class="btn-primary" onclick="saveTransferPanel()">儲存</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('view-list').style.display = 'none';
+  det.style.display = 'flex';
+  det.style.flexDirection = 'column';
+  det.style.flex = '1';
+  det.style.overflowY = 'auto';
+  det.style.padding = '0 24px 48px';
+  det.scrollTop = 0;
+}
+
+// KYC 查看 Modal
+const KYC_MOCK_DATA = {
+  0: { // 個人基本訊息驗證
+    fields: [
+      { label: '名', value: 'sdfsdf', half: true },
+      { label: '姓', value: 'dsfasd', half: true },
+      { label: '出生日期', value: '2026-02-04', half: true },
+      { label: '性別', value: 'male', half: true },
+      { label: '電子郵件', value: 'fsdfas@gmail.com', half: false },
+      { label: '電話', value: '+861703434233', half: false },
+      { label: '國籍', value: '阿根廷', half: true },
+      { label: '職業', value: '製造/生產', half: true },
+      { label: '永久地址', value: 'fasdfasdfsd', half: false },
+      { label: '目前的地址', value: 'fasdfasdfsd', half: false },
+    ]
+  },
+  1: { fields: [{ label: '上傳文件', value: '（圖片檔案）', half: false }] },
+  2: { fields: [{ label: '自拍照', value: '（圖片檔案）', half: false }] },
+  3: { fields: [{ label: '地址證明文件', value: '（圖片檔案）', half: false }] },
+  4: { fields: [{ label: '資產證明文件', value: '（圖片檔案）', half: false }] },
+};
+
+function openKycModal(stageIdx, memberId) {
+  const data = KYC_MOCK_DATA[stageIdx];
+  const label = KYC_STAGE_LABELS[stageIdx];
+  const fields = data.fields.map(f => `
+    <div class="kyc-modal-field ${f.half ? 'half' : 'full'}">
+      <div class="kyc-modal-label">${f.label}</div>
+      <div class="kyc-modal-val">${f.value}</div>
+    </div>
+  `).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'kyc-modal-overlay';
+  overlay.innerHTML = `
+    <div class="kyc-modal">
+      <div class="kyc-modal-header">
+        <span class="kyc-modal-title">${memberId} － ${label}</span>
+        <button class="kyc-modal-close" onclick="this.closest('.kyc-modal-overlay').remove()">✕</button>
+      </div>
+      <div class="kyc-modal-body">
+        <div class="kyc-modal-grid">${fields}</div>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+// MEMO
+let _memoOriginal = '';
+function toggleMemo() {
+  const display = document.getElementById('memo-display');
+  const editArea = document.getElementById('memo-edit-area');
+  const ta = document.getElementById('memo-textarea');
+  _memoOriginal = display.dataset.value || '';
+  ta.value = _memoOriginal;
+  display.style.display = 'none';
+  editArea.style.display = 'block';
+}
+function cancelMemo() {
+  document.getElementById('memo-display').style.display = 'block';
+  document.getElementById('memo-edit-area').style.display = 'none';
+}
+function saveMemo() {
+  const val = document.getElementById('memo-textarea').value.trim();
+  const display = document.getElementById('memo-display');
+  display.dataset.value = val;
+  display.textContent = val || '尚無備注內容...';
+  display.style.color = val ? 'var(--text-primary)' : 'var(--text-muted)';
+  display.style.display = 'block';
+  document.getElementById('memo-edit-area').style.display = 'none';
+  showToast('✓ 備注已儲存');
+}
+
+// 會員狀態 Modal
+function toggleMemberStatus(btn) {
+  const el = document.getElementById('member-status-val');
+  const isOn = el.textContent === '啟用';
+  // 建立 modal
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);width:360px;max-width:calc(100vw - 32px);">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:500;color:var(--text-primary);">編輯會員啟用狀態</span>
+        <button onclick="this.closest('.status-overlay').remove()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:17px;line-height:1;">✕</button>
+      </div>
+      <div style="padding:20px 20px 16px;">
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);cursor:pointer;margin-bottom:14px;">
+          <input type="radio" name="member-status-radio" value="on" ${isOn?'checked':''}> 啟用
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-primary);cursor:pointer;">
+          <input type="radio" name="member-status-radio" value="off" ${!isOn?'checked':''}> 停用
+        </label>
+      </div>
+      <div style="padding:10px 16px 14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn-ghost" onclick="this.closest('.status-overlay').remove()">Cancel</button>
+        <button class="btn-primary" onclick="saveStatusModal(this)">Save</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('status-overlay');
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+function saveStatusModal(btn) {
+  const overlay = btn.closest('.status-overlay');
+  const val = overlay.querySelector('input[name="member-status-radio"]:checked').value;
+  const el = document.getElementById('member-status-val');
+  el.textContent = val === 'on' ? '啟用' : '停用';
+  el.className = 'det-status-val' + (val === 'on' ? '' : ' off');
+  // 同步更新列表頁的 status badge
+  const mid = document.querySelector('.det-breadcrumb .cur').textContent;
+  const member = ALL_MEMBERS.find(x => x.id === mid);
+  if (member) {
+    member.status = val;
+    // 更新列表中對應列的 badge（如果列表還在 DOM 中）
+    const links = document.querySelectorAll('.mid-link');
+    links.forEach(link => {
+      if (link.textContent === mid) {
+        const badge = link.closest('.mid-cell').querySelector('.status-badge');
+        if (badge) {
+          badge.textContent = val === 'on' ? '啟用' : '停用';
+          badge.className = 'status-badge ' + (val === 'on' ? 'status-on' : 'status-off');
+        }
+      }
+    });
+  }
+  overlay.remove();
+  showToast(val === 'on' ? '✓ 已啟用會員' : '✓ 已停用會員');
+}
+
+
+// 等級編輯面板
+function openLevelPanel(mid, level) {
+  document.getElementById('level-mid-display').textContent = mid;
+  document.getElementById('level-select').value = level;
+  document.getElementById('level-note').value = '';
+  document.getElementById('level-panel').style.display = 'flex';
+}
+function closeLevelPanel() {
+  document.getElementById('level-panel').style.display = 'none';
+}
+function saveLevelPanel() {
+  const newLevel = document.getElementById('level-select').value;
+  document.getElementById('det-level-display').textContent = '會員等級：' + newLevel;
+  closeLevelPanel();
+  showToast('✓ 會員等級已更新為 ' + newLevel);
+}
+
+// 人工存入/提出面板
+function openTransferPanel(type, mid) {
+  document.getElementById('transfer-title').textContent = '人工' + type;
+  document.getElementById('transfer-mid').value = mid;
+  document.getElementById('transfer-amount').value = '';
+  document.getElementById('transfer-audit').value = '1';
+  document.getElementById('transfer-front-note').value = '';
+  document.getElementById('transfer-back-note').value = '';
+  document.getElementById('transfer-panel').style.display = 'flex';
+}
+function closeTransferPanel() {
+  document.getElementById('transfer-panel').style.display = 'none';
+}
+function saveTransferPanel() {
+  const frontNote = document.getElementById('transfer-front-note').value.trim();
+  const backNote = document.getElementById('transfer-back-note').value.trim();
+  const amount = document.getElementById('transfer-amount').value;
+  if (!frontNote || !backNote) { showToast('⚠️ 前台備注與後台備注為必填'); return; }
+  if (!amount || parseFloat(amount) <= 0) { showToast('⚠️ 請輸入有效金額'); return; }
+  closeTransferPanel();
+  showToast('✓ 操作已完成');
+}
+
+// ── OTP ──
+function openOtp() {
+  document.getElementById('otp-overlay').classList.add('active');
+  document.getElementById('otp-result').classList.remove('show');
+}
+function closeOtp() { document.getElementById('otp-overlay').classList.remove('active'); }
+function queryOtp() {
+  const y = document.getElementById('otp-year').value;
+  const mo = document.getElementById('otp-month').value;
+  if (!y || y < 2020 || y > 2099) { showToast('請輸入有效年份'); return; }
+  const count = Math.floor(Math.random()*5000)+200;
+  document.getElementById('otp-result-label').textContent = y + ' 年 ' + mo + ' 月 OTP 使用次數';
+  document.getElementById('otp-result-count').textContent = count.toLocaleString();
+  document.getElementById('otp-result').classList.add('show');
+}
+
+// ── KYC Tooltip（fixed 定位，避免被 thead 遮蓋）──
+let _kycTip = null;
+function showKycTip(e, idx, statusLabel) {
+  if (!_kycTip) {
+    _kycTip = document.createElement('div');
+    _kycTip.className = 'kyc-tip';
+    document.body.appendChild(_kycTip);
+  }
+  _kycTip.innerHTML = '<span class="kyc-tip-stage">' + KYC_STAGE_LABELS[idx] + '</span>' + statusLabel;
+  _kycTip.style.display = 'block';
+  posKycTip(e);
+}
+function posKycTip(e) {
+  if (!_kycTip) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const tw = _kycTip.offsetWidth;
+  let left = r.left + r.width/2;
+  let top  = r.bottom + 7;
+  // 邊界保護：不超出右側
+  if (left + tw/2 > window.innerWidth - 8) left = window.innerWidth - 8 - tw/2;
+  if (left - tw/2 < 8) left = 8 + tw/2;
+  _kycTip.style.left = left + 'px';
+  _kycTip.style.top  = top  + 'px';
+}
+function hideKycTip() {
+  if (_kycTip) _kycTip.style.display = 'none';
+}
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ 依 spec 章節／功能自整站 proto 拆分（tools/split_proto.py 自動產生，勿手改本段）══ */
+(function () {
+  var THIS_FILE = '會員列表_proto_v01.html';
+  var FIRST_PAGE = 'member-list';
+  var PROTO_MAP = {"dashboard": ["資訊看板_proto_v01.html", "資訊看板"], "member-list": ["會員列表_proto_v01.html", "會員列表"], "affiliate-list": ["加盟列表_proto_v01.html", "加盟列表"], "login-domain": ["登入網域查詢_proto_v01.html", "登入網域查詢"], "referral": ["推薦註冊金設定_proto_v01.html", "推薦註冊金設定"], "nickname": ["暱稱禁用詞設定_proto_v01.html", "暱稱禁用詞設定"], "withdrawal": ["出金審核_proto_v01.html", "出金審核"], "bonus": ["優惠彩金審核_proto_v01.html", "優惠彩金審核"], "wallet": ["鏈上錢包管理_proto_v01.html", "鏈上錢包管理"], "tx-query": ["交易紀錄查詢_proto_v01.html", "交易紀錄查詢"], "bet-query": ["注單查詢_proto_v01.html", "注單查詢"], "rebate-detail": ["返水明細_proto_v01.html", "返水明細"], "audit-detail": ["稽核明細_proto_v01.html", "稽核明細"], "level-log": ["會員等級異動紀錄_proto_v01.html", "會員等級異動紀錄"], "aff-commission": ["加盟傭金發放紀錄_proto_v01.html", "加盟傭金發放紀錄"], "agent-rebate": ["代理返傭發放紀錄_proto_v01.html", "代理返傭發放紀錄"], "game-provider": ["遊戲商管理_proto_v01.html", "遊戲商管理"], "game-contrib": ["遊戲貢獻值設定_proto_v01.html", "遊戲貢獻值設定"], "kyc-settings": ["KYC設定_proto_v01.html", "KYC 設定"], "member-level": ["會員等級設定_proto_v01.html", "會員等級設定"], "agent-settings": ["代理設定_proto_v01.html", "代理設定"], "affiliate-settings": ["加盟商設定_proto_v02.html", "加盟商設定"], "banner": ["橫幅管理_proto_v01.html", "橫幅管理"], "promo": ["優惠活動管理_proto_v01.html", "優惠活動管理"], "deaudit": ["消稽核設定_proto_v01.html", "消稽核設定"], "admin-users": ["系統使用者列表_proto_v01.html", "系統使用者列表"], "screen-mgmt": ["畫面管理_proto_v01.html", "畫面管理"], "announcement": ["公告設定_proto_v02.html", "公告設定"], "freespin": ["FreeSpin管理_proto_v04.html", "Free Spin 管理"]};   // pageId -> [檔名, 功能名]
+  var MISSING = ["closeDetail"];       // 本檔未包含的跨章節函式
+
+  /* 1. 側邊欄：不在本檔的項目淡化，點擊時提示要開哪一個 proto */
+  var _navTo = window.navTo;
+  window.navTo = function (pageId, title, navEl) {
+    if (!document.getElementById('page-' + pageId)) {
+      var m = PROTO_MAP[pageId];
+      showToast('「' + title + '」不在本檔，請開啟 ' + (m && m[0] ? m[0] : '對應 proto'));
+      return;
+    }
+    return _navTo.apply(this, arguments);
+  };
+
+  /* 2. 缺少的跨章節函式：以提示取代，避免 ReferenceError */
+  MISSING.forEach(function (n) {
+    if (typeof window[n] === 'undefined') {
+      window[n] = function () { showToast('原始 proto 未定義此操作（或屬於其他章節）'); };
+    }
+  });
+
+  document.querySelectorAll('.sidebar [onclick^="navTo("]').forEach(function (el) {
+    var m = /navTo\('([\w-]+)'/.exec(el.getAttribute('onclick'));
+    if (m && !document.getElementById('page-' + m[1])) {
+      el.style.opacity = '.4';
+      el.title = '請見 ' + ((PROTO_MAP[m[1]] || [])[0] || '其他 proto');
+    }
+  });
+
+  /* 3. 開啟時自動展開本功能所屬選單並切到該頁 */
+  var el = document.querySelector('.sidebar [onclick^="navTo(\'' + FIRST_PAGE + '\''  + '"]');
+  if (el) {
+    var sub = el.closest('.nav-sub');
+    if (sub && !sub.classList.contains('open') && sub.previousElementSibling) {
+      toggleGroup(sub.previousElementSibling);   /* 一併換箭頭 › → ∨ */
+    }
+    el.click();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/workflow/workflow-definition.schema.json",
+  "title": "WorkflowDefinition",
+  "description": "workflows/<id>.yaml — Brief §19 十項必備欄位",
+  "type": "object",
+  "required": [
+    "workflow_id",
+    "version",
+    "description",
+    "input",
+    "initial_state",
+    "agents",
+    "artifacts",
+    "tasks",
+    "gates",
+    "failure_handling",
+    "human_approval",
+    "output",
+    "final_state"
+  ],
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "enum": [
+        "spec-to-testcase",
+        "spec-to-bug",
+        "spec-change-impact",
+        "manual-test-to-regression",
+        "regression-generation",
+        "testcase-revision"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "fields"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "required"
+            ],
+            "properties": {
+              "required": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "enum": {
+                "type": "array"
+              },
+              "items_enum": {
+                "type": "array"
+              },
+              "type": {
+                "type": "string"
+              },
+              "min_items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "initial_state": {
+      "type": "object"
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "producer"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "producer": {
+            "type": "string"
+          },
+          "conditional": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "persisted_to": {
+            "type": "string"
+          },
+          "count": {}
+        }
+      }
+    },
+    "max_validation_iterations": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "../common/defs.schema.json#/$defs/TaskId"
+          },
+          "agent": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "approval"
+            ]
+          },
+          "approval_type": {
+            "$ref": "../common/defs.schema.json#/$defs/ApprovalType"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string"
+          },
+          "run_if": {
+            "type": "string"
+          },
+          "skip_if": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gate": {
+            "type": "string"
+          },
+          "on_gate_fail": {
+            "type": "object"
+          },
+          "on_result": {
+            "type": "object"
+          },
+          "on_pass": {
+            "type": "object"
+          },
+          "on_decision": {
+            "type": "object"
+          },
+          "post_pass": {
+            "type": "array"
+          },
+          "transitions": {
+            "type": "object"
+          },
+          "constraint": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "batch": {
+            "type": "boolean"
+          },
+          "per": {
+            "type": "string"
+          },
+          "on_cannot_map_requirement": {
+            "type": "string"
+          },
+          "selection_rules": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "failure_handling": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "human_approval": {
+      "type": "object",
+      "required": [
+        "required"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "../common/defs.schema.json#/$defs/ApprovalType"
+          }
+        },
+        "conditional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "array",
+      "minItems": 1
+    },
+    "final_state": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

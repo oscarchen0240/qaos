@@ -1,0 +1,23 @@
+record_id: MAN-20260913-003
+title: '[v1_user_query-user-list] user-list 的 name 篩選被安靜忽略'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_user_query-user-list` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 不帶篩選抓資料,記錄 baseline 總數與幾個真實的 `fullName` 值(觀察到多數測試帳號的 `fullName` 以「TestUser」開頭,但也有像 ZeghsLin、Elainechen、OscarChen 這種不是這個模式的帳號)。
+- 帶入 `query:{name:["TestUser"]}`,預期應該只篩出名字包含/符合 TestUser 的帳號,排除掉 ZeghsLin、Elainechen、OscarChen 這類帳號。
+observed_result: '`name` 篩選對結果沒有任何實際效果,呼叫正常成功、格式正常,但等同於沒有套用這個條件。跟 Bug #01(referral-reward-log 的 `referralReward`)是同一種「schema
+  允許放行、後端安靜丟棄未綁定欄位」的失效模式。'
+outcome: fail
+evidence_ids:
+- EVD-0003
+notes: 'source: bug-reports/bug-03-user-list-name-filter-ignored.md; severity(原報告): 中(答案錯誤但不至於方向相反,是「未篩選」而非「篩選反了」); 涉及草稿條文:
+  §3.1 R1, §3.1 R2'

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/test-designer-input.schema.json",
+  "title": "TestDesignerInput",
+  "description": "Supervisor DISPATCH_AGENT 時交給 Agent 的輸入包；所有 artifact 以 id 傳遞，Agent 用 READ_ARTIFACT 讀取",
+  "type": "object",
+  "required": ["run_id","task_id","iteration","mode","requirement_model_artifact_id"],
+  "properties": {
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "task_id": {"$ref": "../common/defs.schema.json#/$defs/TaskId"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "mode": {"type": "string", "enum": ["spec", "change", "manual"]},
+    "requirement_model_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "existing_active_testcase_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "description": "同 area 的 ACTIVE TC，供去重"},
+    "change_impact_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId", "description": "mode=change 必填"},
+    "impacted_testcases": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "version"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "version": {"type": "integer"}}}},
+    "manual_record_id": {"type": "string", "description": "mode=manual 必填"},
+    "validation_report_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId", "description": "iteration>0 時，上一輪 FAIL 報告"},
+    "rejection_rationale": {"type": "string", "description": "Human reject 時的理由"},
+    "resolved_ambiguity_approval_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"}}
+  },
+  "additionalProperties": false
+}

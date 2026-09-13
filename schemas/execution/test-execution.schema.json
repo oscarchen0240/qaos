@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/execution/test-execution.schema.json",
+  "title": "TestExecution",
+  "description": "executions/<yyyy-mm>/<exe_id>.yaml — 不可變；Phase 1-4 由 Human / CI 匯入",
+  "type": "object",
+  "required": ["execution_id", "testcase_id", "testcase_version", "result", "executor", "executor_type", "environment", "executed_at", "recorded_by"],
+  "properties": {
+    "execution_id": {"$ref": "../common/defs.schema.json#/$defs/ExecutionId"},
+    "testcase_id": {"anyOf": [{"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, {"type": "null"}], "description": "null 表示 ad-hoc / exploratory"},
+    "testcase_version": {"type": ["integer", "null"]},
+    "suite_id": {"$ref": "../common/defs.schema.json#/$defs/SuiteId"},
+    "suite_version": {"type": "integer"},
+    "result": {"type": "string", "enum": ["pass", "fail", "blocked", "skipped"]},
+    "executor": {"type": "string"},
+    "executor_type": {"type": "string", "enum": ["human", "ci", "agent"]},
+    "environment": {"type": "string"},
+    "build": {"type": "string"},
+    "executed_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "duration_seconds": {"type": "number"},
+    "step_results": {"type": "array", "items": {"type": "object", "required": ["n", "status"], "properties": {"n": {"type": "integer"}, "status": {"type": "string", "enum": ["pass", "fail", "skipped"]}, "observed": {"type": "string"}}}},
+    "actual_result": {"type": "string"},
+    "evidence_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EvidenceId"}},
+    "recorded_by": {"type": "string"},
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,53 @@
+approval_id: APR-0004
+type: OPEN_BUG
+run_id: RUN-20260913-002
+task_id: T3
+status: DECIDED
+summary: '[major/high] [後端][機台][場館日結報表] 依場館彙總／依機台明細維度的 API 回應缺少「場次數」欄位 — 是否成為正式 Bug（OPEN）？'
+impact:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-009
+artifact_ids:
+- ART-BVR-01M2DJFKQG5F5BK6SA8YDBXP04
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items: []
+requested_by: agent-supervisor
+requested_at: '2026-09-13T14:24:32Z'
+diff_summary: '**[後端][機台][場館日結報表] 依場館彙總／依機台明細維度的 API 回應缺少「場次數」欄位**
+
+
+  - 需求：REQ-DAILYREPORT-009（§列表欄位/場次數（2026-09-03 定案））
+
+  - 期望：「依場館彙總」列的場次數＝該場館底下所有機台帳號當日場次數的加總；API 回應應含對應欄位（如 sessionCount）
+
+  - 實際：畫面「場次數」欄一律顯示「--」；API 回應整包無任何場次數欄位（僅 settlePeriod / endTime / 金額類欄位）
+
+  - 證據：EVD-0009, EVD-0044（hash 皆驗證通過）
+
+  - Analyst 建議：major / high；Validator 建議：major / high
+
+
+  Validator minor 建議（不影響開單，可於修復驗收時補）：
+
+  - 二擇一：(a) 補做依機台明細維度的搜尋與 API 攔截，新增 Evidence 並加入 evidence_map；或 (b) 將 AC-DAILYREPORT-0091 自 acceptance_criteria_ids 移除、impact
+  改寫為「依機台明細維度推測同樣受影響（未實測）」。
+
+  - 補一張「依場館彙總」搜尋結果的截圖（含場次數欄顯示 -- 與篩選條件），登錄為 screenshot 類 Evidence 並掛到「畫面場次數欄顯示 --」claim。
+
+  - 在 impact 或 expected_result 補註：「場次數的計算口徑（是否含逾時結束／日結結算）依 REQ-DAILYREPORT-009 ambiguity 待 PM 定案，修復驗收前需先解決」。
+
+
+  Related：Bug Repository 目前無任何 DAILYREPORT 的 bug，無正式重複對象。與同批的 BUG-DRAFT-…AA02（run003，場次明細維度缺開始時間／場次時長）來源相同（MAN-20260913-009
+  / EVD-0009）、同一 API（POST /api/v1/report/query-venue-daily-report），但違反的 Requirement 不同（R…'
+decision:
+  decision: approve
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-09-13T18:02:49Z'
+  rationale: Oscar 2026-09-14 確認：RD 已修復完成

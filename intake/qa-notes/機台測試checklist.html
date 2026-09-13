@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機台與多幣別站台測試 Checklist</title>
+<style>
+  :root{
+    --ink:#1c2521;
+    --ink-soft:#4b5750;
+    --paper:#f6f5f0;
+    --panel:#ffffff;
+    --line:#dcdcd2;
+    --brand:#2f6f52;
+    --brand-soft:#e6efe7;
+    --amber:#a8641b;
+    --amber-soft:#faf0e2;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: "IBM Plex Sans", "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+
+  header.top{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;
+    margin-bottom:20px;
+  }
+  header.top h1{
+    font-size:22px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header.top .meta{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  .progress-bar-outer{
+    width:100%;
+    height:8px;
+    background:var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    margin-top:14px;
+  }
+  .progress-bar-inner{
+    height:100%;
+    background:var(--brand);
+    width:0%;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+
+  .controls{
+    display:flex;
+    gap:8px;
+    margin:18px 0 22px;
+    flex-wrap:wrap;
+  }
+  .controls button{
+    font-family:var(--sans);
+    font-size:13px;
+    padding:7px 14px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .controls button:hover{border-color:var(--ink-soft);}
+  .controls button.danger{color:#a33;border-color:#e3c3c3;}
+  .controls button.danger:hover{background:#fdf3f3;}
+
+  .part-title{
+    font-size:13px;
+    font-family:var(--mono);
+    color:var(--brand);
+    text-transform:none;
+    margin:34px 0 10px;
+    padding-bottom:4px;
+    border-bottom:1px solid var(--line);
+  }
+
+  details.section{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    margin-bottom:10px;
+    overflow:hidden;
+  }
+  details.section[open]{border-color:#c8c8bc;}
+  summary.section-head{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  summary.section-head::-webkit-details-marker{display:none;}
+  .section-head-left{display:flex;align-items:center;gap:10px;min-width:0;}
+  .caret{
+    width:14px;height:14px;flex:none;
+    transition:transform .15s ease;
+    color:var(--ink-soft);
+  }
+  details[open] .caret{transform:rotate(90deg);}
+  .section-title{
+    font-weight:600;
+    font-size:14.5px;
+  }
+  .section-count{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    flex:none;
+  }
+  .section-count.done{color:var(--brand);}
+
+  .items{
+    padding:2px 16px 14px 16px;
+    border-top:1px solid var(--line);
+  }
+  .item{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:9px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:13.5px;
+  }
+  .item:last-child{border-bottom:none;}
+  .item input[type=checkbox]{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--brand);
+    flex:none;
+    cursor:pointer;
+  }
+  .item label{
+    cursor:pointer;
+    flex:1;
+  }
+  .item.checked label{
+    color:var(--ink-soft);
+    text-decoration:line-through;
+    text-decoration-color:var(--line);
+  }
+  .item .warn{
+    color:var(--amber);
+    font-weight:600;
+  }
+
+  table.ref{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    margin:4px 0 14px;
+  }
+  table.ref th, table.ref td{
+    border:1px solid var(--line);
+    padding:6px 8px;
+    text-align:left;
+    vertical-align:top;
+  }
+  table.ref th{
+    background:var(--brand-soft);
+    font-weight:600;
+    font-size:12px;
+  }
+
+  .note-box{
+    background:var(--amber-soft);
+    border:1px solid #e6d3ae;
+    border-radius:6px;
+    padding:10px 12px;
+    font-size:13px;
+    margin:10px 0;
+    color:#5c4014;
+  }
+
+  .hidden{display:none !important;}
+
+  footer.foot{
+    margin-top:36px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+
+  @media (max-width:520px){
+    .wrap{padding:18px 14px 60px;}
+    header.top h1{font-size:19px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>機台與多幣別站台功能測試 Checklist</h1>
+    <div class="meta">依據：17-給QA的說明.md ・ 實體機台_spec_v05.md（正本）・ 機台開發用測試頁.md　｜　環境：SpringKyle stage　｜　更新：2026-09-02</div>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="overallBar"></div></div>
+    <div class="progress-label"><span id="overallText">0 / 0 完成</span><span id="overallPct">0%</span></div>
+  </header>
+
+  <div class="controls">
+    <button id="expandAll">全部展開</button>
+    <button id="collapseAll">全部收合</button>
+    <button id="showPending">只看未完成</button>
+    <button id="showAll">顯示全部</button>
+    <button id="resetAll" class="danger">清空所有勾選</button>
+  </div>
+
+  <div class="note-box">前置準備需要 <code>/dev-login</code> ＋ <code>/dev-cashflow</code> 測試工具（404 請找前端開通）。勾選狀態會自動保存在你自己的瀏覽器帳號下，重新打開此頁面不會消失。</div>
+
+  <div id="sections"></div>
+
+  <footer class="foot">機台開發包 ⑤ QA 用測試工具　｜　資料僅儲存於你個人帳號，不會被其他人看到</footer>
+</div>
+
+<script>
+const DATA = [
+  { part: "Part 1｜機台站台功能（需 /dev-login + /dev-cashflow 測試工具）", sections: [
+    { id:"pre", title:"前置準備", items:[
+      "確認測試環境已開放 /dev-login、/dev-cashflow（若 404，找前端開通）",
+      "用測試帳號登入 /dev-login，兩個步驟都需綠色才算成功",
+      "準備一個機台站台（站台類型＝機台），核心貨幣應為 TWD"
+    ]},
+    { id:"s1", title:"一、開站流程（開發包②站台列表）", items:[
+      "新增主站台選「機台」類型，核心貨幣下拉選單只顯示 TWD（不出現 USDT）",
+      "建立後站台類型欄位鎖定唯讀",
+      "核心貨幣建立後鎖定唯讀，無法修改",
+      "新增子站台（場館）自動繼承主站台類型與核心貨幣，欄位唯讀顯示",
+      "機台專屬欄位（場館地址／聯絡人電話／額度上限／洗分出金最低門檻／場次逾時時間／日結時間）僅機台類型站台顯示",
+      "站台查詢 API response 應含 coreCurrency 欄位，值為 \"TWD\""
+    ]},
+    { id:"s2", title:"二、創建機台帳號（開發包①）", items:[
+      "機台站台底下「創建會員帳號」出現「機台」帳號類型選項（線上站台不應出現）",
+      "選「機台」需填機台名稱，建立後同時產生機台資料",
+      "建立成功時登入帳號密碼完整顯示一次，關閉後不再顯示",
+      "機台狀態預設為「啟用」",
+      "會員詳細頁出現「機台資訊」「機台憑證」兩區塊",
+      "機台憑證可產生／重置，僅一次性完整顯示，之後前後4碼+遮罩",
+      "「重設密碼」對機台帳號適用，新密碼+帳號一次性完整顯示，舊密碼立即失效"
+    ]},
+    { id:"s3", title:"三、機台金流四種交易（開發包③，用 /dev-cashflow 測試）", items:[
+      "【開分】開分成功後分數正確增加，餘額即時更新",
+      "【開分】超過場館額度上限應被拒絕，機台顯示失敗，分數不變（額度為全場館機台共用）",
+      "【開分】重複按開分會重複加分——確認為已知風險行為（無自然防護），非bug",
+      "【洗分】洗分金額被場館「洗分/出金最低門檻」無條件捨去，核可金額≠填寫金額",
+      "【洗分】全洗後不足一個門檻單位的餘數留在機台",
+      "【洗分】洗分完成後立即出現在「洗分出金核實」頁，狀態「待核實」",
+      "【入金】兩階段流程：只按①不按②，分數不變",
+      "【入金】按②確認後分數才正確增加",
+      "【入金】超過24小時未完成的入金自動轉「已逾時」",
+      "【出金】出金一律全額計算，比照洗分以門檻為單位，餘數留機台",
+      "【出金】出金產生訂單編號，可於「洗分出金核實」用訂單編號核銷查詢",
+      "【出金】出金不設逾時，待確認狀態持續保留",
+      "【出金】出金重按第一階，前一筆應失效"
+    ]},
+    { id:"s4", title:"四、場次邏輯（開發包③）", items:[
+      "洗分或出金扣分成功當下即結束當前場次；有餘數立即開新場次承接",
+      "分數歸零視為場次結束",
+      "機台前台注單/遊戲紀錄僅顯示當前進行中場次，換人看不到前一位紀錄",
+      "會員詳細頁「機台資訊」正確顯示進行中場次摘要",
+      "場次逾時（依場館設定）正確觸發結束"
+    ]},
+    { id:"s5", title:"五、機台交易紀錄查詢（開發包④）", items:[
+      "篩選器（機台帳號/交易編號/場次編號/訂單編號/交易類型/交易狀態/核實狀態/交易時間/金額）皆可正常查詢",
+      "場館範圍跟隨站台切換，無獨立「場館」篩選欄位",
+      "五種交易狀態（待確認/已完成/已取消/已逾時/未成立）正確對應",
+      "幣別欄位顯示主站台核心貨幣（TWD）",
+      "核實狀態欄位唯讀",
+      "Admin 可對「待確認」交易手動取消，其他角色不可"
+    ]},
+    { id:"s6", title:"六、洗分出金核實（開發包⑤之一）", items:[
+      "已完成的洗分/出金自動產生「待核實」紀錄",
+      "核實（洗分）：確認彈窗顯示機台帳號/實際金額/交易時間，確認後轉「已核實」",
+      "核實（出金）：可用訂單編號查詢，核實即核銷收據",
+      "已核實/已作廢的紀錄，再次核實應被阻擋（防重複付款）",
+      "核實/作廢一經確認無法撤銷",
+      "作廢僅出金可執行，僅 Admin/站長可操作，須填作廢原因",
+      "操作員權限限自身場館"
+    ]},
+    { id:"s7", title:"七、場館日結報表（開發包⑤之二）", items:[
+      "統計週期切換（按日/週/月/區間合計）數字正確彙總",
+      "統計維度切換（依場館彙總/依機台明細/依場次明細）正確呈現",
+      "「現金淨收」公式正確：開分＋進鈔－已核實洗分－已兌現（不扣待核實洗分）",
+      "「未兌現金額」正確反映截至查詢當下的待核實出金金額",
+      "匯出 CSV 功能正常"
+    ]},
+    { id:"s8", title:"八、機台場館後台選單規則（開發包⑥）", items:[
+      "站台切換到機台場館時，指定頁面正確隱藏（資訊看板/加盟列表/出金審核/優惠彩金審核/返水明細等）",
+      "鏈上錢包管理僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏",
+      "切回線上站台選單恢復完整",
+      "出金設定新增的 TWD 頁籤可正確設定稽核倍數"
+    ]},
+    { id:"s9", title:"九、跨站台一致性檢查", items:[
+      "機台站台資產列表只列 TWD，不列其他餘額0的幣別",
+      "Free Spin 派發依核心貨幣（TWD）發放，非固定 USDT",
+      "搬站/改站台類型導致幣別與站台脫節時，系統應阻擋"
+    ]}
+  ]},
+  { part: "Part 2｜線上站台多幣別測試（現有 TWD 錢包，可直接測）", sections: [
+    { id:"p2", title:"補充可測項目（A～F）", items:[
+      "A：玩家用 TWD 入金 → 入金正常進 TWD 錢包，不應被導去 USDT 錢包",
+      "B：玩家用 TWD 錢包下注 → 注單能正常下注、結算，幣別維持 TWD",
+      "C：注單三層金額（bet_log→wallet_reference→system_wallet_reference）→ 前兩層記錄 TWD，第三層應換算成 USDT",
+      "D：用 TWD 錢包下注後觸發返水/活動獎勵 → 獎勵應進站台核心貨幣（USDT）錢包，不是進 TWD 錢包",
+      "E：後台查詢（注單列表/明細）→ 用 TWD 下的注單，後台能否正確顯示幣別與換算後 USDT 金額",
+      "F：前台資產列表 → 同時列出 USDT 和 TWD"
+    ]}
+  ]},
+  { part: "Part 3｜補充測試案例（依已發現問題延伸）", sections: [
+    { id:"pg", title:"G. 注單顯示格式／篩選器換算一致性", items:[
+      "G1：切換 USDT／TWD／結算幣種查看同一筆 TWD 原生注單，投注額/有效投注額/有效流水貢獻/派彩是否全部欄位都跟著換算",
+      "G2：「投注額」篩選器在不同「注单显示格式」下輸入相同 min/max，驗證比對的是原始幣別還是顯示幣別換算後數字",
+      "G3：「有效流水貢獻」「派彩」「貢獻系數」等其餘範圍篩選器逐一排查是否有相同的未換算問題",
+      "G4：返水明細頁的類似篩選器/顯示欄位是否存在相同換算不一致問題（同源代碼風險）"
+    ]},
+    { id:"ph", title:"H.「以貨幣顯示」與遊戲下注幣別關聯測試", items:[
+      "H1：USDT 錢包進場，切 USD/TWD/EUR 顯示後各下注一筆，比對 gameCurrencySymbol 是否隨顯示變動、walletCurrencySymbol 是否維持 USDT",
+      "H2：切換「以货币显示」後重新開啟餘額彈窗，「所选货币将以 XXX 显示」文字是否正確同步（已知bug回歸）",
+      "H3：遊戲進行中切換「以货币显示」，驗證是否真實刷新重啟，中途下注是否受影響/遺失",
+      "H4：TWD 顯示、USDT 錢包，實際下注輸入「20」，驗證 walletBet 扣款是否為 20÷匯率",
+      "H5：派彩/贏分結果幣別是否與 gameCurrencySymbol 一致，實際金額是否正確入帳到 walletCurrencySymbol 錢包"
+    ]},
+    { id:"pi", title:"I. 站台核心貨幣 API 驗證", items:[
+      "I1：站台查詢 API（列表/詳細）response 應含 coreCurrency 欄位，線上站台值為 \"USDT\"",
+      "I2：「可選幣別清單」端點——線上站台類型只回傳 USDT；機台站台類型只回傳 TWD",
+      "I3：已有會員的站台嘗試變更核心貨幣（UI）應被阻擋；直接 DB UPDATE 應被 trigger 擋下（需協同後端測試）"
+    ]},
+    { id:"pj", title:"J. 人工出入金幣別驗證（對應 QA 文件第6項「四支API」）", items:[
+      "J1：人工存入（create-manual-deposit）未指定幣別時，應自動帶入站台核心貨幣，而非DB DEFAULT或寫死USDT",
+      "J2：人工提出對應API，幣別應正確取核心貨幣",
+      "J3：人工出入金指定TWD錢包，驗證資金正確進出TWD錢包，不影響USDT主錢包"
+    ]}
+  ]},
+  { part: "待確認事項", sections: [
+    { id:"open", title:"需與 PM / 後端確認", items:[
+      "「以货币显示」功能的原始產品定義（前端顯示層 vs 交易層），需與 PM 確認後才能定案 H1、H4、H5 的預期結果",
+      "主站台核心貨幣建立後是否真的完全不可變更（需後端配合驗證 DB trigger）"
+    ]}
+  ]}
+];
+
+const STORAGE_PREFIX = "qa-checklist:";
+let allItemIds = [];
+let stateCache = {};
+let showOnlyPending = false;
+
+function slug(s){
+  return s.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g,'-').slice(0,40);
+}
+
+async function loadState(id){
+  try{
+    const r = await window.storage.get(STORAGE_PREFIX + id, false);
+    return r && r.value === "1";
+  }catch(e){ return false; }
+}
+
+async function saveState(id, checked){
+  try{
+    if(checked){
+      await window.storage.set(STORAGE_PREFIX + id, "1", false);
+    }else{
+      await window.storage.delete(STORAGE_PREFIX + id, false);
+    }
+  }catch(e){ console.error("storage error", e); }
+}
+
+function render(){
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+  DATA.forEach(part => {
+    const h = document.createElement('div');
+    h.className = 'part-title';
+    h.textContent = part.part;
+    container.appendChild(h);
+
+    part.sections.forEach(sec => {
+      const det = document.createElement('details');
+      det.className = 'section';
+      det.open = true;
+      det.dataset.sectionId = sec.id;
+
+      const summary = document.createElement('summary');
+      summary.className = 'section-head';
+      summary.innerHTML = `
+        <div class="section-head-left">
+          <svg class="caret" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="section-title">${sec.title}</span>
+        </div>
+        <span class="section-count" data-count-for="${sec.id}">0/${sec.items.length}</span>
+      `;
+      det.appendChild(summary);
+
+      const itemsDiv = document.createElement('div');
+      itemsDiv.className = 'items';
+
+      sec.items.forEach((text, idx) => {
+        const itemId = sec.id + '-' + idx;
+        allItemIds.push(itemId);
+        const row = document.createElement('div');
+        row.className = 'item';
+        row.dataset.itemId = itemId;
+        const cbId = 'cb-' + itemId;
+        row.innerHTML = `
+          <input type="checkbox" id="${cbId}">
+          <label for="${cbId}">${text}</label>
+        `;
+        itemsDiv.appendChild(row);
+      });
+
+      det.appendChild(itemsDiv);
+      container.appendChild(det);
+    });
+  });
+}
+
+async function hydrate(){
+  for(const id of allItemIds){
+    stateCache[id] = await loadState(id);
+    const row = document.querySelector(`.item[data-item-id="${id}"]`);
+    if(row){
+      const cb = row.querySelector('input');
+      cb.checked = stateCache[id];
+      if(stateCache[id]) row.classList.add('checked');
+    }
+  }
+  updateAllCounts();
+  attachHandlers();
+}
+
+function attachHandlers(){
+  document.querySelectorAll('.item input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const row = e.target.closest('.item');
+      const id = row.dataset.itemId;
+      stateCache[id] = e.target.checked;
+      row.classList.toggle('checked', e.target.checked);
+      await saveState(id, e.target.checked);
+      updateAllCounts();
+      applyFilter();
+    });
+  });
+}
+
+function updateAllCounts(){
+  let totalDone = 0;
+  document.querySelectorAll('details.section').forEach(det => {
+    const secId = det.dataset.sectionId;
+    const rows = det.querySelectorAll('.item');
+    let done = 0;
+    rows.forEach(r => { if(stateCache[r.dataset.itemId]) done++; });
+    totalDone += done;
+    const countEl = det.querySelector(`[data-count-for="${secId}"]`);
+    countEl.textContent = `${done}/${rows.length}`;
+    countEl.classList.toggle('done', done === rows.length && rows.length > 0);
+  });
+  const total = allItemIds.length;
+  const pct = total ? Math.round((totalDone/total)*100) : 0;
+  document.getElementById('overallBar').style.width = pct + '%';
+  document.getElementById('overallText').textContent = `${totalDone} / ${total} 完成`;
+  document.getElementById('overallPct').textContent = pct + '%';
+}
+
+function applyFilter(){
+  document.querySelectorAll('.item').forEach(row => {
+    const id = row.dataset.itemId;
+    const isDone = !!stateCache[id];
+    row.classList.toggle('hidden', showOnlyPending && isDone);
+  });
+  document.querySelectorAll('details.section').forEach(det => {
+    const visible = [...det.querySelectorAll('.item')].some(r => !r.classList.contains('hidden'));
+    det.classList.toggle('hidden', showOnlyPending && !visible);
+  });
+}
+
+document.getElementById('expandAll').addEventListener('click', () => {
+  document.querySelectorAll('details.section').forEach(d => d.open = true);
+});
+document.getElementById('collapseAll').addEventListener('click', () => {
+  document.querySelectorAll('details.section').forEach(d => d.open = false);
+});
+document.getElementById('showPending').addEventListener('click', () => {
+  showOnlyPending = true;
+  applyFilter();
+});
+document.getElementById('showAll').addEventListener('click', () => {
+  showOnlyPending = false;
+  applyFilter();
+});
+document.getElementById('resetAll').addEventListener('click', async () => {
+  if(!confirm('確定要清空所有勾選紀錄嗎？此動作無法復原。')) return;
+  for(const id of allItemIds){
+    stateCache[id] = false;
+    await saveState(id, false);
+  }
+  document.querySelectorAll('.item').forEach(row => {
+    row.classList.remove('checked');
+    row.querySelector('input').checked = false;
+  });
+  updateAllCounts();
+  applyFilter();
+});
+
+render();
+hydrate();
+</script>
+</body>
+</html>

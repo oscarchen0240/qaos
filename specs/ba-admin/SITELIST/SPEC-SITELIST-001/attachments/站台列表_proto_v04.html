@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>站台列表 — bl'ac 後台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;background:#0d0d0b;color:#c8c6be;min-height:100vh;display:flex;flex-direction:column;}
+:root{
+  --bg-page:#0d0d0b;
+  --bg-sidebar:#111110;
+  --bg-card:#181816;
+  --bg-hover:#1e1e1c;
+  --bg-input:#111110;
+  --text-primary:#dedad2;
+  --text-secondary:#6b6965;
+  --text-muted:#3d3d3b;
+  --border:#242422;
+  --border-focus:#3d3d3b;
+  --green-text:#5DCAA5;
+  --green-dim:#0F2E23;
+  --blue:#378ADD;
+  --blue-dim:#0C2A4A;
+  --blue-text:#85B7EB;
+  --red-text:#F09595;
+  --red-dim:#3A1818;
+  --yellow-text:#EF9F27;
+  --yellow-dim:#2E2000;
+  --purple-text:#B09FE8;
+  --purple-dim:#2A1F3D;
+  --gray-dim:#1e1e1c;
+  --radius:6px;
+  --radius-lg:8px;
+}
+
+/* ── Topbar ── */
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;}
+.topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:color 0.12s,background 0.12s;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;overflow-x:auto;padding:24px 28px 60px;}
+.list-wrap{min-width:970px;}
+
+/* ── Page header ── */
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.hint{font-size:12px;color:var(--text-muted);}
+
+/* ── Buttons ── */
+button{font-family:inherit;cursor:pointer;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:opacity 0.15s;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;transition:background 0.12s,color 0.12s,border-color 0.12s;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:3px 9px;border-radius:var(--radius);font-size:12px;white-space:nowrap;transition:background 0.12s,color 0.12s,border-color 0.12s;}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:all 0.12s;font-family:inherit;}
+.filter-chip:hover{color:var(--text-primary);border-color:var(--border-focus);}
+.filter-chip.active{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-focus);}
+.filter-search{flex:1;max-width:260px;min-width:140px;position:relative;}
+.filter-search input{width:100%;padding:6px 10px 6px 30px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;font-family:inherit;transition:border-color 0.15s;}
+.filter-search input:focus{border-color:var(--border-focus);}
+.filter-search input::placeholder{color:var(--text-muted);}
+.filter-search::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;opacity:0.5;}
+
+/* ── Table ── */
+.list-header{display:grid;grid-template-columns:200px 64px 90px 100px 110px 1fr 100px;align-items:center;padding:5px 16px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);gap:12px;}
+.list-header span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+
+.site-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;overflow:hidden;transition:border-color 0.15s;}
+.site-card:hover{border-color:var(--border-focus);}
+.site-row{display:grid;grid-template-columns:200px 64px 90px 100px 110px 1fr 100px;align-items:center;padding:12px 16px;gap:12px;}
+
+/* ── 站台類型 tag ── */
+.type-tag{font-size:11px;padding:2px 7px;border-radius:3px;display:inline-block;white-space:nowrap;}
+.type-online{color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);}
+.type-machine{color:var(--blue-text);background:var(--blue-dim);}
+
+/* ── Drill-down breadcrumb ── */
+.drill-breadcrumb{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:16px;min-height:24px;}
+.drill-crumb{font-size:13px;color:var(--text-secondary);cursor:pointer;padding:2px 6px;border-radius:4px;transition:color 0.12s,background 0.12s;white-space:nowrap;}
+.drill-crumb:hover{color:var(--text-primary);background:var(--bg-hover);}
+.drill-crumb.current{color:var(--text-primary);cursor:default;font-weight:500;}
+.drill-crumb.current:hover{background:transparent;}
+.drill-sep{font-size:12px;color:var(--text-muted);}
+.drill-back-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 10px;border-radius:var(--radius);cursor:pointer;transition:all 0.12s;font-family:inherit;margin-bottom:12px;}
+.drill-back-btn:hover{color:var(--text-primary);border-color:var(--border-focus);}
+
+/* ── 子站入口 ── */
+.site-name-link{cursor:pointer;transition:color 0.12s;}
+.site-name-link:hover{color:var(--blue-text);}
+.child-count{font-size:10px;color:var(--text-muted);background:var(--bg-hover);padding:1px 5px;border-radius:3px;white-space:nowrap;margin-left:6px;vertical-align:middle;}
+.time-stack{display:flex;flex-direction:column;gap:3px;}
+.time-stack-row{display:flex;align-items:center;gap:6px;}
+.time-label{font-size:10px;color:var(--text-muted);letter-spacing:0.03em;white-space:nowrap;flex-shrink:0;width:36px;}
+.time-value{font-size:12px;color:var(--text-secondary);white-space:nowrap;}
+
+.site-name{font-size:14px;font-weight:500;color:var(--text-primary);}
+.site-code{font-size:12px;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums;font-family:monospace;letter-spacing:0.08em;}
+
+/* ── Status badge ── */
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 8px;border-radius:4px;white-space:nowrap;}
+.status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.status-pending{background:#1e1e1c;color:var(--text-secondary);}
+.status-pending .status-dot{background:var(--text-secondary);}
+.status-active{background:var(--green-dim);color:var(--green-text);}
+.status-active .status-dot{background:var(--green-text);box-shadow:0 0 5px rgba(93,202,165,0.4);}
+.status-suspended{background:var(--yellow-dim);color:var(--yellow-text);}
+.status-suspended .status-dot{background:var(--yellow-text);}
+.status-closed{background:var(--red-dim);color:var(--red-text);}
+.status-closed .status-dot{background:var(--red-text);}
+
+.status-reviewing{background:#1a1a2e;color:var(--purple-text);}
+.status-reviewing .status-dot{background:var(--purple-text);}
+
+/* ── Domain count cell ── */
+.domain-count-cell{display:flex;flex-direction:column;gap:4px;}
+.domain-count-row{display:flex;align-items:center;gap:6px;}
+.domain-type-badge{font-size:10px;color:var(--text-muted);background:var(--bg-hover);border:1px solid var(--border);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;letter-spacing:0.03em;}
+.domain-count-num{font-size:12px;color:var(--text-secondary);}
+.domain-empty{font-size:12px;color:var(--text-muted);}
+
+/* ── Template tag ── */
+.tpl-tag{font-size:11px;color:var(--blue-text);background:var(--blue-dim);padding:2px 7px;border-radius:3px;display:inline-block;}
+.tpl-empty{font-size:12px;color:var(--text-muted);}
+
+/* ── Ops ── */
+.ops-cell{display:flex;gap:6px;justify-content:flex-end;}
+
+/* ── Empty state ── */
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+.empty-state-title{font-size:14px;color:var(--text-secondary);margin-bottom:6px;}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);width:580px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);box-shadow:0 16px 48px rgba(0,0,0,0.7);display:flex;flex-direction:column;}
+.modal-head{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-size:14px;font-weight:500;color:var(--text-primary);}
+.modal-close{background:none;border:none;font-size:17px;color:var(--text-secondary);cursor:pointer;padding:2px 5px;line-height:1;}
+.modal-close:hover{color:var(--text-primary);}
+.modal-body{padding:.875rem 1rem;overflow-y:auto;flex:1;}
+.modal-foot{padding:.7rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+
+label.field-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
+.req{color:#F09595;}
+.field{margin-bottom:14px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field-hint{font-size:11px;color:var(--text-muted);margin-top:4px;}
+
+input[type=text],input[type=number],input[type=time],select{width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color 0.15s;}
+input[type=text]::placeholder,input[type=number]::placeholder{color:var(--text-muted);}
+input[type=text]:focus,input[type=number]:focus,input[type=time]:focus,select:focus{border-color:var(--border-focus);}
+input[type=text].error{border-color:var(--red-text);}
+input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.55);}
+select option{background:#181816;}
+.error-msg{font-size:11px;color:var(--red-text);margin-top:4px;}
+
+/* ── Section divider ── */
+.section-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);}
+.section-label:first-child{margin-top:0;padding-top:0;border-top:none;}
+
+/* ── Status option cards ── */
+.status-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.status-opt{border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;cursor:pointer;background:var(--bg-input);transition:all 0.12s;}
+.status-opt:hover{border-color:var(--border-focus);background:var(--bg-hover);}
+.status-opt.sel-pending{border-color:var(--text-secondary);background:#1a1a18;}
+.status-opt.sel-active{border-color:var(--green-text);background:var(--green-dim);}
+.status-opt.sel-reviewing{border-color:var(--purple-text);background:var(--purple-dim);}
+.status-opt.sel-suspended{border-color:var(--yellow-text);background:var(--yellow-dim);}
+.status-opt.sel-closed{border-color:var(--red-text);background:var(--red-dim);}
+.status-opt.sel-online{border-color:var(--text-secondary);background:#1a1a18;}
+.status-opt.sel-machine{border-color:var(--blue-text);background:var(--blue-dim);}
+.status-opt-label{font-size:13px;color:var(--text-primary);margin-bottom:2px;}
+.status-opt-desc{font-size:11px;color:var(--text-muted);}
+
+/* ── Dynamic domain input list ── */
+.domain-inputs{display:flex;flex-direction:column;gap:6px;}
+.domain-input-row{display:flex;align-items:center;gap:6px;}
+.domain-input-row input{flex:1;}
+.domain-remove-btn{background:none;border:none;color:var(--text-muted);font-size:15px;cursor:pointer;padding:4px;line-height:1;transition:color 0.12s;flex-shrink:0;}
+.domain-remove-btn:hover{color:var(--red-text);}
+.add-domain-btn{background:none;border:1px dashed var(--border);color:var(--text-secondary);padding:6px 12px;border-radius:var(--radius);font-size:12px;cursor:pointer;width:100%;font-family:inherit;transition:border-color 0.12s,color 0.12s;margin-top:4px;}
+.add-domain-btn:hover{border-color:var(--border-focus);color:var(--text-primary);}
+
+/* ── Station code input ── */
+.code-input-wrap{position:relative;width:100px;}
+.code-input-wrap input{text-transform:uppercase;letter-spacing:0.12em;font-family:monospace;font-size:14px;text-align:center;}
+
+/* ── Parent readonly (非 Admin) ── */
+.parent-readonly{display:flex;align-items:center;gap:8px;}
+.parent-readonly-val{flex:1;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:#0d0d0b;color:var(--text-secondary);opacity:0.7;}
+
+/* ── Parent selector dropdown ── */
+.parent-opt{padding:8px 12px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:background 0.1s;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.parent-opt:hover{background:var(--bg-hover);color:var(--text-primary);}
+.parent-opt.sel{background:var(--blue-dim);color:var(--blue-text);}
+.parent-opt-path{font-size:11px;color:var(--text-muted);font-family:monospace;}
+.parent-none{padding:8px 12px;font-size:12px;color:var(--text-muted);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-right:2px;">模擬登入：</span>
+    <select id="current-user-sel" onchange="drillStack=[];renderList()" style="font-size:12px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text-primary);padding:3px 8px;border-radius:4px;font-family:inherit;cursor:pointer;">
+      <optgroup label="Admin">
+        <option value="admin|root">Admin（最高層，看全部）</option>
+      </optgroup>
+      <optgroup label="站長">
+        <option value="owner|1">站長 — 九龍娛樂集團</option>
+        <option value="owner|2">站長 — 金沙灘娛樂城</option>
+        <option value="owner|3">站長 — 澳門皇宮</option>
+        <option value="owner|14">站長 — 寶島遊藝集團（實體機台）</option>
+      </optgroup>
+    </select>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-group">資訊看板</div>
+    <div class="sidebar-group">會員與加盟商 <span class="arr">›</span></div>
+    <div class="sidebar-group">帳務管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">各式報表 <span class="arr">›</span></div>
+    <div class="sidebar-group">遊戲廳管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">系統管理 <span class="arr">›</span></div>
+    <div class="sidebar-group active">後台管理員系統 <span class="arr" style="opacity:0.7;">∨</span></div>
+    <div class="sidebar-item">系統使用者列表</div>
+    <div class="sidebar-item active">站台列表</div>
+  </div>
+
+  <div class="main">
+    <div class="breadcrumb">後台管理員系統 <span>/</span> 站台列表</div>
+    <div class="page-header">
+      <h1 class="page-title">站台列表</h1>
+      <button class="btn-primary" onclick="openAddModal()">+ 新增站台</button>
+    </div>
+
+    <!-- 鑽入麵包屑 -->
+    <div class="drill-breadcrumb" id="drill-breadcrumb"></div>
+
+    <div class="list-wrap">
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="status" data-value="all" onclick="setFilter('all')">全部</button>
+      <button class="filter-chip" data-filter="status" data-value="pending" onclick="setFilter('pending')">待開通</button>
+      <button class="filter-chip" data-filter="status" data-value="active" onclick="setFilter('active')">開通</button>
+      <button class="filter-chip" data-filter="status" data-value="reviewing" onclick="setFilter('reviewing')">更新待審</button>
+      <button class="filter-chip" data-filter="status" data-value="suspended" onclick="setFilter('suspended')">暫停</button>
+      <button class="filter-chip" data-filter="status" data-value="closed" onclick="setFilter('closed')">關閉</button>
+      <div class="filter-search">
+        <input type="text" id="search-input" placeholder="搜尋站台名稱或代碼…" oninput="renderList()"/>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <span>站台名稱／代碼</span>
+      <span>站台類型</span>
+      <span>狀態</span>
+      <span>網域</span>
+      <span>模板</span>
+      <span>時間紀錄</span>
+      <span style="text-align:right;">操作</span>
+    </div>
+    <div id="site-list"></div>
+    </div><!-- /.list-wrap -->
+  </div>
+</div>
+
+<!-- 新增 / 編輯 Modal -->
+<div class="overlay" id="edit-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">新增站台</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="section-label" style="margin-top:0;padding-top:0;border-top:none;">基本資訊</div>
+
+      <div class="field">
+        <label class="field-label">上層站台</label>
+        <!-- Admin：可搜尋選取 -->
+        <div id="parent-editable">
+          <div style="position:relative;">
+            <input type="text" id="m-parent-search" placeholder="搜尋站台名稱或代碼（留空為根層）"
+              oninput="filterParentOptions(this.value)" onfocus="showParentDropdown()"
+              onblur="restoreParentLabel()" autocomplete="off"/>
+            <div id="m-parent-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg-card);border:1px solid var(--border-focus);border-radius:var(--radius);z-index:50;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);"></div>
+          </div>
+          <p class="field-hint">留空則建立為根層站台</p>
+        </div>
+        <!-- 非 Admin：唯讀顯示 -->
+        <div id="parent-readonly" style="display:none;">
+          <div class="parent-readonly-val" id="parent-readonly-label">—</div>
+        </div>
+        <input type="hidden" id="m-parent-id" value=""/>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">站台名稱 <span class="req">*</span></label>
+          <input type="text" id="m-name" placeholder="請輸入站台名稱"/>
+          <div class="error-msg" id="err-name" style="display:none;">請填寫站台名稱</div>
+        </div>
+        <div class="field">
+          <label class="field-label">站台代碼 <span class="req">*</span></label>
+          <div class="code-input-wrap">
+            <input type="text" id="m-code" placeholder="AA" maxlength="2"
+              oninput="this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase()"/>
+          </div>
+          <p class="field-hint">兩碼大寫英文字，建立後不可修改</p>
+          <div class="error-msg" id="err-code" style="display:none;">請填寫兩碼大寫英文站台代碼</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">站台類型 <span class="req">*</span></label>
+        <div class="status-options" style="grid-template-columns:1fr 1fr;">
+          <div class="status-opt" id="topt-online" onclick="selectSiteType('online')">
+            <div class="status-opt-label">線上</div>
+            <div class="status-opt-desc">一般線上站台</div>
+          </div>
+          <div class="status-opt" id="topt-machine" onclick="selectSiteType('machine')">
+            <div class="status-opt-label" style="color:var(--blue-text);">機台</div>
+            <div class="status-opt-desc">實體遊藝場（場館）</div>
+          </div>
+        </div>
+        <p class="field-hint">二擇一，建立後不可修改；於主站台（根層）選定，子站台一律與主站台同類型。機台類型站台（主站台或子站台）皆帶機台專屬欄位——機台主站台可自行直接經營（自身即場館），設定作用範圍為該站台自身、不含子站台</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">核心貨幣</label>
+        <!-- 根層（主站台）：下拉選單，選項依站台類型過濾 -->
+        <div id="currency-editable" style="display:none;">
+          <select id="m-currency"></select>
+          <p class="field-hint">選項依站台類型過濾（目前線上僅 USDT、機台僅 TWD，各只有一種故自動帶入；幣別清單可擴充，非寫死）；子站台一律繼承主站台核心貨幣，機台場館的「場館幣別」即本欄值，不另設欄位</p>
+        </div>
+        <!-- 子站台：唯讀繼承 -->
+        <div id="currency-readonly" style="display:none;">
+          <div class="parent-readonly-val" id="currency-readonly-label">—</div>
+          <p class="field-hint">子站台一律繼承主站台核心貨幣，不可各自指定；機台場館的「場館幣別」即本欄繼承值，不另設欄位</p>
+        </div>
+      </div>
+
+      <div class="field" id="status-field">
+        <label class="field-label">狀態 <span class="req">*</span></label>
+        <div class="status-options" style="grid-template-columns:1fr 1fr 1fr;">
+          <div class="status-opt" id="sopt-pending" onclick="selectStatus('pending')">
+            <div class="status-opt-label" style="color:var(--text-secondary);">待開通</div>
+            <div class="status-opt-desc">站台建立中，尚未上線</div>
+          </div>
+          <div class="status-opt" id="sopt-active" onclick="selectStatus('active')">
+            <div class="status-opt-label" style="color:var(--green-text);">開通</div>
+            <div class="status-opt-desc">站台正常運作中</div>
+          </div>
+          <div class="status-opt" id="sopt-reviewing" onclick="selectStatus('reviewing')">
+            <div class="status-opt-label" style="color:var(--purple-text);">更新待審</div>
+            <div class="status-opt-desc">網域變更中，待技術確認</div>
+          </div>
+          <div class="status-opt" id="sopt-suspended" onclick="selectStatus('suspended')">
+            <div class="status-opt-label" style="color:var(--yellow-text);">暫停</div>
+            <div class="status-opt-desc">暫停服務，可恢復</div>
+          </div>
+          <div class="status-opt" id="sopt-closed" onclick="selectStatus('closed')">
+            <div class="status-opt-label" style="color:var(--red-text);">關閉</div>
+            <div class="status-opt-desc">站台已永久停止服務</div>
+          </div>
+        </div>
+        <div class="error-msg" id="err-status" style="display:none;">請選擇站台狀態</div>
+      </div>
+
+      <div class="field" id="template-field">
+        <label class="field-label">模板</label>
+        <!-- Admin：可選取 -->
+        <div id="template-editable">
+          <select id="m-template">
+            <option value="">— 留空（待 Admin 指定）</option>
+            <option value="tpl-a">Template A — 標準版</option>
+            <option value="tpl-b">Template B — 簡潔版</option>
+            <option value="tpl-c">Template C — 旗艦版</option>
+          </select>
+          <p class="field-hint">切換站台為「開通」時，模板為必填</p>
+        </div>
+        <!-- 非 Admin：唯讀 -->
+        <div id="template-readonly" style="display:none;">
+          <div class="parent-readonly-val" id="template-readonly-label">—</div>
+        </div>
+        <div class="error-msg" id="err-template" style="display:none;">切換為「開通」狀態時，必須先指定模板</div>
+      </div>
+
+      <!-- 機台專屬欄位（站台類型＝機台時顯示） -->
+      <div id="machine-fields" style="display:none;">
+        <div class="section-label">機台專屬欄位（場館設定）</div>
+
+        <div class="field">
+          <label class="field-label">場館地址</label>
+          <input type="text" id="m-venue-address" placeholder="選填，供對帳與稽核識別"/>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">場館聯絡人</label>
+            <input type="text" id="m-venue-contact" placeholder="選填"/>
+          </div>
+          <div class="field">
+            <label class="field-label">場館電話</label>
+            <input type="text" id="m-venue-phone" placeholder="選填"/>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">額度上限</label>
+            <input type="number" id="m-venue-limit" min="0" placeholder="0"/>
+            <p class="field-hint">場館層級，全場館機台共用同一份額度；設 0 不限制</p>
+          </div>
+          <div class="field">
+            <label class="field-label">場次逾時時間（小時）</label>
+            <input type="number" id="m-venue-timeout" min="0" step="0.5" placeholder="1"/>
+            <p class="field-hint">預設 1 小時；站長可調整，操作員唯讀</p>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">日結時間（UTC+0）</label>
+            <input type="time" id="m-venue-cutoff" value="00:00"/>
+            <p class="field-hint">每日結算的截止時刻，用於場館日結報表分日</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">前台網域</div>
+
+      <div class="field" style="margin-bottom:4px;">
+        <p class="field-hint" style="margin-bottom:8px;">可新增多個前台網域，每行一筆</p>
+        <div class="domain-inputs" id="frontend-domains"></div>
+        <button class="add-domain-btn" onclick="addDomain('frontend')">＋ 新增前台網域</button>
+      </div>
+
+      <div class="section-label">後台網域</div>
+
+      <div class="field" style="margin-bottom:0;">
+        <p class="field-hint" style="margin-bottom:8px;">可新增多個後台網域，每行一筆</p>
+        <div class="domain-inputs" id="backend-domains"></div>
+        <button class="add-domain-btn" onclick="addDomain('backend')">＋ 新增後台網域</button>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn-primary" id="modal-save-btn" onclick="saveModal()">建立站台</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="overlay" id="confirm-overlay">
+  <div class="modal confirm-modal" style="width:380px;">
+    <div class="modal-head">
+      <h2>確認刪除</h2>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-primary);line-height:1.7;">確定要刪除站台「<span id="confirm-name" style="color:var(--red-text);"></span>」（<span id="confirm-code" style="font-family:monospace;color:var(--text-secondary);"></span>）？此操作無法復原。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn-primary" style="background:var(--red-text);color:#fff;" onclick="confirmDelete()">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── 資料 ───────────────────────────────────────────
+let nextId = 20;
+let sites = [
+  // ── 根層 ──────────────────────────────────────────
+  { id:1, parentId:null, name:'九龍娛樂集團', code:'KL', status:'active', siteType:'online', coreCurrency:'USDT',
+    frontendDomains:['kowloon.bet','www.kowloon.bet'], backendDomains:['admin.kowloon.bet','api.kowloon.bet'],
+    template:'tpl-a', createdAt:'2024-03-01 08:00', updatedAt:'2026-05-12 14:30', lastLoginAt:'2026-06-17 09:21' },
+  { id:2, parentId:null, name:'金沙灘娛樂城', code:'GS', status:'active', siteType:'online', coreCurrency:'USDT',
+    frontendDomains:['goldsands.vip','m.goldsands.vip'], backendDomains:['api.goldsands.vip'],
+    template:'tpl-b', createdAt:'2024-06-15 10:00', updatedAt:'2026-04-08 11:20', lastLoginAt:'2026-06-16 22:44' },
+  { id:3, parentId:null, name:'澳門皇宮', code:'MP', status:'suspended', siteType:'online', coreCurrency:'USDT',
+    frontendDomains:['macaupalace.cc'], backendDomains:['api.macaupalace.cc'],
+    template:'tpl-c', createdAt:'2023-11-20 09:30', updatedAt:'2026-01-05 16:00', lastLoginAt:'2026-03-10 18:55' },
+  { id:4, parentId:null, name:'星際博彩', code:'SB', status:'closed', siteType:'online', coreCurrency:'USDT',
+    frontendDomains:['starbetting.io'], backendDomains:['api.starbetting.io'],
+    template:'tpl-a', createdAt:'2023-05-10 08:00', updatedAt:'2025-08-01 00:00', lastLoginAt:'2025-07-28 03:12' },
+
+  // ── 九龍娛樂集團 子站 ──────────────────────────────
+  { id:5, parentId:1, name:'九龍 VIP 廳', code:'KV', status:'active',
+    frontendDomains:['vip.kowloon.bet'], backendDomains:['api-vip.kowloon.bet'],
+    template:'tpl-a', createdAt:'2024-05-20 10:00', updatedAt:'2026-06-01 09:00', lastLoginAt:'2026-06-17 08:10' },
+  { id:6, parentId:1, name:'九龍體育館', code:'KS', status:'reviewing',
+    frontendDomains:['sports.kowloon.bet','live.kowloon.bet'], backendDomains:['api-sports.kowloon.bet'],
+    template:'tpl-b', createdAt:'2024-07-01 11:00', updatedAt:'2026-06-17 10:45', lastLoginAt:'2026-06-15 20:33' },
+  { id:7, parentId:1, name:'九龍電子競技', code:'KE', status:'pending',
+    frontendDomains:[], backendDomains:[],
+    template:'', createdAt:'2026-06-10 14:00', updatedAt:null, lastLoginAt:null },
+
+  // ── 九龍 VIP 廳 子站（第三層）────────────────────────
+  { id:8, parentId:5, name:'九龍鑽石會', code:'KD', status:'active',
+    frontendDomains:['diamond.kowloon.bet'], backendDomains:['api-diamond.kowloon.bet'],
+    template:'tpl-c', createdAt:'2024-09-01 09:00', updatedAt:'2026-03-15 12:00', lastLoginAt:'2026-06-16 23:58' },
+  { id:9, parentId:5, name:'九龍百家樂廳', code:'KB', status:'reviewing',
+    frontendDomains:['baccarat.kowloon.bet','live-baccarat.kowloon.bet'], backendDomains:['api-baccarat.kowloon.bet'],
+    template:'tpl-a', createdAt:'2025-01-10 08:30', updatedAt:'2026-06-17 11:02', lastLoginAt:'2026-06-17 07:45' },
+
+  // ── 金沙灘娛樂城 子站 ──────────────────────────────
+  { id:10, parentId:2, name:'金沙灘真人廳', code:'GL', status:'active',
+    frontendDomains:['live.goldsands.vip'], backendDomains:['api-live.goldsands.vip'],
+    template:'tpl-b', createdAt:'2024-08-20 13:00', updatedAt:'2026-05-22 10:30', lastLoginAt:'2026-06-16 21:10' },
+  { id:11, parentId:2, name:'金沙灘老虎機', code:'GG', status:'suspended',
+    frontendDomains:['slots.goldsands.vip'], backendDomains:['api-slots.goldsands.vip'],
+    template:'tpl-b', createdAt:'2024-10-05 09:00', updatedAt:'2026-02-18 14:00', lastLoginAt:'2026-04-30 17:22' },
+  { id:12, parentId:2, name:'金沙灘捕魚王', code:'GF', status:'pending',
+    frontendDomains:[], backendDomains:[],
+    template:'', createdAt:'2026-05-28 15:30', updatedAt:null, lastLoginAt:null },
+
+  // ── 金沙灘真人廳 子站（第三層）────────────────────────
+  { id:13, parentId:10, name:'金沙灘歐洲輪盤', code:'GR', status:'active',
+    frontendDomains:['roulette.goldsands.vip'], backendDomains:['api-roulette.goldsands.vip'],
+    template:'tpl-c', createdAt:'2025-02-14 10:00', updatedAt:'2026-04-01 09:15', lastLoginAt:'2026-06-15 03:40' },
+
+  // ── 實體遊藝場客戶：主站台（核心貨幣 TWD）與機台場館 ──
+  { id:14, parentId:null, name:'寶島遊藝集團', code:'BG', status:'active', siteType:'machine', coreCurrency:'TWD',
+    // 機台主站台自行直接經營：自身即一間場館，帶完整場館設定（作用範圍為本站台自身、不含子站台）
+    machine:{ address:'台北市中山區南京東路 1 號', contact:'王志明', phone:'02-2500-0000',
+      creditLimit:800000, sessionTimeout:1, dailyCutoff:'16:00' },
+    frontendDomains:['baodao.tw'], backendDomains:['admin.baodao.tw'],
+    template:'tpl-a', createdAt:'2026-07-01 09:00', updatedAt:'2026-08-10 10:00', lastLoginAt:'2026-08-20 08:15' },
+  { id:15, parentId:14, name:'寶島遊藝 台北館', code:'TP', status:'active', siteType:'machine',
+    machine:{ address:'台北市萬華區昆明街 100 號', contact:'林大同', phone:'02-2371-0000',
+      creditLimit:500000, sessionTimeout:1, dailyCutoff:'16:00' },
+    frontendDomains:['tp.baodao.tw'], backendDomains:['api-tp.baodao.tw'],
+    template:'tpl-a', createdAt:'2026-07-05 10:00', updatedAt:'2026-08-18 14:00', lastLoginAt:'2026-08-21 07:40' },
+  { id:16, parentId:14, name:'寶島遊藝 台中館', code:'TC', status:'pending', siteType:'machine',
+    machine:{ address:'台中市中區綠川西街 88 號', contact:'陳美玲', phone:'04-2222-0000',
+      creditLimit:0, sessionTimeout:2, dailyCutoff:'16:00' },
+    frontendDomains:[], backendDomains:[],
+    template:'', createdAt:'2026-08-15 11:00', updatedAt:null, lastLoginAt:null },
+];
+
+const TEMPLATES = {
+  '': '—（全部模板）',
+  'tpl-a': 'Template A',
+  'tpl-b': 'Template B',
+  'tpl-c': 'Template C',
+};
+
+const STATUS_META = {
+  pending:   { label: '待開通',   cls: 'status-pending' },
+  active:    { label: '開通',     cls: 'status-active' },
+  suspended: { label: '暫停',     cls: 'status-suspended' },
+  closed:    { label: '關閉',     cls: 'status-closed' },
+  reviewing: { label: '更新待審', cls: 'status-reviewing' },
+};
+
+// ─── 鑽入狀態：stack 紀錄路徑，每個元素為 {id, name} ──
+// stack 為空 = 顯示根層（parentId === null 的站台）
+let drillStack = [];
+
+// ─── 取得當前層的父節點 id（null = 根層）────────────────
+function currentParentId() {
+  return drillStack.length ? drillStack[drillStack.length - 1].id : null;
+}
+
+// ─── 鑽入 ────────────────────────────────────────────
+function drillInto(siteId) {
+  const site = sites.find(s => s.id === siteId);
+  if (!site) return;
+  drillStack.push({ id: site.id, name: site.name, code: site.code });
+  renderList();
+}
+
+// ─── 返回到麵包屑某層 ─────────────────────────────────
+function drillTo(idx) {
+  drillStack = drillStack.slice(0, idx + 1);
+  renderList();
+}
+
+// ─── 返回根層 ─────────────────────────────────────────
+function drillRoot() {
+  drillStack = [];
+  renderList();
+}
+
+// ─── 渲染麵包屑 ───────────────────────────────────────
+function renderBreadcrumb() {
+  const el = document.getElementById('drill-breadcrumb');
+  if (drillStack.length === 0) { el.innerHTML = ''; return; }
+
+  let parts = [`<span class="drill-crumb" onclick="drillRoot()">站台列表</span>`];
+  drillStack.forEach((item, idx) => {
+    parts.push(`<span class="drill-sep">›</span>`);
+    if (idx === drillStack.length - 1) {
+      parts.push(`<span class="drill-crumb current">${item.name} <span style="font-size:11px;color:var(--text-muted);font-family:monospace;">${item.code}</span></span>`);
+    } else {
+      parts.push(`<span class="drill-crumb" onclick="drillTo(${idx})">${item.name}</span>`);
+    }
+  });
+  el.innerHTML = parts.join('');
+}
+
+// ─── 角色判斷 ────────────────────────────────────────
+function getCurrentRole() {
+  const sel = document.getElementById('current-user-sel');
+  const val = sel ? sel.value : 'admin|root';
+  const [role, id] = val.split('|');
+  return { role, id };
+}
+
+function isAdmin() {
+  return getCurrentRole().role === 'admin';
+}
+
+function getVisibleRootId() {
+  const { role, id } = getCurrentRole();
+  return (role === 'admin') ? null : parseInt(id);
+}
+
+// ─── 篩選狀態 ────────────────────────────────────────
+let activeFilter = 'all';
+
+function setFilter(val) {
+  activeFilter = val;
+  document.querySelectorAll('.filter-chip').forEach(el => {
+    el.classList.toggle('active', el.dataset.value === val);
+  });
+  renderList();
+}
+
+function renderList() {
+  renderBreadcrumb();
+  const q = (document.getElementById('search-input').value || '').trim().toLowerCase();
+  const list = document.getElementById('site-list');
+  const visibleRootId = getVisibleRootId();
+
+  let candidates;
+
+  if (visibleRootId !== null && drillStack.length === 0) {
+    // 站長根層：只顯示自身站台這一筆
+    candidates = sites.filter(s => s.id === visibleRootId);
+  } else {
+    candidates = sites.filter(s => s.parentId === currentParentId());
+  }
+
+  // 篩選
+  if (activeFilter !== 'all') candidates = candidates.filter(s => s.status === activeFilter);
+  if (q) candidates = candidates.filter(s =>
+    s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
+  );
+
+  if (candidates.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-title">${drillStack.length ? '此站台下沒有子站台' : '找不到符合條件的站台'}</div><div>${drillStack.length ? '可點擊右上角新增子站台' : '試試調整篩選條件，或新增一個站台'}</div></div>`;
+    return;
+  }
+
+  list.innerHTML = candidates.map(s => {
+    const sm = STATUS_META[s.status];
+    const domainCell = renderDomainCell(s.id, s.frontendDomains, s.backendDomains);
+    const tplLabel = s.template ? `<span class="tpl-tag">${TEMPLATES[s.template]}</span>` : `<span class="tpl-empty">—</span>`;
+    const childCount = sites.filter(c => c.parentId === s.id).length;
+    const childBadge = childCount > 0 ? `<span class="child-count">${childCount} 個子站</span>` : '';
+    const nameClickable = `<span class="site-name site-name-link" onclick="drillInto(${s.id})" title="點擊進入子站台列表">${s.name}${childBadge}</span>`;
+    const typeTag = s.siteType === 'machine'
+      ? `<span class="type-tag type-machine">機台</span>`
+      : `<span class="type-tag type-online">線上</span>`;
+
+    return `
+      <div class="site-card">
+        <div class="site-row">
+          <div>
+            ${nameClickable}
+            <div class="site-code">${s.code}</div>
+          </div>
+          <div>${typeTag}</div>
+          <div><span class="status-badge ${sm.cls}"><span class="status-dot"></span>${sm.label}</span></div>
+          <div>${domainCell}</div>
+          <div>${tplLabel}</div>
+          <div class="time-stack">
+            <div class="time-stack-row"><span class="time-label">創建</span><span class="time-value">${s.createdAt||'—'}</span></div>
+            <div class="time-stack-row"><span class="time-label">修改</span><span class="time-value" style="${!s.updatedAt?'color:var(--text-muted);':''}">${s.updatedAt||'—'}</span></div>
+            <div class="time-stack-row"><span class="time-label">登入</span><span class="time-value" style="${!s.lastLoginAt?'color:var(--text-muted);':''}">${s.lastLoginAt||'從未登入'}</span></div>
+          </div>
+          <div class="ops-cell">
+            <button class="btn-sm" onclick="openEditModal(${s.id})">編輯</button>
+            <button class="btn-sm danger" onclick="askDelete(${s.id})">刪除</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderDomainCell(siteId, fe, be) {
+  fe = fe || []; be = be || [];
+  if (fe.length === 0 && be.length === 0) return `<span class="domain-empty">—</span>`;
+  return `<div class="domain-count-cell">
+    <div class="domain-count-row">
+      <span class="domain-type-badge">前台</span>
+      <span class="domain-count-num">${fe.length} 個</span>
+    </div>
+    <div class="domain-count-row">
+      <span class="domain-type-badge">後台</span>
+      <span class="domain-count-num">${be.length} 個</span>
+    </div>
+  </div>`;
+}
+
+// ─── Modal 狀態 ──────────────────────────────────────
+let editId = null;
+let modalStatus = '';
+let modalSiteType = 'online';
+let pendingDeleteId = null;
+
+// ─── 站台類型（線上／機台，建立後不可修改）─────────────
+function selectSiteType(t) {
+  if (editId) return; // 建立後不可修改
+  // 站台類型於主站台（根層）選定；子站台一律與主站台同類型
+  if (document.getElementById('m-parent-id').value) {
+    showToast('子站台的站台類型一律與主站台一致，無法個別選擇');
+    return;
+  }
+  modalSiteType = t;
+  renderSiteTypeOpts();
+  updateCurrencyUI();
+}
+
+function renderSiteTypeOpts() {
+  const isSub = !!document.getElementById('m-parent-id').value;
+  const locked = !!editId || isSub;
+  [['online', 'topt-online'], ['machine', 'topt-machine']].forEach(([t, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'status-opt' + (modalSiteType === t ? (t === 'machine' ? ' sel-machine' : ' sel-online') : '');
+    el.style.cursor = locked ? 'not-allowed' : '';
+    el.style.opacity = (locked && modalSiteType !== t) ? '0.35' : '';
+    el.title = editId ? '站台類型建立後不可修改' : (isSub ? '子站台一律與主站台同類型' : '');
+  });
+  // 機台專屬欄位（場館設定）：凡機台類型站台皆有——機台主站台可自行直接經營（自身即場館），子站台（場館）各自一份
+  document.getElementById('machine-fields').style.display = modalSiteType === 'machine' ? '' : 'none';
+}
+
+// ─── 核心貨幣（依主站台類型自動帶入、子站台一律繼承）─────────────
+function getRootSiteByParent(parentId) {
+  let cur = parentId ? sites.find(s => s.id === parentId) : null;
+  while (cur && cur.parentId) cur = sites.find(s => s.id === cur.parentId);
+  return cur || null;
+}
+
+function getRootCurrencyByParent(parentId) {
+  const root = getRootSiteByParent(parentId);
+  return root ? (root.coreCurrency || '—') : null;
+}
+
+// 各站台類型的可選幣別清單——目前各只有一種；清單可擴充，勿在他處寫死幣別
+const CURRENCIES_BY_TYPE = { online: ['USDT'], machine: ['TWD'] };
+let pendingCurrency = null; // 編輯根層站台時，帶回既有核心貨幣用
+
+function updateCurrencyUI() {
+  const parentIdVal = document.getElementById('m-parent-id').value;
+  const isRoot = !parentIdVal;
+  document.getElementById('currency-editable').style.display = isRoot ? '' : 'none';
+  document.getElementById('currency-readonly').style.display = isRoot ? 'none' : '';
+  if (isRoot) {
+    const sel = document.getElementById('m-currency');
+    const opts = CURRENCIES_BY_TYPE[modalSiteType] || [];
+    const keep = (pendingCurrency && opts.includes(pendingCurrency)) ? pendingCurrency
+      : (opts.includes(sel.value) ? sel.value : opts[0]);
+    pendingCurrency = null;
+    sel.innerHTML = opts.map(c => `<option value="${c}"${c === keep ? ' selected' : ''}>${c}</option>`).join('');
+  } else {
+    const effective = getRootCurrencyByParent(parseInt(parentIdVal)) || '—';
+    document.getElementById('currency-readonly-label').textContent = `${effective}（繼承主站台核心貨幣）`;
+  }
+}
+
+function fillMachineInputs(m) {
+  m = m || {};
+  document.getElementById('m-venue-address').value = m.address || '';
+  document.getElementById('m-venue-contact').value = m.contact || '';
+  document.getElementById('m-venue-phone').value = m.phone || '';
+  document.getElementById('m-venue-limit').value = (m.creditLimit != null) ? m.creditLimit : 0;
+  document.getElementById('m-venue-timeout').value = (m.sessionTimeout != null) ? m.sessionTimeout : 1;
+  document.getElementById('m-venue-cutoff').value = m.dailyCutoff || '00:00';
+}
+
+function openAddModal() {
+  editId = null;
+  modalStatus = 'pending';
+  document.getElementById('status-field').style.display = 'none';
+  document.getElementById('modal-title').textContent = '新增站台';
+  document.getElementById('modal-save-btn').textContent = '建立站台';
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-code').value = '';
+  document.getElementById('m-code').disabled = false;
+  document.getElementById('m-code').style.opacity = '';
+  document.getElementById('m-template').value = '';
+  document.getElementById('m-parent-dropdown').style.display = 'none';
+
+  const cur = drillStack.length ? drillStack[drillStack.length - 1] : null;
+  const parentLabel = cur ? `${cur.name}（${cur.code}）` : '— 根層（無上層站台）';
+  document.getElementById('m-parent-id').value = cur ? cur.id : '';
+
+  if (isAdmin()) {
+    document.getElementById('parent-editable').style.display = '';
+    document.getElementById('parent-readonly').style.display = 'none';
+    document.getElementById('m-parent-search').value = cur ? parentLabel : '';
+    document.getElementById('template-editable').style.display = '';
+    document.getElementById('template-readonly').style.display = 'none';
+  } else {
+    document.getElementById('parent-editable').style.display = 'none';
+    document.getElementById('parent-readonly').style.display = '';
+    document.getElementById('parent-readonly-label').textContent = parentLabel;
+    document.getElementById('template-editable').style.display = 'none';
+    document.getElementById('template-readonly').style.display = '';
+    document.getElementById('template-readonly-label').textContent = '—';
+  }
+
+  // 於樹狀某層底下新增時，類型跟隨該樹的主站台；根層新增預設線上
+  modalSiteType = cur ? ((getRootSiteByParent(cur.id) || {}).siteType || 'online') : 'online';
+  fillMachineInputs(null);
+  renderSiteTypeOpts();
+  updateCurrencyUI();
+
+  clearErrors();
+  renderStatusOpts();
+  initDomains('frontend', []);
+  initDomains('backend', []);
+  document.getElementById('edit-overlay').classList.add('active');
+}
+
+function openEditModal(id) {
+  const site = sites.find(s => s.id === id);
+  if (!site) return;
+  editId = id;
+  modalStatus = site.status;
+  document.getElementById('status-field').style.display = '';
+  document.getElementById('modal-title').textContent = '編輯站台';
+  document.getElementById('modal-save-btn').textContent = '儲存變更';
+  document.getElementById('m-name').value = site.name;
+  document.getElementById('m-code').value = site.code;
+  document.getElementById('m-code').disabled = true;
+  document.getElementById('m-code').style.opacity = '0.5';
+  document.getElementById('m-template').value = site.template || '';
+  document.getElementById('m-parent-dropdown').style.display = 'none';
+
+  const parent = site.parentId ? sites.find(s => s.id === site.parentId) : null;
+  const parentLabel = parent ? `${parent.name}（${parent.code}）` : '— 根層（無上層站台）';
+  document.getElementById('m-parent-id').value = site.parentId || '';
+
+  if (isAdmin()) {
+    document.getElementById('parent-editable').style.display = '';
+    document.getElementById('parent-readonly').style.display = 'none';
+    document.getElementById('m-parent-search').value = parent ? parentLabel : '';
+    document.getElementById('template-editable').style.display = '';
+    document.getElementById('template-readonly').style.display = 'none';
+  } else {
+    document.getElementById('parent-editable').style.display = 'none';
+    document.getElementById('parent-readonly').style.display = '';
+    document.getElementById('parent-readonly-label').textContent = parentLabel;
+    document.getElementById('template-editable').style.display = 'none';
+    document.getElementById('template-readonly').style.display = '';
+    const tplNames = { 'tpl-a': 'Template A — 標準版', 'tpl-b': 'Template B — 簡潔版', 'tpl-c': 'Template C — 旗艦版' };
+    document.getElementById('template-readonly-label').textContent = site.template ? tplNames[site.template] : '— 尚未指定';
+  }
+
+  modalSiteType = site.siteType || 'online';
+  pendingCurrency = site.parentId ? null : (site.coreCurrency || null);
+  fillMachineInputs(site.machine);
+  renderSiteTypeOpts();
+  updateCurrencyUI();
+
+  clearErrors();
+  renderStatusOpts();
+  initDomains('frontend', site.frontendDomains || []);
+  initDomains('backend', site.backendDomains || []);
+  document.getElementById('edit-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('edit-overlay').classList.remove('active');
+}
+
+function selectStatus(s) {
+  modalStatus = s;
+  renderStatusOpts();
+}
+
+function renderStatusOpts() {
+  const ownerAllowed = ['suspended', 'closed'];
+  ['pending', 'active', 'reviewing', 'suspended', 'closed'].forEach(s => {
+    const el = document.getElementById('sopt-' + s);
+    if (!el) return;
+    const locked = !isAdmin() && !ownerAllowed.includes(s);
+    el.className = 'status-opt' + (modalStatus === s ? ' sel-' + s : '') + (locked ? ' locked' : '');
+    el.onclick = locked ? null : () => selectStatus(s);
+    el.style.cursor = locked ? 'not-allowed' : '';
+    el.style.opacity = locked ? '0.35' : '';
+    el.title = locked ? '此狀態僅 Admin 可設定' : '';
+  });
+}
+
+// ─── 域名動態輸入 ─────────────────────────────────────
+function initDomains(type, values) {
+  const container = document.getElementById(type + '-domains');
+  container.innerHTML = '';
+  if (values.length === 0) {
+    addDomainRow(type, '');
+  } else {
+    values.forEach(v => addDomainRow(type, v));
+  }
+}
+
+function addDomain(type) {
+  addDomainRow(type, '');
+}
+
+function addDomainRow(type, value) {
+  const container = document.getElementById(type + '-domains');
+  const row = document.createElement('div');
+  row.className = 'domain-input-row';
+  row.innerHTML = `
+    <input type="text" placeholder="${type === 'frontend' ? 'example.com' : 'api.example.com'}" value="${value}"/>
+    <button class="domain-remove-btn" onclick="removeDomainRow(this)" title="移除">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeDomainRow(btn) {
+  const container = btn.closest('.domain-inputs');
+  if (container.children.length <= 1) {
+    btn.closest('.domain-input-row').querySelector('input').value = '';
+    return;
+  }
+  btn.closest('.domain-input-row').remove();
+}
+
+function getDomains(type) {
+  return [...document.getElementById(type + '-domains').querySelectorAll('input')]
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+// ─── 驗證 ─────────────────────────────────────────────
+function clearErrors() {
+  ['name', 'code', 'status', 'template'].forEach(k => {
+    const el = document.getElementById('err-' + k);
+    if (el) { el.style.display = 'none'; }
+  });
+  document.getElementById('err-code').textContent = '請填寫兩碼大寫英文站台代碼';
+  document.getElementById('err-status').textContent = '請選擇站台狀態';
+  document.getElementById('err-template').textContent = '切換為「開通」狀態時，必須先指定模板';
+  document.getElementById('m-name').classList.remove('error');
+  document.getElementById('m-code').classList.remove('error');
+}
+
+function saveModal() {
+  clearErrors();
+  let valid = true;
+
+  const name = document.getElementById('m-name').value.trim();
+  const code = document.getElementById('m-code').value.trim();
+  const template = document.getElementById('m-template').value;
+
+  if (!name) {
+    document.getElementById('err-name').style.display = 'block';
+    document.getElementById('m-name').classList.add('error');
+    valid = false;
+  }
+  if (!editId && (!/^[A-Z]{2}$/.test(code))) {
+    document.getElementById('err-code').style.display = 'block';
+    document.getElementById('m-code').classList.add('error');
+    valid = false;
+  }
+  if (!modalStatus) {
+    document.getElementById('err-status').style.display = 'block';
+    valid = false;
+  }
+  if (!template && modalStatus === 'active') {
+    document.getElementById('err-template').style.display = 'block';
+    valid = false;
+  }
+  if (!valid) return;
+
+  // 站台代碼重複檢查（新增時，格式已通過才執行）
+  if (!editId && sites.some(s => s.code === code)) {
+    document.getElementById('err-code').textContent = '此站台代碼已被使用，請換一組';
+    document.getElementById('err-code').style.display = 'block';
+    document.getElementById('m-code').classList.add('error');
+    return;
+  }
+
+  const data = {
+    name,
+    code: editId ? sites.find(s => s.id === editId).code : code,
+    // 站台類型建立後不可修改：編輯時一律沿用原值
+    siteType: editId ? (sites.find(s => s.id === editId).siteType || 'online') : modalSiteType,
+    status: modalStatus,
+    template,
+    frontendDomains: getDomains('frontend'),
+    backendDomains: getDomains('backend'),
+  };
+
+  // 核心貨幣：僅根層（主站台）儲存，取自依類型過濾的下拉選單；子站台一律繼承，不落地
+  const parentIdRaw = document.getElementById('m-parent-id').value;
+  if (!parentIdRaw) data.coreCurrency = document.getElementById('m-currency').value;
+
+  // 機台專屬欄位（場館設定）
+  if (data.siteType === 'machine') {
+    data.machine = {
+      address: document.getElementById('m-venue-address').value.trim(),
+      contact: document.getElementById('m-venue-contact').value.trim(),
+      phone: document.getElementById('m-venue-phone').value.trim(),
+      creditLimit: parseFloat(document.getElementById('m-venue-limit').value) || 0,
+      sessionTimeout: parseFloat(document.getElementById('m-venue-timeout').value) || 1,
+      dailyCutoff: document.getElementById('m-venue-cutoff').value || '00:00',
+    };
+  }
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const nowStr = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}`;
+
+  if (editId) {
+    const parentIdVal = document.getElementById('m-parent-id').value;
+    const parentId = parentIdVal ? parseInt(parentIdVal) : null;
+    const orig = sites.find(s => s.id === editId);
+
+    // 非 Admin 不可主動切換為 pending / active / reviewing
+    const ownerAllowed = ['suspended', 'closed'];
+    if (!isAdmin() && !ownerAllowed.includes(modalStatus)) {
+      // 只有當站長「主動把狀態選成不允許的值」才擋
+      // 如果是維持原狀態（orig.status 不在 ownerAllowed 內），允許通過，讓系統邏輯自動處理
+      if (ownerAllowed.includes(orig.status) || modalStatus !== orig.status) {
+        if (!ownerAllowed.includes(modalStatus)) {
+          document.getElementById('err-status').textContent = '您僅能將站台設為「暫停」或「關閉」';
+          document.getElementById('err-status').style.display = 'block';
+          return;
+        }
+      }
+    }
+
+    // 若原狀態為開通或更新待審，且網域有異動，自動切換為「更新待審」
+    const origFe = JSON.stringify([...(orig.frontendDomains || [])].sort());
+    const origBe = JSON.stringify([...(orig.backendDomains || [])].sort());
+    const newFe  = JSON.stringify([...data.frontendDomains].sort());
+    const newBe  = JSON.stringify([...data.backendDomains].sort());
+    const domainChanged = origFe !== newFe || origBe !== newBe;
+
+    if (['active', 'reviewing'].includes(orig.status) && domainChanged) {
+      data.status = 'reviewing';
+      modalStatus = 'reviewing';
+    }
+
+    Object.assign(orig, data, { updatedAt: nowStr, parentId });
+  } else {
+    const parentIdVal = document.getElementById('m-parent-id').value;
+    const parentId = parentIdVal ? parseInt(parentIdVal) : null;
+    sites.push({ id: nextId++, parentId, createdAt: nowStr, updatedAt: null, lastLoginAt: null, ...data });
+  }
+
+  closeModal();
+  renderList();
+}
+
+// ─── 刪除 ─────────────────────────────────────────────
+function askDelete(id) {
+  const site = sites.find(s => s.id === id);
+  if (!site) return;
+  pendingDeleteId = id;
+  document.getElementById('confirm-name').textContent = site.name;
+  document.getElementById('confirm-code').textContent = site.code;
+  document.getElementById('confirm-overlay').classList.add('active');
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('active');
+  pendingDeleteId = null;
+}
+function confirmDelete() {
+  if (pendingDeleteId) sites = sites.filter(s => s.id !== pendingDeleteId);
+  closeConfirm();
+  renderList();
+}
+
+// ─── 上層站台選擇器 ──────────────────────────────────
+// 取得某站台的完整路徑字串，例如 皇冠娛樂城 › 皇冠VIP廳
+function getSitePath(siteId) {
+  const parts = [];
+  let cur = sites.find(s => s.id === siteId);
+  while (cur) {
+    parts.unshift(cur.name);
+    cur = cur.parentId ? sites.find(s => s.id === cur.parentId) : null;
+  }
+  return parts.join(' › ');
+}
+
+function restoreParentLabel() {
+  // blur 時根據 hidden id 還原顯示名稱（延遲執行避免干擾 click 選取）
+  setTimeout(() => {
+    const id = document.getElementById('m-parent-id').value;
+    if (id) {
+      const site = sites.find(s => s.id === parseInt(id));
+      if (site) document.getElementById('m-parent-search').value = `${site.name}（${site.code}）`;
+    } else {
+      document.getElementById('m-parent-search').value = '';
+    }
+    document.getElementById('m-parent-dropdown').style.display = 'none';
+  }, 200);
+}
+
+function showParentDropdown() {
+  // focus 時清空輸入框，讓使用者直接輸入搜尋
+  document.getElementById('m-parent-search').value = '';
+  filterParentOptions('');
+}
+
+function filterParentOptions(q) {
+  const dd = document.getElementById('m-parent-dropdown');
+  const currentParentId = document.getElementById('m-parent-id').value;
+  q = q.trim().toLowerCase();
+
+  // 排除自身（編輯時）及其子孫（防止循環）
+  const excludeIds = new Set();
+  if (editId) {
+    excludeIds.add(editId);
+    // 也排除 editId 的所有後代
+    const queue = [editId];
+    while (queue.length) {
+      const cur = queue.shift();
+      sites.filter(s => s.parentId === cur).forEach(s => { excludeIds.add(s.id); queue.push(s.id); });
+    }
+  }
+
+  let candidates = sites.filter(s => !excludeIds.has(s.id));
+  if (q) candidates = candidates.filter(s =>
+    s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
+  );
+
+  let html = `<div class="parent-opt${!currentParentId ? ' sel' : ''}" onclick="selectParent(null, '')">
+    <span>— 根層（無上層站台）</span>
+  </div>`;
+
+  if (candidates.length === 0 && q) {
+    html += `<div class="parent-none">找不到符合的站台</div>`;
+  } else {
+    html += candidates.map(s => {
+      const path = getSitePath(s.id);
+      const isSel = String(s.id) === String(currentParentId);
+      return `<div class="parent-opt${isSel ? ' sel' : ''}" data-id="${s.id}" onclick="selectParentById(this)">
+        <span>${s.name} <span style="font-family:monospace;font-size:11px;color:var(--text-muted);">${s.code}</span></span>
+        <span class="parent-opt-path">${path}</span>
+      </div>`;
+    }).join('');
+  }
+
+  dd.innerHTML = html;
+  dd.style.display = 'block';
+}
+
+function selectParentById(el) {
+  const id = parseInt(el.dataset.id);
+  const site = sites.find(s => s.id === id);
+  if (site) selectParent(id, `${site.name}（${site.code}）`);
+}
+
+function selectParent(id, label) {
+  document.getElementById('m-parent-id').value = id || '';
+  document.getElementById('m-parent-search').value = id ? label : '';
+  document.getElementById('m-parent-dropdown').style.display = 'none';
+  // 選了上層站台：類型跟隨該樹的主站台；清空回根層則開放選擇（維持現值）
+  if (id && !editId) {
+    modalSiteType = (getRootSiteByParent(id) || {}).siteType || 'online';
+  }
+  renderSiteTypeOpts();
+  updateCurrencyUI(); // 上層變更時同步刷新核心貨幣顯示
+}
+
+// 點擊 modal 外部關閉 dropdown
+document.addEventListener('click', e => {
+  const dd = document.getElementById('m-parent-dropdown');
+  const input = document.getElementById('m-parent-search');
+  if (dd && input && !dd.contains(e.target) && e.target !== input) {
+    dd.style.display = 'none';
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+});
+document.getElementById('edit-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+document.getElementById('confirm-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeConfirm();
+});
+
+renderList();
+</script>
+</body>
+</html>

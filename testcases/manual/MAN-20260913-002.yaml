@@ -1,0 +1,24 @@
+record_id: MAN-20260913-002
+title: '[v1_user_query-user-list] user-list 的 status 篩選結果與資料實況相反/失效'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_user_query-user-list` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 先不帶篩選抓一批使用者資料,記錄下每個人真實的 `status` 值(樣本裡全部都是 `status:1`)。
+- 帶入 `query:{status:[1]}` 問一次,預期應該回傳接近全部(因為樣本裡幾乎都是啟用狀態)。
+- 帶入 `query:{status:[0]}` 問一次,預期應該回傳很少(接近 0),再檢查回傳列表裡每一筆的真實 `status` 值。
+observed_result: '`status` 篩選不只是「沒效果」,而是回傳的結果跟真實資料狀態矛盾:查 `status=1`(啟用)反而什麼都沒有,查 `status=0`(停用)卻拿回一堆真實是啟用狀態的帳號。這代表篩選邏輯本身有問題(可能是條件寫反、或是這個欄位對應到後端不同的意涵),不是單純的「未知欄位被忽略」。任何人(或
+  AI)用這個欄位去問「有多少啟用/停用的會員」都會拿到完全錯誤且方向相反的答案。'
+outcome: fail
+evidence_ids:
+- EVD-0002
+notes: 'source: bug-reports/bug-02-user-list-status-filter-broken.md; severity(原報告): 高(結果與真實資料矛盾,不是單純無效而是給出誤導性數字); 涉及草稿條文:
+  §3.1 R5, §3.1 R1, §3.1 R2'

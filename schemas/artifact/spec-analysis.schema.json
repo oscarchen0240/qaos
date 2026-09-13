@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/spec-analysis.schema.json",
+  "title": "SpecAnalysis (payload)",
+  "type": "object",
+  "required": ["spec_id", "spec_version", "content_hash", "summary", "scope", "requirement_ids", "ambiguities", "constraints", "edge_case_candidates", "open_questions"],
+  "properties": {
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "content_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+    "summary": {"type": "string"},
+    "scope": {"type": "object", "properties": {"in_scope": {"type": "array", "items": {"type": "string"}}, "out_of_scope": {"type": "array", "items": {"type": "string"}}}},
+    "requirement_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "description": "指向同 run 的 RequirementModel"},
+    "ambiguities": {"type": "array", "items": {"type": "object", "required": ["requirement_id", "ambiguity"], "properties": {"requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "ambiguity": {"$ref": "../common/defs.schema.json#/$defs/Ambiguity"}}}},
+    "constraints": {"type": "array", "items": {"type": "object", "required": ["text", "spec_reference"], "properties": {"text": {"type": "string"}, "spec_reference": {"$ref": "../common/defs.schema.json#/$defs/SpecReference"}, "requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}}}},
+    "edge_case_candidates": {"type": "array", "items": {"type": "object", "required": ["text", "requirement_id"], "properties": {"text": {"type": "string"}, "requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "spec_reference": {"$ref": "../common/defs.schema.json#/$defs/SpecReference"}}}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "previous_requirement_model_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"}
+  },
+  "additionalProperties": false
+}

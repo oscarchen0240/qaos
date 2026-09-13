@@ -1,0 +1,104 @@
+artifact_id: ART-BVR-01M2DJFM09KBVXETKQHAJYJZD8
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-003
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-13T14:24:32Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M2DJ7MYFMM14RJ6JAARHE7Y3
+references:
+- entity_type: Artifact
+  id: ART-BD-01M2DJ7MYFMM14RJ6JAARHE7Y3
+- entity_type: Evidence
+  id: EVD-0009
+- entity_type: Evidence
+  id: EVD-0045
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M2DJ7MYFMM14RJ6JAARHE7Y3
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-025
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-008
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號 + §背景:場次資訊/場次時長
+      quote: 另附開始／結束時間與場次時長；場次時長 | 開始至結束的時間差；進行中則顯示累計至查詢當下
+    evidence: Draft expected_result 末句：「API 回應應含開始時間（如 startTime）與時長（如 duration）欄位」；suspected_area：「場次明細層未輸出 startTime / duration」。Spec
+      只定義列表欄位的顯示與時長的算法（結束－開始），未定義 API 契約，也未要求後端必須回傳時長。
+    explanation: 欄位名 startTime / duration 以「如」標示為舉例，可接受。但「API 應含時長欄位」是超出 Spec 的斷言：若後端回傳開始／結束時間、由前端計算時長，同樣滿足 Spec。Draft 自己的
+      severity_rationale 也承認核心缺失是「開始時間」；把「缺 duration 欄位」寫成必要條件會讓修復驗收標準比 Spec 嚴格。
+    recommended_change: expected_result 末句改為：「API 回應應提供足以呈現開始時間與場次時長的資料——至少須有開始時間欄位；場次時長可由後端回傳或由前端以結束－開始計算（進行中場次以查詢當下計算）」。suspected_area
+      同步改為「未輸出開始時間（及／或時長）」。
+  - testcase_id: TC-DAILYREPORT-025
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: actual_result_evidence_map claim「畫面開始時間、場次時長顯示 --」對應 EVD-0009，其 type 為 other（bug 單 Markdown 全文），內容為測試者文字轉述，無畫面截圖。
+    explanation: 文字轉述可作輔證，決定性證據是 EVD-0045 的 API 回應；但畫面層 claim 缺直接視覺證據，建議補截圖。
+    recommended_change: 補一張「依場次明細」搜尋結果截圖（含「開始 ～ 結束」欄開始時間為 -- 與場次時長為 --），登錄為 screenshot 類 Evidence 並掛到畫面 claim。
+  - testcase_id: TC-DAILYREPORT-025
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-008
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景:場次資訊/開始時間 / 結束時間
+      quote: UTC+0；進行中的場次結束時間顯示「—」
+    evidence: EVD-0045（依場次明細）的 endTime 為 2026-09-08T04:38:53Z；EVD-0044（依場館彙總、sessionCode 為 null）的 endTime 也是完全相同的 2026-09-08T04:38:53Z。
+    explanation: 彙總維度不對應單一場次卻帶有相同的 endTime，暗示 endTime 可能是「結算／查詢時點」而非該場次的實際結束時間。若屬實，Draft actual_result「API 回應僅有 endTime」隱含的「結束時間正常、只缺開始時間與時長」判斷可能不成立，AC-0081
+      的「結束時間（UTC+0）」也可能未真正滿足。此為驗證者觀察，非 Draft 錯誤，不影響本 Draft 成立。
+    recommended_change: 請 Analyst 或測試者另以兩個結束時間不同的場次（或比對機台交易紀錄的場次結束時間）確認 endTime 語義；若確認 endTime 非場次結束時間，另開一張 bug 或將本單 title
+      擴為「缺開始時間／時長，且 endTime 語義存疑」。
+  evidence_verification:
+  - evidence_id: EVD-0009
+    hash_verified: true
+    supports_claim: true
+    note: EVD-0009.md 檔案 sha256 與 inline_content sha256 皆等於宣告值 53d6cb22…aca5。內容為 bug 單全文，問題二明確記載「依場次明細」每列場次時長與「開始 ～ 結束」的開始時間皆顯示
+      --；屬文字轉述而非截圖，作為畫面層 claim 的輔證可接受。
+  - evidence_id: EVD-0045
+    hash_verified: true
+    supports_claim: true
+    note: EVD-0045.txt 檔案 sha256 與 inline_content sha256 皆等於宣告值 5110810f…607a。回應 row 共 17 個欄位，時間類只有 endTime，無任何開始時間或時長欄位；sessionCode
+      ACAA00250_20260908_0003、userNo ACAA00250 與 Draft preconditions 一致，確為依場次明細維度。屬單一 row 的節錄，但足以支撐「僅 endTime、無 startTime
+      / duration」claim。另註：endTime 與 EVD-0044 彙總維度的 endTime 相同（見 issues 第 3 條）。
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: Spec 明定依場次明細維度須附開始／結束時間與場次時長；後端未回傳開始時間，前端連自行計算時長都不可能，場次明細維度失去核心資訊，major 合理。不到 critical：場次編號、機台、金額欄位正常，可辨識場次、僅缺時間資訊，不阻擋其他維度。功能尚屬內部但在開發驗收期，缺失屬明確待補實作，priority
+      high 合理。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: Bug Repository 目前無任何 DAILYREPORT 的 bug，無正式重複對象。與同批的 BUG-DRAFT-…AA01（run002，彙總維度缺場次數）來源相同（MAN-20260913-009 / EVD-0009）、同一
+      API（POST /api/v1/report/query-venue-daily-report），但違反的 Requirement 不同（REQ-008 vs REQ-009）、觸發維度不同（依場次明細 vs 依場館彙總）、缺失欄位不同、可獨立驗收，判定為
+      related 而非 duplicate，Analyst 由一張 bug 單拆成兩張是合理的。建議正式建單時互相加 related link，並標註「疑似共用同一 row DTO，可一併修」。
+  ambiguity: null
+history:
+- at: '2026-09-13T14:24:32Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-003

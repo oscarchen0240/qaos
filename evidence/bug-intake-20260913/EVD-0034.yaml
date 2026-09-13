@@ -1,0 +1,32 @@
+evidence_id: EVD-0034
+type: other
+uri: evidence/bug-intake-20260913/EVD-0034.md
+sha256: 70a117bc62f6bb27626bddc3a3d585b3d8d6ea0a4580f7bfc7755dfe5e82aed0
+mime_type: text/markdown
+captured_at: '2026-09-08T00:00:00Z'
+captured_by: oscarchen@blockaction.tech
+description: bug 單全文：bug單_不支援TWD遊戲商於機台場館顯示異常.html
+inline_content: "Bug單：不支援TWD遊戲商於機台場館顯示異常\n待PM定案\n前端/待確認\n畫面管理\n遊戲商\n[前後台][站台] 不支援 TWD 的遊戲商（AMB）於機台場館前台仍可進入，顯示遊戲名稱為內部代碼且圖示破圖\n\
+  測試環境：stage-arcade-violet.springkyle.online（後台）／前台 Violet Arcade　｜　測試時間：2026-09-08\nDetail\n遊戲商\nAMB（比對組：ATG，行為正常）\n遊戲名稱\n\
+  AMB 廠商底下全部遊戲（如 AMB_AMB_ELECTRONIC_NIAN_NIAN_YOU_YU 等）\n測試環境\nstage-arcade-violet.springkyle.online（後台）／前台 Violet Arcade\n\
+  測試帳號\nACAA00293（站長，操作畫面管理）／ACAA00243（前台測試帳號）\n測試時間\n2026-09-08\n問題詳述\n機台場館的核心貨幣固定為 TWD（spec 定案，\n站台列表_spec_v04.md\n），但目前查閱所有機台相關\
+  \ spec（正本、開發包①～⑦），\n完全沒有定義「機台場館底下的遊戲商上架清單，是否該篩選掉不支援 TWD 幣別的遊戲商」這件事\n，屬於規格未覆蓋的空白地帶。\n實測發現一個具體案例\n：AMB 遊戲商\n只支援 USDT，不支援 TWD\n\
+  。此廠商目前仍出現在機台場館（TWD）前台的可選 TAB 清單裡，玩家可以正常點進去瀏覽，但呈現結果異常：\n遊戲名稱直接顯示為\n內部識別碼\n（如 \nAMB_AMB_ELECTRONIC_BABY_MONKEY\n），而非正常應顯示的遊戲名稱\n\
+  遊戲圖示\n破圖\n，僅顯示預設的檔案圖示，無法載入正常封面圖\n[圖]\n圖1（異常組）\n：AMB 廠商於機台場館前台，遊戲卡片圖示全數破圖，遊戲名稱顯示為內部識別碼（如 AMB_AMB_ELECTRONIC_BABY_MONKEY），而非正常遊戲名稱。\n\
+  已排除「語系（locale）」這個變數\n：比對 API 回應，AMB 與 ATG（行為正常的對照組）的 \ntitle.locale\n同樣只設定 \nen-US\n，但 ATG 在機台場館前台完全正常顯示中文遊戲名稱與正常圖示。兩者 locale\
+  \ 設定相同、結果卻不同，證實 locale 並非造成此異常的原因。\n[圖]\n圖2（正常對照組）\n：ATG 廠商於同一機台場館前台，正常顯示中文遊戲名稱（骰子比大小、火箭升空、四人麻將等）與正常封面圖，與 AMB 的異常呈現形成明顯對比。\n\
+  排除 locale 後的推論\n：問題根源回到「幣別支援」——AMB 只支援 USDT，機台帳號的核心貨幣是 TWD，系統目前\n沒有依站台核心貨幣過濾遊戲商上架清單的機制\n，導致不支援 TWD 的廠商依然出現在機台場館前台；玩家點進去後，因底層抓不到對應\
+  \ TWD 版本的遊戲素材（名稱、圖示），只能 fallback 顯示原始內部代碼與破圖，而非正常擋下或提示不支援。\n預期結果（待 PM 定案，非單純技術修復）\n此問題有兩個層次，需要分別處理：\n待 PM 決策的政策層問題\n：機台場館（TWD）的遊戲商上架清單，是否應該在「畫面管理／遊戲商管理」層級就先行過濾，只允許支援\
+  \ TWD 的遊戲商出現？還是允許所有遊戲商都能上架、由前端另做幣別轉換或提示？此為產品決策，spec 目前無定義，需請 PM 補充規則\n無論政策層如何決定，目前的顯示結果本身都是異常，需要修正\n：不應該讓玩家點進一個廠商後，看到顯示內部代碼與破圖的殘缺畫面——至少應該有明確的「此遊戲暫不支援」提示，或乾脆在清單層級就不顯示，不應該是目前這種「進得去但顯示壞掉」的狀態\n\
+  複製步驟\n登入後台，站台切換至 Arcade（機台場館），確認 AMB 遊戲商已於「畫面管理」/「遊戲商管理」開放\n開啟前台，點擊底部導覽列的「AMB」TAB\n觀察遊戲卡片顯示（實測：遊戲名稱顯示為內部代碼，圖示破圖）\n點擊底部導覽列的「ATG」TAB\
+  \ 作為對照（實測：正常顯示中文遊戲名稱與圖示）\n攔截兩個廠商各自的 \nquery-frontend-layout-block-game-list\n API 回應，比對 \ntitle.locale\n 欄位（實測：兩者皆為 \nen-US\n\
+  ，相同設定但結果不同，排除 locale 為原因）\n建議另外於線上站台（USDT 核心貨幣）測試 AMB 廠商顯示是否正常，進一步確認異常是否僅發生在機台場館（TWD）情境下\nAPI URL\nGET https://stage-srv.springkyle.online/api/v3/public/query-frontend-layout-block-game-list\n\
+  Request\nGET /api/v3/public/query-frontend-layout-block-game-list\nResponse（節錄，AMB，異常組）\n{\n \"title\": [\n { \"locale\"\
+  : \"en-US\", \"name\": \"AMB\" }\n ],\n \"gameDetailList\": [\n {\n \"gameId\": 33,\n \"gameName\": \"AMB_AMB_ELECTRONIC_NIAN_NIAN_YOU_YU\"\
+  ,\n \"gameType\": \"electronic\",\n \"provider\": \"amb\",\n \"priorityLevel\": 31\n },\n {\n \"gameId\": 34,\n \"gameName\"\
+  : \"AMB_AMB_ELECTRONIC_GEM_STONE_2\",\n \"gameType\": \"electronic\",\n \"provider\": \"amb\",\n \"priorityLevel\": 32\n\
+  \ }\n ]\n}\nResponse（節錄，ATG，正常對照組）\n{\n \"title\": [\n { \"locale\": \"en-US\", \"name\": \"ＡＴＧ\" }\n ],\n \"gameDetailList\"\
+  : [\n {\n \"gameId\": 5515,\n \"gameName\": \"ATG_ATG_ELECTRONIC_DICE\",\n \"gameType\": \"electronic\",\n \"provider\"\
+  : \"atg\",\n \"priorityLevel\": 1\n }\n ]\n}\n備註：\n兩支回應的 \ngameName\n 欄位格式看起來相同（皆為內部識別碼樣式），但前台實際渲染結果不同——ATG 正確轉換顯示為中文遊戲名與正常圖示，AMB\
+  \ 則直接把 \ngameName\n 原始字串顯示出來、圖示載入失敗。推測前端/後端在依 \ngameName\n 或 \nprovider\n 查找對應的顯示資源（在地化名稱、圖示）時，AMB 這個廠商查無對應資料，才 fallback\
+  \ 顯示原始字串；而查無資料的根本原因，高度懷疑與 AMB 本身未配置 TWD 版本的遊戲資源有關，尚待前端／後端／PM 三方共同確認根因與處理方向。\nBug 單｜整理自 2026-09-08 測試紀錄"

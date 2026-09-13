@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/spec-analyst-input.schema.json",
+  "title": "SpecAnalystInput",
+  "description": "Supervisor DISPATCH_AGENT 時交給 Agent 的輸入包；所有 artifact 以 id 傳遞，Agent 用 READ_ARTIFACT 讀取",
+  "type": "object",
+  "required": ["run_id","task_id","iteration","spec_id","spec_version"],
+  "properties": {
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "task_id": {"$ref": "../common/defs.schema.json#/$defs/TaskId"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "scope": {"type": "object", "properties": {"functional_area": {"type": "string"}, "sections": {"type": "array", "items": {"type": "string"}}}},
+    "previous_requirement_model_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "resolved_ambiguity_approval_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"}},
+    "gate_failure": {"type": "array", "items": {"type": "string"}, "description": "iteration>0 時，上一輪 G-SPEC 缺項"}
+  },
+  "additionalProperties": false
+}

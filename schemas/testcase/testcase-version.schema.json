@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/testcase/testcase-version.schema.json",
+  "title": "TestCaseVersion",
+  "description": "testcases/versions/<tc_id>/v<n>.yaml — 不可變的正式版本（VALIDATED 以上）。Brief §11 全部欄位 + Review 新增。",
+  "type": "object",
+  "required": [
+    "testcase_id",
+    "version",
+    "title",
+    "product",
+    "functional_area",
+    "requirement_ids",
+    "acceptance_criteria_ids",
+    "spec_id",
+    "spec_version",
+    "test_level",
+    "test_types",
+    "design_techniques",
+    "priority",
+    "risk",
+    "execution_mode",
+    "preconditions",
+    "test_data",
+    "steps",
+    "expected_result",
+    "automation_status",
+    "ci_eligible",
+    "hotfix_eligible",
+    "execution_cost",
+    "stability",
+    "source",
+    "status",
+    "created_by",
+    "created_at",
+    "updated_at",
+    "history"
+  ],
+  "properties": {
+    "testcase_id": {
+      "$ref": "../common/defs.schema.json#/$defs/TestCaseId"
+    },
+    "version": {
+      "$ref": "../common/defs.schema.json#/$defs/IntVersion"
+    },
+    "supersedes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "前一版本號"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "description": {
+      "type": "string"
+    },
+    "product": {
+      "type": "string"
+    },
+    "functional_area": {
+      "type": "string"
+    },
+    "requirement_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/RequirementId"
+      }
+    },
+    "acceptance_criteria_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/AcId"
+      }
+    },
+    "spec_id": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecId"
+    },
+    "spec_version": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+    },
+    "test_level": {
+      "$ref": "../common/defs.schema.json#/$defs/TestLevel"
+    },
+    "test_types": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/TestType"
+      }
+    },
+    "design_techniques": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/DesignTechnique"
+      }
+    },
+    "priority": {
+      "$ref": "../common/defs.schema.json#/$defs/Priority"
+    },
+    "risk": {
+      "$ref": "../common/defs.schema.json#/$defs/Risk"
+    },
+    "execution_mode": {
+      "$ref": "../common/defs.schema.json#/$defs/ExecutionMode"
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {},
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "n",
+          "action"
+        ],
+        "properties": {
+          "n": {
+            "type": "integer"
+          },
+          "action": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string",
+            "description": "步驟級期望（可選）"
+          }
+        }
+      }
+    },
+    "expected_result": {
+      "type": "string",
+      "minLength": 5
+    },
+    "expected_result_spec_reference": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text",
+          "requirement_id"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "requirement_id": {
+            "$ref": "../common/defs.schema.json#/$defs/RequirementId"
+          },
+          "resolved_by_approval": {
+            "$ref": "../common/defs.schema.json#/$defs/ApprovalId"
+          },
+          "needs_human_confirmation": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "automation_status": {
+      "$ref": "../common/defs.schema.json#/$defs/AutomationStatus"
+    },
+    "automation_ref": {
+      "type": "string",
+      "description": "自動化腳本路徑 / ID"
+    },
+    "ci_eligible": {
+      "type": "boolean"
+    },
+    "hotfix_eligible": {
+      "type": "boolean"
+    },
+    "execution_cost": {
+      "$ref": "../common/defs.schema.json#/$defs/ExecutionCost"
+    },
+    "stability": {
+      "$ref": "../common/defs.schema.json#/$defs/Stability"
+    },
+    "critical_path": {
+      "type": "boolean",
+      "default": false
+    },
+    "source": {
+      "$ref": "../common/defs.schema.json#/$defs/TestCaseSource"
+    },
+    "source_ref": {
+      "type": "string",
+      "description": "manual record id / import 來源"
+    },
+    "status": {
+      "$ref": "../common/defs.schema.json#/$defs/TestCaseStatus"
+    },
+    "created_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "validated_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "validation_report_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+    },
+    "approved_by": {
+      "$ref": "../common/defs.schema.json#/$defs/HumanId"
+    },
+    "approval_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ApprovalId"
+    },
+    "created_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "updated_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/HistoryEntry"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "APPROVED",
+              "SUPERSEDED"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "validated_by",
+          "validation_report_id",
+          "approved_by",
+          "approval_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "VALIDATED",
+              "PENDING_APPROVAL"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "validated_by",
+          "validation_report_id"
+        ]
+      }
+    }
+  ]
+}

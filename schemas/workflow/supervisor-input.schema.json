@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/workflow/supervisor-input.schema.json",
+  "title": "SupervisorInput (HumanTask)",
+  "type": "object",
+  "required": [
+    "task_text",
+    "initiated_by"
+  ],
+  "properties": {
+    "task_text": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Human 的自然語言 QA Task，例如「用 SPEC-AUTH-001 v1.1 產生 test case」"
+    },
+    "workflow_hint": {
+      "type": "string",
+      "enum": [
+        "spec-to-testcase",
+        "spec-to-bug",
+        "spec-change-impact",
+        "manual-test-to-regression",
+        "regression-generation",
+        "testcase-revision"
+      ]
+    },
+    "hints": {
+      "type": "object",
+      "properties": {
+        "spec_id": {
+          "$ref": "../common/defs.schema.json#/$defs/SpecId"
+        },
+        "spec_version": {
+          "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+        },
+        "from_version": {
+          "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+        },
+        "to_version": {
+          "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+        },
+        "execution_id": {
+          "$ref": "../common/defs.schema.json#/$defs/ExecutionId"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "../common/defs.schema.json#/$defs/EvidenceId"
+          }
+        },
+        "manual_record_id": {
+          "type": "string"
+        },
+        "target_suites": {
+          "type": "array",
+          "items": {
+            "$ref": "../common/defs.schema.json#/$defs/SuiteType"
+          }
+        }
+      }
+    },
+    "initiated_by": {
+      "$ref": "../common/defs.schema.json#/$defs/HumanId"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,82 @@
+artifact_id: ART-BD-01M2DJ7MYFMM14RJ6JAARHE7Y3
+artifact_type: BugDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-003
+task_id: T1
+iteration: 0
+created_by: agent-bug-analyst
+created_at: '2026-09-13T14:20:11Z'
+status: VALID
+source:
+  type: ManualTestRecord
+  ids:
+  - MAN-20260913-009
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-008
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-025
+  version: 1
+- entity_type: ManualTestRecord
+  id: MAN-20260913-009
+- entity_type: Evidence
+  id: EVD-0009
+- entity_type: Evidence
+  id: EVD-0045
+requires_approval: null
+payload:
+  draft_id: BUG-DRAFT-01M2DJ0000000000000000AA02
+  title: '[後端][機台][場館日結報表] 依場次明細維度的 API 回應缺少「開始時間」與「場次時長」欄位'
+  product: ba-admin
+  functional_area: DAILYREPORT
+  severity_proposed: major
+  priority_proposed: high
+  severity_rationale: Spec 明定場次編號需附開始／結束時間與時長；缺開始時間使前端連自行計算時長都不可能
+  environment:
+    name: stage
+    url: stage-admin-srv.springkyle.online
+    account: ACAA00280（站長）／ACAA00250（機台帳號，交易發起）
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-008
+  acceptance_criteria_ids:
+  - AC-DAILYREPORT-0081
+  testcase_id: TC-DAILYREPORT-025
+  testcase_version: 1
+  preconditions:
+  - 測試帳號 ACAA00280（站長）可登入
+  - 機台帳號 ACAA00250 於 2026-09-08 有已結束場次（sessionCode ACAA00250_20260908_0003）
+  reproduction_steps:
+  - 登入後台，站台切換至機台場館（Arcade）
+  - 進入 各式報表 > 場館日結報表，統計維度選「依場次明細」，結算日期選 2026-09-08，搜尋
+  - 觀察每列「開始 ～ 結束」的開始時間與「場次時長」欄
+  - 攔截 query-venue-daily-report 的回應 JSON，檢查是否有開始時間與時長欄位
+  expected_result: 每列有場次編號、開始時間、結束時間（UTC+0）、場次時長（結束－開始；進行中為累計至查詢當下）；API 回應應含開始時間（如 startTime）與時長（如 duration）欄位
+  expected_result_spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/場次編號 + §場次資訊/開始時間、場次時長
+  actual_result: 畫面開始時間與場次時長皆顯示「--」；API 回應僅有 endTime，無開始時間與時長欄位
+  actual_result_evidence_map:
+  - claim: 畫面開始時間、場次時長顯示 --
+    evidence_id: EVD-0009
+  - claim: API 回應僅 endTime、無 startTime / duration
+    evidence_id: EVD-0045
+  evidence_ids:
+  - EVD-0009
+  - EVD-0045
+  api:
+    url: https://stage-admin-srv.springkyle.online/api/v1/report/query-venue-daily-report
+    method: POST
+  impact: 無法檢視場次時長，場次明細維度失去核心資訊
+  suspected_area: 後端 report/query-venue-daily-report 場次明細層未輸出 startTime / duration
+  ambiguity_suspected: false
+  duplicate_candidates: []
+history:
+- at: '2026-09-13T14:20:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-003

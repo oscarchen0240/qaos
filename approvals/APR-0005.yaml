@@ -1,0 +1,53 @@
+approval_id: APR-0005
+type: OPEN_BUG
+run_id: RUN-20260913-003
+task_id: T3
+status: DECIDED
+summary: '[major/high] [後端][機台][場館日結報表] 依場次明細維度的 API 回應缺少「開始時間」與「場次時長」欄位 — 是否成為正式 Bug（OPEN）？'
+impact:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-008
+artifact_ids:
+- ART-BVR-01M2DJFM09KBVXETKQHAJYJZD8
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items: []
+requested_by: agent-supervisor
+requested_at: '2026-09-13T14:24:32Z'
+diff_summary: '**[後端][機台][場館日結報表] 依場次明細維度的 API 回應缺少「開始時間」與「場次時長」欄位**
+
+
+  - 需求：REQ-DAILYREPORT-008（§列表欄位/場次編號 + §場次資訊/開始時間、場次時長）
+
+  - 期望：每列有場次編號、開始時間、結束時間（UTC+0）、場次時長（結束－開始；進行中為累計至查詢當下）；API 回應應含開始時間（如 startTime）與時長（如 duration）欄位
+
+  - 實際：畫面開始時間與場次時長皆顯示「--」；API 回應僅有 endTime，無開始時間與時長欄位
+
+  - 證據：EVD-0009, EVD-0045（hash 皆驗證通過）
+
+  - Analyst 建議：major / high；Validator 建議：major / high
+
+
+  Validator minor 建議（不影響開單，可於修復驗收時補）：
+
+  - expected_result 末句改為：「API 回應應提供足以呈現開始時間與場次時長的資料——至少須有開始時間欄位；場次時長可由後端回傳或由前端以結束－開始計算（進行中場次以查詢當下計算）」。suspected_area 同步改為「未輸出開始時間（及／或時長）」。
+
+  - 補一張「依場次明細」搜尋結果截圖（含「開始 ～ 結束」欄開始時間為 -- 與場次時長為 --），登錄為 screenshot 類 Evidence 並掛到畫面 claim。
+
+  - 請 Analyst 或測試者另以兩個結束時間不同的場次（或比對機台交易紀錄的場次結束時間）確認 endTime 語義；若確認 endTime 非場次結束時間，另開一張 bug 或將本單 title 擴為「缺開始時間／時長，且 endTime
+  語義存疑」。
+
+
+  Related：Bug Repository 目前無任何 DAILYREPORT 的 bug，無正式重複對象。與同批的 BUG-DRAFT-…AA01（run002，彙總維度缺場次數）來源相同（MAN-20260913-009 / EVD-0009）、同一
+  API（POST /api/v1/report/query-venue-daily-report），但違反的 Requirement 不同（REQ-008 v…'
+decision:
+  decision: approve
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-09-13T18:02:49Z'
+  rationale: Oscar 2026-09-14 確認：RD 已修復完成

@@ -1,0 +1,42 @@
+id: agent-bug-validator
+name: Bug Validator
+version: "1.0.0"
+purpose: 獨立驗證 Bug Draft：是否真的違反 SPEC、expected 是否有依據、actual 是否被 Evidence 支撐、步驟是否足夠、severity/priority 是否合理、是否 duplicate、是否只是 ambiguity。
+responsibilities:
+  - 逐項對照 spec_reference 原文
+  - 開啟每個 evidence_id 檔案並確認 sha256、內容支撐 actual_result
+  - 檢查 reproduction_steps 完整性（可由第三者重現）
+  - 對 bugs/ 做 duplicate 檢索（同 area、同 requirement、相似 actual）
+  - 判定 result：PASS | FAIL | DUPLICATE | AMBIGUITY
+  - 產出 BugValidationReport（issues[] 同 8 欄位）+ severity/priority 建議（可與 Draft 不同）
+input_schema: schemas/artifact/bug-validator-input.schema.json
+output_schema: schemas/artifact/bug-validation-report.schema.json
+allowed_actions:
+  - READ_SPEC
+  - READ_SPEC_VERSION
+  - READ_REQUIREMENT
+  - READ_TESTCASE
+  - READ_EXECUTION
+  - READ_EVIDENCE
+  - READ_BUG
+  - READ_ARTIFACT
+  - READ_APPROVAL
+  - CREATE_ARTIFACT
+  - VALIDATE_BUG
+forbidden_actions:
+  - UPDATE_DRAFT（不得修改 BugDraft）
+  - CREATE_BUG_DRAFT
+  - COMMIT_BUG / 開 Bug
+  - 關閉 Bug
+  - MODIFY_SPEC
+dependencies:
+  skills: [bug-validation, traceability]
+  agents: [agent-bug-analyst (upstream)]
+consumes: [SpecVersion, RequirementModel, BugDraft, Evidence, bugs/ index]
+produces: [BugValidationReport]
+quality_gate: G-BVAL
+failure_handling:
+  evidence_missing_or_hash_mismatch: FAIL severity=blocker
+  ambiguity: result=AMBIGUITY，附 options 供 Human RESOLVE_AMBIGUITY
+human_approval_required: []
+write_paths: ["artifacts/validation/<run_id>/**"]

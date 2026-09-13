@@ -1,0 +1,15 @@
+evidence_id: EVD-0006
+type: api_response
+uri: evidence/bug-reports/EVD-0006.md
+sha256: f95d96e1cc01813ec0b389b517f414cb9f516248a1bb2eba1889d7ec36ae6960
+mime_type: text/markdown
+captured_at: '2026-08-06T00:00:00Z'
+captured_by: oscarchen@blockaction.tech
+description: bug-06-rebate-log-undocumented-fields-ignored.md 的「證據」段落（人工核對基準 vs 篩選結果）
+inline_content: '- 不帶篩選總數(baseline):**736**
+
+  - `query:{transactionNo:["89989"]}` → `total = 736`,跟 baseline 一樣,且結果包含各種不相關的 `rebateLogId`/`betNo` —— 因為資料裡根本沒有 `transactionNo`
+  這個鍵,這個篩選從一開始就無意義,但呼叫沒有報錯提示「這個欄位在這張表不存在」。
+
+  - 用 `sorter:{field:"rebateAmount",order:"desc"}` 確認 `rebateAmount` 是真實存在的資料欄位,最大值到 5000,很多筆 >100。帶入 `query:{rebateAmount:{min:100}}`
+  → `total = 736`,跟 baseline 一樣,包含許多 `rebateAmount:0` 的記錄,完全沒有篩選效果。'

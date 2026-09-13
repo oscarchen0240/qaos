@@ -1,0 +1,26 @@
+record_id: MAN-20260913-007
+title: '[v1_transaction_query-transaction-audit-log] transaction-audit-log 的數值範圍篩選完全失效(不論欄位名稱是否正確)'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_transaction_query-transaction-audit-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 不帶篩選抓資料,取一筆真實記錄(`transactionNo:152354`,回應裡對應金額欄位顯示為 `requirementBetAmount:10000`)。
+- 用 schema 文件上「正確」的 snake_case 鍵名 `requirement_bet_amount:{min:9999.99,max:10000.01}` 測試。
+- 用「猜測的」camelCase 鍵名 `requirementBetAmount:{min:9999.99,max:10000.01}`(跟這個 API 其他地方的命名習慣一致)測試,比對兩者結果。
+- 額外用另一個完全沒有命名歧義的欄位 `amount:{min:0,max:0}`(理論上只該篩出金額剛好是 0 的記錄)做交叉驗證,確認是否是數值範圍篩選整體的問題,而不只是這一個欄位。
+- 對照組:確認陣列篩選(`transactionType`、`userNo`、`transactionNo`)跟日期範圍(`createTime`)是否正常運作。
+observed_result: 這不是單純的命名陷阱(猜錯鍵名靜默失效),而是**這張表的所有數值範圍(`{min,max}`)篩選欄位都完全沒有效果**,連文件寫對的正確鍵名 `requirement_bet_amount` 都無法篩選,`amount`
+  也一樣。只有陣列型篩選(userNo/transactionNo/transactionType)跟日期範圍(createTime)是正常的。這代表後端在處理這張表的「數值範圍」查詢條件時,整體性地沒有把這類條件接進 SQL 查詢,而不是個別欄位命名錯誤的問題。
+outcome: fail
+evidence_ids:
+- EVD-0007
+notes: 'source: bug-reports/bug-07-transaction-audit-log-numeric-range-broken.md; severity(原報告): 高(連文件寫對的正確欄位名稱都沒用,比單純的命名陷阱更嚴重);
+  涉及草稿條文: §3.1 R3'

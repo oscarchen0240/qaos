@@ -1,0 +1,23 @@
+record_id: MAN-20260913-005
+title: '[v1_transaction_query-rebate-log] rebate-log 的 time 範圍篩選在兩個方向上都是錯的'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_transaction_query-rebate-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 不帶篩選抓資料,取一筆真實記錄的時間戳記(`rebateLogId:89989`,`time:"2026-08-05T11:10:03Z"`)。
+- 用一個「精準應該命中」的窄時間窗(`11:10:00Z` ~ `11:10:03Z`,剛好框住這筆記錄)測試。
+- 用一個「應該命中多筆」的寬時間窗(`11:09:00Z` ~ `11:11:00Z`,涵蓋 baseline 前幾筆的時間範圍)測試。
+observed_result: '`time` 範圍篩選在兩個方向上都是錯的:窄窗口「篩過頭」把所有資料都排除掉(包括理論上精準命中的記錄),寬窗口卻「完全沒篩」變成回傳全部資料 —— 這兩種行為互相矛盾,不是單純「條件被忽略」這麼簡單,顯示這個日期比較的實作本身有邏輯錯誤(可能是時區轉換、時間精度截斷,或查詢條件的比較運算子寫錯)。'
+outcome: fail
+evidence_ids:
+- EVD-0005
+notes: 'source: bug-reports/bug-05-rebate-log-time-filter-broken.md; severity(原報告): 高(日期範圍是最常見的複合問題條件之一,而且兩個方向的失敗模式還不一樣);
+  涉及草稿條文: §3.1 R4'

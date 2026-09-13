@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>場館日結報表 — bl'ac 後台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;background:#0d0d0b;color:#c8c6be;min-height:100vh;display:flex;flex-direction:column;}
+:root{
+  --bg-page:#0d0d0b;
+  --bg-sidebar:#111110;
+  --bg-card:#181816;
+  --bg-hover:#1e1e1c;
+  --bg-input:#111110;
+  --bg-panel:#141412;
+  --bg-active:#232320;
+  --text-primary:#dedad2;
+  --text-secondary:#6b6965;
+  --text-muted:#3d3d3b;
+  --border:#242422;
+  --border-focus:#3d3d3b;
+  --border-light:#3d3d3b;
+  --green:#1D9E75;
+  --green-text:#5DCAA5;
+  --green-dim:#0F2E23;
+  --blue:#378ADD;
+  --blue-text:#85B7EB;
+  --blue-dim:#0C2A4A;
+  --red-text:#F09595;
+  --red-dim:#3A1818;
+  --yellow-text:#EF9F27;
+  --yellow-dim:#2E2000;
+  --orange-text:#E8894A;
+  --orange-dim:#2E1800;
+  --purple-text:#B09FE8;
+  --purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --sidebar-width:160px;
+  --topbar-height:48px;
+  --radius:6px;
+  --radius-lg:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;
+}
+
+/* ── Topbar ── */
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;}
+.topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:color .12s,background .12s;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;padding:24px 28px 60px;display:flex;flex-direction:column;}
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.page-header-right{display:flex;align-items:center;gap:10px;}
+.hint{font-size:12px;color:var(--text-muted);line-height:1.7;}
+
+/* ── Buttons ── */
+button{font-family:inherit;cursor:pointer;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:opacity .15s;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;transition:background .12s,color .12s,border-color .12s;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:3px 9px;border-radius:var(--radius);font-size:12px;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+
+/* ── Filter card ── */
+.filter-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px;flex-shrink:0;}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.filter-row+.filter-row{margin-top:10px;}
+.f-field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.f-field label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.req{color:#F09595;}
+.f-input{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;width:100%;}
+.f-input:focus{border-color:var(--border-focus);}
+.f-input::placeholder{color:var(--text-muted);}
+.f-select{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233d3d3b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;width:100%;}
+.f-select option{background:#181816;}
+.f-range{display:flex;align-items:center;gap:4px;}
+.f-sep{font-size:11px;color:var(--text-muted);}
+.filter-btn-group{display:flex;gap:6px;margin-left:auto;align-items:flex-end;}
+.field-error .f-input{border-color:var(--red-text)!important;}
+
+/* ── 站台切換（頁面標題下方，後台各頁皆有；一次僅顯示所選站台的資料）── */
+.site-switch{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.site-switch select{width:auto;min-width:220px;}
+
+/* ── 提示 ── */
+.warn-box{background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.3);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--yellow-text);line-height:1.6;margin-bottom:12px;flex-shrink:0;}
+.info-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;flex-shrink:0;}
+
+/* ── List ── */
+.list-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:auto;}
+.list-wrap > .list-header,.list-wrap > .list-body,.list-wrap > .total-row{min-width:max-content;}
+.list-header{display:grid;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--bg-page);}
+.list-header > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;white-space:nowrap;padding-right:12px;}
+.rp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;}
+.rp-card:hover{border-color:var(--border-focus);}
+.rp-row{display:grid;align-items:center;padding:11px 14px;}
+.rp-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.total-row{display:grid;align-items:center;padding:10px 14px;position:sticky;bottom:0;z-index:2;background:var(--bg-panel);border-top:1px solid var(--border);}
+.total-row > div{font-size:12px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;font-variant-numeric:tabular-nums;}
+.table-footer{display:flex;align-items:center;gap:14px;padding:10px 2px 0;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:6px;flex-shrink:0;}
+
+.num-cell{font-variant-numeric:tabular-nums;}
+.cell-empty{color:var(--text-muted);}
+.cell-strong{color:var(--text-primary);}
+.pnl-pos{color:var(--green-text);}
+.pnl-neg{color:var(--red-text);}
+.pending-flag{background:var(--yellow-dim);color:var(--yellow-text);padding:1px 6px;border-radius:4px;font-variant-numeric:tabular-nums;}
+.cell-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.drill-link{color:var(--text-primary);cursor:pointer;transition:color .12s;}
+.drill-link:hover{color:var(--blue-text);}
+.sess-id{font-size:12px;color:var(--text-primary);font-variant-numeric:tabular-nums;cursor:pointer;transition:color .12s;}
+.sess-id:hover{color:var(--blue-text);}
+
+/* ── 場次狀態 tag ── */
+.st-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:1px 7px;border-radius:4px;white-space:nowrap;}
+.st-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.st-live{background:var(--green-dim);color:var(--green-text);}
+.st-live .st-dot{background:var(--green-text);box-shadow:0 0 5px rgba(93,202,165,0.4);}
+.st-ended{background:#1e1e1c;color:var(--text-secondary);}
+.st-ended .st-dot{background:var(--text-secondary);}
+.st-timeout{background:var(--orange-dim);color:var(--orange-text);}
+.st-timeout .st-dot{background:var(--orange-text);}
+.st-settle{background:var(--purple-dim);color:var(--purple-text);}
+.st-settle .st-dot{background:var(--purple-text);}
+
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+.empty-state-title{font-size:14px;color:var(--text-secondary);margin-bottom:6px;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid var(--border-focus);border-radius:var(--radius);padding:10px 16px;font-size:13px;color:var(--text-primary);box-shadow:0 8px 24px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-group">會員與加盟商 <span class="arr">›</span></div>
+    <div class="sidebar-group">帳務管理 <span class="arr">›</span></div>
+    <div class="sidebar-group active">各式報表 <span class="arr" style="opacity:0.7;">∨</span></div>
+    <div class="sidebar-item">交易紀錄查詢</div>
+    <div class="sidebar-item">注單查詢</div>
+    <div class="sidebar-item">稽核明細</div>
+    <div class="sidebar-item active">場館日結報表</div>
+    <div class="sidebar-group">遊戲廳管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">系統管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">後台管理員系統 <span class="arr">›</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="breadcrumb">各式報表 <span>/</span> 場館日結報表</div>
+    <div class="page-header">
+      <h1 class="page-title">場館日結報表</h1>
+      <div class="page-header-right">
+        <button class="btn-ghost" onclick="exportCsv()">匯出 CSV</button>
+      </div>
+    </div>
+
+    <!-- 站台切換（後台各頁皆有；一次僅顯示所選站台的資料）-->
+    <div class="site-switch">
+      <select class="f-select" id="site-sel" onchange="onSiteChange()" title="站台切換：一次僅顯示所選站台的資料">
+        <option value="v1" selected>松山遊藝場（SS）</option>
+        <option value="v2">板橋遊藝場（BQ）</option>
+      </select>
+    </div>
+
+    <!-- 篩選器 -->
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="f-field" style="width:190px;">
+          <label>機台帳號</label>
+          <input type="text" class="f-input" id="f-machine" placeholder="輸入會員編號；留空為全部機台"/>
+        </div>
+        <div class="f-field" id="f-date-field">
+          <label>結算日期 <span class="req">*</span></label>
+          <div class="f-range">
+            <input type="date" class="f-input" id="f-date-start" style="width:130px;" value="2026-08-16"/>
+            <span class="f-sep">～</span>
+            <input type="date" class="f-input" id="f-date-end" style="width:130px;" value="2026-08-19"/>
+          </div>
+        </div>
+        <div class="f-field" style="width:120px;">
+          <label>統計週期</label>
+          <select class="f-select" id="f-period" onchange="renderReport()">
+            <option value="day" selected>按日</option>
+            <option value="week">按週</option>
+            <option value="month">按月</option>
+            <option value="range">區間合計</option>
+          </select>
+        </div>
+        <div class="f-field" style="width:130px;">
+          <label>統計維度</label>
+          <select class="f-select" id="f-dim" onchange="renderReport()">
+            <option value="venue" selected>依場館彙總</option>
+            <option value="machine">依機台明細</option>
+            <option value="session">依場次明細</option>
+          </select>
+        </div>
+        <div class="filter-btn-group">
+          <button class="btn-ghost" onclick="clearFilter()">清除</button>
+          <button class="btn-primary" onclick="searchReport()">搜尋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">⚠️ 「現金淨收」是<b>推算值</b>（開分 ＋ 進鈔 － 已核實洗分 － 已兌現；<b>不扣待核實洗分</b>——尚未確認付出），代表場館端當日現金應該增減多少，尚未兌現的收據不算在內（那是未來要付出去的錢）。與現場實際點鈔金額的差異須由人工查核。</div>
+    <div class="info-box" id="period-note" style="display:none;">統計週期非按日：各金額與筆數欄為<b>該週期內各營業日的合計</b>；「期末餘額」取該週期<b>最後一個營業日</b>結算時點的值；「未兌現金額」不受週期影響、一律為截至查詢當下的累計。</div>
+    <div class="info-box" id="session-note" style="display:none;">「依場次明細」：統計週期僅決定查詢範圍，列表仍<b>逐場次列出、不彙總</b>。營業日依場館設定的「日結時間」切分；日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額。</div>
+
+    <div class="list-wrap">
+      <div class="list-header" id="rp-header"></div>
+      <div class="list-body" id="rp-list"></div>
+      <div class="total-row" id="rp-total" style="display:none;"></div>
+    </div>
+    <div class="table-footer">
+      <span id="footer-count"></span>
+      <span id="footer-note" style="margin-left:auto;">營業日依場館設定的「日結時間」切分（UTC+0）</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 基礎資料 ─────────────────────────────────────────
+const VENUES = [
+  { key:'v1', label:'松山遊藝場（SS）', settle:'16:00' },   // 日結時間（UTC+0），場館設定
+  { key:'v2', label:'板橋遊藝場（BQ）', settle:'20:00' },
+];
+const MACHINES = [
+  { id:'M20260812001', name:'A 區 01 號', venue:'v1' },
+  { id:'M20260812002', name:'A 區 02 號', venue:'v1' },
+  { id:'M20260901003', name:'A 區 03 號', venue:'v1' },
+  { id:'M20260815004', name:'B 區 01 號', venue:'v2' },
+  { id:'M20260815005', name:'B 區 02 號', venue:'v2' },
+];
+const DAYS = ['2026-08-16','2026-08-17','2026-08-18','2026-08-19'];
+const QUERY_NOW = '2026-08-19 14:30'; // 模擬查詢當下（UTC+0）
+
+function venueLabel(k){ return (VENUES.find(v=>v.key===k)||{}).label||k; }
+function venueSettle(k){ return (VENUES.find(v=>v.key===k)||{}).settle||''; }
+
+// ─── 假資料生成（固定種子，資料層層一致：場館＝機台合計＝場次合計）───
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+const SESSIONS = [];   // 每筆＝一個場次（含該場次期間的金流合計）
+(function genData(){
+  MACHINES.forEach((mc, mi)=>{
+    const rng = mulberry32(1103 + mi*97);
+    let carry = 0;                       // 日結結算餘額轉隔日期初
+    let seq = 0;
+    DAYS.forEach((day, di)=>{
+      const lastDay = di===DAYS.length-1;
+      const n = 2 + Math.floor(rng()*3); // 每日 2~4 場
+      let curMin = (9 + Math.floor(rng()*2))*60 + Math.floor(rng()*50);
+      for(let s=0;s<n;s++){
+        const isLast = s===n-1;
+        const openBal = carry; carry = 0;
+        let keyin  = rng()<0.75 ? (2+Math.floor(rng()*18))*100 : 0;
+        let cashin = rng()<0.6  ? (1+Math.floor(rng()*10))*100 : 0;
+        if(openBal+keyin+cashin===0) keyin = 500;
+        const funds = openBal + keyin + cashin;
+        let pnl = Math.round((rng()*1.4-0.85)*Math.min(funds,2200));
+        if(funds+pnl<0) pnl = -funds;
+        let endRaw = funds + pnl;
+        const betAmt = Math.round(funds*(0.8+rng()*2.2));
+        const bets = 12 + Math.floor(rng()*110);
+
+        let status, wash=0, washV=0, washP=0, receipt=0, redeemed=0, unredeemed=0, endBal, ongoing=false;
+        // 機台 0 最後一日的最後一場：進行中（尚未到日結時間）
+        if(mi===0 && lastDay && isLast){
+          status='進行中'; ongoing=true; endBal=endRaw; carry=endRaw;
+        }else if(endRaw===0){
+          status='已結束'; endBal=0; carry=0;               // 歸零結束
+        }else if(isLast){
+          status='日結結算'; endBal=endRaw; carry=endRaw;   // 餘額轉隔日期初
+        }else{
+          const r = rng();
+          if(r<0.45 && Math.floor(endRaw/100)>0){           // 洗分結束
+            status='已結束';
+            wash = Math.floor(endRaw/100)*100;              // 依門檻取整
+            if(rng()<0.78){ washV=wash; }else{ washP=wash; }
+            endBal = endRaw - wash; carry = endBal;         // 餘數留帳、立即承接
+          }else if(r<0.75 && Math.floor(endRaw/100)>0){     // 出金（收據）結束
+            status='已結束';
+            receipt = Math.floor(endRaw/100)*100;
+            if(rng()<0.6){ redeemed=receipt; }else{ unredeemed=receipt; }
+            endBal = endRaw - receipt; carry = endBal;
+          }else{                                            // 逾時結束
+            status='逾時結束'; endBal=endRaw; carry=endRaw;
+          }
+        }
+        const durMin = 25 + Math.floor(rng()*110);
+        const startMin = curMin;
+        curMin += durMin + 5 + Math.floor(rng()*30);
+        const fm = m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+        seq++;
+        SESSIONS.push({
+          id:'S'+day.replace(/-/g,'')+'-'+mc.id.slice(-3)+String(seq).padStart(2,'0'),
+          venue:mc.venue, machine:mc.id, machineName:mc.name, day,
+          status, ongoing,
+          start:day+' '+fm(startMin),
+          end:ongoing?null:(status==='日結結算'?day+' '+venueSettle(mc.venue):day+' '+fm(Math.min(startMin+durMin,23*60+50))),
+          durMin:ongoing?null:durMin,
+          openBal, keyin, cashin, wash, washV, washP, receipt, redeemed, unredeemed,
+          bets, betAmt, pnl, endBal,
+        });
+      }
+    });
+  });
+})();
+
+// 各機台每日的「結算時點分數」＝當日最後一場的期末餘額
+const DAY_END = {};
+SESSIONS.forEach(s=>{ DAY_END[s.machine+'|'+s.day] = s.endBal; });
+
+// ─── 工具 ─────────────────────────────────────────────
+function fmtAmt(n){ return n.toLocaleString('en-US'); }
+function fmtDur(min){ if(min==null)return '—'; const h=Math.floor(min/60),m=min%60; return (h?h+' 小時 ':'')+m+' 分'; }
+function pnlCell(n){ const cls=n>0?'pnl-pos':(n<0?'pnl-neg':''); return `<span class="num-cell ${cls}">${n>0?'+':''}${fmtAmt(n)}</span>`; }
+function pendCell(n){ return n>0?`<span class="pending-flag">${fmtAmt(n)}</span>`:`<span class="num-cell cell-empty">0</span>`; }
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+function weekStart(dayStr){
+  const d=new Date(dayStr+'T00:00:00Z');
+  const wd=(d.getUTCDay()+6)%7;              // 週一為週起
+  d.setUTCDate(d.getUTCDate()-wd);
+  return d.toISOString().slice(0,10);
+}
+function addDays(dayStr,n){
+  const d=new Date(dayStr+'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function clampRange(lo,hi,qLo,qHi){ return [ (lo<qLo?qLo:lo), (hi>qHi?qHi:hi) ]; }
+
+// ─── 站台切換（場館範圍跟隨站台切換，不另設「場館」篩選欄位）───
+function curVenueKey(){ return document.getElementById('site-sel').value; }
+function updateSiteNote(){
+  const k=curVenueKey();
+  document.getElementById('footer-note').textContent =
+    `場館範圍跟隨頂部站台切換；營業日依場館設定的「日結時間」切分——${venueLabel(k)} 日結時間 ${venueSettle(k)}（UTC+0）`;
+}
+function onSiteChange(){
+  updateSiteNote();
+  renderReport();
+  showToast('已切換站台：'+venueLabel(curVenueKey())+'，頁面資料已更新');
+}
+
+// ─── 篩選與彙總 ───────────────────────────────────────
+function currentFilter(){
+  return {
+    venues: [curVenueKey()],   // 場館範圍＝頂部站台切換所選站台
+    machine: document.getElementById('f-machine').value.trim(),
+    start: document.getElementById('f-date-start').value,
+    end: document.getElementById('f-date-end').value,
+    period: document.getElementById('f-period').value,
+    dim: document.getElementById('f-dim').value,
+  };
+}
+function filteredSessions(f){
+  return SESSIONS.filter(s=>
+    f.venues.includes(s.venue) &&
+    (!f.machine || s.machine.toLowerCase().includes(f.machine.toLowerCase())) &&
+    s.day>=f.start && s.day<=f.end
+  );
+}
+function periodOf(day,f){
+  if(f.period==='day')  return { key:day, label:day, lastDay:day };
+  if(f.period==='week'){
+    const ws=weekStart(day), we=addDays(ws,6);
+    const [lo,hi]=clampRange(ws,we,f.start,f.end);
+    return { key:ws, label:lo+' ～ '+hi, lastDay:hi };
+  }
+  if(f.period==='month'){
+    const m=day.slice(0,7), lo=m+'-01', hi=addDays(m==='2026-12'?'2027-01-01':m.slice(0,5)+String(+m.slice(5,7)+1).padStart(2,'0')+'-01',-1);
+    const [clo,chi]=clampRange(lo,hi,f.start,f.end);
+    return { key:m, label:clo+' ～ '+chi, lastDay:chi };
+  }
+  return { key:'ALL', label:f.start+' ～ '+f.end, lastDay:f.end };
+}
+const MONEY_KEYS=['keyin','wash','washV','washP','cashin','receipt','redeemed','unredeemed','net','betAmt','pnl','endBal'];
+function aggregate(rows,f,groupBy){   // groupBy: 'venue' | 'machine'
+  const map=new Map();
+  rows.forEach(s=>{
+    const p=periodOf(s.day,f);
+    const gk=groupBy==='venue'?s.venue:s.machine;
+    const key=p.key+'|'+gk;
+    if(!map.has(key))map.set(key,{ period:p, group:gk, venue:s.venue, machine:s.machine, machineName:s.machineName,
+      sessions:0, keyin:0, wash:0, washV:0, washP:0, cashin:0, receipt:0, redeemed:0, unredeemed:0, betAmt:0, pnl:0, days:new Set() });
+    const a=map.get(key);
+    if(!s.ongoing)a.sessions++;
+    a.keyin+=s.keyin; a.wash+=s.wash; a.washV+=s.washV; a.washP+=s.washP;
+    a.cashin+=s.cashin; a.receipt+=s.receipt; a.redeemed+=s.redeemed; a.unredeemed+=s.unredeemed;
+    a.betAmt+=s.betAmt; a.pnl+=s.pnl; a.days.add(s.day);
+  });
+  const out=[...map.values()];
+  out.forEach(a=>{
+    a.net = a.keyin + a.cashin - a.washV - a.redeemed;   // 現金淨收：不扣待核實洗分
+    const last=[...a.days].sort().pop();                  // 期末餘額取該週期最後一個營業日結算時點
+    if(groupBy==='venue'){
+      a.endBal = MACHINES.filter(m=>m.venue===a.group)
+        .reduce((t,m)=>t+(DAY_END[m.id+'|'+last]!==undefined?DAY_END[m.id+'|'+last]:0),0);
+    }else{
+      a.endBal = DAY_END[a.group+'|'+last]!==undefined?DAY_END[a.group+'|'+last]:0;
+    }
+  });
+  out.sort((x,y)=> x.period.key===y.period.key
+    ? String(x.group).localeCompare(String(y.group))
+    : String(x.period.key).localeCompare(String(y.period.key)) );
+  return out;
+}
+
+// ─── 渲染 ─────────────────────────────────────────────
+const MONEY_HEADS=['開分金額','洗分金額','已核實洗分','待核實洗分','進鈔金額','收據金額','已兌現金額','未兌現金額','現金淨收','有效投注額','損益','期末餘額'];
+const GRID = {
+  venue:  '150px 200px 70px repeat(12, 110px)',
+  machine:'150px 200px 70px repeat(12, 110px)',
+  session:'150px 200px 235px repeat(12, 110px)',
+};
+const MINW = { venue:1740, machine:1740, session:1905 };
+
+function searchReport(){
+  const df=document.getElementById('f-date-field');
+  df.classList.remove('field-error');
+  const f=currentFilter();
+  if(!f.start||!f.end){ df.classList.add('field-error'); showToast('結算日期為必填'); return; }
+  renderReport();
+  showToast('已依條件重新查詢');
+}
+function clearFilter(){
+  document.getElementById('f-machine').value='';
+  document.getElementById('f-date-start').value='2026-08-16';
+  document.getElementById('f-date-end').value='2026-08-19';
+  document.getElementById('f-period').value='day';
+  document.getElementById('f-dim').value='venue';
+  document.getElementById('f-date-field').classList.remove('field-error');
+  renderReport();
+  showToast('已清除所有條件');
+}
+
+function moneyCells(a){
+  return `
+    <div class="num-cell">${fmtAmt(a.keyin)}</div>
+    <div class="num-cell">${fmtAmt(a.wash)}</div>
+    <div class="num-cell">${fmtAmt(a.washV)}</div>
+    <div>${pendCell(a.washP)}</div>
+    <div class="num-cell">${fmtAmt(a.cashin)}</div>
+    <div class="num-cell">${fmtAmt(a.receipt)}</div>
+    <div class="num-cell">${fmtAmt(a.redeemed)}</div>
+    <div class="num-cell">${fmtAmt(a.unredeemed)}</div>
+    <div class="num-cell cell-strong">${fmtAmt(a.net)}</div>
+    <div class="num-cell">${fmtAmt(a.betAmt)}</div>
+    <div>${pnlCell(a.pnl)}</div>
+    <div class="num-cell">${a.endBalDisplay!==undefined?a.endBalDisplay:fmtAmt(a.endBal)}</div>`;
+}
+function statusTag(st){
+  if(st==='進行中')   return '<span class="st-tag st-live"><span class="st-dot"></span>進行中</span>';
+  if(st==='逾時結束') return '<span class="st-tag st-timeout"><span class="st-dot"></span>逾時結束</span>';
+  if(st==='日結結算') return '<span class="st-tag st-settle"><span class="st-dot"></span>日結結算</span>';
+  return '<span class="st-tag st-ended"><span class="st-dot"></span>已結束</span>';
+}
+
+function renderReport(){
+  const f=currentFilter();
+  document.getElementById('period-note').style.display = f.period!=='day'?'':'none';
+  document.getElementById('session-note').style.display = f.dim==='session'?'':'none';
+
+  const header=document.getElementById('rp-header');
+  const list=document.getElementById('rp-list');
+  const totalEl=document.getElementById('rp-total');
+  const grid=GRID[f.dim], minw=MINW[f.dim]+'px';
+  header.style.gridTemplateColumns=grid; header.style.minWidth=minw;
+  totalEl.style.gridTemplateColumns=grid; totalEl.style.minWidth=minw;
+
+  let head1, head2, head3;
+  if(f.dim==='venue'){ head1='結算期間'; head2='場館'; head3='場次數'; }
+  else if(f.dim==='machine'){ head1='結算期間'; head2='場館／機台'; head3='場次數'; }
+  else { head1='結算期間'; head2='場館／機台'; head3='場次編號'; }
+  header.innerHTML=[head1,head2,head3,...MONEY_HEADS].map(h=>`<span>${h}</span>`).join('');
+
+  const rows=filteredSessions(f);
+  let html='', totals=Object.fromEntries(MONEY_KEYS.map(k=>[k,0])), count=0;
+
+  if(f.dim==='session'){
+    const sorted=rows.slice().sort((a,b)=> a.day===b.day
+      ? (a.machine===b.machine? a.start.localeCompare(b.start) : a.machine.localeCompare(b.machine))
+      : a.day.localeCompare(b.day));
+    count=sorted.length;
+    html=sorted.map(s=>{
+      const net=s.keyin+s.cashin-s.washV-s.redeemed;
+      MONEY_KEYS.forEach(k=>{ totals[k]+= k==='net'?net : (k==='endBal'?(s.ongoing?0:s.endBal):s[k]); });
+      const a={ keyin:s.keyin,wash:s.wash,washV:s.washV,washP:s.washP,cashin:s.cashin,receipt:s.receipt,
+        redeemed:s.redeemed,unredeemed:s.unredeemed,net,betAmt:s.betAmt,pnl:s.pnl,endBal:s.endBal,
+        endBalDisplay:s.ongoing?'<span class="cell-empty">—</span>':undefined };
+      return `<div class="rp-card"><div class="rp-row" style="grid-template-columns:${grid};min-width:${minw};">
+        <div>${s.day}<div class="cell-sub">日結時間 ${venueSettle(s.venue)}（UTC+0）</div></div>
+        <div><span class="cell-strong">${venueLabel(s.venue)}</span><div class="cell-sub">${s.machine}（${s.machineName}）</div></div>
+        <div><span class="sess-id" onclick="gotoSession('${s.id}')" title="點擊跳至交易紀錄查詢，依場次編號篩選">${s.id}</span> ${statusTag(s.status)}
+          <div class="cell-sub">${s.start} ～ ${s.end?s.end.slice(11):'—'}　${s.ongoing?'累計至查詢當下（'+QUERY_NOW.slice(11)+'）':fmtDur(s.durMin)}</div></div>
+        ${moneyCells(a)}
+      </div></div>`;
+    }).join('');
+  }else{
+    const aggs=aggregate(rows,f,f.dim);
+    count=aggs.length;
+    html=aggs.map(a=>{
+      MONEY_KEYS.forEach(k=>{ totals[k]+=a[k]; });
+      const groupCell = f.dim==='venue'
+        ? `<div><span class="drill-link" onclick="drillVenue('${a.group}')" title="點擊鑽取：依機台明細">${venueLabel(a.group)} ›</span><div class="cell-sub">日結時間 ${venueSettle(a.group)}（UTC+0）</div></div>`
+        : `<div><span class="drill-link" onclick="drillMachine('${a.group}')" title="點擊鑽取：依場次明細">${a.group} ›</span><div class="cell-sub">${venueLabel(a.venue)}・${a.machineName}</div></div>`;
+      return `<div class="rp-card"><div class="rp-row" style="grid-template-columns:${grid};min-width:${minw};">
+        <div>${a.period.label}</div>
+        ${groupCell}
+        <div class="num-cell">${a.sessions}</div>
+        ${moneyCells(a)}
+      </div></div>`;
+    }).join('');
+  }
+
+  if(count===0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-state-title">查無符合條件的結算資料</div><div>試試調整機台帳號或結算日期，或於頂部切換站台</div></div>`;
+    totalEl.style.display='none';
+  }else{
+    list.innerHTML=html;
+    totalEl.style.display='grid';
+    totalEl.innerHTML=`
+      <div>總計</div><div></div><div></div>
+      <div class="num-cell">${fmtAmt(totals.keyin)}</div>
+      <div class="num-cell">${fmtAmt(totals.wash)}</div>
+      <div class="num-cell">${fmtAmt(totals.washV)}</div>
+      <div>${pendCell(totals.washP)}</div>
+      <div class="num-cell">${fmtAmt(totals.cashin)}</div>
+      <div class="num-cell">${fmtAmt(totals.receipt)}</div>
+      <div class="num-cell">${fmtAmt(totals.redeemed)}</div>
+      <div class="num-cell">${fmtAmt(totals.unredeemed)}</div>
+      <div class="num-cell">${fmtAmt(totals.net)}</div>
+      <div class="num-cell">${fmtAmt(totals.betAmt)}</div>
+      <div>${pnlCell(totals.pnl)}</div>
+      <div class="num-cell">${fmtAmt(totals.endBal)}</div>`;
+  }
+  document.getElementById('footer-count').textContent=`共 ${count} 筆（幣別：TWD，主站台核心貨幣）`;
+}
+
+// ─── 維度鑽取：場館 → 機台 → 場次（場館鎖定由站台切換達成）───
+function drillVenue(key){
+  document.getElementById('f-dim').value='machine';
+  renderReport();
+  showToast('已鑽取至「依機台明細」：'+venueLabel(key));
+}
+function drillMachine(id){
+  document.getElementById('f-machine').value=id;
+  document.getElementById('f-dim').value='session';
+  renderReport();
+  showToast('已鑽取至「依場次明細」：'+id);
+}
+function gotoSession(id){
+  showToast('場次內的交易請開「交易紀錄查詢」proto，依場次編號 '+id+' 篩選');
+}
+
+// ─── 匯出 CSV ─────────────────────────────────────────
+function exportCsv(){
+  const f=currentFilter();
+  const rows=filteredSessions(f);
+  let heads,lines=[];
+  const moneyOf=a=>[a.keyin,a.wash,a.washV,a.washP,a.cashin,a.receipt,a.redeemed,a.unredeemed,a.net,a.betAmt,a.pnl,a.endBal];
+  if(f.dim==='session'){
+    heads=['結算期間','場館','機台帳號','場次編號','場次狀態','開始時間','結束時間','場次時長',...MONEY_HEADS];
+    rows.slice().sort((a,b)=>a.day.localeCompare(b.day)||a.machine.localeCompare(b.machine)||a.start.localeCompare(b.start))
+      .forEach(s=>{
+        const net=s.keyin+s.cashin-s.washV-s.redeemed;
+        lines.push([s.day,venueLabel(s.venue),s.machine,s.id,s.status,s.start,s.end||'—',fmtDur(s.durMin),
+          s.keyin,s.wash,s.washV,s.washP,s.cashin,s.receipt,s.redeemed,s.unredeemed,net,s.betAmt,s.pnl,s.ongoing?'—':s.endBal]);
+      });
+  }else if(f.dim==='machine'){
+    heads=['結算期間','場館','機台帳號','場次數',...MONEY_HEADS];
+    aggregate(rows,f,'machine').forEach(a=>lines.push([a.period.label,venueLabel(a.venue),a.group,a.sessions,...moneyOf(a)]));
+  }else{
+    heads=['結算期間','場館','場次數',...MONEY_HEADS];
+    aggregate(rows,f,'venue').forEach(a=>lines.push([a.period.label,venueLabel(a.group),a.sessions,...moneyOf(a)]));
+  }
+  const esc=v=>{ v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const csv='\ufeff'+[heads,...lines].map(r=>r.map(esc).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`場館日結報表_${f.start}_${f.end}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast(`已匯出 CSV（${lines.length} 筆）`);
+}
+
+// ─── 初始化 ───────────────────────────────────────────
+updateSiteNote();
+renderReport();
+</script>
+</body>
+</html>

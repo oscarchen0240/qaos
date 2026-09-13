@@ -1,0 +1,82 @@
+workflow_id: spec-to-testcase
+version: "1.0.0"
+description: SPEC → Spec Analyst → Test Designer ⇄ Test Validator → Human Approval → Test Case Registry
+input:
+  schema: schemas/workflow/inputs/spec-to-testcase.schema.json
+  fields:
+    spec_id: {required: true}
+    spec_version: {required: true}
+    scope: {required: false, description: functional area 或 requirement_ids 子集}
+    analysis_review: {required: false, enum: [required, skip], description: "ADR-004 #13：required 時在 T2 之後插入 REVIEW_TEST_ANALYSIS approval；預設 skip"}
+    initiated_by: {required: true, type: human_id}
+initial_state:
+  workflow_run: CREATED
+  entities: {testcase: null, requirement: "DRAFT or ACTIVE (若已存在)"}
+agents: [agent-supervisor, agent-spec-analyst, agent-test-designer, agent-test-validator]
+artifacts:
+  - {type: SpecAnalysis, producer: agent-spec-analyst}
+  - {type: RequirementModel, producer: agent-spec-analyst, persisted_to: artifacts/requirements/<spec_id>/v<spec_version>/}
+  - {type: TestDesignReport, producer: agent-test-designer}
+  - {type: TestCaseDraft, producer: agent-test-designer}
+  - {type: TestValidationReport, producer: agent-test-validator}
+  - {type: ApprovalRequest, producer: agent-supervisor}
+  - {type: WorkflowSummary, producer: agent-supervisor}
+max_validation_iterations: 3
+tasks:
+  - id: T1
+    agent: agent-spec-analyst
+    skip_if: "RequirementModel for spec_id@spec_version exists AND status=ACTIVE"
+    inputs: [SpecVersion]
+    outputs: [SpecAnalysis, RequirementModel]
+    gate: G-SPEC
+    on_gate_fail: {retry: 2, then: WAITING_HUMAN(NEEDS_DECISION)}
+    post_pass:
+      - if: "any requirement.ambiguity.level == critical"
+        then: approval_request(RESOLVE_AMBIGUITY) → WAITING_HUMAN → back_to T1
+      - else: runtime.persist_requirements(); requirements → ACTIVE
+  - id: T2
+    agent: agent-test-designer
+    mode: spec
+    inputs: [RequirementModel, "Registry ACTIVE TC (same functional_area)", "TestValidationReport(FAIL) if iteration>0", "ApprovalDecision(reject) if any"]
+    outputs: [TestDesignReport, TestCaseDraft]
+    gate: G-DESIGN
+    on_gate_fail: {retry: 2, then: WAITING_HUMAN(NEEDS_DECISION)}
+    transitions: {testcase: "null → DRAFT"}
+  - id: T3
+    agent: agent-test-validator
+    inputs: [SpecVersion, RequirementModel, TestCaseDraft, "TestDesignReport.coverage_matrix"]
+    outputs: [TestValidationReport]
+    gate: G-TVAL
+    transitions: {testcase: "DRAFT → VALIDATING"}
+    on_result:
+      FAIL: {iteration_lt_max: "goto T2 (testcase → VALIDATION_FAILED → DRAFT)", iteration_ge_max: "approval_request(HUMAN_OVERRIDE) → WAITING_HUMAN"}
+      PASS: "testcase → VALIDATED; runtime.write versions/<tc_id>/v<n>.yaml (正式 ID 配發)"
+  - id: T4
+    type: approval
+    approval_type: ACTIVATE_TESTCASE
+    batch: true
+    inputs: [TestCaseDraft(VALIDATED), TestValidationReport, "trace"]
+    transitions: {testcase: "VALIDATED → PENDING_APPROVAL"}
+    on_decision:
+      approve: "runtime.COMMIT_TO_REGISTRY → APPROVED → ACTIVE; 舊 active → SUPERSEDED"
+      override: "同 approve，audit 標記 override"
+      reject: "testcase → DRAFT; goto T2 with rationale"
+  - id: T5
+    agent: agent-supervisor
+    outputs: [WorkflowSummary]
+    transitions: {workflow_run: "RUNNING → COMPLETED"}
+gates: [G-SPEC, G-DESIGN, G-TVAL, G-APPROVAL]
+failure_handling:
+  structural_gate_fail: 不計入 max_validation_iterations；連續 2 次 → WAITING_HUMAN
+  semantic_gate_fail: iteration+1；超限 → HUMAN_OVERRIDE
+  agent_permission_violation: run → FAILED
+  human_cancel: run → CANCELLED；已 VALIDATED 版本保留（狀態不變）
+human_approval:
+  required: [ACTIVATE_TESTCASE]
+  conditional: [RESOLVE_AMBIGUITY, HUMAN_OVERRIDE, NEEDS_DECISION]
+output:
+  - "Registry ACTIVE testcase ids + versions"
+  - WorkflowSummary
+final_state:
+  workflow_run: [COMPLETED, FAILED, CANCELLED]
+  testcase: ACTIVE

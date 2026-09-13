@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/change-impact-report.schema.json",
+  "title": "ChangeImpactReport (payload)",
+  "type": "object",
+  "required": ["change_impact_id", "spec_id", "from_version", "to_version", "requirement_diff", "testcase_impact", "summary", "completeness"],
+  "properties": {
+    "change_impact_id": {"$ref": "../common/defs.schema.json#/$defs/ChangeImpactId"},
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "from_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "to_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "requirement_diff": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["requirement_id", "change"], "properties": {"requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "change": {"type": "string", "enum": ["unchanged", "changed", "added", "removed"]}, "detail": {"type": "string"}, "from_reference": {"$ref": "../common/defs.schema.json#/$defs/SpecReference"}, "to_reference": {"$ref": "../common/defs.schema.json#/$defs/SpecReference"}}}},
+    "testcase_impact": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "active_version", "impact", "reason", "affected_requirement_ids"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "active_version": {"type": "integer"}, "impact": {"type": "string", "enum": ["unaffected", "affected", "obsolete", "new_required"]}, "reason": {"type": "string"}, "affected_requirement_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}}, "in_suites": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SuiteId"}}}}},
+    "new_required": {"type": "array", "items": {"type": "object", "required": ["requirement_id", "reason"], "properties": {"requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "reason": {"type": "string"}}}},
+    "summary": {"type": "object", "required": ["requirements_changed", "requirements_added", "requirements_removed", "testcases_affected", "testcases_obsolete", "testcases_unaffected"], "additionalProperties": {"type": "integer"}},
+    "completeness": {"type": "object", "required": ["all_active_requirements_judged", "all_referencing_testcases_judged"], "properties": {"all_active_requirements_judged": {"type": "boolean"}, "all_referencing_testcases_judged": {"type": "boolean"}}},
+    "hotfix_suite_recommendation": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}}
+  },
+  "additionalProperties": false
+}

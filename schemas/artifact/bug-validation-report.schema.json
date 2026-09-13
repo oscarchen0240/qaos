@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/bug-validation-report.schema.json",
+  "title": "BugValidationReport (payload)",
+  "type": "object",
+  "required": ["result", "bug_draft_artifact_id", "checks", "issues", "evidence_verification", "severity_assessment", "duplicate_check"],
+  "properties": {
+    "result": {"$ref": "../common/defs.schema.json#/$defs/BugValidationResult"},
+    "bug_draft_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "checks": {"type": "object", "required": ["violates_spec", "expected_has_spec_basis", "actual_supported_by_evidence", "reproduction_sufficient", "severity_reasonable", "priority_reasonable", "not_duplicate", "not_mere_ambiguity"], "additionalProperties": {"type": "boolean"}},
+    "issues": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ValidationIssue"}},
+    "evidence_verification": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["evidence_id", "hash_verified", "supports_claim"], "properties": {"evidence_id": {"$ref": "../common/defs.schema.json#/$defs/EvidenceId"}, "hash_verified": {"type": "boolean"}, "supports_claim": {"type": "boolean"}, "note": {"type": "string"}}}},
+    "severity_assessment": {"type": "object", "required": ["severity_recommended", "priority_recommended", "agrees_with_analyst"], "properties": {"severity_recommended": {"$ref": "../common/defs.schema.json#/$defs/Severity"}, "priority_recommended": {"$ref": "../common/defs.schema.json#/$defs/Priority"}, "agrees_with_analyst": {"type": "boolean"}, "rationale": {"type": "string"}}},
+    "duplicate_check": {"type": "object", "required": ["searched", "duplicate_of"], "properties": {"searched": {"type": "boolean"}, "duplicate_of": {"anyOf": [{"$ref": "../common/defs.schema.json#/$defs/BugId"}, {"type": "null"}]}, "note": {"type": "string"}}},
+    "ambiguity": {"anyOf": [{"$ref": "../common/defs.schema.json#/$defs/Ambiguity"}, {"type": "null"}]}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {"if": {"properties": {"result": {"const": "FAIL"}}}, "then": {"properties": {"issues": {"minItems": 1}}}},
+    {"if": {"properties": {"result": {"const": "DUPLICATE"}}}, "then": {"properties": {"duplicate_check": {"properties": {"duplicate_of": {"type": "string"}}}}}},
+    {"if": {"properties": {"result": {"const": "AMBIGUITY"}}}, "then": {"required": ["ambiguity"], "properties": {"ambiguity": {"type": "object"}}}}
+  ]
+}

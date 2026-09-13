@@ -1,0 +1,121 @@
+# 機器可讀狀態機（對應 docs/architecture/03-state-machines.md）。Runtime 只允許此處列出的轉換。
+# by: 允許的觸發者類別 — agent:<id> | human | system
+schema_version: "1.0"
+machines:
+  testcase:
+    initial: DRAFT
+    terminal: [SUPERSEDED, RETIRED]
+    transitions:
+      - {from: DRAFT,             to: VALIDATING,        by: [system]}
+      - {from: VALIDATING,        to: VALIDATED,         by: [system], requires: "TestValidationReport.result == PASS"}
+      - {from: VALIDATING,        to: VALIDATION_FAILED, by: [system], requires: "TestValidationReport.result == FAIL"}
+      - {from: VALIDATION_FAILED, to: DRAFT,             by: [system]}
+      - {from: VALIDATION_FAILED, to: PENDING_APPROVAL,  by: [system], requires: "ApprovalRequest(HUMAN_OVERRIDE)"}
+      - {from: VALIDATED,         to: PENDING_APPROVAL,  by: [system], requires: "ApprovalRequest(ACTIVATE_TESTCASE|APPLY_CHANGE)"}
+      - {from: PENDING_APPROVAL,  to: APPROVED,          by: [human],  requires: "ApprovalDecision(approve|override)"}
+      - {from: PENDING_APPROVAL,  to: DRAFT,             by: [human],  requires: "ApprovalDecision(reject)"}
+      - {from: APPROVED,          to: ACTIVE,            by: [system], requires: "COMMIT_TO_REGISTRY"}
+      - {from: ACTIVE,            to: SUPERSEDED,        by: [system], requires: "newer version ACTIVE"}
+      - {from: ACTIVE,            to: RETIRED,           by: [human],  requires: "ApprovalDecision(RETIRE_TESTCASE|APPLY_CHANGE)"}
+  bug:
+    initial: DRAFT
+    terminal: [CLOSED, REJECTED]
+    transitions:
+      - {from: DRAFT,               to: VALIDATING,          by: [system]}
+      - {from: VALIDATING,          to: VALIDATED,           by: [system], requires: "BugValidationReport.result == PASS"}
+      - {from: VALIDATING,          to: VALIDATION_FAILED,   by: [system], requires: "BugValidationReport.result == FAIL"}
+      - {from: VALIDATING,          to: AMBIGUITY_ESCALATED, by: [system], requires: "BugValidationReport.result == AMBIGUITY"}
+      - {from: VALIDATION_FAILED,   to: DRAFT,               by: [system]}
+      - {from: VALIDATION_FAILED,   to: REJECTED,            by: [human],  requires: "ApprovalDecision(CONFIRM_DUPLICATE)"}
+      - {from: AMBIGUITY_ESCALATED, to: DRAFT,               by: [human],  requires: "ApprovalDecision(RESOLVE_AMBIGUITY)"}
+      - {from: AMBIGUITY_ESCALATED, to: REJECTED,            by: [human]}
+      - {from: VALIDATED,           to: PENDING_APPROVAL,    by: [system], requires: "ApprovalRequest(OPEN_BUG)"}
+      - {from: PENDING_APPROVAL,    to: OPEN,                by: [human],  requires: "ApprovalDecision(approve|override) + COMMIT_BUG"}
+      - {from: PENDING_APPROVAL,    to: DRAFT,               by: [human],  requires: "ApprovalDecision(reject)"}
+      - {from: OPEN,                to: IN_PROGRESS,         by: [human]}
+      - {from: IN_PROGRESS,         to: RESOLVED,            by: [human]}
+      - {from: RESOLVED,            to: VERIFIED,            by: [human],  requires: "TestExecution(pass)"}
+      - {from: RESOLVED,            to: OPEN,                by: [human]}
+      - {from: VERIFIED,            to: CLOSED,              by: [human],  requires: "ApprovalDecision(CLOSE_BUG)"}
+  change_impact:
+    initial: DETECTED
+    terminal: [APPLIED, NO_IMPACT]
+    transitions:
+      - {from: DETECTED,             to: ANALYZING,            by: [system]}
+      - {from: ANALYZING,            to: NO_IMPACT,            by: [system]}
+      - {from: ANALYZING,            to: IMPACTED,             by: [system]}
+      - {from: IMPACTED,             to: TEST_UPDATE_REQUIRED, by: [system]}
+      - {from: TEST_UPDATE_REQUIRED, to: VALIDATING,           by: [system]}
+      - {from: VALIDATING,           to: TEST_UPDATE_REQUIRED, by: [system]}
+      - {from: VALIDATING,           to: COMPARING,            by: [system]}
+      - {from: COMPARING,            to: PENDING_APPROVAL,     by: [system]}
+      - {from: PENDING_APPROVAL,     to: APPLIED,              by: [human]}
+      - {from: PENDING_APPROVAL,     to: TEST_UPDATE_REQUIRED, by: [human]}
+  workflow_run:
+    initial: CREATED
+    terminal: [COMPLETED, FAILED, CANCELLED]
+    transitions:
+      - {from: CREATED,       to: RUNNING,       by: [system]}
+      - {from: RUNNING,       to: WAITING_HUMAN, by: [system]}
+      - {from: WAITING_HUMAN, to: RUNNING,       by: [human, system]}
+      - {from: RUNNING,       to: FAILED,        by: [system]}
+      - {from: RUNNING,       to: COMPLETED,     by: [system]}
+      - {from: RUNNING,       to: CANCELLED,     by: [human]}
+      - {from: WAITING_HUMAN, to: CANCELLED,     by: [human]}
+  task:
+    initial: PENDING
+    terminal: [DONE, FAILED]
+    transitions:
+      - {from: PENDING,          to: READY,            by: [system]}
+      - {from: READY,            to: RUNNING,          by: [system]}
+      - {from: RUNNING,          to: ARTIFACT_INVALID, by: [system]}
+      - {from: RUNNING,          to: GATE_FAILED,      by: [system]}
+      - {from: RUNNING,          to: DONE,             by: [system]}
+      - {from: ARTIFACT_INVALID, to: READY,            by: [system]}
+      - {from: GATE_FAILED,      to: READY,            by: [system]}
+      - {from: ARTIFACT_INVALID, to: FAILED,           by: [system]}
+      - {from: GATE_FAILED,      to: FAILED,           by: [system]}
+      - {from: RUNNING,          to: FAILED,           by: [system], requires: "permission violation"}
+  artifact:
+    initial: DRAFT
+    terminal: [SUPERSEDED]
+    transitions:
+      - {from: DRAFT,     to: SUBMITTED,  by: [system]}
+      - {from: SUBMITTED, to: VALID,      by: [system]}
+      - {from: SUBMITTED, to: INVALID,    by: [system]}
+      - {from: VALID,     to: SUPERSEDED, by: [system]}
+      - {from: INVALID,   to: SUPERSEDED, by: [system]}
+  test_suite:
+    initial: DRAFT
+    terminal: [RETIRED]
+    transitions:
+      - {from: DRAFT,            to: PENDING_APPROVAL, by: [system]}
+      - {from: PENDING_APPROVAL, to: ACTIVE,           by: [human], requires: "ApprovalDecision(approve|override)"}
+      - {from: PENDING_APPROVAL, to: DRAFT,            by: [human]}
+      - {from: ACTIVE,           to: RETIRED,          by: [human]}
+  requirement:
+    initial: DRAFT
+    terminal: [RETIRED]
+    transitions:
+      - {from: DRAFT,   to: ACTIVE,  by: [system], requires: "G-SPEC PASS and no critical ambiguity (or resolved)"}
+      - {from: ACTIVE,  to: CHANGED, by: [system]}
+      - {from: CHANGED, to: ACTIVE,  by: [system], requires: "new version"}
+      - {from: ACTIVE,  to: RETIRED, by: [system]}
+      - {from: CHANGED, to: RETIRED, by: [system]}
+  approval_request:
+    initial: PENDING
+    terminal: [DECIDED, EXPIRED, CANCELLED]
+    transitions:
+      - {from: PENDING, to: DECIDED,   by: [human]}
+      - {from: PENDING, to: EXPIRED,   by: [system]}
+      - {from: PENDING, to: CANCELLED, by: [human]}
+  clarification:
+    initial: OPEN
+    terminal: [APPLIED, WITHDRAWN]
+    transitions:
+      - {from: OPEN,     to: ASKED,     by: [human],         requires: "asked_to 已填（已送給 PM）"}
+      - {from: OPEN,     to: ANSWERED,  by: [human],         requires: "answer + resolution（PM 直接回答）"}
+      - {from: ASKED,    to: ANSWERED,  by: [human],         requires: "answer + resolution"}
+      - {from: ANSWERED, to: APPLIED,   by: [human, system], requires: "spec 新版本已匯入 / RESOLVE_AMBIGUITY 已 approve"}
+      - {from: OPEN,     to: WITHDRAWN, by: [human]}
+      - {from: ASKED,    to: WITHDRAWN, by: [human]}

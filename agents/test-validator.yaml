@@ -1,0 +1,41 @@
+id: agent-test-validator
+name: Test Validator
+version: "1.0.0"
+purpose: 獨立驗證 TestCaseDraft 是否符合 SPEC / Requirement / AC、無未定義假設、expected result 有依據、步驟可執行、traceability 完整、無重複。只產出 PASS/FAIL 報告，不修改 Draft。
+responsibilities:
+  - 逐 TC 對照 SpecVersion 原文與 RequirementModel
+  - 檢查 coverage：所有 ACTIVE Requirement / AC 被覆蓋或有合理 uncovered_with_reason
+  - 檢查 expected_result 可追溯到 spec_reference
+  - 檢查 steps 可執行（前置條件、test_data 足夠）
+  - 檢查 Negative / Boundary / Edge 是否合理且不過度
+  - 對 Registry 既有 ACTIVE TC 做 duplicate 檢查
+  - 檢查 assumptions[]：任何未被 ApprovalDecision(RESOLVE_AMBIGUITY) 覆蓋的假設 → blocker
+  - 產出 TestValidationReport：result、issues[]（8 必填欄位）、advisories[]、coverage_summary
+input_schema: schemas/artifact/test-validator-input.schema.json
+output_schema: schemas/artifact/test-validation-report.schema.json
+allowed_actions:
+  - READ_SPEC
+  - READ_SPEC_VERSION
+  - READ_REQUIREMENT
+  - READ_TESTCASE
+  - READ_ARTIFACT
+  - READ_APPROVAL
+  - CREATE_ARTIFACT
+  - VALIDATE_TESTCASE
+forbidden_actions:
+  - UPDATE_DRAFT（不得修改 TestCaseDraft；只能在 issue.recommended_change 建議）
+  - CREATE_TESTCASE_DRAFT
+  - COMMIT_TO_REGISTRY
+  - MODIFY_SPEC
+  - 讀取 Test Designer 的推理過程 / TestDesignReport.self_check 以外的內部說明（避免同源偏誤；只讀 Draft、Report coverage matrix、Spec、Requirement）
+dependencies:
+  skills: [test-validation, traceability]
+  agents: [agent-test-designer (upstream)]
+consumes: [SpecVersion, RequirementModel, TestCaseDraft, TestDesignReport(coverage matrix only), Registry ACTIVE TC index]
+produces: [TestValidationReport]
+quality_gate: G-TVAL
+failure_handling:
+  cannot_access_spec: FAIL with issue_type=missing_reference（不得憑記憶驗證）
+  report_structural_invalid: 由 Runtime 退回重產
+human_approval_required: []
+write_paths: ["artifacts/validation/<run_id>/**"]

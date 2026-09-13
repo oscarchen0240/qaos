@@ -1,0 +1,259 @@
+artifact_id: ART-TVR-01M2DHZ3HFXMS3342ZRNSJR838
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-001
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-13T14:15:31Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2DHP7NPKTQZPEHSYS86RNPE
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2DHP7NPKTQZPEHSYS86RNPE
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2DHP7NPKTQZPEHSYS86RNPE
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+  issues:
+  - testcase_id: TC-DRAFT-01M2DHP7NNN33C2R9HT2CR8ND0
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+    evidence: Draft test_data：date_from 2026-09-02、date_to 2026-09-10；expected_result：「列出兩列，週起分別為 2026-08-31(一) 與 2026-09-07(一)；各欄為該週內營業日合計」；assumptions
+      只有一條：「結算期間欄對不完整週的顯示格式（完整週起訖 vs 截至查詢起迄日）Spec 未定義」。Spec 原文：「非按日時，每列為該週期內各營業日的彙總」；「結算日期 | 日期範圍 | 必填」。
+    explanation: 第一週 08-31～09-06 有兩個營業日（08-31、09-01）落在結算日期 09-02～09-10 之外。「該週內營業日合計」是含這兩天（整週）還是只含結算日期範圍內的 09-02～09-06，Spec
+      沒寫；已宣告的 assumption 只涵蓋顯示格式，未涵蓋合計範圍。上一版指出的這一點未處理，expected 的金額部分仍無法判定。
+    recommended_change: 補一條 assumption：「結算日期範圍外但同週的營業日是否計入合計，Spec 未定義；本案假設只計結算日期範圍內」，並在 expected 明寫「第一列＝09-02～09-06 合計、第二列＝09-07～09-10
+      合計」；或把測試資料改為完整週（09-07～09-13）避開此歧義。
+  - testcase_id: TC-DRAFT-01M2DHP7NPJ2YN5CVJ3J4FW0R0
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數 + §業務規則/場次日結
+    evidence: Draft steps：「讓機台 A 產生 1 場逾時結束、1 場日結結算的場次」→「依機台明細搜尋當日」；expected：「場次數 2（逾時結束 1 ＋ 日結結算 1；依假設含所有非進行中狀態）」；assumption
+      只涵蓋「是否含逾時結束與日結結算狀態」。Spec：「場次數…為當日結束的場次筆數」；「日結時間到達時強制結束所有進行中的場次」；同一 Draft 的邊界案例（…NNWMBW1F6QTAE852RE）預期 06:00:00 的交易計入新營業日。
+    explanation: 日結結算場次必然在日結時間 06:00 結束，而 06:00 依 AC-0072 屬於下一個營業日。該場次的「當日」是它開始的營業日還是結束時刻所屬的營業日，Spec 未寫；步驟中「當日」也未指明哪個營業日。expected
+      2 只在「日結結算場次歸屬於開始的營業日」這個未宣告的前提下成立，否則會拆成兩列各 1。
+    recommended_change: 補 assumption：「日結結算場次歸屬哪個營業日 Spec 未定義；本案假設歸屬於場次開始的營業日」，並把步驟改為明確的日期（例如逾時結束與日結結算的場次皆開始於營業日 2026-09-05，搜尋
+      2026-09-05）。
+  - testcase_id: TC-DRAFT-01M2DHP7NPCKQ99ZRZE28DVG4M
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/期末餘額
+    evidence: 共用前置條件：「結算日期預設為單一營業日 2026-09-05」「查詢時點在當日日結時間（06:00 UTC+0）之前」；Draft steps：「日結時 A 分數 50、B 30」→「按日依場館彙總搜尋」；expected：「期末餘額
+      80」。Spec：「期末餘額 | 該日結算時點各機台的分數合計」。
+    explanation: 期末餘額取「該日結算時點」的值，必須在營業日 2026-09-05 日結之後才存在；但前置條件規定查詢時點在日結之前，步驟又沒有覆寫時點。依前置執行時 09-05 尚未結算，expected 80 無從觀察，前置與步驟互相矛盾。
+    recommended_change: 本案 steps 補「等待 2026-09-05 營業日日結（09-06 06:00 UTC+0）後再查詢」以覆寫前置；並建議把「查詢時點在日結前」這條從共用前置移到真正需要它的場次數案例。
+  - testcase_id: TC-DRAFT-01M2DHP7NPQGDESWZ77P5S7860
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+    evidence: 共用前置條件：「結算日期預設為單一營業日 2026-09-05」「查詢時點在當日日結時間之前」；Draft steps：「週內最後營業日期末合計 80、前一日 120」→「按週依場館彙總搜尋」；expected：「期末餘額
+      80」。Spec：「『期末餘額』取該週期最後一個營業日結算時點的值」。
+    explanation: 同上：週內最後營業日的期末餘額需在該日日結後才存在，前置卻要求日結前查詢；且步驟未另設多日的結算日期（單日預設下「按週」只含一天，「前一日 120」無法納入）。
+    recommended_change: steps 補「結算日期設為涵蓋整週（例如 09-07～09-13），於最後營業日日結後查詢」。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2DHP7NP4HJDQ19J2J6EKCME
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-015
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+    evidence: Draft steps：「準備未兌現收據：09-05 300、09-03 200（皆在結算日期 09-01～09-07 範圍內）」，expected「皆為 500」；preconditions 為共用 6 條，不含「該場館無其他未兌現收據」（同
+      Draft 的 …PN9BTEFZ0JKRXKMYK 已加此條）。Spec：「未兌現金額…一律為截至查詢當下的累計」。
+    explanation: 若環境存在其他未兌現收據，累計就不是 500；expected 已不取決於 REQ-015 歧義（兩筆皆在結算日期範圍內），只差前置未排除干擾資料。
+    recommended_change: 前置條件補「該場館無其他未兌現收據」。
+  - testcase_id: '*'
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+    evidence: 共用前置：「結算日期預設為單一營業日 2026-09-05…需要多日的案例於步驟中另設」。但 …PA81GKBX1F6S953FD（「準備一天損益為正、一天為負」）、…P07HE8R27C789F2AG（「週內三個營業日開分各
+      100 → 按週」）、…NNQ0FM508EQ9TNYXA9（按月看結算期間）的 steps 都未另設結算日期。
+    explanation: 單日預設下這些案例無法產生預期的多列／跨週資料，執行者仍需自行補值。
+    recommended_change: 在上述案例的 steps 明寫結算日期範圍（例如 09-01～09-07 或跨兩個月）。
+  - testcase_id: '*'
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-006
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號
+    evidence: coverage.yaml REQ-DAILYREPORT-006 的 acceptance_criteria 清單含「AC-DAILYREPORT-0082 → …NN7W5Q38AYF9PVRFGM」；requirements.yaml
+      中 AC-0082 屬於 REQ-DAILYREPORT-008，REQ-006 只有 AC-0061～0063。
+    explanation: coverage matrix 結構錯誤：AC 被列在不屬於它的 Requirement 下。REQ-008 節已正確列出 AC-0082（…NNMVHJHC6Q1QD0YGAG），故不影響覆蓋結論，但會讓依
+      requirement 彙整的覆蓋統計失真。
+    recommended_change: 把 AC-0082 從 REQ-006 節移除，改在 REQ-008 節的 AC-0082 draft_ids 中加入 …NN7W5Q38AYF9PVRFGM。
+  - testcase_id: TC-DRAFT-01M2DHP7NPP4RP9TPA2J65WN20
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結
+    evidence: 共用前置：「查詢時點在當日日結時間（06:00 UTC+0）之前」；Draft steps[2]：「等待日結時間 06:00 UTC+0 到達」、steps[3]：「依場次明細查詢前一日與當日」（…PDK6619G0YG69ADZW
+      同）。
+    explanation: 步驟已明確描述時序，可執行；但與共用前置字面衝突，執行者需自行判斷步驟優先。
+    recommended_change: 把「查詢時點在日結前」從共用前置移到場次數案例（…NNF18DHE6H47KFWKVS、…PRDQZK91E9S4RHAP1、…PDRQTN17MVJA536S7）各自的前置。
+  coverage_summary:
+    requirements_total: 17
+    requirements_covered: 17
+    ac_total: 43
+    ac_covered: 43
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2DHP7NNCA143G66J2ZAATH8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNMWMES5F92YJCBVH2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNVA3JN6ZQ2ZGAQY6G
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NN0RRDAV51CMSJTQFC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNV3ZACC6CYSFKMQ1H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNYJ5Y9N2X0M6Y2YPS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNEMKC4621J9A3G9YQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNSJXYGD1KVMPX5F0N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NN3AJJJ9TJPPCCHY64
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNGRVP45Q918K38SPF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNNW4QTDYXW7P8CCS9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNPAYPSRYG08ZRW2CX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNKQVYN1T141DP42XX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNN33C2R9HT2CR8ND0
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2DHP7NN8AMNYXEC1X7J0Z11
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNY3KGZ8EQXJAHXFCA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNKY8B1QZF1H6CSX4C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NN6CRNJV4V10XV6P7M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNSVG8KCR2HE2DHWKW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NN7W5Q38AYF9PVRFGM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNPB2V8WAH9WP1QHHA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNWMBW1F6QTAE852RE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNQ0FM508EQ9TNYXA9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNZE4N59W8QY993RGA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNHMBW6V3MBD152WRR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNMVHJHC6Q1QD0YGAG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNWWG6H4GSGSVM10C6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NNF18DHE6H47KFWKVS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPRDQZK91E9S4RHAP1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPDRQTN17MVJA536S7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPJ2YN5CVJ3J4FW0R0
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2DHP7NPRWHTTRRS0J0WMT3T
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPQWW21EFYD26HFAVY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPR8T129PXXNMQK23K
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPD3Q7CX1HT2XA7KAQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPN9BTEFZ0JKRXKMYK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NP6H24W412H1RCF4TK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NP1BWBKRQNVMQX83N9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPMM0CC4R81MZDD5SQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPWP52XYCS6E8RJ88E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPA81GKBX1F6S953FD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPCKQ99ZRZE28DVG4M
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2DHP7NPQGDESWZ77P5S7860
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2DHP7NP07HE8R27C789F2AG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NP4HJDQ19J2J6EKCME
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NP1EH1SA8T9X3GR4TF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPB8STQPNX7Q124G14
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPVXCG2E72WSPVBEH0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPV90JHV8WT0JZE350
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPGY7MW8HPJSC3NP7M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPP4RP9TPA2J65WN20
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NPDK6619G0YG69ADZW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2DHP7NP2Q5Z02HZEQZMZAN6
+    verdict: ok
+history:
+- at: '2026-09-13T14:15:31Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-001

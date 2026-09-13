@@ -1,0 +1,142 @@
+artifact_id: ART-SA-01M2D72FB5MCEMH67XNR9V1TY4
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-001
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-13T11:05:07Z'
+status: DRAFT
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-DAILYREPORT-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-DAILYREPORT-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  content_hash: 08e90e0ae8b74e65e832030624f829f41320269e567d17a53057f945b816c10b
+  summary: 場館日結報表：依場館／機台／場次三種維度、四種統計週期，統計開分／洗分／入金／出金與核實狀態連動金額、現金淨收、投注與損益、期末餘額；權限三層；唯讀＋匯出 CSV。相依開發包③場次引擎與開發包⑤之一洗分出金核實。
+  scope:
+    in_scope:
+    - 篩選器
+    - 列表欄位與計算規則
+    - 權限
+    - 匯出 CSV
+    - 場次日結（影響本報表分日）
+    out_of_scope:
+    - 核實操作本身（洗分出金核實）
+    - 場次引擎細節（開發包③）
+    - 客戶版手冊
+  requirement_ids:
+  - REQ-DAILYREPORT-001
+  - REQ-DAILYREPORT-002
+  - REQ-DAILYREPORT-003
+  - REQ-DAILYREPORT-004
+  - REQ-DAILYREPORT-005
+  - REQ-DAILYREPORT-006
+  - REQ-DAILYREPORT-007
+  - REQ-DAILYREPORT-008
+  - REQ-DAILYREPORT-009
+  - REQ-DAILYREPORT-010
+  - REQ-DAILYREPORT-011
+  - REQ-DAILYREPORT-012
+  - REQ-DAILYREPORT-013
+  - REQ-DAILYREPORT-014
+  - REQ-DAILYREPORT-015
+  - REQ-DAILYREPORT-016
+  - REQ-DAILYREPORT-017
+  ambiguities:
+  - requirement_id: REQ-DAILYREPORT-009
+    ambiguity:
+      level: major
+      description: 「當日結束的場次」是否包含狀態為「逾時結束」與「日結結算」的場次，Spec 未明示
+      options:
+      - 包含所有非進行中狀態（已結束、逾時結束、日結結算）
+      - 僅包含「已結束」
+  - requirement_id: REQ-DAILYREPORT-011
+    ambiguity:
+      level: minor
+      description: 「標示提醒」的具體呈現方式未定義
+      options:
+      - 紅字
+      - 圖示
+      - 文字標籤
+  - requirement_id: REQ-DAILYREPORT-015
+    ambiguity:
+      level: major
+      description: 「未兌現金額不受週期影響」與「結算日期」篩選的關係未明：是否也不受結算日期範圍限制？
+      options:
+      - 不受結算日期限制（全期累計）
+      - 受結算日期限制、只不受統計週期切分影響
+  constraints:
+  - text: 所有時間以 UTC+0
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §場次資訊/開始時間
+      quote: ''
+  - text: 本包與正本 v07 重疊處以正本為準
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: 拆包說明
+      quote: ''
+  - text: 本功能未對客戶開放（INTERNAL）
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: 首行標記
+      quote: ''
+  edge_case_candidates:
+  - text: 結算日期起日 = 迄日（單日）
+    requirement_id: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+      quote: ''
+  - text: 交易剛好落在日結時間邊界（同秒）
+    requirement_id: REQ-DAILYREPORT-007
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/日結時間
+      quote: ''
+  - text: 按週且結算日期起日非週一
+    requirement_id: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+      quote: ''
+  - text: 場館當日無任何交易（各欄為 0 或不列出？）
+    requirement_id: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: ''
+  - text: 查詢區間內核實狀態變動（同一筆先待核實後已核實）
+    requirement_id: REQ-DAILYREPORT-011
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/已核實洗分
+      quote: ''
+  - text: 現金淨收為負值的顯示
+    requirement_id: REQ-DAILYREPORT-012
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/現金淨收
+      quote: ''
+  open_questions:
+  - 場館當日無交易時是否列出一列全 0？
+  - 「依場次明細」是否也顯示底部總計？
+  - 匯出 CSV 欄位順序與時區標示？

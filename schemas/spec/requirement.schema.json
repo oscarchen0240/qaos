@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/spec/requirement.schema.json",
+  "title": "Requirement",
+  "description": "持久化 Requirement（artifacts/requirements/<spec_id>/v<ver>/requirements.yaml 內的每一筆）",
+  "type": "object",
+  "required": [
+    "requirement_id",
+    "version",
+    "spec_id",
+    "spec_version",
+    "type",
+    "statement",
+    "acceptance_criteria",
+    "spec_reference",
+    "status",
+    "history"
+  ],
+  "properties": {
+    "requirement_id": {
+      "$ref": "../common/defs.schema.json#/$defs/RequirementId"
+    },
+    "version": {
+      "$ref": "../common/defs.schema.json#/$defs/IntVersion"
+    },
+    "spec_id": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecId"
+    },
+    "spec_version": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "functional",
+        "constraint",
+        "non_functional",
+        "security",
+        "edge_case_candidate"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 5
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "ac_id",
+          "given",
+          "when",
+          "then"
+        ],
+        "properties": {
+          "ac_id": {
+            "$ref": "../common/defs.schema.json#/$defs/AcId"
+          },
+          "given": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          },
+          "then": {
+            "type": "string"
+          },
+          "spec_reference": {
+            "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spec_reference": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+    },
+    "ambiguity": {
+      "anyOf": [
+        {
+          "$ref": "../common/defs.schema.json#/$defs/Ambiguity"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "related_requirement_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/RequirementId"
+      }
+    },
+    "risk": {
+      "$ref": "../common/defs.schema.json#/$defs/Risk"
+    },
+    "status": {
+      "$ref": "../common/defs.schema.json#/$defs/RequirementStatus"
+    },
+    "supersedes_version": {
+      "type": "integer"
+    },
+    "created_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "created_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/HistoryEntry"
+      }
+    },
+    "behavior_kind": {
+      "type": "string",
+      "enum": [
+        "success",
+        "rejection",
+        "boundary",
+        "state_change",
+        "constraint"
+      ],
+      "description": "此需求描述的是成功路徑 / 拒絕行為 / 邊界 / 狀態變化 / 不變量。Designer 依此決定必展開的技術層。"
+    },
+    "inputs": {
+      "type": "array",
+      "description": "給 EP / BVA 用的輸入結構",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "integer",
+              "number",
+              "boolean",
+              "date",
+              "datetime",
+              "enum",
+              "array",
+              "object",
+              "file"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "min_length": {
+                "type": "integer"
+              },
+              "max_length": {
+                "type": "integer"
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "enum": {
+                "type": "array"
+              },
+              "format": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "spec_reference": {
+            "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "states": {
+      "type": "array",
+      "description": "給 state transition 用：此需求涉及的狀態與轉換",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "allowed": {
+            "type": "boolean",
+            "default": true
+          },
+          "spec_reference": {
+            "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rejection_contract": {
+      "type": "object",
+      "description": "Spec 是否寫了『不符合時系統怎麼做』。defined=false 是 exploratory 案例與 Clarification 的觸發器。",
+      "required": [
+        "defined"
+      ],
+      "properties": {
+        "defined": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "spec_reference": {
+          "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

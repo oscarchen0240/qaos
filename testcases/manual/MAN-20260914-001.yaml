@@ -1,0 +1,26 @@
+record_id: MAN-20260914-001
+title: 玩家場次逾時結束後不可再遊玩，前後端皆擋；再次入金或開分後建立新場次可遊玩
+tester: oscarchen@blockaction.tech
+tested_at: '2026-09-14T00:00:00Z'
+product: ba-admin
+functional_area: DAILYREPORT
+spec_hint:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_ids:
+  - REQ-DAILYREPORT-017
+environment: stage-arcade-violet.springkyle.online（後台）／Violet Arcade 前台 + 機台端
+preconditions:
+- 機台帳號有分數餘額且場次進行中
+- 場館設定的場次逾時時間已知（預設 1 小時）
+steps_performed:
+- 讓機台在有餘額的狀態下超過場館逾時時間無任何交易與遊玩
+- 確認場次狀態變為「逾時結束」
+- 以剩餘分數在機台前台嘗試進入遊戲／下注
+- 直接呼叫遊玩／下注 API
+- 對該機台再次入金或開分
+- 再次嘗試遊玩
+observed_result: 逾時結束後前台拒絕進入遊戲、後端 API 亦拒絕；入金或開分後系統建立新場次，可正常遊玩。
+outcome: pass
+evidence_ids: []
+notes: 'source: QA 口述（Oscar，2026-09-14）；規則依據：機台金流與場次_spec_v01 §場次狀態「逾時結束…之後若再有交易，會建立新場次」；「不可再遊玩、前後端擋」為實測觀察，spec 未明文。'

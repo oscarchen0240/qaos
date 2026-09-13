@@ -1,0 +1,52 @@
+workflow_id: regression-generation
+version: "1.0.0"
+description: Registry → Risk / Change Analysis → RegressionProposal → Human Approval → Full / CI / Hotfix / Smoke suites
+input:
+  fields:
+    target_suites: {required: true, items_enum: [full_regression, ci_regression, hotfix, smoke, feature]}
+    scope: {required: true, enum: [all, functional_area, impacted], description: "impacted 需附 change_impact_id"}
+    functional_area: {required: false}
+    change_impact_id: {required: false}
+    trigger: {required: true, enum: [manual, post_change, hotfix]}
+    initiated_by: {required: true}
+initial_state: {workflow_run: CREATED, suite: "ACTIVE (current) or null"}
+agents: [agent-supervisor, agent-regression-curator]
+artifacts:
+  - {type: RegressionProposal, producer: agent-regression-curator, count: "one per target suite"}
+  - {type: ApprovalRequest, producer: agent-supervisor, count: "one per target suite"}
+  - {type: WorkflowSummary, producer: agent-supervisor}
+tasks:
+  - id: T1
+    agent: agent-regression-curator
+    inputs: ["Registry ACTIVE TC + metadata", "TestSuite(current versions)", "ChangeImpactReport (if scope=impacted or trigger=hotfix)", "TestExecution history (stability)", "bugs/ (risk hotspots)"]
+    outputs: [RegressionProposal]
+    gate: G-REG
+    selection_rules:
+      full_regression: "ACTIVE ∧ (risk ≥ medium ∨ priority ≥ medium ∨ critical_path) 依 area 分組"
+      ci_regression: "automation_status=automated ∧ stability=stable ∧ ci_eligible ∧ execution_cost ≤ medium ∧ (priority=high ∨ risk=high)"
+      hotfix: "impacted tc ∪ same-area high-risk ∪ critical-dependency tc；pinned_version=整數"
+      smoke: "critical_path ∧ execution_cost=low"
+      feature: "requirement_ids ∩ feature scope ≠ ∅"
+    transitions: {suite: "→ DRAFT (proposal)"}
+  - id: T2
+    type: approval
+    approval_type: UPDATE_SUITE_MEMBERSHIP
+    per: target_suite
+    inputs: [RegressionProposal, "suite diff (add/remove/repin) with justification", trace]
+    transitions: {suite: "DRAFT → PENDING_APPROVAL"}
+    on_decision:
+      approve: "UPDATE_SUITE_MEMBERSHIP → suite version+1 ACTIVE；舊 version 保留"
+      override: 同 approve
+      reject: "goto T1 with rationale 或 結束（Human 選）"
+  - id: T3
+    agent: agent-supervisor
+    outputs: [WorkflowSummary]
+gates: [G-REG, G-APPROVAL]
+failure_handling:
+  non_active_tc_referenced: G-REG structural FAIL
+  manual_tc_in_ci: G-REG structural FAIL
+human_approval:
+  required: [UPDATE_SUITE_MEMBERSHIP]   # 加入與移出都需要
+  conditional: [NEEDS_DECISION]
+output: ["suite_id@version ACTIVE", "membership diff", WorkflowSummary]
+final_state: {workflow_run: [COMPLETED, FAILED, CANCELLED], suite: ACTIVE}

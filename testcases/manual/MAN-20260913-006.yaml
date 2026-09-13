@@ -1,0 +1,26 @@
+record_id: MAN-20260913-006
+title: '[v1_transaction_query-rebate-log] rebate-log 的 transactionNo / rebateAmount 篩選被安靜忽略'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_transaction_query-rebate-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 檢查不帶篩選的原始資料完整欄位形狀,確認實際欄位是 `rebateLogId, betLogId, betNo, userNo, bet, validBet, rebatePercentage, rebateAmount, auditRequirement,
+  requirementBetAmount, time`,注意 **schema 裡完全沒有列出 `rebateAmount` 這個欄位當篩選條件**,而且資料裡也**沒有 `transactionNo` 這個鍵**。
+- 用 schema 裡列出的 `transactionNo`(陣列)帶一個看似合理的值去查,驗證這個欄位是否真的存在對應的資料欄位可以篩選。
+- 用資料裡真實存在但 schema 未列出的 `rebateAmount` 做範圍篩選測試,比對 `pagination.total` 是否真的narrow。
+observed_result: '- `transactionNo`:schema 列出了這個欄位當篩選條件,但這張表的資料本身根本沒有這個概念(可能是複製自其他表格的 schema 定義,貼錯到這個工具上),帶入後被安靜忽略,沒有任何錯誤提示告知「這張表沒有這個欄位」。
+
+  - `rebateAmount`:這是真實存在、有意義的金額欄位,如果有人問「返水金額超過 X 元的有幾筆」,自然會嘗試用這個欄位名去篩,但目前完全無效,答案會被誤認為全部符合(因為 total 沒變)。這跟 Bug #01 的失效模式完全相同。'
+outcome: fail
+evidence_ids:
+- EVD-0006
+notes: 'source: bug-reports/bug-06-rebate-log-undocumented-fields-ignored.md; severity(原報告): 中(不存在的欄位被忽略較符合預期,但 `rebateAmount`
+  是真實存在卻不可篩選的資料欄位,屬於複合問題陷阱); 涉及草稿條文: §3.2 R7, §3.2 R6'

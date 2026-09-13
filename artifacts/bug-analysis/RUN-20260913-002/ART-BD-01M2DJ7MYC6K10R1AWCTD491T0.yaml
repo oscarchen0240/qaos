@@ -1,0 +1,83 @@
+artifact_id: ART-BD-01M2DJ7MYC6K10R1AWCTD491T0
+artifact_type: BugDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-002
+task_id: T1
+iteration: 0
+created_by: agent-bug-analyst
+created_at: '2026-09-13T14:20:11Z'
+status: VALID
+source:
+  type: ManualTestRecord
+  ids:
+  - MAN-20260913-009
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-009
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-029
+  version: 1
+- entity_type: ManualTestRecord
+  id: MAN-20260913-009
+- entity_type: Evidence
+  id: EVD-0009
+- entity_type: Evidence
+  id: EVD-0044
+requires_approval: null
+payload:
+  draft_id: BUG-DRAFT-01M2DJ0000000000000000AA01
+  title: '[後端][機台][場館日結報表] 依場館彙總／依機台明細維度的 API 回應缺少「場次數」欄位'
+  product: ba-admin
+  functional_area: DAILYREPORT
+  severity_proposed: major
+  priority_proposed: high
+  severity_rationale: Spec 明定的列表欄位整欄缺失（後端未回傳），對帳核心維度之一無法使用；非資料錯誤故不到 critical
+  environment:
+    name: stage
+    url: stage-admin-srv.springkyle.online
+    account: ACAA00280（站長）／ACAA00250（機台帳號，交易發起）
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-009
+  acceptance_criteria_ids:
+  - AC-DAILYREPORT-0091
+  - AC-DAILYREPORT-0092
+  testcase_id: TC-DAILYREPORT-029
+  testcase_version: 1
+  preconditions:
+  - 測試帳號 ACAA00280（站長）可登入
+  - 機台帳號 ACAA00250 於 2026-09-08 有已結束場次（sessionCode ACAA00250_20260908_0003）
+  reproduction_steps:
+  - 登入後台，站台切換至機台場館（Arcade）
+  - 進入 各式報表 > 場館日結報表，統計維度選「依場館彙總」，結算日期選 2026-09-08，搜尋
+  - 觀察列表「場次數」欄
+  - 開啟瀏覽器 Network，攔截 query-venue-daily-report 的回應 JSON，檢查是否有場次數欄位
+  expected_result: 「依場館彙總」列的場次數＝該場館底下所有機台帳號當日場次數的加總；API 回應應含對應欄位（如 sessionCount）
+  expected_result_spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/場次數（2026-09-03 定案）
+  actual_result: 畫面「場次數」欄一律顯示「--」；API 回應整包無任何場次數欄位（僅 settlePeriod / endTime / 金額類欄位）
+  actual_result_evidence_map:
+  - claim: 畫面場次數欄顯示 --
+    evidence_id: EVD-0009
+  - claim: API 回應無 sessionCount 類欄位
+    evidence_id: EVD-0044
+  evidence_ids:
+  - EVD-0009
+  - EVD-0044
+  api:
+    url: https://stage-admin-srv.springkyle.online/api/v1/report/query-venue-daily-report
+    method: POST
+  impact: 場館與平台對帳時無法得知當日場次筆數；依機台明細維度同樣受影響
+  suspected_area: 後端 report/query-venue-daily-report 彙總層未計算場次數
+  ambiguity_suspected: false
+  duplicate_candidates: []
+history:
+- at: '2026-09-13T14:20:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-002

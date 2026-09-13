@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/testcase/test-suite.schema.json",
+  "title": "TestSuite",
+  "description": "testsuites/<type>/<suite_id>.yaml — 只 reference testcase_id；schema 刻意不允許 steps / expected_result 等內容欄位",
+  "type": "object",
+  "required": ["suite_id", "suite_type", "version", "status", "memberships", "history"],
+  "properties": {
+    "suite_id": {"$ref": "../common/defs.schema.json#/$defs/SuiteId"},
+    "suite_type": {"$ref": "../common/defs.schema.json#/$defs/SuiteType"},
+    "version": {"$ref": "../common/defs.schema.json#/$defs/IntVersion"},
+    "title": {"type": "string"},
+    "product": {"type": "string"},
+    "functional_area": {"type": "string"},
+    "purpose": {"type": "string"},
+    "change_impact_id": {"$ref": "../common/defs.schema.json#/$defs/ChangeImpactId"},
+    "status": {"$ref": "../common/defs.schema.json#/$defs/SuiteStatus"},
+    "memberships": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["testcase_id", "pinned_version", "justification", "risk_tag", "added_by_approval"],
+        "properties": {
+          "testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"},
+          "pinned_version": {"anyOf": [{"const": "active"}, {"type": "integer", "minimum": 1}]},
+          "justification": {"type": "string", "minLength": 5},
+          "risk_tag": {"type": "string"},
+          "order": {"type": "integer"},
+          "added_by_approval": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "approved_by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+    "approval_id": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"},
+    "created_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "history": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/HistoryEntry"}}
+  },
+  "additionalProperties": false
+}

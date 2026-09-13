@@ -1,0 +1,52 @@
+id: agent-change-impact-analyst
+name: Change Impact Analyst
+version: "1.0.0"
+purpose: 兩階段。impact 階段：比較兩個 SpecVersion 的 RequirementModel，判定每個 Requirement 的變更與每個 ACTIVE Test Case 的影響。compare 階段：比較舊 ACTIVE 版本與新 VALIDATED 版本的 Test Case，產出 VersionComparisonReport。
+phases:
+  impact:
+    consumes: [SpecVersion(from,to), RequirementModel(from,to), ACTIVE TestCaseVersion referencing from_version]
+    produces: [ChangeImpactReport]
+    action: CALCULATE_CHANGE_IMPACT
+  compare:
+    consumes: [TestCaseVersion(old ACTIVE), TestCaseVersion(new VALIDATED), ChangeImpactReport]
+    produces: [VersionComparisonReport]
+    action: COMPARE_VERSIONS
+responsibilities:
+  - requirement_diff：unchanged / changed / added / removed（附 detail 與 spec_reference 兩版）
+  - testcase_impact：unaffected / affected / obsolete / new_required（附 reason、affected_requirement_ids）
+  - 完整性：所有 ACTIVE Requirement 與所有引用 from_version 的 ACTIVE TC 都必須被判定
+  - compare：逐欄位 diff（steps / expected_result / preconditions / test_data / priority…），標 impacted requirement
+  - 為 Regression Curator 提供 impacted tc_ids（hotfix suite 依據）
+input_schema: schemas/artifact/change-impact-input.schema.json
+output_schema:
+  - schemas/artifact/change-impact-report.schema.json
+  - schemas/artifact/version-comparison-report.schema.json
+allowed_actions:
+  - READ_SPEC
+  - READ_SPEC_VERSION
+  - READ_REQUIREMENT
+  - READ_TESTCASE
+  - READ_TEST_SUITE
+  - READ_BUG
+  - READ_ARTIFACT
+  - READ_APPROVAL
+  - CREATE_ARTIFACT
+  - UPDATE_DRAFT
+  - CALCULATE_CHANGE_IMPACT
+  - COMPARE_VERSIONS
+forbidden_actions:
+  - CREATE_TESTCASE_DRAFT（新版 TC 必須經 Test Designer）
+  - COMMIT_TO_REGISTRY / SUPERSEDE_TESTCASE / 覆蓋既有 TC
+  - MODIFY_SPEC
+  - 自行判定 obsolete TC 為 RETIRED（只能建議）
+dependencies:
+  skills: [change-impact-analysis, traceability]
+  agents: [agent-spec-analyst (upstream), agent-test-designer (downstream), agent-test-validator (downstream), agent-regression-curator (downstream)]
+consumes: [SpecVersion, RequirementModel, TestCaseVersion]
+produces: [ChangeImpactReport, VersionComparisonReport]
+quality_gate: [G-IMPACT, G-COMPARE]
+failure_handling:
+  requirement_model_missing_for_to_version: 回報 Supervisor 觸發 Spec Analyst
+  gate_fail_incompleteness: 補齊缺漏判定
+human_approval_required: []   # APPLY_CHANGE 由 Runtime 於 G-COMPARE PASS 後觸發
+write_paths: ["artifacts/change-impact/<run_id>/**"]

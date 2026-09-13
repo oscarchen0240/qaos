@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/regression-proposal.schema.json",
+  "title": "RegressionProposal (payload)",
+  "type": "object",
+  "required": ["suite_id", "suite_type", "base_suite_version", "proposed_memberships", "diff", "selection_criteria", "summary"],
+  "properties": {
+    "suite_id": {"$ref": "../common/defs.schema.json#/$defs/SuiteId"},
+    "suite_type": {"$ref": "../common/defs.schema.json#/$defs/SuiteType"},
+    "base_suite_version": {"type": ["integer", "null"], "description": "null = 新 suite"},
+    "change_impact_id": {"$ref": "../common/defs.schema.json#/$defs/ChangeImpactId"},
+    "trigger": {"type": "string", "enum": ["manual", "post_change", "hotfix"]},
+    "proposed_memberships": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "pinned_version", "justification", "risk_tag"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "pinned_version": {"anyOf": [{"const": "active"}, {"type": "integer"}]}, "justification": {"type": "string", "minLength": 5}, "risk_tag": {"type": "string"}, "order": {"type": "integer"}}, "additionalProperties": false}},
+    "diff": {"type": "object", "required": ["add", "remove", "repin"], "properties": {
+      "add": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "reason"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "reason": {"type": "string"}}}},
+      "remove": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "reason"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "reason": {"type": "string"}}}},
+      "repin": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "from", "to", "reason"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "from": {}, "to": {}, "reason": {"type": "string"}}}}
+    }},
+    "selection_criteria": {"type": "string"},
+    "ci_recommendations": {"type": "array", "description": "建議進 CI 但未列入本 proposal 的 TC（另開 proposal）", "items": {"type": "object", "properties": {"testcase_id": {"type": "string"}, "reason": {"type": "string"}}}},
+    "summary": {"type": "object", "required": ["total", "added", "removed", "repinned"], "additionalProperties": {"type": "integer"}}
+  },
+  "additionalProperties": false
+}

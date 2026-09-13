@@ -1,0 +1,81 @@
+workflow_id: spec-change-impact
+version: "1.0.0"
+description: SPEC vN → vN+1 → Change Impact → Test Designer(change) ⇄ Validator → Compare → Human Approval → Registry Update
+input:
+  fields:
+    spec_id: {required: true}
+    from_version: {required: true}
+    to_version: {required: true, description: 已由 Human 匯入 specs/}
+    initiated_by: {required: true}
+initial_state: {workflow_run: CREATED, change_impact: DETECTED}
+agents: [agent-supervisor, agent-spec-analyst(conditional), agent-change-impact-analyst, agent-test-designer, agent-test-validator]
+artifacts:
+  - {type: RequirementModel, producer: agent-spec-analyst, conditional: true, note: to_version}
+  - {type: ChangeImpactReport, producer: agent-change-impact-analyst}
+  - {type: TestDesignReport, producer: agent-test-designer}
+  - {type: TestCaseDraft, producer: agent-test-designer, note: "supersedes 舊版"}
+  - {type: TestValidationReport, producer: agent-test-validator}
+  - {type: VersionComparisonReport, producer: agent-change-impact-analyst}
+  - {type: ApprovalRequest, producer: agent-supervisor}
+  - {type: WorkflowSummary, producer: agent-supervisor}
+max_validation_iterations: 3
+tasks:
+  - id: T0
+    agent: agent-spec-analyst
+    run_if: "RequirementModel for spec_id@to_version NOT exists"
+    inputs: [SpecVersion(to), "RequirementModel(from) as previous (保留 requirement_id)"]
+    gate: G-SPEC
+  - id: T1
+    agent: agent-change-impact-analyst
+    phase: impact
+    inputs: [SpecVersion(from,to), RequirementModel(from,to), "ACTIVE TestCaseVersion where spec_version==from"]
+    outputs: [ChangeImpactReport]
+    gate: G-IMPACT
+    transitions: {change_impact: "DETECTED → ANALYZING → IMPACTED | NO_IMPACT"}
+    on_pass:
+      no_impact: "goto T6 (summary)"
+      impacted: "change_impact → TEST_UPDATE_REQUIRED; goto T2"
+  - id: T2
+    agent: agent-test-designer
+    mode: change
+    inputs: [ChangeImpactReport, RequirementModel(to), "impacted TestCaseVersion(s)", "TestValidationReport(FAIL) if iteration>0"]
+    outputs: [TestDesignReport, TestCaseDraft]
+    gate: G-DESIGN
+    constraint: "只處理 impact ∈ {affected, new_required}；unaffected 不得重產；obsolete 只列入 retire 建議"
+  - id: T3
+    agent: agent-test-validator
+    inputs: [SpecVersion(to), RequirementModel(to), TestCaseDraft]
+    outputs: [TestValidationReport]
+    gate: G-TVAL
+    transitions: {change_impact: "TEST_UPDATE_REQUIRED → VALIDATING"}
+    on_result:
+      FAIL: {iteration_lt_max: "goto T2", iteration_ge_max: HUMAN_OVERRIDE}
+      PASS: "new versions → VALIDATED (寫入 versions/, pointer 不動); change_impact → COMPARING"
+  - id: T4
+    agent: agent-change-impact-analyst
+    phase: compare
+    inputs: ["TestCaseVersion(old ACTIVE)", "TestCaseVersion(new VALIDATED)", ChangeImpactReport]
+    outputs: [VersionComparisonReport]
+    gate: G-COMPARE
+  - id: T5
+    type: approval
+    approval_type: APPLY_CHANGE
+    prompt: "是否將此新版 Test Case 更新為正式 Registry 版本？"
+    inputs: [VersionComparisonReport, ChangeImpactReport, TestValidationReport, "obsolete TC 列表（RETIRE 建議）"]
+    transitions: {change_impact: "COMPARING → PENDING_APPROVAL"}
+    on_decision:
+      approve: "runtime.COMMIT_TO_REGISTRY(new) + SUPERSEDE_TESTCASE(old) + RETIRE(obsolete, 若一併核准); change_impact → APPLIED; 若受影響 TC 在任何 Suite → 建議觸發 regression-generation(scope=impacted)"
+      override: 同 approve
+      reject: "change_impact → TEST_UPDATE_REQUIRED; goto T2 with rationale"
+  - id: T6
+    agent: agent-supervisor
+    outputs: [WorkflowSummary]
+gates: [G-SPEC(conditional), G-IMPACT, G-DESIGN, G-TVAL, G-COMPARE, G-APPROVAL]
+failure_handling:
+  to_version_missing: run 建立時拒絕
+  incompleteness: G-IMPACT structural FAIL → 回 T1
+human_approval:
+  required: [APPLY_CHANGE]
+  conditional: [RETIRE_TESTCASE, RESOLVE_AMBIGUITY, HUMAN_OVERRIDE]
+output: ["new ACTIVE versions", "SUPERSEDED versions", "RETIRED tc ids", VersionComparisonReport, WorkflowSummary]
+final_state: {workflow_run: [COMPLETED, FAILED, CANCELLED], change_impact: [APPLIED, NO_IMPACT]}

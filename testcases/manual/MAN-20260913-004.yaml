@@ -1,0 +1,25 @@
+record_id: MAN-20260913-004
+title: '[v1_transaction_query-game-bet-log] game-bet-log 無法用任何方式篩選 Bet Status'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_transaction_query-game-bet-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 先不帶篩選抓資料,確認資料裡真實的欄位名稱是 `betStatus`(不是 `status`),並取樣觀察到多種不同的 `betStatus` 值(1、2、3、6 等)。
+- 用真實欄位名 `betStatus` 以三種常見形狀分別測試:數字、陣列、字串(`betStatus:2`、`betStatus:[2]`、`betStatus:"2"`)。
+- 改用一個「猜測的替代欄位名」`status`(不是真實欄位名)測試同樣的篩選意圖。
+- 用一個 schema 有正式列出的欄位(`gameBet` 金額範圍)做對照組,確認篩選機制本身沒有整體性壞掉。
+observed_result: 這是兩個問題疊加造成「完全打不到」的結果:用真實欄位名會被 400 擋掉(可能是欄位型別/命名跟後端 struct 不匹配),用一個看起來合理的替代欄位名又會被安靜忽略(不報錯但沒效果)。結果是:**目前沒有任何方式可以透過這個
+  MCP 工具篩選 Bet Status**,即使後台 UI 明確有這個篩選功能。任何被問到「有多少局是輸/贏/取消狀態」這類問題的呼叫方都無法透過這個工具得到正確答案,而且會有兩種不同的失敗訊號混在一起,增加除錯難度。
+outcome: fail
+evidence_ids:
+- EVD-0004
+notes: 'source: bug-reports/bug-04-game-bet-log-betstatus-unreachable.md; severity(原報告): 中高(對應到後台 UI 明確存在的「Bet Status」篩選功能,但透過
+  MCP 完全打不到); 涉及草稿條文: §3.4 R9, §3.2 R6'

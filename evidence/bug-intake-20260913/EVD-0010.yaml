@@ -1,0 +1,31 @@
+evidence_id: EVD-0010
+type: other
+uri: evidence/bug-intake-20260913/EVD-0010.md
+sha256: 213cf210511a9aa6437fe1dab8f8b9393d2ece470e6fb4b2037513559cab4d9e
+mime_type: text/markdown
+captured_at: '2026-09-07T00:00:00Z'
+captured_by: oscarchen@blockaction.tech
+description: bug 單全文：bug單_洗分出金核實入口角標計數與頁面實際筆數不符.md
+inline_content: "## Title\n\n[待排查][機台][洗分出金核實] 入口按鈕角標顯示待核實筆數與頁面實際查詢結果不符（角標12 vs 實際11）\n\n## Detail\n\n**遊戲商：** N/A（非遊戲相關，屬機台場館入口角標計數功能）\n\
+  \n**遊戲名稱：** N/A\n\n**測試環境：** stage-admin-srv.springkyle.online\n\n**測試帳號：** ACAA00250 / ACAA00243（機台帳號，交易發起）\n\n**測試時間：**\
+  \ 2026-09-07\n\n**問題詳述：**\n\n機台場館後台右上角「洗分出金核實」入口按鈕（原出金審核快捷圖示，依先前修復回報已改為此入口，並加上待核實筆數角標），目前角標顯示為 **12**。\n\n點進「洗分出金核實」頁面後，實測頁面載入時會呼叫**同一支\
+  \ API 三次**，帶不同篩選條件：\n\n| # | 篩選條件 | 回傳 total |\n|---|---|---|\n| 1 | `verifyStatus:[0]`（全部類型，待核實） | 11 |\n| 2 | `verifyStatus:[0]`\
+  \ + `transactionType:[\"creditOut\"]`（洗分） | 9 |\n| 3 | `verifyStatus:[0]` + `transactionType:[\"cashOut\"]`（出金） | 2 |\n\n\
+  9（洗分）+ 2（出金）= 11，與第一支不分類型查詢的總數一致，**證實頁面內部三支查詢彼此資料一致，頁面本身顯示的待核實總數（11）沒有問題**。\n\n**問題聚焦在：入口按鈕角標顯示的數字（12）與頁面實際查詢結果（11）對不上，多算了\
+  \ 1 筆。**\n\n已與提出人確認：此按鈕本身的功能定位是「導向洗分出金核實頁面的入口」，導頁行為正常、無異議；本次回報範圍**僅針對角標數字的計數邏輯**，不涉及按鈕的導頁功能本身。\n\n**懷疑方向**：角標數字很可能不是即時依頁面所用的這三支查詢\
+  \ API 計算，而是另外呼叫一支獨立的通知/計數 API，兩邊未共用同一份計數邏輯或查詢條件，才會出現角標與頁面內容筆數不一致的情況。\n\n**預期結果：**\n\n入口按鈕角標顯示的待核實筆數，應與「洗分出金核實」頁面實際查詢到的待核實總筆數一致（依本次測試情境應為\
+  \ 11，而非 12）。角標計數來源建議與頁面查詢共用同一套邏輯或條件，避免兩處分別維護各自計數造成落差。\n\n**複製步驟：**\n\n1. 登入後台，站台切換至機台場館（Arcade）\n2. 觀察右上角「洗分出金核實」入口按鈕的角標數字（實測：12）\n\
+  3. 點擊按鈕進入「洗分出金核實」頁面，開啟瀏覽器 Network 分頁，記錄頁面載入時呼叫 `query-withdraw-verify-report` 的次數與各自回傳的 `total`（實測：呼叫 3 次，分別為 11／9／2，9+2=11）\n\
+  4. 比對步驟 2 的角標數字與步驟 3 算出的頁面實際待核實總數（實測：12 ≠ 11，不一致）\n5. 建議前端／後端一併排查角標數字實際呼叫的 API 或計算來源，確認與頁面查詢口徑是否一致\n\n**API URL：**\n\n`POST\
+  \ https://stage-admin-srv.springkyle.online/api/v1/transaction/query-withdraw-verify-report`\n\n### Request（節錄，三次呼叫）\n\n\
+  ```json\n// 第1次：全部類型\n{\n    \"webOwnerId\": \"43037acc-50b8-4998-8d3e-3cd18e24af39\",\n    \"query\": { \"verifyStatus\"\
+  : [0] },\n    \"pagination\": { \"current\": 0, \"pageSize\": 10 },\n    \"sorter\": { \"field\": \"transactionTime\", \"\
+  order\": \"desc\" }\n}\n\n// 第2次：僅洗分（creditOut）\n{\n    \"webOwnerId\": \"43037acc-50b8-4998-8d3e-3cd18e24af39\",\n    \"\
+  query\": { \"verifyStatus\": [0], \"transactionType\": [\"creditOut\"] },\n    \"pagination\": { \"current\": 0, \"pageSize\"\
+  : 1 },\n    \"sorter\": { \"field\": \"transactionTime\", \"order\": \"desc\" }\n}\n\n// 第3次：僅出金（cashOut）\n{\n    \"webOwnerId\"\
+  : \"43037acc-50b8-4998-8d3e-3cd18e24af39\",\n    \"query\": { \"verifyStatus\": [0], \"transactionType\": [\"cashOut\"]\
+  \ },\n    \"pagination\": { \"current\": 0, \"pageSize\": 1 },\n    \"sorter\": { \"field\": \"transactionTime\", \"order\"\
+  : \"desc\" }\n}\n```\n\n### Response（節錄，三次回應的 pagination.total）\n\n```json\n// 第1次\n{ \"data\": { \"pagination\": { \"total\"\
+  : 11 } } }\n\n// 第2次\n{ \"data\": { \"pagination\": { \"total\": 9 } } }\n\n// 第3次\n{ \"data\": { \"pagination\": { \"total\"\
+  : 2 } } }\n```\n\n> 備註：9 + 2 = 11，與第1次不分類型的總數一致，證實頁面內部三支查詢資料彼此一致，問題不在頁面查詢邏輯本身，而在角標（12）與此三支查詢結果（11）對不上，懷疑角標計數來源是另一支獨立的通知\
+  \ API，未與頁面查詢共用同一套邏輯。\n"

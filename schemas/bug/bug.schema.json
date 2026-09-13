@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/bug/bug.schema.json",
+  "title": "Bug",
+  "description": "bugs/<product>/<area>/<bug_id>.yaml — Brief §13 全部欄位 + Review 新增（evidence_ids、execution_id、duplicate_of、ambiguity_suspected、approval_id）",
+  "type": "object",
+  "required": [
+    "bug_id",
+    "version",
+    "title",
+    "product",
+    "functional_area",
+    "severity",
+    "priority",
+    "environment",
+    "spec_id",
+    "spec_version",
+    "requirement_id",
+    "preconditions",
+    "reproduction_steps",
+    "expected_result",
+    "expected_result_spec_reference",
+    "actual_result",
+    "evidence_ids",
+    "impact",
+    "suspected_area",
+    "status",
+    "created_by",
+    "history"
+  ],
+  "properties": {
+    "bug_id": {
+      "$ref": "../common/defs.schema.json#/$defs/BugId"
+    },
+    "version": {
+      "$ref": "../common/defs.schema.json#/$defs/IntVersion"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "product": {
+      "type": "string"
+    },
+    "functional_area": {
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "../common/defs.schema.json#/$defs/Severity"
+    },
+    "priority": {
+      "$ref": "../common/defs.schema.json#/$defs/Priority"
+    },
+    "severity_rationale": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "build": {
+          "type": "string"
+        },
+        "account": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        },
+        "game_provider": {
+          "type": "string"
+        },
+        "game_name": {
+          "type": "string"
+        }
+      }
+    },
+    "spec_id": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecId"
+    },
+    "spec_version": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecVersion"
+    },
+    "requirement_id": {
+      "$ref": "../common/defs.schema.json#/$defs/RequirementId"
+    },
+    "acceptance_criteria_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/AcId"
+      }
+    },
+    "testcase_id": {
+      "$ref": "../common/defs.schema.json#/$defs/TestCaseId"
+    },
+    "testcase_version": {
+      "type": "integer"
+    },
+    "execution_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ExecutionId"
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reproduction_steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_result": {
+      "type": "string",
+      "minLength": 5
+    },
+    "expected_result_spec_reference": {
+      "$ref": "../common/defs.schema.json#/$defs/SpecReference"
+    },
+    "actual_result": {
+      "type": "string",
+      "minLength": 5
+    },
+    "actual_result_evidence_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim",
+          "evidence_id"
+        ],
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "evidence_id": {
+            "$ref": "../common/defs.schema.json#/$defs/EvidenceId"
+          }
+        }
+      },
+      "description": "每個 actual 主張對應的 evidence"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/EvidenceId"
+      }
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "request_evidence_id": {
+          "$ref": "../common/defs.schema.json#/$defs/EvidenceId"
+        },
+        "response_evidence_id": {
+          "$ref": "../common/defs.schema.json#/$defs/EvidenceId"
+        }
+      }
+    },
+    "impact": {
+      "type": "string"
+    },
+    "suspected_area": {
+      "type": "string"
+    },
+    "ambiguity_suspected": {
+      "type": "boolean",
+      "default": false
+    },
+    "duplicate_of": {
+      "anyOf": [
+        {
+          "$ref": "../common/defs.schema.json#/$defs/BugId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "external_ref": {
+      "type": "string",
+      "description": "開發團隊共用表單的列／連結（RD 修復回覆所在）"
+    },
+    "status": {
+      "$ref": "../common/defs.schema.json#/$defs/BugStatus"
+    },
+    "created_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "validated_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "validation_report_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+    },
+    "approved_by": {
+      "$ref": "../common/defs.schema.json#/$defs/HumanId"
+    },
+    "approval_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ApprovalId"
+    },
+    "created_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "updated_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/HistoryEntry"
+      }
+    },
+    "resolution_note": {
+      "type": "string",
+      "description": "RD 的修復說明（由 QA 自共用表單轉錄）"
+    },
+    "resolved_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "retest_execution_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/ExecutionId"
+      },
+      "description": "每次複測的 Execution（含 Evidence）"
+    },
+    "reopen_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "VERIFIED",
+              "CLOSED"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "validated_by",
+          "validation_report_id",
+          "approved_by",
+          "approval_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "REJECTED"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "approval_id"
+        ]
+      }
+    }
+  ]
+}

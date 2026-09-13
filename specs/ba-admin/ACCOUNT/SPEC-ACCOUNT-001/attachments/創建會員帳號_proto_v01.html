@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>創建會員帳號 — bl'ac 後台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;background:#0d0d0b;color:#c8c6be;min-height:100vh;display:flex;flex-direction:column;}
+:root{
+  --bg-page:#0d0d0b;
+  --bg-sidebar:#111110;
+  --bg-card:#181816;
+  --bg-hover:#1e1e1c;
+  --bg-input:#111110;
+  --bg-panel:#141412;
+  --bg-active:#232320;
+  --text-primary:#dedad2;
+  --text-secondary:#6b6965;
+  --text-muted:#3d3d3b;
+  --border:#242422;
+  --border-focus:#3d3d3b;
+  --border-light:#3d3d3b;
+  --green:#1D9E75;
+  --green-text:#5DCAA5;
+  --green-dim:#0F2E23;
+  --blue:#378ADD;
+  --blue-text:#85B7EB;
+  --blue-dim:#0C2A4A;
+  --red-text:#F09595;
+  --red-dim:#3A1818;
+  --yellow-text:#EF9F27;
+  --yellow-dim:#2E2000;
+  --orange-text:#E8894A;
+  --orange-dim:#2E1800;
+  --purple-text:#B09FE8;
+  --purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --sidebar-width:160px;
+  --topbar-height:48px;
+  --radius:6px;
+  --radius-lg:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;
+}
+
+/* ── Topbar ── */
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;}
+.topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:color .12s,background .12s;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;padding:24px 28px 60px;display:flex;flex-direction:column;}
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.page-header-right{display:flex;align-items:center;gap:10px;}
+.hint{font-size:12px;color:var(--text-muted);}
+
+/* ── 站台切換（每頁皆有，內容以所選站台為範圍）── */
+.site-switch{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.site-switch select{width:auto;min-width:220px;}
+
+/* ── Buttons ── */
+button{font-family:inherit;cursor:pointer;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:opacity .15s;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;transition:background .12s,color .12s,border-color .12s;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:3px 9px;border-radius:var(--radius);font-size:12px;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-label{font-size:12px;color:var(--text-muted);}
+.filter-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;transition:all .12s;font-family:inherit;}
+.filter-chip:hover{color:var(--text-primary);border-color:var(--border-focus);}
+.filter-chip.active{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-focus);}
+.filter-divider{width:1px;height:18px;background:var(--border);margin:0 2px;}
+.filter-search{flex:1;max-width:280px;min-width:160px;position:relative;}
+.filter-search input{width:100%;padding:6px 10px 6px 30px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;font-family:inherit;transition:border-color .15s;}
+.filter-search input:focus{border-color:var(--border-focus);}
+.filter-search input::placeholder{color:var(--text-muted);}
+.filter-search::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;opacity:0.5;}
+
+/* ── List ── */
+.list-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:auto;}
+.list-wrap > .list-header,.list-wrap > .list-body{min-width:max-content;}
+.list-header{display:grid;grid-template-columns:210px 90px 190px 150px 130px 140px 90px;min-width:1000px;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--bg-page);}
+.list-header > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;white-space:nowrap;padding-right:12px;}
+.mem-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;}
+.mem-card:hover{border-color:var(--border-focus);}
+.mem-row{display:grid;grid-template-columns:210px 90px 190px 150px 130px 140px 90px;min-width:1000px;align-items:center;padding:11px 14px;}
+.mem-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.ops-cell{display:flex;gap:6px;justify-content:flex-start;}
+.table-footer{display:flex;align-items:center;gap:14px;padding:10px 2px 0;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:6px;}
+
+.mem-id{font-size:13px;color:var(--text-primary);font-variant-numeric:tabular-nums;cursor:pointer;transition:color .12s;}
+.mem-id:hover{color:var(--blue-text);}
+.mem-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.num-cell{font-variant-numeric:tabular-nums;}
+.cell-empty{color:var(--text-muted);}
+
+/* ── 帳號類型 / 狀態 tag ── */
+.type-tag{font-size:11px;padding:2px 8px;border-radius:4px;display:inline-block;white-space:nowrap;}
+.type-online{background:var(--blue-dim);color:var(--blue-text);}
+.type-machine{background:var(--purple-dim);color:var(--purple-text);}
+.src-tag{font-size:10px;color:var(--text-muted);background:var(--bg-hover);border:1px solid var(--border);padding:1px 5px;border-radius:3px;white-space:nowrap;}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 8px;border-radius:4px;white-space:nowrap;}
+.status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.st-enabled{background:var(--green-dim);color:var(--green-text);}
+.st-enabled .status-dot{background:var(--green-text);box-shadow:0 0 5px rgba(93,202,165,0.4);}
+.st-disabled{background:#1e1e1c;color:var(--text-secondary);}
+.st-disabled .status-dot{background:var(--text-secondary);}
+
+/* ── 詳細頁 ── */
+.back-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 10px;border-radius:var(--radius);cursor:pointer;transition:all .12s;margin-bottom:14px;align-self:flex-start;}
+.back-btn:hover{color:var(--text-primary);border-color:var(--border-focus);}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+.detail-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;}
+.detail-card.full{grid-column:1 / -1;}
+.detail-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.detail-card-title{font-size:13px;font-weight:500;color:var(--text-primary);}
+.detail-card-actions{display:flex;gap:6px;}
+.kv-list{display:flex;flex-direction:column;gap:9px;}
+.kv-row{display:flex;align-items:baseline;gap:10px;}
+.kv-key{font-size:12px;color:var(--text-muted);width:110px;flex-shrink:0;}
+.kv-val{font-size:13px;color:var(--text-primary);word-break:break-all;}
+.kv-val.dim{color:var(--text-muted);}
+.kv-val.mono{font-family:monospace;font-variant-numeric:tabular-nums;letter-spacing:0.04em;}
+.warn-box{background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.3);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--yellow-text);line-height:1.6;margin-top:12px;}
+.info-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--text-secondary);line-height:1.6;margin-top:12px;}
+.hidden-blocks-note{font-size:12px;color:var(--text-muted);line-height:1.7;}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);width:560px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);box-shadow:0 16px 48px rgba(0,0,0,0.7);display:flex;flex-direction:column;}
+.modal.modal-sm{width:400px;}
+.modal-head{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-size:14px;font-weight:500;color:var(--text-primary);}
+.modal-close{background:none;border:none;font-size:17px;color:var(--text-secondary);cursor:pointer;padding:2px 5px;line-height:1;}
+.modal-close:hover{color:var(--text-primary);}
+.modal-body{padding:.875rem 1rem;overflow-y:auto;flex:1;}
+.modal-foot{padding:.7rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+
+/* ── 表單 ── */
+.field{margin-bottom:13px;}
+label.field-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
+.req{color:#F09595;}
+.field-hint{font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.6;}
+input[type=text],select,textarea{width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;}
+input::placeholder,textarea::placeholder{color:var(--text-muted);}
+input:focus,select:focus,textarea:focus{border-color:var(--border-focus);}
+select option{background:#181816;}
+.field-error input,.field-error select{border-color:var(--red-text)!important;}
+.field-error-msg{font-size:11px;color:var(--red-text);margin-top:4px;display:none;}
+.field-error .field-error-msg{display:block;}
+input[readonly]{opacity:0.5;}
+.section-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);}
+.section-label:first-child{margin-top:0;padding-top:0;border-top:none;}
+
+/* ── 帳號類型選項卡 ── */
+.option-group{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.option-card{border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;cursor:pointer;background:var(--bg-input);transition:all .12s;}
+.option-card:hover{border-color:var(--border-focus);background:var(--bg-hover);}
+.option-card.sel{border-color:var(--blue-text);background:var(--blue-dim);}
+.option-card.disabled{opacity:0.35;cursor:not-allowed;}
+.option-card.disabled:hover{border-color:var(--border);background:var(--bg-input);}
+.option-card-label{font-size:13px;color:var(--text-primary);margin-bottom:2px;}
+.option-card-desc{font-size:11px;color:var(--text-muted);line-height:1.5;}
+
+/* ── 一次性顯示（帳密／憑證）── */
+.secret-block{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;}
+.secret-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:6px;}
+.secret-row{display:flex;align-items:center;gap:8px;}
+.secret-val{flex:1;font-family:monospace;font-size:14px;color:var(--text-primary);letter-spacing:0.06em;word-break:break-all;}
+.secret-masked{font-family:monospace;font-size:13px;color:var(--text-secondary);letter-spacing:0.08em;}
+
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+.empty-state-title{font-size:14px;color:var(--text-secondary);margin-bottom:6px;}
+
+/* ── 側邊簡易資料面板（2.1.4）── */
+.side-panel{position:fixed;top:48px;right:0;bottom:0;width:370px;max-width:calc(100vw - 40px);background:var(--bg-card);border-left:1px solid var(--border);box-shadow:-12px 0 32px rgba(0,0,0,0.45);transform:translateX(105%);transition:transform .2s;z-index:150;display:flex;flex-direction:column;}
+.side-panel.open{transform:translateX(0);}
+.side-panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.side-panel-id{font-size:14px;font-weight:500;color:var(--text-primary);font-variant-numeric:tabular-nums;}
+.side-panel-head .type-tag{flex-shrink:0;}
+.side-panel-head-actions{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.side-panel-body{padding:14px 16px;overflow-y:auto;flex:1;}
+.side-panel .section-label:first-child{margin-top:0;padding-top:0;border-top:none;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid var(--border-focus);border-radius:var(--radius);padding:10px 16px;font-size:13px;color:var(--text-primary);box-shadow:0 8px 24px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-group">資訊看板</div>
+    <div class="sidebar-group active">會員與加盟商 <span class="arr" style="opacity:0.7;">∨</span></div>
+    <div class="sidebar-item active">會員列表</div>
+    <div class="sidebar-item">加盟列表</div>
+    <div class="sidebar-item">登入網域查詢</div>
+    <div class="sidebar-item">推薦註冊金設定</div>
+    <div class="sidebar-group">帳務管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">各式報表 <span class="arr">›</span></div>
+    <div class="sidebar-group">遊戲廳管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">系統管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">後台管理員系統 <span class="arr">›</span></div>
+  </aside>
+
+  <!-- ═══ 列表視圖 ═══ -->
+  <div class="main" id="view-list">
+    <div class="breadcrumb">會員與加盟商 <span>/</span> 會員列表</div>
+    <div class="page-header">
+      <h1 class="page-title">會員列表</h1>
+      <div class="page-header-right">
+        <button class="btn-primary" onclick="openCreateModal()">+ 創建會員帳號</button>
+      </div>
+    </div>
+
+    <div class="site-switch">
+      <select id="cur-site-sel" onchange="onSiteChange()">
+        <option value="online">金好運線上（GO）</option>
+        <option value="v1" selected>松山遊藝場（SS）</option>
+        <option value="v2">板橋遊藝場（BQ）</option>
+      </select>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">帳號類型</span>
+      <button class="filter-chip active" data-value="all" onclick="setTypeFilter('all')">全部</button>
+      <button class="filter-chip" data-value="online" onclick="setTypeFilter('online')">線上</button>
+      <button class="filter-chip" data-value="machine" onclick="setTypeFilter('machine')">機台</button>
+      <div class="filter-divider"></div>
+      <div class="filter-search">
+        <input type="text" id="search-input" placeholder="搜尋會員編號或機台名稱…" oninput="renderList()"/>
+      </div>
+    </div>
+
+    <div class="list-wrap">
+      <div class="list-header">
+        <span>會員編號</span>
+        <span>帳號類型</span>
+        <span>電子信箱</span>
+        <span>電話號碼</span>
+        <span>帳戶餘額（主錢包）</span>
+        <span>註冊日期</span>
+        <span>操作</span>
+      </div>
+      <div class="list-body" id="member-list"></div>
+    </div>
+    <div class="table-footer"><span id="footer-count"></span></div>
+  </div>
+
+  <!-- ═══ 詳細視圖 ═══ -->
+  <div class="main" id="view-detail" style="display:none;">
+    <div class="breadcrumb">會員與加盟商 <span>/</span> 會員列表 <span>/</span> 會員詳細資料</div>
+    <button class="back-btn" onclick="backToList()">← 返回會員列表</button>
+    <div class="page-header">
+      <h1 class="page-title" id="detail-title">會員詳細資料</h1>
+      <div class="page-header-right" id="detail-actions"></div>
+    </div>
+    <div class="detail-grid" id="detail-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ 創建會員帳號 Modal ═══ -->
+<div class="overlay" id="create-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>創建會員帳號</h2>
+      <button class="modal-close" onclick="closeCreateModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box" style="margin:0 0 13px;">帳號將建立於目前站台底下：<b id="create-site-label" style="color:var(--text-primary);"></b></div>
+      <div class="field">
+        <label class="field-label">帳號類型 <span class="req">*</span></label>
+        <div class="option-group">
+          <div class="option-card" id="type-opt-online" onclick="selectAcctType('online')">
+            <div class="option-card-label">線上</div>
+            <div class="option-card-desc">建立所屬目前站台的線上會員，行為與前台註冊會員相同</div>
+          </div>
+          <div class="option-card" id="type-opt-machine" onclick="selectAcctType('machine')">
+            <div class="option-card-label">機台</div>
+            <div class="option-card-desc">綁定一台實體機台的共用帳號，一併建立機台資料</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 機台分支欄位 -->
+      <div id="machine-fields" style="display:none;">
+        <div class="section-label">機台資料</div>
+        <div class="field">
+          <label class="field-label">機台名稱（＝會員暱稱，選填）</label>
+          <input type="text" id="m-machine-name" placeholder="例：A 區 03 號"/>
+          <p class="field-hint">即此帳號的暱稱欄位（與線上會員同一欄位），供後台辨識。機台不另設機台編號，識別碼即本次建立的會員編號。</p>
+        </div>
+        <div class="info-box">機台狀態預設建立為「<b>啟用</b>」。機台憑證不隨建立產生——於該帳號的會員詳細頁面生成。額度上限一律套用所屬場館的場館設定值，不在此設定；洗分門檻於機台端設定，後台不設。</div>
+      </div>
+
+      <!-- 線上分支說明 -->
+      <div id="online-fields" style="display:none;">
+        <div class="info-box">不需填寫其他欄位：將建立一名所屬目前站台的線上會員，電子信箱與電話留空。</div>
+      </div>
+
+      <div class="info-box" style="margin-top:14px;">登入帳號與密碼<b>不需輸入</b>——不論帳號類型一律由系統自動生成（可用於前台登入），建立成功時完整顯示一次。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeCreateModal()">取消</button>
+      <button class="btn-primary" onclick="submitCreate()">建立</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 一次性顯示 Modal（建立成功／重設密碼／憑證）═══ -->
+<div class="overlay" id="secret-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="secret-title">建立成功</h2>
+      <button class="modal-close" onclick="closeSecretModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="secret-blocks"></div>
+      <div class="warn-box">⚠️ 以上內容<b>僅此一次完整顯示</b>，關閉後不再完整顯示，請立即複製妥善保存。<span id="secret-extra-warn"></span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-primary" onclick="closeSecretModal()">我已保存，關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 通用確認 Modal（二次確認）═══ -->
+<div class="overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h2 id="confirm-title">確認操作</h2>
+      <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="font-size:13px;color:var(--text-primary);line-height:1.7;"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeConfirmModal()">取消</button>
+      <button class="btn-primary" id="confirm-ok-btn" onclick="confirmOk()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 編輯機台 Modal ═══ -->
+<div class="overlay" id="edit-machine-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h2>編輯機台</h2>
+      <button class="modal-close" onclick="closeEditMachine()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">所屬場館</label>
+        <input type="text" id="em-venue" readonly/>
+        <p class="field-hint">唯讀；如需搬移須停用本機台後另建新機台帳號。</p>
+      </div>
+      <div class="field">
+        <label class="field-label">機台名稱（＝會員暱稱）</label>
+        <input type="text" id="em-name" placeholder="例：A 區 03 號"/>
+      </div>
+      <div class="field">
+        <label class="field-label">機台狀態</label>
+        <select id="em-status">
+          <option value="enabled">啟用</option>
+          <option value="disabled">停用</option>
+        </select>
+        <p class="field-hint">停用後機台立即無法運作；不影響帳號餘額。機台不提供刪除，報廢一律以停用處理。</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeEditMachine()">取消</button>
+      <button class="btn-primary" onclick="saveEditMachine()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 側邊簡易資料面板（2.1.4）═══ -->
+<div class="side-panel" id="side-panel">
+  <div class="side-panel-head">
+    <span class="side-panel-id" id="sp-id"></span>
+    <span id="sp-type"></span>
+    <div class="side-panel-head-actions">
+      <button class="btn-sm" onclick="panelToDetail()">詳細資料</button>
+      <button class="modal-close" onclick="closePanel()">✕</button>
+    </div>
+  </div>
+  <div class="side-panel-body" id="sp-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 場館與站台 ───────────────────────────────────────
+const VENUES = { v1:'松山遊藝場（SS）', v2:'板橋遊藝場（BQ）' };
+// 模擬「目前所在的子站台」：帳號一律建立於目前站台底下
+const SITES = {
+  online:{ type:'online',  label:'金好運線上（GO）' },
+  v1:    { type:'machine', label:VENUES.v1 },
+  v2:    { type:'machine', label:VENUES.v2 },
+};
+function curSite(){ return SITES[document.getElementById('cur-site-sel').value]; }
+function curSiteKey(){ return document.getElementById('cur-site-sel').value; }
+
+// ─── 假資料 ───────────────────────────────────────────
+// source: 'front' 前台註冊 / 'backstage' 後台創建
+let nextSeq = 7;
+let members = [
+  { id:'M20260701001', type:'online', source:'front', siteKey:'online', site:'金好運線上（GO）',
+    account:'player01',
+    email:'player01@gmail.com', phone:'+886 912 345 678', balance:12340, currency:'TWD',
+    createdAt:'2026-07-01 08:12', updatedAt:null },
+  { id:'M20260703012', type:'online', source:'front', siteKey:'online', site:'金好運線上（GO）',
+    account:'lucky888',
+    email:'lucky888@yahoo.com', phone:'', balance:0, currency:'TWD',
+    createdAt:'2026-07-03 21:40', updatedAt:null },
+  { id:'M20260810003', type:'online', source:'backstage', siteKey:'online', site:'金好運線上（GO）',
+    account:'mc_k2x9d4qa',
+    email:'', phone:'', balance:500, currency:'TWD',
+    createdAt:'2026-08-10 06:33', updatedAt:null },
+  { id:'M20260812001', type:'machine', source:'backstage', siteKey:'v1', site:'松山遊藝場（SS）',
+    account:'mc_a7pf3nq2',
+    email:'', phone:'', balance:321, currency:'TWD',
+    machine:{ venue:'v1', name:'A 區 01 號', status:'enabled',
+      credential:{ masked:'eyJh ···· ···· 9x2Q', createdAt:'2026-08-12 10:05', lastUsedAt:'2026-08-17 23:41' },
+      createdAt:'2026-08-12 09:58', updatedAt:'2026-08-12 10:20' },
+    createdAt:'2026-08-12 09:58', updatedAt:'2026-08-12 10:20' },
+  { id:'M20260812002', type:'machine', source:'backstage', siteKey:'v1', site:'松山遊藝場（SS）',
+    account:'mc_ej54wthc',
+    email:'', phone:'', balance:0, currency:'TWD',
+    machine:{ venue:'v1', name:'A 區 02 號', status:'disabled', credential:null,
+      createdAt:'2026-08-12 10:02', updatedAt:null },
+    createdAt:'2026-08-12 10:02', updatedAt:null },
+  { id:'M20260814009', type:'online', source:'backstage', siteKey:'v1', site:'松山遊藝場（SS）',
+    account:'mc_p4nd7xw3',
+    email:'', phone:'', balance:200, currency:'TWD',
+    createdAt:'2026-08-14 11:47', updatedAt:null },
+  { id:'M20260815004', type:'machine', source:'backstage', siteKey:'v2', site:'板橋遊藝場（BQ）',
+    account:'mc_u8rm2kvd',
+    email:'', phone:'', balance:1050, currency:'TWD',
+    machine:{ venue:'v2', name:'B 區 01 號', status:'enabled',
+      credential:{ masked:'eyJh ···· ···· T8ka', createdAt:'2026-08-15 14:22', lastUsedAt:'2026-08-18 02:10' },
+      createdAt:'2026-08-15 14:10', updatedAt:'2026-08-15 14:30' },
+    createdAt:'2026-08-15 14:10', updatedAt:'2026-08-15 14:30' },
+];
+
+// ─── 工具 ─────────────────────────────────────────────
+function nowStr(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+function randStr(len){
+  const chars='abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<len;i++)s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function maskSecret(s){ return s.slice(0,4)+' ···· ···· '+s.slice(-4); }
+function fmtAmt(n){ return n.toLocaleString('en-US'); }
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+function copyText(text,label){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');showToast((label||'內容')+'已複製');}
+  catch(e){showToast('複製失敗，請手動選取');}
+  document.body.removeChild(ta);
+}
+
+// ─── 列表 ─────────────────────────────────────────────
+let typeFilter='all';
+function setTypeFilter(v){
+  typeFilter=v;
+  document.querySelectorAll('.filter-chip').forEach(el=>el.classList.toggle('active',el.dataset.value===v));
+  renderList();
+}
+function onSiteChange(){
+  closePanel();
+  renderList();
+  showToast('已切換站台：'+curSite().label);
+}
+function renderList(){
+  const q=(document.getElementById('search-input').value||'').trim().toLowerCase();
+  let rows=members.filter(m=>m.siteKey===curSiteKey());
+  if(typeFilter!=='all')rows=rows.filter(m=>m.type===typeFilter);
+  if(q)rows=rows.filter(m=>m.id.toLowerCase().includes(q)||(m.machine&&m.machine.name.toLowerCase().includes(q)));
+  const list=document.getElementById('member-list');
+  document.getElementById('footer-count').textContent=`共 ${rows.length} 筆`;
+  if(rows.length===0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-state-title">找不到符合條件的會員</div><div>試試調整帳號類型篩選或搜尋條件</div></div>`;
+    return;
+  }
+  list.innerHTML=rows.map(m=>{
+    const typeTag=m.type==='machine'
+      ?`<span class="type-tag type-machine">機台</span>`
+      :`<span class="type-tag type-online">線上</span>`;
+    const sub=m.type==='machine'
+      ?`<div class="mem-sub">${m.machine.name||'（未命名機台）'}</div>`
+      :`<div class="mem-sub"><span class="src-tag">${m.source==='front'?'前台註冊':'後台建立'}</span></div>`;
+    return `<div class="mem-card"><div class="mem-row">
+      <div><span class="mem-id" onclick="openPanel('${m.id}')" title="點擊開啟側邊簡易資料面板">${m.id}</span>${sub}</div>
+      <div>${typeTag}</div>
+      <div>${m.email?m.email:'<span class="cell-empty">—</span>'}</div>
+      <div>${m.phone?m.phone:'<span class="cell-empty">—</span>'}</div>
+      <div class="num-cell">${fmtAmt(m.balance)} ${m.currency}</div>
+      <div>${m.createdAt}</div>
+      <div class="ops-cell"><button class="btn-sm" onclick="openDetail('${m.id}')">詳細</button></div>
+    </div></div>`;
+  }).join('');
+}
+
+// ─── 創建 Modal ───────────────────────────────────────
+let acctType='online';
+function openCreateModal(){
+  // 帳號一律建立於目前站台底下；預設值依站台類型帶入
+  const site=curSite();
+  document.getElementById('create-site-label').textContent=site.label;
+  const machineOpt=document.getElementById('type-opt-machine');
+  machineOpt.classList.toggle('disabled',site.type!=='machine');
+  machineOpt.title=site.type!=='machine'?'「機台」僅於目前站台為機台場館時可選':'';
+  selectAcctType(site.type==='machine'?'machine':'online');
+  document.getElementById('m-machine-name').value='';
+  document.getElementById('create-overlay').classList.add('active');
+}
+function closeCreateModal(){document.getElementById('create-overlay').classList.remove('active');}
+function selectAcctType(t){
+  if(t==='machine'&&curSite().type!=='machine'){
+    showToast('「機台」僅於目前站台為機台場館時可選');
+    return;
+  }
+  acctType=t;
+  document.getElementById('type-opt-online').classList.toggle('sel',t==='online');
+  document.getElementById('type-opt-machine').classList.toggle('sel',t==='machine');
+  document.getElementById('machine-fields').style.display=t==='machine'?'':'none';
+  document.getElementById('online-fields').style.display=t==='online'?'':'none';
+}
+function submitCreate(){
+  const site=curSite();
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const id=`M${d.getUTCFullYear()}${p(d.getUTCMonth()+1)}${p(d.getUTCDate())}0${String(nextSeq++).padStart(2,'0')}`;
+  const account='mc_'+randStr(8).toLowerCase();
+  const password=randStr(12);
+  const rec={
+    id, type:acctType, source:'backstage', account,
+    siteKey:curSiteKey(), site:site.label,
+    email:'', phone:'', balance:0, currency:'TWD',
+    createdAt:nowStr(), updatedAt:null,
+  };
+  if(acctType==='machine'){
+    rec.machine={ venue:curSiteKey(), name:document.getElementById('m-machine-name').value.trim(),
+      status:'enabled', credential:null, createdAt:nowStr(), updatedAt:null };
+  }
+  members.unshift(rec);
+  closeCreateModal();
+  renderList();
+  openSecretModal('建立成功',[
+    {label:'會員編號',value:id},
+    {label:'登入帳號（系統生成，可用於前台登入）',value:account},
+    {label:'密碼（系統生成）',value:password},
+  ], acctType==='machine'
+    ?' 機台憑證請至該帳號的會員詳細頁面產生。'
+    :' 密碼遺失時於會員詳細頁「重設密碼」處理。');
+}
+
+// ─── 一次性顯示 Modal ─────────────────────────────────
+function openSecretModal(title,items,extraWarn){
+  document.getElementById('secret-title').textContent=title;
+  document.getElementById('secret-extra-warn').textContent=extraWarn||'';
+  document.getElementById('secret-blocks').innerHTML=items.map((it,i)=>`
+    <div class="secret-block">
+      <div class="secret-label">${it.label}</div>
+      <div class="secret-row">
+        <span class="secret-val" id="secret-val-${i}">${it.value}</span>
+        <button class="btn-sm" onclick="copyText(document.getElementById('secret-val-${i}').textContent,'${it.label.split('（')[0]}')">複製</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('secret-overlay').classList.add('active');
+}
+function closeSecretModal(){document.getElementById('secret-overlay').classList.remove('active');}
+
+// ─── 通用確認 Modal ───────────────────────────────────
+let confirmCallback=null;
+function openConfirmModal(title,msgHtml,okLabel,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').innerHTML=msgHtml;
+  document.getElementById('confirm-ok-btn').textContent=okLabel||'確認';
+  confirmCallback=cb;
+  document.getElementById('confirm-overlay').classList.add('active');
+}
+function closeConfirmModal(){
+  document.getElementById('confirm-overlay').classList.remove('active');
+  confirmCallback=null;
+}
+function confirmOk(){
+  const cb=confirmCallback;
+  closeConfirmModal();
+  if(cb)cb();
+}
+
+// ─── 側邊簡易資料面板（2.1.4）──────────────────────────
+let panelId=null;
+function openPanel(id){
+  const m=members.find(x=>x.id===id);
+  if(!m)return;
+  panelId=id;
+  document.getElementById('sp-id').textContent=m.id;
+  document.getElementById('sp-type').innerHTML=m.type==='machine'
+    ?'<span class="type-tag type-machine">機台</span>'
+    :'<span class="type-tag type-online">線上</span>';
+  let html=`
+    <div class="section-label">個人資訊</div>
+    <div class="kv-list">
+      <div class="kv-row"><span class="kv-key">電子信箱</span><span class="kv-val ${m.email?'':'dim'}">${m.email||'—'}</span></div>
+      <div class="kv-row"><span class="kv-key">電話號碼</span><span class="kv-val ${m.phone?'':'dim'}">${m.phone||'—'}</span></div>
+      <div class="kv-row"><span class="kv-key">建立方式</span><span class="kv-val">${m.source==='front'?'前台註冊':'後台建立'}</span></div>
+    </div>
+    <div class="section-label">註冊資訊</div>
+    <div class="kv-list">
+      <div class="kv-row"><span class="kv-key">註冊時間</span><span class="kv-val">${m.createdAt}（UTC+0）</span></div>
+      <div class="kv-row"><span class="kv-key">帳戶餘額（主錢包）</span><span class="kv-val mono">${fmtAmt(m.balance)} ${m.currency}</span></div>
+    </div>`;
+  if(m.type==='machine'){
+    const mc=m.machine;
+    const stBadge=mc.status==='enabled'
+      ?'<span class="status-badge st-enabled"><span class="status-dot"></span>啟用</span>'
+      :'<span class="status-badge st-disabled"><span class="status-dot"></span>停用</span>';
+    html+=`
+    <div class="section-label">機台資訊摘要</div>
+    <div class="kv-list">
+      <div class="kv-row"><span class="kv-key">機台名稱</span><span class="kv-val ${mc.name?'':'dim'}">${mc.name||'（未命名機台）'}</span></div>
+      <div class="kv-row"><span class="kv-key">所屬場館</span><span class="kv-val">${VENUES[mc.venue]}</span></div>
+      <div class="kv-row"><span class="kv-key">機台狀態</span><span class="kv-val">${stBadge}</span></div>
+      <div class="kv-row"><span class="kv-key">機台憑證</span><span class="kv-val ${mc.credential?'':'dim'}">${mc.credential?'已產生':'尚未產生'}</span></div>
+    </div>`;
+  }
+  document.getElementById('sp-body').innerHTML=html;
+  document.getElementById('side-panel').classList.add('open');
+}
+function closePanel(){
+  document.getElementById('side-panel').classList.remove('open');
+  panelId=null;
+}
+function panelToDetail(){
+  const id=panelId;
+  closePanel();
+  if(id)openDetail(id);
+}
+
+// ─── 詳細頁 ───────────────────────────────────────────
+let detailId=null;
+function openDetail(id){
+  closePanel();
+  detailId=id;
+  document.getElementById('view-list').style.display='none';
+  document.getElementById('view-detail').style.display='';
+  renderDetail();
+}
+function backToList(){
+  detailId=null;
+  document.getElementById('view-detail').style.display='none';
+  document.getElementById('view-list').style.display='';
+  renderList();
+}
+function renderDetail(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m)return backToList();
+  document.getElementById('detail-title').textContent=`會員詳細資料 — ${m.id}`;
+
+  // 頁首動作：重設密碼（所有會員帳號皆適用，含前台註冊）
+  const actions=document.getElementById('detail-actions');
+  actions.innerHTML=`<button class="btn-ghost" onclick="askResetPassword()">重設密碼</button>`;
+
+  const typeTag=m.type==='machine'
+    ?`<span class="type-tag type-machine">機台</span>`
+    :`<span class="type-tag type-online">線上</span>`;
+
+  let html=`
+  <div class="detail-card">
+    <div class="detail-card-head"><div class="detail-card-title">基本資料</div></div>
+    <div class="kv-list">
+      <div class="kv-row"><span class="kv-key">會員編號</span><span class="kv-val mono">${m.id}</span></div>
+      <div class="kv-row"><span class="kv-key">帳號類型</span><span class="kv-val">${typeTag}</span></div>
+      <div class="kv-row"><span class="kv-key">建立方式</span><span class="kv-val">${m.source==='front'?'前台註冊':'後台建立（帳密由系統自動生成）'}</span></div>
+      <div class="kv-row"><span class="kv-key">所屬站台</span><span class="kv-val">${m.site}</span></div>
+      <div class="kv-row"><span class="kv-key">電子信箱</span><span class="kv-val ${m.email?'':'dim'}">${m.email||'—'}</span></div>
+      <div class="kv-row"><span class="kv-key">電話號碼</span><span class="kv-val ${m.phone?'':'dim'}">${m.phone||'—'}</span></div>
+      <div class="kv-row"><span class="kv-key">帳戶餘額（主錢包）</span><span class="kv-val mono">${fmtAmt(m.balance)} ${m.currency}</span></div>
+      <div class="kv-row"><span class="kv-key">註冊日期</span><span class="kv-val">${m.createdAt}（UTC+0）</span></div>
+    </div>
+    ${m.type==='machine'?`<div class="info-box">機台帳號的帳密僅供機台本身的前台遊戲畫面登入使用，由現場人員設定機台時輸入，不交付玩家。</div>`:''}
+  </div>`;
+
+  if(m.type==='machine'){
+    const mc=m.machine;
+    const stBadge=mc.status==='enabled'
+      ?`<span class="status-badge st-enabled"><span class="status-dot"></span>啟用</span>`
+      :`<span class="status-badge st-disabled"><span class="status-dot"></span>停用</span>`;
+    const toggleLabel=mc.status==='enabled'?'停用':'啟用';
+    html+=`
+    <div class="detail-card">
+      <div class="detail-card-head">
+        <div class="detail-card-title">機台資訊</div>
+        <div class="detail-card-actions">
+          <button class="btn-sm" onclick="openEditMachine()">編輯</button>
+          <button class="btn-sm ${mc.status==='enabled'?'danger':''}" onclick="askToggleMachine()">${toggleLabel}</button>
+        </div>
+      </div>
+      <div class="kv-list">
+        <div class="kv-row"><span class="kv-key">機台名稱</span><span class="kv-val ${mc.name?'':'dim'}">${mc.name||'（未命名機台）'}</span></div>
+        <div class="kv-row"><span class="kv-key">所屬場館</span><span class="kv-val">${VENUES[mc.venue]}</span></div>
+        <div class="kv-row"><span class="kv-key">機台狀態</span><span class="kv-val">${stBadge}</span></div>
+        <div class="kv-row"><span class="kv-key">進行中場次</span><span class="kv-val dim">—</span></div>
+        <div class="kv-row"><span class="kv-key">建立時間</span><span class="kv-val">${mc.createdAt}（UTC+0）</span></div>
+        <div class="kv-row"><span class="kv-key">修改時間</span><span class="kv-val ${mc.updatedAt?'':'dim'}">${mc.updatedAt?mc.updatedAt+'（UTC+0）':'—'}</span></div>
+      </div>
+      <div class="info-box">額度上限為<b>場館層級</b>設定（站台列表 > 場館設定），機台不個別調整；洗分門檻於機台端設定、隨洗分請求送至平台，後台不設。機台不提供刪除，報廢一律以停用處理。</div>
+    </div>`;
+
+    // 機台憑證區塊
+    let credInner;
+    if(mc.credential){
+      credInner=`
+      <div class="kv-list">
+        <div class="kv-row"><span class="kv-key">憑證</span><span class="kv-val"><span class="secret-masked">${mc.credential.masked}</span></span></div>
+        <div class="kv-row"><span class="kv-key">建立時間</span><span class="kv-val">${mc.credential.createdAt}（UTC+0）</span></div>
+        <div class="kv-row"><span class="kv-key">最後使用時間</span><span class="kv-val ${mc.credential.lastUsedAt?'':'dim'}">${mc.credential.lastUsedAt?mc.credential.lastUsedAt+'（UTC+0）':'—'}</span></div>
+      </div>
+      <div class="warn-box">⚠️ 重置憑證會使舊憑證立即失效，機台將無法運作，須由現場人員寫入新憑證後恢復。非必要不要重置，重置前先與現場確認。</div>`;
+    }else{
+      credInner=`<div class="hidden-blocks-note">尚未產生憑證。憑證供機台主控程式與平台 API 通訊，與登入帳密各自獨立、互不影響；產生後僅完整顯示一次。</div>`;
+    }
+    html+=`
+    <div class="detail-card">
+      <div class="detail-card-head">
+        <div class="detail-card-title">機台憑證</div>
+        <div class="detail-card-actions">
+          ${mc.credential
+            ?`<button class="btn-sm danger" onclick="askResetCredential()">重置憑證</button>`
+            :`<button class="btn-sm" onclick="generateCredential()">產生憑證</button>`}
+        </div>
+      </div>
+      ${credInner}
+    </div>`;
+
+  }
+
+  document.getElementById('detail-grid').innerHTML=html;
+}
+
+// ─── 重設密碼 ─────────────────────────────────────────
+function askResetPassword(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m)return;
+  const extra=m.type==='machine'
+    ?'<br/><span style="color:var(--yellow-text);">⚠️ 機台帳號重設後，機台的前台遊戲畫面將無法再以舊密碼登入，須由現場人員以新帳密重新登入機台。重設前請先與現場確認。</span>'
+    :'';
+  openConfirmModal('重設密碼',
+    `確定要重設「${m.id}」的登入密碼？舊密碼將<b>立即失效</b>，新密碼僅於重設當下完整顯示一次。此操作無法復原。${extra}`,
+    '確認重設',doResetPassword);
+}
+function doResetPassword(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m)return;
+  const password=randStr(12);
+  showToast('密碼已重設，舊密碼立即失效');
+  openSecretModal('重設密碼成功',[
+    {label:'會員編號',value:m.id},
+    {label:'登入帳號',value:m.account||'—'},
+    {label:'新密碼（系統生成）',value:password},
+  ],m.type==='machine'?' 請通知現場人員以新帳密重新登入機台。':'');
+}
+
+// ─── 機台憑證 ─────────────────────────────────────────
+function generateCredential(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  const secret='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'+randStr(40)+'.'+randStr(43);
+  m.machine.credential={ masked:maskSecret(secret), createdAt:nowStr(), lastUsedAt:null };
+  renderDetail();
+  openSecretModal('憑證已產生',[
+    {label:'機台憑證',value:secret},
+  ],' 憑證為 JWT，字串較長，請使用複製按鈕；由現場人員寫入機台。之後僅顯示前後各 4 碼。');
+}
+function askResetCredential(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  openConfirmModal('重置憑證',
+    `確定要重置「${m.machine.name||m.id}」的機台憑證？舊憑證將<b>立即失效</b>，機台將無法運作，須由現場人員寫入新憑證後才會恢復。此操作無法復原。`,
+    '確認重置',doResetCredential);
+}
+function doResetCredential(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  const secret='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'+randStr(40)+'.'+randStr(43);
+  m.machine.credential={ masked:maskSecret(secret), createdAt:nowStr(), lastUsedAt:null };
+  renderDetail();
+  showToast('憑證已重置，舊憑證立即失效');
+  openSecretModal('憑證已重置',[
+    {label:'新機台憑證',value:secret},
+  ],' 請由現場人員將新憑證寫入機台。');
+}
+
+// ─── 編輯機台 ─────────────────────────────────────────
+function openEditMachine(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  document.getElementById('em-venue').value=VENUES[m.machine.venue];
+  document.getElementById('em-name').value=m.machine.name||'';
+  document.getElementById('em-status').value=m.machine.status;
+  document.getElementById('edit-machine-overlay').classList.add('active');
+}
+function closeEditMachine(){document.getElementById('edit-machine-overlay').classList.remove('active');}
+function saveEditMachine(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  m.machine.name=document.getElementById('em-name').value.trim();
+  m.machine.status=document.getElementById('em-status').value;
+  m.machine.updatedAt=nowStr();
+  m.updatedAt=m.machine.updatedAt;
+  closeEditMachine();
+  renderDetail();
+  showToast('已儲存變更，修改時間自動更新');
+}
+
+// ─── 停用／啟用 ───────────────────────────────────────
+function askToggleMachine(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  if(m.machine.status==='enabled'){
+    openConfirmModal('停用機台',
+      `確定要停用「${m.machine.name||m.id}」？停用後機台立即無法運作，玩家無法投鈔、遊玩或出金；不影響帳號餘額，再次啟用即恢復。`,
+      '確認停用',doToggleMachine);
+  }else{
+    doToggleMachine();
+  }
+}
+function doToggleMachine(){
+  const m=members.find(x=>x.id===detailId);
+  if(!m||!m.machine)return;
+  m.machine.status=m.machine.status==='enabled'?'disabled':'enabled';
+  m.machine.updatedAt=nowStr();
+  renderDetail();
+  showToast(m.machine.status==='enabled'?'機台已啟用':'機台已停用');
+}
+
+// ─── 全域互動 ─────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    closeCreateModal();closeSecretModal();closeConfirmModal();closeEditMachine();closePanel();
+  }
+});
+['create-overlay','secret-overlay','confirm-overlay','edit-machine-overlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    if(e.target===e.currentTarget)document.getElementById(id).classList.remove('active');
+  });
+});
+// 點擊面板外側關閉側邊面板（點會員編號除外）
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('side-panel');
+  if(panel.classList.contains('open')&&!panel.contains(e.target)&&!e.target.closest('.mem-id'))closePanel();
+});
+
+renderList();
+</script>
+</body>
+</html>

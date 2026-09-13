@@ -1,0 +1,63 @@
+id: agent-supervisor
+name: QA Supervisor
+version: "1.0.0"
+purpose: 接收 Human QA Task，分類 task_type，建立 WorkflowRun 與 Task Graph，依 workflow 定義逐一 dispatch Agent、觸發 Gate、路由失敗、在需要時暫停等待 Human，完成後產生 WorkflowSummary。不自行完成任何 QA 內容工作。
+responsibilities:
+  - 判斷 task_type（5 種 workflow 之一；無法判斷 → NEEDS_DECISION）
+  - 建立 runs/<run_id>/run.yaml 與 tasks/
+  - 依 workflows/<id>.yaml 展開 Task Graph
+  - 對每個 ready task 執行 DISPATCH_AGENT（含 input artifact ids）
+  - 觸發 EVALUATE_GATE；依結果 route（next / back / human）
+  - 追蹤 validation iteration，超限時建立 HUMAN_OVERRIDE request
+  - 建立 ApprovalRequest（REQUEST_HUMAN_APPROVAL）
+  - 產出 WorkflowSummary
+input_schema: schemas/workflow/supervisor-input.schema.json      # { task_text, hints?: {spec_id, spec_version, ...}, initiated_by }
+output_schema: schemas/artifact/workflow-summary.schema.json
+allowed_actions:
+  - READ_SPEC
+  - READ_SPEC_VERSION
+  - READ_REQUIREMENT
+  - READ_TESTCASE
+  - READ_TEST_SUITE
+  - READ_EXECUTION
+  - READ_EVIDENCE
+  - READ_BUG
+  - READ_ARTIFACT
+  - READ_APPROVAL
+  - CREATE_ARTIFACT
+  - REQUEST_HUMAN_APPROVAL
+  - CREATE_WORKFLOW_RUN
+  - DISPATCH_AGENT
+  - EVALUATE_GATE
+  - CREATE_WORKFLOW_SUMMARY
+forbidden_actions:
+  - CREATE_TESTCASE_DRAFT
+  - CREATE_BUG_DRAFT
+  - VALIDATE_TESTCASE
+  - VALIDATE_BUG
+  - COMMIT_TO_REGISTRY
+  - UPDATE_SUITE_MEMBERSHIP
+  - COMMIT_BUG
+  - RECORD_APPROVAL
+  - MODIFY_SPEC
+  - 自行設計 Test Case 或撰寫 Bug 內容
+  - 跳過任何 Gate
+  - 代替 Human 做 approve / reject / override
+dependencies:
+  runtime: [schema-validator, state-machine, gate-evaluator, permission-guard, audit-log]
+  agents: [agent-spec-analyst, agent-test-designer, agent-test-validator, agent-bug-analyst, agent-bug-validator, agent-change-impact-analyst, agent-regression-curator]
+consumes: [HumanTask, "*"]   # 可讀所有 VALID artifact 以做 routing
+produces: [WorkflowRun, Task, ApprovalRequest, WorkflowSummary]
+quality_gate:
+  self: none
+  enforces: [G-SPEC, G-DESIGN, G-TVAL, G-BVAL, G-IMPACT, G-COMPARE, G-REG, G-APPROVAL]
+failure_handling:
+  unknown_task_type: create NEEDS_DECISION ApprovalRequest, run → WAITING_HUMAN
+  structural_gate_fail: route back to producing agent; after 2 consecutive → WAITING_HUMAN
+  semantic_gate_fail: route back; iteration > workflow.max_validation_iterations → HUMAN_OVERRIDE
+  agent_permission_violation: task → FAILED, run → FAILED, audit log
+human_approval_required:
+  - NEEDS_DECISION
+  - HUMAN_OVERRIDE
+  - 所有 workflow 定義中的 approval node（由 Supervisor 建立 request，Human 決定）
+write_paths: ["runs/<run_id>/**", "artifacts/summaries/<run_id>/**", "approvals/*.yaml(create only)"]

@@ -1,0 +1,24 @@
+record_id: MAN-20260913-001
+title: '[v1_referral_query-referral-reward-log] referral-reward-log 的 referralReward 篩選被安靜忽略'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v1_referral_query-referral-reward-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 先用不帶篩選的呼叫把 47 筆原始資料整批抓下來,人工逐筆核對 `referralReward` 欄位,算出「拿到獎勵金(>0)」跟「超過 10 元」各是幾人、是誰。
+- 用同一個工具帶入 `query:{referralReward:{min:0.01}}` 這個「看起來合理但 schema 沒正式列出」的篩選條件再問一次,比對回傳的 `total` 跟名單是否跟人工核對一致。
+- 為排除「篩選機制整體壞掉」的可能性,額外用 schema 裡確實列出的正式欄位 `referralLevel:["0"]` 做對照測試。
+observed_result: '`referralReward` 這個欄位在 `query` 物件裡完全沒有實際篩選效果,呼叫不會報錯、格式正常,但回傳的是未篩選的全量資料。任何依賴這個 schema 去猜測「這個欄位可以篩選」的呼叫方(包含
+  AI agent)都會在沒有任何錯誤提示的情況下,把「未篩選的全量資料」誤當成「篩選後的正確答案」。'
+outcome: fail
+evidence_ids:
+- EVD-0001
+notes: 'source: bug-reports/bug-01-referral-reward-log-filter-ignored.md; severity(原報告): 高(答案錯誤且無任何錯誤提示); 涉及草稿條文: §3.2 R6,
+  §3.1 R1'

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/testcase-draft.schema.json",
+  "title": "TestCaseDraft (payload)",
+  "description": "一個 Draft artifact 含多個 TC；每個 TC 與 TestCaseVersion 同構，但 ID 為暫時 ID、status 固定 DRAFT、無 approval 欄位",
+  "type": "object",
+  "required": ["mode", "spec_id", "spec_version", "testcases"],
+  "properties": {
+    "mode": {"type": "string", "enum": ["spec", "change", "manual"]},
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "change_impact_id": {"$ref": "../common/defs.schema.json#/$defs/ChangeImpactId"},
+    "manual_record_id": {"type": "string"},
+    "testcases": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["draft_id", "title", "product", "functional_area", "requirement_ids", "acceptance_criteria_ids", "spec_id", "spec_version", "test_level", "test_types", "design_techniques", "priority", "risk", "execution_mode", "preconditions", "test_data", "steps", "expected_result", "expected_result_spec_reference", "automation_status", "ci_eligible", "hotfix_eligible", "execution_cost", "stability", "source", "assumptions"],
+        "properties": {
+          "draft_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseDraftId"},
+          "supersedes_testcase": {"type": "object", "required": ["testcase_id", "version"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "version": {"type": "integer"}}, "description": "mode=change 必填"},
+          "title": {"type": "string", "minLength": 5},
+          "description": {"type": "string"},
+          "product": {"type": "string"},
+          "functional_area": {"type": "string"},
+          "requirement_ids": {"type": "array", "minItems": 1, "items": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}},
+          "acceptance_criteria_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/AcId"}},
+          "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+          "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+          "test_level": {"$ref": "../common/defs.schema.json#/$defs/TestLevel"},
+          "test_types": {"type": "array", "minItems": 1, "items": {"$ref": "../common/defs.schema.json#/$defs/TestType"}},
+          "design_techniques": {"type": "array", "minItems": 1, "items": {"$ref": "../common/defs.schema.json#/$defs/DesignTechnique"}},
+          "priority": {"$ref": "../common/defs.schema.json#/$defs/Priority"},
+          "risk": {"$ref": "../common/defs.schema.json#/$defs/Risk"},
+          "execution_mode": {"$ref": "../common/defs.schema.json#/$defs/ExecutionMode"},
+          "preconditions": {"type": "array", "items": {"type": "string"}},
+          "test_data": {"type": "array", "items": {"type": "object", "required": ["name", "value"], "properties": {"name": {"type": "string"}, "value": {}, "note": {"type": "string"}}}},
+          "steps": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["n", "action"], "properties": {"n": {"type": "integer"}, "action": {"type": "string"}, "expected": {"type": "string"}}}},
+          "expected_result": {"type": "string", "minLength": 5},
+          "expected_result_spec_reference": {"$ref": "../common/defs.schema.json#/$defs/SpecReference"},
+          "assumptions": {"type": "array", "items": {"type": "object", "required": ["text", "requirement_id"], "properties": {"text": {"type": "string"}, "requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "needs_human_confirmation": {"type": "boolean"}}}},
+          "automation_status": {"$ref": "../common/defs.schema.json#/$defs/AutomationStatus"},
+          "ci_eligible": {"type": "boolean"},
+          "hotfix_eligible": {"type": "boolean"},
+          "execution_cost": {"$ref": "../common/defs.schema.json#/$defs/ExecutionCost"},
+          "stability": {"$ref": "../common/defs.schema.json#/$defs/Stability"},
+          "critical_path": {"type": "boolean"},
+          "source": {"$ref": "../common/defs.schema.json#/$defs/TestCaseSource"},
+          "source_ref": {"type": "string"},
+          "design_rationale": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

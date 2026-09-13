@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/spec/spec.schema.json",
+  "title": "Spec",
+  "description": "specs/<product>/<area>/<spec_id>/spec.yaml — Spec 身份與版本索引；內容快照在 v<ver>.md",
+  "type": "object",
+  "required": ["spec_id", "product", "functional_area", "title", "versions"],
+  "properties": {
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "product": {"type": "string"},
+    "functional_area": {"type": "string", "pattern": "^[A-Z0-9]+$"},
+    "title": {"type": "string"},
+    "owner": {"type": "string"},
+    "versions": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["spec_version", "file", "content_hash", "imported_by", "imported_at", "status"],
+        "properties": {
+          "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+          "file": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.md$"},
+          "content_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+          "source_uri": {"type": "string", "description": "Confluence / Jira / 檔案來源"},
+          "imported_by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+          "imported_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+          "effective_at": {"type": "string", "format": "date"},
+          "status": {"type": "string", "enum": ["IMPORTED", "ANALYZED", "SUPERSEDED"]},
+          "change_summary": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

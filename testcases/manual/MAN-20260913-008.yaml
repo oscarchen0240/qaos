@@ -1,0 +1,24 @@
+record_id: MAN-20260913-008
+title: '[v2_vip_query-vip-level-change-log] vip-level-change-log 的日期篩選若用「巢狀」形狀會被安靜忽略'
+tester: oscarchen@blockaction.tech
+tested_at: '2026-08-06T00:00:00Z'
+product: mcp-admin
+functional_area: ADMQUERY
+spec_hint:
+  spec_id: SPEC-ADMQUERY-001
+  spec_version: '1.0'
+environment: mcp-admin (test-mcp-admin.springkyle.online) via Claude Code MCP client
+preconditions:
+- 工具 `v2_vip_query-vip-level-change-log` 可呼叫
+- 已取得不帶 query 的 baseline 資料
+steps_performed:
+- 不帶篩選抓資料,取一筆真實記錄的時間戳記(`vipLevelChangeLogId:10627`,`createdAt:"2026-07-23T03:48:30Z"`)。
+- 用「正確」的扁平形狀 `timeStart:"...:29Z", timeEnd:"...:31Z"` 測試,確認能不能精準命中那一筆。
+- 用「跟這個 API 大多數其他地方一致,但對這個工具是錯的」巢狀形狀 `time:{startDate:"...:29Z", endDate:"...:31Z"}` 測試同一個時間窗,比對結果。
+observed_result: 如果呼叫方(包含 AI agent)依照這個 API 裡其他地方學到的「日期篩選都是巢狀 `{startDate,endDate}`」這個主流慣例,套用到這個工具上,會在**沒有任何錯誤提示**的情況下拿到完全未篩選的全量資料(7452
+  筆),卻誤以為問對了問題、拿到的是篩選後的結果。這正是最危險的複合問題失敗模式。
+outcome: fail
+evidence_ids:
+- EVD-0008
+notes: 'source: bug-reports/bug-08-vip-level-change-log-nested-date-ignored.md; severity(原報告): 中高(這個 API 裡幾乎所有其他日期篩選都是巢狀 `{startDate,endDate}`
+  形狀,這張表卻是唯一的例外,是個很容易踩到的地雷); 涉及草稿條文: §3.3 R8'

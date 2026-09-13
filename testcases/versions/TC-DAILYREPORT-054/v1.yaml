@@ -1,0 +1,104 @@
+title: 場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids: []
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+- functional
+design_techniques:
+- state_transition
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 機台 A 有分數餘額且場次進行中
+- 場館設定的場次逾時時間已知（預設 1 小時；測試可調短）
+- 已登入後台可查看場次狀態（依場次明細）
+test_data:
+- name: session_timeout
+  value: 場館設定值，建議測試時調為 5 分鐘
+steps:
+- n: 1
+  action: 讓機台 A 在有餘額狀態下超過場館逾時時間無任何交易與遊玩
+- n: 2
+  action: 在後台場館日結報表（依場次明細）確認該場次狀態為「逾時結束」
+- n: 3
+  action: 以剩餘分數在機台前台嘗試進入遊戲／下注
+- n: 4
+  action: 直接呼叫遊玩／下注 API
+- n: 5
+  action: 對機台 A 進行入金（或開分）
+- n: 6
+  action: 再次嘗試遊玩
+expected_result: 步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 5：系統建立新場次（依場次明細可見新的場次編號）；步驟 6：可正常遊玩
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §背景：場次資訊/場次狀態（狀態值「逾時結束」）+ REQ-017 states（進行中→逾時結束，定義於開發包③）
+assumptions:
+- text: 「逾時結束後、餘額仍在時前台與後端拒絕遊玩」與「再有交易即建立新場次」為 QA 實測觀察（MAN-20260914-001），SPEC-DAILYREPORT-001 未明寫；規則出處為機台金流與場次_spec_v01 §場次狀態
+  requirement_id: REQ-DAILYREPORT-017
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0007
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: manual_integration
+source_ref: MAN-20260914-001
+testcase_id: TC-DAILYREPORT-054
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2DT3GAFF9YC228962JCFTTA
+created_at: '2026-09-13T16:37:44Z'
+updated_at: '2026-09-13T18:07:19Z'
+history:
+- at: '2026-09-13T16:37:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2DSYMMRSM91ZNF501DFT6XF
+  run_id: RUN-20260914-001
+- at: '2026-09-13T16:37:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-001
+- at: '2026-09-13T16:37:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2DT3GAFF9YC228962JCFTTA
+  run_id: RUN-20260914-001
+- at: '2026-09-13T16:37:44Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-001
+- at: '2026-09-13T18:07:19Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0007
+  run_id: RUN-20260914-001
+- at: '2026-09-13T18:07:19Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-001
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0007

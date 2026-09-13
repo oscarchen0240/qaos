@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/execution/evidence.schema.json",
+  "title": "Evidence",
+  "description": "evidence/<exe_id|bug_id>/<evd_id>.yaml — 不可變，sha256 必填",
+  "type": "object",
+  "required": ["evidence_id", "type", "uri", "sha256", "captured_at", "captured_by"],
+  "properties": {
+    "evidence_id": {"$ref": "../common/defs.schema.json#/$defs/EvidenceId"},
+    "type": {"type": "string", "enum": ["screenshot", "recording", "api_request", "api_response", "log", "console", "db_observation", "execution_result", "other"]},
+    "uri": {"type": "string", "description": "相對路徑或 URL"},
+    "sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+    "mime_type": {"type": "string"},
+    "size_bytes": {"type": "integer"},
+    "captured_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "captured_by": {"type": "string"},
+    "execution_id": {"$ref": "../common/defs.schema.json#/$defs/ExecutionId"},
+    "description": {"type": "string"},
+    "inline_content": {"type": "string", "description": "小型文字證據（API payload / log 片段）可直接內嵌；仍需 sha256"}
+  },
+  "additionalProperties": false
+}

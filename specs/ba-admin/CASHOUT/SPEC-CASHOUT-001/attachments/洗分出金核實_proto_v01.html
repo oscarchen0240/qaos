@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>洗分出金核實 — bl'ac 後台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;background:#0d0d0b;color:#c8c6be;min-height:100vh;display:flex;flex-direction:column;}
+:root{
+  --bg-page:#0d0d0b;
+  --bg-sidebar:#111110;
+  --bg-card:#181816;
+  --bg-hover:#1e1e1c;
+  --bg-input:#111110;
+  --bg-panel:#141412;
+  --bg-active:#232320;
+  --text-primary:#dedad2;
+  --text-secondary:#6b6965;
+  --text-muted:#3d3d3b;
+  --border:#242422;
+  --border-focus:#3d3d3b;
+  --border-light:#3d3d3b;
+  --green:#1D9E75;
+  --green-text:#5DCAA5;
+  --green-dim:#0F2E23;
+  --blue:#378ADD;
+  --blue-text:#85B7EB;
+  --blue-dim:#0C2A4A;
+  --red-text:#F09595;
+  --red-dim:#3A1818;
+  --yellow-text:#EF9F27;
+  --yellow-dim:#2E2000;
+  --orange-text:#E8894A;
+  --orange-dim:#2E1800;
+  --purple-text:#B09FE8;
+  --purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --sidebar-width:160px;
+  --topbar-height:48px;
+  --radius:6px;
+  --radius-lg:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;
+}
+
+/* ── Topbar ── */
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--text-primary);letter-spacing:-0.02em;}
+.topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+/* ── 站台切換（頁面標題下方，場館切換一律由它負責）── */
+.site-switch{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.site-switch label{font-size:12px;color:var(--text-muted);}
+.site-switch select{width:auto;min-width:200px;padding:6px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;cursor:pointer;transition:border-color .15s;}
+.site-switch select:focus{border-color:var(--border-focus);}
+.site-switch select option{background:#181816;}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:color .12s,background .12s;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;padding:24px 28px 60px;display:flex;flex-direction:column;}
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.page-header-right{display:flex;align-items:center;gap:10px;}
+.hint{font-size:12px;color:var(--text-muted);}
+
+/* ── Buttons ── */
+button{font-family:inherit;cursor:pointer;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;transition:opacity .15s;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;transition:background .12s,color .12s,border-color .12s;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:3px 9px;border-radius:var(--radius);font-size:12px;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+.btn-sm.blocked{opacity:0.45;}
+.btn-sm.blocked:hover{color:var(--text-secondary);border-color:var(--border);background:transparent;}
+
+/* ── 提示區 ── */
+.warn-box{background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.3);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--yellow-text);line-height:1.6;margin-bottom:10px;}
+.info-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;}
+
+/* ── 多欄位篩選 ── */
+.filter-panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:14px;}
+.filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.f-field{display:flex;flex-direction:column;gap:4px;}
+.f-field label{font-size:10.5px;color:var(--text-muted);white-space:nowrap;}
+.f-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;color:var(--text-primary);font-size:12px;outline:none;height:30px;font-family:inherit;transition:border-color .15s;}
+.f-input:focus{border-color:var(--border-focus);}
+.f-input::placeholder{color:var(--text-muted);}
+select.f-input{cursor:pointer;min-width:110px;}
+select.f-input option{background:#181816;}
+.f-range{display:flex;align-items:center;gap:5px;}
+.f-range .sep{font-size:11px;color:var(--text-muted);}
+.filter-btn-group{display:flex;gap:6px;margin-left:auto;}
+.f-field.order-entry label{color:var(--blue-text);}
+.f-field.order-entry .f-input{border-color:rgba(133,183,235,0.35);}
+.f-field.order-entry .f-input:focus{border-color:var(--blue-text);}
+.filter-note{font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.6;}
+.filter-note b{color:var(--text-secondary);font-weight:500;}
+
+/* ── List ── */
+.list-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:auto;}
+.list-wrap > .list-header,.list-wrap > .list-body{min-width:max-content;}
+.list-header{display:grid;grid-template-columns:160px 110px 170px 95px 105px 150px 130px 130px 110px 120px;min-width:1280px;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--bg-page);}
+.list-header > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;white-space:nowrap;padding-right:12px;}
+.vr-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;}
+.vr-card:hover{border-color:var(--border-focus);}
+.vr-row{display:grid;grid-template-columns:160px 110px 170px 95px 105px 150px 130px 130px 110px 120px;min-width:1280px;align-items:center;padding:11px 14px;}
+.vr-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.ops-cell{display:flex;gap:6px;justify-content:flex-start;overflow:visible!important;}
+.table-footer{display:flex;align-items:center;gap:14px;padding:10px 2px 0;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:6px;}
+
+.tx-id{font-size:12px;color:var(--text-primary);font-family:monospace;font-variant-numeric:tabular-nums;cursor:pointer;transition:color .12s;}
+.tx-id:hover{color:var(--blue-text);}
+.order-id{font-family:monospace;font-size:12px;color:var(--text-primary);letter-spacing:0.05em;}
+.venue-sub{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:monospace;}
+.num-cell{font-variant-numeric:tabular-nums;color:var(--text-primary)!important;}
+.cell-empty{color:var(--text-muted)!important;}
+.time-cell{font-variant-numeric:tabular-nums;}
+
+/* ── 交易類型 / 核實狀態 ── */
+.type-tag{font-size:11px;padding:2px 8px;border-radius:4px;display:inline-block;white-space:nowrap;}
+.type-wash{background:var(--orange-dim);color:var(--orange-text);}
+.type-cashout{background:var(--purple-dim);color:var(--purple-text);}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 8px;border-radius:4px;white-space:nowrap;}
+.status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.st-pending{background:var(--blue-dim);color:var(--blue-text);}
+.st-pending .status-dot{background:var(--blue-text);box-shadow:0 0 5px rgba(133,183,235,0.4);}
+/* 待核實的「洗分」以醒目色標區分（洗分應當場付現、隨即登記；出金待核實屬正常故維持藍標） */
+.st-pending.wash-hot{background:var(--yellow-dim);color:var(--yellow-text);}
+.st-pending.wash-hot .status-dot{background:var(--yellow-text);box-shadow:0 0 5px rgba(239,159,39,0.4);}
+.st-verified{background:var(--green-dim);color:var(--green-text);}
+.st-verified .status-dot{background:var(--green-text);}
+.st-voided{background:#1e1e1c;color:var(--text-secondary);}
+.st-voided .status-dot{background:var(--text-secondary);}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);width:460px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);box-shadow:0 16px 48px rgba(0,0,0,0.7);display:flex;flex-direction:column;}
+.modal.modal-sm{width:400px;}
+.modal-head{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-size:14px;font-weight:500;color:var(--text-primary);}
+.modal-close{background:none;border:none;font-size:17px;color:var(--text-secondary);cursor:pointer;padding:2px 5px;line-height:1;}
+.modal-close:hover{color:var(--text-primary);}
+.modal-body{padding:.875rem 1rem;overflow-y:auto;flex:1;}
+.modal-foot{padding:.7rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+.modal .warn-box{margin-top:12px;margin-bottom:0;}
+.modal .info-box{margin-top:10px;margin-bottom:0;}
+
+.kv-list{display:flex;flex-direction:column;gap:9px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.kv-row{display:flex;align-items:baseline;gap:10px;}
+.kv-key{font-size:12px;color:var(--text-muted);width:110px;flex-shrink:0;}
+.kv-val{font-size:13px;color:var(--text-primary);word-break:break-all;}
+.kv-val.mono{font-family:monospace;font-variant-numeric:tabular-nums;letter-spacing:0.04em;}
+.kv-val.big{font-size:16px;font-weight:600;}
+
+/* ── 表單 ── */
+.field{margin-bottom:13px;}
+label.field-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
+.req{color:#F09595;}
+textarea{width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;resize:vertical;min-height:80px;}
+textarea::placeholder{color:var(--text-muted);}
+textarea:focus{border-color:var(--border-focus);}
+.field-error textarea{border-color:var(--red-text)!important;}
+.field-error-msg{font-size:11px;color:var(--red-text);margin-top:4px;display:none;}
+.field-error .field-error-msg{display:block;}
+
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+.empty-state-title{font-size:14px;color:var(--text-secondary);margin-bottom:6px;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid var(--border-focus);border-radius:var(--radius);padding:10px 16px;font-size:13px;color:var(--text-primary);box-shadow:0 8px 24px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;max-width:420px;line-height:1.5;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-group">資訊看板</div>
+    <div class="sidebar-group">會員與加盟商 <span class="arr">›</span></div>
+    <div class="sidebar-group active">帳務管理 <span class="arr" style="opacity:0.7;">∨</span></div>
+    <div class="sidebar-item">鏈上錢包管理</div>
+    <div class="sidebar-item">出金審核</div>
+    <div class="sidebar-item">優惠彩金審核</div>
+    <div class="sidebar-item active">洗分出金核實</div>
+    <div class="sidebar-group">各式報表 <span class="arr">›</span></div>
+    <div class="sidebar-group">遊戲商管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">系統管理 <span class="arr">›</span></div>
+    <div class="sidebar-group">後台管理員系統 <span class="arr">›</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="breadcrumb">帳務管理 <span>/</span> 洗分出金核實</div>
+    <div class="page-header">
+      <h1 class="page-title">洗分出金核實</h1>
+      <div class="page-header-right"><span class="hint">時間均為 UTC+0</span></div>
+    </div>
+
+    <div class="site-switch">
+      <label for="site-switch-sel">站台切換</label>
+      <select id="site-switch-sel" onchange="switchSite(this.value)">
+        <option value="ss">松山遊藝場（SS）</option>
+        <option value="bq">板橋遊藝場（BQ）</option>
+      </select>
+      <span class="hint">一次僅顯示所選站台的資料；場館切換一律由此負責，不另設場館篩選</span>
+    </div>
+
+    <div class="warn-box">⚠️ <b>核實不等於付錢，是付錢之後的登記。</b>現場的正確順序：交易成功 → 現金交給玩家 → 到本頁核實。核實與作廢<b>一經確認皆無法撤銷</b>。</div>
+    <div class="info-box">僅交易狀態為「已完成」的機台洗分與機台出金會出現在本頁；待確認、已取消、已逾時、未成立的交易不會出現。機台畫面顯示失敗、本頁又查無該筆時，代表交易可能沒有完成——請先到「機台交易紀錄」查明狀態再決定付不付錢，<b>不要憑本頁有沒有紀錄以外的印象判斷</b>。</div>
+
+    <div class="filter-panel">
+      <div class="filter-row">
+        <div class="f-field">
+          <label>機台帳號</label>
+          <input type="text" class="f-input" id="ft-acct" placeholder="會員編號，多筆以 , 分隔" style="min-width:180px;"/>
+        </div>
+        <div class="f-field">
+          <label>交易類型</label>
+          <select class="f-input" id="ft-type">
+            <option value="all">全部</option>
+            <option value="wash">機台洗分</option>
+            <option value="cashout">機台出金</option>
+          </select>
+        </div>
+        <div class="f-field order-entry">
+          <label>訂單編號（櫃檯核銷入口）</label>
+          <input type="text" class="f-input" id="ft-order" placeholder="輸入收據上的訂單編號" style="min-width:170px;" onkeydown="if(event.key==='Enter')applyFilters()"/>
+        </div>
+        <div class="f-field">
+          <label>核實狀態</label>
+          <select class="f-input" id="ft-status">
+            <option value="all">全部</option>
+            <option value="pending">待核實</option>
+            <option value="verified">已核實</option>
+            <option value="voided">已作廢</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-row" style="margin-top:10px;">
+        <div class="f-field">
+          <label>交易時間（出金即收據印出時間）</label>
+          <div class="f-range">
+            <input type="date" class="f-input" id="ft-tx-from"/>
+            <span class="sep">～</span>
+            <input type="date" class="f-input" id="ft-tx-to"/>
+          </div>
+        </div>
+        <div class="f-field">
+          <label>核實時間</label>
+          <div class="f-range">
+            <input type="date" class="f-input" id="ft-v-from"/>
+            <span class="sep">～</span>
+            <input type="date" class="f-input" id="ft-v-to"/>
+          </div>
+        </div>
+        <div class="f-field">
+          <label>金額</label>
+          <div class="f-range">
+            <input type="number" class="f-input" id="ft-amt-min" placeholder="min" style="width:90px;"/>
+            <span class="sep">～</span>
+            <input type="number" class="f-input" id="ft-amt-max" placeholder="max" style="width:90px;"/>
+          </div>
+        </div>
+        <div class="filter-btn-group">
+          <button class="btn-ghost" onclick="clearFilters()">清除</button>
+          <button class="btn-primary" onclick="applyFilters()">搜尋</button>
+        </div>
+      </div>
+      <div class="filter-note"><b>收據核銷：</b>玩家持收據到櫃檯時，於「訂單編號」輸入收據上的編號搜尋，帶出該筆後點「核實」核對金額——核實即收據核銷，確認後付現。場館切換一律由頁面標題下方的站台切換下拉選單負責（一次僅顯示所選站台的資料）。</div>
+    </div>
+
+    <div class="list-wrap">
+      <div class="list-header">
+        <span>交易編號</span><span>訂單編號</span><span>機台帳號</span><span>交易類型</span><span>實際金額</span><span>核實狀態</span><span>交易時間 (UTC+0)</span><span>核實時間 (UTC+0)</span><span>核實人員</span><span>操作</span>
+      </div>
+      <div class="list-body" id="vr-list"></div>
+    </div>
+    <div class="table-footer" id="vr-footer"></div>
+  </div>
+</div>
+
+<!-- 核實確認 Modal（洗分／出金共用，內容依交易類型切換） -->
+<div class="overlay" id="verify-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="verify-title">核實</h2>
+      <button class="modal-close" onclick="closeVerifyModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kv-list" id="verify-kv"></div>
+      <div class="info-box" id="verify-flow-hint"></div>
+      <div class="warn-box">⚠️ <b>核實一經確認即無法撤銷</b>，誤按無法回復，只能透過後台操作紀錄追溯執行人員與時間。請務必核對上方內容無誤後再確認。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeVerifyModal()">取消</button>
+      <button class="btn-primary" id="verify-confirm-btn" onclick="confirmVerify()">確認核實</button>
+    </div>
+  </div>
+</div>
+
+<!-- 阻擋提示 Modal（已核實／已作廢再次核實） -->
+<div class="overlay" id="block-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h2>無法核實</h2>
+      <button class="modal-close" onclick="closeBlockModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box" style="margin:0;" id="block-msg"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-primary" onclick="closeBlockModal()">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 作廢 Modal（僅出金） -->
+<div class="overlay" id="void-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>作廢收據</h2>
+      <button class="modal-close" onclick="closeVoidModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="kv-list" id="void-kv"></div>
+      <div class="field" style="margin-top:12px;margin-bottom:0;" id="void-reason-field">
+        <label class="field-label">作廢原因 <span class="req">*</span></label>
+        <textarea id="void-reason" placeholder="例：收據遺失／兌現爭議，經確認不再兌付"></textarea>
+        <p class="field-error-msg">作廢原因為必填</p>
+      </div>
+      <div class="warn-box">⚠️ 僅 Admin 與站長可執行作廢。<b>作廢後不可復原，分數也不會退回機台</b>，該收據不再兌付。此操作無法復原。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeVoidModal()">取消</button>
+      <button class="btn-primary" onclick="confirmVoid()">確認作廢</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 常數 ───────────────────────────────────────
+var CURRENT_USER = 'OAAE27852';           // topbar 登入者（站長）
+var CURRENT_ROLE = 'owner';               // admin / owner(站長) / operator(操作員)
+var VENUES = { ss:'松山遊藝場（SS）', bq:'板橋遊藝場（BQ）' };
+var TYPE_LABEL = { wash:'機台洗分', cashout:'機台出金' };
+var STATUS_LABEL = { pending:'待核實', verified:'已核實', voided:'已作廢' };
+
+// ─── 假資料（涵蓋：洗分/出金 × 待核實/已核實/已作廢；訂單編號為人工可朗讀短碼）───
+var RECORDS = [
+  { tx:'TX20260821000347', order:'K7Q4-312', venue:'ss', acct:'M20260812001', type:'cashout', amount:300,  status:'pending',  txTime:'2026-08-21 09:41', vTime:null, vUser:null },
+  { tx:'TX20260821000331', order:null,       venue:'ss', acct:'M20260812002', type:'wash',    amount:2600, status:'pending',  txTime:'2026-08-21 08:57', vTime:null, vUser:null },
+  { tx:'TX20260821000352', order:null,       venue:'bq', acct:'M20260815004', type:'wash',    amount:5000, status:'pending',  txTime:'2026-08-21 10:12', vTime:null, vUser:null },
+  { tx:'TX20260820000298', order:'R2W7-085', venue:'ss', acct:'M20260812002', type:'cashout', amount:2100, status:'pending',  txTime:'2026-08-20 22:36', vTime:null, vUser:null },
+  { tx:'TX20260820000254', order:null,       venue:'ss', acct:'M20260812001', type:'wash',    amount:900,  status:'verified', txTime:'2026-08-20 19:03', vTime:'2026-08-20 19:05', vUser:'OPSS0001' },
+  { tx:'TX20260819000221', order:'M3X8-207', venue:'bq', acct:'M20260815004', type:'cashout', amount:4700, status:'verified', txTime:'2026-08-19 21:48', vTime:'2026-08-20 10:12', vUser:'OAAE27852' },
+  { tx:'TX20260818000176', order:'T6J1-449', venue:'bq', acct:'M20260815004', type:'cashout', amount:1200, status:'pending',  txTime:'2026-08-18 15:22', vTime:null, vUser:null },
+  { tx:'TX20260818000169', order:null,       venue:'bq', acct:'M20260815004', type:'wash',    amount:300,  status:'verified', txTime:'2026-08-18 13:40', vTime:'2026-08-18 13:41', vUser:'OPBQ0002' },
+  { tx:'TX20260816000143', order:'W5H9-118', venue:'ss', acct:'M20260812001', type:'cashout', amount:1500, status:'verified', txTime:'2026-08-16 20:15', vTime:'2026-08-17 11:02', vUser:'OPSS0001' },
+  { tx:'TX20260812000097', order:'P9T2-664', venue:'ss', acct:'M20260812002', type:'cashout', amount:800,  status:'voided',   txTime:'2026-08-12 14:05', vTime:'2026-08-15 11:30', vUser:'OAAE27852', voidReason:'收據遺失，經與現場確認不再兌付' },
+];
+
+var filtered = [];
+var curIdx = -1;   // 目前操作中的紀錄（RECORDS index）
+var CURRENT_VENUE = 'ss';   // 頂部站台切換所選站台（一次僅顯示所選站台的資料）
+
+// ─── 站台切換（頁面標題下方；場館切換一律由它負責，不另設場館篩選）───
+function switchSite(v){
+  CURRENT_VENUE = v;
+  applyFilters();
+  showToast('已切換站台：'+VENUES[v]+'（僅顯示該場館的資料）');
+}
+
+// ─── 篩選 ───────────────────────────────────────
+function applyFilters(){
+  var accts = document.getElementById('ft-acct').value.trim();
+  var type  = document.getElementById('ft-type').value;
+  var order = document.getElementById('ft-order').value.trim().toUpperCase();
+  var status= document.getElementById('ft-status').value;
+  var txF = document.getElementById('ft-tx-from').value, txT = document.getElementById('ft-tx-to').value;
+  var vF  = document.getElementById('ft-v-from').value,  vT  = document.getElementById('ft-v-to').value;
+  var aMin= document.getElementById('ft-amt-min').value, aMax= document.getElementById('ft-amt-max').value;
+  var acctList = accts ? accts.split(',').map(function(s){return s.trim().toUpperCase();}).filter(Boolean) : [];
+
+  filtered = RECORDS.filter(function(r){
+    if(r.venue!==CURRENT_VENUE) return false;
+    if(acctList.length && !acctList.some(function(a){return r.acct.toUpperCase().indexOf(a)!==-1;})) return false;
+    if(type!=='all' && r.type!==type) return false;
+    if(order && (!r.order || r.order.toUpperCase().indexOf(order)===-1)) return false;
+    if(status!=='all' && r.status!==status) return false;
+    var txDate = r.txTime.slice(0,10);
+    if(txF && txDate<txF) return false;
+    if(txT && txDate>txT) return false;
+    if(vF || vT){
+      if(!r.vTime) return false;
+      var vDate = r.vTime.slice(0,10);
+      if(vF && vDate<vF) return false;
+      if(vT && vDate>vT) return false;
+    }
+    if(aMin!=='' && r.amount<Number(aMin)) return false;
+    if(aMax!=='' && r.amount>Number(aMax)) return false;
+    return true;
+  });
+  renderList();
+  if(order && filtered.length===0) showToast('查無此訂單編號，請先到「機台交易紀錄」查明交易狀態，不要憑印象付款');
+}
+
+function clearFilters(){
+  ['ft-acct','ft-order','ft-tx-from','ft-tx-to','ft-v-from','ft-v-to','ft-amt-min','ft-amt-max'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('ft-type').value='all';
+  document.getElementById('ft-status').value='all';
+  applyFilters();
+}
+
+// ─── 列表 ───────────────────────────────────────
+function fmtAmt(n){ return n.toLocaleString('en-US'); }
+
+function renderList(){
+  var body = document.getElementById('vr-list');
+  if(!filtered.length){
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-title">查無資料</div>調整篩選條件後再試</div>';
+  }else{
+    body.innerHTML = filtered.map(function(r){
+      var i = RECORDS.indexOf(r);
+      var washHot = (r.type==='wash' && r.status==='pending') ? ' wash-hot' : '';
+      var badge = '<span class="status-badge st-'+r.status+washHot+'"'
+        + (washHot ? ' title="待核實的洗分：現金可能未交付或現場漏登記，請優先處理"' : '')
+        + '><span class="status-dot"></span>'+STATUS_LABEL[r.status]+'</span>';
+      var ops = '<button class="btn-sm'+(r.status!=='pending'?' blocked':'')+'" onclick="openVerifyModal('+i+')">核實</button>';
+      if(r.type==='cashout' && r.status==='pending'){
+        ops += '<button class="btn-sm danger" title="僅 Admin 與站長可執行" onclick="openVoidModal('+i+')">作廢</button>';
+      }
+      return '<div class="vr-card"><div class="vr-row">'
+        + '<div><span class="tx-id" onclick="gotoTx(\''+r.tx+'\')">'+r.tx+'</span></div>'
+        + '<div>'+(r.order?'<span class="order-id">'+r.order+'</span>':'<span class="cell-empty">—</span>')+'</div>'
+        + '<div><span class="venue-sub" style="font-size:12px;margin-top:0;">'+r.acct+'</span></div>'
+        + '<div><span class="type-tag type-'+r.type+'">'+TYPE_LABEL[r.type]+'</span></div>'
+        + '<div class="num-cell">'+fmtAmt(r.amount)+'</div>'
+        + '<div>'+badge+'</div>'
+        + '<div class="time-cell">'+r.txTime+'</div>'
+        + '<div class="time-cell">'+(r.vTime||'<span class="cell-empty">—</span>')+'</div>'
+        + '<div>'+(r.vUser||'<span class="cell-empty">—</span>')+'</div>'
+        + '<div class="ops-cell">'+ops+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+  var pw = filtered.filter(function(r){return r.status==='pending'&&r.type==='wash';}).length;
+  var pc = filtered.filter(function(r){return r.status==='pending'&&r.type==='cashout';}).length;
+  document.getElementById('vr-footer').innerHTML =
+    '<span>共 '+filtered.length+' 筆</span><span>待核實 '+(pw+pc)+' 筆（洗分 '+pw+' / 出金 '+pc+'）</span>';
+}
+
+function gotoTx(tx){
+  showToast('交易明細請開「交易紀錄查詢」proto（機台交易紀錄）查看：'+tx);
+}
+
+// ─── 核實（含阻擋） ───────────────────────────────
+function openVerifyModal(i){
+  var r = RECORDS[i];
+  if(r.status!=='pending'){ openBlockModal(r); return; }
+  curIdx = i;
+  var kv = document.getElementById('verify-kv');
+  if(r.type==='cashout'){
+    document.getElementById('verify-title').textContent = '核實（收據核銷）';
+    kv.innerHTML =
+      '<div class="kv-row"><span class="kv-key">訂單編號</span><span class="kv-val mono">'+r.order+'</span></div>'
+      +'<div class="kv-row"><span class="kv-key">機台帳號</span><span class="kv-val mono">'+r.acct+'（'+VENUES[r.venue]+'）</span></div>'
+      +'<div class="kv-row"><span class="kv-key">金額（收據面額）</span><span class="kv-val big">'+fmtAmt(r.amount)+'</span></div>'
+      +'<div class="kv-row"><span class="kv-key">收據印出時間</span><span class="kv-val mono">'+r.txTime+' (UTC+0)</span></div>';
+    document.getElementById('verify-flow-hint').innerHTML =
+      '請與玩家持有的收據逐項核對無誤後確認。<b>核實即收據核銷</b>；確認後櫃檯付現金給玩家。';
+    document.getElementById('verify-confirm-btn').textContent = '確認核實（核銷）';
+  }else{
+    document.getElementById('verify-title').textContent = '核實（洗分）';
+    kv.innerHTML =
+      '<div class="kv-row"><span class="kv-key">機台帳號</span><span class="kv-val mono">'+r.acct+'（'+VENUES[r.venue]+'）</span></div>'
+      +'<div class="kv-row"><span class="kv-key">實際金額</span><span class="kv-val big">'+fmtAmt(r.amount)+'</span></div>'
+      +'<div class="kv-row"><span class="kv-key">交易時間</span><span class="kv-val mono">'+r.txTime+' (UTC+0)</span></div>';
+    document.getElementById('verify-flow-hint').innerHTML =
+      '洗分因門檻計算，實際金額<b>可能小於店員輸入的金額，付現一律以「實際金額」為準</b>。核實是付現之後的登記，請確認現金已交給玩家。';
+    document.getElementById('verify-confirm-btn').textContent = '確認核實';
+  }
+  document.getElementById('verify-overlay').classList.add('active');
+}
+function closeVerifyModal(){ document.getElementById('verify-overlay').classList.remove('active'); curIdx=-1; }
+function confirmVerify(){
+  var r = RECORDS[curIdx];
+  r.status='verified';
+  r.vTime = nowStr();
+  r.vUser = CURRENT_USER;
+  closeVerifyModal();
+  applyFilters();
+  showToast(r.type==='cashout'
+    ? '訂單 '+r.order+' 已核實（收據已核銷），請付現金 '+fmtAmt(r.amount)+' 給玩家'
+    : '洗分已核實並記錄核實人員與時間（'+r.acct+'／'+fmtAmt(r.amount)+'）');
+}
+
+function openBlockModal(r){
+  var msg;
+  if(r.status==='verified'){
+    msg = '⚠️ 此筆已於 '+r.vTime+' (UTC+0) 由 '+r.vUser+' 核實'
+      +(r.type==='cashout'?'（收據已核銷）':'')
+      +'，系統阻擋重複核實，<b>避免重複付款</b>。請勿再付現。';
+  }else{
+    msg = '⚠️ 此筆收據已作廢（不再兌付），無法核實。作廢原因：'+(r.voidReason||'—')+'。請勿付現。';
+  }
+  document.getElementById('block-msg').innerHTML = msg;
+  document.getElementById('block-overlay').classList.add('active');
+}
+function closeBlockModal(){ document.getElementById('block-overlay').classList.remove('active'); }
+
+// ─── 作廢（僅出金；僅 Admin 與站長） ───────────────
+function openVoidModal(i){
+  var r = RECORDS[i];
+  if(CURRENT_ROLE!=='admin' && CURRENT_ROLE!=='owner'){ showToast('僅 Admin 與站長可執行作廢'); return; }
+  if(r.status!=='pending'){ openBlockModal(r); return; }
+  curIdx = i;
+  document.getElementById('void-kv').innerHTML =
+    '<div class="kv-row"><span class="kv-key">訂單編號</span><span class="kv-val mono">'+r.order+'</span></div>'
+    +'<div class="kv-row"><span class="kv-key">機台帳號</span><span class="kv-val mono">'+r.acct+'（'+VENUES[r.venue]+'）</span></div>'
+    +'<div class="kv-row"><span class="kv-key">金額（收據面額）</span><span class="kv-val big">'+fmtAmt(r.amount)+'</span></div>'
+    +'<div class="kv-row"><span class="kv-key">收據印出時間</span><span class="kv-val mono">'+r.txTime+' (UTC+0)</span></div>';
+  document.getElementById('void-reason').value='';
+  document.getElementById('void-reason-field').classList.remove('field-error');
+  document.getElementById('void-overlay').classList.add('active');
+}
+function closeVoidModal(){ document.getElementById('void-overlay').classList.remove('active'); curIdx=-1; }
+function confirmVoid(){
+  var reason = document.getElementById('void-reason').value.trim();
+  if(!reason){ document.getElementById('void-reason-field').classList.add('field-error'); return; }
+  var r = RECORDS[curIdx];
+  r.status='voided';
+  r.vTime = nowStr();
+  r.vUser = CURRENT_USER;
+  r.voidReason = reason;
+  closeVoidModal();
+  applyFilters();
+  showToast('訂單 '+r.order+' 收據已作廢，不再兌付（已寫入後台操作紀錄）');
+}
+
+// ─── 共用 ───────────────────────────────────────
+function nowStr(){
+  var d = new Date();
+  function p(n){ return (n<10?'0':'')+n; }
+  return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes());
+}
+var toastTimer=null;
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+// Escape 與點擊 overlay 空白處關閉
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){ closeVerifyModal(); closeBlockModal(); closeVoidModal(); }
+});
+['verify-overlay','block-overlay','void-overlay'].forEach(function(id){
+  document.getElementById(id).addEventListener('click', function(e){
+    if(e.target===this) this.classList.remove('active');
+  });
+});
+
+applyFilters();
+</script>
+</body>
+</html>

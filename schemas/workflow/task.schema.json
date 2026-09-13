@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/workflow/task.schema.json",
+  "title": "Task",
+  "type": "object",
+  "required": [
+    "task_id",
+    "type",
+    "status",
+    "iteration",
+    "input_artifact_ids",
+    "output_artifact_ids"
+  ],
+  "properties": {
+    "task_id": {
+      "$ref": "../common/defs.schema.json#/$defs/TaskId"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "agent",
+        "approval"
+      ]
+    },
+    "agent_id": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "mode": {
+      "type": "string"
+    },
+    "approval_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ApprovalId"
+    },
+    "status": {
+      "$ref": "../common/defs.schema.json#/$defs/TaskStatus"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_artifact_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+      }
+    },
+    "input_entity_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/EntityRef"
+      }
+    },
+    "output_artifact_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+      }
+    },
+    "gate": {
+      "$ref": "../common/defs.schema.json#/$defs/GateId"
+    },
+    "gate_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "layer",
+          "result"
+        ],
+        "properties": {
+          "at": {
+            "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "structural",
+              "semantic"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "FAIL"
+            ]
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "permission_violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "action"
+        ],
+        "properties": {
+          "at": {
+            "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+          },
+          "action": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "started_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "ended_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/HistoryEntry"
+      }
+    }
+  },
+  "additionalProperties": false
+}

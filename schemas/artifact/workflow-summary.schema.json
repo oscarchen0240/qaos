@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/workflow-summary.schema.json",
+  "title": "WorkflowSummary (payload)",
+  "type": "object",
+  "required": ["run_id", "workflow_id", "final_status", "tasks", "artifacts_produced", "approvals", "outputs", "iterations", "overrides", "open_items"],
+  "properties": {
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "workflow_id": {"type": "string"},
+    "final_status": {"$ref": "../common/defs.schema.json#/$defs/RunStatus"},
+    "started_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "ended_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "tasks": {"type": "array", "items": {"type": "object", "required": ["task_id", "agent_id", "status", "iterations"], "properties": {"task_id": {"type": "string"}, "agent_id": {"type": "string"}, "status": {"$ref": "../common/defs.schema.json#/$defs/TaskStatus"}, "iterations": {"type": "integer"}, "gate": {"type": "string"}, "gate_result": {"type": "string"}}}},
+    "artifacts_produced": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EntityRef"}},
+    "approvals": {"type": "array", "items": {"type": "object", "required": ["approval_id", "type", "decision"], "properties": {"approval_id": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"}, "type": {"$ref": "../common/defs.schema.json#/$defs/ApprovalType"}, "decision": {"type": ["string", "null"]}, "decided_by": {"type": "string"}}}},
+    "outputs": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EntityRef"}, "description": "最終進入 Registry / Suite / Bug repo 的 entity"},
+    "iterations": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "overrides": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ApprovalId"}},
+    "open_items": {"type": "array", "items": {"type": "string"}, "description": "未解 ambiguity、被拒的提案、建議的後續 workflow"},
+    "narrative": {"type": "string"}
+  },
+  "additionalProperties": false
+}

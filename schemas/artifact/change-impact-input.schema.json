@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/change-impact-input.schema.json",
+  "title": "ChangeImpactAnalystInput",
+  "description": "Supervisor DISPATCH_AGENT 時交給 Agent 的輸入包；所有 artifact 以 id 傳遞，Agent 用 READ_ARTIFACT 讀取",
+  "type": "object",
+  "required": ["run_id","task_id","iteration","phase","spec_id","from_version","to_version"],
+  "properties": {
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "task_id": {"$ref": "../common/defs.schema.json#/$defs/TaskId"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "phase": {"type": "string", "enum": ["impact", "compare"]},
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "from_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "to_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "from_requirement_model_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "to_requirement_model_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "referencing_active_testcases": {"type": "array", "items": {"type": "object", "required": ["testcase_id", "version"], "properties": {"testcase_id": {"$ref": "../common/defs.schema.json#/$defs/TestCaseId"}, "version": {"type": "integer"}}}},
+    "change_impact_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId", "description": "phase=compare 必填"},
+    "new_testcase_draft_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId", "description": "phase=compare 必填（已 VALIDATED）"}
+  },
+  "additionalProperties": false
+}

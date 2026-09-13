@@ -1,0 +1,66 @@
+workflow_id: spec-to-bug
+version: "1.0.0"
+description: SPEC + Actual Behavior + Evidence → Bug Analyst ⇄ Bug Validator → Human Approval → Bug Repository
+input:
+  fields:
+    spec_id: {required: true}
+    spec_version: {required: true}
+    execution_id: {required: false, description: 有 Execution 記錄時提供}
+    actual_behavior: {required: false, description: 無 Execution 時的文字描述；仍必須有 evidence_ids}
+    evidence_ids: {required: true, min_items: 1}
+    testcase_id: {required: false}
+    testcase_version: {required: false}
+    initiated_by: {required: true}
+initial_state: {workflow_run: CREATED, bug: null, evidence: RECORDED}
+agents: [agent-supervisor, agent-spec-analyst(conditional), agent-bug-analyst, agent-bug-validator]
+artifacts:
+  - {type: RequirementModel, producer: agent-spec-analyst, conditional: true}
+  - {type: BugDraft, producer: agent-bug-analyst}
+  - {type: BugValidationReport, producer: agent-bug-validator}
+  - {type: ApprovalRequest, producer: agent-supervisor}
+  - {type: WorkflowSummary, producer: agent-supervisor}
+max_validation_iterations: 3
+tasks:
+  - id: T0
+    agent: agent-spec-analyst
+    run_if: "RequirementModel for spec_id@spec_version NOT exists"
+    gate: G-SPEC
+  - id: T1
+    agent: agent-bug-analyst
+    inputs: [RequirementModel, "TestExecution (optional)", "Evidence[]", "TestCaseVersion (optional)", "BugValidationReport(FAIL) if iteration>0"]
+    outputs: [BugDraft]
+    gate: G-BVAL.structural   # evidence ≥1、hash 相符、references 存在
+    on_gate_fail: {retry: 2, then: WAITING_HUMAN}
+    transitions: {bug: "null → DRAFT"}
+  - id: T2
+    agent: agent-bug-validator
+    inputs: [SpecVersion, RequirementModel, BugDraft, "Evidence[]", "bugs/ index (same area)"]
+    outputs: [BugValidationReport]
+    gate: G-BVAL
+    transitions: {bug: "DRAFT → VALIDATING"}
+    on_result:
+      PASS: "bug → VALIDATED"
+      FAIL: {iteration_lt_max: "goto T1 (bug → VALIDATION_FAILED → DRAFT)", iteration_ge_max: "HUMAN_OVERRIDE"}
+      DUPLICATE: "approval_request(CONFIRM_DUPLICATE) → Human confirm → bug → REJECTED(duplicate_of) | back to T1"
+      AMBIGUITY: "bug → AMBIGUITY_ESCALATED; approval_request(RESOLVE_AMBIGUITY) → Human → back to T1 | REJECTED"
+  - id: T3
+    type: approval
+    approval_type: OPEN_BUG
+    inputs: [BugDraft(VALIDATED), BugValidationReport, "severity/priority 建議（Analyst vs Validator）", trace]
+    transitions: {bug: "VALIDATED → PENDING_APPROVAL"}
+    on_decision:
+      approve: "runtime.COMMIT_BUG → bugs/<product>/<area>/<bug_id>.yaml (OPEN)；render human-facing bug report (md/html via bug-report skill)"
+      override: 同 approve
+      reject: "bug → DRAFT; goto T1"
+  - id: T4
+    agent: agent-supervisor
+    outputs: [WorkflowSummary]
+gates: [G-SPEC(conditional), G-BVAL, G-APPROVAL]
+failure_handling:
+  no_evidence: "Runtime 於 run 建立時拒絕（No Evidence, No Formal Bug）"
+  evidence_hash_mismatch: run → FAILED，audit
+human_approval:
+  required: [OPEN_BUG]
+  conditional: [CONFIRM_DUPLICATE, RESOLVE_AMBIGUITY, HUMAN_OVERRIDE]
+output: ["bug_id (OPEN)", "rendered report path", WorkflowSummary]
+final_state: {workflow_run: [COMPLETED, FAILED, CANCELLED], bug: [OPEN, REJECTED]}

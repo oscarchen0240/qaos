@@ -1,0 +1,173 @@
+# QAOS Action Registry — 單一事實來源
+# 每個 Agent 的 allowed_actions 必須是此清單的子集；Runtime 於 dispatch 前檢查。
+# category: read | write-artifact | validate | analyze | propose | execute | orchestrate | system | forbidden
+# phase: 該 Action 可被授權的最早 Phase；reserved 表示目前無任何 Agent 可用
+schema_version: "1.0"
+actions:
+  # ---- read ----
+  - id: READ_SPEC
+    category: read
+    phase: 1
+    description: 讀取 Spec 身份與版本索引
+    paths: ["specs/**/spec.yaml"]
+  - id: READ_SPEC_VERSION
+    category: read
+    phase: 1
+    description: 讀取特定版本的 Spec 內容快照
+    paths: ["specs/**/v*.md"]
+  - id: READ_REQUIREMENT
+    category: read
+    phase: 1
+    description: 讀取持久化 RequirementModel
+    paths: ["artifacts/requirements/<spec_id>/**"]
+  - id: READ_TESTCASE
+    category: read
+    phase: 1
+    description: 讀取 Registry pointer 與所有 TestCase 版本
+    paths: ["testcases/registry/**", "testcases/versions/**", "testcases/manual/**"]
+  - id: READ_TEST_SUITE
+    category: read
+    phase: 1
+    paths: ["testsuites/**"]
+  - id: READ_EXECUTION
+    category: read
+    phase: 1
+    paths: ["executions/**"]
+  - id: READ_EVIDENCE
+    category: read
+    phase: 1
+    paths: ["evidence/**"]
+  - id: READ_BUG
+    category: read
+    phase: 1
+    added_in_review: true
+    description: Bug Validator duplicate 檢查、Curator 風險評估所需
+    paths: ["bugs/**"]
+  - id: READ_ARTIFACT
+    category: read
+    phase: 1
+    added_in_review: true
+    description: 只能讀取 dispatch 時指定的 VALID 上游 artifact
+    paths: ["artifacts/**"]
+    constraint: only_dispatched_inputs
+  - id: READ_APPROVAL
+    category: read
+    phase: 1
+    added_in_review: true
+    paths: ["approvals/**"]
+
+  # ---- write-artifact ----
+  - id: CREATE_ARTIFACT
+    category: write-artifact
+    phase: 1
+    description: 建立符合 envelope schema 的 artifact，只能寫入自身 artifact 目錄
+    constraint: own_artifact_dir_only
+  - id: UPDATE_DRAFT
+    category: write-artifact
+    phase: 1
+    description: 更新自己建立且狀態為 DRAFT/INVALID 的 artifact（產生新 version）
+    constraint: own_artifact_only
+  - id: CREATE_TESTCASE_DRAFT
+    category: write-artifact
+    phase: 1
+    produces: TestCaseDraft
+  - id: CREATE_BUG_DRAFT
+    category: write-artifact
+    phase: 1
+    produces: BugDraft
+  - id: CREATE_SUITE_DRAFT
+    category: write-artifact
+    phase: 1
+    produces: RegressionProposal
+
+  # ---- validate / analyze / propose ----
+  - id: VALIDATE_TESTCASE
+    category: validate
+    phase: 1
+    produces: TestValidationReport
+  - id: VALIDATE_BUG
+    category: validate
+    phase: 1
+    produces: BugValidationReport
+  - id: CALCULATE_CHANGE_IMPACT
+    category: analyze
+    phase: 1
+    produces: ChangeImpactReport
+  - id: COMPARE_VERSIONS
+    category: analyze
+    phase: 1
+    produces: VersionComparisonReport
+  - id: PROPOSE_REGRESSION_UPDATE
+    category: propose
+    phase: 1
+    produces: RegressionProposal
+  - id: REQUEST_HUMAN_APPROVAL
+    category: propose
+    phase: 1
+    produces: ApprovalRequest
+    constraint: supervisor_or_runtime_only
+
+  # ---- execute (reserved) ----
+  - id: EXECUTE_TEST
+    category: execute
+    phase: reserved
+    description: Phase 5 才解鎖給 Test Executor；Phase 1-4 無任何 Agent 可用
+
+  # ---- orchestrate ----
+  - id: CREATE_WORKFLOW_RUN
+    category: orchestrate
+    phase: 1
+    added_in_review: true
+  - id: DISPATCH_AGENT
+    category: orchestrate
+    phase: 1
+    added_in_review: true
+    description: 指定 agent_id + input artifact ids + expected output type；Runtime 檢查 permission
+  - id: EVALUATE_GATE
+    category: orchestrate
+    phase: 1
+    added_in_review: true
+    description: 觸發 Runtime 執行 Structural Gate；Semantic Gate 結果來自 Validator artifact
+  - id: TRANSITION_STATE
+    category: orchestrate
+    phase: 1
+    added_in_review: true
+    constraint: runtime_only
+  - id: CREATE_WORKFLOW_SUMMARY
+    category: orchestrate
+    phase: 1
+    added_in_review: true
+    produces: WorkflowSummary
+
+  # ---- system (需 ApprovalDecision，無 Agent 可用) ----
+  - id: COMMIT_TO_REGISTRY
+    category: system
+    phase: 1
+    added_in_review: true
+    requires: ApprovalDecision(approve|override)
+  - id: UPDATE_SUITE_MEMBERSHIP
+    category: system
+    phase: 1
+    added_in_review: true
+    requires: ApprovalDecision(approve|override)
+  - id: COMMIT_BUG
+    category: system
+    phase: 1
+    added_in_review: true
+    requires: ApprovalDecision(approve|override)
+  - id: SUPERSEDE_TESTCASE
+    category: system
+    phase: 1
+    added_in_review: true
+    requires: COMMIT_TO_REGISTRY
+  - id: RECORD_APPROVAL
+    category: system
+    phase: 1
+    added_in_review: true
+    constraint: human_only
+
+  # ---- forbidden (全域) ----
+  - id: MODIFY_SPEC
+    category: forbidden
+    phase: never
+    description: Spec 只能由 Human 匯入新版本，任何 Agent 或 Runtime 不得修改既有版本

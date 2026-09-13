@@ -1,0 +1,394 @@
+artifact_id: ART-TVR-01M2DHKNY6RHPZ12HV2DNSWVHM
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-001
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-13T14:09:17Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2D77XNG6X6HQ7A30SP0154W
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2D77XNG6X6HQ7A30SP0154W
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2D77XNG6X6HQ7A30SP0154W
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+  issues:
+  - testcase_id: TC-DRAFT-01M2D77XNF94DGECN9WPPS7VAR
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §功能說明/權限表
+    evidence: Draft expected_result：「站台切換選單只列出自身及子站台；報表只含管轄範圍內場館資料」。Spec 原文：「場館日結報表 | 全部 | 管轄範圍 | 自身場館」；requirements.yaml
+      REQ-001 rejection_contract.defined=false：「Spec 未定義越權…時系統的回應：拒絕、隱藏選項或回空資料」。
+    explanation: 此案 assumptions 為空（grounded），但 expected 斷言了「選單只列出自身及子站台」這個 Spec 沒有的 UI 機制。Spec 僅定義可見資料範圍，未定義是以隱藏選項、拒絕查詢或回空資料達成；Spec
+      Analyst 已明確標記此點未定義。
+    recommended_change: 將 expected 收斂為 Spec 支持的「報表只含管轄範圍內場館資料」；「選單只列出自身及子站台」若要保留，須改列為 assumption（needs_human_confirmation）並拆成
+      exploratory 案例。
+  - testcase_id: TC-DRAFT-01M2D77XNFRM5DADGW6YGXVYTJ
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計維度
+    evidence: Draft steps 僅「結算日期起迄皆選同一天 → 搜尋」，未選統計維度；expected_result：「回傳該營業日一列資料」。Spec §篩選器/統計維度只列「依場館彙總 / 依機台明細 / 依場次明細」，未定義預設值；前置條件又寫「測試場館下有機台
+      A、B」。
+    explanation: 「一列」只在維度為「依場館彙總」時成立；若預設維度是依機台明細會是 2 列、依場次明細則為場次數列。Spec 未定義維度預設值，此 grounded 案例的 expected 隱含了一個 Spec 沒有的預設值。
+    recommended_change: 步驟中明確選擇統計維度（例如「依場館彙總」），或把 expected 改為「回傳且所有列的結算期間皆為 2026-09-05」，不依賴列數。
+  - testcase_id: TC-DRAFT-01M2D77XNFR9CWCETFNK7DAC81
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/結算期間
+    evidence: Draft expected_result：「列出兩列，結算期間分別為 08-31～09-06 與 09-07～09-13（或至迄日）；各欄為該週內營業日合計」。Spec 原文：「按週以週一為週起」「按週／按月／區間合計顯示該週期的起訖日期」。AC-0052：「週起為
+      2026-08-31(一) 與 2026-09-07(一) 的兩週」。
+    explanation: 此案 assumptions 為空，但 expected 寫了兩個 Spec 沒有的具體規則：(1) 結算期間欄顯示完整週起訖 08-31～09-06（超出結算日期 09-02～09-10 的範圍），Spec
+      只說「顯示該週期的起訖日期」，未定義是否截至結算日期範圍；(2) 第二週寫「09-07～09-13（或至迄日）」二選一，同一 expected 內第一週卻不寫「或自起日」，自相矛盾且無法判定 pass/fail。另外「該週內營業日合計」未說明
+      08-31、09-01 這兩個落在結算日期範圍外的營業日是否計入。
+    recommended_change: expected 只保留 Spec 支持的部分：「兩列、週起分別為 08-31(一) 與 09-07(一)」；結算期間欄顯示格式（完整週 vs 截至起迄日）與範圍外營業日是否計入，改列為 assumption
+      並 needs_human_confirmation。
+  - testcase_id: TC-DRAFT-01M2D77XNFE6HYNSFWV69AJ6S9
+    issue_type: critical_ambiguity
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+    evidence: Draft steps：「機台 A 當日結束 3 場、機台 B 結束 2 場」，expected：「A 列場次數 3、B 列 2」，assumptions 為空。requirements.yaml REQ-009 ambiguity.level=major：「『當日結束的場次』是否包含狀態為『逾時結束』與『日結結算』的場次，Spec
+      未明示」。
+    explanation: 步驟未限定這 3 場、2 場的結束狀態（已結束／逾時結束／日結結算）。若任一場是跨日結時間被強制結束的「日結結算」場次，場次數是 3 或 2 取決於 REQ-009 的 major 歧義，但本案沒有 assumptions。
+    recommended_change: 在 steps/test_data 明確限定所有場次皆以洗分／出金／分數歸 0 正常結束（狀態「已結束」）且不跨日結時間，使 expected 不依賴歧義；或補上 assumption 並 needs_human_confirmation。
+  - testcase_id: TC-DRAFT-01M2D77XNFNKA1FGWE703WDW68
+    issue_type: critical_ambiguity
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+    evidence: Draft steps：「同上資料 → 依場館彙總搜尋」，expected：「場次數 5」，assumptions 為空。REQ-009 ambiguity.level=major（逾時結束／日結結算是否計入未明示）。
+    explanation: expected 5 依賴「同上資料」中的 5 場都被計入，而場次結束狀態未限定；若含日結結算或逾時結束場次，結果取決於 REQ-009 major 歧義，本案卻無 assumptions。
+    recommended_change: 同 AC-0091 案例：限定場次結束狀態為「已結束」，或補 assumption。
+  - testcase_id: TC-DRAFT-01M2D77XNFJSF5HX4MVV2S40M7
+    issue_type: critical_ambiguity
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+    evidence: Draft steps：「機台 A 另有 1 場進行中 → 依機台明細搜尋」，expected：「A 列場次數仍為 3（不含進行中）」，assumptions 為空。REQ-009 ambiguity.level=major。
+    explanation: 「仍為 3」依賴前案 3 場已結束場次的狀態；若進行中場次在查詢前跨越日結時間變為「日結結算」，或 3 場中含逾時結束，結果取決於 REQ-009 歧義，本案無 assumptions。
+    recommended_change: 限定 3 場皆為「已結束」狀態、查詢時點在日結時間之前；或補 assumption。
+  - testcase_id: TC-DRAFT-01M2D77XNGWKH87SW9GRQFAN90
+    issue_type: critical_ambiguity
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-015
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+    evidence: Draft steps：「查詢當下未兌現累計 500（含週期外收據）→ 分別以按日與按週搜尋」，expected：「兩者未兌現金額皆為 500」，assumptions 為空。REQ-015 ambiguity.level=major：「『未兌現金額不受週期影響』與『結算日期』篩選的關係未明：是否也不受結算日期範圍限制？」
+    explanation: 「週期外收據」未說明是落在統計週期外但仍在結算日期範圍內，還是落在結算日期範圍外。若為後者，選項 2（受結算日期限制）下結果不會是 500；expected 因此取決於 REQ-015 的 major 歧義，卻沒有
+      assumptions。
+    recommended_change: 把測試資料限定為「週期外但仍在結算日期範圍內」的收據，使案例只驗證統計週期不影響；結算日期範圍外的情形已由 TC-DRAFT-01M2D77XNGA6SCBXK6GRY207M2 以假設處理。
+  - testcase_id: TC-DRAFT-01M2D77XNFRM5DADGW6YGXVYTJ
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+    evidence: 'Draft acceptance_criteria_ids: [AC-DAILYREPORT-0042]，title：「結算日期起日等於迄日（單日查詢）」。AC-0042：「輸入跨越一年以上的日期區間並搜尋 → 系統接受並回傳資料，不因區間長度拒絕」。'
+    explanation: 單日查詢驗證的是最小區間邊界，與 AC-0042 的「不設區間上限」語義無關；coverage.yaml 因此把 AC-0042 列為兩條覆蓋，實際只有 TC-DRAFT-01M2D77XNF3WCE7YDHH8JDM04P
+      對應。
+    recommended_change: acceptance_criteria_ids 留空並在 design_rationale 註明為 REQ-004 的邊界補充案例，或請 Spec Analyst 為 REQ-004 補「最小區間」AC。
+  - testcase_id: TC-DRAFT-01M2D77XNF8GXH8J7QMG09YTMC
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+    evidence: 'Draft title：「按月彙總每月一列」，acceptance_criteria_ids: [AC-DAILYREPORT-0053]。AC-0053：「統計週期選『區間合計』→ 只有一列，各欄為區間內所有營業日合計」。'
+    explanation: 按月與區間合計是不同的週期值；此案內容不驗證 AC-0053。coverage.yaml 把 AC-0053 列為兩條覆蓋，實際只有 TC-DRAFT-01M2D77XNFB8RVZCM2H66XDTMS 對應。
+    recommended_change: acceptance_criteria_ids 留空並註明為 REQ-005「按月」補充案例，或請 Spec Analyst 補按月 AC。
+  - testcase_id: TC-DRAFT-01M2D77XNF6Q4M8DWN7XPP9B06
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+    evidence: 'Draft title：「結算日期起日晚於迄日」，acceptance_criteria_ids: [AC-DAILYREPORT-0041]。AC-0041：「未填結算日期即搜尋 → 系統不執行查詢（必填）」。'
+    explanation: 起日晚於迄日與「未填」是不同情境；掛在 AC-0041 下會讓 coverage 誤以為 AC-0041 有兩條案例。
+    recommended_change: acceptance_criteria_ids 留空（探索性案例對應 REQ-004 rejection_contract 中「起日晚於迄日」未定義項），不要借用語義不同的 AC。
+  - testcase_id: TC-DRAFT-01M2D77XNFVB1A9VXPEPQRGV8D
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-007
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/日結時間
+    evidence: 'Draft title：「場館未設定日結時間時的分日行為」，acceptance_criteria_ids: [AC-DAILYREPORT-0071]。AC-0071：「場館日結時間設為 06:00 UTC+0，交易發生在
+      05:59 → 計入營業日 09-04」。'
+    explanation: 本案前提是「未設定日結時間」，AC-0071 的前提是「日結時間設為 06:00」，兩者互斥；此案對應的是 REQ-007 rejection_contract 未定義項，而非 AC-0071。
+    recommended_change: acceptance_criteria_ids 留空並註明對應 REQ-007 rejection_contract（未設定日結時間時的預設值未定義）。
+  - testcase_id: TC-DRAFT-01M2D77XNFNKA1FGWE703WDW68
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+    evidence: 'Draft steps[1].action：「同上資料」；test_data: []。'
+    explanation: 「同上」指向另一條案例的資料，本案無法獨立執行；test_data 亦為空，執行者無從得知需準備幾場、何種結束狀態。
+    recommended_change: 把資料條件寫入本案 steps 或 test_data：「機台 A 當日 3 場已結束、機台 B 當日 2 場已結束」。
+  - testcase_id: TC-DRAFT-01M2D77XNFJSF5HX4MVV2S40M7
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+    evidence: 'Draft steps[1].action：「機台 A 另有 1 場進行中」；expected：「A 列場次數仍為 3（不含進行中）」；test_data: []。'
+    explanation: 「另有」「仍為 3」都依賴前一案例已建立的 3 場資料，本案沒有自己的資料前提，無法獨立執行。
+    recommended_change: steps/test_data 補「機台 A 當日 3 場已結束 + 1 場進行中」，expected 寫「場次數 3」。
+  - testcase_id: TC-DRAFT-01M2D77XNGA4V3RMZFFWZM043N
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+    evidence: Draft expected_result：「場次數依 PM 決定的口徑計算，且與逐場次明細的列數一致」；assumptions[0]：「本案假設含所有非進行中狀態」。
+    explanation: expected 未依已宣告的假設給出具體值（應為 2），「依 PM 決定的口徑」無法判定 pass/fail；且「與逐場次明細的列數一致」也不成立——依場次明細會列出進行中場次，而場次數不含進行中。
+    recommended_change: expected 改為「場次數 2（逾時結束 1 + 日結結算 1，依假設含所有非進行中狀態）」；刪除與逐場次明細列數比對的敘述，或改為「等於逐場次明細中非進行中的列數」。
+  - testcase_id: TC-DRAFT-01M2D77XNGA6SCBXK6GRY207M2
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-015
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+    evidence: Draft expected_result：「未兌現金額依 PM 決定的口徑顯示」；assumptions[0]：「本案假設不受限制（含 200）」。
+    explanation: assumption 已宣告口徑（含 200），expected 卻寫「依 PM 決定」，無可判定的檢查點。
+    recommended_change: expected 改為「未兌現金額包含該 200（依假設：不受結算日期範圍限制）」。
+  advisories:
+  - testcase_id: '*'
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+    evidence: 共用前置條件 &id001／&id002 皆未指定結算日期；多數案例（如 TC-DRAFT-01M2D77XNFK1A1NN3K4MCXY8R0、…NFR62GP48FMMFFPRBT、…NFB8RVZCM2H66XDTMS）的
+      steps 也未填結算日期。Spec：「結算日期 | 日期範圍 | 必填」。
+    explanation: 結算日期為必填，未填則不執行查詢；執行者需自行補值。另 …NFK1A1NN3K4MCXY8R0 的 expected「A、B 各一列」只在單一營業日查詢時成立。
+    recommended_change: 在共用前置條件加入「結算日期預設為單一營業日 2026-09-05（起迄相同）」，需要多日的案例再於 steps 覆寫。
+  - testcase_id: TC-DRAFT-01M2D77XNFMHZRDYY7RXQ8ETGX
+    issue_type: requirement_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-006
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號、場次數
+    evidence: 'Draft requirement_ids: [REQ-DAILYREPORT-006]，acceptance_criteria_ids: [AC-0061, AC-0063]；expected 驗證的是「場次編號」與「場次數」欄位互斥，spec_reference
+      亦指向 §列表欄位。'
+    explanation: AC-0061/0063 講的是列數，欄位顯示規則屬 REQ-008（AC-0082）與 REQ-009；追溯關係不完整，但不影響 expected 正確性。
+    recommended_change: requirement_ids 補 REQ-DAILYREPORT-008、-009，acceptance_criteria_ids 補 AC-DAILYREPORT-0082。
+  - testcase_id: TC-DRAFT-01M2D77XNG2NS670S4XJJAC7VW
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-011
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/未兌現金額
+    evidence: Draft steps：「當日收據 200，其中 150 已核銷」→ expected「未兌現 50」。Spec：「未兌現金額 | 截至查詢當下仍為待核實的收據金額合計」。
+    explanation: 未兌現是截至查詢當下的累計，若測試環境存在其他日期的未兌現收據，結果不會是 50；前置條件未排除。
+    recommended_change: 前置條件補「該機台／場館無其他未兌現收據」。
+  - testcase_id: TC-DRAFT-01M2D77XNGYF6W7RWHP3M0AS8Z
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊
+    evidence: 'Draft expected_result_spec_reference.location：「§場次資訊/場次狀態」，acceptance_criteria_ids: [AC-0171]；expected：「系統不得將已結束場次改回進行中；新交易應開新場次」。Spec
+      §場次資訊/場次狀態只列出四個狀態值。'
+    explanation: 引用段落不直接支持「不可逆」與「新交易開新場次」；後者的依據是 §背景 的場次定義「從機台有分數開始玩起算…算一個場次」，前者來自 requirements.yaml REQ-017 states（allowed:false）。AC-0171
+      亦與本案（日結承接）無關。
+    recommended_change: location 改為「§背景：場次資訊（場次定義）+ REQ-017 states」；acceptance_criteria_ids 留空。
+  - testcase_id: TC-DRAFT-01M2D77XNG7S9NGBKW7QMC80RD
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/收據金額
+    evidence: Draft steps[1].action：「使用標記為無印表機的機台出金 200」；preconditions 未說明如何標記。
+    explanation: 「無印表機」的機台設定不在本包定義（屬開發包③過渡期規則），執行者需要知道在哪裡設定。
+    recommended_change: 前置條件補「機台 A 於機台設定中標記為無印表機（設定位置見開發包③）」。
+  coverage_summary:
+    requirements_total: 17
+    requirements_covered: 17
+    ac_total: 43
+    ac_covered: 43
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2D77XNFPNW7S5V0CDYDVVAQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF94DGECN9WPPS7VAR
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNF81SM0N2GH98DB54M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF9R478T8FAZWJ663R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFBDW67J9GT3KAA1X0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFK1A1NN3K4MCXY8R0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFVKCYR7F9QNESZ21N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF9B7VG4851BJFF2C9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF6CJ4H76F73W9Q5YQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFRM5DADGW6YGXVYTJ
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNF3WCE7YDHH8JDM04P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF6Q4M8DWN7XPP9B06
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNFD66YH3TPMSMSPDFR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFR9CWCETFNK7DAC81
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNF8GXH8J7QMG09YTMC
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNFB8RVZCM2H66XDTMS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFR62GP48FMMFFPRBT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF9AT15NN2QW7HJ3J7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFD24ZMQ7TSP91AT8N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFMHZRDYY7RXQ8ETGX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFYT80K96WEN5MYW07
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNF7HW2DD0AHR4NT8C0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFQME6QFCK7YNWCMS8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFVB1A9VXPEPQRGV8D
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNFRE2CVDC77A1KHA3E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFTS45N3HV0BB03P70
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFY51NC4KWHPT5ENFA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNFE6HYNSFWV69AJ6S9
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNFNKA1FGWE703WDW68
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNFJSF5HX4MVV2S40M7
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNGA4V3RMZFFWZM043N
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNGTM9KBSSSWSWM3AYD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG7S9NGBKW7QMC80RD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG44GNEJN18R3GWJQ9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG2SBY2FF0RDRNN0HC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG2NS670S4XJJAC7VW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGS5W8EVYWS0CM0AVK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGV6JFBYF4BMD9522D
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGRFMGV5XCTDDD226E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGATB695VXECE54MDB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGGB38W742FZ17ZMCF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGH1ZKKHZPNYT2CX7K
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG1CZMSE9F94VYYVY5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGZMFEHE112BANCRN0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGWKH87SW9GRQFAN90
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNGA6SCBXK6GRY207M2
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2D77XNGHYZ8D4PFFZKN19FQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGM64KDFWNMBJ4YJK9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGRFRY8YSTX5ZF07WP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGV78KNWXMGT5Y8FRR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNG1WGDXYSWB6PK1RH2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGQD1BPYAFVESF2YVM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2D77XNGYF6W7RWHP3M0AS8Z
+    verdict: ok
+history:
+- at: '2026-09-13T14:09:17Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-001

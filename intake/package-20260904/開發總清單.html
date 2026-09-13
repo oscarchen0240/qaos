@@ -1,0 +1,272 @@
+<title>實體機台開發總清單</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#FAF8F4; --surface:#FFFFFF; --surface2:#F3EFE7;
+  --ink:#241F17; --muted:#6E6759; --line:#E4DECF; --line-strong:#CFC7B2;
+  --accent:#996A15; --accent-strong:#7A5410; --accent-soft:#F5EBD6;
+  --ok:#3D7A48; --warn:#A3512B; --warn-soft:#F7E9E0;
+  --chip-ink:#4A4436; --chip-bg:#EDE8DC;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191712; --surface:#211E17; --surface2:#28241B;
+    --ink:#EDE7DA; --muted:#A69C87; --line:#3A3427; --line-strong:#4C4433;
+    --accent:#E0AF52; --accent-strong:#EDC26E; --accent-soft:#31290F;
+    --ok:#7CB98A; --warn:#E08A5E; --warn-soft:#332218;
+    --chip-ink:#D8CFBB; --chip-bg:#2E2A20;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191712; --surface:#211E17; --surface2:#28241B;
+  --ink:#EDE7DA; --muted:#A69C87; --line:#3A3427; --line-strong:#4C4433;
+  --accent:#E0AF52; --accent-strong:#EDC26E; --accent-soft:#31290F;
+  --ok:#7CB98A; --warn:#E08A5E; --warn-soft:#332218;
+  --chip-ink:#D8CFBB; --chip-bg:#2E2A20;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  font-size:15px;line-height:1.75;}
+main{max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.86em;}
+code{background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap;}
+a{color:var(--accent);}
+
+/* header */
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--accent);font-weight:700;margin-bottom:10px;}
+h1{font-size:34px;font-weight:900;line-height:1.25;margin:0 0 10px;text-wrap:balance;}
+.lede{color:var(--muted);max-width:62ch;margin:0;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--muted);}
+.meta b{color:var(--ink);font-weight:500;}
+
+/* principles */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:34px 0 6px;}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.rule h3{margin:0 0 4px;font-size:14px;font-weight:700;}
+.rule h3 span{color:var(--accent);margin-right:6px;}
+.rule p{margin:0;font-size:13px;color:var(--muted);}
+
+/* dependency strip */
+.dep{background:var(--accent-soft);border:1px solid var(--line-strong);border-radius:10px;
+  padding:14px 18px;margin:26px 0 40px;font-size:14px;overflow-x:auto;}
+.dep .flow{white-space:nowrap;font-weight:500;}
+.dep .flow b{color:var(--accent-strong);}
+.dep .arrow{color:var(--muted);padding:0 8px;}
+.dep p{margin:6px 0 0;font-size:13px;color:var(--muted);}
+
+/* package sections */
+h2.pkg{display:flex;align-items:baseline;gap:12px;font-size:21px;font-weight:900;
+  margin:44px 0 4px;padding-top:26px;border-top:2px solid var(--line-strong);}
+.pkg-no{flex:none;font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;
+  color:var(--accent);border:1.5px solid var(--accent);border-radius:6px;padding:1px 9px;letter-spacing:.06em;}
+.files{font-size:13px;color:var(--muted);margin:2px 0 14px;}
+.files code{margin-right:4px;}
+.assign{display:inline-block;font-size:12px;color:var(--chip-ink);background:var(--chip-bg);
+  border-radius:999px;padding:1px 10px;margin-left:4px;}
+
+ul.tasks{list-style:none;margin:0 0 8px;padding:0;}
+ul.tasks li{position:relative;padding:7px 0 7px 30px;border-bottom:1px dashed var(--line);}
+ul.tasks li:last-child{border-bottom:none;}
+ul.tasks li::before{content:"";position:absolute;left:2px;top:14px;width:13px;height:13px;
+  border:1.5px solid var(--line-strong);border-radius:3px;background:var(--surface);}
+ul.tasks li b{font-weight:700;}
+.sub{color:var(--muted);font-size:13.5px;}
+.dep-note{font-size:13px;color:var(--muted);margin:10px 0 0;}
+.dep-note b{color:var(--ink);font-weight:500;}
+
+/* callouts */
+.note{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:10px 16px;font-size:13.5px;color:var(--muted);margin:14px 0 0;}
+.note b{color:var(--ink);font-weight:700;}
+.warnbox{background:var(--warn-soft);border:1px solid var(--line);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:10px 16px;font-size:13.5px;margin:14px 0 0;}
+.warnbox b{color:var(--warn);}
+
+/* decided table */
+h2.plain{font-size:21px;font-weight:900;margin:52px 0 12px;padding-top:26px;border-top:2px solid var(--line-strong);}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+table{border-collapse:collapse;width:100%;font-size:13.5px;}
+th{background:var(--surface2);text-align:left;font-weight:700;padding:9px 14px;border-bottom:1px solid var(--line-strong);white-space:nowrap;}
+td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td:first-child{white-space:nowrap;font-weight:500;}
+
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);}
+@media (max-width:560px){ h1{font-size:27px;} main{padding:32px 16px 60px;} }
+</style>
+
+<main>
+<div class="eyebrow">bl'ac 後台 × 實體遊藝場</div>
+<h1>實體機台開發總清單</h1>
+<p class="lede">七個開發包可同步開工，只需閱讀自己的 spec 檔；規格正本為 <code>實體機台_spec_v07.md</code>，各包重疊部分一律以正本為準。本份為 <b>2026-09-04 快照</b>，取代 2026-08-21 版。</p>
+<div class="meta">
+  <span>基準日 <b>2026-09-04</b></span>
+  <span>正本 <b class="mono">實體機台_spec_v07.md</b></span>
+  <span>廠商確認事項 <b>全數結案</b></span>
+  <span>對客戶 <b>未發佈</b>（全數 INTERNAL）</span>
+</div>
+
+<div class="warnbox" style="margin-top:26px;"><b>已拿到 2026-08-21 版的人請先看這裡：</b>新增 <b>包⑦（機台功能更新）</b>——上一版發出之後才定案的規格集中在該包。另有兩份檔案換版：正本 <code>實體機台_spec_v05.md</code> → <code>v07</code>、<code>站台列表_spec_v03.md</code> → <code>v04</code>（proto 同步 v04）。其餘五包的 spec 檔名未變，但內容已隨定案修訂，請一律以本份為準。</div>
+
+<h2 class="plain" style="margin-top:44px;">本次更新（相對 2026-08-21 版）</h2>
+<div class="tbl-wrap"><table>
+<tr><th>異動</th><th>落在哪一包</th></tr>
+<tr><td>洗分門檻改以機台端為準、後台不設門檻</td><td>⑦（欄位移除在②）、③④⑤⑥ 連動</td></tr>
+<tr><td>出金定案為清空餘額、不套門檻、無餘數</td><td>③⑦</td></tr>
+<tr><td>機台憑證格式定案為 JWT</td><td>⑦（原規格在①③）</td></tr>
+<tr><td>共用頁面的場次編號欄位，線上帳號顯示「—」</td><td>⑦（原規格在④）</td></tr>
+<tr><td>洗分／出金餘額不足不寫入交易紀錄</td><td>⑦（原規格在③④）</td></tr>
+<tr><td>日結報表「場次數」定義（機台明細／場館彙總）</td><td>⑦（原規格在⑤）</td></tr>
+<tr><td>入金額度上限的<b>判定與預留移至 <code>req-cashin</code></b>、場館鎖序列化</td><td>⑦（原規格在③）</td></tr>
+<tr><td>機台憑證<b>不設有效期限</b></td><td>⑦（原規格在①③）</td></tr>
+<tr><td>主站台<b>核心貨幣建立後不可修改</b></td><td>②</td></tr>
+<tr><td>有效投注額與損益以主站台核心貨幣計算</td><td>⑦（原規格在③⑤）</td></tr>
+<tr><td>存款／提款累計欄位定案（僅計系統入出金）</td><td>⑦（原規格在①⑤與會員列表章）</td></tr>
+<tr><td>多幣別錢包展開顯示（會員列表／側邊面板／詳細頁）</td><td>⑦（原規格在會員列表章 2.1.6）</td></tr>
+<tr><td>過渡期：機台暫無印表機，出金以結算結果畫面代收據</td><td>③④⑤（正本與各包已修訂）</td></tr>
+<tr><td>機台名稱＝會員暱稱（同一欄位）</td><td>①</td></tr>
+</table></div>
+
+<div class="rules">
+  <div class="rule"><h3><span>壹</span>Schema 先行</h3><p>開發包③的交易與場次資料模型是 ④⑤ 的地基，第一週先定案 schema（交易狀態、核實狀態、場次 ID、來源機台），其餘可平行開工。</p></div>
+  <div class="rule"><h3><span>貳</span>排除做成政策層</h3><p>機台帳號對既有功能的排除，一律呼叫集中且可逐項解除的政策層（開發包⑥），不得在各功能內硬編碼帳號類型判斷——排除是現階段決策，未來會逐項恢復。</p></div>
+  <div class="rule"><h3><span>參</span>場館範圍跟隨站台切換</h3><p>後台各頁皆有頁面標題下方的站台切換下拉，一次僅顯示所選站台的資料。任何頁面都不另設「場館」篩選欄位，列表也不重複顯示場館名稱。</p></div>
+  <div class="rule"><h3><span>肆</span>幣別與門檻都不要寫死</h3><p>幣別依主站台核心貨幣（線上 USDT、機台 TWD），清單須可擴充；洗分門檻一律採機台隨請求送上的 <code>throshold</code>，後台不設門檻欄位。兩者都不得硬編碼。</p></div>
+</div>
+
+<div class="dep">
+  <div class="flow"><b>② 站台列表</b><span class="arrow">→</span><b>① 帳號與機台管理</b>、<b>③ 金流與場次</b><span class="arrow">→</span><b>④ 交易紀錄</b>、<b>⑤ 核實＋日結</b><span class="arrow">｜</span><b>⑥ 平台規則</b>、<b>⑦ 機台功能更新</b> 可立即開工</div>
+  <p>②量小、擋住所有人，最先合入。④⑤ 實際只等 ③ 的 schema 定案，不必等 ③ 完工。⑦ 的七節分別掛在①②③④⑤，領到①的人可直接接手⑦的一～三節。與機台廠商的聯調環境（測試機台／模擬器）請儘早申請——這是最大的外部時程風險。</p>
+</div>
+
+<h2 class="pkg"><span class="pkg-no">包 ②</span>站台列表擴充<span class="assign">前置相依・最先做</span></h2>
+<p class="files">spec <code>站台列表_spec_v04.md</code>　proto <code>proto/站台列表_proto_v04.html</code></p>
+<ul class="tasks">
+  <li><b>站台類型欄位</b>：線上／機台二擇一，建立後不可修改。<span class="sub">於主站台（根層）選定，子站台一律與主站台同類型——機台主站台＝實體遊藝場經營者，可自行直接經營（自身即場館）；凡機台類型站台皆帶機台專屬欄位，每份設定作用範圍為該站台自身、不含子站台</span></li>
+  <li><b>機台專屬欄位</b>：場館地址、聯絡人／電話、額度上限（全場館機台共用總額度，0＝不限）、場次逾時時間（預設 1 小時）、日結時間（UTC+0）。<span class="sub">⚠️ v04 起<b>移除「洗分／出金最低門檻」欄位</b>——門檻改於機台端設定。場館幣別＝繼承主站台核心貨幣的唯讀值，新增／編輯視窗不另設欄位</span></li>
+  <li><b>主站台「核心貨幣」欄位</b>：下拉選單，選項依站台類型過濾——目前線上僅 USDT、機台僅 TWD（各一種、等同自動帶入）。<span class="sub">實作不得寫死幣別：清單須可擴充。子站台一律繼承；站台通用設定，非機台專屬。<b>主站台建立後不可修改</b>——比照站台類型永久鎖定，編輯視窗唯讀</span></li>
+</ul>
+
+<h2 class="pkg"><span class="pkg-no">包 ①</span>帳號與機台管理<span class="assign">會員模組</span></h2>
+<p class="files">spec <code>創建會員帳號_spec_v01.md</code>　proto <code>proto/創建會員帳號_proto_v01.html</code></p>
+<ul class="tasks">
+  <li><b>會員列表「創建會員帳號」按鈕＋Modal</b>：帳號類型（線上／機台）預設依站台類型帶入、「機台」僅機台場館可選；選機台一併建立機台資料；帳號建立於目前所在子站台，不設所屬場館欄位。<span class="sub">機台名稱即會員暱稱（同一欄位，不另設）</span></li>
+  <li><b>帳密系統自動生成</b>（不論帳號類型），建立成功一次性完整顯示＋複製；可用於前台登入</li>
+  <li><b>會員列表同步修訂</b>：篩選器新增「帳號類型」；機台帳號照常列出、總筆數依篩選結果。<span class="sub">存款／提款四欄與多幣別餘額展開見<b>包⑦</b>一、二節</span></li>
+  <li><b>會員詳細頁「機台資訊」區塊</b>：檢視／編輯／停用啟用；不提供刪除（報廢一律停用）；「進行中場次」在包③上線前恆顯示「—」</li>
+  <li><b>機台憑證</b>：產生／重置，一次性顯示；一台機台同時僅一組有效憑證，重置舊憑證立即失效。<span class="sub">格式定案為 <b>JWT</b>、<b>不設有效期限</b>，重置即失效須由平台端比對現行憑證識別保證——見<b>包⑦</b>第三節</span></li>
+  <li><b>重設密碼</b>（所有會員帳號）：新密碼連同登入帳號僅重設當下顯示一次，舊密碼立即失效</li>
+  <li><b>前台修訂</b>：註冊強制綁定電子信箱；忘記密碼寄送 1 小時時效重設連結（機台帳號不適用，走後台重設）</li>
+  <li><b>帳號存在即觸發的排除</b>：詳細頁 KYC／等級／優惠／邀請鏈區塊隱藏、不可成為加盟商、等級固定最低、KYC 不可申請——一律經由包⑥政策層</li>
+</ul>
+<p class="dep-note">相依：<b>包②</b>的站台類型與核心貨幣（幣別建立時取自主站台、之後不可改，順序錯了無法事後修正）。領到本包的人請一併接<b>包⑦</b>的一～三節。</p>
+
+<h2 class="pkg"><span class="pkg-no">包 ③</span>機台金流與場次<span class="assign">純後端・最難・schema 地基</span></h2>
+<p class="files">spec <code>機台金流與場次_spec_v01.md</code>（無 proto；機台端畫面由廠商實作）</p>
+<ul class="tasks">
+  <li><b>四支對接 API</b>：開分 <code>req-keyin</code>、洗分 <code>req-keyout</code>（單階段）；入金 <code>req-cashin → end-cashin</code>、出金 <code>req-cashout → end-cashout</code>（兩階段，憑交易編號冪等）。<span class="sub">憑證以 <code>Authorization: Bearer &lt;JWT&gt;</code> 附帶</span></li>
+  <li><b>PENDING 收斂</b>：入金 24 小時自動轉「已逾時」（逾時後再收 end-cashin 回 <code>1-NO RECORD</code>）；出金不設逾時——保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消</li>
+  <li><b>金額計算</b>：<b>門檻一律採洗分請求隨附的 <code>throshold</code></b>（後台不設門檻）、<code>throshold=0</code>＝洗出全部餘額、核可金額無條件捨去、餘數留在帳號不清除；<b>出金一律清空餘額、不套門檻</b>；幣別與核心貨幣不符即拒絕</li>
+  <li><b>額度上限</b>：<b>判定與預留都在 <code>req-cashin</code></b>，於<b>場館鎖</b>內逐筆序列化，基準含<b>已預留未入帳的入金金額</b>；<code>end-cashin</code> 不再判定額度。超限回 <code>1-OVER LIMIT</code>、不建 PENDING、機台直接退鈔（<b>不涉及退現</b>）。預留於入帳轉正、PENDING 逾時（24 小時）排程關閉、Admin／站長手動取消三種情況釋放——<b>預留與釋放必須成對</b>（見包⑦第七節）</li>
+  <li><b>餘額不足不寫入交易紀錄</b>：洗分可洗金額為 0 或出金餘額為 0，僅回 <code>1-NO CREDITS</code>，不留紀錄（見包⑦第五節）</li>
+  <li><b>稽核</b>：開分／入金依 TWD 稽核倍數寫入稽核明細，預設 0 倍（倍數&gt;0 時洗分／出金核可金額先扣未完成稽核）</li>
+  <li><b>場次引擎</b>：開分／入金使分數 0→正即開場；任一筆洗分／出金完成當下即結束當場（餘數立即開新場承接）；歸零結束、逾時結束、日結強制結束（餘額轉隔日期初）；同機台僅一進行中場次。<span class="sub">有效投注額與損益以主站台核心貨幣計算</span></li>
+  <li><b>前台顯示隔離</b>：機台前台注單與遊戲紀錄僅顯示當前進行中場次</li>
+  <li><b>單階段防重複＝不做</b>：開分／洗分每筆一律當新交易（廠商定案：無 TX 欄位、不自動重送），以現場 SOP 因應——不要自作主張加冪等機制</li>
+</ul>
+<p class="dep-note">相依：<b>包②</b>場館設定值、<b>包①</b>機台憑證。<b>第一週先定案交易與場次 schema</b> 並知會 ④⑤。</p>
+<div class="warnbox"><b>風險提示：</b>開分無任何自然防護（重按幾次加幾次，僅受額度上限限制），為最高風險項；務必確保每筆交易在後台可查、可辨識，支撐現場「先查後台再重做」的 SOP。</div>
+
+<h2 class="pkg"><span class="pkg-no">包 ④</span>機台交易紀錄<span class="assign">後台頁面</span></h2>
+<p class="files">spec <code>機台交易紀錄_spec_v01.md</code>　proto <code>proto/機台交易紀錄_proto_v01.html</code></p>
+<ul class="tasks">
+  <li><b>4.1 交易紀錄查詢擴充機台視角</b>：查詢範圍含機台交易時，另外顯示待確認／已取消／已逾時／未成立</li>
+  <li><b>篩選器新增</b>：機台帳號、場次編號、訂單編號、交易狀態、核實狀態；交易類型加「機台開分／洗分／入金／出金」四項（不設場館欄位）</li>
+  <li><b>列表欄位</b>：來源機台＝機台帳號（可點擊進會員詳細頁；非機台交易顯示「—」；不顯示場館名稱）、核實狀態唯讀、重送次數。<span class="sub"><b>場次編號欄位在線上帳號的交易一律顯示「—」</b>（包⑦第五節）</span></li>
+  <li><b>「未成立」不含餘額不足</b>：未成立原因對照表移除餘額不足一列（包⑦第五節）</li>
+  <li><b>明細右側面板</b>：上半站務摘要、下半技術欄位（往來紀錄）</li>
+  <li><b>Admin 手動取消</b>：僅「待確認」可取消、二次確認、分數不異動；供機台故障卡單清理（含 Operator Reset 後永久卡單的情境）。<span class="sub">過渡期機台無印表機，「收據是否印出」改確認前台是否已顯示結算結果畫面</span></li>
+  <li><b>連動小項</b>：4.2 注單列表加「場次編號」欄（非機台顯示「—」）；4.4 稽核明細類型篩選加「機台開分」「機台入金」</li>
+</ul>
+<p class="dep-note">相依：<b>包③</b>的交易 schema（定案即可開工，不必等③完工）。核實操作不在本頁——一律於包⑤的洗分出金核實頁執行。</p>
+
+<h2 class="pkg"><span class="pkg-no">包 ⑤</span>洗分出金核實＋場館日結報表<span class="assign">後台頁面</span></h2>
+<p class="files">spec <code>洗分出金核實_spec_v01.md</code>、<code>場館日結報表_spec_v01.md</code>　proto <code>proto/洗分出金核實_proto_v01.html</code>、<code>proto/場館日結報表_proto_v01.html</code></p>
+<ul class="tasks">
+  <li><b>洗分出金核實頁</b>（帳務管理新增）：洗分核實與出金收據核銷的單一入口；「已完成」交易自動產生待核實紀錄</li>
+  <li><b>核實回寫會員列表累計欄位</b>：機台洗分／出金於<b>核實當下</b>累計會員的提款次數／金額，待核實不計、已作廢永不計（包⑦第二節）</li>
+  <li><b>收據核銷流程</b>：櫃檯人工輸入訂單編號（人工短碼，不用條碼／掃碼）→ 帶出該筆 → 核對金額 → 付現 → 核銷；重複核銷阻擋並提示、已作廢提示勿付現；收據永久有效、不自動作廢</li>
+  <li><b>作廢</b>：僅出金、限 Admin／站長、必填原因、二次確認</li>
+  <li><b>不可撤銷＋稽核軌跡</b>：核實與作廢確認後無法回復，寫入 7.4 操作紀錄（操作人、時間、對象交易）</li>
+  <li><b>場館日結報表頁</b>（各式報表新增）：依場館日結時間切分營業日；統計週期按日／週／月／自訂區間；三維度（場館彙總／機台明細／場次明細）可鑽取</li>
+  <li><b>報表欄位</b>：開分、進鈔、洗分（已核實／待核實）、收據（已兌現／未兌現＝待付負債）、投注與損益、期末餘額、現金淨收（僅計已核實洗分，為推算值）。<span class="sub"><b>場次數</b>：依機台明細＝該機台當日場次數；依場館彙總＝所有機台帳號當日場次數<b>加總</b>。有效投注額與損益以<b>核心貨幣</b>計算（包⑦第六節）</span></li>
+  <li><b>CSV 匯出</b></li>
+</ul>
+<p class="dep-note">相依：<b>包③</b>的交易與場次 schema。核實狀態由核實頁回寫，包④的列表僅唯讀顯示。</p>
+
+<h2 class="pkg"><span class="pkg-no">包 ⑥</span>機台場館平台規則<span class="assign">跨頁政策層・可立即開工</span></h2>
+<p class="files">spec <code>機台場館平台規則_spec_v01.md</code>（無 proto）</p>
+<ul class="tasks">
+  <li><b>排除規則政策層</b>：集中設定、可逐項解除；機台帳號排除於返水、加盟傭金、代理返傭、會員等級、KYC、優惠活動（含簽到）之外；Free Spin 為既有例外，不得被優惠類排除擋掉</li>
+  <li><b>機台場館選單顯示</b>：站台切換選到機台場館時隱藏不適用頁面（依 spec 顯示／隱藏表）；公告、橫幅、貢獻值、消稽核保留；鏈上錢包管理僅顯示法幣 TWD 頁籤；切回線上站台恢復——顯示規則與排除政策層同一來源</li>
+  <li><b>操作員角色</b>：權限小於站長、限自身場館（7.1.1 角色說明、新增使用者可選操作員＋指定場館）</li>
+  <li><b>出金設定 TWD 頁籤</b>：法幣頁籤＋稽核倍數設定（機台預設 0 倍）</li>
+  <li><b>3.2 出金審核修訂</b>：機台出金不進審核流程；櫃檯對機台帳號人工出金時，系統同時取消該機台未完成的出金（與包③連動）</li>
+  <li><b>遊戲更新預設停用</b>：平台新增／更新遊戲後，機台場館一律預設停用（含原已啟用者），站長於遊戲商管理啟用、操作員不可；不做系統內通知</li>
+  <li><b>Free Spin 修訂</b>：選擇會員允許指定機台帳號；幣種由固定 USDT 改依主站台核心貨幣</li>
+  <li><b>前言名詞對照</b>：新增場館／機台／機台帳號／分數／收據；幣種敘述改依核心貨幣</li>
+</ul>
+
+<h2 class="pkg"><span class="pkg-no">包 ⑦</span>機台功能更新<span class="assign">新增</span></h2>
+<p class="files">spec <code>機台更新包_spec_v01.md</code>　proto <code>proto/機台更新包_proto_v01.html</code>（另附 <code>proto/會員列表_proto_v01.html</code>，多幣別展開已實作）</p>
+<ul class="tasks">
+  <li><b>一、多幣別錢包展開顯示</b>：會員列表／側邊面板／詳細頁的餘額欄，站台啟用一種以上幣別時可展開逐列檢視。<span class="sub">幣別清單來自鏈上錢包管理已啟用幣種；收合值＝核心貨幣錢包餘額（不換算、非加總）；機台場館僅 TWD、不顯示箭頭，但<b>實作不得把單一幣別寫死</b></span></li>
+  <li><b>二、存款／提款累計欄位</b>：四欄<b>僅計系統入出金、不含人工入出金</b>；機台開分／入金於交易完成當下計入存款，機台洗分／出金於<b>核實當下</b>計入提款（待核實不計、已作廢永不計）；金額以核心貨幣原值累計、不換算 USDT</li>
+  <li><b>三、機台憑證（JWT）</b>：一次性顯示須允許換行完整顯示＋複製鈕；<b>重置即失效必須由平台端比對現行憑證識別（jti／版本號）保證，只驗簽章不符合規格</b>；<b>不設有效期限</b></li>
+  <li><b>四、場館設定的洗分門檻</b>：後台不設門檻欄位；平台一律採請求中的 <code>throshold</code>（0＝全洗、規格外值回 <code>6-BAD DATA/FORMAT</code>）；餘數留在機台帳號；出金一律清空餘額</li>
+  <li><b>五、交易紀錄的兩項欄位規則</b>：場次編號欄位線上帳號顯示「—」；餘額不足<b>不寫入交易紀錄</b>，僅回 <code>1-NO CREDITS</code></li>
+  <li><b>六、場館日結報表</b>：場次數的兩種算法；有效投注額與損益以核心貨幣計算</li>
+  <li><b>七、入金額度上限的判定與預留</b>（純後端）：<code>req-cashin</code> 取場館鎖判定並<b>預留</b>金額（基準含已預留未入帳的入金），<code>end-cashin</code> 不再判定；超額在紙鈔進錢箱前就被擋下。預留於入帳／逾時／手動取消時釋放</li>
+</ul>
+<p class="dep-note">本包七節分別掛在①②③④⑤：一～三給領①的人，四給②③，五給③④，六給⑤，七給③。<b>不需另開一組人</b>。</p>
+
+<h2 class="plain">已定案事項（開發時不要重新設計）</h2>
+<div class="tbl-wrap"><table>
+<tr><th>事項</th><th>定案內容</th></tr>
+<tr><td>洗分門檻</td><td>於<b>機台端</b>設定（同場館各機台可不同），平台一律採請求隨附的 <code>throshold</code>；<b>後台不設門檻欄位、前台不顯示門檻</b></td></tr>
+<tr><td>出金金額</td><td>一律<b>清空餘額</b>、不套門檻、無餘數；<code>req-cashout</code> 金額必為機台當前顯示的全部餘額</td></tr>
+<tr><td>餘數保留</td><td>洗分不足一個門檻單位的餘數留在機台帳號、不清除、不另記交易（四種金流，無「洗分餘額」類型）</td></tr>
+<tr><td>餘額不足</td><td><b>不寫入交易紀錄</b>，僅回 <code>1-NO CREDITS</code>；交易狀態「未成立」不含餘額不足</td></tr>
+<tr><td>機台憑證</td><td>格式為 <b>JWT</b>、以 Bearer 附帶；重置即失效由平台端比對現行憑證識別保證（不能只驗簽章）；<b>不設有效期限</b>，僅靠重置使舊憑證失效</td></tr>
+<tr><td>額度上限判定</td><td><b>判定與預留都在 <code>req-cashin</code></b>，場館鎖內逐筆序列化，基準含已預留未入帳金額；<code>end-cashin</code> 不再判定。超限回 <code>1-OVER LIMIT</code>、機台直接退鈔，不涉及退現。預留於入帳／逾時（24 小時）／手動取消時釋放</td></tr>
+<tr><td>核心貨幣</td><td>主站台層級設定、子站台一律繼承；<b>建立後不可修改</b>，比照站台類型永久鎖定、編輯視窗唯讀</td></tr>
+<tr><td>計價幣別</td><td>有效投注額、損益、存提款累計金額一律以<b>主站台核心貨幣</b>原值計算，<b>不換算 USDT</b></td></tr>
+<tr><td>存提款累計</td><td>會員列表四欄<b>僅計系統入出金</b>；機台開分／入金完成即計，機台洗分／出金核實後才計，<b>人工入出金一律不計</b></td></tr>
+<tr><td>單階段防重複</td><td>廠商無法加唯一識別碼（API 已上線）、機台不會自動重送——每筆開分／洗分一律當新交易，現場 SOP（先查後台再重做）為正式因應，<b>不做系統冪等</b></td></tr>
+<tr><td>場次切分</td><td>首要目的是前台注單顯示隔離；任一筆洗分／出金完成當下即結束場次、餘數立即開新場承接；場次不得作為風控／優惠／分潤依據</td></tr>
+<tr><td>場次數</td><td>依機台明細＝該機台當日場次數；依場館彙總＝該場館所有機台帳號當日場次數<b>加總</b></td></tr>
+<tr><td>交易保留</td><td>入金 24 小時逾時；出金不設逾時（收據永久有效，交易不先於收據關閉）</td></tr>
+<tr><td>過渡期收據</td><td>機台暫無印表機——出金由前台自行完成兩階段，<b>結算結果畫面拍照代收據</b></td></tr>
+<tr><td>場館範圍</td><td>跟隨頁面標題下方的站台切換下拉（後台各頁皆有）；不設場館篩選欄位、列表不顯示場館名稱</td></tr>
+<tr><td>排除規則</td><td>現階段營運決策、未來可逐項恢復——實作為集中政策層，禁止散落硬編碼</td></tr>
+<tr><td>機台稽核</td><td>目前不啟用（TWD 稽核倍數預設 0）；「開分招待」為未來活動需求，現行機制無法表達，屆時另案設計，<b>本次不實作</b>（已定案）</td></tr>
+<tr><td>前台註冊</td><td>線上站台維持開放（強制綁信箱）；機台場館前台<b>維持不開放</b>註冊，帳號一律由後台建立（已定案）</td></tr>
+<tr><td>機台識別</td><td>不另設機台編號，一律以機台帳號的會員編號識別；<b>機台名稱＝會員暱稱</b>（同一欄位）；一帳號綁一機台；機台與帳號不可刪除，報廢以停用處理</td></tr>
+<tr><td>時區</td><td>後台所有時間一律 UTC+0 顯示（含日結時間設定值）</td></tr>
+</table></div>
+
+<h2 class="plain">已定案但本次不實作（不要自行加做）</h2>
+<div class="tbl-wrap"><table>
+<tr><th>項目</th><th>定案</th></tr>
+<tr><td>多幣別站台下「人工存入／人工提出」的幣種選擇</td><td><b>維持現狀</b>：幣種欄固定 USDT、無法切換。多幣別站台做人工出入金時幣別與實際不符，屬已知落差</td></tr>
+<tr><td>開分招待（開 N 送 M、綁流水才能洗分）</td><td><b>本次不實作</b>：機台稽核倍數維持預設 0；屆時另案設計新交易類型＋單筆流水鎖定</td></tr>
+<tr><td>機台場館的前台自行註冊</td><td><b>維持不開放</b>：機台帳號一律由後台建立</td></tr>
+</table></div>
+
+<div class="note"><b>發佈範圍提醒：</b>本功能全數 INTERNAL、未對客戶開放——spec 檔首行帶 <code>&lt;!-- INTERNAL --&gt;</code>，客戶版手冊自動排除；proto 僅供開發團隊理解需求，不交付客戶。<code>會員與加盟商_spec_v02.md</code> 為客戶可見章節，附在本包僅供對照 2.1.2／2.1.3／2.1.6 的規格。</div>
+
+<footer>依據：<span class="mono">實體機台_spec_v07.md</span>（正本）與各開發包 spec ・ 機台廠商 API：J型老虎機API文件-入金出金 v1.4 ・ 2026-09-04</footer>
+</main>

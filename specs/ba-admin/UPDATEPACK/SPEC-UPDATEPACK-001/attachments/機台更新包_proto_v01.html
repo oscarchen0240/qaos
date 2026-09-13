@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>機台更新包 — bl'ac 後台</title>
+<style>
+:root{
+  --bg-page:#0d0d0b;   --bg-sidebar:#111110; --bg-card:#181816;
+  --bg-hover:#1e1e1c;  --bg-input:#111110;
+  --bg-panel:#141412;  --bg-active:#232320;
+  --text-primary:#dedad2; --text-secondary:#6b6965; --text-muted:#3d3d3b;
+  --border:#242422;    --border-focus:#3d3d3b;      --border-light:#3d3d3b;
+  --green:#1D9E75;  --green-text:#5DCAA5;  --green-dim:#0F2E23;
+  --blue:#378ADD;   --blue-text:#85B7EB;   --blue-dim:#0C2A4A;
+  --red-text:#F09595;    --red-dim:#3A1818;
+  --yellow-text:#EF9F27; --yellow-dim:#2E2000;
+  --orange-text:#E8894A; --orange-dim:#2E1800;
+  --purple-text:#B09FE8; --purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --sidebar-width:160px; --topbar-height:48px;
+  --radius:6px; --radius-lg:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary);font-size:13px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+button{font-family:inherit;cursor:pointer;}
+
+/* ── 框架 ── */
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;letter-spacing:-0.02em;} .topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;padding:24px 28px 60px;}
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.page-header-right{display:flex;align-items:center;gap:10px;}
+
+/* ── 按鈕 ── */
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{padding:3px 9px;font-size:12px;white-space:nowrap;border-radius:var(--radius);font-family:inherit;cursor:pointer;}
+.btn-sm:not(.btn-primary){background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+
+/* ── 表單 ── */
+.field{margin-bottom:13px;}
+label.field-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
+input[type=text],input[type=number],select,textarea{width:100%;padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;}
+input::placeholder{color:var(--text-muted);}
+input:focus,select:focus,textarea:focus{border-color:var(--border-focus);}
+select option{background:#181816;}
+textarea{resize:vertical;min-height:80px;}
+
+/* ── 更新包版面 ── */
+.up-meta{display:flex;gap:6px;align-items:center;}
+.up-tag{font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap;}
+.tag-date{background:var(--bg-hover);color:var(--text-secondary);border:1px solid var(--border);}
+.tag-pkg{background:var(--blue-dim);color:var(--blue-text);}
+.tag-ui{background:var(--green-dim);color:var(--green-text);}
+.tag-be{background:var(--purple-dim);color:var(--purple-text);}
+.tag-open{background:var(--yellow-dim);color:var(--yellow-text);}
+
+.sec{margin-bottom:22px;}
+.sec-label{font-size:11px;color:var(--text-muted);letter-spacing:0.06em;margin-bottom:9px;text-transform:uppercase;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.diff-col{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+.diff-col.before{border-color:var(--red-dim);}
+.diff-col.after{border-color:var(--green-dim);}
+.diff-head{font-size:11px;letter-spacing:0.04em;margin-bottom:7px;}
+.diff-col.before .diff-head{color:var(--red-text);}
+.diff-col.after .diff-head{color:var(--green-text);}
+.diff-body{font-size:12px;color:var(--text-secondary);line-height:1.75;}
+.diff-body b,.card b{color:var(--text-primary);font-weight:500;}
+.strike{text-decoration:line-through;opacity:0.45;}
+
+.bullets{list-style:none;font-size:12px;color:var(--text-secondary);line-height:1.9;}
+.bullets li{padding-left:14px;position:relative;}
+.bullets li::before{content:'·';position:absolute;left:3px;color:var(--text-muted);}
+.hint{font-size:12px;color:var(--text-secondary);background:var(--bg-panel);border:1px solid var(--border);border-left:2px solid var(--border-light);border-radius:var(--radius);padding:9px 12px;line-height:1.75;}
+.warn-box{font-size:12px;color:var(--yellow-text);background:var(--yellow-dim);border:1px solid var(--yellow-dim);border-radius:var(--radius);padding:9px 12px;line-height:1.75;}
+.warn-box b{color:var(--yellow-text);font-weight:600;}
+
+/* ── 迷你列表 ── */
+.list-wrap{overflow-x:auto;overflow-y:visible;}
+.list-wrap > .list-header,.list-wrap > .list-body{min-width:max-content;}
+.list-header{display:grid;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);}
+.list-header > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;white-space:nowrap;padding-right:12px;}
+.up-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;}
+.up-card:hover{border-color:var(--border-focus);}
+.up-row{display:grid;align-items:center;padding:11px 14px;}
+.up-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.up-row .strong{color:var(--text-primary);}
+.mono{font-variant-numeric:tabular-nums;}
+
+/* 帳號類型標籤 */
+.acct-tag{font-size:11px;padding:2px 8px;border-radius:4px;}
+.acct-slot{background:var(--orange-dim);color:var(--orange-text);}
+.acct-online{background:var(--blue-dim);color:var(--blue-text);}
+
+/* 多幣別錢包（與整站 proto 同一組 class） */
+.wal-cell{display:inline-flex;flex-direction:column;align-items:flex-start;gap:3px;}
+.wal-cell.right{align-items:flex-end;}
+.wal-main{display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+.wal-caret{font-size:9px;color:var(--text-muted);line-height:1;transition:transform .15s;}
+.wal-main:hover .wal-caret{color:var(--text-secondary);}
+.wal-cell.open .wal-caret{transform:rotate(180deg);}
+.wal-detail{display:none;flex-direction:column;gap:2px;padding-top:1px;}
+.wal-cell.open .wal-detail{display:flex;}
+.wal-line{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--text-secondary);}
+.wal-cell.right .wal-line{justify-content:flex-end;}
+.wal-ccy{font-size:10px;color:var(--text-muted);letter-spacing:0.04em;}
+.wal-amt{font-variant-numeric:tabular-nums;}
+
+/* label-value 區塊（詳細頁樣式） */
+.kv{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(36,36,34,.4);}
+.kv:last-child{border-bottom:none;}
+.kv-label{font-size:12px;color:var(--text-muted);padding-right:8px;}
+.kv-val{font-size:12px;color:var(--text-primary);text-align:right;}
+.block-title{font-size:13px;color:var(--text-primary);margin-bottom:8px;}
+
+/* 計數器示意 */
+.counters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.counter{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+.counter-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+.counter-val{font-size:16px;color:var(--text-primary);font-variant-numeric:tabular-nums;}
+.counter.bump{border-color:var(--green);}
+.op-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.log{background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-size:11px;color:var(--text-secondary);line-height:1.9;max-height:150px;overflow-y:auto;}
+.log .ok{color:var(--green-text);} .log .no{color:var(--text-muted);} .log .warn{color:var(--yellow-text);}
+
+/* 流程示意 */
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;}
+.flow-step{flex:1 1 150px;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+.flow-step.hot{border-color:var(--blue);}
+.flow-step-t{font-size:12px;color:var(--text-primary);margin-bottom:4px;}
+.flow-step-d{font-size:11px;color:var(--text-secondary);line-height:1.7;}
+.flow-arrow{display:flex;align-items:center;color:var(--text-muted);font-size:14px;}
+
+/* segmented */
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.seg button{background:transparent;border:none;color:var(--text-secondary);font-size:12px;padding:5px 12px;}
+.seg button.on{background:var(--bg-active);color:var(--text-primary);}
+
+.inline-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;}
+.inline-form .field{margin-bottom:0;width:130px;}
+
+/* 總覽表 */
+.ov-row{display:grid;grid-template-columns:34px minmax(230px,1.4fr) 110px 130px 90px;align-items:center;padding:11px 14px;cursor:pointer;}
+.ov-row > div{font-size:12px;color:var(--text-secondary);padding-right:12px;}
+.ov-head{display:grid;grid-template-columns:34px minmax(230px,1.4fr) 110px 130px 90px;padding:5px 14px 6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+.ov-head > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);width:560px;max-width:92vw;max-height:86vh;display:flex;flex-direction:column;}
+.modal-head{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-primary);display:flex;justify-content:space-between;align-items:center;}
+.modal-head .x{background:transparent;border:none;color:var(--text-secondary);font-size:15px;}
+.modal-body{padding:16px;overflow-y:auto;}
+.modal-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.token-box{background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--text-primary);line-height:1.7;word-break:break-all;white-space:pre-wrap;max-height:180px;overflow-y:auto;}
+
+.toast{position:fixed;right:20px;bottom:20px;background:var(--green-dim);color:var(--green-text);border:1px solid var(--green);border-radius:var(--radius);padding:9px 14px;font-size:12px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:80;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:#2a2a28;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">繁體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <div class="breadcrumb">實體機台 <span>/</span> 機台更新包 <span>/</span> <span id="bc-item" style="opacity:1;margin:0;">總覽</span></div>
+    <div class="page-header">
+      <h1 class="page-title" id="pg-title">總覽</h1>
+      <div class="page-header-right"><div class="up-meta" id="pg-meta"></div></div>
+    </div>
+    <div id="panel"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head"><span id="m-title">標題</span><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-foot" id="m-foot"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Toast ──
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// ── Modal ──
+function openModal(title, body, foot){
+  document.getElementById('m-title').textContent = title;
+  document.getElementById('m-body').innerHTML = body;
+  document.getElementById('m-foot').innerHTML = foot || '<button class="btn-ghost" onclick="closeModal()">關閉</button>';
+  document.getElementById('overlay').classList.add('active');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('active'); }
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+const fmt = n => '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// ── 本包各節 ──
+const ITEMS = [
+  {n:'總覽',                       path:'',                                     pkg:'', kind:''},
+  {n:'一、多幣別錢包展開顯示',        path:'會員與加盟商 / 會員列表',                 pkg:'相依 —',      kind:'ui'},
+  {n:'二、存款／提款累計欄位',        path:'會員與加盟商 / 會員列表',                 pkg:'相依 ③⑤',    kind:'ui'},
+  {n:'三、機台憑證（JWT）',          path:'會員與加盟商 / 會員詳細資料頁',            pkg:'相依 ③',     kind:'ui'},
+  {n:'四、場館設定的洗分門檻',        path:'後台管理員系統 / 站台列表 / 場館設定',      pkg:'相依 ②③',    kind:'ui'},
+  {n:'五、交易紀錄的兩項欄位規則',     path:'各式報表 / 交易紀錄查詢',                 pkg:'相依 ③④',    kind:'ui'},
+  {n:'六、場館日結報表',             path:'各式報表 / 場館日結報表',                 pkg:'相依 ③⑤',    kind:'ui'},
+  {n:'七、入金額度上限的判定與預留',     path:'無後台畫面（機台對接 API 平台側邏輯）',     pkg:'相依 ③',     kind:'be'},
+];
+
+let current = 0;
+
+function renderSidebar(){
+  let h = '<div class="sidebar-group active">機台更新包 <span class="arr" style="opacity:0.7;">∨</span></div>';
+  ITEMS.forEach((it,i)=>{
+    h += `<div class="sidebar-item${i===current?' active':''}" onclick="showItem(${i})" title="${it.n}">${it.n}</div>`;
+  });
+  h += '<div class="sidebar-group" onclick="notHere()">開發包①～⑥ <span class="arr">›</span></div>';
+  h += '<div class="sidebar-group" onclick="notHere()">會員與加盟商 <span class="arr">›</span></div>';
+  document.getElementById('sidebar').innerHTML = h;
+}
+function notHere(){ showToast('本 proto 只涵蓋開發包⑦；其他包的規格請看各包 spec'); }
+
+function showItem(i){
+  current = i;
+  const it = ITEMS[i];
+  document.getElementById('pg-title').textContent = it.n;
+  document.getElementById('bc-item').textContent = it.n;
+  document.getElementById('pg-meta').innerHTML = i === 0 ? '' :
+    `<span class="up-tag tag-date">${it.path}</span>
+     <span class="up-tag tag-pkg">${it.pkg}</span>
+     <span class="up-tag ${it.kind==='be'?'tag-be':'tag-ui'}">${it.kind==='be'?'純後端':'有畫面'}</span>`;
+  document.getElementById('panel').innerHTML = PANELS[i]();
+  if (AFTER[i]) AFTER[i]();
+  renderSidebar();
+  document.querySelector('.main').scrollTop = 0;
+}
+
+// ── 共用片段 ──
+function sec(label, inner){ return `<div class="sec">${label?`<div class="sec-label">${label}</div>`:''}${inner}</div>`; }
+function desc(text){ return sec('功能說明', `<div class="card"><div class="diff-body">${text}</div></div>`); }
+function points(arr){ return `<div class="card"><ul class="bullets">${arr.map(t=>`<li>${t}</li>`).join('')}</ul></div>`; }
+function ruleTable(rows){
+  return `<div class="card"><table style="width:100%;border-collapse:collapse;">${rows.map(r=>
+    `<tr><td style="vertical-align:top;padding:6px 12px 6px 0;font-size:12px;color:var(--text-primary);white-space:nowrap;">${r[0]}</td>
+         <td style="vertical-align:top;padding:6px 0;font-size:12px;color:var(--text-secondary);line-height:1.75;">${r[1]}</td></tr>`).join('')}</table></div>`;
+}
+
+const PANELS = [];
+const AFTER = [];
+
+// ══════════════════════════════════════════
+// 0. 總覽
+// ══════════════════════════════════════════
+const SCOPE = [
+  ['多幣別錢包展開顯示（會員列表／側邊面板／詳細頁）', 1, '在本包'],
+  ['存款／提款累計欄位（機台四種金流的計入時點）',     1, '在本包'],
+  ['機台憑證（JWT）',                              1, '在本包'],
+  ['場館設定的洗分門檻（改於機台端）',                1, '在本包'],
+  ['交易紀錄的場次編號與餘額不足規則',                1, '在本包'],
+  ['場館日結報表的場次數與計價幣別',                  1, '在本包'],
+  ['入金額度上限的判定時點（純後端）',                1, '在本包'],
+  ['四種金流的完整流程、場次規則、對接 API',          0, '開發包③'],
+  ['洗分出金核實的核實與作廢流程',                    0, '開發包⑤'],
+  ['排除規則政策層、操作員角色',                      0, '開發包⑥'],
+];
+
+PANELS[0] = () => {
+  const rows = SCOPE.map(r=>`<div class="up-card"><div class="up-row" style="grid-template-columns:minmax(300px,1fr) 110px;min-width:480px;">
+      <div class="${r[1]?'strong':''}">${r[0]}</div>
+      <div>${r[1] ? '<span class="up-tag tag-ui">✅ 在本包</span>' : `<span class="up-tag tag-date">❌ ${r[2]}</span>`}</div>
+    </div></div>`).join('');
+  const nav = ITEMS.slice(1).map((it,i)=>`<div class="up-card"><div class="ov-row" onclick="showItem(${i+1})">
+      <div class="strong">${i+1}</div>
+      <div class="strong">${it.n.replace(/^[一二三四五六七]、/,'')}</div>
+      <div>${it.path}</div>
+      <div>${it.pkg}</div>
+      <div><span class="up-tag ${it.kind==='be'?'tag-be':'tag-ui'}">${it.kind==='be'?'純後端':'有畫面'}</span></div>
+    </div></div>`).join('');
+  return `
+  ${sec('開發包說明', `<div class="hint">本 proto 對應 <b>開發包⑦（機台功能更新）</b>，自正本 <b>實體機台_spec_v07.md</b> 抽錄；<b>兩檔規格如有出入一律以正本為準</b>。本包收錄的是六個開發包發出之後才定案的規格，交付對象為已拿到<b>開發包①</b>的工程師。</div>`)}
+  ${sec('功能路徑', `<div class="hint"><b>不另設頁面</b>，各節併入既有頁面——會員列表／會員詳細資料頁、站台列表（場館設定）、交易紀錄查詢、場館日結報表；第七節為純後端、無畫面。</div>`)}
+  ${sec('本包範圍', `<div class="list-wrap">
+    <div class="list-header" style="grid-template-columns:minmax(300px,1fr) 110px;min-width:480px;"><span>項目</span><span>是否在本包</span></div>
+    <div class="list-body">${rows}</div></div>`)}
+  ${sec('各節（點列進入）', `<div class="list-wrap">
+    <div class="ov-head"><span>#</span><span>節</span><span>功能路徑</span><span>相依</span><span>型態</span></div>
+    <div class="list-body">${nav}</div></div>`)}
+  ${sec('已定案但本次不實作', points([
+    '多幣別站台下「人工存入 / 人工提出」的<b>幣種選擇</b>——<b>維持現狀</b>，固定 USDT、無法切換',
+    '<b>開分招待</b>（開 N 送 M、綁流水才能洗分）——<b>本次不實作</b>，機台稽核倍數維持預設 0',
+    '機台場館的<b>前台自行註冊</b>——<b>維持不開放</b>，機台帳號一律由後台建立',
+  ]))}`;
+};
+
+// ══════════════════════════════════════════
+// 一、多幣別錢包展開顯示
+// ══════════════════════════════════════════
+let SITE_WALLETS = ['USDT','TWD'];
+const SITE_CORE_CCY = 'USDT';
+const MEM_ROWS = [
+  {id:'OAAE28104', type:'線上', bal:{USDT:130.72, TWD:0}},
+  {id:'OAAE28101', type:'線上', bal:{USDT:55.50,  TWD:1780.00}},
+  {id:'ACAA01793', type:'機台', bal:{USDT:0,      TWD:987.00}},
+];
+
+function walletCell(amounts, cls, align){
+  const core = amounts[SITE_CORE_CCY] || 0;
+  const valCls = cls || '';
+  if (SITE_WALLETS.length <= 1) return `<span class="${valCls}">${fmt(core)}</span>`;
+  const lines = SITE_WALLETS.map(c =>
+    `<span class="wal-line"><span class="wal-ccy">${c}</span><span class="wal-amt">${fmt(amounts[c]||0)}</span></span>`).join('');
+  return `<span class="wal-cell${align==='right'?' right':''}">
+    <span class="wal-main" onclick="toggleWallet(event)"><span class="${valCls}">${fmt(core)}</span><span class="wal-caret">⌄</span></span>
+    <span class="wal-detail">${lines}</span></span>`;
+}
+function toggleWallet(e){ e.stopPropagation(); e.currentTarget.closest('.wal-cell').classList.toggle('open'); }
+function setSiteWallets(multi){ if ((SITE_WALLETS.length > 1) === multi) return; toggleSiteWallets(); }
+function toggleSiteWallets(){
+  SITE_WALLETS = SITE_WALLETS.length > 1 ? ['USDT'] : ['USDT','TWD'];
+  showItem(1);
+  showToast(SITE_WALLETS.length > 1 ? '✓ 已切為多幣別站台（餘額欄可展開）' : '✓ 已切為單一幣別站台（不顯示展開箭頭）');
+}
+
+PANELS[1] = () => {
+  const multi = SITE_WALLETS.length > 1;
+  const cols = 'grid-template-columns:150px 90px 200px;min-width:440px;';
+  const rows = MEM_ROWS.map(m => `<div class="up-card"><div class="up-row" style="${cols}">
+      <div class="strong">${m.id}</div>
+      <div><span class="acct-tag ${m.type==='機台'?'acct-slot':'acct-online'}">${m.type}</span></div>
+      <div class="strong">${walletCell(m.bal)}</div>
+    </div></div>`).join('');
+  return `
+  ${desc('站台可同時開啟多個幣別的錢包。會員的餘額類欄位預設為<b>收合</b>狀態，只顯示該站台<b>核心貨幣</b>錢包的金額；當站台開啟一種以上幣別時，欄位右側顯示展開箭頭，點擊後逐列列出各幣別錢包的金額，再次點擊收合。')}
+  ${sec('適用欄位', ruleTable([
+    ['2.1.3 會員列表', '帳戶餘額（主錢包）'],
+    ['2.1.4 側邊簡易資料面板〈帳戶資訊〉', '帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、可提領餘額'],
+    ['2.1.5 會員詳細資料頁〈帳務資訊〉', '帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、可提領餘額'],
+  ]))}
+  ${sec('畫面示意 — 2.1.3 會員列表', `
+    <div class="inline-form">
+      <div class="seg">
+        <button class="${multi?'on':''}" onclick="setSiteWallets(true)">多幣別站台（USDT／TWD）</button>
+        <button class="${!multi?'on':''}" onclick="setSiteWallets(false)">單一幣別站台（USDT）</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);padding-bottom:6px;">← 切換站台已啟用的幣別數，看展開箭頭出現／消失</div>
+    </div>
+    <div class="list-wrap">
+      <div class="list-header" style="${cols}"><span>會員編號</span><span>帳號類型</span><span>帳戶餘額（主錢包）</span></div>
+      <div class="list-body">${rows}</div>
+    </div>`)}
+  ${sec('畫面示意 — 2.1.5 詳細頁〈帳務資訊〉／2.1.4 側邊面板〈帳戶資訊〉', `
+    <div class="card" style="max-width:420px;">
+      <div class="block-title">帳務資訊</div>
+      <div class="kv"><span class="kv-label">帳戶餘額（主錢包）</span>${walletCell(MEM_ROWS[1].bal,'kv-val','right')}</div>
+      <div class="kv"><span class="kv-label">提領所需有效投注額（流水錢包）</span>${walletCell({USDT:0,TWD:0},'kv-val','right')}</div>
+      <div class="kv"><span class="kv-label">可提領餘額</span>${walletCell({USDT:0,TWD:0},'kv-val','right')}</div>
+    </div>`)}
+  ${sec('顯示規則', ruleTable([
+    ['幣別清單來源', '依「帳務管理 &gt; 鏈上錢包管理」中狀態為<b>啟用</b>的幣種為準（含法幣頁籤）；關閉或禁用不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能<b>不另行設定幣別清單</b>'],
+    ['展開箭頭顯示條件', '已啟用幣種<b>超過一種</b>時才顯示；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現'],
+    ['收合時顯示的數值', '該站台<b>核心貨幣</b>錢包的餘額——<b>不做匯率換算，也不是各幣別的加總</b>'],
+    ['展開後的排列順序', '核心貨幣固定第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序；每列「幣種代碼 ＋ 金額」'],
+    ['金額為 0 的幣別', '仍列出並顯示 0.00，不因無餘額而隱藏'],
+    ['展開狀態的保留', '逐欄各自獨立，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設'],
+    ['不變更的範圍', '2.1.2 篩選器「帳戶餘額 min ～ max」與列表底部「總計」列維持現行行為，不依幣別拆分、不提供幣別選擇'],
+  ]))}
+  ${sec('機台場館的情形', `<div class="warn-box">機台場館核心貨幣為 <b>TWD</b>，鏈上錢包管理僅顯示法幣 TWD 一個頁籤、只啟用這一種幣別，因此機台帳號的餘額欄<b>不顯示展開箭頭、維持單行</b>；收合值即主錢包（TWD）餘額，也就是機台上顯示的<b>分數</b>。<br/>⚠️ <b>實作不得把「單一幣別」寫死</b>——幣別數量須由鏈上錢包管理的啟用狀態決定。</div>`)}`;
+};
+
+// ══════════════════════════════════════════
+// 二、存款／提款累計欄位
+// ══════════════════════════════════════════
+let CNT = {dc:0, da:0, wc:0, wa:0};
+let PENDING = [];
+let LOG = [];
+
+function cntReset(){ CNT={dc:0,da:0,wc:0,wa:0}; PENDING=[]; LOG=[]; showItem(2); }
+function cntOp(kind){
+  const amt = kind==='開分' ? 500 : kind==='入金' ? 1000 : kind==='洗分' ? 300 : kind==='出金' ? 221 : 800;
+  if (kind==='開分' || kind==='入金'){
+    CNT.dc++; CNT.da += amt;
+    LOG.unshift(`<span class="ok">＋計入存款</span>　機台${kind} ${fmt(amt)}（交易完成當下直接累計，不需核實）`);
+  } else if (kind==='洗分' || kind==='出金'){
+    PENDING.push({kind, amt});
+    LOG.unshift(`<span class="warn">待核實</span>　機台${kind} ${fmt(amt)}（<b>尚未計入</b>提款，等核實）`);
+  } else {
+    LOG.unshift(`<span class="no">不計入</span>　${kind} ${fmt(amt)}（人工入出金一律不計這四個欄位）`);
+  }
+  showItem(2);
+}
+function cntVerify(i, ok){
+  const p = PENDING.splice(i,1)[0];
+  if (ok){
+    CNT.wc++; CNT.wa += p.amt;
+    LOG.unshift(`<span class="ok">＋計入提款</span>　機台${p.kind} ${fmt(p.amt)} 已核實（核實當下累計）`);
+  } else {
+    LOG.unshift(`<span class="no">永不計入</span>　機台${p.kind} ${fmt(p.amt)} 已作廢`);
+  }
+  showItem(2);
+}
+
+PANELS[2] = () => {
+  const pend = PENDING.length === 0
+    ? '<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">目前沒有待核實的交易</div>'
+    : PENDING.map((p,i)=>`<div class="up-card"><div class="up-row" style="grid-template-columns:120px 120px 1fr;min-width:380px;">
+        <div class="strong">機台${p.kind}</div><div class="strong mono">${fmt(p.amt)}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-sm btn-primary" onclick="cntVerify(${i},true)">核實</button>
+          <button class="btn-sm danger" onclick="cntVerify(${i},false)">作廢</button>
+        </div></div></div>`).join('');
+  return `
+  ${desc('會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，<b>僅計系統入金與系統出金，一律不含人工入金與人工出金</b>。機台的四種金流依「是否需要核實」分成兩種計入時點。')}
+  ${sec('機台四種金流的計入規則', ruleTable([
+    ['機台<b>開分</b>', '存款次數／存款金額　—　<b>交易完成當下直接累計</b>，不需核實'],
+    ['機台<b>入金</b>', '存款次數／存款金額　—　<b>交易完成當下直接累計</b>，不需核實'],
+    ['機台<b>洗分</b>', '提款次數／提款金額　—　於「洗分出金核實」頁<b>核實當下</b>累計；待核實不計、<b>已作廢永不計</b>'],
+    ['機台<b>出金</b>', '提款次數／提款金額　—　於「洗分出金核實」頁<b>核實當下</b>累計；待核實不計、<b>已作廢永不計</b>'],
+  ]))}
+  ${sec('畫面示意 — 按下方按鈕看四個欄位怎麼跳', `
+    <div class="counters">
+      <div class="counter"><div class="counter-label">存款次數</div><div class="counter-val">${CNT.dc}</div></div>
+      <div class="counter"><div class="counter-label">存款金額</div><div class="counter-val">${fmt(CNT.da)}</div></div>
+      <div class="counter"><div class="counter-label">提款次數</div><div class="counter-val">${CNT.wc}</div></div>
+      <div class="counter"><div class="counter-label">提款金額</div><div class="counter-val">${fmt(CNT.wa)}</div></div>
+    </div>
+    <div class="op-row">
+      <button class="btn-sm" onclick="cntOp('開分')">機台開分 $500</button>
+      <button class="btn-sm" onclick="cntOp('入金')">機台入金 $1,000</button>
+      <button class="btn-sm" onclick="cntOp('洗分')">機台洗分 $300</button>
+      <button class="btn-sm" onclick="cntOp('出金')">機台出金 $221</button>
+      <button class="btn-sm" onclick="cntOp('人工存入')">人工存入 $800</button>
+      <button class="btn-sm" onclick="cntOp('人工提出')">人工提出 $800</button>
+      <button class="btn-sm danger" onclick="cntReset()">重置</button>
+    </div>
+    <div class="sec-label" style="margin-top:14px;">待核實佇列（洗分出金核實頁）</div>
+    <div class="list-wrap">${pend}</div>
+    <div class="sec-label" style="margin-top:14px;">累計紀錄</div>
+    <div class="log">${LOG.length ? LOG.join('<br/>') : '尚無操作'}</div>`)}
+  ${sec('欄位定義', ruleTable([
+    ['存款次數', '累計成功入金的次數，僅計系統入金、<b>不含人工入金</b>；機台開分與機台入金於交易完成當下累計'],
+    ['存款金額', '計算範圍同上；金額以站台<b>核心貨幣原值</b>累計，<b>不換算 USDT</b>'],
+    ['提款次數', '累計成功出金的次數，僅計系統出金、<b>不含人工出金</b>；線上出金於出金審核按「通過」當下累計，機台洗分與出金於核實當下累計'],
+    ['提款金額', '計算範圍同上；金額以站台<b>核心貨幣原值</b>累計，<b>不換算 USDT</b>'],
+    ['篩選器', '四個範圍欄位與列表欄位採<b>同一套定義</b>'],
+  ]))}
+  ${sec('', `<div class="warn-box">手冊原文曾寫「<b>含</b>人工入金／出金」，該敘述<b>已作廢</b>——人工存入與人工提出一律不計入這四個欄位。</div>`)}`;
+};
+
+// ══════════════════════════════════════════
+// 三、機台憑證（JWT）
+// ══════════════════════════════════════════
+const DEMO_JWT = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNsb3QtMjAyNi0wOSJ9.eyJpc3MiOiJibGFjLXBsYXRmb3JtIiwic3ViIjoiQUNBQTAxNzkzIiwidmVudWUiOiJTVEEwMDIxIiwianRpIjoiYzdmM2E5MmUtNGQxYi00ZjA4LWI2YTMtOWUxMjRkMGY3ODIxIiwidmVyIjozLCJpYXQiOjE3ODk5OTIwMDB9.M2Rk0oQ7pQm5rXcV1sYbNfL8hUu3TtJv6aWx9ZgKpE4nD7sHbQyRcMfA2iLvOwTgXzUdKePnBrYhCsJmVqIt5xNlZaGoDwFuSkPyMbRhTcVeXnAqLdJgOiZwUrYtBmCxHnEkPsQfDvGaLoTzMwRbYuIjNqXcVePlAsKdHgFtZoRyBnUmWqTxCvJiElPaSdOgNhKfRcVbYuXtMwZqLiEjApDnGoSrTvBcHfUyKmXwNlQaZeIpRdTgOvBjCsYnFkMhLwQxEaUpZiVrTcNdKgOjBmXsYfHwLpEuQaRvTiZnCkMdGxJoBsYwFpNlEqUaTrZiVcKdMgOjBnXsHfLwEpQuRaTvZiCnKdMxGjOoBsYwFlNpEqUaZrTiVcKdMgHjOnBsXwYfLpEuQaRvTiZnCkMdGxJoBsYwFpNlEqUaTrZiVcKdMgOjBn';
+let CERT_STATE = { issued:false, ver:0 };
+
+function certIssue(){
+  CERT_STATE.issued = true; CERT_STATE.ver++;
+  openModal('機台憑證已產生（僅顯示這一次）',
+    `<div class="warn-box" style="margin-bottom:12px;"><b>此憑證僅完整顯示這一次。</b>關閉後只會看到遮罩，遺失請以「重置憑證」重新產生。</div>
+     <div class="field"><label class="field-label">憑證（JWT，Bearer Token）　<span style="color:var(--text-muted);">憑證版本 v${CERT_STATE.ver}</span></label>
+     <div class="token-box" id="tok">${DEMO_JWT}</div></div>
+     <div class="hint">字串長達數百字元 → 顯示區塊<b>允許換行完整顯示</b>並<b>提供複製按鈕</b>，不可截斷或塞進單行不可捲動的欄位。</div>`,
+    `<button class="btn-ghost" onclick="copyTok()">複製憑證</button><button class="btn-primary" onclick="closeModal();showItem(3)">我已保存</button>`);
+}
+function copyTok(){ showToast('✓ 已複製憑證（proto 模擬）'); }
+function certReset(){
+  openModal('重置機台憑證',
+    `<div class="warn-box"><b>重置會讓機台立即無法運作。</b>必須由現場人員把新憑證寫入機台後才會恢復。此操作無法復原，舊憑證立即失效。</div>
+     <div class="hint" style="margin-top:12px;">重置即失效由<b>平台端</b>保證：驗證時除簽章外須比對該機台<b>現行有效的憑證識別</b>（<b>jti</b> 或憑證版本號），舊憑證即使簽章仍有效也一律拒絕。</div>`,
+    `<button class="btn-ghost" onclick="closeModal()">取消</button><button class="btn-primary" onclick="closeModal();certIssue()">確認重置</button>`);
+}
+
+PANELS[3] = () => `
+  ${desc('機台憑證供機台主控程式與平台 API 通訊，與機台帳號的登入帳密各自獨立、互不影響。憑證格式為 <b>JWT（JSON Web Token）</b>，由平台簽發；機台每次呼叫平台 API 時以 <b>Authorization: Bearer &lt;token&gt;</b> 附帶。')}
+  ${sec('畫面示意 — 會員詳細資料頁〈機台憑證〉區塊', `
+    <div class="card" style="max-width:520px;">
+      <div class="block-title">機台憑證</div>
+      <div class="kv"><span class="kv-label">憑證狀態</span><span class="kv-val">${CERT_STATE.issued?'<span class="up-tag tag-ui">已產生</span>':'<span class="up-tag tag-date">未產生</span>'}</span></div>
+      <div class="kv"><span class="kv-label">憑證（遮罩）</span><span class="kv-val mono">${CERT_STATE.issued?'eyJh···························'+DEMO_JWT.slice(-4):'—'}</span></div>
+      <div class="kv"><span class="kv-label">憑證版本</span><span class="kv-val mono">${CERT_STATE.issued?'v'+CERT_STATE.ver:'—'}</span></div>
+      <div class="kv"><span class="kv-label">有效期限</span><span class="kv-val"><span class="up-tag tag-ui">不設期限</span></span></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        ${CERT_STATE.issued
+          ? '<button class="btn-sm danger" onclick="certReset()">重置憑證</button>'
+          : '<button class="btn-sm btn-primary" onclick="certIssue()">產生憑證</button>'}
+      </div>
+    </div>`)}
+  ${sec('操作', points([
+    '<b>產生憑證</b>：憑證於此區塊產生，<b>不隨帳號建立自動產生</b>；產生後完整顯示一次，須提供<b>複製按鈕</b>並<b>允許換行完整顯示</b>',
+    '<b>重置憑證</b>：二次確認後重新簽發，舊憑證立即失效，畫面同樣完整顯示一次',
+    '⚠️ 重置會讓機台<b>立即無法運作</b>，須由現場人員寫入新憑證才恢復；重置前先與現場確認',
+  ]))}
+  ${sec('規則', ruleTable([
+    ['憑證唯一性', '一台機台同時只有<b>一組</b>有效憑證；重置後舊憑證立即失效'],
+    ['重置即失效的保證', 'JWT 本身無法被收回，<b>必須由平台端保證</b>：驗證時除簽章外須比對該機台目前有效的憑證識別（<b>jti</b> 或憑證版本號），舊憑證即使簽章仍有效也一律拒絕。⚠️ <b>只驗簽章不符合規格</b>'],
+    ['一次性顯示', '產生與重置當下各完整顯示一次，之後僅能看到遮罩（前後各 4 碼）；遺失以重置處理'],
+    ['有效期限', '<b>不設有效期限</b>：憑證長期有效，僅靠「重置憑證」使舊憑證失效'],
+  ]))}`;
+
+// ══════════════════════════════════════════
+// 四、場館設定的洗分門檻
+// ══════════════════════════════════════════
+function calcWash(){
+  const bal = parseFloat(document.getElementById('w-bal').value) || 0;
+  const th  = parseFloat(document.getElementById('w-th').value);
+  const out = document.getElementById('w-out');
+  if (isNaN(th) || th < 0){
+    out.innerHTML = `<div class="warn-box"><b>6-BAD DATA/FORMAT</b>　門檻為負值／缺漏／非數值 → 防禦性拒絕</div>`;
+    return;
+  }
+  if (th === 0){
+    out.innerHTML = bal <= 0
+      ? `<div class="warn-box"><b>1-NO CREDITS</b>　餘額為 0，回覆餘額不足（不寫入交易紀錄，見第五節）</div>`
+      : `<div class="card"><ul class="bullets"><li>門檻 <b>0</b>＝洗出<b>全部餘額</b>、不做取整</li><li>核可金額 <b>${fmt(bal)}</b>　餘數 <b>${fmt(0)}</b>　洗分後餘額 <b>${fmt(0)}</b></li></ul></div>`;
+    return;
+  }
+  const ok = Math.floor(bal / th) * th;
+  const rest = bal - ok;
+  out.innerHTML = ok === 0
+    ? `<div class="warn-box"><b>1-NO CREDITS</b>　以門檻 ${fmt(th)} 捨去後可洗金額為 0 → 回覆餘額不足（<b>不寫入交易紀錄</b>）</div>`
+    : `<div class="card"><ul class="bullets">
+        <li>核可金額 <b>${fmt(ok)}</b>（以門檻 ${fmt(th)} 為單位捨去）</li>
+        <li>餘數 <b>${fmt(rest)}</b> — <b>繼續留在機台帳號上，不會被清除</b></li>
+        <li>洗分後機台餘額 <b>${fmt(rest)}</b></li></ul></div>`;
+}
+
+PANELS[4] = () => `
+  ${desc('洗分門檻是洗分的<b>計算單位</b>，於<b>機台端設定</b>（同場館各機台可設不同值），隨每筆洗分請求送至平台；<b>平台計算一律採請求中的 throshold</b>。<b>後台不實作門檻設定、前台不顯示門檻。</b>')}
+  ${sec('畫面示意 — 站台列表〈場館設定〉', `
+    <div class="card" style="max-width:460px;">
+      <div class="block-title">場館設定</div>
+      <div class="kv"><span class="kv-label">場館幣別</span><span class="kv-val">TWD　<span style="color:var(--text-muted);font-size:11px;">唯讀，繼承主站台核心貨幣</span></span></div>
+      <div class="kv"><span class="kv-label">額度上限</span><span class="kv-val mono">$50,000.00</span></div>
+      <div class="kv"><span class="kv-label">場次逾時時間</span><span class="kv-val">30 分鐘</span></div>
+      <div class="kv"><span class="kv-label">日結時間</span><span class="kv-val">04:00</span></div>
+    </div>
+    <div class="hint" style="margin-top:10px;max-width:460px;">⚠️ 場館設定<b>沒有</b>「洗分／出金最低門檻」欄位（站台列表 <b>v04</b> 起移除）。門檻於機台端設定，後台不設。</div>`)}
+  ${sec('洗分的門檻計算（試算）', `
+    <div class="inline-form">
+      <div class="field"><label class="field-label">機台當前餘額</label><input type="number" id="w-bal" value="321"/></div>
+      <div class="field"><label class="field-label">throshold（機台端）</label><input type="number" id="w-th" value="100"/></div>
+      <button class="btn-primary" onclick="calcWash()">計算洗分</button>
+    </div>
+    <div id="w-out"></div>`)}
+  ${sec('門檻計算規則', ruleTable([
+    ['採用值', '一律採洗分請求隨附的 <b>throshold</b>；廠商保證每筆請求必帶（正值或 0、不會為負）'],
+    ['throshold = 0', '表示洗出<b>全部餘額</b>、不做取整'],
+    ['throshold &gt; 0', '以門檻為單位捨去計算核可金額；<b>不足一個門檻單位的餘數繼續留在機台帳號上，不會被清除</b>'],
+    ['可洗金額為 0', '平台拒絕，回覆機台<b>餘額不足</b>（見第五節）'],
+    ['規格外的值', '負值、缺漏、非數值一律<b>防禦性拒絕</b>，回 <b>6-BAD DATA/FORMAT</b>'],
+    ['出金', '<b>一律清空餘額</b>、<b>不套門檻</b>、<b>無餘數</b>；req-cashout 的金額參數必為機台當前顯示的全部餘額'],
+  ]))}`;
+AFTER[4] = () => calcWash();
+
+// ══════════════════════════════════════════
+// 五、交易紀錄的兩項欄位規則
+// ══════════════════════════════════════════
+const TX_ROWS = [
+  {id:'TX20260904001', acct:'ACAA01793', type:'機台開分', sess:'SS-20260904-0007', amt:500},
+  {id:'TX20260904002', acct:'OAAE28101', type:'一般存款', sess:null,               amt:120},
+  {id:'TX20260904003', acct:'ACAA01793', type:'機台洗分', sess:'SS-20260904-0007', amt:-300},
+  {id:'TX20260904004', acct:'OAAE28104', type:'一般提款', sess:null,               amt:-80},
+];
+let TXLOG = [];
+function txReq(){
+  const bal = parseFloat(document.getElementById('t-bal').value) || 0;
+  const th  = parseFloat(document.getElementById('t-th').value) || 0;
+  const ok  = th === 0 ? bal : Math.floor(bal/th)*th;
+  if (ok <= 0){
+    TXLOG.unshift(`<span class="no">未寫入交易紀錄</span>　洗分請求（餘額 ${fmt(bal)}／門檻 ${fmt(th)}）→ 平台僅回覆 <b>1-NO CREDITS</b>`);
+  } else {
+    TXLOG.unshift(`<span class="ok">已寫入交易紀錄</span>　機台洗分 ${fmt(ok)} 　狀態：已完成`);
+  }
+  showItem(5);
+}
+function txDenied(){
+  TXLOG.unshift(`<span class="warn">已寫入交易紀錄</span>　機台開分被拒（額度上限）→ 狀態：<b>未成立</b>，原因欄記 1-OVER LIMIT`);
+  showItem(5);
+}
+function txClear(){ TXLOG = []; showItem(5); }
+
+PANELS[5] = () => {
+  const cols = 'grid-template-columns:170px 130px 110px 190px 110px;min-width:760px;';
+  const rows = TX_ROWS.map(t=>`<div class="up-card"><div class="up-row" style="${cols}">
+      <div class="strong mono">${t.id}</div>
+      <div>${t.acct}</div>
+      <div>${t.type}</div>
+      <div class="${t.sess?'strong mono':''}" ${t.sess?'':'style="color:var(--text-muted);"'}>${t.sess || '—'}</div>
+      <div class="mono" style="color:${t.amt<0?'var(--red-text)':'var(--green-text)'};">${t.amt<0?'-':'+'}${fmt(Math.abs(t.amt)).slice(1)}</div>
+    </div></div>`).join('');
+  return `
+  ${desc('本節為交易紀錄查詢（機台視角擴充）中的兩項欄位規則：<b>場次編號欄位在線上帳號的呈現</b>，以及<b>餘額不足的交易不寫入紀錄</b>。列表的完整欄位與篩選器見開發包④。')}
+  ${sec('場次編號欄位', `<div class="card"><div class="diff-body">與線上會員<b>共用的頁面</b>（交易紀錄查詢、注單查詢）的「場次編號」欄位，<b>線上帳號的資料一律顯示「—」</b>，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號。</div></div>`)}
+  ${sec('畫面示意 — 4.1 交易紀錄查詢（機台與線上混列）', `<div class="list-wrap">
+    <div class="list-header" style="${cols}"><span>交易編號</span><span>會員編號</span><span>交易類型</span><span>場次編號</span><span>金額</span></div>
+    <div class="list-body">${rows}</div>
+  </div>`)}
+  ${sec('餘額不足不寫入交易紀錄', ruleTable([
+    ['適用情形', '洗分可洗金額為 0（<b>含以門檻捨去後為 0</b>），或出金時餘額為 0——屬<b>正常情形</b>，不是異常'],
+    ['平台行為', '<b>不寫入交易紀錄</b>，僅回覆機台狀態碼 <b>1-NO CREDITS</b>'],
+    ['交易狀態', '「未成立」的定義<b>不包含餘額不足</b>；其餘拒絕原因才留下「未成立」紀錄並記下原因'],
+    ['未成立原因對照表', '<b>不含</b>餘額不足一列'],
+  ]))}
+  ${sec('畫面示意 — 送出請求，看會不會留下紀錄', `
+    <div class="inline-form">
+      <div class="field"><label class="field-label">機台餘額</label><input type="number" id="t-bal" value="80"/></div>
+      <div class="field"><label class="field-label">throshold</label><input type="number" id="t-th" value="100"/></div>
+      <button class="btn-primary" onclick="txReq()">送出洗分請求</button>
+      <button class="btn-ghost" onclick="txDenied()">送出一筆超額開分</button>
+      <button class="btn-sm danger" onclick="txClear()" style="margin-bottom:2px;">清空</button>
+    </div>
+    <div class="hint" style="margin-bottom:10px;">餘額 80、門檻 100 → 捨去後可洗 0 → <b>餘額不足</b>，不留紀錄。把餘額改成 321 再送一次就會留下已完成的洗分。</div>
+    <div class="log">${TXLOG.length ? TXLOG.join('<br/>') : '尚無請求'}</div>`)}`;
+};
+
+// ══════════════════════════════════════════
+// 六、場館日結報表
+// ══════════════════════════════════════════
+let DIM = 'venue';
+function setDim(d){ DIM = d; showItem(6); }
+const MACHINES = [
+  {id:'ACAA01793', name:'C-4', sess:7,  bet:12400, pnl:-1850},
+  {id:'ACAA01718', name:'B-0', sess:4,  bet:6300,  pnl:920},
+  {id:'ACAA01697', name:'A-0', sess:12, bet:20100, pnl:-3400},
+];
+PANELS[6] = () => {
+  const total = MACHINES.reduce((s,m)=>s+m.sess,0);
+  const cols = DIM==='venue' ? 'grid-template-columns:170px 110px 160px 160px;min-width:640px;'
+                             : 'grid-template-columns:150px 100px 110px 160px 160px;min-width:720px;';
+  const head = DIM==='venue'
+    ? '<span>場館</span><span>場次數</span><span>有效投注額</span><span>損益</span>'
+    : '<span>機台帳號</span><span>機台名稱</span><span>場次數</span><span>有效投注額</span><span>損益</span>';
+  const body = DIM==='venue'
+    ? `<div class="up-card"><div class="up-row" style="${cols}">
+         <div class="strong">台北一館</div>
+         <div class="strong mono">${total}</div>
+         <div class="mono">${fmt(MACHINES.reduce((s,m)=>s+m.bet,0))} <span class="wal-ccy">TWD</span></div>
+         <div class="mono" style="color:var(--red-text);">${fmt(MACHINES.reduce((s,m)=>s+m.pnl,0))} <span class="wal-ccy">TWD</span></div>
+       </div></div>`
+    : MACHINES.map(m=>`<div class="up-card"><div class="up-row" style="${cols}">
+         <div class="strong">${m.id}</div><div>${m.name}</div>
+         <div class="strong mono">${m.sess}</div>
+         <div class="mono">${fmt(m.bet)} <span class="wal-ccy">TWD</span></div>
+         <div class="mono" style="color:${m.pnl<0?'var(--red-text)':'var(--green-text)'};">${fmt(m.pnl)} <span class="wal-ccy">TWD</span></div>
+       </div></div>`).join('');
+  return `
+  ${desc('本節為場館日結報表的兩項規則：<b>場次數的統計口徑</b>，以及<b>有效投注額與損益的計價幣別</b>。報表的完整欄位與匯出見開發包⑤。')}
+  ${sec('場次數', ruleTable([
+    ['依機台明細', '該機台當日的場次數'],
+    ['依場館彙總', '該場館<b>所有機台帳號</b>當日場次數的<b>加總</b>（不是去重後的場次數，也不是機台數）'],
+  ]))}
+  ${sec('畫面示意 — 場館日結報表', `
+    <div class="inline-form">
+      <div class="seg">
+        <button class="${DIM==='venue'?'on':''}" onclick="setDim('venue')">依場館彙總</button>
+        <button class="${DIM==='machine'?'on':''}" onclick="setDim('machine')">依機台明細</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);padding-bottom:6px;">場館彙總的場次數 ${total} ＝ ${MACHINES.map(m=>m.sess).join(' + ')}</div>
+    </div>
+    <div class="list-wrap">
+      <div class="list-header" style="${cols}">${head}</div>
+      <div class="list-body">${body}</div>
+    </div>`)}
+  ${sec('計價幣別', `<div class="card"><div class="diff-body">場次資訊與日結報表的<b>有效投注額與損益，一律以主站台核心貨幣計算</b>（機台場館即 TWD），<b>不換算 USDT</b>、不涉及匯率換算。核心貨幣為主站台層級的設定，底下子站台一律繼承；⚠️ 實作<b>不得把幣別寫死</b>，清單須可擴充。</div></div>`)}`;
+};
+
+// ══════════════════════════════════════════
+// 七、入金額度上限的判定時點（純後端）
+// ══════════════════════════════════════════
+PANELS[7] = () => `
+  ${desc('入金的額度上限於<b>請求階段 req-cashin</b> 判定，並在同一時點把該筆金額<b>預留</b>起來；判定與預留在<b>場館鎖</b>內逐筆序列化執行，開分共用同一把鎖。<b>end-cashin 不再判定額度</b>，只做入帳並把預留轉為實際分數餘額。本節為純後端，沒有後台畫面。')}
+  ${sec('為什麼一定要「預留」', `<div class="hint">檢查點與累計點不在同一階段就會有缺口：額度檢查在 req-cashin，但分數餘額要到 end-cashin 才增加，而規格允許<b>同帳號多筆入金 PENDING 併存</b>。只檢查不佔用額度，多筆 PENDING 就會各自通過檢查、合計卻超過上限。<br/><br/>把金額<b>預留</b>起來（判定基準＝全場館分數餘額合計 ＋ 已預留未入帳金額 ＋ 本筆），下一筆請求看到的已用額度就已含前一筆，超額會在<b>紙鈔捲入錢箱之前</b>被擋下、機台直接退鈔。</div>`)}
+  ${sec('流程', `
+    <div class="flow">
+      <div class="flow-step hot"><div class="flow-step-t">req-cashin（場館鎖）</div><div class="flow-step-d"><b>判定額度上限＋預留金額</b><br/>基準含已預留未入帳的入金；通過才建 PENDING</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-step-t">機台收鈔</div><div class="flow-step-d">紙鈔捲入錢箱<br/>超額的請求根本走不到這一步</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="flow-step-t">end-cashin</div><div class="flow-step-d">關閉 PENDING、入帳<br/><b>不再判定額度</b>，預留轉為實際餘額</div></div>
+    </div>`)}
+  ${sec('範例（額度上限 $50,000，目前已用 $49,000）', `<div class="card"><ul class="bullets">
+    <li>入金 A $800 送 req-cashin → 取得場館鎖，49,000 ＋ 0 ＋ 800 ≤ 50,000 → 建立 PENDING、<b>預留 800</b></li>
+    <li>入金 B $600 送 req-cashin → 取得鎖，49,000 ＋ <b>800（A 的預留）</b> ＋ 600 = 50,400 &gt; 50,000 → 回 <b>1-OVER LIMIT</b></li>
+    <li>B 的機台<b>直接退鈔</b>，紙鈔不會進錢箱，也不需要現場退現</li>
+    <li>A 的 end-cashin 完成 → 預留 800 轉為實際分數餘額，已用額度變 $49,800</li>
+  </ul></div>`)}
+  ${sec('預留額度的釋放', ruleTable([
+    ['入帳成功（end-cashin 完成）', '預留轉為實際分數餘額'],
+    ['PENDING 逾時（24 小時）', '由排程關閉該筆時釋放預留'],
+    ['Admin／站長手動取消', '於交易紀錄取消待確認入金當下立即釋放預留'],
+  ]))}
+  ${sec('', `<div class="warn-box">⚠️ <b>預留與釋放必須成對</b>——漏掉任一條釋放路徑，額度就會被永久佔用，場館之後再也收不了鈔。</div>`)}
+  ${sec('開分（CreditIn）', `<div class="hint">開分是單階段、檢查完立刻入帳，本來就沒有這個缺口；但它必須與入金的預留<b>共用同一把場館鎖</b>，判定基準同樣要含<b>已預留未入帳的入金金額</b>。</div>`)}`;
+
+// ── 匯出（供 onclick 使用）──
+Object.assign(window, {showItem, showToast, openModal, closeModal, notHere,
+  toggleWallet, toggleSiteWallets, setSiteWallets, cntOp, cntVerify, cntReset,
+  certIssue, certReset, copyTok, calcWash, txReq, txDenied, txClear, setDim});
+
+showItem(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+artifact_id: ART-BVR-01M2DJFKQG5F5BK6SA8YDBXP04
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260913-002
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-13T14:24:32Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M2DJ7MYC6K10R1AWCTD491T0
+references:
+- entity_type: Artifact
+  id: ART-BD-01M2DJ7MYC6K10R1AWCTD491T0
+- entity_type: Evidence
+  id: EVD-0009
+- entity_type: Evidence
+  id: EVD-0044
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M2DJ7MYC6K10R1AWCTD491T0
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-029
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+      quote: 「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數
+    evidence: Draft acceptance_criteria_ids 含 AC-DAILYREPORT-0091（依機台明細）、impact 寫「依機台明細維度同樣受影響」；但 reproduction_steps 只操作「依場館彙總」，EVD-0044
+      亦為依場館彙總維度的回應（machineName/userNo 皆 null），EVD-0009 的複製步驟 1–5 也未實測依機台明細維度。
+    explanation: 「依機台明細維度同樣缺場次數」是由彙總維度回應外推的推論，目前無該維度的實測畫面或 API 回應可支撐。若兩維度共用同一 row DTO 推論很可能成立，但 Draft 應區分「已實測」與「推論」。
+    recommended_change: 二擇一：(a) 補做依機台明細維度的搜尋與 API 攔截，新增 Evidence 並加入 evidence_map；或 (b) 將 AC-DAILYREPORT-0091 自 acceptance_criteria_ids
+      移除、impact 改寫為「依機台明細維度推測同樣受影響（未實測）」。
+  - testcase_id: TC-DAILYREPORT-029
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: actual_result_evidence_map claim「畫面場次數欄顯示 --」對應 EVD-0009，其 type 為 other（bug 單 Markdown 全文），內容是測試者的文字轉述「畫面『場次數』欄一律顯示『--』」，並無畫面截圖。
+    explanation: 文字轉述可接受作為輔證，但畫面層 claim 缺乏直接視覺證據；API 層 claim（EVD-0044）才是本 Draft 的決定性證據。建議補截圖以利開發與 Reviewer 復核。
+    recommended_change: 補一張「依場館彙總」搜尋結果的截圖（含場次數欄顯示 -- 與篩選條件），登錄為 screenshot 類 Evidence 並掛到「畫面場次數欄顯示 --」claim。
+  - testcase_id: TC-DAILYREPORT-029
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+      quote: 為當日結束的場次筆數
+    evidence: REQ-DAILYREPORT-009 登錄有 major ambiguity：「當日結束的場次」是否含「逾時結束」與「日結結算」狀態，Spec 未明示。Draft ambiguity_suspected 為 false。
+    explanation: 整欄缺失不論採哪種解讀都是 bug，故 ambiguity_suspected=false 正確、本 Draft 不屬 mere ambiguity。但修復後驗收「場次數的值」時會踩到這個 ambiguity，Draft
+      未提示。
+    recommended_change: 在 impact 或 expected_result 補註：「場次數的計算口徑（是否含逾時結束／日結結算）依 REQ-DAILYREPORT-009 ambiguity 待 PM 定案，修復驗收前需先解決」。
+  evidence_verification:
+  - evidence_id: EVD-0009
+    hash_verified: true
+    supports_claim: true
+    note: EVD-0009.md 檔案 sha256 與 inline_content sha256 皆等於宣告值 53d6cb22…aca5。內容為 bug 單全文，明確記載「依場館彙總」畫面場次數欄顯示 --；屬文字轉述而非截圖，作為畫面層
+      claim 的輔證可接受。
+  - evidence_id: EVD-0044
+    hash_verified: true
+    supports_claim: true
+    note: EVD-0044.txt 檔案 sha256 與 inline_content sha256 皆等於宣告值 bd861ab9…d840。回應 row 共 17 個欄位（settlePeriod、endTime、machineName、userNo、sessionCode、11
+      個金額欄、closingBalance），無任何可對應「場次數」的計數欄位，且 machineName/userNo/sessionCode 為 null 與「依場館彙總」維度相符。屬單一 row 的節錄而非完整 response，但足以支撐
+      claim。
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: Spec 明定「場次數」在依場館彙總與依機台明細兩個維度都要顯示，是對帳與分潤用的核心欄位；後端整欄未回傳，前端無法以其他欄位推導，功能面等於該欄位不存在，major 合理。不到 critical：其餘金額欄位正常、無資料錯誤、不阻擋其他報表流程。功能尚屬內部（未對客戶開放）但仍在開發驗收期，欄位缺失屬明確待補實作，priority
+      high 合理。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: Bug Repository 目前無任何 DAILYREPORT 的 bug，無正式重複對象。與同批的 BUG-DRAFT-…AA02（run003，場次明細維度缺開始時間／場次時長）來源相同（MAN-20260913-009
+      / EVD-0009）、同一 API（POST /api/v1/report/query-venue-daily-report），但違反的 Requirement 不同（REQ-009 vs REQ-008）、觸發維度不同（依場館彙總
+      vs 依場次明細）、缺失欄位不同、可獨立驗收（修好一個另一個可能仍壞），判定為 related 而非 duplicate，Analyst 由一張 bug 單拆成兩張是合理的。建議正式建單時互相加 related link，並在兩單標註「疑似共用同一
+      row DTO，可一併修」以利開發排程。
+  ambiguity: null
+history:
+- at: '2026-09-13T14:24:32Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260913-002

@@ -1,0 +1,104 @@
+## Title
+
+[後端][機台][場館日結報表] API 缺少必要欄位（場次數、開始時間、場次時長）
+
+## Detail
+
+**遊戲商：** N/A（非遊戲相關，屬場館日結報表功能）
+
+**遊戲名稱：** N/A
+
+**測試環境：** stage-admin-srv.springkyle.online
+
+**測試帳號：** ACAA00280（站長）／ACAA00250（機台帳號，交易發起）
+
+**測試時間：** 2026-09-08
+
+**問題詳述：**
+
+依 `場館日結報表_spec_v01.md`／`實體機台_spec_v07.md` 規格，比對實際 API 回應，發現兩個統計維度下各自缺少必要欄位。
+
+**問題一：「依場館彙總」維度，缺少「場次數」欄位**
+
+依 spec：
+
+> 場次數 | 「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：...依場館彙總＝**該場館底下所有機台帳號當日場次數的加總**
+
+實測「依場館彙總」維度，畫面「場次數」欄一律顯示「--」。對照 API 原始回應，整包 response 完全沒有任何類似 `sessionCount` 的欄位，證實是後端未回傳，非前端未接。
+
+**問題二：「依場次明細」維度，缺少「開始時間」與「場次時長」欄位**
+
+依 spec：
+
+> 場次編號 | 僅「依場次明細」維度顯示；另附開始／結束時間與場次時長
+> 場次時長 | 開始至結束的時間差；進行中則顯示累計至查詢當下
+
+實測「依場次明細」維度，畫面每一列「場次時長」皆顯示「--」，且「開始 ～ 結束」時間範圍的開始時間也一律顯示「--」。對照 API 原始回應，僅有 `endTime`（結束時間）欄位，**完全沒有對應的「開始時間」欄位**，也沒有「場次時長」欄位——不只是場次時長本身缺欄位，連前端據以自行計算所需的「開始時間」原始資料都沒有給，前端就算想自行相減計算也無資料可用。
+
+**預期結果：**
+
+1. 「依場館彙總」維度的 API 回應，應補上場次數欄位（如 `sessionCount`），值為該場館底下所有機台帳號當日場次數的加總
+2. 「依機台明細」維度同樣應有場次數欄位，值為該機台帳號當日場次數
+3. 「依場次明細」維度的 API 回應，應補上「開始時間」欄位（如 `startTime`），並補上「場次時長」欄位（如 `duration`），已結束場次為固定值（結束時間－開始時間），進行中場次則應隨查詢當下動態累計
+
+**複製步驟：**
+
+1. 登入後台，站台切換至機台場館（Arcade）
+2. 進入「場館日結報表」，統計維度選「依場館彙總」，搜尋，觀察「場次數」欄位（實測：全部顯示 `--`）
+3. 開啟瀏覽器 Network 分頁，攔截查詢 API 的原始回應，確認是否有場次數相關欄位（實測：完全沒有）
+4. 切換統計維度為「依場次明細」，重新搜尋，觀察「場次時長」欄位與「開始 ～ 結束」時間範圍的開始時間（實測：皆顯示 `--`）
+5. 再次攔截 API 原始回應，確認是否有「開始時間」與「場次時長」對應欄位（實測：僅有 `endTime`，無對應開始時間與時長欄位）
+
+**API URL：**
+
+`POST https://stage-admin-srv.springkyle.online/api/v1/report/query-venue-daily-report`（實際路徑請以攔截結果為準）
+
+### Response（節錄一：依場館彙總維度，缺場次數）
+
+```json
+{
+    "settlePeriod": "2026-09-08",
+    "endTime": "2026-09-08T04:38:53Z",
+    "machineName": null,
+    "userNo": null,
+    "sessionCode": null,
+    "creditInAmount": 0,
+    "creditOutAmount": 0,
+    "verifiedCreditOutAmount": 0,
+    "unverifiedCreditOutAmount": 0,
+    "cashInAmount": 3000,
+    "cashOutAmount": 3037,
+    "cashedAmount": 0,
+    "uncashedAmount": 1000,
+    "netCashIncome": 3000,
+    "validBetAmount": 0,
+    "profitLoss": 0,
+    "closingBalance": 0
+}
+```
+
+### Response（節錄二：依場次明細維度，缺開始時間與場次時長）
+
+```json
+{
+    "settlePeriod": "2026-09-08",
+    "endTime": "2026-09-08T04:38:53Z",
+    "machineName": "EL",
+    "userNo": "ACAA00250",
+    "sessionCode": "ACAA00250_20260908_0003",
+    "creditInAmount": 0,
+    "creditOutAmount": 0,
+    "verifiedCreditOutAmount": 0,
+    "unverifiedCreditOutAmount": 0,
+    "cashInAmount": 1000,
+    "cashOutAmount": 1000,
+    "cashedAmount": 0,
+    "uncashedAmount": 1000,
+    "netCashIncome": 1000,
+    "validBetAmount": 0,
+    "profitLoss": 0,
+    "closingBalance": 0
+}
+```
+
+> 備註：`machineName`／`userNo`／`sessionCode` 在依場次明細維度下正確帶出值，證實這三個欄位運作正常（在依場館彙總維度顯示 null 屬正常，因彙總層級本就無單一機台/場次可指認）；問題精準聚焦在「場次數」（彙總維度缺）與「開始時間／場次時長」（明細維度缺）這兩組欄位。

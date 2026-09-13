@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/envelope.schema.json",
+  "title": "ArtifactEnvelope",
+  "description": "所有 Agent 產出的 Artifact 共用外層。payload 依 artifact_type 套用對應 schema。",
+  "type": "object",
+  "required": [
+    "artifact_id",
+    "artifact_type",
+    "schema_version",
+    "version",
+    "run_id",
+    "task_id",
+    "created_by",
+    "created_at",
+    "status",
+    "source",
+    "references",
+    "payload"
+  ],
+  "properties": {
+    "artifact_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": [
+        "SpecAnalysis",
+        "RequirementModel",
+        "TestDesignReport",
+        "TestCaseDraft",
+        "TestValidationReport",
+        "BugDraft",
+        "BugValidationReport",
+        "ChangeImpactReport",
+        "VersionComparisonReport",
+        "RegressionProposal",
+        "ApprovalRequest",
+        "WorkflowSummary"
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "version": {
+      "$ref": "../common/defs.schema.json#/$defs/IntVersion"
+    },
+    "supersedes_artifact_id": {
+      "$ref": "../common/defs.schema.json#/$defs/ArtifactId"
+    },
+    "run_id": {
+      "$ref": "../common/defs.schema.json#/$defs/RunId"
+    },
+    "task_id": {
+      "$ref": "../common/defs.schema.json#/$defs/TaskId"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_by": {
+      "$ref": "../common/defs.schema.json#/$defs/AgentId"
+    },
+    "created_at": {
+      "$ref": "../common/defs.schema.json#/$defs/Timestamp"
+    },
+    "status": {
+      "$ref": "../common/defs.schema.json#/$defs/ArtifactStatus"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "type",
+        "ids"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "輸入來源類別，例如 SpecVersion / RequirementModel / ManualTestRecord"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/EntityRef"
+      },
+      "description": "Structural Gate 逐一驗證存在"
+    },
+    "requires_approval": {
+      "anyOf": [
+        {
+          "$ref": "../common/defs.schema.json#/$defs/ApprovalType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/defs.schema.json#/$defs/HistoryEntry"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "SpecAnalysis"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "spec-analysis.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "RequirementModel"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "requirement-model.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "TestDesignReport"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "test-design-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "TestCaseDraft"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "testcase-draft.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "TestValidationReport"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "test-validation-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "BugDraft"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "bug-draft.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "BugValidationReport"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "bug-validation-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "ChangeImpactReport"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "change-impact-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "VersionComparisonReport"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "version-comparison-report.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "RegressionProposal"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "regression-proposal.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "ApprovalRequest"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "../approval/approval-request.schema.json"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_type": {
+            "const": "WorkflowSummary"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "workflow-summary.schema.json"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

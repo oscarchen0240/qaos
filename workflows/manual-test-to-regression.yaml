@@ -1,0 +1,62 @@
+workflow_id: manual-test-to-regression
+version: "1.0.0"
+description: Manual Test Record → Test Designer(manual) ⇄ Validator → Human(ACTIVATE) → Regression Curator → Human(SUITE) → Full Regression
+input:
+  fields:
+    manual_record_id: {required: true, description: "testcases/manual/<id>.yaml，schema manual-test-record"}
+    spec_id: {required: false, description: 若記錄未標 spec，Human 可提示}
+    spec_version: {required: false}
+    initiated_by: {required: true}
+initial_state: {workflow_run: CREATED, testcase: null}
+agents: [agent-supervisor, agent-test-designer, agent-test-validator, agent-regression-curator]
+artifacts:
+  - {type: TestDesignReport, producer: agent-test-designer, note: "含 mapping_confidence"}
+  - {type: TestCaseDraft, producer: agent-test-designer, note: "source=manual_integration"}
+  - {type: TestValidationReport, producer: agent-test-validator}
+  - {type: RegressionProposal, producer: agent-regression-curator}
+  - {type: ApprovalRequest, producer: agent-supervisor, count: 2}
+  - {type: WorkflowSummary, producer: agent-supervisor}
+max_validation_iterations: 3
+tasks:
+  - id: T1
+    agent: agent-test-designer
+    mode: manual
+    inputs: [ManualTestRecord, RequirementModel(spec_id@spec_version), "Registry ACTIVE TC (same area)"]
+    outputs: [TestDesignReport, TestCaseDraft]
+    gate: G-DESIGN
+    on_cannot_map_requirement: "approval_request(NEEDS_DECISION: 指定 requirement 或先跑 spec-to-testcase T1) → WAITING_HUMAN"
+  - id: T2
+    agent: agent-test-validator
+    inputs: [SpecVersion, RequirementModel, TestCaseDraft, "Registry ACTIVE TC index"]
+    outputs: [TestValidationReport]
+    gate: G-TVAL
+    on_result:
+      PASS: "testcase → VALIDATED"
+      FAIL: {iteration_lt_max: "goto T1", iteration_ge_max: HUMAN_OVERRIDE}
+      DUPLICATE: "approval_request(NEEDS_DECISION: merge into existing TC / discard) → WAITING_HUMAN"
+  - id: T3
+    type: approval
+    approval_type: ACTIVATE_TESTCASE
+    on_decision: {approve: "COMMIT_TO_REGISTRY → ACTIVE", reject: "goto T1"}
+  - id: T4
+    agent: agent-regression-curator
+    inputs: ["TestCaseVersion(ACTIVE, 新)", "TestSuite(full_regression current)", "TestSuite(ci_regression current)", "TestExecution history (manual runs)"]
+    outputs: [RegressionProposal]
+    gate: G-REG
+    constraint: "full_regression 必評；ci_regression 只在 high value ∧ high risk ∧ stable ∧ automation_status!=not_automated 時建議"
+  - id: T5
+    type: approval
+    approval_type: UPDATE_SUITE_MEMBERSHIP
+    on_decision: {approve: "UPDATE_SUITE_MEMBERSHIP → suite version+1 ACTIVE", reject: "記錄，TC 仍 ACTIVE 但不入 suite"}
+  - id: T6
+    agent: agent-supervisor
+    outputs: [WorkflowSummary]
+gates: [G-DESIGN, G-TVAL, G-APPROVAL, G-REG, G-APPROVAL]
+failure_handling:
+  cannot_map_requirement: 不得假設；WAITING_HUMAN
+  duplicate: WAITING_HUMAN
+human_approval:
+  required: [ACTIVATE_TESTCASE, UPDATE_SUITE_MEMBERSHIP]
+  conditional: [NEEDS_DECISION, HUMAN_OVERRIDE]
+output: ["testcase_id ACTIVE", "suite membership diff", WorkflowSummary]
+final_state: {workflow_run: [COMPLETED, FAILED, CANCELLED], testcase: ACTIVE}

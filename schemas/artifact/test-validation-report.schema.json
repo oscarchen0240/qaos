@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/test-validation-report.schema.json",
+  "title": "TestValidationReport (payload)",
+  "type": "object",
+  "required": ["result", "testcase_draft_artifact_id", "validated_against", "issues", "advisories", "coverage_summary", "checks"],
+  "properties": {
+    "result": {"$ref": "../common/defs.schema.json#/$defs/ValidationResult"},
+    "testcase_draft_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "validated_against": {"type": "object", "required": ["spec_id", "spec_version", "requirement_model_artifact_id"], "properties": {"spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"}, "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"}, "requirement_model_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"}}},
+    "issues": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ValidationIssue"}},
+    "advisories": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ValidationIssue"}},
+    "coverage_summary": {"type": "object", "required": ["requirements_total", "requirements_covered", "ac_total", "ac_covered"], "properties": {"requirements_total": {"type": "integer"}, "requirements_covered": {"type": "integer"}, "ac_total": {"type": "integer"}, "ac_covered": {"type": "integer"}, "uncovered_accepted": {"type": "array", "items": {"type": "string"}}}},
+    "checks": {"type": "object", "required": ["no_spec_mismatch", "no_requirement_mismatch", "expected_result_valid", "steps_executable", "traceability_complete", "no_critical_ambiguity", "no_duplicates", "edge_cases_reasonable"], "additionalProperties": {"type": "boolean"}},
+    "per_testcase": {"type": "array", "items": {"type": "object", "required": ["draft_id", "verdict"], "properties": {"draft_id": {"type": "string"}, "verdict": {"type": "string", "enum": ["ok", "issue", "duplicate"]}}}}
+  },
+  "additionalProperties": false,
+  "allOf": [{"if": {"properties": {"result": {"const": "FAIL"}}}, "then": {"properties": {"issues": {"minItems": 1}}}}]
+}

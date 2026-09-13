@@ -1,0 +1,29 @@
+evidence_id: EVD-0037
+type: other
+uri: evidence/bug-intake-20260913/EVD-0037.md
+sha256: 4d988aceb8ec857a27193cfee62cf4fee5f90b1e70956dc12c9cd09156ed6df8
+mime_type: text/markdown
+captured_at: '2026-09-08T00:00:00Z'
+captured_by: oscarchen@blockaction.tech
+description: bug 單全文：bug單_畫面管理OFF未實際隱藏前台TAB.html
+inline_content: "Bug單：畫面管理OFF未實際隱藏前台TAB\n待確認\n畫面管理\n娛樂城區塊 OFF 後前台 TAB 與遊戲皆未隱藏，僅遊戲商管理全數停用遊戲才會生效\n測試環境：stage-arcade-violet.springkyle.online（後台）／前台\
+  \ Violet Arcade　｜　測試時間：2026-09-08\nDetail\n遊戲商\nATG / S PLUS / RSG / AMB（娛樂城類型區塊，皆已測試）\n遊戲名稱\nN/A（區塊層級問題，非單一遊戲）\n測試帳號\n\
+  ACAA00293（站長，操作畫面管理）／ACAA00243（前台測試帳號）\n問題詳述\n「畫面管理」頁面的「前台顯示」開關，功能定位應為控制該區塊（娛樂城 TAB）是否顯示於前台。實測將 S PLUS、ATG、RSG、AMB 四個娛樂城區塊的「前台顯示」全數切為\
+  \ OFF 後：\n[圖]\n圖1\n：後台「畫面管理」，S PLUS、ATG、RSG、AMB 四個娛樂城區塊的「前台顯示」皆已切為 OFF。\n前台大廳底下的遊戲區塊確實隱藏了\n（首頁不再列出這些區塊的遊戲卡片）\n[圖]\n圖2\n\
+  ：前台大廳，首頁區塊卡片已隱藏（符合預期），但底部導覽列的 TAB（全部／S PLUS／ATG／RSG）依然全數顯示。\n但底部導覽列的 TAB（全部／S PLUS／ATG／RSG）依然全數顯示，未被隱藏\n點擊任一 TAB（如 S PLUS），該廠商底下的遊戲依然完整列出、可正常進入遊玩\n\
+  ，與「前台顯示」OFF 的預期效果完全不符\n[圖]\n圖3\n：點擊「S PLUS」TAB，該廠商底下的遊戲（龍神、龍虎爭霸等）完整列出，與區塊已 OFF 的狀態不符。\n唯一能讓 TAB 消失的方法：\n改到「遊戲商管理」，把該廠商底下\n\
+  所有個別遊戲逐一停用\n後，前台 TAB 才會消失。\n[圖]\n圖4\n：「遊戲商管理／ATG」，該廠商 21 款遊戲全數手動停用（狀態顯示「停用中」）。\n[圖]\n圖5\n：對應的 \nquery-game-schedule\n API\
+  \ 回應，ATG 底下個別遊戲的 \ncurrentStatus\n 皆為 \n\"close\"\n，確認個別遊戲層級已停用。\n[圖]\n圖6\n：ATG 廠商所有遊戲停用後，前台底部導覽列的 ATG TAB 消失（僅剩「全部／S PLUS／RSG」）——證實\
+  \ TAB 隱藏是由「遊戲商管理」個別遊戲狀態決定，而非「畫面管理」的區塊開關。\n推論：\n前台實際判斷「TAB 要不要顯示」的邏輯，看起來完全沒有讀取「畫面管理」的區塊開關狀態，而是單純依「遊戲商管理」底下該廠商是否還有任一款啟用中的遊戲來決定。也就是說，「畫面管理」的前台顯示開關目前\n\
+  對 TAB 與遊戲列表毫無實際作用\n，只影響首頁區塊卡片的呈現。\n預期結果\n「畫面管理」的「前台顯示」開關 OFF 時，該區塊對應的前台 TAB 應一併隱藏，TAB 底下的遊戲也不應可透過直接點擊 TAB 存取，效果應與「遊戲商管理全數停用該廠商遊戲」等價或至少能達成同樣的隱藏目的，不應該只影響首頁卡片區塊的呈現而已。\n\
+  複製步驟\n登入後台，站台切換至 Arcade，進入「畫面管理」\n將某一娛樂城區塊（如 S PLUS）「前台顯示」切為 OFF\n開啟前台，確認首頁大廳底下該區塊卡片已隱藏（實測：已隱藏，符合預期）\n查看前台底部導覽列，確認該區塊對應的\
+  \ TAB 是否仍顯示（實測：仍顯示，未如預期隱藏）\n點擊該 TAB，確認底下遊戲是否仍可完整瀏覽與進入（實測：可以，完全不受「前台顯示」OFF 影響）\n改至「遊戲商管理」，將該廠商（如 ATG）底下全部遊戲逐一停用\n重新整理前台，確認該廠商\
+  \ TAB 是否消失（實測：消失，此方法才有效）\nAPI URL\nPOST https://stage-admin-srv.springkyle.online/api/v1/layout/query-frontend-layout-block\n\
+  （畫面管理，區塊開關狀態）\nPOST .../query-game-schedule\n（遊戲商管理，個別遊戲啟用狀態）\nResponse（節錄，畫面管理區塊狀態，enabled 已正確存為關閉）\n{\n \"frontendLayoutBlockId\"\
+  : 114,\n \"blockType\": \"casino\",\n \"name\": \"ＲＳＧ\",\n \"sortOrder\": 0,\n \"enabled\": 0,\n \"showBeforeLogin\": 1,\n\
+  \ \"showAfterLogin\": 1,\n \"gameCount\": 91\n}\nResponse（節錄，遊戲商管理個別遊戲狀態，ATG 廠商）\n{\n \"gameId\": 5515,\n \"gameType\":\
+  \ \"electronic\",\n \"gameName\": \"ATG_ATG_ELECTRONIC_DICE\",\n \"currentStatus\": \"close\",\n \"scheduleType\": null,\n\
+  \ \"scheduledTime\": null,\n \"newCategoryFeatured\": false,\n \"popularCategoryFeatured\": false\n}\n備註：\n畫面管理的區塊 \nenabled\n\
+  \ 欄位已確認正確存為 0（關閉），代表後台管理端存值正確；但前台實際呈現（TAB 與遊戲列表）完全未反映此欄位，改由「遊戲商管理」的個別遊戲 \ncurrentStatus\n 決定。懷疑前台實際消費的 API（大廳/TAB 列表）並未查詢或合併「畫面管理」的區塊開關狀態，僅依遊戲商管理的個別遊戲狀態判斷；亦可能是後端提供給前台的介面本身未串接此欄位。\n\
+  建議前端與後端共同確認前台大廳/TAB 列表 API 的資料來源與過濾邏輯\n，確認是否應該、以及在哪一層併入「畫面管理」區塊開關的判斷，本次尚未攔截到前台專用 API 的原始回應，無法進一步鎖定屬前端或後端問題。\nBug 單｜整理自 2026-09-08\
+  \ 測試紀錄"

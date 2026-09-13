@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/artifact/test-design-report.schema.json",
+  "title": "TestDesignReport (payload)",
+  "type": "object",
+  "required": ["mode", "testcase_draft_artifact_id", "coverage_matrix", "uncovered_with_reason", "technique_summary", "self_check", "assumptions", "duplicate_check"],
+  "properties": {
+    "mode": {"type": "string", "enum": ["spec", "change", "manual"]},
+    "testcase_draft_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "coverage_matrix": {"type": "array", "items": {"type": "object", "required": ["requirement_id", "draft_ids"], "properties": {"requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "acceptance_criteria": {"type": "array", "items": {"type": "object", "required": ["ac_id", "draft_ids"], "properties": {"ac_id": {"$ref": "../common/defs.schema.json#/$defs/AcId"}, "draft_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/TestCaseDraftId"}}}}}, "draft_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/TestCaseDraftId"}}}}},
+    "uncovered_with_reason": {"type": "array", "items": {"type": "object", "required": ["requirement_id", "reason"], "properties": {"requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"}, "reason": {"type": "string"}}}},
+    "technique_summary": {"type": "array", "items": {"type": "object", "required": ["technique", "count"], "properties": {"technique": {"$ref": "../common/defs.schema.json#/$defs/DesignTechnique"}, "count": {"type": "integer"}, "notes": {"type": "string"}}}},
+    "self_check": {"type": "object", "required": ["requirements_covered", "acceptance_criteria_covered", "negative_considered", "boundary_considered", "expected_results_traceable", "no_unsupported_assumptions", "duplicate_detection_completed"], "additionalProperties": {"type": "boolean"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}, "description": "應為空；非空時每筆須在對應 TC 的 assumptions 出現"},
+    "duplicate_check": {"type": "object", "required": ["against_registry", "findings"], "properties": {"against_registry": {"type": "boolean"}, "findings": {"type": "array", "items": {"type": "object", "properties": {"draft_id": {"type": "string"}, "similar_to": {"type": "string"}, "resolution": {"type": "string"}}}}}},
+    "mapping_confidence": {"type": "array", "description": "mode=manual", "items": {"type": "object", "properties": {"draft_id": {"type": "string"}, "requirement_id": {"type": "string"}, "confidence": {"type": "string", "enum": ["high", "medium", "low"]}}}},
+    "revision_of_issues": {"type": "array", "description": "iteration>0 時，逐條回應 TestValidationReport.issues", "items": {"type": "object", "required": ["issue_index", "action"], "properties": {"issue_index": {"type": "integer"}, "action": {"type": "string"}, "draft_id": {"type": "string"}}}}
+  },
+  "additionalProperties": false
+}
