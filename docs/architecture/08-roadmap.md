@@ -62,6 +62,8 @@ DoD：MVP-3 / 4 / 5 跑通；`qaos trace` 可從任一 Bug 回溯到 SpecVersion
 ## Phase 5 — Automation
 CI 結果 ingestion（executions/ 自動寫入）、`EXECUTE_TEST` 解鎖給新 Agent（Test Executor）、automation eligibility 自動評估、stability 由執行歷史計算、TestRail/Xray/Jira 匯出。
 
+> 註：工程 pytest／GitLab CI（`tests/`、`admin-ui/backend/tests/`、`.gitlab-ci.yml`）屬開發衛生，與 MVP-5 的產品自動化（`EXECUTE_TEST`）分開，不在此路線圖計。
+
 ## Phase 6 — Advanced Collaboration
 Agent 並行（Test Designer 依 functional area 分片）、Supervisor 自主 re-planning、Agent Teams。前提：Phase 2–5 的 audit log 顯示 override 率 < 某門檻（建議 10%）。
 

@@ -28,6 +28,8 @@ admin-ui/
 ├─ config/stages.yaml  pipeline 階段大綱：events / run.yaml / final 檔如何對應到階段、stall 門檻
 ├─ design-system/      ui-ux-pro-max 產生的設計系統（MASTER.md 下半「採用版」為準：slate 基底、藍色互動色、語意色只給狀態、JetBrains Mono、最小 12px、Phosphor 圖示）
 ├─ hooks/              Claude Code hook 腳本：log_event（記錄事件）、handoff_relay（交接回 QA session）、guard_qaos（守門）、PROPOSED-settings.local.json（待確認的設定）
+├─ scripts/            write_ci_status.py（工程 CI 結果 → data/ci-status.json）
+├─ backend/tests/      工程測試（qaos_exec 預檢、handoff_relay、guard_qaos、Pipeline 主狀態）
 ├─ fixtures/           假事件產生器（make_demo_events.py）
 ├─ data/               SQLite 與快取（git 忽略）
 └─ PLAN.md             第 0 步規劃
@@ -71,7 +73,7 @@ admin-ui/
     - **依建議套用**：有 shadow-test 文件時，平台從文件抓「採用哪幾條」（`tickets._recommendation`，只認三種寫法：`--per-item TC-X:approve|reject` 指令、「新增 N 條（TC-…、nnn）」、「保留／採用 TC-…」），橫幅列出建議採用的 TC、引用文件原句，按「依建議套用」＝整體核准＋其餘逐條退回（理由「交叉比對不採用（依 shadow-test 文件）」）；每條 TC 標「建議採用／建議不採用」。抓不到清單時橫幅說明原因，請自己看文件。**前提是 QA session 在核准前就先做交叉比對並寫好文件**（含「最終處置」那行指令）；文件在核准後才寫的話，平台只會看到「沒有比對紀錄」的警告。
   - **M5b 送出到 QAOS**（2026-09-18 Oscar 放寬邊界 1 後啟用）：指令框的「送出到 QAOS」由平台在專案根目錄執行 `bin/qaos …`（`backend/services/qaos_exec.py`）。規則：只接受 tickets.py 組出、以 `bin/qaos` 開頭的指令；同時只跑一條、60 秒逾時；執行前預檢（APR 必須 PENDING 且 run 為 WAITING_HUMAN；CLR／Bug 動作必須是狀態機允許的轉移；必填齊全），不符回 409、不重試。成功後 append 一筆到 `.warroom/handoff.jsonl`，並把結果存 `ticket_executions`；釐清／Bug 動作後順帶跑 `bin/qaos clarification list` / `bin/qaos bug index` 重建 index.md。確認框會列出這次 QAOS 會寫到的路徑。「複製」與「已手動執行」保留為備援。
     - QAOS 會寫的路徑：核准 → `approvals/<APR>.yaml`、`runs/<RUN>/run.yaml`＋`audit.log`、`runs/_audit.log`；啟用 TC 另寫 `testcases/versions/<TC>/v<N>.yaml`、`testcases/registry/<TC>.yaml`；APPLY_CHANGE 寫 `runs/<RUN>/entities/change-impact.yaml`；OPEN_BUG 新建 `bugs/<p>/<a>/BUG-*.yaml`＋`_counters.yaml`；推進後可能新建 `approvals/APR-*.yaml` 或 `artifacts/summaries/`。**不寫 `testcases/final/`**。釐清 → `clarifications/<p>/<a>/<CLR>.yaml`＋`.md`；answer 另更新需求文件與 PENDING 核准單的 `.md/.html`。Bug → `bugs/<p>/<a>/<BUG>.yaml`、`runs/_audit.log`；close 新建一張 `approvals/APR-*.yaml`。
-    - 交接給 QA session：`hooks/handoff_relay.sh`（Stop：run 仍 RUNNING 且 current task READY 時回 `decision: block` 讓 QA session 接續，並 append `consumed`；UserPromptSubmit：把待接續的交接印成上下文）與 `hooks/guard_qaos.sh`（PreToolUse Bash：agent 要跑 approve / clarification ask|answer|apply|withdraw / bug resolve|verify|close|transition 時回 `permissionDecision: ask`，跳權限確認讓 Oscar 按允許；口頭交辦與平台送出兩個入口都保留，但 agent 不能無人看管地自行核准）。只認 `session_id` 相符的交接，開發 session 不受影響。建議的設定在 `hooks/PROPOSED-settings.local.json`，**經 Oscar 確認後才寫進 `.claude/settings.local.json`**。
+    - 交接給 QA session：`hooks/handoff_relay.sh`（Stop：run 仍 RUNNING 且 current task READY 時回 `decision: block` 讓 QA session 接續，只 append 這一筆 `consumed(resumed)`，其餘 pending 不動（run 已結案的 notify_only 不會被吞）；UserPromptSubmit：把待接續的交接印成上下文，notify_only 顯示過即標 `consumed(notified)`）與 `hooks/guard_qaos.sh`（PreToolUse Bash：agent 要跑 approve / clarification ask|answer|apply|withdraw / bug resolve|verify|close|transition 時回 `permissionDecision: ask`，跳權限確認讓 Oscar 按允許；口頭交辦與平台送出兩個入口都保留，但 agent 不能無人看管地自行核准）。只認 `session_id` 相符的交接，開發 session 不受影響。建議的設定在 `hooks/PROPOSED-settings.local.json`，**經 Oscar 確認後才寫進 `.claude/settings.local.json`**。
     - 已知限制：QA session 已停下等你時，平台核准後不會立刻被喚醒；要等它下一回合結束（Stop）或你在 QA session 送出任何訊息（UserPromptSubmit）。`GET /api/tickets/handoff/recent` 可看交接是否已被消費。
 - **測試執行（M7，TestRail 式）**：側欄「工作 › 測試執行」，取代原本的自動化測試 stub（`/automation` 轉到 `/testruns`）。
   - **建立回合**：名稱／環境／build／備註，從產出模組（列出 final JSON 的 TC，可搜尋、全選）或資料夾挑 TC；建立時把 TC 的版本、標題、前置、步驟、預期**快照**進回合，之後 final 重新匯出不影響這輪。找不到的 TC 會略過並提示。
@@ -81,6 +83,12 @@ admin-ui/
   - **NG 送 QAOS 開 bug（M7b，待做）**：對 Fail 的 TC 依 spec-to-bug 必填（spec、TC、實際行為、至少一份證據、環境／build）依序執行 `bin/qaos evidence add` → `execution import --result fail` → `run new spec-to-bug`，之後 Bug Analyst／Validator 在 QA session 跑，OPEN_BUG 核准單出現在「單據 › 核准」。回合設定 `import_all` 預留「Pass 也匯進 QAOS executions」。
 - 自動化測試（M4 stub，API 契約仍在 `/api/automation/*`）：頁面可開，顯示預留的資料表（`test_runs` / `test_results`）與 API 契約；`GET /api/automation/runs` 回空清單，其餘寫入類端點回 501。契約與 M7 流程寫在 `backend/routers/automation.py` 開頭註解。
 - API：`curl http://127.0.0.1:8780/api/health`；完整文件 http://127.0.0.1:8780/api/docs
+
+## 工程測試（程式有沒有壞，不是產品 TC）
+
+- 改 Runtime（`tools/qaos`）→ 測試在根目錄 `tests/`：`python3 -m pytest tests/ -q`。
+- 改交握／`qaos_exec`／hooks／Pipeline 狀態合成 → 測試在 `admin-ui/backend/tests/`（function scope 假專案根，hook 用 subprocess 跑真腳本）：`admin-ui/.venv/bin/python -m pytest admin-ui/backend/tests -q`。同一次改動就補測。
+- 純 CSS／文案不強制。CI：`.gitlab-ci.yml` 兩個 job（`runtime-pytest`、`admin-ui-pytest`），merge request 與 push main 觸發。控制台「監控 › 工程 CI」讀 `admin-ui/data/ci-status.json`（本機 `admin-ui/.venv/bin/python admin-ui/scripts/write_ci_status.py --run` 產生；範例 `admin-ui/config/ci-status.example.json`；環境變數 `GITLAB_PIPELINE_URL` 給連結）。盤點與缺口見 `docs/decisions/TEST-AUTOMATION-COVERAGE-AUDIT.md`。
 
 ## Claude Code hook（Agent 狀態來源）
 

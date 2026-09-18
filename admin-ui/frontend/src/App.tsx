@@ -11,6 +11,7 @@ import { OutputsPage } from "@/pages/OutputsPage";
 import { ReportsPage } from "@/pages/ReportsPage";
 import { TestRunsPage } from "@/pages/TestRunsPage";
 import { TestRunPage } from "@/pages/testruns/TestRunPage";
+import { CiPage } from "@/pages/CiPage";
 import { ApprovalsPage } from "@/pages/tickets/ApprovalsPage";
 import { ClarificationsPage } from "@/pages/tickets/ClarificationsPage";
 import { BugsPage } from "@/pages/tickets/BugsPage";
@@ -48,6 +49,7 @@ export function App() {
               <Route path="/tickets/approvals" element={<ApprovalsPage />} />
               <Route path="/tickets/clarifications" element={<ClarificationsPage />} />
               <Route path="/tickets/bugs" element={<BugsPage />} />
+              <Route path="/ci" element={<CiPage />} />
               <Route path="/testruns" element={<TestRunsPage />} />
               <Route path="/testruns/:id" element={<TestRunPage />} />
               <Route path="/automation" element={<Navigate to="/testruns" replace />} />

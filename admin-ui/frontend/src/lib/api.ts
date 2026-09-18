@@ -271,3 +271,8 @@ export interface TestRun {
   report_id: number | null; started_at: string | null; ended_at: string | null; created_at: string; updated_at: string; counts: RunCounts; results?: TestResult[]; missing?: string[];
 }
 export interface TestRunMeta { results: TestResultKind[]; evidence_types: string[]; run_status: string[]; max_evidence_bytes: number }
+
+// ---- 工程 CI（讀 admin-ui/data/ci-status.json）----
+export interface CiJob { name: string; status: "pass" | "fail" | "running" | "skipped"; tests: number; failures: number; errors: number; duration_s: number; log: string }
+export interface CiStatus { status: "pass" | "fail" | "running"; sha: string; branch: string; updated_at: string; web_url: string; source: "local" | "gitlab"; jobs: CiJob[] }
+export interface CiStatusResp { available: boolean; file: string; example?: string; error?: string; web_url?: string; remote?: string; status: CiStatus | null }

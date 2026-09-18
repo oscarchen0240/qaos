@@ -10,6 +10,7 @@ const Icon = {
   approvals: <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 12l4 4L19 6" /></svg>,
   clr: <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01" /></svg>,
   bug: <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 8V6a3 3 0 0 1 6 0v2" /><rect x="7" y="8" width="10" height="12" rx="5" /><path d="M3 13h4M17 13h4M4 19l3-2M20 19l-3-2M4 8l3 2M20 8l-3 2" /></svg>,
+  ci: <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16M4 12h16M4 17h10" /><circle cx="18" cy="17" r="2" /></svg>,
   automation: <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="4" /></svg>,
 };
 
@@ -37,6 +38,7 @@ export function Sidebar({ counts, backendOk }: Props) {
         {item("/pipeline", "Pipeline", Icon.pipeline, counts?.pipeline.active_sessions, (counts?.pipeline.active_sessions ?? 0) > 0, "有 session 進行中")}
         {item("/outputs", "產出", Icon.outputs, counts?.outputs.total, (counts?.outputs.unread ?? 0) > 0, `${counts?.outputs.unread} 個未讀`)}
         <OutputTree />
+        {item("/ci", "工程 CI", Icon.ci)}
       </div>
       <div className="nav-group">
         <div className="nav-group-title">單據</div>

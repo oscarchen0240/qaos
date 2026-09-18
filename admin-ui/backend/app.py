@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import db
 from .config import FRONTEND_DIST
-from .routers import todos, nav, outputs, reports, pipeline, folders, tickets, automation, testruns
+from .routers import todos, nav, outputs, reports, pipeline, folders, tickets, automation, testruns, ci
 
 app = FastAPI(title="QAOS Admin UI", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
@@ -45,6 +45,7 @@ app.include_router(folders.router)
 app.include_router(tickets.router)
 app.include_router(automation.router)
 app.include_router(testruns.router)
+app.include_router(ci.router)
 
 
 @app.get("/api/health")
