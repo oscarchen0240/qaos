@@ -1,0 +1,756 @@
+artifact_id: ART-TCD-01M2RK006KP2GY3N457AB9NV0H
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-009
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T21:05:08Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2G5ANR2EPARZ77K8VG61CHV
+references:
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-001
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-002
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-003
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-004
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-005
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-006
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-007
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-008
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-009
+- entity_type: Artifact
+  id: ART-RM-01M2G5ANR2EPARZ77K8VG61CHV
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-UPDATEPACK-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2RK006JF1DM4C00TW07EZBK
+    title: 已啟用三種幣別（含法幣 TWD 頁籤）時，展開清單恰好列出這三種幣別
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-001
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0011
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的線上站台，於『帳務管理 > 鏈上錢包管理』核對該站台目前狀態為啟用的幣種恰為三種（含法幣頁籤幣別，若目前不足三種則先啟用至三種）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『會員與加盟商 > 會員列表』，任選一名該站台既有會員，展開其『帳戶餘額（主錢包）』欄
+    - n: 2
+      action: 檢視展開後列出的幣別清單
+    expected_result: 展開清單恰好列出鏈上錢包管理中目前狀態為啟用的三種幣別，不多也不少
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 幣別清單來源 | 依「帳務管理 > 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤的幣別）；狀態為關閉或禁用的幣種不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能不另行設定幣別清單
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RK006J0HK4QPSJXHRYK1T8
+    title: 於鏈上錢包管理將某幣別改為禁用後，展開清單即時反映、不再列出該幣別
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-001
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0012
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 承上一條 TC 的站台設定（已啟用三種幣別），選定其中一名會員供比對
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開該會員的餘額欄，記錄目前列出的幣別清單
+    - n: 2
+      action: 前往『帳務管理 > 鏈上錢包管理』，將清單中其中一種非核心貨幣的幣別改為禁用並儲存
+    - n: 3
+      action: 回到會員列表，重新展開同一會員的餘額欄（可重新查詢或重新進入頁面）
+    - n: 4
+      action: 測試完成後，回『帳務管理 > 鏈上錢包管理』將步驟2禁用的幣別重新設回啟用並儲存，復原站台設定，避免影響同一站台的其他TC前提（該站台已啟用三種幣別）
+    expected_result: 重新展開後的清單不再列出剛被禁用的幣別，僅剩餘下已啟用的幣種，清單內容即時反映鏈上錢包管理目前的啟用狀態
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 幣別清單來源 | 依「帳務管理 > 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤的幣別）；狀態為關閉或禁用的幣種不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能不另行設定幣別清單
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 'AC-0012 驗證的是清單會『即時反映』狀態變化，而非清單建立當下的靜態快照；步驟刻意在展開一次記錄基準後才變更鏈上錢包管理設定，再重新展開比對差異，確保驗證到的是連動更新而非巧合的初始狀態
+
+
+      【交叉比對前修正】獨立Validator指出原設計缺少復原步驟，會把站台從『已啟用三種幣別』永久變更為兩種，影響依賴同一前提的其他TC（如TC1）。已補上收尾復原步驟。'
+  - draft_id: TC-DRAFT-01M2RK006JQVXNJ74BV2SV1JAD
+    title: 啟用幣別數為 1 時不顯示展開箭頭，達到 2 種以上時顯示，兩者於會員列表對照
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-002
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0021
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個僅啟用單一幣別的既有機台場館（TWD 唯一頁籤）作為『1 種幣別』對照組
+    - 另選定一個已啟用兩種以上幣別的既有線上站台作為『2 種以上』對照組
+    test_data: []
+    steps:
+    - n: 1
+      action: 切換至機台場館，進入『會員與加盟商 > 會員列表』，檢視任一機台帳號的『帳戶餘額（主錢包）』欄，確認是否有展開箭頭
+    - n: 2
+      action: 切換至已啟用兩種以上幣別的線上站台，檢視任一會員的『帳戶餘額（主錢包）』欄，確認是否有展開箭頭
+    expected_result: 步驟1（僅啟用 1 種幣別）欄位不出現展開箭頭，維持單行呈現；步驟2（已啟用 2 種以上幣別）欄位出現展開箭頭——驗證『已啟用幣種超過一種』這個門檻恰好落在 1 與 2 之間
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 展開箭頭顯示條件 | 已啟用幣種超過一種時才顯示展開箭頭；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現
+    assumptions:
+    - text: 機台場館（TWD唯一頁籤、僅啟用單一幣別）作為『1種幣別』對照組，此業務規則本身直接引自spec『機台場館的情形』小節，非自行推測；但目前測試環境中是否已存在一個可操作的機台場館測試站台，需環境負責人協助確認。若環境當下無此類站台，可暫以站台列表新建一個機台類型場館站台替代，或標記本案待執行
+      requirement_id: REQ-UPDATEPACK-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: '『超過一種』是一個明確的數量門檻（1 對 2），本案以兩個既有站台分別代表門檻兩側的真實案例做對照，而非在單一站台上臨時切換啟用幣種數（避免混入切換過程中的其他副作用），屬邊界值分析而非一般案例；機台場館僅單一幣別的事實直接引自
+      spec『機台場館的情形』小節，非自行推測
+
+
+      【交叉比對前修正】獨立Validator第一輪指出本TC依賴『既有機台場館測試站台』這個環境事實，卻未像TC1/TC5那樣附加應變條款或用assumptions標註，可能導致環境無此類站台時無法執行。已補上assumptions揭露此環境依賴。'
+  - draft_id: TC-DRAFT-01M2RK006JKYVMG93A3NXJ0889
+    title: 已啟用兩種以上幣別時，側邊簡易資料面板與會員詳細資料頁的三個餘額類欄位皆顯示展開箭頭
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-002
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0022
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別的既有線上站台，並選定該站台下一名既有會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員列表點開該會員列，開啟『側邊簡易資料面板』，檢視〈帳戶資訊〉的帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、可提領餘額三欄
+    - n: 2
+      action: 改開啟該會員的『會員詳細資料頁』，檢視〈帳務資訊〉同樣的三個欄位
+    expected_result: 側邊簡易資料面板與會員詳細資料頁的三個餘額類欄位（帳戶餘額、提領所需有效投注額、可提領餘額）皆顯示展開箭頭
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 展開箭頭顯示條件 | 已啟用幣種超過一種時才顯示展開箭頭；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 【交叉比對前修正】獨立Validator指出原quote引用『適用欄位』表格列，僅列出欄位名稱、未陳述『展開箭頭顯示條件』這條規則本身，追溯力偏弱。已改引『顯示規則』表中直接支持本斷言的那段文字，與AC-0021所引用的段落一致（同一條規則，適用於不同欄位/位置的展開行為）
+  - draft_id: TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ
+    title: 收合狀態的帳戶餘額欄顯示的即為核心貨幣錢包的原始餘額
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-003
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0031
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別的既有線上站台（核心貨幣為 USDT），並選定一名同時持有核心貨幣與至少一種非核心貨幣餘額的既有會員；若當前環境找不到現成案例，需先於『帳務管理 > 鏈上錢包管理』確認幣別已啟用，並尋找已有跨幣別餘額紀錄的會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 先展開該會員的帳戶餘額欄，記錄核心貨幣（USDT）那一列顯示的金額
+    - n: 2
+      action: 收合該欄位，檢視收合狀態顯示的數值
+    expected_result: 收合狀態顯示的數值，與展開後核心貨幣（USDT）那一列的金額完全相同
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以展開後核心貨幣列的金額作為比對基準，避免另外自行計算匯率或加總（那正是本規則要求不做的事），驗證方式本身不能預設任何換算或加總邏輯
+  - draft_id: TC-DRAFT-01M2RK006JF5PBZF3P85CY4JFY
+    title: 收合狀態顯示的數值不是各幣別加總、也不是匯率換算後的結果
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-003
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0031
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一名核心貨幣（USDT）餘額與另一種已啟用幣別餘額，兩者數值明顯不同且皆非 0 的既有會員（例如核心貨幣餘額與另一幣別餘額至少相差一個數量級，以利肉眼判斷收合值不是兩者加總或換算結果）
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開該會員的帳戶餘額欄，逐列記錄每個已啟用幣別各自的金額
+    - n: 2
+      action: 手動計算『各幣別金額加總』作為對照值 A
+    - n: 3
+      action: 收合該欄位，記錄收合狀態顯示的數值
+    - n: 4
+      action: 比對收合值分別與步驟1的核心貨幣列金額、步驟2的對照值 A 是否相符
+    expected_result: 收合狀態顯示的數值等於核心貨幣錢包的原始金額，且明顯不等於各幣別加總後的對照值 A（除非巧合下非核心貨幣餘額恰為 0，此情形應改選其他會員以確保比對有效）；收合值不做任何匯率換算
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-UPDATEPACK-003 為 high risk，本案為其 non-happy 覆蓋：刻意驗證『收合值不是加總、不是換算』這個負面事實，比對基準為展開後各列金額的手動加總（對照值 A），並要求測試資料中核心貨幣與非核心貨幣金額差異明顯，避免因數值巧合（例如非核心貨幣恰為
+      0，或加總後恰與核心貨幣金額相同）而無法區分兩種結果，讓比對真正具有鑑別力
+  - draft_id: TC-DRAFT-01M2RK006JN5P1P8H1E5YKAH1N
+    title: 展開已啟用三種幣別的餘額欄，核心貨幣列在第一列，其餘依鏈上錢包管理幣種順序接續
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-004
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0041
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用三種幣別的既有線上站台，於『帳務管理 > 鏈上錢包管理』記錄目前的幣種排列順序
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開該站台任一會員的帳戶餘額欄
+    - n: 2
+      action: 由上到下記錄展開後每一列的幣種代碼與金額順序
+    expected_result: 第一列為核心貨幣，其餘兩種幣別依鏈上錢包管理設定的順序接續排列；每一列皆同時顯示幣種代碼與金額
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 展開後的排列順序 | 核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每列顯示「幣種代碼＋金額」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RK006JR00Q32C4BASR5Y6J
+    title: 展開餘額欄時，餘額為 0 的已啟用幣別仍列出並顯示 0.00
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-005
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0051
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一名在某個已啟用幣別的餘額恰為 0（該幣別從未有入金或已全數提領）的既有會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開該會員的帳戶餘額欄
+    - n: 2
+      action: 檢視餘額為 0 的那個幣別是否出現在清單中，以及顯示的數值格式
+    expected_result: 餘額為 0 的幣別仍出現在展開清單中，顯示為『0.00』，不因無餘額而被隱藏或省略
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 金額為 0 的幣別 | 仍列出並顯示 0.00，不因無餘額而隱藏
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 0 是金額欄位的自然邊界值，spec 特別點名『不因無餘額而隱藏』代表這是容易被誤實作（過濾掉 0 值）的邊界情形，屬邊界值分析而非一般案例
+  - draft_id: TC-DRAFT-01M2RK006J3MZK9AKJ3988Q5V4
+    title: 換頁或重新查詢後，已展開的餘額欄回到收合預設
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-006
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0061
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別的既有線上站台，且會員列表查詢結果至少涵蓋兩頁
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員列表展開任一會員（非第一頁最後一筆以外）的帳戶餘額欄，確認已展開
+    - n: 2
+      action: 切換至下一頁，再切換回原頁面（或直接重新送出查詢）
+    - n: 3
+      action: 檢視原本展開的那一列，帳戶餘額欄目前的展開／收合狀態
+    expected_result: 換頁或重新查詢後，該欄回到收合預設狀態，不記得先前的展開操作
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 展開狀態的保留 | 逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RK006J2J3WPKZZ3PCN7R3V
+    title: 離開會員列表頁後重新進入，先前展開的餘額欄回到收合預設
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-006
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0062
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別的既有線上站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員列表展開任一會員的帳戶餘額欄，確認已展開
+    - n: 2
+      action: 離開會員列表頁（切換至其他選單頁面），再重新進入『會員與加盟商 > 會員列表』
+    - n: 3
+      action: 檢視原本展開的那一列，帳戶餘額欄目前的展開／收合狀態
+    expected_result: 重新進入頁面後，該欄回到收合預設狀態，不記得先前的展開狀態
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 展開狀態的保留 | 逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RK006JV3KC6S160HS839EP
+    title: 帳戶餘額篩選器僅提供單一 min~max 範圍輸入，不提供依幣別分別篩選的選項
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-007
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0071
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別的既有線上站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入會員列表，檢視篩選器區域的『帳戶餘額（主錢包）』相關欄位
+    - n: 2
+      action: 確認是否存在依幣別分別設定 min~max 的選項，或任何幣別選擇下拉選單
+    expected_result: 篩選器僅提供單一組 min～max 範圍輸入（對應核心貨幣餘額），不存在依幣別分別篩選的選項，也不提供幣別選擇下拉選單——即使站台已啟用多種幣別
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 不變更的範圍：2.1.2 篩選器的「帳戶餘額（主錢包）min ～ max」與列表底部「總計」列維持現行行為——皆以收合時的單一數值（核心貨幣錢包餘額）為準，不依幣別拆分，也不提供幣別選擇
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RK006JA6P8XKKGM0SHW7C4
+    title: 列表底部總計列以核心貨幣餘額加總計算，不依幣別拆分
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-007
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0072
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個已啟用兩種以上幣別、查詢結果會回傳多筆會員的既有線上站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入會員列表並查詢，逐列記錄每位會員收合狀態的帳戶餘額（核心貨幣）數值
+    - n: 2
+      action: 手動加總各列數值，與列表底部『總計』列顯示的數值比對
+    - n: 3
+      action: 確認總計列旁是否存在幣別選擇或拆分顯示的選項
+    expected_result: 總計列數值等於各列收合狀態核心貨幣餘額的加總；總計不依幣別拆分顯示，也不提供幣別選擇
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示/顯示規則
+      quote: 不變更的範圍：2.1.2 篩選器的「帳戶餘額（主錢包）min ～ max」與列表底部「總計」列維持現行行為——皆以收合時的單一數值（核心貨幣錢包餘額）為準，不依幣別拆分，也不提供幣別選擇
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 【交叉比對前修正】獨立Validator指出本TC與TC11（同為『驗證某選項/功能不存在』的性質）對negative標籤的判斷不一致，TC11標了negative本TC卻沒有。統一準則：驗證『不提供依幣別拆分/選擇』這類『某功能不存在』的斷言，比照TC11一併標記negative
+  - draft_id: TC-DRAFT-01M2RK006JJTRZZAW45GT55KVR
+    title: 對會員執行一筆人工存入後，其存款次數與存款金額皆不變動
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-008
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0081
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一名既有會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員列表查詢該會員，記錄其目前的『存款次數』與『存款金額』兩欄數值作為基準
+    - n: 2
+      action: 進入該會員的『會員詳細資料頁』〈帳務資訊〉區塊，點擊『人工存入』按鈕，於滑出面板填寫金額（幣種欄固定 USDT，無法切換）、稽核、前台備注、後台備注等必填欄位後點擊『儲存』
+    - n: 3
+      action: 回到會員列表重新查詢（或重新整理）該會員，記錄其『存款次數』與『存款金額』兩欄目前數值
+    expected_result: 步驟3 記錄的存款次數與存款金額，與步驟1 的基準值完全相同，這筆人工存入不計入這兩個欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §二、存款／提款累計欄位
+      quote: 會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金，一律不含人工入金與人工出金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-UPDATEPACK-008 為 high risk，本案即其 non-happy 覆蓋（negative）；spec 特別註明『手冊原文曾寫含人工入金/出金，該敘述已作廢』，代表這是已知容易被誤實作成『計入』的既有勘誤，故採
+      error_guessing 技巧刻意針對此已知誤區設計案例；驗證方式採操作前後同一會員的基準值比對，不需另外找對照組會員
+  - draft_id: TC-DRAFT-01M2RK006JRP933H3H8Q692S4G
+    title: 對會員執行一筆人工提出後，其提款次數與提款金額皆不變動
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-008
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0082
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一名帳戶餘額足以扣除本次人工提出金額的既有會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員列表查詢該會員，記錄其目前的『提款次數』與『提款金額』兩欄數值作為基準
+    - n: 2
+      action: 進入該會員的『會員詳細資料頁』〈帳務資訊〉區塊，點擊『人工提出』按鈕，於滑出面板填寫金額、稽核、前台備注、後台備注等必填欄位後點擊『儲存』
+    - n: 3
+      action: 回到會員列表重新查詢（或重新整理）該會員，記錄其『提款次數』與『提款金額』兩欄目前數值
+    expected_result: 步驟3 記錄的提款次數與提款金額，與步驟1 的基準值完全相同，這筆人工提出不計入這兩個欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §二、存款／提款累計欄位
+      quote: 會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金，一律不含人工入金與人工出金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 與 AC-0081 對稱，同樣是 spec 已知勘誤（原文曾寫『含』）的既有誤區，採 error_guessing 技巧；本案與 AC-0081 分屬存款／提款兩個獨立欄位組，屬不同斷言，不併入同一條
+      TC
+  - draft_id: TC-DRAFT-01M2RK006J1HN347SR6VCCJ199
+    title: 注單查詢頁的查詢結果中，線上會員的注單場次編號欄一律顯示「—」
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-009
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0091
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個查詢結果會包含線上會員注單的既有站台與查詢區間
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 注單查詢』，設定查詢區間與篩選條件使結果包含線上會員的注單，查詢
+    - n: 2
+      action: 檢視結果列表中線上會員注單列的『場次編號』欄位
+    expected_result: 線上會員注單的場次編號欄一律顯示「—」，不留空白、不顯示 0、也不顯示 null 或空字串
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §五、交易紀錄的兩項欄位規則
+      quote: 與線上會員共用的頁面（交易紀錄查詢、注單查詢）的「場次編號」欄位，線上帳號的資料一律顯示「—」，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: spec 明確列出三種必須排除的錯誤呈現方式（留空、顯示 0、顯示 null），故 expected_result 逐一斷言排除這三種情形，而非只斷言『顯示—』一個正面陳述，以避免驗證力道不足
+  - draft_id: TC-DRAFT-01M2RK006J5TP7GV8Z2W6WNBVZ
+    title: 注單查詢頁的查詢結果中，機台帳號的注單場次編號欄顯示其所屬場次編號
+    product: ba-admin
+    functional_area: UPDATEPACK
+    requirement_ids:
+    - REQ-UPDATEPACK-009
+    acceptance_criteria_ids:
+    - AC-UPDATEPACK-0092
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台既有機台帳號，其至少有一筆注單記錄已知所屬的場次編號（可先於『各式報表 > 交易紀錄查詢』或機台交易紀錄核對該筆交易所屬場次編號，作為比對基準）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 注單查詢』，篩選出該機台帳號的注單記錄，查詢
+    - n: 2
+      action: 檢視該筆注單列的『場次編號』欄位，與前置作業核對的場次編號比對
+    expected_result: 機台帳號的注單場次編號欄顯示該筆注單實際所屬的場次編號，且與前置作業由交易紀錄查詢核對的場次編號一致
+    expected_result_spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §五、交易紀錄的兩項欄位規則
+      quote: 與線上會員共用的頁面（交易紀錄查詢、注單查詢）的「場次編號」欄位，線上帳號的資料一律顯示「—」，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 本條為 spec 附註中特別點出『從未被任何 spec 測過的注單查詢頁』，故比對基準刻意取自另一個已驗證過的頁面（交易紀錄查詢）之場次編號，確保注單查詢頁與交易紀錄查詢頁對同一筆交易呈現一致的場次編號，而非各自孤立驗證
+history:
+- at: '2026-09-17T21:05:13Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-009

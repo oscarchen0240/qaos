@@ -1,0 +1,77 @@
+artifact_id: ART-TVR-01M2QW5WQB1FGWCP0FP600W9VB
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T14:26:24Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2QVAHBN3H7H5ZMA8DJJGR0X
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2QVAHBN3H7H5ZMA8DJJGR0X
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2QVAHBN3H7H5ZMA8DJJGR0X
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2QVAHBKMNQJ86FVMGVCV7QG
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: CLR-SITELIST-011的provenance明顯弱於同資料夾其他9張CLR：同一帳號在11秒內提出/回答/套用，無asked_to/asked_at欄位，無ASKED中繼狀態，無可獨立核查的第三方來源。spec.md全文「鏈上錢包」零命中，此概念完全由RequirementModel/CLR自行注入。
+    explanation: TC把「鏈上錢包管理與核心貨幣連動無關」當作既定事實寫進expected_result、assumptions留空，但這個判斷的稽核強度不足以支撐這種確定性層級。
+    recommended_change: 把此依賴移回assumptions並標記needs_human_confirmation:true，不當作確定規則。
+  - testcase_id: TC-DRAFT-01M2QVAHBKMNQJ86FVMGVCV7QG
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: null
+    spec_reference: null
+    evidence: self_check.no_unsupported_assumptions=true，但expected_result內嵌了未經獨立驗證的斷言且assumptions為空。
+    explanation: 與self_check宣稱的狀態不符。
+    recommended_change: 同上，修正後self_check即可如實反映。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2QVAHBKMNQJ86FVMGVCV7QG
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: AC-SITELIST-0023的核心貨幣連動斷言只驗證機台→TWD路徑，線上→USDT路徑沒有對稱的「建立完成後持續顯示」驗證。
+    explanation: risk不算高，範圍選擇有一定合理性。
+    recommended_change: 可選擇性補一個對稱驗證，或在design_rationale說明理由。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 64
+    uncovered_accepted:
+    - AC-SITELIST-0072
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T14:26:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

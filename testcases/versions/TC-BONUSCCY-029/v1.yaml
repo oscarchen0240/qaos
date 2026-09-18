@@ -1,0 +1,91 @@
+title: 核心貨幣對應幣別已停用時，出金操作應被阻擋
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-004
+acceptance_criteria_ids:
+- AC-BONUSCCY-022
+spec_id: SPEC-BONUSCCY-001
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用
+- 必須使用機台站台（非線上站台）——出金為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API
+test_data: []
+steps:
+- n: 1
+  action: 於機台版前台按 CASHOUT 鍵，觸發 req-cashout（建立出金 PENDING，核可金額為全部餘額）
+- n: 2
+  action: 接著觸發 end-cashout（確認出金，帶入 TXID）
+- n: 3
+  action: 觀察兩階段的回應（是否仍回 0-OK 並完成扣分）
+expected_result: req-cashout 或 end-cashout 任一階段應被阻擋（不應兩階段皆回 0-OK 並完成扣分）；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  location: §一句話（限制段落，2026-09-15 PM 補充確認）
+  quote: ''
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: change_workflow
+source_ref: new_required:pm_confirmation_CLR-BONUSCCY-002_2026-09-15
+testcase_id: TC-BONUSCCY-029
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2GSFZQVQ6DE62T3VYME0TFC
+created_at: '2026-09-14T20:24:51Z'
+updated_at: '2026-09-14T20:39:50Z'
+history:
+- at: '2026-09-14T20:24:51Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2GS97PW20YG82GFHVDD1D1P
+  run_id: RUN-20260915-005
+- at: '2026-09-14T20:24:51Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-005
+- at: '2026-09-14T20:24:51Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2GSFZQVQ6DE62T3VYME0TFC
+  run_id: RUN-20260915-005
+- at: '2026-09-14T20:24:51Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-005
+- at: '2026-09-14T20:39:50Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0047
+  run_id: RUN-20260915-005
+- at: '2026-09-14T20:39:50Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0047

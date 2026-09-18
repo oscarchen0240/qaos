@@ -1,0 +1,200 @@
+artifact_id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-003
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T17:35:29Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-BONUSCCY-001@1.0
+references:
+- entity_type: SpecVersion
+  id: SPEC-BONUSCCY-001
+  version: '1.0'
+requires_approval: null
+payload:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  requirements:
+  - requirement_id: REQ-BONUSCCY-001
+    version: 1
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    type: functional
+    title: 注單查詢/明細頁的金額欄位以站台核心貨幣顯示
+    statement: 機台站台（TWD核心貨幣）的注單三層金額（game_bet_log → wallet_reference → system_wallet_reference）第三層的幣別與換算已改依站台核心貨幣；後台注單查詢/明細頁的金額欄位應對應顯示核心貨幣，不是寫死的
+      USDT
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-001
+      given: 一筆機台（TWD核心貨幣站台）的注單
+      when: 檢視後台注單查詢/明細頁的金額欄位
+      then: 金額以站台核心貨幣（TWD）顯示，不是寫死顯示 USDT 或其換算值
+    spec_reference: &id001
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第2項：注單三層金額）
+      quote: 注單三層金額 | game_bet_log → …_wallet_reference → …_system_wallet_reference，第三層的幣別與換算改依站台核心貨幣
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；日結報表層級的核心貨幣計算已由 SPEC-DAILYREPORT-001 REQ-013 驗證，本條測的是注單查詢/明細頁本身，過去未被任何 spec 測過
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-001
+        spec_version: '1.0'
+        location: §實際被改到的地方
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-002
+    version: 1
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    type: functional
+    title: 會員列表與 Dashboard 總會員數正確涵蓋機台（TWD）站台會員
+    statement: 後台查詢頁（會員列表、Dashboard 總會員數等）原本的 JOIN 條件比對寫死的 USDT 常數，已改為依站台核心貨幣查詢；機台（TWD核心貨幣）站台的會員應正確被涵蓋，不因舊有寫死的比對條件而被排除或漏計
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-002
+      given: 機台（TWD核心貨幣）站台底下已有會員
+      when: 檢視 Dashboard 總會員數統計
+      then: 這些會員正確計入總會員數，不因原本寫死 USDT 的 JOIN 條件而被排除
+    - ac_id: AC-BONUSCCY-003
+      given: 站台切換選單切至機台（TWD）站台
+      when: 檢視會員列表
+      then: 正確列出該站台會員，不因幣別相關的查詢條件而遺漏資料
+    spec_reference: &id002
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項：後台查詢）
+      quote: 後台查詢 | 注單列表與明細、返水明細、營運日報、會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，屬於這次架構變更的核心回歸風險——若 JOIN 條件沒改乾淨，機台站台的資料會在報表/列表裡悄悄消失而不是報錯，風險標 high
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-001
+        spec_version: '1.0'
+        location: §實際被改到的地方
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-003
+    version: 1
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    type: functional
+    title: 人工存入／人工提出未指定幣別時，預設寫入站台核心貨幣
+    statement: 人工出入金四支功能原本沒有明確寫入幣別（靠資料表 DEFAULT 或寫死 USDT），已改為取站台核心貨幣；對機台（TWD核心貨幣）帳號執行人工存入/提出且未指定幣別時，應寫入/扣除該站台的核心貨幣（TWD）
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-004
+      given: 對一個機台（TWD核心貨幣）帳號執行人工存入，未指定幣別
+      when: 檢視入帳結果
+      then: 金額寫入該站台核心貨幣（TWD）錢包，不是寫死的 USDT
+    - ac_id: AC-BONUSCCY-005
+      given: 對同一機台帳號執行人工提出，未指定幣別
+      when: 檢視扣款結果
+      then: 從該站台核心貨幣（TWD）錢包扣除，不是寫死的 USDT
+    spec_reference: &id003
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項：人工出入金）
+      quote: 人工出入金 | 四支原本沒有明確寫入幣別（靠資料表 DEFAULT 或填死 USDT），改成取核心貨幣
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接關係金流正確性——若預設幣別沒改乾淨，錢會進錯錢包或找不到對應餘額扣款
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-001
+        spec_version: '1.0'
+        location: §實際被改到的地方
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-004
+    version: 1
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    type: constraint
+    title: 站台核心貨幣僅能設定為目前已啟用中的錢包幣別
+    statement: 站台的核心貨幣（系統幣別）必須是啟用中的錢包幣別之一（wallet_currency.enabled=1），否則獎勵會發到玩家看不到的錢包；設定核心貨幣時若選擇未啟用的幣別，系統應阻擋
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-006
+      given: 建立或編輯站台時，嘗試將核心貨幣設定為目前未啟用的錢包幣別
+      when: 送出設定
+      then: 系統阻擋，不允許設定為非啟用中的幣別
+    spec_reference: &id004
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+      quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義是限制條件本身；具體的錯誤訊息文案本檔未給，若畫面實際文案與預期不符不算違反本條，只測「是否被阻擋」這個行為本身
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-001
+        spec_version: '1.0'
+        location: §一句話
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-005
+    version: 1
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    type: constraint
+    title: 機台站台的前台資產列表僅顯示核心貨幣，不列出其他幣別的零餘額項目
+    statement: 機台（TWD核心貨幣）站台玩家只有 TWD 一種錢包；前台資產列表只列核心貨幣（TWD），不再像以前那樣列出一排餘額 0 的其他幣別
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-007
+      given: 以機台帳號登入前台
+      when: 檢視前台資產列表
+      then: 只顯示核心貨幣 TWD 一種，不列出其他幣別的零餘額項目
+    spec_reference: &id005
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §⭐兩種站台差很多 + 實際被改到的地方（表格第8項）
+      quote: 前台資產列表 | 只列 TWD（本次改的，見下表第 8 項） ｜ 機台站台的資產列表 | 只列核心貨幣，不再列出一排餘額 0 的其他幣別
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；此為前台（玩家端）畫面，過去所有已測 spec 皆為後台管理端，本條是第一次測前台資產列表
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-001
+        spec_version: '1.0'
+        location: §⭐兩種站台差很多
+        quote: ''
+  traceability:
+  - requirement_id: REQ-BONUSCCY-001
+    spec_reference: *id001
+  - requirement_id: REQ-BONUSCCY-002
+    spec_reference: *id002
+  - requirement_id: REQ-BONUSCCY-003
+    spec_reference: *id003
+  - requirement_id: REQ-BONUSCCY-004
+    spec_reference: *id004
+  - requirement_id: REQ-BONUSCCY-005
+    spec_reference: *id005
+history:
+- at: '2026-09-14T17:35:34Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-003

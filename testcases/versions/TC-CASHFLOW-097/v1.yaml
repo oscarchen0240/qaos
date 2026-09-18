@@ -1,0 +1,81 @@
+title: 無論機台帳號前台登入狀態為何，平台皆不因此回 2-OCCUPIED 或拒絕交易
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-031
+acceptance_criteria_ids:
+- AC-CASHFLOW-0311
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: low
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 確認機台帳號目前前台為已登入狀態，呼叫任一交易請求（其餘條件皆合法）
+- n: 2
+  action: 確認機台帳號前台為未登入狀態，重複呼叫同類型交易請求
+expected_result: 兩種登入狀態下，平台皆不因前台登入狀態回 2-OCCUPIED 或拒絕交易，此狀態碼永遠不會被使用（機台帳號的前台登入僅供機台本身遊戲畫面使用，平台不將其當作交易阻擋條件）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-狀態碼對照
+  quote: 2-OCCUPIED | （不啟用）| 平台不回此碼…平台不把前台登入狀態當作機台交易的阻擋條件，不啟用此碼
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: low
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-097
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:40Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:40Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

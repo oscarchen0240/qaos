@@ -1,0 +1,46 @@
+<title>APR-0117 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0117 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260918-005 · 狀態 PENDING · 提出 2026-09-17</div>
+<div class=summary>6 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 2 條 exploratory，approve 即確認其假設）</div>
+<p>共 6 條：grounded 4 條（預期結果有 spec 條文依據）、<b>exploratory 2 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-BONUSCCY-011 存款原始金額正確進玩家錢包，不受「原始金額/核心貨幣金額」欄位拆分影響</h2>
+<blockquote>spec：§改了什麼／①存款金額拆成兩個 + §這次能測什麼／T2　「原始金額 | 玩家實際存的錢，玩家看到的幣別 | 進錢包、算流水倍數、算手續費 ｜ T2 入金金額進錢包正確：存多少就進多少，幣別正確。這是最重要的回歸點」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-046">046<br>v1</td><td>grounded</td><td>線上站台存款：存入多少金額，玩家錢包就精確增加多少，幣別與存款當下一致</td><td>選定一名既有的線上站台會員（自行從環境中選定）。<br>於 ba-admin 後台查詢該會員目前的錢包餘額與幣別，記錄為存款前基準值。</td><td><ol><li>以該會員身分，透過線上站台實際完成一筆系統存款（非後台人工存款），存入一個可清楚辨識的金額，例如 100 USDT（實際數字可依環境調整，只要能明確辨識即可）。</li><li>確認該筆存款於系統顯示為入帳成功。</li><li>於 ba-admin 後台重新查詢該會員的錢包餘額與幣別。</li><li>於 ba-admin 後台查詢該筆存款的交易/存提記錄明細，記錄其顯示的金額與幣別。</li></ol></td><td>錢包餘額較存款前增加的金額，恰等於玩家本次實際存入的金額（本例 100），幣別與玩家存款當下所使用的幣別一致（USDT）；存提記錄明細顯示的金額與此一致。不因新拆出的「原始金額」與「核心貨幣金額」兩個欄位而發生算錯或漏算。</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-047">047<br>v1</td><td>grounded</td><td>線上站台存款金額為非整數小數時，錢包入帳金額仍精確不被四捨五入或截斷</td><td>選定一名既有的線上站台會員（自行從環境中選定，可與另一條 TC 使用不同會員以避免互相干擾）。<br>於 ba-admin 後台查詢該會員目前的錢包餘額，記錄為存款前基準值。</td><td><ol><li>以該會員身分，透過線上站台實際完成一筆系統存款，刻意使用一個非整數、非規則的小數金額，例如 83.57 USDT（避免使用 100 這類整數，降低『欄位間複製/寫入時精度被吃掉』這類 bug 被整數掩蓋的機率；實際小數位數以站台實際允許的輸入精度為準）。</li><li>確認該筆存款入帳成功。</li><li>於 ba-admin 後台重新查詢該會員的錢包餘額。</li></ol></td><td>錢包餘額增加的金額精確等於存入的小數金額（本例 83.57），小數位不因「原始金額」與「核心貨幣金額」拆成兩欄位而被四捨五入、無條件捨去或整數化。</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-BONUSCCY-012 流水倍數與手續費以實際存入金額（原始金額）為基數計算</h2>
+<blockquote>spec：§改了什麼／①存款金額拆成兩個 + §這次能測什麼／T3　「原始金額 | … | 進錢包、算流水倍數、算手續費 ｜ T3 流水倍數與手續費的基數正確：存款後的「提領所需有效投注額」要以實際存入金額為基數算，不是別的數字」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-BONUSCCY-048">048<br>v1</td><td>⚠ exploratory</td><td>存款後的流水門檻增量與手續費，以玩家實際存入的原始金額為基數計算</td><td>選定一名既有的線上站台會員（自行從環境中選定），且該會員存款當下會產生非零的流水倍數與／或手續費（例如符合資格的存款相關紅利活動，或站台既有的存款手續費規則；實際依環境現況選定，選定方式見下方 assumptions）。<br>於 ba-admin 後台查詢並記錄該會員存款前既有的『提領所需有效投注額（流水門檻）』，以及本次存款預期適用的流水倍數與手續費率（若後台頁面有顯示規則的話）。</td><td><ol><li>以該會員身分，透過線上站台實際完成一筆存款（非後台人工存款），存入一個可清楚辨識的金額，例如 200 USDT。</li><li>確認該筆存款入帳成功。</li><li>於 ba-admin 後台重新查詢該會員的『提領所需有效投注額（流水門檻）』，計算本次存款造成的增量。</li><li>於 ba-admin 後台查詢該筆存款實際扣收的手續費金額。</li><li>以『存款金額（原始金額）× 已知流水倍數』與『存款金額（原始金額）× 已知手續費率』分別回算，核對後台顯示的流水門檻增量與手續費是否與回算結果一致。</li></ol></td><td>流水門檻增量與手續費金額，皆以玩家實際存入的原始金額（本例 200）為計算基數；與回算結果一致。惟因目前線上站台的存款幣別必然等於記帳幣別（兩個金額欄位目前數字相同），本測試無法真正區辨『以原始金額為基數』與『以核心貨幣金額為基數』兩者的差異，只能確認這次欄位拆分沒有破壞既有的計算行為（回歸驗證）。<div class=assume>⚠ 假設：spec.md 未說明存款觸發非零『流水倍數』與『手續費』的確切條件（例如是否需要同時符合某個存款相關紅利活動才會有流水倍數，或手續費率如何配置／在哪個後台頁面可查）。此測試資料佈置方式（選定一名存款會產生非零流水倍數與手續費的會員、並於後台查得其規則數值用於回算比對）是我方為了讓案例可執行而做的推測，需要環境負責人確認實際可行的操作路徑與查詢頁面。</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-BONUSCCY-013 簽到活動前台進度條與後台判定一致，皆讀取正確的入帳資料表</h2>
+<blockquote>spec：§改了什麼／②簽到活動的「有效會員」改讀正確的表 + §這次能測什麼／T1　「後台判定：以前讀區塊鏈明細表，現在讀 deposit_log_v2（入帳成功的都在裡面）；前台進度條：以前讀另一張更舊的區塊鏈表，現在同上、與後台一致 ｜ T1 前台進度條會動、且與後台一致：前台簽到頁的有效會員進度條，數字應該跟後台判定的累積金額一致。以前前台永遠顯示 0」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-049">049<br>v1</td><td>grounded</td><td>累積存款未達有效會員門檻時，前台簽到頁進度條與後台判定的累積金額一致（不再永遠顯示 0）</td><td>選定一名既有的線上站台會員（自行從環境中選定）。<br>透過線上站台以該會員身分完成一筆或多筆存款（不可用後台人工存款——spec 明定後台人工存款不計入累積儲值與有效會員判定），使其累積存款金額大於 0，但低於所屬簽到活動設定的『有效會員門檻』。<br>於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。</td><td><ol><li>登入會員前台網站（非 ba-admin 後台），以該會員身分開啟簽到活動頁面。</li><li>查看頁面上『有效會員』進度條顯示的累積金額。</li><li>於 ba-admin 後台開啟該會員的簽到活動有效會員判定/查詢頁面，查看後台判定的累積金額。</li><li>比對前台進度條顯示的數字與後台判定的數字。</li></ol></td><td>前台進度條顯示的累積金額，與後台判定的累積金額一致（兩者皆反映該會員透過線上存款且已入帳成功的累積總額，讀取自 deposit_log_v2），不再像修改前一樣恆為 0；因累積金額尚未達門檻，前後台皆應顯示會員仍非有效會員狀態。</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-050">050<br>v1</td><td>grounded</td><td>累積存款達到有效會員門檻後，開啟一次前台簽到頁即直接寫入有效會員，與後台判定結果一致</td><td>選定一名既有的線上站台會員（自行從環境中選定，與另一條 TC 的會員不同，避免互相干擾）。<br>於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。<br>透過線上站台以該會員身分完成一筆或多筆存款（非後台人工存款），使其累積存款金額精確達到（等於或剛超過）此門檻數值；存款筆數與單筆金額可依環境現況調整，只要能讓累積總額精確達到門檻即可。<br>存款完成後，先不要開啟前台簽到頁——spec 說明前台是『每次玩家打開簽到頁就重算一次、達標就直接寫入有效會員』，先保持未開啟才能驗證是否真的是『開啟一次前台頁面』觸發了這次寫入。</td><td><ol><li>於 ba-admin 後台查詢該會員目前的有效會員狀態與累積金額判定結果（此時應尚未被前台觸發重算/寫入）。</li><li>登入會員前台網站，以該會員身分開啟一次簽到活動頁面。</li><li>觀察前台『有效會員』進度條顯示狀態。</li><li>於 ba-admin 後台重新查詢該會員的有效會員狀態與累積金額判定結果。</li></ol></td><td>開啟前台簽到頁後，進度條顯示達標（累積金額≥門檻），且該次開啟即直接將此會員寫入『有效會員』狀態；隨後於 ba-admin 後台再次查詢時，該會員的有效會員狀態與判定結果與前台一致（不需要玩家再存一筆才會反映）。</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-BONUSCCY-014 簽到活動「有效會員每月重置」機制，跨月後進度正確歸零重算</h2>
+<blockquote>spec：§這次能測什麼／T5　「T5 每月重置仍正常：簽到活動若開了「有效會員每月重置」，跨月後進度應歸零重算」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-BONUSCCY-051">051<br>v1</td><td>⚠ exploratory</td><td>已開啟「有效會員每月重置」的簽到活動，跨月後有效會員累積進度正確歸零重算，不誤讀上月已計入的舊資料</td><td>選定一個已開啟『有效會員每月重置』設定的簽到活動（自行從後台活動列表中確認此設定已開啟；若目前沒有任何活動開啟此設定，需請環境負責人協助開啟一個測試用活動）。<br>選定一名既有會員，其上個月透過線上存款的累積金額已達到（或曾達到）該活動的有效會員門檻，且本月截至目前尚未有任何新的線上存款記錄（可從後台歷史存款記錄篩選出符合此時間條件的既有會員；若無法自然找到，需以可控制系統日期的測試環境配合建立此狀態——此佈置方式所需的環境能力需請環境負責人確認可行）。</td><td><ol><li>於 ba-admin 後台查詢該會員在系統當前月份（跨月後）的有效會員累積判定金額與狀態。</li><li>以該會員身分登入會員前台，開啟一次簽到活動頁面，查看『有效會員』進度條顯示。</li><li>於 ba-admin 後台再次查詢該會員本月的有效會員判定結果與累積金額。</li></ol></td><td>無論後台判定或前台進度條，本月的累積金額皆從 0 重新開始計算，僅反映『本月』透過 deposit_log_v2 記錄的存款；不會把上個月已計入（歸零前）的存款金額延續帶入本月累積。本月尚無任何新存款，因此累積金額應為 0，不會僅因為上月已達門檻就維持或直接判定為有效會員。<div class=assume>⚠ 假設：spec 未定義如何在測試環境中人工製造『跨月』情境（例如是否有可調整系統日期的測試環境，或需要仰賴自然存在、真的橫跨月份邊界的既有會員資料）。此測試資料佈置方式是我方推測的可行做法，需要環境負責人確認實際可行的操作路徑。</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0117 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0117 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0117 --decision reject --by &lt;you&gt; --rationale "..."</div>

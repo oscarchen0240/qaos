@@ -1,0 +1,95 @@
+title: 轉為已核實後，原本的醒目色標提示消失，改以已核實的一般樣式顯示
+product: ba-admin
+functional_area: CASHOUT
+requirement_ids:
+- REQ-CASHOUT-005
+acceptance_criteria_ids:
+- AC-CASHOUT-0051
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入後台
+- 頁面標題下方的站台切換選單已切換至一個既有的測試站台
+- 進入 帳務管理 > 洗分出金核實
+test_data: []
+steps:
+- n: 1
+  action: 取得一筆原本核實狀態為『待核實』且以醒目色標顯示的洗分交易
+- n: 2
+  action: 對其執行核實（見 REQ-CASHOUT-021 核實流程）
+- n: 3
+  action: 核實完成後再次檢視該筆紀錄的呈現方式
+expected_result: 不再顯示待核實的醒目提示樣式，改為已核實狀態對應的綠色一般樣式；醒目提示只在『待核實』這個狀態下出現
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.1'
+  location: §核實狀態
+  quote: 待核實 | 藍色 | ...待核實的洗分以醒目色標提示... ｜ 已核實 | 綠色 | 現金已交付並完成登記
+assumptions:
+- text: 『核實完成後醒目提示消失』是從核實狀態表『待核實』與『已核實』兩列各自獨立的顏色/說明欄結構推斷而來（已核實列僅寫『現金已交付並完成登記』，未逐字明講『不再有醒目提示』），非spec.md逐字條文；此推斷本身合理（醒目提示的定義只掛在待核實列），但仍建議與前端實作/PM確認後再視為確定規則，避免結構性審查誤把它當成有明確條文依據的規則
+  requirement_id: REQ-CASHOUT-005
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0118
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHOUT-091
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+created_at: '2026-09-17T17:38:03Z'
+updated_at: '2026-09-17T19:15:28Z'
+history:
+- at: '2026-09-17T17:38:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6NEJ8SFRQWXWDBMMXRVAB
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-003
+- at: '2026-09-17T19:15:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0118
+  run_id: RUN-20260918-003
+- at: '2026-09-17T19:15:28Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260918-003
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0118

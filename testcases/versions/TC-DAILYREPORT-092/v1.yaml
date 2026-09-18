@@ -1,0 +1,81 @@
+title: 未兌現金額仍受結算日期範圍限制，範圍外的未核實收據不計入
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-015
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0152
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- equivalence_partitioning
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一個目前有未兌現金額的既有機台，記錄其目前實際全部未核實收據的總金額與各筆的核實/收據日期
+test_data: []
+steps:
+- n: 1
+  action: 進入場館日結報表，結算日期範圍設定為明確不含任一筆未核實收據日期的窄區間，查詢，檢視該機台的『未兌現金額』欄位
+- n: 2
+  action: 改以結算日期範圍設定為涵蓋全部未核實收據日期的區間，查詢，比較兩次『未兌現金額』的差異
+expected_result: 第一次查詢（範圍不含未核實收據日期）：未兌現金額不含這些收據，數值應為0或明顯小於全部未核實收據總額；第二次查詢（範圍涵蓋）：未兌現金額等於這些收據的總額。驗證未兌現金額仍以結算日期範圍為篩選條件，範圍外的未核實收據不計入——依CLR-DAILYREPORT-009確認：『不受週期影響』指的是不受統計週期切分方式影響（不會因切成週/月而被打散或重複計算），不是不受結算日期範圍本身限制
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §列表欄位附註
+  quote: 「未兌現金額」不受週期影響、一律為截至查詢當下的累計
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-092
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:10Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:10Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

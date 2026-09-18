@@ -4,7 +4,7 @@
 - 規格：SPEC-SITELIST-001 v0.4  §§角色與權限 + §操作/編輯站台 + §業務規則-上層站台循環防護
 - 相關需求：REQ-SITELIST-013
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 Admin 編輯時可修改上層站台，選取時自動排除自身及子站台；站長編輯時唯讀顯示，如需變更須通知 Admin

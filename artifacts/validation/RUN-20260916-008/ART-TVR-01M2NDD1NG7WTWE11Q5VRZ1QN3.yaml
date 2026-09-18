@@ -1,0 +1,86 @@
+artifact_id: ART-TVR-01M2NDD1NG7WTWE11Q5VRZ1QN3
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-008
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T15:29:41Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2NCW1BSP0HY83TBACB7GZZW
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2NCW1BSP0HY83TBACB7GZZW
+- entity_type: Artifact
+  id: ART-RM-01M2EACWVWTZ2AGGA50EKHT3H2
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M2NCW1BSP0HY83TBACB7GZZW
+  validated_against:
+    spec_id: SPEC-ACCOUNT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EACWVWTZ2AGGA50EKHT3H2
+  issues:
+  - testcase_id: TC-DRAFT-01M2NCW1BQZNE5V7R6Z82BWQZY
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: step1「以一個操作員角色帳號登入後台（自行從環境中選定）」寫得像這種帳號理所當然存在，但assumptions已誠實揭露操作員角色屬開發包⑥範圍、本包測試環境是否已提供尚不確定。
+    explanation: 只看步驟文字會誤以為操作員測試帳號必然存在，跟assumptions的揭露有落差，屬可執行性層面的措辭問題，非捏造。
+    recommended_change: 把不確定性寫進step本身：若環境已提供開發包⑥操作員角色測試帳號則登入測試，若尚未提供則標記暫緩。
+  - testcase_id: TC-DRAFT-01M2NCW1BQZNE5V7R6Z82BWQZY
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-ACCOUNT-028
+    spec_reference: null
+    evidence: coverage_matrix中REQ-ACCOUNT-028的acceptance_criteria只列AC-ACCOUNT-0281，AC-0282/0283完全沒出現在結構化陣列裡（即使是空draft_ids），只在uncovered_with_reason的自由文字說明。
+    explanation: 只走程式化遍歷coverage_matrix的人看不到AC-0282/0283存在且被刻意排除，可能誤判此requirement只有1條AC。
+    recommended_change: 把AC-ACCOUNT-0282/0283也加進acceptance_criteria陣列（draft_ids:[]），讓缺口在結構化資料裡可見。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2NCW1BQ1ZB7EXGPCMX52DR0
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 6條TC的design_rationale僅16-18字、皆為「直接依AC轉譯的...案例」模板句，缺乏個案推理。
+    explanation: 非不實，這些確實是簡單的直接轉譯案例，但措辭偏制式。
+    recommended_change: 非必要，可選擇性補充當初範圍界定的考量。
+  - testcase_id: TC-DRAFT-01M2NCW1BRD7678J7PCCSNCG6D
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 此TC(連結重複點擊情境)掛在AC-ACCOUNT-0161下，但該AC字面given/when/then是關於首次成功發送連結，不是關於連結被重複點擊。
+    explanation: requirements.yaml沒有專屬AC對應「連結重複使用」情境，TC實際依據是REQ-016的rejection_contract.description，屬合理但AC鄰近而非精確匹配的掛法。
+    recommended_change: 可在design_rationale補充說明此情境無專屬AC、掛在AC-0161是最接近的對應。
+  coverage_summary:
+    requirements_total: 32
+    requirements_covered: 31
+    ac_total: 67
+    ac_covered: 65
+    uncovered_accepted:
+    - REQ-ACCOUNT-020
+    - AC-ACCOUNT-0282
+    - AC-ACCOUNT-0283
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T15:29:41Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-008

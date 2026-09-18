@@ -1,0 +1,89 @@
+title: 稽核倍數維持預設 0 倍時，開分與入金正常寫入稽核明細且不產生洗分/出金門檻
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-001
+acceptance_criteria_ids:
+- AC-CASHFLOW-0011
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: medium
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 先於 帳務管理 > 出金設定 > TWD 頁籤 確認該幣種稽核倍數為系統預設值 0
+- n: 2
+  action: 呼叫 req-keyin 為機台帳號開分一筆金額 X（機台餘額由 0 增加為 X）
+- n: 3
+  action: 至稽核明細查詢該筆，確認類型為「機台開分」
+- n: 4
+  action: 呼叫 req-cashin 取得 PENDING 並以 end-cashin 完成入金一筆金額 Y
+- n: 5
+  action: 至稽核明細查詢該筆，確認類型為「機台入金」
+- n: 6
+  action: 緊接著（不等待、不做任何額外操作）以 throshold=0 呼叫 req-keyout 全洗，確認可立即洗出全部餘額 X+Y
+expected_result: 兩筆稽核明細皆正常寫入（類型分別為「機台開分」「機台入金」）；因倍數為 0，緊接著的洗分不因稽核門檻被擋下（回 0-OK 洗出全額），僅一般餘額規則適用
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §機台帳號的稽核
+  quote: 預設值 | 0 倍——即開分與入金不產生稽核門檻，玩家隨時可洗分與出金 ｜ 稽核明細 | 兩種交易照常寫入，類型顯示為「機台開分」「機台入金」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-062
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

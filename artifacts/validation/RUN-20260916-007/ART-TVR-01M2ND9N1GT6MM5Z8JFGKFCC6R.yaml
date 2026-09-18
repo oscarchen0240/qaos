@@ -1,0 +1,86 @@
+artifact_id: ART-TVR-01M2ND9N1GT6MM5Z8JFGKFCC6R
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T15:27:49Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2NCSW5FJC0WN8ZKSTHXTYXV
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2NCSW5FJC0WN8ZKSTHXTYXV
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2NCSW5FJC0WN8ZKSTHXTYXV
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2NCSW5D04F7MWHF69J8YXQQ
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-SITELIST-007
+    spec_reference: null
+    evidence: AC-SITELIST-0072（報表依日結時間切分營業日）完全沒出現在coverage_matrix的draft_ids，也沒出現在uncovered_with_reason（該清單只有REQ-023一項）。唯一的說明藏在本TC的design_rationale文字裡（AC-0072屬SPEC-DAILYREPORT-001責任範圍）。
+    explanation: self_check.acceptance_criteria_covered標true但實際有1條AC完全未走正式豁免流程即消失，自報不實。草案在AC-0042/AC-0052等類似跨功能區情況都採用「誠實收斂斷言範圍、仍設計TC」，此處卻讓整條AC消失不留結構化痕跡，與自身建立的處理慣例不一致。
+    recommended_change: 比照REQ-023的作法，將AC-SITELIST-0072明確列入uncovered_with_reason（例如CROSS_SPEC_BOUNDARY標記），或在coverage_matrix補上AC-0072並連結既有TC。
+  - testcase_id: TC-DRAFT-01M2NCSW5C4CVZTP2HE4NCEX54
+    issue_type: spec_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: expected_result_spec_reference的quote「當上層站台為admin（最上層根站台）時，此強制跟隨規則不適用...」比對spec.md全文完全找不到，spec.md該章節只有一般規則「子站台一律與主站台同類型」。這段quote實際上是逐字擷取自requirements.yaml中REQ-SITELIST-002的statement欄位（該欄位本身註明「已由Oscar
+      2026-09-15確認」），而非spec_reference.quote欄位。
+    explanation: 此規則完全依賴一次未寫入spec.md的產品確認，但呈現方式讓執行者誤以為spec.md該章節直接記載此例外。對照同一份草案處理REQ-016（Oscar確認事項）的方式——quote與expected_result都清楚標註「已由Oscar確認」——本條卻完全省略這個關鍵但書，同一份草案內部標準不一致。
+    recommended_change: 改標location為REQ-SITELIST-002的statement/history，並在quote或design_rationale明確加註「此例外規則未見於spec.md原文，依RequirementModel
+      statement所載2026-09-15 Oscar產品確認為準」，比照REQ-016的揭露方式。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2NCSW5DR4JG223M8GXZ98HJ
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: AC-SITELIST-0111/0112標design_technique:security_rule，但本質是「無限制展示」與「預設範圍展示」，未實際觸發拒絕/繞過機制。
+    explanation: 與AC-0113（真正的拒絕驗證）相比較寬鬆，但屬對稱設計的正向對照組，仍可接受。
+    recommended_change: 可考慮僅對實際涉及拒絕/限制執行的案例標security_rule，正向展示案例改標requirement_based。
+  - testcase_id: TC-DRAFT-01M2NCSW5D04F7MWHF69J8YXQQ
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: REQ-023的uncovered_with_reason使用NO_REJECTION_CONTRACT:前綴，但實際理由核心是刪除功能前後端皆不存在(moot)，不只是rejection_contract未定義。
+    explanation: 理由本身站得住腳，但標籤名稱與實際理由性質不完全對應。
+    recommended_change: 若系統支援多種豁免分類，建議改用MOOT_REQUIREMENT等更貼切的分類。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 64
+    uncovered_accepted:
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T15:27:50Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

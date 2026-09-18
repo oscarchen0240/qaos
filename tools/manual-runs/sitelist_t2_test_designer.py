@@ -14,13 +14,14 @@ PRE_CHIEF = ["以站長登入後台", "進入 後台管理員系統 > 站台列�
 N = collections.defaultdict(int)  # 每個 REQ 已產生的 draft 流水號（僅供 draft_id 唯一，不影響正式 ID）
 
 def tc(req, acs, title, level, types, techs, steps, expected, loc, prio="high", risk=None, pre=None, data=None,
-       assume=None, critical=False, cost="medium", automation="not_automated", ci=False, hotfix=True, more_reqs=()):
+       assume=None, critical=False, cost="medium", automation="not_automated", ci=False, hotfix=True, more_reqs=(), extra_ac=()):
     r = reqs[R(req)]; N[req] += 1
     assumptions = []
     for a in ([assume] if isinstance(assume, str) else (assume or [])):
         assumptions.append({"text": a, "requirement_id": R(req), "needs_human_confirmation": True})
     return {"draft_id": f"TC-DRAFT-{ids.ulid()}", "title": title, "product": "ba-admin", "functional_area": AREA,
-            "requirement_ids": [R(req)] + [R(x) for x in more_reqs], "acceptance_criteria_ids": [AC(req, i) for i in acs],
+            "requirement_ids": [R(req)] + [R(x) for x in more_reqs],
+            "acceptance_criteria_ids": [AC(req, i) for i in acs] + [AC(rn, ai) for rn, ai in extra_ac],
             "spec_id": SID, "spec_version": SV, "test_level": level, "test_types": types, "design_techniques": techs,
             "priority": prio, "risk": risk or r["risk"], "execution_mode": "manual",
             "preconditions": PRE_ADMIN if pre is None else pre, "test_data": [{"name": k, "value": v} for k, v in (data or {}).items()],
@@ -70,7 +71,7 @@ T.append(tc(5, [1], "額度上限輸入負數應被拒絕", "ui_e2e", ["negative
     "§站台類型與機台專屬欄位/額度上限", assume="Spec 只寫「設為 0 代表不限制」，未定義負數輸入的處理；PM 已於 CLR-SITELIST-002 確認前後端皆拒絕"))
 
 # ---- REQ-006 場次逾時時間 ----
-T.append(tc(6, [1], "場次逾時時間預設 1 小時且站長可調整", "ui_e2e", ["functional"], ["state_transition"],
+T.append(tc(6, [1, 2], "場次逾時時間預設 1 小時且站長可調整", "ui_e2e", ["functional"], ["state_transition"],
     ["新建機台類型站台，檢視場次逾時時間預設值", "以站長登入，修改該值為 2 小時並儲存"],
     "預設值為 1 小時；站長修改後系統接受並儲存新值", "§站台類型與機台專屬欄位/場次逾時時間"))
 T.append(tc(6, [1], "場次逾時時間低於 1 小時或超過 17 位數皆應被拒絕", "ui_e2e", ["negative"], ["negative"],
@@ -81,8 +82,9 @@ T.append(tc(6, [1], "場次逾時時間低於 1 小時或超過 17 位數皆應�
 
 # ---- REQ-007 日結時間 ----
 T.append(tc(7, [1, 2], "日結時間可設定並用於場館日結報表分日", "ui_e2e", ["functional"], ["requirement_based"],
-    ["機台類型站台，設定日結時間為 06:00 UTC+0 並儲存", "至場館日結報表確認分日依此時刻切分（見 SPEC-DAILYREPORT-001 REQ-007）"],
-    "日結時間成功儲存；場館日結報表依此時刻切分營業日", "§站台類型與機台專屬欄位/日結時間", risk="low", cost="low"))
+    ["機台類型站台，設定日結時間為 06:00 UTC+0 並儲存", "至 各式報表 > 場館日結報表 確認分日依此時刻切分（見 SPEC-DAILYREPORT-001 REQ-007；需該報表功能已部署）"],
+    "日結時間成功儲存；場館日結報表依此時刻切分營業日", "§站台類型與機台專屬欄位/日結時間", risk="low", cost="low",
+    pre=PRE_ADMIN + ["場館日結報表功能已部署且可存取"]))
 
 # ---- REQ-008 核心貨幣主站台設定，子站台唯讀繼承 ----
 T.append(tc(8, [1], "子站台的核心貨幣唯讀顯示繼承值", "ui_e2e", ["functional"], ["requirement_based"],
@@ -138,7 +140,7 @@ T.append(tc(14, [1, 2], "模板僅 Admin 可指定或修改，站長唯讀不可
 T.append(tc(15, [1], "新建站台時模板可留空", "ui_e2e", ["functional"], ["requirement_based"],
     ["Admin 新增站台，模板欄位留空，填妥其餘必填欄位送出"],
     "系統接受建立，站台狀態為待開通", "§模板設定/填寫規則"))
-T.append(tc(15, [1], "狀態切換為開通時，模板為必填", "ui_e2e", ["negative", "functional"], ["state_transition"],
+T.append(tc(15, [2, 3], "狀態切換為開通時，模板為必填", "ui_e2e", ["negative", "functional"], ["state_transition"],
     ["取一個模板為空的站台，Admin 將狀態切換為「開通」並儲存", "為該站台選取模板後，再次將狀態切換為「開通」並儲存"],
     "第一次：系統阻擋儲存並提示錯誤（模板必填）；第二次：模板已填，系統接受，狀態變為開通", "§業務規則與驗證/模板（切換開通）", critical=True))
 
@@ -146,22 +148,22 @@ T.append(tc(15, [1], "狀態切換為開通時，模板為必填", "ui_e2e", ["n
 T.append(tc(16, [1], "Admin 可切換為暫停、開通或關閉", "ui_e2e", ["functional"], ["decision_table"],
     ["Admin 編輯一個待開通站台（已設模板），切換為開通並儲存", "再切換為暫停並儲存", "再切換為關閉並儲存"],
     "三次切換皆成功，狀態依序變為開通、暫停、關閉", "§角色與權限/狀態切換", critical=True))
-T.append(tc(16, [2], "站長僅可切換為暫停或關閉，其他狀態被阻擋", "ui_e2e", ["negative"], ["negative"],
+T.append(tc(16, [2, 3], "站長僅可切換為暫停或關閉，其他狀態被阻擋", "ui_e2e", ["negative"], ["negative"],
     ["站長編輯一個開通中的站台，嘗試切換為除暫停／關閉以外的狀態（如更新待審）"],
     "其他狀態顯示但不可選取；若嘗試送出，系統阻擋儲存", "§角色與權限/狀態切換"))
 T.append(tc(16, [1], "Admin 嘗試將既有站台手動切回待開通", "ui_e2e", ["negative"], ["negative"],
     ["Admin 編輯一個狀態為開通的站台", "嘗試將狀態切換為「待開通」並儲存"],
-    "系統行為依 spec 對「任意狀態」範圍的認定而定（見假設）", "§站台狀態",
+    "情境一（任意狀態含待開通）：系統接受切換，狀態變為待開通；情境二（任意狀態不含待開通）：系統阻擋此切換，顯示錯誤提示或該選項不可選。請對照實測結果記錄屬於哪一種情境，並提交 Human 確認何者為準（見假設）", "§站台狀態",
     assume="「待開通」在 §站台狀態一節僅列「新建站台自動設定」為觸發方式，未列為 Admin 可手動選取的目標狀態；spec 對「任意狀態」是否含待開通未明確定義"))
 
 # ---- REQ-017 更新待審狀態自動觸發 ----
 T.append(tc(17, [1], "開通狀態下網域異動，儲存後自動切為更新待審", "ui_e2e", ["functional"], ["state_transition"],
     ["取一個狀態為開通的站台", "新增一筆前台網域並儲存"],
     "站台狀態自動變為更新待審", "§站台狀態/更新待審", critical=True))
-T.append(tc(17, [1], "待開通、暫停或關閉狀態下網域異動不觸發更新待審", "ui_e2e", ["negative", "boundary"], ["boundary_value"],
+T.append(tc(17, [2], "待開通、暫停或關閉狀態下網域異動不觸發更新待審", "ui_e2e", ["negative", "boundary"], ["boundary_value"],
     ["取一個狀態為待開通的站台，新增網域並儲存，確認狀態", "取一個狀態為暫停的站台，重複上述操作，確認狀態", "取一個狀態為關閉的站台，重複上述操作，確認狀態"],
     "三種狀態皆不因網域異動而改變（不會變為更新待審）", "§站台狀態/更新待審"))
-T.append(tc(17, [1], "更新待審狀態下，Admin 可手動切換為其他任意狀態", "ui_e2e", ["functional"], ["state_transition"],
+T.append(tc(17, [3], "更新待審狀態下，Admin 可手動切換為其他任意狀態", "ui_e2e", ["functional"], ["state_transition"],
     ["取一個狀態為更新待審的站台", "以 Admin 身分切換其狀態為開通並儲存"],
     "系統接受，狀態成功變更", "§站台狀態/更新待審"))
 
@@ -169,9 +171,12 @@ T.append(tc(17, [1], "更新待審狀態下，Admin 可手動切換為其他任�
 T.append(tc(18, [1], "新增站台時網域欄位預設一個空輸入欄，可點擊新增追加", "ui_e2e", ["functional"], ["scenario"],
     ["開啟新增站台 Modal，檢視前台與後台網域欄位", "點擊「＋ 新增前台網域」兩次"],
     "前台與後台網域各預設顯示一個空輸入欄；每次點擊新增按鈕即追加一列新的空輸入欄", "§操作/網域編輯行為（Modal 內）", risk="low", cost="low"))
-T.append(tc(18, [1], "僅剩最後一列網域時，移除後清空但保留該列", "ui_e2e", ["boundary"], ["boundary_value"],
+T.append(tc(18, [3], "僅剩最後一列網域時，移除後清空但保留該列", "ui_e2e", ["boundary"], ["boundary_value"],
     ["前台網域僅剩一列且有值", "點擊該列的移除按鈕"],
     "該列輸入欄被清空，但列本身保留（不會變成 0 列）", "§操作/網域編輯行為（Modal 內）", risk="low"))
+T.append(tc(18, [2], "多列網域中移除非最後一列，其餘列不受影響", "ui_e2e", ["functional"], ["scenario"],
+    ["前台網域已有 3 筆不同值的列", "點擊第 2 列（非最後一列）的移除按鈕"],
+    "第 2 列被移除；第 1、3 列的值維持不變、位置不因移除而錯亂", "§操作/網域編輯行為（Modal 內）", risk="low", cost="low"))
 
 # ---- REQ-019 網域格式不驗證 ----
 T.append(tc(19, [1], "網域欄位輸入不合法格式的字串仍被接受", "ui_e2e", ["negative"], ["negative"],
@@ -183,8 +188,8 @@ T.append(tc(20, [1, 2], "站台代碼輸入時自動轉大寫並過濾非英文�
     ["站台代碼欄位輸入小寫字母「ab」", "另試輸入含數字或符號的字串「a1b!」"],
     "第一種自動轉為「AB」；第二種非英文字元被過濾，僅保留英文字母部分並轉大寫", "§業務規則與驗證/站台代碼格式", critical=True))
 T.append(tc(20, [3], "站台代碼與既有站台重複時阻擋儲存", "ui_e2e", ["negative"], ["negative"],
-    ["取一個已存在的站台代碼「AB」", "新增站台時輸入相同代碼「AB」並送出"],
-    "系統阻擋儲存並提示重複錯誤", "§業務規則與驗證/站台代碼唯一性"))
+    ["若無代碼為「AB」的站台，先建立一個站台並將代碼設為「AB」", "新增另一個站台，代碼同樣輸入「AB」並送出"],
+    "系統阻擋儲存並提示重複錯誤", "§業務規則與驗證/站台代碼唯一性", data={"site_code": "AB"}))
 T.append(tc(20, [4], "站台代碼建立後於編輯畫面唯讀", "ui_e2e", ["negative", "boundary"], ["boundary_value"],
     ["取一個已建立的站台，進入編輯畫面", "檢視站台代碼欄位"],
     "欄位唯讀（置灰），無法修改", "§業務規則與驗證/站台代碼鎖定"))
@@ -209,19 +214,22 @@ T.append(tc(23, [1], "機台類型站台不提供刪除操作，只能停用", "
     assume="Spec 原文的刪除流程未區分站台類型；PM 已於 CLR-SITELIST-007 確認機台類型不提供刪除操作，僅能停用"))
 T.append(tc(23, [1], "線上類型站台二次確認刪除後不可復原", "ui_e2e", ["negative"], ["requirement_based"],
     ["取一個線上類型且無子站台的站台", "刪除並二次確認"],
-    "站台被刪除，列表查無此站台，且無任何復原入口或機制", "§操作/刪除站台 + §業務規則/刪除確認"))
+    "二次確認後站台被刪除，列表查無此站台，且無任何復原入口或機制", "§操作/刪除站台 + §業務規則/刪除確認", more_reqs=(22,), extra_ac=[(22, 3)]))
 T.append(tc(23, [1], "線上類型主站台帶有子站台時執行刪除", "ui_e2e", ["negative"], ["negative"],
     ["取一個線上類型且帶有至少一個子站台的主站台", "點擊刪除並二次確認"],
-    "系統行為依子站台處理方式而定（見假設）", "§操作/刪除站台",
+    "三種可能結果之一：(a) 阻擋刪除——系統顯示錯誤提示，主站台與所有子站台皆維持不變；(b) 連坐刪除——主站台與所有子站台（含孫層）皆從列表消失；(c) 子站台上移——主站台消失，其子站台仍存在但上層站台改變（變成根層或掛到被刪站台原本的上層）。請對照實測結果記錄屬於哪一種，待 CLR-SITELIST-008 回覆後收斂為單一斷言（見假設）", "§操作/刪除站台",
     assume="Spec 未定義有子站台的站台如何刪除；CLR-SITELIST-008 尚待 PM 回覆是阻擋、連坐刪除、或子站台改掛他處"))
 
 # ---- REQ-024 機台主站台可自行經營，場館設定範圍不含子站台 ----
 T.append(tc(24, [1], "機台主站台可自行經營作為一間場館", "ui_e2e", ["functional"], ["scenario"],
     ["建立一個機台類型主站台，不建立任何子站台", "以該主站台設定場館專屬欄位（額度上限等）並運作"],
     "主站台自身即可作為一間場館經營，帶完整場館設定欄位", "§站台類型與機台專屬欄位", critical=True))
-T.append(tc(24, [1], "修改主站台的額度上限不影響其場館子站台，反之亦然", "ui_e2e", ["boundary"], ["boundary_value"],
+T.append(tc(24, [1], "修改主站台的額度上限不影響其場館子站台", "ui_e2e", ["boundary"], ["boundary_value"],
     ["機台主站台額度上限為 A，其場館子站台額度上限為 B", "將主站台額度上限改為 A2"],
-    "子站台的額度上限仍為 B，不受影響；同理修改子站台不影響主站台", "§業務規則與驗證/機台主站台可直接經營"))
+    "子站台的額度上限仍為 B，不受影響", "§業務規則與驗證/機台主站台可直接經營"))
+T.append(tc(24, [2], "修改機台主站台的場次逾時時間不影響其場館子站台，反之亦然", "ui_e2e", ["boundary"], ["boundary_value"],
+    ["機台主站台場次逾時時間為 1 小時，其場館子站台為 2 小時", "將主站台的場次逾時時間改為 3 小時"],
+    "子站台的場次逾時時間仍為 2 小時，不受影響；同理修改子站台的值不影響主站台", "§業務規則與驗證/機台主站台可直接經營"))
 
 # ---- REQ-025 洗分/出金門檻欄位移除 ----
 T.append(tc(25, [1], "機台專屬欄位群中不存在洗分/出金門檻欄位", "ui_e2e", ["negative"], ["negative"],
@@ -259,7 +267,7 @@ T.append(tc(28, [2], "篩選與搜尋僅作用於當前所在層，不跨層查�
 T.append(tc(29, [1], "點擊站台名稱進入其子站台列表，路徑列顯示對應路徑", "ui_e2e", ["functional"], ["scenario"],
     ["在根層列表點擊某站台名稱"],
     "進入該站台的子站台列表，頁面頂部路徑列顯示對應的瀏覽路徑", "§階層結構與逐層瀏覽", risk="low"))
-T.append(tc(29, [1], "點擊路徑列節點或「站台列表」可跳轉回對應層級", "ui_e2e", ["functional"], ["scenario"],
+T.append(tc(29, [2, 3], "點擊路徑列節點或「站台列表」可跳轉回對應層級", "ui_e2e", ["functional"], ["scenario"],
     ["已鑽入多層子站台", "點擊路徑列中間某節點", "點擊路徑列最前面的「站台列表」"],
     "第一次點擊回到該節點對應的層級；第二次點擊回到根層", "§階層結構與逐層瀏覽", risk="low"))
 

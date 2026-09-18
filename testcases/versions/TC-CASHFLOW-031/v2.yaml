@@ -1,0 +1,91 @@
+title: req-cashout 已建立 PENDING 後機台 15 秒逾時結束程序，該 PENDING 不會自動結束，需新請求取代或人工出金連動取消
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-026
+acceptance_criteria_ids:
+- AC-CASHFLOW-0261
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- error_guessing
+priority: high
+risk: medium
+execution_mode: manual
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+test_data: []
+steps:
+- n: 1
+  action: 機台送出 req-cashout，平台已建立 PENDING
+- n: 2
+  action: 機台 15 秒內未收到回覆，直接結束程序（不印收據）
+- n: 3
+  action: 檢視該筆 PENDING 的狀態
+expected_result: 該 PENDING 持續停留在待確認，不會自動結束；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依 REQ-CASHFLOW-027 連動取消既有
+  PENDING）才能收斂——交易紀錄查詢頁不存在手動取消操作，已由 Oscar 2026-09-15 確認（CLR-CASHFLOW-004）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-出金
+  quote: 須由新的 req-cashout 取代或 Admin 手動取消收斂（spec.md原文，2026-09-15已由Oscar確認「Admin手動取消」此路徑不存在於現行產品，見REQ-CASHFLOW-026 statement/CLR-CASHFLOW-004）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+testcase_id: TC-CASHFLOW-031
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2HT7XB7B31TBSJGAGR1434D
+created_at: '2026-09-15T05:57:10Z'
+updated_at: '2026-09-15T06:26:53Z'
+history:
+- at: '2026-09-15T05:57:10Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2HT46N1JGEGMA7W192CKS8Y
+  run_id: RUN-20260915-014
+- at: '2026-09-15T05:57:10Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-014
+- at: '2026-09-15T05:57:10Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2HT7XB7B31TBSJGAGR1434D
+  run_id: RUN-20260915-014
+- at: '2026-09-15T05:57:10Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-014
+- at: '2026-09-15T06:26:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0054
+  run_id: RUN-20260915-014
+- at: '2026-09-15T06:26:53Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-014
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0054

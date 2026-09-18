@@ -1,0 +1,112 @@
+artifact_id: ART-TVR-01M2G4PMF30MDQ41KRR9SA7A6S
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-014
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T14:21:25Z'
+status: SUPERSEDED
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2G4AAGM11XYWMXZHV5BE1Z9
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2G4AAGM11XYWMXZHV5BE1Z9
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2G4AAGM11XYWMXZHV5BE1Z9
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+  issues:
+  - testcase_id: TC-DRAFT-01M2G4AAGJ409QAGA8SNZ177XD
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-013
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: expected_result 斷言「站台切換選單不提供切換至其他場館的入口」，但 AC-PLATFORMRULE-0131 與 spec.md 角色與權限表只定義可見場館範圍（資料層），未規定 UI 切換器入口本身是否隱藏；同
+      draft 中對應 REQ-PLATFORMRULE-015 的 TC 則預設查詢入口存在、只是結果被過濾為空，兩條 TC 對同一類頁面的 UI 假設互相矛盾，assumptions 卻為空陣列。
+    explanation: 對 spec 未定義的 UI 實作細節做了絕對斷言，且與同份 Draft 內另一條 TC 的假設不一致，可能造成依實作方式不同而產生假陽性 bug 回報。
+    recommended_change: 拿掉「切換選單不提供入口」的絕對斷言，只保留資料可見範圍的核心斷言，並比照 REQ-017/018/019/022 已用的彈性措辭（入口可能存在也可能不存在，核心斷言是看不到/查不到其他場館資料）。
+  - testcase_id: TC-DRAFT-01M2G4AAGJ74Y3P8Z7BX40EH1J
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-013
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: steps 寫「直接呼叫可見場館範圍相關 API」，未指名具體 API/頁面，test_data 為空陣列，測試人員無法得知要打哪一支 API、帶什麼參數；expected_result「後端拒絕該請求」的措辭也與同份
+      draft 中 REQ-015 對機台交易紀錄查詢的預期（回傳空結果、而非明確拒絕）不完全一致。
+    explanation: 可執行性不足，且對後端具體回應方式（拒絕 vs 過濾空結果）做了過度絕對、未經 spec 或跨功能區確認資料明確支持的單一斷言。
+    recommended_change: 具名至少一支代表性頁面/API（如機台交易紀錄查詢），補上具體測試資料（如一個非自身所屬場館的場館 ID），並將 expected_result 放寬為「不得回傳非自身場館資料——無論是以拒絕回應、或回傳空結果/已過濾資料」。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2G4AAGJGJGHNENK05TGPGFM
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-003
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §Free Spin 例外
+    evidence: expected_result 多加了幣種斷言，但 steps 沒有對應的檢視幣種欄位動作
+    explanation: expected_result 的斷言缺少對應驗證步驟支撐
+    recommended_change: 補一個檢視幣種欄位的步驟，或移除該句斷言
+  - testcase_id: TC-DRAFT-01M2G4AAGJZYTCRD7BP4ABTYJY
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-002
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §既有功能對機台帳號的排除規則
+    evidence: 「類型分別標示為機台開分、機台入金」的精確標籤文字未在本次審查所見的 spec.md 摘要中逐字出現（標籤細項屬正本範圍）
+    explanation: 非阻斷性，建議註明來源以利追溯
+    recommended_change: 於 design_rationale 註明標籤名稱來源為正本交易類型定義
+  - testcase_id: multiple (REQ-005~009)
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 6 條選單顯示/隱藏 TC 皆標 design_techniques=decision_table，但實際內容是單一狀態核對而非多條件判斷表組合
+    explanation: technique 標籤與實際測試設計手法不完全吻合，不影響覆蓋率正確性
+    recommended_change: 可改標 requirement_based，或在 design_rationale 補充決策表輸入說明
+  coverage_summary:
+    requirements_total: 23
+    requirements_covered: 22
+    ac_total: 31
+    ac_covered: 30
+    uncovered_accepted:
+    - REQ-PLATFORMRULE-011
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-14T14:21:29Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:22:14Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TVR-01M2G4QC9EPHKAVCW1BG1C10CH
+  run_id: RUN-20260914-014

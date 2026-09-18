@@ -1,0 +1,130 @@
+title: 機台類型根層站台建立時核心貨幣 TWD 連動啟用，過程中未在 admin 端預先啟用該幣別
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-002
+acceptance_criteria_ids:
+- AC-SITELIST-0023
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台（Admin 可見全部站台、新增站台時可自由選取上層站台或留空）
+- 該 Admin 帳號同時看得到「後台管理員系統 > 站台列表」與「帳務管理 > 鏈上錢包管理」兩個選單項目（自行從環境中選定可用的 Admin 帳號，不指定特定帳號）
+- 頁面標題下方的「站台切換」下拉選單維持在最上層（admin）脈絡
+- 本次測試全程不得對任何站台的幣別啟用狀態做手動變更——step 1 是唯讀觀察，這是本 TC 成立的前提
+test_data:
+- name: 上層站台
+  value: 留空（＝建立根層站台，即 AC-SITELIST-0023 所稱「上層為 admin」的情境）
+- name: 站台類型
+  value: 機台
+- name: 預期連動的核心貨幣
+  value: TWD
+- name: 站台名稱
+  value: 自訂可辨識名稱，例如「AC0023-核心貨幣連動驗證」
+- name: 站台代碼
+  value: 兩碼大寫英文字，取環境中尚未使用的組合（例如 ZT）；若提示重複改試另一組
+  note: 代碼格式規則見 spec.md §業務規則與驗證/站台代碼格式
+steps:
+- n: 1
+  action: 站台切換維持在 admin（最上層）脈絡，從左側選單進入「帳務管理 > 鏈上錢包管理」，檢視法幣頁籤，記錄 TWD 這個幣別是否存在、以及其狀態（啟用／關閉／禁用／根本沒有這個幣別）。本步驟只讀不改，不得在此啟用 TWD。
+  expected: 取得 admin 自身的 TWD 幣別狀態，作為後續判讀「是否需要預先啟用」的比對基準
+- n: 2
+  action: 回到「後台管理員系統 > 站台列表」，在根層（路徑列顯示「站台列表」）點擊右上角「+ 新增站台」開啟 Modal，「上層站台」欄位保持留空，「站台類型」選「機台」。
+  expected: 上層站台留空代表建立根層站台；站台類型欄位可自由選擇（不被強制跟隨規則鎖住）
+- n: 3
+  action: 在同一個 Modal 內檢視「核心貨幣」欄位的值（不做任何幣別啟用、匯入或其他前置操作），填妥站台名稱與兩碼大寫站台代碼後點擊「建立站台」。
+  expected: 核心貨幣欄位依所選「機台」類型帶出 TWD；點擊建立後站台建立成功，列表出現該站台、狀態為「待開通」
+- n: 4
+  action: 在站台列表找到剛建立的站台，點擊該列的「編輯」開啟 Modal，檢視「核心貨幣」欄位。
+  expected: 核心貨幣顯示為 TWD。（編輯視窗中核心貨幣為唯讀，屬 AC-SITELIST-0101／REQ-SITELIST-010 的斷言，已由 TC-DRAFT-01M2NCSW5D3W9ZQDASZW5FV4BK 覆蓋；本步驟只取其顯示值
+    TWD 作為「連動建立」的證據，不對唯讀性另作斷言）
+- n: 5
+  action: 將頁面標題下方的「站台切換」下拉選單切到剛建立的這個機台站台，再進入「帳務管理 > 鏈上錢包管理」，檢視法幣頁籤中 TWD 的狀態。若該站台因狀態為「待開通」而未出現在站台切換清單中，記錄此事實並跳過本步驟與 step 6（見
+    expected_result 的範圍說明）。
+  expected: 該站台的鏈上錢包管理法幣頁籤存在 TWD 且狀態為啟用（跨 spec 預期，依據見 assumptions 第 1 條）
+- n: 6
+  action: 將「站台切換」切回 admin（最上層）脈絡，重新檢視「帳務管理 > 鏈上錢包管理」法幣頁籤的 TWD 狀態，與 step 1 記錄的基準值比對並記錄差異。
+  expected: 記錄比對結果（此步驟純為建立負面事實的對照基準，不作為本 TC 的通過／失敗判準，理由見 expected_result）
+expected_result: 在全程未於 admin 自身的「鏈上錢包管理」執行任何啟用 TWD 之前置操作的前提下（step 1 為唯讀觀察）：step 3 的核心貨幣欄位依所選「機台」類型帶出 TWD 且站台建立成功、step 4 在該站台的編輯視窗中核心貨幣顯示為
+  TWD（唯讀性不在本 TC 的斷言範圍內，見 AC-SITELIST-0101）、step 5 顯示該站台的鏈上錢包管理法幣頁籤 TWD 為啟用——亦即核心貨幣依所選站台類型連動建立，不以 admin 自身預先啟用該幣別為前提。【判讀範圍限制，執行者請務必一併回報】(1)
+  只有當 step 1 觀察到 admin 自身的 TWD 並非啟用狀態時，本次執行才構成「不需預先啟用」的完整證據；若 step 1 就發現 admin 的 TWD 原本即為啟用，則這次執行只能證明「連動建立」的部分，「不需預先啟用」在該環境下無法判定，應如實回報而非逕行判為
+  Pass。(2) 若新站台因「待開通」狀態未出現在站台切換清單，step 5/6 無法執行，本次可驗證範圍退回 step 3/4，同樣如實回報。(3) step 6 的比對結果僅供記錄：AC-SITELIST-0023 並未對「建立動作是否改變
+  admin 自身的幣別狀態」做任何要求，若發現 admin 端 TWD 狀態被此次建立改變，屬本 AC 未定義的行為，回報為待確認，不直接判為 Fail。
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §核心貨幣（第一項）＋ §操作/新增站台「核心貨幣」欄
+  quote: 主站台（根層站台）的核心貨幣為下拉選單，選項依站台類型過濾——可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種，故實際上等同自動帶入（2026-08-21 客戶定案）
+assumptions:
+- text: 「帳務管理 > 鏈上錢包管理」這個頁面、以及各頁標題下方的「站台切換」下拉選單，在 SPEC-SITELIST-001 v0.4 全文完全沒有出現（「鏈上錢包」四字零命中）；step 5 的頁面路徑與「機台場館的鏈上錢包管理僅顯示法幣
+    TWD 頁籤、只啟用這一種幣別」這個預期觀察，依據來自 SPEC-ARCADE-001 v0.7「機台場館的後台選單」表與 SPEC-UPDATEPACK-001 v0.1「機台場館的情形」，屬跨 spec 推論，需人工確認在「從站台列表新建機台根站台」這個情境下同樣成立。
+  requirement_id: REQ-SITELIST-002
+  needs_human_confirmation: true
+- text: 'AC-SITELIST-0023 then 子句中「不需 admin 自身的鏈上錢包管理預先啟用該幣別」這一句，在 spec.md v0.4 查無出處，CLR-SITELIST-010（status: APPLIED）的 PM
+    答覆也只寫到「核心貨幣依所選類型連動建立」、沒有這一句；其唯一出處是 RequirementModel 的 AC 文字本身。需人工向 PM 確認此斷言的來源與精確語意（是「不需要先啟用」還是「建立時會順帶啟用」）後，才能把它當成確定規則。'
+  requirement_id: REQ-SITELIST-002
+  needs_human_confirmation: true
+- text: 本 TC 能否真正證明「不需預先啟用」，取決於執行當下 admin 自身的鏈上錢包管理中 TWD 恰好不是啟用狀態（step 1 的基準觀察）；若環境中 admin 的 TWD 原本即為啟用，這個否定前提不成立，本次執行只能驗證「連動建立」的正面部分。spec
+    沒有任何條文說明 admin 層的幣別啟用狀態如何設定或重置，因此「如何佈置出 TWD 未啟用的 admin 環境」是我無法從 spec 推導的，需環境負責人協助。
+  requirement_id: REQ-SITELIST-002
+  needs_human_confirmation: true
+- text: 新建站台狀態固定為「待開通」（spec.md §操作/新增站台）；spec 未定義「待開通」狀態的站台是否會出現在後台的「站台切換」下拉選單中。若不出現，step 5 / step 6 無法執行，本 TC 的可驗證範圍將退回到
+    step 3/4（站台列表頁面內可觀察的核心貨幣連動帶入），需人工確認站台切換清單的納入條件。
+  requirement_id: REQ-SITELIST-002
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-130
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QSHTEZ04N21M5CZS7S2JBT
+created_at: '2026-09-17T13:40:30Z'
+updated_at: '2026-09-17T14:07:03Z'
+history:
+- at: '2026-09-17T13:40:30Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QRB7VW6KY1ZTH1WSB8K4MF
+  run_id: RUN-20260916-007
+- at: '2026-09-17T13:40:30Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T13:40:30Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QSHTEZ04N21M5CZS7S2JBT
+  run_id: RUN-20260916-007
+- at: '2026-09-17T13:40:30Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:07:03Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0109
+  run_id: RUN-20260916-007
+  note: rejected

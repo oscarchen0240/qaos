@@ -1,0 +1,88 @@
+title: 操作員嘗試創建會員帳號（含機台帳號）不被允許
+product: ba-admin
+functional_area: ACCOUNT
+requirement_ids:
+- REQ-ACCOUNT-010
+acceptance_criteria_ids:
+- AC-ACCOUNT-0103
+spec_id: SPEC-ACCOUNT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 進入 會員與加盟商 > 會員列表
+test_data: []
+steps:
+- n: 1
+  action: 以一個操作員角色帳號登入後台（自行從環境中選定）
+- n: 2
+  action: 檢視會員列表是否有「創建會員帳號」按鈕；若有，嘗試點擊並送出建立
+expected_result: 系統不允許操作員完成創建會員帳號的操作（按鈕不顯示、按鈕停用、或送出後被拒絕，三者之一）；即使嘗試建立機台帳號亦同樣不被允許
+expected_result_spec_reference:
+  spec_id: SPEC-ACCOUNT-001
+  spec_version: '0.1'
+  location: §角色與權限 + 開發包⑦附註
+  quote: 操作員…不可新增機台帳號…此角色屬開發包⑥實作，本包的創建操作限 Admin／站長
+assumptions:
+- text: Spec 未定義操作員嘗試建立帳號時系統的具體回應方式（按鈕隱藏 vs 送出後 API 拒絕），需人工確認實際行為屬於哪一種
+  requirement_id: REQ-ACCOUNT-010
+  needs_human_confirmation: true
+- text: 「操作員」角色本身屬開發包⑥實作範圍；本包（①）測試環境當下是否已提供可登入的操作員角色/測試帳號尚不確定，需向環境負責人確認角色是否可用，若尚未提供則本案例需延後至該角色可用後執行
+  requirement_id: REQ-ACCOUNT-010
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-ACCOUNT-078
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2NDD1NG7WTWE11Q5VRZ1QN3
+created_at: '2026-09-16T15:29:41Z'
+updated_at: '2026-09-17T15:40:29Z'
+history:
+- at: '2026-09-16T15:29:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2NCW1BSP0HY83TBACB7GZZW
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2NDD1NG7WTWE11Q5VRZ1QN3
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-008
+- at: '2026-09-17T15:40:29Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0105
+  run_id: RUN-20260916-008
+  note: rejected

@@ -1,0 +1,76 @@
+artifact_id: ART-TVR-01M2GY5BD46VKPFF1CKEFJB6TT
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-011
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T21:46:22Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GXRQ71V6960CJ8JMK3GJ64
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GXRQ71V6960CJ8JMK3GJ64
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GXRQ71V6960CJ8JMK3GJ64
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+  issues:
+  - testcase_id: TC-DRAFT-01M2GXRQ7017YHXHQWF5SF7SVY
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: 額度上限有清楚標註的雙來源（spec原文+Oscar確認），但場次逾時時間在 AC then/statement/TC expected_result 中都以同等確定的語氣並列陳述，卻完全沒有註記來源——這個欄位其實只出現在
+      SPEC-ARCADE-001 正本，不在本 spec 原文
+    explanation: 把沿用自上一輪的假設當成既定事實直接寫入，self_check.no_unsupported_assumptions 因此不準確
+    recommended_change: 為場次逾時時間補上明確來源引用，比照額度上限的雙來源註記方式處理
+  - testcase_id: TC-DRAFT-01M2GXRQ7017YHXHQWF5SF7SVY
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §2.1.5
+    evidence: requirement.yaml.statement 與 testcase_draft.yaml.design_rationale 均明確斷言機台管理/人工入出金是透過會員列表進入，但 Oscar 提供的選單截圖只能證實會員列表這個選單項目存在，不能證實這些功能實際的頁面路徑；spec.md
+      全文也查無對應描述
+    explanation: 把對系統頁面內部結構的推論寫成確定語氣的既定事實
+    recommended_change: 將此路徑聲稱改為明確標註推論/待確認，或移出TC的判定依據範圍
+  advisories: []
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-14T21:46:26Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-011

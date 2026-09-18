@@ -1,0 +1,76 @@
+artifact_id: ART-TVR-01M2GGKWE2V1THXS6S8F99TTVK
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-003
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T17:49:38Z'
+status: INVALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GG8DNPAEC4W537ERW4PFMD
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GG8DNPAEC4W537ERW4PFMD
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GG8DNPAEC4W537ERW4PFMD
+  issues:
+  - testcase_id: TC-DRAFT-01M2GG8DNN53CJRA45T6844GT4
+    issue_type: missing_negative_coverage
+    severity: major
+    violated_requirement: REQ-BONUSCCY-002
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項：後台查詢）
+    evidence: REQ-BONUSCCY-002 的 rejection_contract 明確寫『若 JOIN 條件沒改乾淨，機台站台的資料會在報表/列表裡悄悄消失而不是報錯』，但 TC2（Dashboard 總會員數）與 TC3（會員列表）的
+      steps 只寫『檢視 Dashboard 總會員數統計』『檢視會員列表』，expected_result 只說『正確計入/正確列出』，沒有任何可比對的基準值
+    explanation: 一個『悄悄消失』的 bug，光看單一總數或列表本身看不出來，測試人員無從判斷；這正是這條 high risk 需求最該防的失效模式，卻沒被步驟真正涵蓋
+    recommended_change: 在 steps 加入具體比對基準，例如記錄新增會員前後的計數差、或以其他管道取得實際筆數與列表顯示筆數比對
+  - testcase_id: TC-DRAFT-01M2GG8DNN53CJRA45T6844GT4
+    issue_type: technique_mismatch
+    severity: major
+    violated_requirement: REQ-BONUSCCY-002
+    spec_reference: null
+    evidence: TC2、TC3 的 test_types/design_techniques 都標 negative，但操作內容是『在正常條件下檢視資料是否正確』，沒有任何異常輸入或錯誤路徑，本質是 requirement_based/functional
+      驗證
+    explanation: 貼 negative 標籤是誤用設計技巧，導致 coverage_matrix 的自動化規則表面判定 REQ-002 已有負向覆蓋，但實質上這條 high risk 需求完全沒有真正的邊界/負向案例
+    recommended_change: TC2/TC3 的 test_types/design_techniques 改回 functional/requirement_based，另外為 REQ-002 補一條真正的邊界或負向案例（例如線上與機台會員混合時，總數應正確加總兩者，不會只計入線上會員）
+  - testcase_id: TC-DRAFT-01M2GG8DNN5MPCEYQQGQQBFVYT
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-BONUSCCY-001
+    spec_reference: null
+    evidence: 步驟『至各式報表 > 注單查詢，開啟一筆機台注單的明細』，「各式報表」「注單查詢」這個選單路徑與頁面命名在 spec.md 裡完全沒有出現
+    explanation: 合理的工程推論，但若實際選單名稱、路徑不同，執行時會卡關
+    recommended_change: 改寫成較抽象的描述，並在 design_rationale 註明此路徑為推論、非 spec 明文
+  - testcase_id: TC-DRAFT-01M2GG8DNNK0YQAQ852G20TSM7
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-BONUSCCY-003
+    spec_reference: null
+    evidence: 這條案例測的是『明確指定幣別 vs 未指定時預設核心貨幣』兩個業務分支的優先序，不涉及 min/max/off-by-one 等傳統邊界值概念，標 boundary_value 不貼切
+    explanation: 技巧標籤與實際測試設計手法不吻合
+    recommended_change: 技巧標籤改為 requirement_based 或 scenario 類
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 7
+    ac_covered: 7
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true

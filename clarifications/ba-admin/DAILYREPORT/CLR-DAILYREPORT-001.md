@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1  §§功能說明/權限表
 - 相關需求：REQ-DAILYREPORT-001
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 場館日結報表依角色限制可見範圍：Admin 全部；站長 管轄範圍；操作員 自身場館。

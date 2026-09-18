@@ -1,0 +1,78 @@
+artifact_id: ART-TCD-01M2GJ4QX63W66RYBQT9KRVS5T
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-005
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T18:16:19Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-004
+- entity_type: TestCase
+  id: TC-BONUSCCY-008
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GJ4QX5X85TZA614R8J4RR5
+    title: 嘗試停用站台核心貨幣本身對應的錢包幣別，系統應阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-006
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 一個站台的核心貨幣為其自身鏈上錢包管理中目前已啟用的某個幣別（例如機台站台核心貨幣 TWD）
+    test_data: []
+    steps:
+    - n: 1
+      action: 至該站台的鏈上錢包管理，找到核心貨幣本身對應的那個幣別項目（例如 TWD）
+    - n: 2
+      action: 嘗試將該幣別項目的狀態切換為停用
+    expected_result: 系統阻擋，不允許停用站台核心貨幣本身對應的幣別（若實際錯誤訊息文案與此不同，不視為違反本條，僅測是否被阻擋）；若系統允許停用，代表核心貨幣可能變成不在啟用幣別清單中，直接違反 REQ-BONUSCCY-004
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-BONUSCCY-008
+      version: 1
+    design_rationale: 原路徑（建站時選未啟用幣別當核心貨幣）在目前 UI 下無法觸發：核心貨幣依站台類型自動帶入唯一值，建站當下會連動啟用該幣別（2026-09-15 由 Oscar 現場操作驗證）。改測『事後嘗試停用核心貨幣本身對應的幣別』這條真正可執行、且驗證同一個不變量（核心貨幣須維持為啟用中幣別）的路徑
+history:
+- at: '2026-09-14T18:16:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-005

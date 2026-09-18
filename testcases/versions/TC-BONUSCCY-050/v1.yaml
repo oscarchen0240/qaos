@@ -1,0 +1,89 @@
+title: 累積存款達到有效會員門檻後，開啟一次前台簽到頁即直接寫入有效會員，與後台判定結果一致
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-013
+acceptance_criteria_ids:
+- AC-BONUSCCY-020
+spec_id: SPEC-BONUSCCY-003
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- requirement_based
+- boundary_value
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 選定一名既有的線上站台會員（自行從環境中選定，與另一條 TC 的會員不同，避免互相干擾）。
+- 於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。
+- 透過線上站台以該會員身分完成一筆或多筆存款（非後台人工存款），使其累積存款金額精確達到（等於或剛超過）此門檻數值；存款筆數與單筆金額可依環境現況調整，只要能讓累積總額精確達到門檻即可。
+- 存款完成後，先不要開啟前台簽到頁——spec 說明前台是『每次玩家打開簽到頁就重算一次、達標就直接寫入有效會員』，先保持未開啟才能驗證是否真的是『開啟一次前台頁面』觸發了這次寫入。
+test_data: []
+steps:
+- n: 1
+  action: 於 ba-admin 後台查詢該會員目前的有效會員狀態與累積金額判定結果（此時應尚未被前台觸發重算/寫入）。
+- n: 2
+  action: 登入會員前台網站，以該會員身分開啟一次簽到活動頁面。
+- n: 3
+  action: 觀察前台『有效會員』進度條顯示狀態。
+- n: 4
+  action: 於 ba-admin 後台重新查詢該會員的有效會員狀態與累積金額判定結果。
+expected_result: 開啟前台簽到頁後，進度條顯示達標（累積金額≥門檻），且該次開啟即直接將此會員寫入『有效會員』狀態；隨後於 ba-admin 後台再次查詢時，該會員的有效會員狀態與判定結果與前台一致（不需要玩家再存一筆才會反映）。
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  location: §改了什麼／②簽到活動的「有效會員」改讀正確的表；§這次能測什麼／T1
+  quote: 它是每次玩家打開簽到頁就重算一次、達標就直接寫入有效會員（後台那條要等玩家再存一筆才會重算）。所以部署後玩家只要開一次簽到頁，就會用新口徑重算：進度條數字會往上跳，本來就已經達標的玩家會立刻變成有效會員。
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-BONUSCCY-050
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+created_at: '2026-09-17T17:33:08Z'
+updated_at: '2026-09-17T19:11:34Z'
+history:
+- at: '2026-09-17T17:33:08Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6FS8KT5M4KGSTQT6ZZ9TZ
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-005
+- at: '2026-09-17T19:11:34Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0117
+  run_id: RUN-20260918-005
+  note: rejected

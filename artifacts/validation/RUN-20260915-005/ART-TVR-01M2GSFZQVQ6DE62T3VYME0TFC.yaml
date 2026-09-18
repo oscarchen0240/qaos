@@ -1,0 +1,93 @@
+artifact_id: ART-TVR-01M2GSFZQVQ6DE62T3VYME0TFC
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-005
+task_id: T2
+iteration: 3
+created_by: agent-test-validator
+created_at: '2026-09-14T20:24:48Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GS97PW20YG82GFHVDD1D1P
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GS97PW20YG82GFHVDD1D1P
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M2GS97PW20YG82GFHVDD1D1P
+  validated_against:
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M2GS97PV2HDC5NARKXR416HY
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §出金過渡期
+    evidence: cashflow_spec.md 記載過渡期由前台自動依序呼叫 req-cashout→end-cashout，並非測試員手動分兩步觸發
+    explanation: TC2 目前把兩階段寫成各自的 step，容易讓測試員誤以為要手動分開觸發
+    recommended_change: 補充說明「過渡期由前台自動依序完成兩階段，測試員僅需按一次結算鍵」
+  - testcase_id: TC-DRAFT-01M2GS97PVMQHG83XVGNTWK86P
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: 目前 4 條 TC 皆為「先停用才嘗試操作」，未覆蓋「PENDING 於停用前已建立、停用發生在兩階段之間」的情境
+    explanation: 此 race-condition 情境風險較高但字面上不在本次 AC 範圍內
+    recommended_change: 建議另立 TC 追蹤
+  - testcase_id: TC-DRAFT-01M2GS97PVMQHG83XVGNTWK86P
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: 4 條 TC 的 test_data 皆為空陣列
+    explanation: precondition 文字已足夠具體可執行，但補上具體站台代號/金額會更完整
+    recommended_change: 可選：後續補上 test_data
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 4
+    ac_covered: 4
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2GS97PVMQHG83XVGNTWK86P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GS97PV2HDC5NARKXR416HY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GS97PVJB1728AKMV7F9VNX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GS97PV49Y2VEKWAT0Q2CV2
+    verdict: ok
+history:
+- at: '2026-09-14T20:24:51Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-005

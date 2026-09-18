@@ -1,0 +1,101 @@
+artifact_id: ART-TVR-01M2QYVG38QFTBJNKRN56GWSFE
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T15:13:09Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2QYC5A1MZK69TJ0X2Z4XVJK
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2QYC5A1MZK69TJ0X2Z4XVJK
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2QYC5A1MZK69TJ0X2Z4XVJK
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2NCSW5CV1MZNZ6D6KSGDP30
+    issue_type: requirement_mismatch
+    severity: blocker
+    violated_requirement: REQ-SITELIST-005
+    spec_reference: null
+    evidence: 補標AC-SITELIST-0051，但該AC的then是「0代表不限制」，跟本TC驗證的「負數輸入拒絕」是不同斷言，AC-0051沒有任何負數/拒絕相關文字。
+    explanation: 把未定義行為的exploratory TC硬掛到語意不同的AC上，製造假的可追溯性。
+    recommended_change: 改回acceptance_criteria_ids:[]。
+  - testcase_id: TC-DRAFT-01M2NCSW5DNEQ0GH48B6R6Z1Q7
+    issue_type: requirement_mismatch
+    severity: blocker
+    violated_requirement: REQ-SITELIST-006
+    spec_reference: null
+    evidence: 補標AC-SITELIST-0061，但該AC的then是「預設值為1小時」，跟本TC驗證的「輸入低於1小時或超長格式拒絕」是不同斷言。
+    explanation: 同上，內容誤配。
+    recommended_change: 改回acceptance_criteria_ids:[]。
+  - testcase_id: TC-DRAFT-01M2NCSW5CPSGPYY3SVMV27JMF
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: 補標AC-0021/0022，但這兩條AC的then限定在UI層(唯讀跟隨)，未涵蓋後端API行為；同份draft裡結構相同的姊妹TC(TC-DRAFT-01M2NCSW5DMDVMGP7CRV5SDEBJ等)刻意留空，本輪處理不一致。
+    explanation: 同一份draft對同類案例標記標準不一致。
+    recommended_change: 改回acceptance_criteria_ids:[]，與姊妹TC一致。
+  - testcase_id: TC-DRAFT-01M2NCSW5D8EK8HBZWE2QE1P45
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-012
+    spec_reference: null
+    evidence: 補標AC-0122為UI唯讀斷言，本TC驗證後端API行為，REQ-012本身標註為已知風險區域尚待確認。
+    explanation: 同上。
+    recommended_change: 改回acceptance_criteria_ids:[]。
+  - testcase_id: TC-DRAFT-01M2NCSW5D4JTJK91FXZBPZN61
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-013
+    spec_reference: null
+    evidence: 補標AC-0132，但同REQ-013底下幾乎一樣的Admin側姊妹TC(TC-DRAFT-01M2NCSW5D7J4TC115RG2MJQ4Y)仍留空，同一requirement內部標準不一致。
+    explanation: 同上，此例內部矛盾最明顯。
+    recommended_change: 改回acceptance_criteria_ids:[]，與姊妹TC一致。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2QVAHBKMNQJ86FVMGVCV7QG
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: uncovered_with_reason仍列出REQ-SITELIST-002一筆(AC_PARTIALLY_COVERED)，但coverage_matrix顯示該requirement三條AC皆已有draft_ids，屬完全覆蓋。
+    explanation: 殘留的歷史說明可能誤導只看陣列key的讀者。
+    recommended_change: 移除此筆，歷史說明併入design_rationale。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 64
+    uncovered_accepted:
+    - AC-SITELIST-0072
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T15:13:09Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

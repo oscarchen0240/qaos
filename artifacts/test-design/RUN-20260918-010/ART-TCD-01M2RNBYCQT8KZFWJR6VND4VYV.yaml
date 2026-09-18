@@ -1,0 +1,1517 @@
+artifact_id: ART-TCD-01M2RNBYCQT8KZFWJR6VND4VYV
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-010
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T21:46:36Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+references:
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-001
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-002
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-003
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-004
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-005
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-006
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-007
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-008
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-009
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-010
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-011
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-012
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-013
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-014
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-015
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-016
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-017
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-018
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-019
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-020
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-021
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-022
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-023
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2RNBYCMQG8NKA44PPGDYS02
+    title: 機台出金核實完成後，出金審核頁面查無該筆機台出金項目
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-001
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0011
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - scenario
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    - 於『帳務管理 > 洗分出金核實』頁面尋找一筆狀態為『待核實』的機台出金申請並完成核實（含收據核銷），記錄核實完成的時間與對象機台帳號
+    test_data: []
+    steps:
+    - n: 1
+      action: 於『帳務管理 > 出金審核』頁面，設定查詢區間涵蓋剛才核實完成那筆機台出金交易的時間範圍
+    - n: 2
+      action: 檢視查詢結果列表，尋找是否存在該筆機台出金項目；若查詢區間內另有線上會員的出金審核項目，一併記錄
+    expected_result: 出金審核頁面的查詢結果中查無剛才核實完成的那筆機台出金項目；頁面僅列出線上會員的出金審核項目（若查詢範圍內原本就有其他線上會員的出金審核項目，仍正常列出，僅機台出金不出現）
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §既有功能對機台帳號的排除規則 + §對既有章節的影響
+      quote: 3.2 | 出金審核 | 不進入本流程。機台出金為現場即時核可並印出收據，不需後台審核
+    assumptions:
+    - text: 機台出金申請本身的產生方式（現場即時核可、印出收據）屬機台端硬體現場流程，非本 spec 定義的後台 UI 操作；本 TC 假設測試環境的『洗分出金核實』頁面當下存在或可產生一筆狀態為『待核實』的機台出金申請供核實使用，若環境當下查無待核實項目，需洽環境負責人透過機台模擬工具或既有測試資料補上一筆，此步驟超出本
+        spec 定義範圍
+      requirement_id: REQ-PLATFORMRULE-001
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 機台出金完成的前置動作（現場核可、印收據）本身不是可透過本 spec 定義的後台 UI 重現的動作，只有『核實』這一步在後台『洗分出金核實』頁面，因此本 TC 採 scenario 技巧串接『核實』與『出金審核頁面查驗』兩個頁面的實際工作流程，而非單頁靜態檢查；產生待核實項目的前置條件明確標為假設並要求人工確認，避免把無法從
+      spec 驗證的機台端流程當成後台可控制的既定步驟
+  - draft_id: TC-DRAFT-01M2RNBYCMZ6RNTG1FQT1W49GM
+    title: 機台開分或入金交易完成後，稽核明細頁面正常出現並標示正確交易類型
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-002
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0021
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - scenario
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    - 選定一個既有的機台帳號，記錄一筆該帳號近期已完成的機台開分或機台入金交易的時間與金額（可先於『各式報表 > 交易紀錄查詢』核對是否已有現成記錄）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 稽核明細』頁面，以該機台帳號與對應時間區間查詢
+    - n: 2
+      action: 檢視查詢結果中該筆交易的『交易類型』欄位標示
+    expected_result: 該筆機台開分或機台入金交易正常出現在稽核明細頁面查詢結果中；交易類型欄位標示為「機台開分」或「機台入金」（依實際操作類型而定），不是顯示為其他既有線上交易類型、也不是空白
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §既有功能對機台帳號的排除規則
+      quote: 4.4 | 稽核明細 | 照常寫入。開分與入金比照既有的出金設定，可依幣種設定稽核倍數，機台預設為 0 倍（等同不設稽核門檻）；詳見下方「出金設定 TWD 頁籤」與正本「機台帳號的稽核」
+    assumptions:
+    - text: 機台開分／入金交易本身是玩家在機台端實際遊玩產生的紀錄，非後台 UI 可直接建立的動作；本 TC 假設測試環境當下已存在或可查得該機台帳號至少一筆已完成的開分或入金交易供查驗，若環境當下查無現成記錄，需洽環境負責人透過機台模擬工具產生，此步驟超出本
+        spec 定義範圍
+      requirement_id: REQ-PLATFORMRULE-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 本條的稽核倍數規則本身（機台預設 0 倍、依幣種可設定倍數）已由 SPEC-CASHFLOW-001 驗證，故本 TC 依 RequirementModel 的 rejection_contract
+      說明僅聚焦『稽核明細頁面是否正常寫入且類型標示正確』這一顯示層面，不重複驗證倍數計算規則；產生交易紀錄的方式不在本 spec UI 範圍內，故以 assumption 誠實揭露
+  - draft_id: TC-DRAFT-01M2RNBYCMX5TE5VG9SB7DEH7P
+    title: Free Spin 管理選擇會員時可指定機台帳號，不因帳號類型而被排除
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-003
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0031
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台帳號
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『系統管理 > Free Spin 管理』，建立或編輯一個 Free Spin 活動，於選擇發放對象（會員）的步驟嘗試搜尋並選取前置作業選定的機台帳號
+    - n: 2
+      action: 確認該機台帳號在選擇清單中是否可被勾選/選取
+    expected_result: 系統允許選取該機台帳號作為 Free Spin 活動的發放對象，不因其帳號類型為機台而被過濾、隱藏或拒絕選取
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §既有功能對機台帳號的排除規則 + §Free Spin 例外
+      quote: 6.8 | Free Spin 管理 | 適用，同一般會員。可將機台帳號指定加入 Free Spin 活動；免費旋轉由後台直接派發、不需玩家領取，共用帳號收得到。幣種依主站台核心貨幣（機台場館即 TWD），見正本「核心貨幣」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCMB99ZY041G74133TZ
+    title: 後台對機台帳號派發 Free Spin 後，免費旋轉直接到帳，不需玩家額外領取
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-003
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0032
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台帳號，記錄其目前的 Free Spin（免費旋轉）可用次數或狀態作為基準
+    test_data: []
+    steps:
+    - n: 1
+      action: 於『系統管理 > Free Spin 管理』對該機台帳號派發一筆 Free Spin（設定次數與幣種後送出）
+    - n: 2
+      action: 派發完成後，檢視該機台帳號目前的 Free Spin 狀態（可透過會員詳細資料頁或 Free Spin 管理的派發紀錄查看）
+    expected_result: 派發完成後，該機台帳號的免費旋轉可用次數立即增加（或呈現為已到帳狀態），不存在『待玩家領取』的中間狀態，不需要玩家或機台端另外操作才能取得
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §既有功能對機台帳號的排除規則 + §Free Spin 例外
+      quote: 6.8 | Free Spin 管理 | 適用，同一般會員。可將機台帳號指定加入 Free Spin 活動；免費旋轉由後台直接派發、不需玩家領取，共用帳號收得到。幣種依主站台核心貨幣（機台場館即 TWD），見正本「核心貨幣」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCMCD6ZBAV33XE85MK0
+    title: 切換至機台場館後，後台選單依隱藏規則調整，不適用頁面消失
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-004
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0041
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 使用頁面上方的站台切換下拉選單，切換至前置作業選定的機台場館站台
+    - n: 2
+      action: 展開左側選單全部分類，逐一檢視各分類下目前可見的項目清單
+    expected_result: 選單依「機台場館的後台選單」規則調整：資訊看板分類整個消失；會員與加盟商僅剩會員列表；帳務管理僅剩鏈上錢包管理與洗分出金核實；各式報表僅剩交易紀錄查詢、注單查詢、稽核明細、場館日結報表；系統管理僅剩公告設定、Free
+      Spin 管理、橫幅管理、消稽核設定；遊戲商管理與後台管理員系統維持全部顯示不變——其餘屬於隱藏規則列表的項目（如加盟列表、出金審核、KYC 設定等）皆不出現於任何分類
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 站台切換下拉選單選到機台場館時，後台選單隱藏不適用的頁面（這些頁面的功能已由排除規則排除，現階段留著只會是空白頁）。顯示與否跟著站台切換走：同一操作者切回線上站台即恢復完整選單
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-004 為 high risk，本案即其 non-happy 覆蓋：expected_result 明確斷言一系列項目『不出現』，屬負向驗證。本 TC 做整體切換動作後的跨分類總覽檢查，確保『切換』這個觸發動作本身正確連動全部分類；各分類內部的詳細隱藏/顯示清單則由
+      REQ-PLATFORMRULE-005～010 各自的 TC 逐項覆蓋，避免與本 TC 重複
+  - draft_id: TC-DRAFT-01M2RNBYCNT1PW0WV3CPSJCN8Z
+    title: 自機台場館切回線上站台後，後台選單恢復完整
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-004
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0042
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 承上一條 TC（AC-0041），已切換至機台場館且選單已依規則隱藏；若未緊接執行該條TC，可自行先手動切換至機台場館以重建此前置狀態
+    - 選定一個既有的線上站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 使用站台切換下拉選單，切回前置作業選定的線上站台
+    - n: 2
+      action: 展開左側選單全部分類，逐一檢視各分類下目前可見的項目清單
+    expected_result: 選單恢復完整：先前於機台場館被隱藏的所有頁面（資訊看板、加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定、出金審核、優惠彩金審核、返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄、KYC
+      設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理）全部重新出現；鏈上錢包管理頁面的區塊鏈幣別頁籤也恢復顯示
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 站台切換下拉選單選到機台場館時，後台選單隱藏不適用的頁面（這些頁面的功能已由排除規則排除，現階段留著只會是空白頁）。顯示與否跟著站台切換走：同一操作者切回線上站台即恢復完整選單
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 本 TC 專門驗證 AC-0042 要求的『回復』本身（即切換動作具備往返一致性，不遺留機台場館隱藏狀態），刻意接續在 AC-0041 的 TC 之後執行以形成真實的來回切換場景；與 AC-0041
+      的 TC 屬對稱情境但驗證目標不同（一個驗證隱藏觸發、一個驗證回復觸發），依本專案準則兩者皆採 requirement_based 標記，不因對稱性而刻意標成不同技巧或標成 state_transition——本規則並未定義多狀態的轉換矩陣，僅是單純的顯示規則跟隨當前站台類型即時求值，不涉及需要額外驗證的狀態機邏輯
+  - draft_id: TC-DRAFT-01M2RNBYCNRWSEDB8H7PNWFR5T
+    title: 機台場館的左側選單不存在資訊看板分類
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-005
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0051
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 檢視左側選單目前所有分類標題的清單
+    expected_result: 選單分類清單中不存在「資訊看板」這個分類（含其下所有原本子項目），選單分類清單直接從下一個分類開始
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 資訊看板 | —（整個分類隱藏） | 資訊看板
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNJ6WGJAAAKBW41RZ0
+    title: 機台場館的會員與加盟商分類僅顯示會員列表
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-006
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0061
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開左側選單的『會員與加盟商』分類
+    - n: 2
+      action: 逐一檢視該分類下目前顯示的項目清單
+    expected_result: 該分類下僅顯示「會員列表」一項；「加盟列表」「登入網域查詢」「推薦註冊金設定」「暱稱禁用詞設定」皆不出現於此分類下
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 會員與加盟商 | 會員列表 | 加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNH4QXT07ZZ0KPTXYR
+    title: 機台場館的帳務管理分類顯示鏈上錢包管理與洗分出金核實，隱藏出金審核與優惠彩金審核
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-007
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0071
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開左側選單的『帳務管理』分類
+    - n: 2
+      action: 逐一檢視該分類下目前顯示的項目清單
+    expected_result: 該分類下顯示「鏈上錢包管理」與「洗分出金核實」；不顯示「出金審核」與「優惠彩金審核」
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 帳務管理 | 鏈上錢包管理（僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏——稽核倍數設定在此）、洗分出金核實 | 出金審核、優惠彩金審核
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNPSZFF5AH2PC6PA3F
+    title: 機台場館開啟鏈上錢包管理頁面，僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-007
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0072
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 點開『帳務管理 > 鏈上錢包管理』
+    - n: 2
+      action: 檢視頁面內的頁籤列，記錄目前顯示的頁籤
+    expected_result: 頁籤列僅顯示「TWD」（法幣）一個頁籤；原本線上站台會出現的區塊鏈幣別頁籤（如 USDT 等）皆不顯示
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 帳務管理 | 鏈上錢包管理（僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏——稽核倍數設定在此）、洗分出金核實 | 出金審核、優惠彩金審核
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNPMZJNZA28HSSASH5
+    title: 機台場館的各式報表分類顯示交易紀錄查詢等四項，隱藏返水明細等四項
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-008
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0081
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開左側選單的『各式報表』分類
+    - n: 2
+      action: 逐一檢視該分類下目前顯示的項目清單
+    expected_result: 該分類下顯示「交易紀錄查詢」「注單查詢」「稽核明細」「場館日結報表」；不顯示「返水明細」「加盟傭金發放紀錄」「代理返傭發放紀錄」「會員等級異動紀錄」
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 各式報表 | 交易紀錄查詢、注單查詢、稽核明細、場館日結報表 | 返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNEPMR17MENBWZNDH1
+    title: 機台場館的系統管理分類顯示公告設定等四項，隱藏 KYC 設定等六項
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-009
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0091
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開左側選單的『系統管理』分類
+    - n: 2
+      action: 逐一檢視該分類下目前顯示的項目清單
+    expected_result: 該分類下顯示「公告設定」「Free Spin 管理」「橫幅管理」「消稽核設定」；不顯示「KYC 設定」「會員等級設定」「代理設定」「加盟商設定」「優惠活動管理」「畫面管理」
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 系統管理 | 公告設定、Free Spin 管理、橫幅管理、消稽核設定 | KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCN6GT9C1N52CSPB7QB
+    title: 機台場館的遊戲商管理與後台管理員系統分類全部顯示，無任何項目被隱藏
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-010
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0101
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換下拉選單切換至一個既有的機台場館站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 展開左側選單的『遊戲商管理』分類，記錄目前顯示的項目
+    - n: 2
+      action: 展開左側選單的『後台管理員系統』分類，記錄目前顯示的項目
+    expected_result: 『遊戲商管理』分類顯示「遊戲商管理」與「遊戲貢獻值設定」兩項；『後台管理員系統』分類全部項目皆顯示；兩個分類皆沒有任何一項因站台切換至機台場館而被隱藏
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: 遊戲商管理 | 遊戲商管理、遊戲貢獻值設定 | — ｜ 後台管理員系統 | 全部 | —
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNZ1TBY8XYD5A5CMQA
+    title: 新增後台使用者時，角色選項包含操作員並可指定所屬場館
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-012
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0121
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『後台管理員系統』的使用者列表，點擊新增使用者
+    - n: 2
+      action: 檢視角色下拉選項清單
+    - n: 3
+      action: 選擇「操作員」角色，檢視畫面是否出現可指定所屬場館的欄位，並嘗試選取一個既有機台場館作為所屬場館
+    expected_result: 角色選項清單包含「操作員」；選擇操作員角色後，畫面提供可指定所屬場館的欄位，且能選取一個既有機台場館作為其所屬場館
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限 + §對既有章節的影響
+      quote: 7.x 後台管理員系統 | 新增使用者時的角色選項須包含「操作員」，並可指定所屬場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNZT6FKHGJWTR0YS6N
+    title: 操作員登入後台，僅能見到自身所屬場館的場館日結報表資料
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-013
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0131
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - security
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館 X
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 場館日結報表』頁面
+    - n: 2
+      action: 檢視頁面可查詢/顯示的場館範圍選項與實際回傳的結果
+    expected_result: 僅能查詢/看到場館 X（自身所屬場館）的日結報表資料；畫面上若有場館選擇欄位，選項僅包含場館 X，不含其他場館
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 'AC-PLATFORMRULE-0131是跨頁通用的角色可見範圍規則（角色與權限表『可見場館範圍』列），本TC選擇『場館日結報表』作為具體驗證頁面（同一份角色與權限表另有『場館日結報表 | 全部 |
+      管轄範圍 | 自身場館』這一列，明確把此通則套用到本頁面），驗證操作員登入後僅能查詢自身場館的日結報表資料。
+
+
+      【交叉比對前修正】獨立Validator指出原expected_result_spec_reference.quote把『可見場館範圍』與『場館日結報表』兩個在spec.md中相隔11列的表格列用全形『｜』拼接成看似連續的原文，破壞quote的可追溯性。已改為只保留與REQ-013本身spec_reference一致的『可見場館範圍』單列，『場館日結報表』列的引用改移到design_rationale說明。'
+  - draft_id: TC-DRAFT-01M2RNBYCNFMW82GAKKT32GHVV
+    title: 操作員嘗試查詢自身所屬場館以外的場館日結報表，查無資料或無法選取
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-013
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0131
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 承上，操作員帳號所屬場館為既有機台場館 X
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 於『各式報表 > 場館日結報表』頁面，嘗試尋找或選取場館 X 以外的另一個機台場館 Y
+    - n: 2
+      action: 若介面允許直接查詢，嘗試以場館 Y 為條件查詢；若介面本身無場館選擇欄位，確認結果是否仍侷限於場館 X
+    expected_result: 操作員無法查得或選取場館 X 以外（例如場館 Y）的任何場館日結報表資料——場館選擇欄位（若存在）不包含場館 Y，或選取後查無資料，僅能查得場館 X 範圍內的資料
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館
+    assumptions:
+    - text: 本 TC 需要測試環境當下存在至少兩個不同的既有機台場館（操作員所屬場館 X 之外，另需一個場館 Y 作為『其他場館』對照）；若環境當下僅有一個機台場館，需先依既有機台場館的建立方式另外建立一個測試用機台場館 Y 才能執行本
+        TC 的對照比較
+      requirement_id: REQ-PLATFORMRULE-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-013 為 high risk，本案即其 non-happy 覆蓋；與同一 AC 下的另一條正向 TC 互補，一個確認『看得到自己的』、一個確認『看不到別人的』，兩者比對基準不同（前者驗證存在性、後者驗證不存在性），不算重複案例。是否存在第二個機台場館屬於測試環境資料佈置問題而非業務規則假設，依專案準則以
+      assumptions 誠實揭露，而非預設環境必然具備此條件
+  - draft_id: TC-DRAFT-01M2RNBYCNS47HEGTJ0H8909YV
+    title: 操作員登入機台場館後，選單無『站台列表』項目，可操作項目正常存在於選單中
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-014
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0141
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 以該操作員帳號登入後台，站台切換選單確認已選定其所屬的機台場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 檢視後台左側選單的全部項目
+    - n: 2
+      action: 確認選單中是否存在「站台列表」這個項目
+    - n: 3
+      action: 確認會員與加盟商 > 會員列表、帳務管理 > 洗分出金核實、各式報表 > 交易紀錄查詢與場館日結報表等項目是否正常存在於選單中
+    expected_result: 選單中不存在「站台列表」這個項目，操作員因此沒有入口可進入場館設定頁面，該頁面內屬本 spec 明訂欄位的「額度上限（場館層級）」也因此無從檢視或修改；會員列表、洗分出金核實、交易紀錄查詢、場館日結報表等操作員可操作項目仍正常存在於選單中
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 額度上限（場館層級） | 可設定 | 可設定 | 唯讀
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-014 為 high risk，本案即其 non-happy 覆蓋。特別說明：『操作員選單無站台列表項目』這項具體事實並非 SPEC-PLATFORMRULE-001
+      v0.1.md 原文逐字內容（spec.md 本身僅在角色與權限表列出各功能項目的可操作性，未直接描述選單結構），而是 RequirementModel 中 REQ-PLATFORMRULE-014 的 history 記錄裡 Oscar
+      於 2026-09-15 提供實際選單截圖後的人工確認結果；本 TC 依此已核准進入 ACTIVE 狀態的 RequirementModel 斷言設計，非自行杜撰無依據的規則。expected_result 刻意不包含『場次逾時時間』欄位的斷言——該欄位出處為
+      SPEC-ARCADE-001 而非本 spec，其存在與位置不屬本 spec 驗證範圍；同理，REQ-PLATFORMRULE-014 原文中『編輯機台基本資料／機台停用啟用／人工入出金等項目是否經由會員列表頁面進入』僅屬尚未經確認的推論，本
+      TC 不對其實際頁面路徑做斷言，避免超出已核准範圍去驗證未經確認的細節
+  - draft_id: TC-DRAFT-01M2RNBYCNCF508073ZMZQ7S6Z
+    title: 操作員於機台交易紀錄查詢頁查詢自身所屬場館以外的交易，查無結果
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-015
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0151
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館 X
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 交易紀錄查詢』頁面
+    - n: 2
+      action: 嘗試以場館 X 以外的另一個既有機台場館 Y 為條件查詢（若頁面提供場館篩選欄位，檢視其選項；若無此欄位，直接查詢並比對結果範圍）
+    expected_result: 查詢結果中查無場館 Y（或任何非自身所屬場館 X）的交易紀錄，僅能查得場館 X 範圍內的機台交易；若頁面提供場館篩選欄位，選項不包含場館 Y
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 機台交易紀錄查詢 | 全部 | 管轄範圍 | 自身場館
+    assumptions:
+    - text: 本 TC 需要測試環境當下存在至少兩個不同的既有機台場館（操作員所屬場館 X 之外，另需一個場館 Y 且該場館有機台交易紀錄，作為『查無結果』的對照）；若環境當下僅有一個機台場館或場館 Y 無任何交易紀錄，需先洽環境負責人補上對應資料才能執行本
+        TC 的對照比較
+      requirement_id: REQ-PLATFORMRULE-015
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-015 為 high risk，本案即其 non-happy 覆蓋，直接對應 AC-0151 的斷言。是否存在第二個機台場館及其交易紀錄屬測試環境資料佈置問題，依專案準則以
+      assumptions 誠實揭露
+  - draft_id: TC-DRAFT-01M2RNBYCNF5PZE6FZZW5YHABR
+    title: Admin 可查全部場館、站長僅可查其管轄範圍內的機台交易紀錄
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-015
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0151
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - security
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的站長帳號，確認其管轄的站台樹（自身站台及所有子站台）下涵蓋至少一個機台場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入後台，進入『各式報表 > 交易紀錄查詢』，不限定場館查詢，確認結果涵蓋來自不同機台場館的交易紀錄
+    - n: 2
+      action: 改以前置作業準備好的站長帳號登入，重複同樣的查詢，檢視結果範圍
+    expected_result: Admin 查詢結果涵蓋系統內全部機台場館範圍的交易紀錄；站長查詢結果僅涵蓋其自身站台及所有子站台下機台場館範圍內的交易，不包含管轄範圍以外的機台場館交易
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 機台交易紀錄查詢 | 全部 | 管轄範圍 | 自身場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與同 AC 下的操作員負向案例互補，本案補齊 Admin『全部』與站長『管轄範圍』兩種角色範圍的正向驗證，三種角色合計完整覆蓋 REQ-PLATFORMRULE-015 statement 所描述的三層可見範圍
+  - draft_id: TC-DRAFT-01M2RNBYCN85KMDG1J865R87JE
+    title: 操作員可對既有機台帳號執行人工入金或人工出金
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-016
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0161
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 選定該機台場館下一個既有的機台帳號
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入該機台帳號的會員詳細資料頁〈帳務資訊〉區塊，點擊『人工入金』（或『人工出金』）按鈕
+    - n: 2
+      action: 依系統要求填寫必要欄位（金額、稽核、備註等）後點擊儲存
+    expected_result: 系統允許操作員完成人工入金或人工出金操作，未因角色為操作員而被拒絕或隱藏此功能按鈕
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 人工入金／出金（櫃檯） | 可操作 | 可操作 | 可操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCN2QWXWCZ3M6YCD6WP
+    title: 站長執行重設密碼操作須經二次確認才會生效
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-017
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0171
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - security
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的站長帳號，並選定其管轄範圍內一名既有會員
+    - 以該站長帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入該會員的重設密碼功能，觸發重設密碼操作
+    - n: 2
+      action: 觀察系統是否出現二次確認提示（例如確認對話框），並完成該次確認
+    expected_result: 系統於執行重設密碼前要求二次確認；在完成該次確認之前，密碼重設不會生效，完成確認後才實際生效
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 重設密碼（所有會員帳號） | 可操作 | 可操作（須二次確認） | 不可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNFZZMK2HXWE3VWZ8P
+    title: 操作員嘗試執行重設密碼操作，不具備此權限
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-017
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0172
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 選定該機台場館下一個既有的會員/機台帳號
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 嘗試尋找或執行對該會員的重設密碼功能
+    - n: 2
+      action: 觀察系統反應
+    expected_result: 操作員無法執行重設密碼操作——功能按鈕不存在、呈現不可用狀態、或操作被系統拒絕，不具備此權限
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 重設密碼（所有會員帳號） | 可操作 | 可操作（須二次確認） | 不可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-017 為 high risk，本案即其 non-happy 覆蓋
+  - draft_id: TC-DRAFT-01M2RNBYCNGP2HEGBXG0RKCSSX
+    title: 操作員檢視機台基本資料編輯畫面僅能唯讀，無法儲存修改
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-018
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0181
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 選定該機台場館下一台既有機台
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入該機台的編輯機台基本資料畫面
+    - n: 2
+      action: 嘗試修改任一欄位內容，並尋找/點擊儲存
+    expected_result: 欄位呈現唯讀狀態（無法輸入修改，或修改後無儲存按鈕、儲存按鈕不可用），操作員無法完成任何內容的儲存
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 編輯機台基本資料 | 可操作 | 可操作 | 唯讀 ｜ 發放／重置機台憑證 | 可操作 | 可操作（重置須二次確認） | 不可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-018 為 high risk，本案為其 non-happy 覆蓋之一
+  - draft_id: TC-DRAFT-01M2RNBYCN3F3W6V9FDCDQ6RSY
+    title: 操作員嘗試發放或重置機台憑證，不具備此權限
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-018
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0182
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 選定該機台場館下一台既有機台
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 嘗試尋找或執行該機台的發放憑證或重置憑證操作
+    - n: 2
+      action: 觀察系統反應
+    expected_result: 操作員無法執行發放或重置機台憑證操作——功能不存在、不可用、或被系統拒絕，不具備此權限
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 編輯機台基本資料 | 可操作 | 可操作 | 唯讀 ｜ 發放／重置機台憑證 | 可操作 | 可操作（重置須二次確認） | 不可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-018 為 high risk，本案為其 non-happy 覆蓋之二，與 AC-0181 分屬編輯資料與憑證管理兩個獨立功能，不合併為單一 TC
+  - draft_id: TC-DRAFT-01M2RNBYCN9230VWPM1XGNZYR2
+    title: 操作員嘗試新增機台，不具備此權限
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-019
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0191
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 嘗試尋找或執行新增機台的功能
+    - n: 2
+      action: 觀察系統反應
+    expected_result: 操作員無法執行新增機台操作——功能入口不存在或操作被系統拒絕，不具備此權限
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 新增機台 | 可操作 | 可操作 | 不可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNHMWVBJ8ZEJ1EC50Y
+    title: 操作員可對既有機台執行停用與啟用操作
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-020
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0201
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 選定該機台場館下一台既有機台，確認目前為啟用狀態
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 對該機台執行停用操作，確認狀態變為停用
+    - n: 2
+      action: 再對同一機台執行啟用操作，確認狀態變回啟用
+    expected_result: 系統允許操作員完成機台停用與啟用兩項操作，兩次操作皆未因角色為操作員而被拒絕
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 機台停用／啟用 | 可操作 | 可操作 | 可操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNP4Y6Y1V0X3KATCTC
+    title: 既有已啟用的遊戲於平台發布更新後，在機台場館被重新設為停用
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-021
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0211
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台場館站台 X
+    - 選定一款目前已在機台場館 X 呈啟用狀態的既有遊戲
+    test_data: []
+    steps:
+    - n: 1
+      action: 於『遊戲商管理』記錄該遊戲目前於機台場館 X 的狀態（啟用中）
+    - n: 2
+      action: 由具備權限的角色，對該遊戲發佈一次更新
+    - n: 3
+      action: 更新完成後，重新檢視該遊戲於機台場館 X 的狀態
+    expected_result: 更新完成後，該遊戲於機台場館 X 被重新設為停用狀態，不因更新前原已是啟用狀態而被保留為啟用
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 預設停用 | 平台新增任何遊戲、或對既有遊戲發佈更新後，該遊戲在所有機台場館一律預設為停用——包含更新前原已啟用的遊戲（更新視同內容變動，須重新決定是否開放）
+    assumptions:
+    - text: 『平台對既有遊戲發佈更新』的實際後台操作介面與具體步驟不在本 spec 定義範圍內（本 spec 僅描述此動作對機台場館產生的連帶效果，未定義觸發此動作的頁面路徑），需另比對遊戲管理相關 spec 或洽環境負責人確認實際觸發方式；本
+        TC 假設可透過後台遊戲管理功能中的版本／更新發佈動作觸發，若實際操作路徑與假設不符，結果需人工複核
+      requirement_id: REQ-PLATFORMRULE-021
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-021 為 high risk，本案即其 non-happy 覆蓋。spec 特別點名『包含更新前原已啟用的遊戲』這個情境，代表這正是容易被誤實作成『沿用舊狀態』的已知陷阱（例如更新流程若只處理新遊戲的預設值、忘記重置既有啟用中遊戲的狀態），故採
+      error_guessing 技巧針對此已知風險點設計案例，而非泛用的 requirement_based；expected_result 斷言的是『不保留啟用』這個負向結果，屬 non-happy 驗證
+  - draft_id: TC-DRAFT-01M2RNBYCNG15JSSW6KQZMFMYS
+    title: 平台新增一款全新遊戲後，所有機台場館皆預設停用
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-021
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0212
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定至少兩個不同的既有機台場館站台，供比對新遊戲於各場館的預設狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 由具備權限的角色，於平台新增一款全新遊戲
+    - n: 2
+      action: 分別切換至前置作業選定的各個機台場館，於『遊戲商管理』檢視該款新遊戲的預設狀態
+    expected_result: 該款新遊戲於所檢視的每一個機台場館皆預設為停用狀態，沒有任何機台場館預設為啟用
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 預設停用 | 平台新增任何遊戲、或對既有遊戲發佈更新後，該遊戲在所有機台場館一律預設為停用——包含更新前原已啟用的遊戲（更新視同內容變動，須重新決定是否開放）
+    assumptions:
+    - text: 『平台新增一款全新遊戲』的實際後台操作介面與具體步驟不在本 spec 定義範圍內，需另比對遊戲管理相關 spec 或洽環境負責人確認實際觸發方式；本 TC 假設可透過後台遊戲管理功能中的新增遊戲動作觸發，若實際操作路徑與假設不符，結果需人工複核
+      requirement_id: REQ-PLATFORMRULE-021
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 AC-0211 共用同一類『遊戲新增/更新如何觸發』的環境假設，但驗證目標不同：本案驗證的是全新遊戲的初始預設值，AC-0211 驗證的是既有啟用狀態於更新後是否被正確重置，兩者不可互相取代
+  - draft_id: TC-DRAFT-01M2RNBYCNCDN61QWR4V2QTC5H
+    title: 站長可於遊戲商管理手動開啟目前為停用狀態的機台場館遊戲
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-022
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0221
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台場館站台，並於其『遊戲商管理』選定一款目前狀態為停用的既有遊戲（不論其停用原因，只要目前狀態為停用即可）
+    - 選定一個管轄範圍涵蓋該機台場館的既有站長帳號
+    - 以該站長帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『遊戲商管理』，找到前置作業選定的停用中遊戲
+    - n: 2
+      action: 對該遊戲執行啟用操作
+    expected_result: 系統允許站長完成該遊戲的啟用操作，操作後該遊戲狀態變為啟用
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 開啟方式 | 由站長自行於 遊戲商管理 啟用該遊戲；操作員不可操作；平台不代為開啟
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RNBYCNKEE2P416AF71E2P9
+    title: 操作員嘗試開啟一款被停用的機台場館遊戲，不具備此權限
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-022
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0222
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 依『後台管理員系統』新增一個操作員角色帳號，將其所屬場館指定為一個既有機台場館
+    - 於該機台場館的『遊戲商管理』選定一款目前狀態為停用的既有遊戲
+    - 以該操作員帳號登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 嘗試尋找或執行該遊戲的啟用操作（若操作員選單本身無遊戲商管理入口，記錄其無法進入的情形；若可進入，嘗試執行啟用並觀察反應）
+    - n: 2
+      action: 觀察系統反應
+    expected_result: 操作員無法執行該遊戲的啟用操作——無論是因遊戲商管理入口本身不存在、或進入後啟用功能被拒絕/不可用，操作員都不具備此權限，該遊戲狀態維持停用
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 開啟方式 | 由站長自行於 遊戲商管理 啟用該遊戲；操作員不可操作；平台不代為開啟
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-022 為 high risk，本案為其 non-happy 覆蓋之一
+  - draft_id: TC-DRAFT-01M2RNBYCNHB5YGQ4QVBBJMGQX
+    title: 遊戲因平台更新被停用後，若無人工操作，平台不會自動將其重新設為啟用
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-022
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0223
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的機台場館，於其『遊戲商管理』選定一款目前狀態為停用的既有遊戲，確認自其被設為停用以來尚未有任何站長執行過啟用操作
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該遊戲目前的停用狀態與檢視時間
+    - n: 2
+      action: 間隔一段時間後（或重新整理/重新查詢該頁面），在不進行任何手動啟用操作的情況下，再次檢視該遊戲狀態
+    expected_result: 該遊戲狀態仍維持停用，未觀察到任何自動或排程機制將其重新設為啟用；平台本身不會主動代為開啟，需人工由站長執行
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 開啟方式 | 由站長自行於 遊戲商管理 啟用該遊戲；操作員不可操作；平台不代為開啟
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-PLATFORMRULE-022 為 high risk，本案為其 non-happy 覆蓋之二，專門對應 AC-0223『平台不代為開啟』這項負面事實——比對基準為同一遊戲同一場館『操作前後狀態不變』，不需要額外對照組；與
+      AC-0222（操作員主動嘗試被拒絕）驗證的是不同機制（人為越權 vs 系統自動行為），兩者互補不重複
+  - draft_id: TC-DRAFT-01M2RNBYCNKB6FJ8H67CXD87N5
+    title: 線上站台已啟用的遊戲於平台發布更新後，維持啟用狀態不受機台場館停用規則影響
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-023
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0231
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有的線上站台，並於其『遊戲商管理』選定一款目前已啟用的既有遊戲
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該遊戲於此線上站台目前為啟用狀態
+    - n: 2
+      action: 由具備權限的角色，對該遊戲發佈一次更新（與同一款遊戲對機台場館產生影響的更新事件相同）
+    - n: 3
+      action: 更新完成後，重新檢視該遊戲於此線上站台的狀態
+    expected_result: 更新完成後，該遊戲於此線上站台維持啟用狀態不變，不受機台場館『預設停用』規則影響——因為該規則僅適用站台類型為「機台」的場館
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的遊戲更新
+      quote: 適用範圍 | 僅站台類型「機台」的場館；線上站台維持既有行為，不受本規則影響
+    assumptions:
+    - text: 同 REQ-PLATFORMRULE-021，『平台對遊戲發佈更新』的實際後台操作介面與具體步驟不在本 spec 定義範圍內，此處假設可透過後台遊戲管理功能觸發，且該次更新動作屬平台層級事件、會同時影響同一款遊戲在線上與機台場館兩側的預設狀態判斷；若實際操作路徑與假設不符，結果需人工複核
+      requirement_id: REQ-PLATFORMRULE-023
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 本 TC 與 REQ-PLATFORMRULE-021 的 TC 共用同一次『發佈更新』事件的概念作為對照組（同一款遊戲、同一次更新），驗證的是範圍邊界（機台 vs 線上）而非更新本身的效果，兩者互為對照但驗證目標不同，不算重複案例
+history:
+- at: '2026-09-17T21:46:43Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-010

@@ -39,3 +39,36 @@ def test_40_structural_retry_does_not_consume_semantic_iterations():
     assert engine.submit(rid, "T3", str(p))[0] and engine.evaluate_gate(rid, "T3")["result"] == "PASS"
     assert engine.load_run(rid)["status"] == "WAITING_HUMAN"   # ACTIVATE_TESTCASE
     engine.cancel(rid, "oscar@example.com")
+
+def test_41_reject_full_activate_batch_then_resubmit_gives_fresh_approval_refs():
+    """T3（approval）整批 reject 後，approval task 自己的 input_entity_refs 必須被清掉；否則下一輪
+    Designer→Validator 重新 PASS、materialize 出全新版本時，_create_approval_for_task 會誤撿到
+    上一輪已被打回 DRAFT 的舊 refs，對其 state.apply(...→PENDING_APPROVAL) 直接崩潰（回歸測試）。"""
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
+    tcs, _ = _tcs(prefix="01J0ZZZZZZZZZZZZZZZZZZZZZ")
+    did1, r = _submit_design(rid, tcs, iteration=0); assert r["result"] == "PASS"
+    _, p = H.write_artifact(rid, "T3", "agent-test-validator", "TestValidationReport", H.validation_report(did1, rm_aid, "PASS"), [{"entity_type": "Artifact", "id": did1}], {"type": "TestCaseDraft", "ids": [did1]}, "validation", iteration=0)
+    assert engine.submit(rid, "T3", str(p))[0] and engine.evaluate_gate(rid, "T3")["result"] == "PASS"
+    run = engine.load_run(rid); assert run["status"] == "WAITING_HUMAN"
+    apr1 = store.load(f"approvals/{run['waiting_on_approval_id']}.yaml")
+    first_ids = {it["id"] for it in apr1["batch_items"]}; assert len(first_ids) == 5
+    # 整批 reject（非 per-item）→ 回到 T2，第一輪版本打回 DRAFT
+    engine.approve(apr1["approval_id"], "reject", "oscar@example.com", rationale="重新設計")
+    run = engine.load_run(rid); assert run["tasks"][1]["status"] == "READY" and run["tasks"][1]["iteration"] == 1
+    for tc_id in first_ids:
+        assert store.load(store.tc_pointer_path(tc_id))["versions"][0]["status"] == "DRAFT"
+    # 第二輪：重新設計 → Validator PASS → 應產生全新 ApprovalRequest，不崩潰、且與第一輪的 TC id 不重疊
+    tcs2, _ = _tcs(prefix="01J1ZZZZZZZZZZZZZZZZZZZZZ")
+    did2, r = _submit_design(rid, tcs2, iteration=1); assert r["result"] == "PASS"
+    _, p2 = H.write_artifact(rid, "T3", "agent-test-validator", "TestValidationReport", H.validation_report(did2, rm_aid, "PASS"), [{"entity_type": "Artifact", "id": did2}], {"type": "TestCaseDraft", "ids": [did2]}, "validation", iteration=1)
+    assert engine.submit(rid, "T3", str(p2))[0]
+    r2 = engine.evaluate_gate(rid, "T3")   # 修正前：TransitionError（testcase: 沒有 DRAFT → PENDING_APPROVAL 這條轉換）
+    assert r2["result"] == "PASS"
+    run = engine.load_run(rid); assert run["status"] == "WAITING_HUMAN"
+    apr2 = store.load(f"approvals/{run['waiting_on_approval_id']}.yaml")
+    second_ids = {it["id"] for it in apr2["batch_items"]}
+    assert len(second_ids) == 5 and second_ids.isdisjoint(first_ids)
+    for it in apr2["batch_items"]:
+        assert store.load(store.tc_version_path(it["id"], it["version"]))["status"] == "PENDING_APPROVAL"
+    engine.cancel(rid, "oscar@example.com")

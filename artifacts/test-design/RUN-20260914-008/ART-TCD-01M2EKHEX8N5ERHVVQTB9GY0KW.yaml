@@ -1,0 +1,129 @@
+artifact_id: ART-TCD-01M2EKHEX8N5ERHVVQTB9GY0KW
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-008
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T00:02:16Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-027
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-023
+- entity_type: TestCase
+  id: TC-CASHFLOW-027
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - title: 印表機到位後：列印未開始前偵測異常，機台不呼叫 end-cashout 但平台仍留待確認 PENDING
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-023
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0231
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    - 機台印表機已到位、已恢復正式收據列印流程（非過渡期現況）
+    test_data: []
+    steps:
+    - n: 1
+      action: 前提：本案例僅適用印表機到位、機台恢復原生 req-cashout/end-cashout 呼叫流程後；過渡期（見 REQ-CASHFLOW-025）不適用
+    - n: 2
+      action: 機台已送出 req-cashout 並取得核可（PENDING 已建立）
+    - n: 3
+      action: 按下結算時印表機已有異常（列印尚未開始），機台直接結束流程、不呼叫 end-cashout
+    expected_result: 機台不呼叫 end-cashout，分數不扣、保留在機台上；但平台因先前 req-cashout 已建立的 PENDING 仍留有一筆「待確認」的出金（依 REQ-CASHFLOW-026 的既有機制收斂）
+    expected_result_spec_reference: &id001
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金 + §四種金流/出金（過渡期）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEX8QB2JT73VGY2CC6ZB
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-027
+      version: 1
+  - title: 印表機到位後：已送入列印佇列後才實體故障，分數照扣、收據待排除後自動印出
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-023
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0232
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    - 機台印表機已到位、已恢復正式收據列印流程（非過渡期現況）
+    test_data: []
+    steps:
+    - n: 1
+      action: 前提：本案例僅適用印表機到位後；過渡期（見 REQ-CASHFLOW-025）不適用
+    - n: 2
+      action: 機台已送出 req-cashout 並取得核可
+    - n: 3
+      action: 收據已送入列印佇列後才卡紙或缺紙
+    expected_result: 機台送出 end-cashout，分數已扣（出金已完成），收據仍在佇列中，待現場排除狀況後自動印出，不可視為未出金而重做
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEX8PASKX7VV286HWDV5
+    source_ref: new_required:split_from_TC-CASHFLOW-027
+history:
+- at: '2026-09-14T00:02:23Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-008
+- at: '2026-09-14T00:07:15Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2EKTD91W7PYTD9G2BPNYAP1
+  run_id: RUN-20260914-008

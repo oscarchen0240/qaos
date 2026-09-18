@@ -1,0 +1,96 @@
+title: 五種未成立原因分別對應正確的狀態碼
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-029
+acceptance_criteria_ids:
+- AC-CASHFLOW-0291
+- AC-CASHFLOW-0292
+- AC-CASHFLOW-0293
+- AC-CASHFLOW-0294
+- AC-CASHFLOW-0295
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- equivalence_partitioning
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 情境一：佈置全場館餘額合計＋預留＋本次金額將超過額度上限，呼叫 req-keyin 或 req-cashin
+- n: 2
+  action: 情境二：以查無對應 PENDING 或不符的 TXID 呼叫 end-cashin 或 end-cashout
+- n: 3
+  action: 情境三：先將該機台於後台設為停用，呼叫任一交易請求；另將所屬場館站台狀態改為非開通，呼叫任一交易請求
+- n: 4
+  action: 情境四：以已被重置、失效的機台憑證呼叫任一交易請求
+- n: 5
+  action: 情境五：呼叫任一交易請求，欄位缺漏、型別錯誤，或 currency 與主站台核心貨幣不符，或金額為負
+expected_result: 情境一回 1-OVER LIMIT；情境二回 1-NO RECORD；情境三兩種子情境皆回 7-OUT OF SERVICE；情境四回 9-OTHER ERROR；情境五回 6-BAD DATA/FORMAT——五種未成立原因與狀態碼一一對應，不以
+  HTTP 狀態碼表達業務結果
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-狀態碼對照
+  quote: 1-OVER LIMIT｜超過額度上限；1-NO RECORD｜查無對應交易（查無對應 PENDING，或 TXID 不符）；7-OUT OF SERVICE｜機台停用中/場館未開通；9-OTHER ERROR｜憑證失效/系統錯誤；6-BAD
+    DATA/FORMAT｜資料格式錯誤（欄位缺漏、型別錯誤、currency 與主站台核心貨幣不符、金額為負）
+assumptions:
+- text: 情境三『機台停用』的後台操作切換路徑，本 spec 未明確定義其所在頁面（機台帳號沿用既有會員資料機制，推測透過既有的帳號啟用/停用功能操作），實際切換入口需與環境負責人確認
+  requirement_id: REQ-CASHFLOW-029
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-095
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

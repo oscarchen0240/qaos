@@ -1,0 +1,393 @@
+artifact_id: ART-TCD-01M2GGNA97NB232AR3MRX69SK7
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-003
+task_id: T2
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-09-14T17:50:25Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-001
+- entity_type: Requirement
+  id: REQ-BONUSCCY-002
+- entity_type: Requirement
+  id: REQ-BONUSCCY-003
+- entity_type: Requirement
+  id: REQ-BONUSCCY-004
+- entity_type: Requirement
+  id: REQ-BONUSCCY-005
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GGNA95XE9M96J9JJETRF8E
+    title: 機台站台的注單查詢/明細頁金額以核心貨幣(TWD)顯示
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-001
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-001
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: &id001
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 站台切換選單切至機台（TWD核心貨幣）站台
+    - n: 2
+      action: 依實際選單導覽至注單查詢/明細頁，開啟一筆機台注單的明細
+    expected_result: 金額欄位以站台核心貨幣（TWD）顯示，不是寫死顯示 USDT 或其換算值
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第2項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: spec.md 對這支頁面完全沒有畫面/選單路徑描述，「注單查詢/明細頁」的實際導覽路徑為推論、非 spec 明文，執行時以實際選單為準
+  - draft_id: TC-DRAFT-01M2GGNA950ND06GQ53Y4XGKB9
+    title: 新增機台站台會員前後，Dashboard 總會員數正確 +1（比對基準）
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-002
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄目前 Dashboard 總會員數 N
+    - n: 2
+      action: 在機台（TWD核心貨幣）站台新增一位會員
+    - n: 3
+      action: 再次檢視 Dashboard 總會員數
+    expected_result: 總會員數為 N+1，正確計入這名新增的機台站台會員；若仍為 N，代表該會員被 JOIN 條件悄悄排除
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GGNA95JREPDEJFR8KQZMVN
+    title: 會員列表切換至機台站台時，列出筆數與該站台實際會員數一致（比對基準）
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-003
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以帳號類型篩選＝機台，記錄該機台站台的實際會員數 M（或以其他管道取得已知筆數）
+    - n: 2
+      action: 站台切換選單切至該機台站台，不加篩選檢視會員列表筆數
+    expected_result: 會員列表筆數與 M 一致，沒有因幣別相關的查詢條件而遺漏資料
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GGNA95HKH4K7PVP35TW9W7
+    title: 平台同時有線上與機台站台會員時，Dashboard 總會員數正確加總兩者，不會只計入線上會員
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids: []
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄線上站台會員數 A 與機台（TWD）站台會員數 B（各自以帳號類型/站台篩選取得）
+    - n: 2
+      action: 檢視 Dashboard 總會員數
+    expected_result: 總會員數 ＝ A + B；若總數等於 A（只有線上會員數），代表機台站台會員被原本寫死 USDT 的 JOIN 條件悄悄排除在外
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-002 的 rejection_contract 點名的失效模式是『資料悄悄消失、不會報錯』，單看某一次的總數或列表筆數看不出來，需要有可比對的基準值（線上/機台分開計數再加總）才能真正驗證這個風險
+  - draft_id: TC-DRAFT-01M2GGNA95CHJAXFF81B0TK0PV
+    title: 人工存入未指定幣別時寫入站台核心貨幣(TWD)
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-003
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-004
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 對一個機台（TWD核心貨幣）帳號執行人工存入，未指定幣別
+    - n: 2
+      action: 檢視入帳結果
+    expected_result: 金額寫入該站台核心貨幣（TWD）錢包，不是寫死的 USDT
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GGNA95PJRYEFA4NTVYKYPJ
+    title: 人工提出未指定幣別時從站台核心貨幣(TWD)扣除
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-003
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-005
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 對同一機台帳號執行人工提出，未指定幣別
+    - n: 2
+      action: 檢視扣款結果
+    expected_result: 從該站台核心貨幣（TWD）錢包扣除，不是寫死的 USDT
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GGNA950YTW3SHMVVH6C922
+    title: 人工存入時明確指定幣別，系統依指定幣別入帳（預設規則僅在未指定時生效）
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-003
+    acceptance_criteria_ids: []
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - scenario
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 對一個機台（TWD核心貨幣）帳號執行人工存入，後台明確指定幣別欄位（若畫面提供此選項）
+    - n: 2
+      action: 檢視入帳結果
+    expected_result: 依後台明確指定的幣別入帳；「未指定則預設核心貨幣」這條規則只在沒有明確指定時生效，不會覆蓋已明確指定的選擇
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 區分「預設值」與「強制值」兩種語意：REQ-BONUSCCY-003 的規則是補上未指定時的預設，不是禁止指定其他幣別；若畫面實際上不提供指定欄位（只有金額輸入），此案例的 given 不成立，執行時應標記為不適用而非失敗
+  - draft_id: TC-DRAFT-01M2GGNA958GPJYAVD2GGJBEWD
+    title: 核心貨幣不可設定為未啟用的錢包幣別
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-006
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 建立或編輯站台時，嘗試將核心貨幣設定為目前未啟用的錢包幣別
+    - n: 2
+      action: 送出設定
+    expected_result: 系統阻擋，不允許設定為非啟用中的幣別（若實際錯誤訊息文案與此不同，不視為違反本條，僅測是否被阻擋）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GGNA96F6Z0PJ8A97M9N9YC
+    title: 機台站台前台資產列表僅顯示核心貨幣(TWD)
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-005
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-007
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - negative
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以機台帳號登入前台
+    - n: 2
+      action: 檢視前台資產列表
+    expected_result: 只顯示核心貨幣 TWD 一種，不列出其他幣別的零餘額項目
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §⭐兩種站台差很多 + 實際被改到的地方（表格第8項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+history:
+- at: '2026-09-14T17:50:30Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-003

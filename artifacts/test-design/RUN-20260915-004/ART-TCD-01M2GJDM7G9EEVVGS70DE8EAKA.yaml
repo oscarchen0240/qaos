@@ -1,0 +1,128 @@
+artifact_id: ART-TCD-01M2GJDM7G9EEVVGS70DE8EAKA
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-004
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T18:21:10Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-SITELIST-002
+- entity_type: TestCase
+  id: TC-SITELIST-003
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GJDM7F56W1QZV6QSBXCE2N
+    title: 上層站台為 admin 時，子站台類型不強制跟隨，可自由選擇機台或線上
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-002
+    acceptance_criteria_ids:
+    - AC-SITELIST-0023
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - admin 為既有的最上層根站台（線上類型；測試環境中此站台目前命名為 admin，如環境有變動請以平台最上層根站台為準）
+    test_data: []
+    steps:
+    - n: 1
+      action: 至後台管理員系統 > 站台列表，新增子站台，上層站台選擇 admin，站台類型選擇「機台」並儲存
+    - n: 2
+      action: 檢視這個新建立的機台子站台，確認核心貨幣欄位與其自身的鏈上錢包管理
+    - n: 3
+      action: 再新增另一個子站台，上層站台同樣選擇 admin，這次站台類型選擇「線上」並儲存
+    - n: 4
+      action: 檢視這個新建立的線上子站台，確認核心貨幣欄位與其自身的鏈上錢包管理
+    expected_result: 兩次新增站台類型欄位皆可自由選擇，不因上層站台 admin 本身是線上類型而被強制鎖定為線上、UI 也未唯讀跟隨；機台類型的子站台建立後核心貨幣顯示 TWD，且該子站台自己的鏈上錢包管理裡 TWD 已連動為啟用狀態；線上類型的子站台建立後核心貨幣顯示
+      USDT，且該子站台自己的鏈上錢包管理裡 USDT 同樣已連動為啟用狀態——兩種類型皆不需要 admin 自身的鏈上錢包管理預先啟用對應幣別
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: REQ-SITELIST-002 / AC-SITELIST-0023（RequirementModel，非 spec.md 原文——spec.md 全文未記載 admin 特例，此為 Oscar 2026-09-15
+        口頭確認並寫入 RequirementModel 的行為）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    source_ref: new_required:oscar_2026-09-15_confirmation
+    design_rationale: REQ-SITELIST-002 新增 AC-SITELIST-0023，涵蓋先前完全沒有 TC 測過的 admin 特例路徑；一般主站台（非 admin）底下子站台強制跟隨類型的既有規則由 TC-SITELIST-003/004
+      覆蓋，維持不變、不受本條影響
+  - draft_id: TC-DRAFT-01M2GJDM7FR86M3MYQJKMNFTTW
+    title: admin 底下自由選型建立的子站台，建立後站台類型同樣不可修改
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-002
+    - REQ-SITELIST-001
+    acceptance_criteria_ids:
+    - AC-SITELIST-0023
+    - AC-SITELIST-0012
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - admin 底下已有一個依特例自由選型建立的機台類型子站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯這個機台類型子站台，檢視站台類型欄位
+    expected_result: 站台類型欄位唯讀、不可修改——這條驗證的其實是既有的 REQ-SITELIST-001／AC-SITELIST-0012（站台類型二擇一、建立後不可修改），本條案例是確認 admin 特例只解除「建立當下強制跟隨上層」這件事（REQ-SITELIST-002／AC-SITELIST-0023
+      的範圍），不影響「建立後類型鎖定」這條不同需求下的通用規則
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位
+      quote: 每個站台的「站台類型」為線上 / 機台，二擇一；建立後不可修改
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    source_ref: new_required:oscar_2026-09-15_confirmation
+    design_rationale: admin 特例（REQ-SITELIST-002/AC-0023）只解除子站台建立當下的類型選擇限制，不代表放寬 REQ-SITELIST-001/AC-0012「建立後不可修改」的規則；補一條跨需求的邊界案例避免修復/實作時誤把兩條規則混為一談。本案例主要驗證對象是
+      AC-SITELIST-0012，掛在 REQ-SITELIST-002 底下是次要關聯（用 admin 特例建立的站台作為測試素材），故 requirement_ids/acceptance_criteria_ids 同時列出兩者
+history:
+- at: '2026-09-14T18:21:16Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-004

@@ -1,0 +1,143 @@
+artifact_id: ART-TCD-01M2J8M8KHMRVYEAN8M2SXDSW9
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-016
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T10:08:31Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-005
+- entity_type: TestCase
+  id: TC-MEMBER-007
+- entity_type: TestCase
+  id: TC-MEMBER-008
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2J8M8KG8H8CWYDSK8HT3B0Q
+    title: 可提領餘額恰為 10 USDT 時不可於前台申請出金（邊界值，剛好不達門檻）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-007
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能；「須大於10 USDT」這道門檻僅在前台實際送出出金申請（API）時才會被檢查，後台人工提出操作本身不受此門檻限制（已由 Oscar 2026-09-15
+      確認）
+    - 換算公式（已由 Oscar 2026-09-15 確認）：可提領餘額 ＝ 帳戶餘額（主錢包） － 提領所需有效投注額（流水錢包）；此差值大於10時即符合出金門檻。佈置方式：先透過人工存入設定主錢包與流水門檻的初始值（存入金額 M、稽核倍數
+      k → 主錢包 +M、流水門檻 +M×k），再透過以下任一方式消耗/調整流水門檻至目標差值：(a) 於前台實際進行遊戲投注消耗流水門檻，或 (b) 由後台人工提出直接調整流水門檻——兩者皆為 Oscar 確認可行的佈置手段，執行時擇一操作即可
+    - 需要一名會員的「可提領餘額」恰為 10.00 USDT
+    test_data: []
+    steps:
+    - n: 1
+      action: 於後台帳務資訊區塊確認可提領餘額顯示為 10.00 USDT
+    - n: 2
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 3
+      action: 嘗試送出出金申請
+    expected_result: 前台阻擋出金申請（規則為「須大於10 USDT」，剛好等於10不符合條件）：申請入口不可用，或送出後被系統拒絕而未成功送出
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-007
+      version: 1
+    design_rationale: v2版本因換算公式與人工提出是否受門檻限制未知，標記為exploratory assumption。已由 Oscar 2026-09-15 補充確認：①>10門檻僅前台API送出時檢查，人工提出不受限
+      ②可提領餘額=帳戶餘額-提領所需有效投注額，且流水門檻可透過前台實際投注或後台人工提出兩種方式調整。v3改為grounded，移除assumptions，test_level維持integration以反映驗證動作跨出ba-admin進入會員前台
+  - draft_id: TC-DRAFT-01M2J8M8KG6WQRMYQG94PGK5JP
+    title: 可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-008
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能；「須大於10 USDT」這道門檻僅在前台實際送出出金申請（API）時才會被檢查，後台人工提出操作本身不受此門檻限制（已由 Oscar 2026-09-15
+      確認）
+    - 換算公式（已由 Oscar 2026-09-15 確認）：可提領餘額 ＝ 帳戶餘額（主錢包） － 提領所需有效投注額（流水錢包）；此差值大於10時即符合出金門檻。佈置方式：先透過人工存入設定主錢包與流水門檻的初始值（存入金額 M、稽核倍數
+      k → 主錢包 +M、流水門檻 +M×k），再透過以下任一方式消耗/調整流水門檻至目標差值：(a) 於前台實際進行遊戲投注消耗流水門檻，或 (b) 由後台人工提出直接調整流水門檻——兩者皆為 Oscar 確認可行的佈置手段，執行時擇一操作即可
+    - 需要一名會員的「可提領餘額」恰為 10.01 USDT
+    test_data: []
+    steps:
+    - n: 1
+      action: 於後台帳務資訊區塊確認可提領餘額顯示為 10.01 USDT
+    - n: 2
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 3
+      action: 送出出金申請
+    expected_result: 前台允許正常申請出金，申請成功送出
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-008
+      version: 1
+    design_rationale: v2版本因換算公式與人工提出是否受門檻限制未知，標記為exploratory assumption。已由 Oscar 2026-09-15 補充確認：①>10門檻僅前台API送出時檢查，人工提出不受限
+      ②可提領餘額=帳戶餘額-提領所需有效投注額，且流水門檻可透過前台實際投注或後台人工提出兩種方式調整。v3改為grounded，移除assumptions，test_level維持integration以反映驗證動作跨出ba-admin進入會員前台
+history:
+- at: '2026-09-15T10:08:43Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:23:02Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2J9EJXF860Z2X5TRNDFP6DW
+  run_id: RUN-20260915-016

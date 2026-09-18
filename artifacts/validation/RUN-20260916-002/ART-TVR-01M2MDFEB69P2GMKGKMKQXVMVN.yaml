@@ -1,0 +1,118 @@
+artifact_id: ART-TVR-01M2MDFEB69P2GMKGKMKQXVMVN
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T06:11:45Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2MCSQ3VZQ168YTF5BSQRA4N
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2MCSQ3VZQ168YTF5BSQRA4N
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2MCSQ3VZQ168YTF5BSQRA4N
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2MBHFR6VK7VQ6491GXPR5NK
+    issue_type: other
+    severity: blocker
+    violated_requirement: null
+    spec_reference: null
+    evidence: 以腳本統計整份 47 條 TC，design_rationale 為空字串的共 34 條（72%），包含多筆 high risk/critical_path 核心案例（REQ-020 出金核可金額、REQ-021 end-cashout
+      冪等性、REQ-033/035/037/038 場次生命週期等）。完整清單：TC-DRAFT-01M2MBHFR6VK7VQ6491GXPR5NK, 01M2MBHFR6A6Y344W8M8RGB34Z, 01M2MBHFR6XP0FQFE63NXFH2BG,
+      01M2MBHFR66GECM0VGRNFRGH61, 01M2MBHFR6YQ1QD64Q6R3K85C1, 01M2MBHFR6PRPRFPHNWNVJK009, 01M2MBHFR6DCNCAB8P4Z88GE0E, 01M2MBHFR6NRXT46KMDY0BA2X1,
+      01M2MBHFR6BE24MJN4AECVH993, 01M2MBHFR6T17X9W76XDMFJJ6Y, 01M2MBHFR6W2SA9J8T04FP4Y5S, 01M2MBHFR64JFFPFVBD3Y80CK0, 01M2MBHFR6896H6AZQMQQWBHAT,
+      01M2MBHFR6MS79WC71E4CZVMM5, 01M2MBHFR6DKCMSGEGYMHNEMNM, 01M2MBHFR6NM5FDTJ6SZ7BCCXD, 01M2MBHFR6DVP7ESQKHM4G00K5, 01M2MBHFR6G0FXNJJESAVKGBW5,
+      01M2MBHFR6TZW6B37XSBNJ32CV, 01M2MBHFR69N6D59K767Q9DD2T, 01M2MBHFR6FY005FGJYW5ZZKRM, 01M2MBHFR6XQB7BEF038786QTW, 01M2MBHFR7GAYKTSCJ7ZSNGAF1,
+      01M2MBHFR731GMAY97H62T6FNC, 01M2MBHFR7578AW414F03BV0NB, 01M2MBHFR7FFFGAH13FXKK91BC, 01M2MBHFR7CMM7NG5Y0DG9VJ26, 01M2MBHFR7C48Q0C1GX7JD0CG2,
+      01M2MBHFR7VPRRGBQSG7V7K2XA, 01M2MBHFR7MQ9G300VBQDQQRM6, 01M2MBHFR75GM0TKM39J6P0T3R, 01M2MBHFR7BYY2H6BRBS3N5VRD, 01M2MBHFR7XAPNHNGVR90YMB5H,
+      01M2MBHFR7ZRFCM13FB7T3G46T（已由獨立腳本二次核實，與 Validator 統計一致）。
+    explanation: design_rationale 是 Test Designer 唯一能自證技巧選型、佈置邏輯不是隨便套模板的欄位，schema 上雖選填但屬於 Test Designer 自身被賦予的硬規則（不准留空）。72%留空，使審查者與後續維護者無法得知這些
+      TC（含多筆 high risk）的設計依據，嚴重削弱可稽核性。僅有的少數具實質內容案例品質良好，顯示並非能力問題，而是未一致套用到全部案例。
+    recommended_change: 為全部 34 條留空的 TC 補上 design_rationale，至少說明：(a) 為何選擇該 design_techniques 組合、(b) test_data/佈置方式的選擇邏輯、(c)
+      若涵蓋多個 AC 或 requirement，說明整合理由。
+  - testcase_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    issue_type: missing_reference
+    severity: major
+    violated_requirement: null
+    spec_reference: null
+    evidence: 全部 47 條 TC 的 expected_result_spec_reference 都只有 spec_id/spec_version/location，完全沒有 quote 欄位逐字引用原文（已用腳本核對，0/47
+      有 quote）。對照 requirements.yaml 中每條 AC 的 spec_reference 皆附完整 quote。
+    explanation: 缺少 quote 使 expected_result 斷言無法在條目層級逐一核實是否真的忠於 spec 原文，只能退而依 location 章節手動比對，這代表 TestDesignReport.self_check.expected_results_traceable=true
+      的宣稱實際上只達到章節層級可追溯，未達嚴格的引文層級可追溯，宣稱與實際精確度有落差。
+    recommended_change: 為每條 TC 的 expected_result_spec_reference 補上 quote 欄位（逐字引用 spec.md 對應段落，可截斷但需能對應到 expected_result 斷言）。
+  - testcase_id: TC-DRAFT-01M2MBHFR7GAYKTSCJ7ZSNGAF1
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 此 TC（REQ-CASHFLOW-029，五種未成立原因對應狀態碼）design_techniques 仍標記 decision_table，但 5 個步驟各自是單一獨立條件→單一固定結果的一對一對照，並非多條件交叉矩陣。同份草案中另外
+      3 條結構相同的 TC 已在上一輪修正為 equivalence_partitioning，此條被遺漏。
+    explanation: 與同份草案已自我修正的三個案例相比，此處標籤不一致，屬技術標籤誤用的遺漏。
+    recommended_change: 比照其他三條已修正案例，改為 equivalence_partitioning，或在 design_rationale 中提出令人信服的理由說明為何此處仍屬決策矩陣。
+  - testcase_id: TC-DRAFT-01M2MBHFR6DKCMSGEGYMHNEMNM
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 此 TC（REQ-CASHFLOW-020 AC-0201，出金核可金額不因門檻取整）design_techniques 標記 boundary_value，但測試資料僅為機台餘額 321（刻意選一個非任何常見門檻整數倍的值），驗證的是出金不套用洗分門檻取整規則，並未真正操作任何數值邊界。
+    explanation: 此案例本質是功能性驗證，而非邊界值測試，標記 boundary_value 較不精確。
+    recommended_change: 改標為 requirement_based，或若堅持保留 boundary_value，應在 design_rationale 說明所測試的邊界具體是什麼。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2MBHFR69N6D59K767Q9DD2T
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: coverage_matrix 中 REQ-CASHFLOW-019/027 的 requirement 層級 draft_ids 含有實際上只對應到其他 requirement AC 的 TC（例如此 TC 實際對應
+      AC-CASHFLOW-0252／屬 REQ-025，卻列在 REQ-019 的 requirement 層級清單）。AC 層級映射本身經核對完全正確，不影響實質覆蓋率。
+    explanation: requirement 層級清單（較寬鬆，含情境相關但未實際驗證該 requirement 任何 AC 的 TC）與 AC 層級清單（較嚴謹）之間有落差，若讀者只看 requirement 層級清單容易誤判覆蓋深度。
+    recommended_change: 非必要修正，建議報告中註明 requirement 層級 draft_ids 代表情境相關而非逐項驗證。
+  - testcase_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: spec.md 附錄-PENDING保留期限提到「死單（如機台報廢）由 Admin 手動取消清理」，這是獨立於 REQ-CASHFLOW-026（15秒逾時）之外的另一種機台報廢情境下的出金 PENDING 收斂機制，requirements.yaml
+      中未見對應 requirement_id。
+    explanation: 2026-09-15 Oscar 對 REQ-CASHFLOW-008/026 的確認是否也一併否定這條機台報廢死單清理路徑不明確，不是本次 TestCaseDraft 的責任範圍，但建議提出 Clarification
+      請 RequirementModel 維護者確認。
+    recommended_change: 建議另開 Clarification，確認機台報廢死單清理的 Admin 手動取消路徑是否仍存在；若存在則需新增 requirement 與對應 TC，若不存在則同步修正 spec.md。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 42
+    ac_total: 69
+    ac_covered: 66
+    uncovered_accepted:
+    - AC-CASHFLOW-0083
+    - AC-CASHFLOW-0421
+    - AC-CASHFLOW-0431
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T06:11:48Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-002

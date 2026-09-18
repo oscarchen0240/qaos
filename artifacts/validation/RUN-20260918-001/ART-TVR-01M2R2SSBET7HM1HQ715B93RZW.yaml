@@ -1,0 +1,78 @@
+artifact_id: ART-TVR-01M2R2SSBET7HM1HQ715B93RZW
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-001
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T16:22:07Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2R29PNQKKA7V3GWN6PHYTPW
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2R29PNQKKA7V3GWN6PHYTPW
+- entity_type: Artifact
+  id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2R29PNQKKA7V3GWN6PHYTPW
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+  issues:
+  - testcase_id: TC-DRAFT-01M2R29PNMXV0DH63DKNF2ZMM6
+    issue_type: spec_mismatch
+    severity: major
+    violated_requirement: REQ-TXLOG-017
+    spec_reference: null
+    evidence: quote「出金不設逾時...或轉介至「洗分出金核實」頁人工處理」，但spec.md原文(L57,L122)實際是「...或由Admin手動取消為止」。requirements.yaml中REQ-TXLOG-017自己的spec_reference.quote對此有加註「原文已由Oscar
+      2026-09-14確認為錯誤敘述」，這條TC的quote卻拿掉了這個揭露註記，看起來像逐字引用spec.md但實際不是。
+    explanation: 跟同批其他TC(REQ-025/026/028)已採用的揭露慣例不一致，破壞逐字可追溯性。
+    recommended_change: 比照同批其他TC，在quote後補上揭露註記說明原文已確認為錯誤敘述。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2R29PNNMD1CP43TEHYADHH3
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 斷言洗分門檻恰好等於請求金額時實際金額不變，屬邊界推論非spec明文，但未用assumptions揭露，且標critical priority。
+    explanation: 置信度標示不夠明確。
+    recommended_change: 評估是否需要另開Clarification確認相等邊界行為。
+  - testcase_id: TC-DRAFT-01M2R29PNNNJVGCK4WKW4H08K4
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 此TC額外斷言了CASHFLOW已覆蓋的冪等性範圍。
+    explanation: 與TXLOG不應重驗CASHFLOW邏輯的原則有點混淆。
+    recommended_change: 改為觀察性備註或說明重複核對的理由。
+  coverage_summary:
+    requirements_total: 30
+    requirements_covered: 29
+    ac_total: 51
+    ac_covered: 49
+    uncovered_accepted:
+    - AC-TXLOG-0291
+    - AC-TXLOG-0292
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T16:22:07Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-001

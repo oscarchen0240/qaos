@@ -1,0 +1,233 @@
+artifact_id: ART-TCD-01M2EKHEYFF4HEBPKMXV8GAYGJ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-009
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T00:02:16Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-034
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-029
+- entity_type: TestCase
+  id: TC-CASHFLOW-034
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - title: 加計後將超過場館額度上限時回 1-OVER LIMIT
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0291
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台正常啟用、場館開通
+    - n: 2
+      action: 加計後將超過場館額度上限，送出開分或入金請求
+    expected_result: 平台回 1-OVER LIMIT
+    expected_result_spec_reference: &id001
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-狀態碼對照
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEYF7K31KT37QX2CVPT9
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-034
+      version: 1
+  - title: 查無對應 PENDING 或 TXID 不符時回 1-NO RECORD
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0292
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台正常啟用、場館開通
+    - n: 2
+      action: 查無對應 PENDING 或 TXID 不符，送出 end-cashin/end-cashout
+    expected_result: 平台回 1-NO RECORD
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEYFBNH6Z3EXGST4Z957
+    source_ref: new_required:split_from_TC-CASHFLOW-034
+  - title: 機台停用或場館未開通時回 7-OUT OF SERVICE
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0293
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台將被設為停用（或其所屬場館站台將被設為非開通）
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台原為啟用狀態，改為停用（或機台所屬場館站台改為非開通狀態）
+    - n: 2
+      action: 送出任一交易請求
+    expected_result: 平台回 7-OUT OF SERVICE
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEYFQK6V0Q7QZ79MMQCB
+    source_ref: new_required:split_from_TC-CASHFLOW-034
+  - title: 機台憑證已失效（被重置）時回 9-OTHER ERROR
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0294
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    - 機台憑證已被重置、失效
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台正常啟用、場館開通，但機台憑證已失效（被重置）
+    - n: 2
+      action: 送出任一交易請求
+    expected_result: 平台回 9-OTHER ERROR
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEYFW6T6BFPW5Q2W0J73
+    source_ref: new_required:split_from_TC-CASHFLOW-034
+  - title: 請求欄位缺漏/型別錯誤或幣別不符或金額為負時回 6-BAD DATA/FORMAT
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0295
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台正常啟用、場館開通
+    - n: 2
+      action: 送出任一交易請求，欄位缺漏、型別錯誤，或 currency 不符主站台核心貨幣，或金額為負
+    expected_result: 平台回 6-BAD DATA/FORMAT
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEYF6ZSFEWCTB3V3TN2K
+    source_ref: new_required:split_from_TC-CASHFLOW-034
+history:
+- at: '2026-09-14T00:02:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-009

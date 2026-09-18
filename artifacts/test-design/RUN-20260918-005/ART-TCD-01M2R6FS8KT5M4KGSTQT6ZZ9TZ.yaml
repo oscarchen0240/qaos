@@ -1,0 +1,331 @@
+artifact_id: ART-TCD-01M2R6FS8KT5M4KGSTQT6ZZ9TZ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-005
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T17:26:34Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-011
+- entity_type: Requirement
+  id: REQ-BONUSCCY-012
+- entity_type: Requirement
+  id: REQ-BONUSCCY-013
+- entity_type: Requirement
+  id: REQ-BONUSCCY-014
+- entity_type: Artifact
+  id: ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2R6FS8JC19890EJ87Q1NS95
+    title: 線上站台存款：存入多少金額，玩家錢包就精確增加多少，幣別與存款當下一致
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-011
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-017
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 選定一名既有的線上站台會員（自行從環境中選定）。
+    - 於 ba-admin 後台查詢該會員目前的錢包餘額與幣別，記錄為存款前基準值。
+    test_data: []
+    steps:
+    - n: 1
+      action: 以該會員身分，透過線上站台實際完成一筆系統存款（非後台人工存款），存入一個可清楚辨識的金額，例如 100 USDT（實際數字可依環境調整，只要能明確辨識即可）。
+    - n: 2
+      action: 確認該筆存款於系統顯示為入帳成功。
+    - n: 3
+      action: 於 ba-admin 後台重新查詢該會員的錢包餘額與幣別。
+    - n: 4
+      action: 於 ba-admin 後台查詢該筆存款的交易/存提記錄明細，記錄其顯示的金額與幣別。
+    expected_result: 錢包餘額較存款前增加的金額，恰等於玩家本次實際存入的金額（本例 100），幣別與玩家存款當下所使用的幣別一致（USDT）；存提記錄明細顯示的金額與此一致。不因新拆出的「原始金額」與「核心貨幣金額」兩個欄位而發生算錯或漏算。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／①存款金額拆成兩個；§這次能測什麼／T2
+      quote: 原始金額｜玩家實際存的錢，玩家看到的幣別｜進錢包、算流水倍數、算手續費／T2 入金金額進錢包正確：存多少就進多少，幣別正確。這是最重要的回歸點
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-017 與 spec 的 T2 都直接點名這是本次部署最重要的回歸點；此案例是最直接的正向驗證，只斷言 AC 明確要求的『存多少進多少、幣別正確』，不多加碼。幣別換算是否算對不在本次測試範圍內（spec
+      明講今天沒有任何存款會觸發換算），故不在此案例中涉及。
+  - draft_id: TC-DRAFT-01M2R6FS8JGG7FNFBFHN5PQEWB
+    title: 線上站台存款金額為非整數小數時，錢包入帳金額仍精確不被四捨五入或截斷
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-011
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-017
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 選定一名既有的線上站台會員（自行從環境中選定，可與另一條 TC 使用不同會員以避免互相干擾）。
+    - 於 ba-admin 後台查詢該會員目前的錢包餘額，記錄為存款前基準值。
+    test_data: []
+    steps:
+    - n: 1
+      action: 以該會員身分，透過線上站台實際完成一筆系統存款，刻意使用一個非整數、非規則的小數金額，例如 83.57 USDT（避免使用 100 這類整數，降低『欄位間複製/寫入時精度被吃掉』這類 bug 被整數掩蓋的機率；實際小數位數以站台實際允許的輸入精度為準）。
+    - n: 2
+      action: 確認該筆存款入帳成功。
+    - n: 3
+      action: 於 ba-admin 後台重新查詢該會員的錢包餘額。
+    expected_result: 錢包餘額增加的金額精確等於存入的小數金額（本例 83.57），小數位不因「原始金額」與「核心貨幣金額」拆成兩欄位而被四捨五入、無條件捨去或整數化。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／①存款金額拆成兩個；§這次能測什麼／T2
+      quote: 原始金額｜玩家實際存的錢，玩家看到的幣別｜進錢包、算流水倍數、算手續費／T2 入金金額進錢包正確：存多少就進多少，幣別正確。這是最重要的回歸點
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-011 為 high risk，需要至少一條 non-happy 案例；這裡用 error_guessing 技巧，針對『把同一個金額拆成兩個欄位』這種改動最容易犯的錯誤類型（欄位間賦值時精度遺失、其中一個欄位被錯誤四捨五入）刻意選用非整數金額作為測試資料，藉此提高抓到回歸的機率。expected_result
+      仍完全落在 AC-BONUSCCY-017『存多少進多少』的範圍內，沒有新增 spec 未要求的斷言，故不需要 assumptions／exploratory 標記；spec 也未定義任何數值精度邊界，因此不使用 boundary_value
+      技巧標籤，避免虛標。
+  - draft_id: TC-DRAFT-01M2R6FS8JFCKHRQ4E9GE3EC66
+    title: 存款後的流水門檻增量與手續費，以玩家實際存入的原始金額為基數計算
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-012
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-018
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 選定一名既有的線上站台會員（自行從環境中選定），且該會員存款當下會產生非零的流水倍數與／或手續費（例如符合資格的存款相關紅利活動，或站台既有的存款手續費規則；實際依環境現況選定，選定方式見下方 assumptions）。
+    - 於 ba-admin 後台查詢並記錄該會員存款前既有的『提領所需有效投注額（流水門檻）』，以及本次存款預期適用的流水倍數與手續費率（若後台頁面有顯示規則的話）。
+    test_data: []
+    steps:
+    - n: 1
+      action: 以該會員身分，透過線上站台實際完成一筆存款（非後台人工存款），存入一個可清楚辨識的金額，例如 200 USDT。
+    - n: 2
+      action: 確認該筆存款入帳成功。
+    - n: 3
+      action: 於 ba-admin 後台重新查詢該會員的『提領所需有效投注額（流水門檻）』，計算本次存款造成的增量。
+    - n: 4
+      action: 於 ba-admin 後台查詢該筆存款實際扣收的手續費金額。
+    - n: 5
+      action: 以『存款金額（原始金額）× 已知流水倍數』與『存款金額（原始金額）× 已知手續費率』分別回算，核對後台顯示的流水門檻增量與手續費是否與回算結果一致。
+    expected_result: 流水門檻增量與手續費金額，皆以玩家實際存入的原始金額（本例 200）為計算基數；與回算結果一致。惟因目前線上站台的存款幣別必然等於記帳幣別（兩個金額欄位目前數字相同），本測試無法真正區辨『以原始金額為基數』與『以核心貨幣金額為基數』兩者的差異，只能確認這次欄位拆分沒有破壞既有的計算行為（回歸驗證）。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／①存款金額拆成兩個；§這次能測什麼／T3
+      quote: 原始金額｜玩家實際存的錢，玩家看到的幣別｜進錢包、算流水倍數、算手續費／T3 流水倍數與手續費的基數正確：存款後的「提領所需有效投注額」要以實際存入金額為基數算，不是別的數字
+    assumptions:
+    - text: spec.md 未說明存款觸發非零『流水倍數』與『手續費』的確切條件（例如是否需要同時符合某個存款相關紅利活動才會有流水倍數，或手續費率如何配置／在哪個後台頁面可查）。此測試資料佈置方式（選定一名存款會產生非零流水倍數與手續費的會員、並於後台查得其規則數值用於回算比對）是我方為了讓案例可執行而做的推測，需要環境負責人確認實際可行的操作路徑與查詢頁面。
+      requirement_id: REQ-BONUSCCY-012
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-018 的斷言本身有明確 spec 依據（quote 直接對應），但要佈置一個『存款會產生非零流水倍數與手續費』的測試狀態，依賴的是 spec 未定義的觸發規則與查詢頁面，屬於未經驗證的環境/資料知識，因此誠實標為
+      exploratory 並揭露 assumption。expected_result 同時老實承認：因為今天幣別必存等於記帳幣別，這條案例只能做到回歸驗證，無法真正證明『基數是原始金額而非核心貨幣金額』——這一點也對應 spec 自己在『這次測不了』一節的說明。
+  - draft_id: TC-DRAFT-01M2R6FS8J1G7G7EK24XJ4RVKK
+    title: 累積存款未達有效會員門檻時，前台簽到頁進度條與後台判定的累積金額一致（不再永遠顯示 0）
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-013
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-019
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 選定一名既有的線上站台會員（自行從環境中選定）。
+    - 透過線上站台以該會員身分完成一筆或多筆存款（不可用後台人工存款——spec 明定後台人工存款不計入累積儲值與有效會員判定），使其累積存款金額大於 0，但低於所屬簽到活動設定的『有效會員門檻』。
+    - 於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。
+    test_data: []
+    steps:
+    - n: 1
+      action: 登入會員前台網站（非 ba-admin 後台），以該會員身分開啟簽到活動頁面。
+    - n: 2
+      action: 查看頁面上『有效會員』進度條顯示的累積金額。
+    - n: 3
+      action: 於 ba-admin 後台開啟該會員的簽到活動有效會員判定/查詢頁面，查看後台判定的累積金額。
+    - n: 4
+      action: 比對前台進度條顯示的數字與後台判定的數字。
+    expected_result: 前台進度條顯示的累積金額，與後台判定的累積金額一致（兩者皆反映該會員透過線上存款且已入帳成功的累積總額，讀取自 deposit_log_v2），不再像修改前一樣恆為 0；因累積金額尚未達門檻，前後台皆應顯示會員仍非有效會員狀態。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／②簽到活動的「有效會員」改讀正確的表；§這次能測什麼／T1
+      quote: 前台進度條會動、且與後台一致｜前台簽到頁的有效會員進度條，數字應該跟後台判定的累積金額一致。以前前台永遠顯示 0
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-019 描述的是會員前台的進度條頁面，不是 ba-admin 後台的畫面，因此 precondition／steps 明確區分『登入會員前台開簽到頁』與『ba-admin 後台查詢判定結果』兩個不同介面，不假設後台有對應的進度條畫面。累積存款的測試資料必須來自線上站台的真實存款，因為
+      spec 明文『後台人工存款不計入紅利（不進累積儲值...不算有效會員）』，用後台人工存款佈置資料會直接不成立。
+  - draft_id: TC-DRAFT-01M2R6FS8JAZKEST822NVC1HG4
+    title: 累積存款達到有效會員門檻後，開啟一次前台簽到頁即直接寫入有效會員，與後台判定結果一致
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-013
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-020
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - requirement_based
+    - boundary_value
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 選定一名既有的線上站台會員（自行從環境中選定，與另一條 TC 的會員不同，避免互相干擾）。
+    - 於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。
+    - 透過線上站台以該會員身分完成一筆或多筆存款（非後台人工存款），使其累積存款金額精確達到（等於或剛超過）此門檻數值；存款筆數與單筆金額可依環境現況調整，只要能讓累積總額精確達到門檻即可。
+    - 存款完成後，先不要開啟前台簽到頁——spec 說明前台是『每次玩家打開簽到頁就重算一次、達標就直接寫入有效會員』，先保持未開啟才能驗證是否真的是『開啟一次前台頁面』觸發了這次寫入。
+    test_data: []
+    steps:
+    - n: 1
+      action: 於 ba-admin 後台查詢該會員目前的有效會員狀態與累積金額判定結果（此時應尚未被前台觸發重算/寫入）。
+    - n: 2
+      action: 登入會員前台網站，以該會員身分開啟一次簽到活動頁面。
+    - n: 3
+      action: 觀察前台『有效會員』進度條顯示狀態。
+    - n: 4
+      action: 於 ba-admin 後台重新查詢該會員的有效會員狀態與累積金額判定結果。
+    expected_result: 開啟前台簽到頁後，進度條顯示達標（累積金額≥門檻），且該次開啟即直接將此會員寫入『有效會員』狀態；隨後於 ba-admin 後台再次查詢時，該會員的有效會員狀態與判定結果與前台一致（不需要玩家再存一筆才會反映）。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／②簽到活動的「有效會員」改讀正確的表；§這次能測什麼／T1
+      quote: 它是每次玩家打開簽到頁就重算一次、達標就直接寫入有效會員（後台那條要等玩家再存一筆才會重算）。所以部署後玩家只要開一次簽到頁，就會用新口徑重算：進度條數字會往上跳，本來就已經達標的玩家會立刻變成有效會員。
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-020 的 given 明確是『累積存款達到有效會員門檻』——這是 spec 明文定義的門檻比較邊界，因此除了 requirement_based 外額外標記 boundary_value（測試資料刻意取在門檻本身，而非隨意一個高於門檻很多的數字）。同時採用
+      spec §改了什麼②裡『前台開頁直接寫入、後台要等下一筆存款才重算』這個機制細節設計驗證順序（先不開前台頁確認後台未變、再開一次前台頁確認寫入），避免只驗證『最終兩邊一致』卻沒驗證到『是前台這次開頁造成的』這個因果關係。
+  - draft_id: TC-DRAFT-01M2R6FS8JFQARBWE5WBPC749C
+    title: 已開啟「有效會員每月重置」的簽到活動，跨月後有效會員累積進度正確歸零重算，不誤讀上月已計入的舊資料
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-014
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-021
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 選定一個已開啟『有效會員每月重置』設定的簽到活動（自行從後台活動列表中確認此設定已開啟；若目前沒有任何活動開啟此設定，需請環境負責人協助開啟一個測試用活動）。
+    - 選定一名既有會員，其上個月透過線上存款的累積金額已達到（或曾達到）該活動的有效會員門檻，且本月截至目前尚未有任何新的線上存款記錄（可從後台歷史存款記錄篩選出符合此時間條件的既有會員；若無法自然找到，需以可控制系統日期的測試環境配合建立此狀態——此佈置方式所需的環境能力需請環境負責人確認可行）。
+    test_data: []
+    steps:
+    - n: 1
+      action: 於 ba-admin 後台查詢該會員在系統當前月份（跨月後）的有效會員累積判定金額與狀態。
+    - n: 2
+      action: 以該會員身分登入會員前台，開啟一次簽到活動頁面，查看『有效會員』進度條顯示。
+    - n: 3
+      action: 於 ba-admin 後台再次查詢該會員本月的有效會員判定結果與累積金額。
+    expected_result: 無論後台判定或前台進度條，本月的累積金額皆從 0 重新開始計算，僅反映『本月』透過 deposit_log_v2 記錄的存款；不會把上個月已計入（歸零前）的存款金額延續帶入本月累積。本月尚無任何新存款，因此累積金額應為
+      0，不會僅因為上月已達門檻就維持或直接判定為有效會員。
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §這次能測什麼／T5
+      quote: 每月重置仍正常｜簽到活動若開了「有效會員每月重置」，跨月後進度應歸零重算
+    assumptions:
+    - text: spec 未定義如何在測試環境中人工製造『跨月』情境（例如是否有可調整系統日期的測試環境，或需要仰賴自然存在、真的橫跨月份邊界的既有會員資料）。此測試資料佈置方式是我方推測的可行做法，需要環境負責人確認實際可行的操作路徑。
+      requirement_id: REQ-BONUSCCY-014
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-014 的業務規則本身有明確 spec 依據（T5），但用來驗證『跨月』這個時間條件所需的資料佈置手法（找到天然跨月的既有會員，或以某種方式模擬跨月）不在 spec 定義範圍內，屬於環境操作面的假設，誠實標為
+      exploratory 並揭露 assumption，而不是直接假設環境一定有時間穿越能力或一定存在天然跨月會員。
+history:
+- at: '2026-09-17T17:26:37Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-005

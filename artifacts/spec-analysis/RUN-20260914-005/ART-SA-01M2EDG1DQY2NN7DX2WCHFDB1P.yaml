@@ -1,0 +1,158 @@
+artifact_id: ART-SA-01M2EDG1DQY2NN7DX2WCHFDB1P
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-005
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-13T22:16:38Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-CASHFLOW-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-CASHFLOW-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  summary: 機台金流與場次（開發包③，純後端、無 UI）：四種金流（開分/入金/洗分/出金）的請求規則、額度上限判定與預留、門檻計算、PENDING 生命週期與冪等性、8 種狀態碼、場次的開始/結束/併發規則、既有機制排除（稽核倍數預設
+    0、開分招待不實作）。是開發包④⑤的資料地基。純 API 對接，無 proto。
+  scope:
+    in_scope:
+    - 開分/入金/洗分/出金的規則與 API 對接
+    - 額度上限判定與預留
+    - PENDING 生命週期、逾時、冪等性
+    - 8 種狀態碼
+    - 場次生命週期
+    - 人工入金/出金的連動規則
+    out_of_scope:
+    - 機台交易紀錄的呈現（開發包④）
+    - 洗分出金核實、場館日結報表（開發包⑤）
+    - 站台列表設定（開發包②）
+    - 創建帳號與憑證（開發包①）
+  requirement_ids:
+  - REQ-CASHFLOW-001
+  - REQ-CASHFLOW-002
+  - REQ-CASHFLOW-003
+  - REQ-CASHFLOW-004
+  - REQ-CASHFLOW-005
+  - REQ-CASHFLOW-006
+  - REQ-CASHFLOW-007
+  - REQ-CASHFLOW-008
+  - REQ-CASHFLOW-009
+  - REQ-CASHFLOW-010
+  - REQ-CASHFLOW-011
+  - REQ-CASHFLOW-012
+  - REQ-CASHFLOW-013
+  - REQ-CASHFLOW-014
+  - REQ-CASHFLOW-015
+  - REQ-CASHFLOW-016
+  - REQ-CASHFLOW-017
+  - REQ-CASHFLOW-018
+  - REQ-CASHFLOW-019
+  - REQ-CASHFLOW-020
+  - REQ-CASHFLOW-021
+  - REQ-CASHFLOW-022
+  - REQ-CASHFLOW-023
+  - REQ-CASHFLOW-024
+  - REQ-CASHFLOW-025
+  - REQ-CASHFLOW-026
+  - REQ-CASHFLOW-027
+  - REQ-CASHFLOW-028
+  - REQ-CASHFLOW-029
+  - REQ-CASHFLOW-030
+  - REQ-CASHFLOW-031
+  - REQ-CASHFLOW-032
+  - REQ-CASHFLOW-033
+  - REQ-CASHFLOW-034
+  - REQ-CASHFLOW-035
+  - REQ-CASHFLOW-036
+  - REQ-CASHFLOW-037
+  - REQ-CASHFLOW-038
+  - REQ-CASHFLOW-039
+  - REQ-CASHFLOW-040
+  - REQ-CASHFLOW-041
+  - REQ-CASHFLOW-042
+  - REQ-CASHFLOW-043
+  - REQ-CASHFLOW-044
+  ambiguities:
+  - requirement_id: REQ-CASHFLOW-042
+    ambiguity:
+      level: major
+      description: 前台呼叫 req-cashout/end-cashout 時使用的認證方式未定案
+      options:
+      - 沿用機台憑證（JWT）
+      - 另立一套前台專屬的認證機制
+      - 尚未決定，需開發團隊與前台一併定案
+  - requirement_id: REQ-CASHFLOW-043
+    ambiguity:
+      level: major
+      description: 前台 end-cashout 失敗時的重送策略未定案
+      options:
+      - 前台自動重試數次後才視為失敗
+      - 前台立即視為失敗、交由人工處理
+      - 尚未決定，需前台團隊定案
+  constraints:
+  - text: 本功能未對客戶開放（INTERNAL），純後端無 UI
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: 首行標記 + 本檔定位
+      quote: ''
+  - text: 重疊部分與實體機台正本 v07 有出入時以正本為準
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: 本檔定位
+      quote: ''
+  - text: 本包是開發包④⑤的資料地基，schema 需最先定案
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: 本檔定位
+      quote: ''
+  edge_case_candidates:
+  - text: 兩筆入金請求幾乎同時到達同一場館的不同機台，額度上限的場館鎖序列化是否確實避免合計超額（高併發壓力測試）
+    requirement_id: REQ-CASHFLOW-007
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: ''
+  - text: 機台在出金 req-cashout 已建立 PENDING、15 秒逾時後，現場人員直接重按結算鍵（觸發新 req-cashout）是否正確取代舊 PENDING 而非產生衝突
+    requirement_id: REQ-CASHFLOW-026
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: ''
+  - text: 場次日結結算與場次逾時結束幾乎同時發生在同一台機台的邊界情況
+    requirement_id: REQ-CASHFLOW-037
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: ''
+  - text: 稽核倍數大於 0（未來若調整）時，扣除未完成稽核部分後洗分/出金核可金額的邊界計算
+    requirement_id: REQ-CASHFLOW-002
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/稽核倍數
+      quote: ''
+  open_questions:
+  - 前台呼叫 req-cashout/end-cashout 的認證方式？（REQ-042）
+  - end-cashout 失敗時前台的重送策略？（REQ-043）
+history:
+- at: '2026-09-13T22:16:43Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-005

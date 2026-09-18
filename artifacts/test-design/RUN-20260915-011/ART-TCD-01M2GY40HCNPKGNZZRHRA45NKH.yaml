@@ -1,0 +1,81 @@
+artifact_id: ART-TCD-01M2GY40HCNPKGNZZRHRA45NKH
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-011
+task_id: T1
+iteration: 2
+created_by: agent-test-designer
+created_at: '2026-09-14T21:45:38Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-PLATFORMRULE-014
+- entity_type: TestCase
+  id: TC-PLATFORMRULE-018
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GY40HCXPF9KRBPCEEQXGMA
+    title: 操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改
+    product: ba-admin
+    functional_area: PLATFORMRULE
+    requirement_ids:
+    - REQ-PLATFORMRULE-014
+    acceptance_criteria_ids:
+    - AC-PLATFORMRULE-0141
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以操作員身分登入後台
+    - 站台切換選單已選定自身所屬的機台場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 檢視後台左側選單，確認「站台列表」是否存在於選單中
+    - n: 2
+      action: 確認「會員與加盟商>會員列表」「帳務管理>洗分出金核實」「各式報表>交易紀錄查詢/場館日結報表」是否正常存在於選單中
+    - n: 3
+      action: 若嘗試直接以網址存取站台列表頁面，觀察系統反應
+    expected_result: 選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（本 spec 原文欄位）與場次逾時時間（SPEC-ARCADE-001 正本定義的欄位，本 spec 原文未提及）皆無從檢視，更無法修改；會員列表、洗分出金核實、交易紀錄查詢、場館日結報表等其他操作員可操作項目正常存在於選單中，不受影響（若直接以網址嘗試存取站台列表頁面，若實際錯誤訊息/阻擋方式與選單消失不同，不視為違反本條，僅測是否被阻擋）
+    expected_result_spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: 額度上限（場館層級） | 可設定 | 可設定 | 唯讀（本spec原文欄位，經 Oscar 2026-09-15 選單截圖確認整頁無法進入，非可檢視唯讀）。場次逾時時間欄位本身不在本 spec 原文中，出處見 SPEC-ARCADE-001
+        §場館設定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-PLATFORMRULE-018
+      version: 1
+    design_rationale: 第二輪 Validator 指出兩點：①場次逾時時間仍缺明確出處標註，本輪已拆解清楚——額度上限是本spec原文欄位+Oscar確認，場次逾時時間出處為SPEC-ARCADE-001正本、本spec原文未提及此欄位名稱；②「機台管理/人工入出金透過會員列表進入」這條路徑推論不寫進本TC的expected_result/steps可測試斷言中（僅作為排除說明留在REQ層級的statement），避免把未經Oscar逐項確認的頁面路徑當成本TC的判定依據；本TC的判定範圍精確限定在「站台列表選單項目是否存在」與「額度上限/場次逾時時間是否可存取」，不涉及機台管理的實際路徑
+history:
+- at: '2026-09-14T21:46:31Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-011

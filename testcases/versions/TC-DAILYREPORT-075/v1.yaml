@@ -1,0 +1,84 @@
+title: 場次數：依機台明細等於該機台當日已結束場次數，依場館彙總等於底下所有機台場次數加總
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-009
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0091
+- AC-DAILYREPORT-0092
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一個場館，其底下至少兩台機台當日皆有已結束場次記錄（僅使用狀態明確為『已結束』的場次，避開逾時結束或日結結算狀態，以迴避場次結束狀態範圍尚未明確定義的模糊地帶）
+test_data: []
+steps:
+- n: 1
+  action: 透過『機台交易紀錄』或對應的場次查詢功能，分別核對這兩台機台當日各自狀態為『已結束』的場次筆數，記錄下來
+- n: 2
+  action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，記錄每台機台的『場次數』欄位
+- n: 3
+  action: 統計維度改選『依場館彙總』，查詢，記錄場館彙總列的『場次數』
+expected_result: 依機台明細：每台機台的場次數與步驟1核對的該機台已結束場次筆數相符；依場館彙總：場次數等於該場館底下所有機台場次數的加總（＝步驟1兩台機台場次數之和）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §列表欄位/場次數（2026-09-03 定案）
+  quote: 依場館彙總＝**該場館底下所有機台帳號當日場次數的加總**
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-075
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:10Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:10Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

@@ -1,0 +1,197 @@
+<title>APR-0012 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0012 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260914-002 · 狀態 PENDING · 提出 2026-09-13</div>
+<div class=summary>57 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 9 條 exploratory，approve 即確認其假設）</div>
+<p>共 57 條：grounded 48 條（預期結果有 spec 條文依據）、<b>exploratory 9 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-SITELIST-001 站台類型二擇一且建立後不可修改</h2>
+<blockquote>spec：§站台類型與機台專屬欄位 + §業務規則-站台類型鎖定　「每個站台的「站台類型」為線上 / 機台，二擇一；建立後不可修改」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-001">001<br>v1</td><td>grounded</td><td>根層站台建立時可二擇一選擇線上或機台類型</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>在根層點擊「+ 新增站台」，站台類型選「線上」，填妥必填欄位送出</li><li>再新增一個站台，站台類型選「機台」，填妥必填欄位送出</li></ol></td><td>兩次皆建立成功，各自的站台類型為所選值（線上／機台）</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-002">002<br>v1</td><td>grounded</td><td>站台建立後，編輯畫面的站台類型為唯讀無法修改</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個已建立的線上類型站台，點擊「編輯」</li><li>檢視站台類型欄位並嘗試點擊切換為機台</li></ol></td><td>站台類型欄位為唯讀（置灰），無法點擊切換，送出後類型不變</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-002 站台類型由主站台決定，子站台強制繼承</h2>
+<blockquote>spec：§站台類型與機台專屬欄位 + §業務規則-站台類型隨主站台　「站台類型於主站台（根層）選定，子站台一律與主站台同類型、不可個別選擇」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-003">003<br>v1</td><td>grounded</td><td>子站台的站台類型固定跟隨主站台，UI 不可個別選擇</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以機台類型主站台為上層，新增子站台，檢視站台類型欄位</li><li>以線上類型主站台為上層，新增子站台，檢視站台類型欄位</li></ol></td><td>前者站台類型固定為機台、後者固定為線上，皆為唯讀且不可個別選擇</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-004">004<br>v1</td><td>⚠ exploratory</td><td>直接呼叫建立站台 API，帶入與上層站台不同的站台類型</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以已知上層站台為機台類型的站台 ID</li><li>直接呼叫建立站台 API，siteType 欄位帶入「線上」（與上層不同）</li></ol></td><td>後端拒絕此請求，不得建立出與上層站台類型不同的子站台<div class=assume>⚠ 假設：Spec 只描述 UI 唯讀跟隨；PM 已於 CLR-SITELIST-001 確認後端也會拒絕，但尚未寫入 spec 正文<br><span class=pm>✅ PM（CLR-SITELIST-001）：後端也會拒絕：若透過 API 帶入與上層站台不同的站台類型，後端會擋下，不只是前端唯讀限制。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-003 機台專屬欄位僅機台類型顯示</h2>
+<blockquote>spec：§站台類型與機台專屬欄位　「類型為「機台」時才顯示下列機台專屬欄位」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-005">005<br>v1</td><td>grounded</td><td>機台專屬欄位僅於站台類型為機台時顯示</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>新增或編輯站台，站台類型為線上，檢視欄位</li><li>新增或編輯站台，站台類型為機台，檢視欄位</li></ol></td><td>線上類型不顯示任何機台專屬欄位；機台類型顯示場館地址、聯絡人／電話、額度上限、場次逾時時間、日結時間</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-004 場館幣別唯讀繼承核心貨幣，不另設欄位</h2>
+<blockquote>spec：§站台類型與機台專屬欄位/場館幣別　「新增／編輯視窗不另設本欄位——與「核心貨幣」為同一個值，由核心貨幣欄的子站台唯讀繼承顯示承載」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-006">006<br>v1</td><td>grounded</td><td>場館幣別不另設輸入欄位，檢視情境顯示值等於核心貨幣</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>站台類型為機台，開啟新增或編輯畫面，確認畫面上只有一個貨幣相關欄位（核心貨幣）</li><li>至機台資訊或報表等檢視情境，確認顯示的場館幣別</li></ol></td><td>新增／編輯畫面沒有獨立的場館幣別輸入欄；檢視情境顯示的場館幣別等於該站台所屬主站台的核心貨幣</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-005 額度上限為場館層級共用池</h2>
+<blockquote>spec：§站台類型與機台專屬欄位/額度上限 + §業務規則-額度上限（場館）　「設為 0 代表不限制…修改後即時生效，不影響既有餘額」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-007">007<br>v1</td><td>grounded</td><td>額度上限設為 0 代表不限制</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>機台類型場館站台，額度上限設為 0 並儲存</li><li>以該場館機台嘗試大額開分／入金</li></ol></td><td>系統不因額度而拒絕，視為不限制</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-008">008<br>v1</td><td>grounded</td><td>額度上限修改後即時生效，不影響既有餘額</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>場館現有機台分數餘額合計為 X，額度上限原為 X</li><li>將額度上限調整為 X/2 並儲存</li></ol></td><td>既有機台餘額合計仍為 X（不變），僅新的開分／入金請求依新上限（X/2）檢核</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-009">009<br>v1</td><td>⚠ exploratory</td><td>額度上限輸入負數應被拒絕</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>機台類型場館站台，額度上限欄位輸入 -100 並送出</li></ol></td><td>前端顯示「值必須大於或等於 0」；即使繞過前端送出，後端也拒絕該請求<div class=assume>⚠ 假設：Spec 只寫「設為 0 代表不限制」，未定義負數輸入的處理；PM 已於 CLR-SITELIST-002 確認前後端皆拒絕<br><span class=pm>✅ PM（CLR-SITELIST-002）：額度上限輸入負數：前端顯示「值必須大於或等於 0」，後端也會拒絕（雙層驗證）。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-006 場次逾時時間欄位</h2>
+<blockquote>spec：§站台類型與機台專屬欄位/場次逾時時間　「預設 1 小時，站長可調整，操作員唯讀」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-010">010<br>v1</td><td>grounded</td><td>場次逾時時間預設 1 小時且站長可調整</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>新建機台類型站台，檢視場次逾時時間預設值</li><li>以站長登入，修改該值為 2 小時並儲存</li></ol></td><td>預設值為 1 小時；站長修改後系統接受並儲存新值</td><td>high<br>medium</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-011">011<br>v1</td><td>⚠ exploratory</td><td>場次逾時時間低於 1 小時或超過 17 位數皆應被拒絕</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>場次逾時時間輸入低於 1 小時的值（如 30 分鐘）並送出</li><li>另輸入一個超過 17 位數的極端數值並送出</li></ol></td><td>第一種：後端拒絕（最低值為 1 小時）；第二種：前端顯示格式錯誤，後端阻擋並回傳 COMMON_INVALID_REQUEST_FORMAT<div class=assume>⚠ 假設：Spec 只寫「預設 1 小時，站長可調整」，未定義下限與極端值的處理；PM 已於 CLR-SITELIST-003 確認上述兩種拒絕行為與錯誤代碼<br><span class=pm>✅ PM（CLR-SITELIST-003）：場次逾時時間：後端設計最低值為 1 小時（低於 1 小時會被拒絕）。輸入超過 17 位數（極端格式）時，前端跳格式錯誤，後端阻擋並回傳通用錯誤代碼 COMMON_INVALID_REQUEST_FORMAT。</span></div></td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-007 日結時間欄位</h2>
+<blockquote>spec：§站台類型與機台專屬欄位/日結時間　「每日結算的截止時刻（UTC+0），用於場館日結報表分日」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-012">012<br>v1</td><td>grounded</td><td>日結時間可設定並用於場館日結報表分日</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表<br>場館日結報表功能已部署且可存取</td><td><ol><li>機台類型站台，設定日結時間為 06:00 UTC+0 並儲存</li><li>至 各式報表 &gt; 場館日結報表 確認分日依此時刻切分（見 SPEC-DAILYREPORT-001 REQ-007；需該報表功能已部署）</li></ol></td><td>日結時間成功儲存；場館日結報表依此時刻切分營業日</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-SITELIST-008 核心貨幣為主站台層級設定，子站台繼承不可各自指定</h2>
+<blockquote>spec：§核心貨幣　「幣別不在子站台（場館）層級設定，而是主站台層級的設定…其底下所有子站台一律沿用，不可各自指定」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-013">013<br>v1</td><td>grounded</td><td>子站台的核心貨幣唯讀顯示繼承值</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>主站台核心貨幣為 TWD（機台類型）</li><li>新增或檢視其子站台，檢視核心貨幣欄位</li></ol></td><td>子站台核心貨幣唯讀顯示 TWD，與主站台一致，無法個別指定</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-014">014<br>v1</td><td>grounded</td><td>子站台核心貨幣欄位無法透過畫面修改</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>子站台核心貨幣欄位顯示為唯讀</li><li>嘗試點擊或以任何方式修改該欄位</li></ol></td><td>欄位無互動元素（無下拉箭頭／無法點擊），無法修改</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-009 核心貨幣下拉依站台類型過濾</h2>
+<blockquote>spec：§核心貨幣　「可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種…實作不得將幣別寫死」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-015">015<br>v1</td><td>grounded</td><td>核心貨幣下拉選單依站台類型過濾</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>根層站台類型選「線上」，檢視核心貨幣下拉選項</li><li>根層站台類型選「機台」，檢視核心貨幣下拉選項</li></ol></td><td>線上類型只列出 USDT；機台類型只列出 TWD，皆等同自動帶入</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-010 核心貨幣建立後不可修改</h2>
+<blockquote>spec：§核心貨幣 + §業務規則-核心貨幣繼承　「主站台建立後，核心貨幣不可修改（v07 定案）：比照「站台類型」，於建立時選定即永久鎖定，編輯視窗唯讀顯示」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-016">016<br>v1</td><td>grounded</td><td>主站台建立後核心貨幣不可修改</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個已建立的機台類型主站台（核心貨幣 TWD）</li><li>進入編輯畫面，檢視並嘗試修改核心貨幣欄位</li></ol></td><td>核心貨幣欄位為唯讀顯示，無法修改；子站台編輯畫面同樣唯讀</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-011 可見範圍依角色</h2>
+<blockquote>spec：§角色與權限 + §階層結構與逐層瀏覽-根層顯示　「可見站台範圍 | 全部站台 | 僅自身站台及所有子站台（不含平行或上層站台）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-017">017<br>v1</td><td>grounded</td><td>Admin 可見全部站台，站長僅見自身及子站台</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以 Admin 登入，檢視站台列表根層</li><li>以站長登入，檢視站台列表根層</li></ol></td><td>Admin 顯示所有無上層站台的根層站台；站長預設顯示自身所屬站台，且僅能看到自身及其所有子站台</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-018">018<br>v1</td><td>⚠ exploratory</td><td>站長嘗試以站台 ID 直接查詢平行或上層站台</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以站長帳號取得登入憑證（歸屬於主站台 A 底下）</li><li>直接呼叫站台查詢 API，帶入平行站台或上層站台（admin）的 ID</li></ol></td><td>系統不得回傳該站台的資料（依可見範圍模型應無法取得資料）<div class=assume>⚠ 假設：Spec 未定義具體回應方式（403／空資料／錯誤訊息）；PM 已於 CLR-SITELIST-004 以權限範圍圖確認範圍由所屬站台決定<br><span class=pm>✅ PM（CLR-SITELIST-004）：以「三個角色的關係」權限範圍圖為準（同 CLR-PLATFORMRULE-001 附圖）：範圍由所屬站台決定，不是角色本身。站長掛在主站台 A → 可見範圍＝A 及其子樹；操作員只看自身場館。層級可指派範圍：管理員可指派管理員/站長及以下，站長只能指派站長以下，操作員不可指派。站長嘗試存取平行或上層站台（含直接以站台 ID 呼叫查詢），依此範圍模型應無法取得資料。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-012 新增站台時上層站台欄位權限</h2>
+<blockquote>spec：§角色與權限 + §操作/新增站台　「上層站台 | 自動帶入當前所在層；可搜尋改選任意站台…留空為根層 | 預帶當前所在層，唯讀不可修改」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-019">019<br>v1</td><td>grounded</td><td>新增站台時，Admin 可自由選取上層站台，站長固定為當前層</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以 Admin 登入，新增站台，搜尋並改選任意站台為上層站台；另試留空</li><li>以站長登入，新增站台，檢視上層站台欄位</li></ol></td><td>Admin：可搜尋並選取任意站台，留空則建立為根層站台；站長：欄位唯讀，固定顯示當前所在層，無法改選</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-020">020<br>v1</td><td>⚠ exploratory</td><td>站長直接呼叫建立站台 API，帶入非當前層的上層站台</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以站長帳號取得登入憑證（當前所在層為站台 A）</li><li>直接呼叫建立站台 API，upperSiteId 帶入非 A 的其他站台 ID</li></ol></td><td>後端拒絕此請求，不得以非當前層的站台作為上層站台建立成功<div class=assume>⚠ 假設：Spec 只描述前端唯讀行為；PM 已於 CLR-SITELIST-005 確認後端已拒絕（此前 RD 回報的繞過風險已修復）<br><span class=pm>✅ PM（CLR-SITELIST-005）：已修改：站長不可自由選取上層站台，需點進不同子站後新增站台，上層站台選單會自動帶入其選擇的站台；後端已拒絕（不接受繞過前端指定其他上層站台）。此前 RD 回報的「直接呼叫 API 仍會成功」風險已修復。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-013 編輯站台時上層站台欄位權限與循環防護</h2>
+<blockquote>spec：§角色與權限 + §操作/編輯站台 + §業務規則-上層站台循環防護　「編輯時，不可將自身或自身的子站台選為上層站台」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-021">021<br>v1</td><td>grounded</td><td>編輯站台時，Admin 可修改上層站台且選單排除自身與子站台；站長唯讀</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以 Admin 登入，編輯某站台，開啟上層站台選單</li><li>以站長登入，編輯站台，檢視上層站台欄位</li></ol></td><td>Admin：選單不包含該站台自身及其所有子站台；站長：欄位唯讀顯示目前值，無法修改</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-022">022<br>v1</td><td>⚠ exploratory</td><td>直接呼叫編輯站台 API，帶入會形成循環的上層站台 ID</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個有子站台 B 的站台 A</li><li>直接呼叫編輯 API，將站台 A 的上層站台設為其子站台 B</li></ol></td><td>後端拒絕此請求，不得形成循環的階層關係<div class=assume>⚠ 假設：Spec 只定義 UI 選單排除循環選項；PM 對站長權限的後端驗證已於 CLR-SITELIST-006 確認，但 Admin 編輯時的循環防護是否也有對應後端驗證未明確涵蓋，需另行確認<br><span class=pm>✅ PM（CLR-SITELIST-006）：同 CLR-SITELIST-005：站長於編輯時的上層站台唯讀限制，後端已拒絕繞過前端的修改。（本次確認聚焦於站長權限；Admin 編輯時的循環防護是否也有對應後端驗證，未在本次回覆中明確涵蓋，若後續測試發現可繞過，需另案處理）</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-014 模板權限</h2>
+<blockquote>spec：§模板設定 + §角色與權限　「指定權限：僅 Admin 可指定或修改；站長的模板欄位為唯讀，如需變更須通知 Admin」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-023">023<br>v1</td><td>grounded</td><td>模板僅 Admin 可指定或修改，站長唯讀不可修改</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>以 Admin 登入，新增或編輯站台並選取／修改模板</li><li>以站長登入，新增或編輯站台，檢視模板欄位</li></ol></td><td>Admin：系統接受選取或修改；站長：模板欄位不顯示（新增）或唯讀顯示（編輯），無法修改</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-015 模板必填規則（切換開通）</h2>
+<blockquote>spec：§模板設定/填寫規則 + §業務規則-模板（切換開通）　「當狀態切換為「開通」時，模板為必填，否則阻擋儲存並提示錯誤」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-024">024<br>v1</td><td>grounded</td><td>新建站台時模板可留空</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>Admin 新增站台，模板欄位留空，填妥其餘必填欄位送出</li></ol></td><td>系統接受建立，站台狀態為待開通</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-025">025<br>v1</td><td>grounded</td><td>狀態切換為開通時，模板為必填</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個模板為空的站台，Admin 將狀態切換為「開通」並儲存</li><li>為該站台選取模板後，再次將狀態切換為「開通」並儲存</li></ol></td><td>第一次：系統阻擋儲存並提示錯誤（模板必填）；第二次：模板已填，系統接受，狀態變為開通</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-016 狀態切換權限</h2>
+<blockquote>spec：§角色與權限/狀態切換　「狀態切換 | 可切換為任意狀態 | 僅可切換為「暫停」或「關閉」」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-026">026<br>v1</td><td>grounded</td><td>Admin 可切換為暫停、開通或關閉</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>Admin 編輯一個待開通站台（已設模板），切換為開通並儲存</li><li>再切換為暫停並儲存</li><li>再切換為關閉並儲存</li></ol></td><td>三次切換皆成功，狀態依序變為開通、暫停、關閉</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-027">027<br>v1</td><td>grounded</td><td>站長僅可切換為暫停或關閉，其他狀態被阻擋</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>站長編輯一個開通中的站台，嘗試切換為除暫停／關閉以外的狀態（如更新待審）</li></ol></td><td>其他狀態顯示但不可選取；若嘗試送出，系統阻擋儲存</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-028">028<br>v1</td><td>⚠ exploratory</td><td>Admin 嘗試將既有站台手動切回待開通</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>Admin 編輯一個狀態為開通的站台</li><li>嘗試將狀態切換為「待開通」並儲存</li></ol></td><td>情境一（任意狀態含待開通）：系統接受切換，狀態變為待開通；情境二（任意狀態不含待開通）：系統阻擋此切換，顯示錯誤提示或該選項不可選。請對照實測結果記錄屬於哪一種情境，並提交 Human 確認何者為準（見假設）<div class=assume>⚠ 假設：「待開通」在 §站台狀態一節僅列「新建站台自動設定」為觸發方式，未列為 Admin 可手動選取的目標狀態；spec 對「任意狀態」是否含待開通未明確定義</div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-017 更新待審狀態自動觸發</h2>
+<blockquote>spec：§站台狀態/更新待審　「站台處於「開通」或「更新待審」狀態下，若前台或後台網域有異動，儲存後自動切換；……不開放手動選取；Admin 可在此狀態下手動切換為其他任意狀態」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-029">029<br>v1</td><td>grounded</td><td>開通狀態下網域異動，儲存後自動切為更新待審</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個狀態為開通的站台</li><li>新增一筆前台網域並儲存</li></ol></td><td>站台狀態自動變為更新待審</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-030">030<br>v1</td><td>grounded</td><td>待開通、暫停或關閉狀態下網域異動不觸發更新待審</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個狀態為待開通的站台，新增網域並儲存，確認狀態</li><li>取一個狀態為暫停的站台，重複上述操作，確認狀態</li><li>取一個狀態為關閉的站台，重複上述操作，確認狀態</li></ol></td><td>三種狀態皆不因網域異動而改變（不會變為更新待審）</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-031">031<br>v1</td><td>grounded</td><td>更新待審狀態下，Admin 可手動切換為其他任意狀態</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個狀態為更新待審的站台</li><li>以 Admin 身分切換其狀態為開通並儲存</li></ol></td><td>系統接受，狀態成功變更</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-018 網域欄位新增刪除 UI 行為</h2>
+<blockquote>spec：§操作/網域編輯行為（Modal 內）　「每個站台各可設定多筆，無上限……若僅剩最後一列，點擊移除後清空輸入欄但保留該列」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-032">032<br>v1</td><td>grounded</td><td>新增站台時網域欄位預設一個空輸入欄，可點擊新增追加</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>開啟新增站台 Modal，檢視前台與後台網域欄位</li><li>點擊「＋ 新增前台網域」兩次</li></ol></td><td>前台與後台網域各預設顯示一個空輸入欄；每次點擊新增按鈕即追加一列新的空輸入欄</td><td>high<br>low</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-033">033<br>v1</td><td>grounded</td><td>僅剩最後一列網域時，移除後清空但保留該列</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>前台網域僅剩一列且有值</li><li>點擊該列的移除按鈕</li></ol></td><td>該列輸入欄被清空，但列本身保留（不會變成 0 列）</td><td>high<br>low</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-034">034<br>v1</td><td>grounded</td><td>多列網域中移除非最後一列，其餘列不受影響</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>前台網域已有 3 筆不同值的列</li><li>點擊第 2 列（非最後一列）的移除按鈕</li></ol></td><td>第 2 列被移除；第 1、3 列的值維持不變、位置不因移除而錯亂</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-SITELIST-019 網域格式不驗證</h2>
+<blockquote>spec：§業務規則與驗證/網域格式　「不做格式驗證，由管理員自行確保正確性」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-035">035<br>v1</td><td>grounded</td><td>網域欄位輸入不合法格式的字串仍被接受</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>新增或編輯站台，前台網域欄位輸入不符合網域格式的字串（如純數字、含空白）</li><li>送出儲存</li></ol></td><td>系統接受並儲存，不阻擋、不提示格式錯誤</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-SITELIST-020 站台代碼格式、唯一性與鎖定</h2>
+<blockquote>spec：§業務規則與驗證/站台代碼格式、唯一性、鎖定　「必須為恰好兩碼大寫英文字；輸入時自動轉大寫並過濾非英文字元…重複時阻擋儲存並提示錯誤」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-036">036<br>v1</td><td>grounded</td><td>站台代碼輸入時自動轉大寫並過濾非英文字元</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>站台代碼欄位輸入小寫字母「ab」</li><li>另試輸入含數字或符號的字串「a1b!」</li></ol></td><td>第一種自動轉為「AB」；第二種非英文字元被過濾，僅保留英文字母部分並轉大寫</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-037">037<br>v1</td><td>grounded</td><td>站台代碼與既有站台重複時阻擋儲存</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>若無代碼為「AB」的站台，先建立一個站台並將代碼設為「AB」</li><li>新增另一個站台，代碼同樣輸入「AB」並送出</li></ol></td><td>系統阻擋儲存並提示重複錯誤</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-038">038<br>v1</td><td>grounded</td><td>站台代碼建立後於編輯畫面唯讀</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個已建立的站台，進入編輯畫面</li><li>檢視站台代碼欄位</li></ol></td><td>欄位唯讀（置灰），無法修改</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-021 站台名稱必填</h2>
+<blockquote>spec：§業務規則與驗證/站台名稱必填　「名稱為空時阻擋儲存，輸入框標示紅框與錯誤提示」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-039">039<br>v1</td><td>grounded</td><td>站台名稱為空時阻擋儲存</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>新增或編輯站台，站台名稱欄位留空</li><li>送出儲存</li></ol></td><td>系統阻擋儲存，輸入框標示紅框與錯誤提示</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-022 刪除站台二次確認</h2>
+<blockquote>spec：§操作/刪除站台　「點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-040">040<br>v1</td><td>grounded</td><td>刪除站台顯示確認彈窗並列出名稱與代碼</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>點擊某站台（線上類型）的刪除按鈕</li></ol></td><td>顯示確認彈窗，列出該站台的名稱與代碼</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-041">041<br>v1</td><td>grounded</td><td>取消刪除確認彈窗，站台不被刪除</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>點擊某站台的刪除按鈕開啟確認彈窗</li><li>點擊「取消」</li></ol></td><td>站台不被刪除，資料維持不變，仍存在於列表中</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-023 刪除操作不可復原</h2>
+<blockquote>spec：§操作/刪除站台 + §業務規則-刪除確認　「⚠️ 刪除操作不可復原」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-042">042<br>v1</td><td>⚠ exploratory</td><td>機台類型站台不提供刪除操作，只能停用</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個機台類型站台，檢視其可用操作</li><li>嘗試尋找刪除按鈕或選項</li></ol></td><td>不提供刪除操作／按鈕；可用的狀態操作僅有暫停或關閉（停用）<div class=assume>⚠ 假設：Spec 原文的刪除流程未區分站台類型；PM 已於 CLR-SITELIST-007 確認機台類型不提供刪除操作，僅能停用<br><span class=pm>✅ PM（CLR-SITELIST-007）：機台類型站台不提供刪除操作，只能停用（暫停／關閉）；不會出現在確認刪除的流程裡。（原問題「有子站台時如何刪除」對機台類型不再適用，因為機台本來就不能刪除；線上類型站台若帶有子站台時的刪除行為，本次回覆未涵蓋，另開單追蹤）</span></div></td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-043">043<br>v1</td><td>grounded</td><td>線上類型站台二次確認刪除後不可復原</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個線上類型且無子站台的站台</li><li>刪除並二次確認</li></ol></td><td>二次確認後站台被刪除，列表查無此站台，且無任何復原入口或機制</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-SITELIST-044">044<br>v1</td><td>⚠ exploratory</td><td>線上類型主站台帶有子站台時執行刪除</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>取一個線上類型且帶有至少一個子站台的主站台</li><li>點擊刪除並二次確認</li></ol></td><td>三種可能結果之一：(a) 阻擋刪除——系統顯示錯誤提示，主站台與所有子站台皆維持不變；(b) 連坐刪除——主站台與所有子站台（含孫層）皆從列表消失；(c) 子站台上移——主站台消失，其子站台仍存在但上層站台改變（變成根層或掛到被刪站台原本的上層）。請對照實測結果記錄屬於哪一種，待 CLR-SITELIST-008 回覆後收斂為單一斷言（見假設）<div class=assume>⚠ 假設：Spec 未定義有子站台的站台如何刪除；CLR-SITELIST-008 尚待 PM 回覆是阻擋、連坐刪除、或子站台改掛他處<br><span class=pm>✅ PM（CLR-SITELIST-007）：機台類型站台不提供刪除操作，只能停用（暫停／關閉）；不會出現在確認刪除的流程裡。（原問題「有子站台時如何刪除」對機台類型不再適用，因為機台本來就不能刪除；線上類型站台若帶有子站台時的刪除行為，本次回覆未涵蓋，另開單追蹤）</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-024 機台主站台可自行經營，場館設定範圍不含子站台</h2>
+<blockquote>spec：§站台類型與機台專屬欄位 + §業務規則-機台主站台可直接經營　「每份場館設定（額度上限、場次逾時、日結時間）的作用範圍為該站台自身、不含子站台，主站台與各場館各自一份、互不影響」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-045">045<br>v1</td><td>grounded</td><td>機台主站台可自行經營作為一間場館</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>建立一個機台類型主站台，不建立任何子站台</li><li>以該主站台設定場館專屬欄位（額度上限等）並運作</li></ol></td><td>主站台自身即可作為一間場館經營，帶完整場館設定欄位</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-046">046<br>v1</td><td>grounded</td><td>修改主站台的額度上限不影響其場館子站台</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>機台主站台額度上限為 A，其場館子站台額度上限為 B</li><li>將主站台額度上限改為 A2</li></ol></td><td>子站台的額度上限仍為 B，不受影響</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-047">047<br>v1</td><td>grounded</td><td>修改機台主站台的場次逾時時間不影響其場館子站台</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>機台主站台場次逾時時間為 1 小時，其場館子站台為 2 小時</li><li>將主站台的場次逾時時間改為 3 小時</li></ol></td><td>子站台的場次逾時時間仍為 2 小時，不受影響</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-SITELIST-025 洗分／出金門檻不在後台設定（v04 移除）</h2>
+<blockquote>spec：§業務規則與驗證/洗分門檻採用值 + §變更記錄 v04　「移除機台專屬欄位「洗分／出金最低門檻」——洗分門檻定案改於機台端設定」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-048">048<br>v1</td><td>grounded</td><td>機台專屬欄位群中不存在洗分/出金門檻欄位</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>站台類型為機台，開啟新增或編輯畫面</li><li>檢視機台專屬欄位群的完整欄位清單</li></ol></td><td>不存在「洗分／出金最低門檻」或類似名稱的欄位（v04 已移除）</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-026 列表基本欄位呈現</h2>
+<blockquote>spec：§列表欄位　「站台名稱／代碼 | 名稱可點擊，進入該站台的子站台列表；有子站時名稱旁顯示「N 個子站」……網域 | 前台與後台網域合併顯示，僅顯示數量」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-049">049<br>v1</td><td>grounded</td><td>站台名稱旁依是否有子站顯示「N 個子站」</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>檢視一個有 3 個子站的站台於列表的呈現</li><li>檢視一個無子站的站台於列表的呈現</li></ol></td><td>前者名稱旁顯示「3 個子站」；後者不顯示子站數量文字</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-050">050<br>v1</td><td>grounded</td><td>網域欄僅顯示前後台網域數量，不展開完整清單</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>某站台有前台網域 2 筆、後台網域 1 筆</li><li>檢視列表的網域欄</li></ol></td><td>顯示「前台 2 個 / 後台 1 個」，需進入編輯彈窗才能看到完整清單</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-051">051<br>v1</td><td>grounded</td><td>模板欄位未指定時顯示「—」</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>某站台未指定模板</li><li>檢視列表的模板欄</li></ol></td><td>顯示「—」</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-027 時間紀錄欄位</h2>
+<blockquote>spec：§列表欄位/時間紀錄　「均為系統自動產生（UTC+0），不開放編輯；新建站台修改時間為空、從未登入顯示「從未登入」」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-052">052<br>v1</td><td>grounded</td><td>新建站台的時間紀錄欄位初始值</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>新建一個站台</li><li>檢視其時間紀錄欄（創建時間／修改時間／最後登入）</li></ol></td><td>創建時間有值（UTC+0）；修改時間為空；最後登入顯示「從未登入」</td><td>high<br>low</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-053">053<br>v1</td><td>grounded</td><td>編輯站台後修改時間自動更新，且三欄皆唯讀</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>編輯一個站台並儲存變更</li><li>檢視修改時間</li><li>嘗試編輯創建時間／修改時間／最後登入三個欄位</li></ol></td><td>修改時間更新為本次操作時刻；三個欄位皆為唯讀，不開放編輯</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-SITELIST-028 篩選器行為</h2>
+<blockquote>spec：§篩選器　「篩選與搜尋均僅作用於當前所在層，不跨層查詢」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-054">054<br>v1</td><td>grounded</td><td>狀態篩選與關鍵字搜尋可同時作用</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>狀態篩選選擇「開通」</li><li>同時輸入關鍵字（站台名稱片段）搜尋</li></ol></td><td>結果同時符合狀態為開通、且名稱或代碼包含關鍵字的站台</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-055">055<br>v1</td><td>grounded</td><td>篩選與搜尋僅作用於當前所在層，不跨層查詢</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>鑽入某子站台層級</li><li>以「其他層級才有」的站台名稱關鍵字搜尋</li></ol></td><td>結果為空或不包含其他層級的站台，即使該站台名稱確實符合關鍵字</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-SITELIST-029 階層瀏覽行為</h2>
+<blockquote>spec：§階層結構與逐層瀏覽/鑽入、路徑列　「點擊任意節點可跳回該層，點擊「站台列表」回到根層」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-056">056<br>v1</td><td>grounded</td><td>點擊站台名稱進入其子站台列表，路徑列顯示對應路徑</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>在根層列表點擊某站台名稱</li></ol></td><td>進入該站台的子站台列表，頁面頂部路徑列顯示對應的瀏覽路徑</td><td>high<br>low</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-057">057<br>v1</td><td>grounded</td><td>點擊路徑列節點或「站台列表」可跳轉回對應層級</td><td>以 Admin 登入後台<br>進入 後台管理員系統 &gt; 站台列表</td><td><ol><li>已鑽入多層子站台</li><li>點擊路徑列中間某節點</li><li>點擊路徑列最前面的「站台列表」</li></ol></td><td>第一次點擊回到該節點對應的層級；第二次點擊回到根層</td><td>high<br>low</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0012 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0012 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0012 --decision reject --by &lt;you&gt; --rationale "..."</div>

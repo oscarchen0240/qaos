@@ -1,0 +1,74 @@
+artifact_id: ART-BD-01M2GE9QC2EQ86YV5JBR2D74GM
+artifact_type: BugDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-002
+task_id: T1
+iteration: 1
+created_by: agent-bug-analyst
+created_at: '2026-09-14T17:09:08Z'
+status: VALID
+source:
+  type: Evidence
+  ids: &id001
+  - EVD-0053
+  - EVD-0054
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-001
+- entity_type: Evidence
+  id: EVD-0053
+- entity_type: Evidence
+  id: EVD-0054
+requires_approval: null
+payload:
+  draft_id: BUG-DRAFT-01M2GE9QC0PPHJFTCZ94R2T4WE
+  title: '[優化建議][前端/後端][鏈上錢包管理] TWD「開分/洗分」與「入金/出金」兩組稽核倍數設定畫面與 API 回應完全相同，使用者無法區分'
+  product: ba-admin
+  functional_area: CASHFLOW
+  severity_proposed: minor
+  priority_proposed: medium
+  severity_rationale: 「開分/洗分」與「入金/出金」為兩組獨立稽核倍數設定一事，係 Oscar（PM，2026-09-15）口頭直接確認的後端設計：後端目前對這兩組回傳的可視化欄位完全相同，前端未做視覺區隔，並非
+    spec 文字明訂（cashflow_spec.md／platformrule_spec.md 皆只描述『依幣種設定稽核倍數』單一資料模型，未提及兩組並存），故此判斷以
+    PM 直接確認為依據，非本 Analyst 自行臆測。severity 由 trivial 上修為 minor、priority 由 low 上修為 medium：spec
+    對稽核倍數誤設有明確警語（調高倍數前務必評估現場衝擊，設定不當會導致玩家當場洗不出錢、引發爭議），操作者在完全無法分辨兩組設定的情況下修改，有直接誤改稽核倍數、引發現場糾紛的風險；REQ-CASHFLOW-001
+    本身 risk=medium，與此風險路徑一致
+  environment:
+    name: stage
+    account: ZZAA00261（管理員）
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-001
+  acceptance_criteria_ids: []
+  preconditions:
+  - 站台 Arcade（機台類型）的鏈上錢包管理 TWD 頁籤，存在「開分/洗分」與「入金/出金」兩組獨立的稽核倍數設定（此為 Oscar 2026-09-15
+    口頭確認的後端設計，spec 文字本身未提及此二分）
+  reproduction_steps:
+  - 以管理員 ZZAA00261 登入後台，站台切換選單切至 Arcade（機台）
+  - 至帳務管理 > 鏈上錢包管理 TWD 頁籤
+  - 檢視列表，注意到有兩筆名稱、代碼、付款方式、出金手續費、稽核倍數、狀態皆完全相同的「New Taiwan Dollar」紀錄
+  - 開啟瀏覽器 Network，檢查對應查詢 API 的回應 JSON，確認兩筆紀錄的所有欄位值（paymentMethod/currencyName/currencySymbol/transactionFee/audit/status）是否完全相同
+  expected_result: 使用者應能從畫面（或至少從 API 回應）分辨這兩組稽核倍數設定分別對應「開分/洗分」還是「入金/出金」，避免改錯組別（此為可用性建議，非
+    spec 明文要求；「稽核倍數依幣種設定」本身是 spec 明文，但「兩組需可視覺區分」是本 Analyst 依 Oscar 口頭確認的資料模型推論出的可用性建議）
+  expected_result_spec_reference:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    location: §機台帳號的稽核（稽核倍數依幣種設定，機台預設 0 倍；『兩組』本身未見於 spec 文字，見 severity_rationale 說明來源）
+  actual_result: 兩筆 TWD 紀錄在畫面上完全無法區分（名稱、代碼、手續費、稽核倍數、狀態皆相同），API 回應的欄位值也完全相同，沒有任何分組標識欄位
+  actual_result_evidence_map:
+  - claim: 畫面上兩筆 New Taiwan Dollar 紀錄視覺上完全相同，無法分辨對應哪一組功能
+    evidence_id: EVD-0054
+  - claim: API 回應中兩筆紀錄除順序外所有欄位值完全相同，無分組標識欄位
+    evidence_id: EVD-0053
+  evidence_ids: *id001
+  impact: 操作者修改稽核倍數等設定時，無法確認自己改的是「開分/洗分」還是「入金/出金」哪一組，有改錯風險（例如原意只想調整入金稽核倍數，卻誤改到洗分那組）
+  suspected_area: 前端：鏈上錢包管理 TWD 頁籤列表元件未顯示分組標籤；後端：查詢 API 回應未包含可辨識分組的欄位（如 group/scope）
+  ambiguity_suspected: false
+  duplicate_candidates: []
+history:
+- at: '2026-09-14T17:09:13Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-002

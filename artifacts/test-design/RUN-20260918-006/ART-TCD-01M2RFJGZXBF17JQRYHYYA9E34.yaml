@@ -1,0 +1,89 @@
+artifact_id: ART-TCD-01M2RFJGZXBF17JQRYHYYA9E34
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-006
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T20:05:21Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-DAILYREPORT-046
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-015
+- entity_type: TestCase
+  id: TC-DAILYREPORT-046
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2RFJGZW4QKWK6YKS2JFKTKD
+    title: 未兌現金額仍受結算日期範圍限制，範圍外的未兌現收據不計入
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-015
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0152
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 進入 各式報表 > 場館日結報表
+    - 測試場館已設定日結時間 06:00 UTC+0
+    - 測試場館下有機台 A、B（會員編號已知），並依案例準備交易資料
+    - 存在一筆結算日期為 09-10 的未兌現收據 200
+    test_data:
+    - name: 未兌現收據金額
+      value: 200
+    - name: 收據結算日期
+      value: '2026-09-10'
+    steps:
+    - n: 1
+      action: 以結算日期範圍 09-03～09-09（不含 09-10）、按週統計搜尋，記錄 09-07～09-09 與 09-03～09-06 兩列的未兌現金額
+    - n: 2
+      action: 改以結算日期範圍 09-03～09-10（含 09-10）、按週統計搜尋，記錄 09-07～09-10 與 09-03～09-06 兩列的未兌現金額
+    expected_result: 第一次查詢（範圍不含 09-10）：未兌現金額不包含這筆 200，09-07～09-09 列與 09-03～09-06 列皆不反映此筆收據；第二次查詢（範圍含 09-10）：09-07～09-10 這一列的未兌現金額包含這筆
+      200（較第一次同週次的未兌現金額多 200）。驗證未兌現金額仍以結算日期範圍為篩選條件，範圍外的未兌現收據不會被計入——『不受週期影響、累計至查詢當下』指的是不受『週期切分方式』影響（不會因為切成週而被打散或重複計算），不是不受『結算日期範圍』這個篩選條件限制
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註（此節已由 CLR-DAILYREPORT-009 補充精確定義）
+      quote: 未兌現金額：不受統計週期切分影響，累計至查詢當下；結算日期範圍仍是篩選條件，未兌現金額只計範圍內
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-DAILYREPORT-046
+      version: 1
+    source_ref: CLR-DAILYREPORT-009
+    design_rationale: 自 TC-DAILYREPORT-046 v1 修訂：v1 的 expected_result 明確寫『依假設：不受結算日期範圍限制』，該假設當初由 APR-0003 標記為 needs_human_confirmation=false（視為已確認），但
+      CLR-DAILYREPORT-009的PM正式回覆推翻了這個假設——未兌現金額仍受結算日期範圍限制，只是不受統計週期切分本身影響（例：9/10未兌現200，結算範圍09-03~09-09時該筆不計入任何一列，結算範圍09-03~09-10時才計入09-07~09-10這一列）。改用『同一筆收據、兩種結算範圍前後對照』的equivalence_partitioning設計，直接對比範圍含/不含該筆收據時的差異，比原本單一情境的斷言更能驗證『範圍才是篩選依據』這個修正後的正確機制，同時保留PM提供的具體算例作為expected_result的精確依據，不再是需要needs_human_confirmation的假設。
+history:
+- at: '2026-09-17T20:05:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-006

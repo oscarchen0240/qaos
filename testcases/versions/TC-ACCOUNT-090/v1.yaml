@@ -1,0 +1,83 @@
+title: 重設連結逾時（超過預設 1 小時）後失效，時效內仍有效
+product: ba-admin
+functional_area: ACCOUNT
+requirement_ids:
+- REQ-ACCOUNT-016
+acceptance_criteria_ids:
+- AC-ACCOUNT-0162
+spec_id: SPEC-ACCOUNT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 於前台（會員端）登入頁或首頁
+test_data: []
+steps:
+- n: 1
+  action: 申請重設密碼連結後，於連結產生後約 55 分鐘（時效邊界內）點擊該連結，確認可進入設定新密碼頁面
+- n: 2
+  action: 另申請一次新連結，於連結產生後超過 1 小時（如 65 分鐘）才點擊該連結
+expected_result: 第一次：時效邊界內點擊，連結仍有效，可進入設定新密碼頁面；第二次：超過 1 小時後點擊，連結已失效，無法用於設定新密碼
+expected_result_spec_reference:
+  spec_id: SPEC-ACCOUNT-001
+  spec_version: '0.1'
+  location: §前台忘記密碼（線上會員）
+  quote: 連結具時效（預設 1 小時），逾時失效須重新申請
+assumptions:
+- text: 驗證此邊界需要能夠讓連結「產生後經過指定時間」才點擊，測試環境是否提供可調整系統時間、縮短時效設定或其他方式模擬時間經過，spec 未定義，此測試資料佈置方式為設計推測，需環境負責人確認實際可行的驗證方式
+  requirement_id: REQ-ACCOUNT-016
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-ACCOUNT-090
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2NDD1NG7WTWE11Q5VRZ1QN3
+created_at: '2026-09-16T15:29:41Z'
+updated_at: '2026-09-17T15:40:29Z'
+history:
+- at: '2026-09-16T15:29:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2NCW1BSP0HY83TBACB7GZZW
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2NDD1NG7WTWE11Q5VRZ1QN3
+  run_id: RUN-20260916-008
+- at: '2026-09-16T15:29:41Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-008
+- at: '2026-09-17T15:40:29Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0105
+  run_id: RUN-20260916-008
+  note: rejected

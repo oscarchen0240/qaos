@@ -1,0 +1,121 @@
+artifact_id: ART-TVR-01M2GYVB3CNFCA1W7HNJZAX6AD
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-010
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T21:58:23Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GYKAG5M4MS9TV1TYWJG94W
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GYKAG5M4MS9TV1TYWJG94W
+- entity_type: Artifact
+  id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GYKAG5M4MS9TV1TYWJG94W
+  validated_against:
+    spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    requirement_model_artifact_id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+  issues:
+  - testcase_id: TC-DRAFT-01M2GYKAG45K4JB6DNVWM1GVXR
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-ARCADE-004
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 機台帳號的稽核／設定位置
+    evidence: spec.md 全文對「稽核倍數」的所有引用皆無欄位輸入驗證規則；expected_result_spec_reference.quote 引用的內容跟「阻擋負數」這個斷言完全對不上，assumptions為空，design_rationale卻寫「spec對此規則已明確定義」
+    explanation: 這是Test Designer自行推測，未誠實標記為假設
+    recommended_change: 標記為exploratory（assumptions+needs_human_confirmation:true），或改用uncovered_with_reason記錄此規則缺口
+  - testcase_id: TC-DRAFT-01M2GYKAG4N9KV5VA9KV13853N
+    issue_type: non_executable_steps
+    severity: blocker
+    violated_requirement: REQ-ARCADE-002
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 既有功能對機台帳號的排除規則／4.5-4.6
+    evidence: spec.md第180行指出加盟傭金/代理返傭是拿結算期間的注單乘費率計算，屬週期性結算而非即時重算，但TC寫「重新計算/檢視」這種模糊動作；precondition未要求乾淨測試環境（同期間該加盟商是否有其他會員流水）；未提醒機台場館站台脈絡下「加盟傭金/代理返傭發放紀錄」頁面是隱藏的，須切回加盟商自身站台才看得到
+    explanation: 驗證負面事實需要清楚交代操作路徑與乾淨比對基準，目前設計太模糊，執行者可能不知道具體怎麼操作或誤判為功能缺失
+    recommended_change: 補充結算週期等待方式、乾淨測試環境要求、以及切回加盟商站台查看發放紀錄頁面的提醒
+  - testcase_id: TC-DRAFT-01M2GYKAG43MBZ1TMXVXDN6EBA
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-ARCADE-004
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 機台帳號的稽核／設定位置
+    evidence: AC-ARCADE-004的then子句要求「該倍數即套用於後續的機台開分與入金計算」，但steps只到「修改並儲存」，沒有觸發一筆開分/入金去驗證倍數確實生效
+    explanation: expected_result照抄了AC全文卻沒有對應的驗證步驟，斷言與steps對不上
+    recommended_change: 補上觸發開分/入金並檢查稽核明細/核可金額確實依新倍數計算的步驟
+  - testcase_id: TC-DRAFT-01M2GYKAG4NP159W01FHR9TY9Z
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-ARCADE-001
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 業務規則與驗證／前台自行註冊
+    evidence: precondition/steps未說明機台場館前台網域從哪裡取得（登入網域查詢頁在機台場館脈絡被隱藏）
+    explanation: 同份TestCaseDraft裡其他TC都寫得具體，唯獨這條缺了取得網域的具體路徑
+    recommended_change: 補上「先於站台列表查看該機台場館的網域欄位」這一步
+  advisories:
+  - testcase_id: TC-DRAFT-01M2GYKAG403G8J722N4FD8GWJ
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-ARCADE-006
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 對既有章節的影響／7.4 操作紀錄
+    evidence: 兩條TC對「檢視後台操作紀錄」沒有具體頁面路徑
+    explanation: spec本身也只泛稱後台操作紀錄，未具體定義頁面位置，研判是平台既有通用稽核日誌功能，不列入FAIL主因
+    recommended_change: 可選：補充導覽路徑
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 7
+    ac_covered: 7
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2GYKAG4NP159W01FHR9TY9Z
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GYKAG4N9KV5VA9KV13853N
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GYKAG4AEHC25W7XZACBA5S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GYKAG43MBZ1TMXVXDN6EBA
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GYKAG45K4JB6DNVWM1GVXR
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GYKAG403G8J722N4FD8GWJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GYKAG4S94221XCBY6R0AB3
+    verdict: ok
+history:
+- at: '2026-09-14T21:58:26Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-010

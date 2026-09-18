@@ -1,0 +1,86 @@
+artifact_id: ART-TCD-01M2MVQJB8XEGYHJXP4957M0ZR
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-005
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-16T10:20:51Z'
+status: DRAFT
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-015
+- entity_type: TestCase
+  id: TC-CASHFLOW-018
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2MVQJB78AJGKZ7ENQC2VNTM
+    title: 洗分請求的 throshold 為負值、缺漏或非數值時，三種等價類別各自防禦性拒絕回 6-BAD DATA/FORMAT
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-015
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0151
+    - AC-CASHFLOW-0152
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data:
+    - name: 情境一 throshold
+      value: -1（負值）
+    - name: 情境二 throshold
+      value: 欄位缺漏
+    - name: 情境三 throshold
+      value: 字串（非數值型別）
+    steps:
+    - n: 1
+      action: 呼叫 req-keyout，throshold 帶入負值（例如 -1）
+    - n: 2
+      action: 確認回覆與帳務是否變動
+    - n: 3
+      action: 另呼叫 req-keyout，缺少 throshold 欄位
+    - n: 4
+      action: 確認回覆與帳務是否變動
+    - n: 5
+      action: 另呼叫 req-keyout，throshold 帶入非數值（例如字串）
+    - n: 6
+      action: 確認回覆與帳務是否變動；查詢交易紀錄
+    expected_result: 三種規格外情形皆回 6-BAD DATA/FORMAT，不寫入任何帳務異動，但交易紀錄留有「未成立」紀錄可查得拒絕原因（不屬於餘額不足的不寫入交易紀錄例外）；三者以等價劃分（負值／缺漏／型別錯誤）分別代表一類規格外輸入，結果一致
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-洗分 + §四種金流/交易不成立的原因
+      quote: throshold 為負值、缺漏或非數值時，平台防禦性拒絕並回 6-BAD DATA/FORMAT；餘額不足不寫入交易紀錄，其餘原因才會留下「未成立」紀錄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-018
+      version: 1
+    design_rationale: Phase2×3交叉比對整合：原版(v1)的step2把「缺漏或非數值」合併成同一步驟（用「或」表示任選其一），這兩種輸入異常屬於不同的等價類別（欄位缺失 vs 型別錯誤），合併測試有可能導致其中一種永遠不會被實際執行到。Phase3影子測試(RUN-20260916-002)對同一組AC明確用等價劃分技巧拆成3個獨立步驟分別測試。本版採用Phase3的3步拆分，確保三種等價類別都被獨立驗證；並比照同批TC-CASHFLOW-005的整合結果補上「拒絕仍留有交易紀錄」斷言。critical_path維持原版的true（此為高風險防禦性拒絕案例，不應降低執行優先級）。

@@ -4,7 +4,7 @@
 - 規格：SPEC-SITELIST-001 v0.4  §§操作/刪除站台 + §業務規則-刪除確認
 - 相關需求：REQ-SITELIST-023
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 刪除操作不可復原

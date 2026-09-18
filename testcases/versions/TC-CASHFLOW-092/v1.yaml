@@ -1,0 +1,88 @@
+title: req-cashout 已建立 PENDING 但機台 15 秒內未收到回覆而結束程序時，PENDING 不會自動收斂，須靠新請求取代或人工出金連動取消
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-026
+- REQ-CASHFLOW-027
+acceptance_criteria_ids:
+- AC-CASHFLOW-0261
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- functional
+design_techniques:
+- scenario
+- error_guessing
+priority: high
+risk: medium
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 呼叫 req-cashout 建立 PENDING（TXID1），不呼叫 end-cashout（模擬機台 15 秒逾時直接結束程序、收據不印）
+- n: 2
+  action: 靜置一段時間後查詢該 PENDING 狀態，確認未自動結束
+- n: 3
+  action: 透過既有的『人工出金』功能對該機台帳號執行人工出金
+- n: 4
+  action: 確認 TXID1 的 PENDING 是否因此被連動取消
+expected_result: PENDING 持續停留在待確認，不會自動結束（也沒有隨時間推移的逾時機制，出金 PENDING 不設逾時）；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依
+  REQ-CASHFLOW-027 連動取消既有 PENDING）才能收斂
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-出金
+  quote: 第一階段有 15 秒逾時…但平台此時已建立 PENDING，該筆將永遠等不到 end-cashout，須由新的 req-cashout 取代或 Admin 手動取消收斂
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-092
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

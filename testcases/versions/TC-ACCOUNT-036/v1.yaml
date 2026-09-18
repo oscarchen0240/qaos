@@ -1,0 +1,94 @@
+title: 重置後舊憑證即使簽章仍有效也一律被拒絕
+product: ba-admin
+functional_area: ACCOUNT
+requirement_ids:
+- REQ-ACCOUNT-020
+acceptance_criteria_ids:
+- AC-ACCOUNT-0201
+spec_id: SPEC-ACCOUNT-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 進入 會員與加盟商 > 會員列表
+- ⚠️ 本案例依賴驗證憑證的平台 API；該 API 屬開發包③範圍，正式對接前尚不存在，目前無法實際執行，僅供開發包③上線後執行
+test_data: []
+steps:
+- n: 1
+  action: 機台使用憑證 A 正常呼叫平台 API
+- n: 2
+  action: 在後台重置該機台的憑證（產生憑證 B，A 應立即失效）
+- n: 3
+  action: 以憑證 A 再次呼叫平台 API
+expected_result: 第三步呼叫被拒絕——平台除驗證簽章外，另比對機台目前有效的憑證識別（如 jti／版本號），僅簽章有效不足以通過
+expected_result_spec_reference:
+  spec_id: SPEC-ACCOUNT-001
+  spec_version: '0.1'
+  location: §機台憑證
+assumptions:
+- text: 規則本身 spec 已明確定義（非假設待確認），此處的 assumption 僅用於標記『目前無法執行、需等待開發包③』這個環境限制，供 Human 知悉並在 ACTIVATE 時決定是否先行核准、標記為延後執行
+  requirement_id: REQ-ACCOUNT-020
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0017
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-ACCOUNT-036
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2ECP44HBA5SNK4H6XQC5PFJ
+created_at: '2026-09-13T22:02:29Z'
+updated_at: '2026-09-13T22:06:36Z'
+history:
+- at: '2026-09-13T22:02:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ECEVVEAQGMDNVZ6SG22Q9S
+  run_id: RUN-20260914-004
+- at: '2026-09-13T22:02:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-004
+- at: '2026-09-13T22:02:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2ECP44HBA5SNK4H6XQC5PFJ
+  run_id: RUN-20260914-004
+- at: '2026-09-13T22:02:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-004
+- at: '2026-09-13T22:06:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0017
+  run_id: RUN-20260914-004
+- at: '2026-09-13T22:06:36Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-004
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0017

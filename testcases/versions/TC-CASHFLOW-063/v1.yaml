@@ -1,0 +1,92 @@
+title: 稽核倍數大於 0 且有未完成稽核金額時，洗分核可金額已扣除未完成稽核部分
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-002
+acceptance_criteria_ids:
+- AC-CASHFLOW-0021
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: medium
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data:
+- name: 稽核倍數
+  value: 1
+- name: 機台餘額
+  value: 1000
+- name: 未完成稽核部分
+  value: 400
+steps:
+- n: 1
+  action: 將該幣種稽核倍數調整為 1 倍（帳務管理 > 出金設定 > TWD 頁籤）
+- n: 2
+  action: 透過開分或入金為機台帳號建立一筆餘額（例如 1000），並使其中一部分（例如 400）處於『尚未完成稽核』狀態（依既有稽核倍數機制佈置，見假設）
+- n: 3
+  action: 以 throshold=0 呼叫 req-keyout 全洗，觀察回覆的核可金額 value
+expected_result: 核可金額已扣除尚未完成稽核的部分（例如扣除 400 後，僅對剩餘 600 計算門檻捨去），而非以機台帳面全額 1000 計算
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §機台帳號的稽核 + §業務規則與驗證/稽核倍數
+  quote: 倍數大於 0 時 | 洗分與出金的核可金額須扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足，機台畫面顯示餘額不足
+assumptions:
+- text: 稽核倍數機制沿用既有出金設定（依 §機台帳號的稽核：『機台的開分與入金比照既有的出金設定』），但『未完成稽核金額』的精確判定方式（例如以有效投注額對比存入金額的比例）並未在本 spec 中重新定義，屬既有機制的延伸；此處佈置『有未完成稽核金額』狀態的具體操作方式為依既有出金設定稽核邏輯的推測，需環境負責人／熟悉既有稽核機制的人員確認佈置方式是否正確
+  requirement_id: REQ-CASHFLOW-002
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-063
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

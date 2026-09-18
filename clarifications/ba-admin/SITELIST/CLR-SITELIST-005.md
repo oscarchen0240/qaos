@@ -4,7 +4,7 @@
 - 規格：SPEC-SITELIST-001 v0.4  §§角色與權限 + §操作/新增站台
 - 相關需求：REQ-SITELIST-012
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 Admin 新增站台時可自由選取上層站台（留空為根層）；站長新增站台時上層站台固定為當前所在層，不可修改

@@ -1,0 +1,89 @@
+title: 機台帳號完成金流交易後，優惠彩金審核佇列查無該筆交易
+product: ba-admin
+functional_area: ARCADE
+requirement_ids:
+- REQ-ARCADE-003
+acceptance_criteria_ids:
+- AC-ARCADE-003
+spec_id: SPEC-ARCADE-001
+spec_version: '0.7'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- negative
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 站台切換下拉選單切換至一個既有的機台場館站台
+- 選定該場館下一個既有機台帳號，記錄其目前的交易紀錄狀態（可先於『各式報表 > 交易紀錄查詢』核對），供後續比對是否有新增交易
+test_data: []
+steps:
+- n: 1
+  action: 使該機台帳號完成任一筆金流交易（開分／入金／洗分／出金皆可，四者本 requirement 一視同仁），記錄該筆交易的完成時間與交易編號（此步驟涉及機台端硬體現場流程，非本 spec定義的後台 UI 範圍，見下方假設）
+- n: 2
+  action: 進入『帳務管理 > 優惠彩金審核』頁面，以涵蓋該筆交易完成時間的查詢區間查詢
+- n: 3
+  action: 檢視查詢結果列表中是否存在對應該筆機台交易的審核項目；若查詢區間內原本就有其他線上會員的優惠彩金審核項目，一併記錄，以確認佇列本身有在正常運作而非剛好整批皆空
+expected_result: 優惠彩金審核佇列的查詢結果中查無剛才那筆機台帳號交易對應的審核項目；若查詢範圍內原本就存在其他線上會員的優惠彩金審核項目，這些項目仍正常列出，僅機台帳號的交易不出現，證明並非佇列查詢功能本身異常
+expected_result_spec_reference:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  location: 既有功能對機台帳號的排除規則／排除規則總表
+  quote: 3.3 | 優惠彩金審核 | 不適用
+assumptions:
+- text: 機台帳號的開分／入金／洗分／出金交易本身是玩家在機台端實際操作產生的紀錄，非後台 UI 可直接建立的動作；本 TC 假設測試環境當下可透過機台現場流程（或既有模擬工具）使該機台帳號產生至少一筆新的已完成金流交易供查驗，若環境當下無法產生，需洽環境負責人協助，此步驟超出本
+    spec 定義範圍。
+  requirement_id: REQ-ARCADE-003
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-ARCADE-011
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+created_at: '2026-09-18T01:19:38Z'
+updated_at: '2026-09-18T10:49:52Z'
+history:
+- at: '2026-09-18T01:19:38Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-011
+- at: '2026-09-18T10:49:52Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0157
+  run_id: RUN-20260918-011
+  note: rejected

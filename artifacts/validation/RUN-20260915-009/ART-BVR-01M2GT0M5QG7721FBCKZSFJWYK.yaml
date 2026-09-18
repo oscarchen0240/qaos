@@ -1,0 +1,89 @@
+artifact_id: ART-BVR-01M2GT0M5QG7721FBCKZSFJWYK
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-009
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-14T20:33:53Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ
+references:
+- entity_type: Artifact
+  id: ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ
+- entity_type: Evidence
+  id: EVD-0055
+- entity_type: Evidence
+  id: EVD-0056
+- entity_type: Evidence
+  id: EVD-0057
+- entity_type: Evidence
+  id: EVD-0058
+- entity_type: Evidence
+  id: EVD-0059
+requires_approval: null
+payload:
+  result: FAIL
+  bug_draft_artifact_id: ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: false
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: BUG-DRAFT-01M2GSRRE4K9AFRK08ASPY9JP1
+    issue_type: invalid_expected_result
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: 禁用twd.png 顯示狀態欄為一個可點擊的按鈕，文字為「禁用」，與同頁其他編輯類 action 按鈕樣式相近；依中文後台慣例，狀態切換按鈕顯示的通常是「點擊後會執行的動作」，也就是說按鈕顯示「禁用」時，目前有可能仍是啟用中，尚未有停用後的視覺確認（例如按鈕變「啟用」或出現「已停用」徽章）
+    explanation: 前置條件（核心貨幣 TWD 已停用）是整份 BugDraft 的地基，若此條件不成立，出金/洗分成功即屬預期行為，非違反 REQ-BONUSCCY-004，severity/priority 建議也會失去根據
+    recommended_change: 需向 Oscar 確認該截圖當下 TWD 的實際狀態（已停用，或按鈕僅為可點擊動作、當時仍是啟用中）
+  evidence_verification:
+  - evidence_id: EVD-0055
+    hash_verified: true
+    supports_claim: false
+    note: 畫面本身無法明確判斷是「已停用」還是「可點擊禁用（仍啟用中）」，需額外確認
+  - evidence_id: EVD-0056
+    hash_verified: true
+    supports_claim: true
+    note: 入金 end-cashin 回 7-OUT OF SERVICE，與 claim 一致
+  - evidence_id: EVD-0057
+    hash_verified: true
+    supports_claim: true
+    note: 開分 req-keyin 回 7-OUT OF SERVICE，與 claim 一致
+  - evidence_id: EVD-0058
+    hash_verified: true
+    supports_claim: true
+    note: 出金兩階段皆回 0-OK，與 claim 一致
+  - evidence_id: EVD-0059
+    hash_verified: true
+    supports_claim: true
+    note: 洗分回 0-OK，與 claim 一致
+  severity_assessment:
+    severity_recommended: critical
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 若前置條件成立，severity=critical/priority=high 合理（資金安全、PM剛確認的明確規則被違反）；此次 FAIL 純粹是證據不足問題，不是嚴重度判斷問題
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+  ambiguity: null
+history:
+- at: '2026-09-14T20:33:57Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-009

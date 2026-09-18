@@ -1,0 +1,93 @@
+artifact_id: ART-BVR-01M2GE6QP8FDNMFKQHX5ZMY7P6
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-002
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-14T17:07:30Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M2GDZXWBWEJJZE8N0SPXXEAC
+references:
+- entity_type: Artifact
+  id: ART-BD-01M2GDZXWBWEJJZE8N0SPXXEAC
+- entity_type: Evidence
+  id: EVD-0053
+- entity_type: Evidence
+  id: EVD-0054
+requires_approval: null
+payload:
+  result: FAIL
+  bug_draft_artifact_id: ART-BD-01M2GDZXWBWEJJZE8N0SPXXEAC
+  checks:
+    violates_spec: false
+    expected_has_spec_basis: false
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: false
+    priority_reasonable: false
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: BUG-DRAFT-01M2GDZXWBWEJJZE8N0SPXXEAC
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-CASHFLOW-001
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+    evidence: 逐字核對 cashflow_spec.md 與 platformrule_spec.md 全文，稽核機制描述的是單一一組「依幣種」的稽核倍數（開分/入金累積額度、洗分/出金消耗額度，同一機制的兩端），spec 從未出現「開分/洗分」與「入金/出金」是兩組獨立設定的說法；platformrule_spec.md
+      3.1 節反而說出金設定頁面是「依幣別分頁」，即一個幣種對應一列設定才是 spec 描述的資料模型
+    explanation: severity_rationale 把「兩組獨立設定各自存在」當既定事實寫死（後端資料本身正確），但這個判斷查無 spec 依據，兩筆完全相同的 TWD 紀錄更符合『違反依幣種一列』的資料重複/髒資料疑慮，不應在未證實前就直接以優化建議結案
+    recommended_change: 在送出前先明確標註「兩組獨立設定」的說法來源是 PM 口頭確認（非 spec 文字），並保留另一種可能性（資料重複）；若已有 PM 直接確認來源，應在 severity_rationale／preconditions
+      明確寫出確認者與確認時間，而不是用肯定語氣『後端資料本身正確』帶過
+  - testcase_id: BUG-DRAFT-01M2GDZXWBWEJJZE8N0SPXXEAC
+    issue_type: other
+    severity: major
+    violated_requirement: REQ-CASHFLOW-001
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+    evidence: cashflow_spec.md 對稽核倍數有明確警語：『調高倍數前務必評估現場衝擊』『若設了稽核倍數而玩家未達標，當場就洗不出錢，必然引發爭議』；REQ-CASHFLOW-001 本身 risk 欄位標 medium，與這張單
+      severity_proposed=trivial 明顯不一致
+    explanation: 即使兩組設定真的獨立存在，操作者在完全無法分辨兩筆設定的情況下修改，有直接誤改稽核倍數、引發現場玩家糾紛的風險，trivial 標示過低
+    recommended_change: severity 至少提升到 minor，priority 至少提升到 medium；若證實兩組皆會實際生效於金流，建議上修至 major
+  - testcase_id: BUG-DRAFT-01M2GDZXWBWEJJZE8N0SPXXEAC
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-001
+    spec_reference: null
+    evidence: expected_result_spec_reference 引用『機台帳號的稽核』小節中『稽核倍數依幣種設定，預設0倍』這句話，但該引用並不支持『兩組要能區分』這個具體主張
+    explanation: expected_result 本身是合理的可用性常識建議，但 spec_reference 的引用方式容易讓審查者誤以為『該能區分』是規格明文要求
+    recommended_change: expected_result_spec_reference 或 design 說明應誠實標註「此為可用性建議，非 spec 明文要求」
+  evidence_verification:
+  - evidence_id: EVD-0053
+    hash_verified: true
+    supports_claim: true
+    note: API 回應兩筆物件 paymentMethod/currencyName/currencySymbol/transactionFee/audit/status 六欄位值完全相同，無分組欄位，屬實
+  - evidence_id: EVD-0054
+    hash_verified: true
+    supports_claim: true
+    note: 畫面兩筆 New Taiwan Dollar 列六欄完全相同，無分組標籤，屬實
+  severity_assessment:
+    severity_recommended: minor
+    priority_recommended: medium
+    agrees_with_analyst: false
+    rationale: 畫面/API 完全相同這點證據支持、未誇大；但 trivial/low 偏低——spec 自身對稽核倍數誤設有現場糾紛風險的明確警語，且 REQ-CASHFLOW-001 risk=medium，操作者無法分辨兩組設定時有誤改風險，應至少
+      minor/medium；若「兩組獨立設定」的前提屬實且來源明確（如 PM 直接確認），可以維持優化建議定調，但 severity 不應停在 trivial
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+history:
+- at: '2026-09-14T17:07:36Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-002

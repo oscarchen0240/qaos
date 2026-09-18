@@ -1,0 +1,89 @@
+artifact_id: ART-TCD-01M2MV7YTPYK3CHPG84B69P77K
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-004
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-16T10:12:19Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-007
+- entity_type: TestCase
+  id: TC-CASHFLOW-008
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2MV7YTN6QZJE1Q0KJJXKK2B
+    title: 入金加計後恰等於額度上限可成立並預留，超過 1 單位則 1-OVER LIMIT 且不建立 PENDING、不預留
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-007
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0071
+    - AC-CASHFLOW-0072
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    - 設定該場館額度上限為 A，並確認目前「全場館機台分數餘額合計＋已預留未入帳入金金額」恰為 A-100
+    test_data:
+    - name: 第一筆入金金額
+      value: 100（使加計後恰等於上限 A）
+    - name: 第二筆入金金額
+      value: 1（使加計後超過上限 A）
+    steps:
+    - n: 1
+      action: 送出 req-cashin，金額 100，使「全場館餘額合計＋已預留未入帳金額＋本筆金額」恰等於額度上限 A
+    - n: 2
+      action: 確認回覆建立 PENDING 並將 100 計入預留（此時全場館「餘額合計＋預留」恰為 A）
+    - n: 3
+      action: 再送出 req-cashin，金額 1，使加計後超過額度上限 A
+    - n: 4
+      action: 確認此筆的回覆，並確認機台未收到分數變化、無新 PENDING 產生，機台直接退鈔
+    expected_result: 第一筆恰等於上限：成立，建立 PENDING 並將本筆金額計入預留；第二筆超過上限：回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/入金
+      quote: req-cashin 於場館鎖內以「全場館餘額＋已預留＋本筆金額」判定額度，未超限才建立 PENDING 並預留
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-008
+      version: 1
+    design_rationale: Phase2×3交叉比對整合：原版(v1)只用「未超過上限」與「將超過上限」兩個籠統值測試，未精確驗證「恰等於上限」這個邊界點是否真的成立。Phase3影子測試(RUN-20260916-002)對同一組AC採用真正的邊界值兩側測法，先驗證恰等於上限時成立並正確預留，再測多1單位驗證拒絕且不預留。本版採用Phase3的精確邊界測法取代原版籠統值。
+history:
+- at: '2026-09-16T10:12:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-004

@@ -1,0 +1,279 @@
+artifact_id: ART-TCD-01M2GNQA9S7H91TWVGNXTJD9T7
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-007
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T19:18:54Z'
+status: SUPERSEDED
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-011
+- entity_type: Requirement
+  id: REQ-BONUSCCY-012
+- entity_type: Requirement
+  id: REQ-BONUSCCY-013
+- entity_type: Requirement
+  id: REQ-BONUSCCY-014
+- entity_type: Artifact
+  id: ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GNQA9R2D10W1W1K6QN62B1
+    title: 系統存款正確進玩家錢包，金額與幣別一致
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-011
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-017
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: &id001
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家於線上站台完成一筆系統存款（非人工存款）
+    - n: 2
+      action: 檢視入帳結果的金額與幣別
+    expected_result: 存入多少金額就進玩家錢包多少金額，幣別與存款當下一致，不因新拆出的「原始金額」欄位而算錯或漏算
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §這次能測什麼
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GNQA9RN6NMRHZVV6166SZP
+    title: 存款金額精確到小數點時，進錢包金額不因欄位拆分而被無條件取整或接錯欄位
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-011
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-017
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家於線上站台完成一筆帶小數點的系統存款（例如 100.55）
+    - n: 2
+      action: 檢視入帳結果的金額，並可能的話核對後端回應中「原始金額」與「核心貨幣金額」兩個欄位的值
+    expected_result: 進錢包金額精確為 100.55，不因新拆出的兩個欄位（原始金額／核心貨幣金額）而被無條件取整或誤用另一欄位的值；目前兩欄位數值應相同
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／①存款金額拆成兩個
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是本次唯一的結構性改動（拆欄位）帶來的迴歸風險點：欄位拆分後最容易出錯的地方是取整規則或欄位接錯，用小數金額當邊界案例能同時驗證兩件事
+  - draft_id: TC-DRAFT-01M2GNQA9RD87MEQPPBE90DF30
+    title: 存款後流水門檻與手續費以實際存入的原始金額為基數計算
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-012
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-018
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家完成一筆系統存款
+    - n: 2
+      action: 檢視存款後的提領所需有效投注額（流水門檻）與手續費計算結果
+    expected_result: 皆以玩家實際存入的原始金額為基數計算，不是核心貨幣金額或其他換算後的數字
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §這次能測什麼
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GNQA9RAS355RGHXRRPCB0W
+    title: 未達標時前台簽到進度條正確顯示，與後台判定一致，不再永遠顯示0
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-013
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-019
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家有已入帳成功的存款記錄，尚未達到有效會員門檻
+    - n: 2
+      action: 檢視前台簽到頁的有效會員進度條
+    expected_result: 進度條正確顯示累積金額，與後台判定的累積金額一致，不再是以前那樣永遠顯示 0
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／②簽到活動的「有效會員」改讀正確的表
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GNQA9SPYKQFF399TJPZR14
+    title: 達標玩家開啟一次前台簽到頁即直接寫入有效會員狀態
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-013
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-020
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家的累積存款達到有效會員門檻，但尚未開啟過新版前台簽到頁
+    - n: 2
+      action: 開啟一次前台簽到頁
+    expected_result: 進度條達標並直接寫入有效會員狀態，與後台最終判定結果一致
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／②簽到活動的「有效會員」改讀正確的表
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GNQA9SVZJN9VYHGTYWYG0F
+    title: 簽到有效會員每月重置，跨月後進度正確歸零重算
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-014
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-021
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 簽到活動已開啟「有效會員每月重置」設定，玩家上個月的累積進度已達有效會員門檻
+    - n: 2
+      action: 跨月後檢視該玩家本月的有效會員進度
+    expected_result: 進度正確歸零，重新從 0 開始累積計算，不因改讀 deposit_log_v2 而受影響（例如不會誤讀到上個月已計入歸零前的舊資料）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §這次能測什麼
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+history:
+- at: '2026-09-14T19:19:13Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:24:51Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2GP227CQHPZKT2CMFNHB6G9
+  run_id: RUN-20260915-007

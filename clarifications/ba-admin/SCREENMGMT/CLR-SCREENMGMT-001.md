@@ -4,7 +4,7 @@
 - 規格：SPEC-SITELIST-001 v0.4
 - 相關需求：—
 - 提出者：oscarchen@blockaction.tech（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 站台列表_spec_v04 定案機台場館核心貨幣固定 TWD，但所有機台相關 spec 皆未定義遊戲商上架清單是否依幣別過濾。實測 AMB（僅支援 USDT）仍出現在 Violet Arcade 前台 TAB，遊戲名稱顯示內部代碼、圖示破圖（見 MAN-20260913-015 / EVD）。已排除 locale 因素。

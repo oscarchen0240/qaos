@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1  §§篩選器/機台帳號
 - 相關需求：REQ-DAILYREPORT-003
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 篩選欄「機台帳號」為文字輸入，輸入會員編號；留空表示場館全部機台。

@@ -1,0 +1,90 @@
+title: 洗分請求的 throshold 為負值、缺漏或非數值時，一律防禦性拒絕回 6-BAD DATA/FORMAT
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-015
+acceptance_criteria_ids:
+- AC-CASHFLOW-0151
+- AC-CASHFLOW-0152
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- equivalence_partitioning
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 呼叫 req-keyout，throshold 帶入負值（例如 -1）
+- n: 2
+  action: 確認回覆與帳務是否變動
+- n: 3
+  action: 呼叫 req-keyout，缺少 throshold 欄位
+- n: 4
+  action: 確認回覆與帳務是否變動
+- n: 5
+  action: 呼叫 req-keyout，throshold 帶入非數值（例如字串）
+- n: 6
+  action: 確認回覆與帳務是否變動
+expected_result: 三種規格外情形皆回 6-BAD DATA/FORMAT，不寫入任何帳務異動；三者以等價劃分（負值／缺漏／型別錯誤）分別代表一類規格外輸入，結果一致
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-洗分
+  quote: 規格外的值（負值、缺漏、非數值）屬廠商保證外情形，防禦性處理：拒絕該筆、回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-080
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

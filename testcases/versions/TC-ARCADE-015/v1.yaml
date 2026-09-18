@@ -1,0 +1,89 @@
+title: 對一筆待核實的機台出金收據執行作廢操作後，後台操作紀錄如實記錄該筆作廢動作
+product: ba-admin
+functional_area: ARCADE
+requirement_ids:
+- REQ-ARCADE-006
+acceptance_criteria_ids:
+- AC-ARCADE-007
+spec_id: SPEC-ARCADE-001
+spec_version: '0.7'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- scenario
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 站台切換下拉選單切換至一個既有機台場館
+- 於『帳務管理 > 洗分出金核實』頁面，尋找一筆狀態為『待核實』的機台出金項目（作廢僅適用出金，不適用洗分），記錄其交易編號與訂單編號（若當下查無待核實出金項目，見下方假設）
+test_data: []
+steps:
+- n: 1
+  action: 對該筆待核實出金項目點擊『作廢』，依系統要求填寫作廢原因（必填）後送出，記錄本次執行的操作人員（即目前登入帳號）與操作時間
+- n: 2
+  action: 進入『後台管理員系統』的操作紀錄查詢頁面，以剛才作廢的時間範圍查詢（若頁面提供關鍵字查詢，亦可用該筆交易編號查詢）
+- n: 3
+  action: 檢視查詢結果中是否存在對應本次作廢動作的紀錄，並核對其操作人員、時間、對象交易欄位內容
+expected_result: 後台操作紀錄中存在一筆對應本次作廢動作的紀錄，其操作人員為本次實際執行作廢的登入帳號、時間與實際操作時間相符（合理誤差內），對象交易為剛才作廢的那筆交易編號
+expected_result_spec_reference:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  location: 對既有章節的影響／7.4 操作紀錄
+  quote: 洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）
+assumptions:
+- text: 同 AC-ARCADE-006 的 TC，待核實的機台出金項目其產生前提依賴機台端硬體現場流程，非後台 UI 可直接觸發；本 TC 假設測試環境當下存在（或可佈置）至少一筆狀態為『待核實』的機台出金項目供作廢操作使用，若環境當下查無，需洽環境負責人協助佈置，此步驟超出本spec
+    定義範圍。另外，v0.7.md 第709行明訂『作廢僅 Admin 與站長可執行』，故本 TC 以Admin 身分執行，未使用操作員角色，避免混入權限判斷（權限判斷不在本 requirement 的AC 範圍內）。
+  requirement_id: REQ-ARCADE-006
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-ARCADE-015
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+created_at: '2026-09-18T01:19:38Z'
+updated_at: '2026-09-18T10:49:52Z'
+history:
+- at: '2026-09-18T01:19:38Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-011
+- at: '2026-09-18T10:49:52Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0157
+  run_id: RUN-20260918-011
+  note: rejected

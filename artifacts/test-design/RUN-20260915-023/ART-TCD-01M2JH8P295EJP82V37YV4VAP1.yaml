@@ -1,0 +1,137 @@
+artifact_id: ART-TCD-01M2JH8P295EJP82V37YV4VAP1
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-023
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T12:39:29Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-014
+- entity_type: TestCase
+  id: TC-MEMBER-021
+- entity_type: TestCase
+  id: TC-MEMBER-022
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JH8P29DRKX5KPVW7TC4JHR
+    title: 客製化加盟商 Inline 編輯修改欄位數值後點擊確認，成功儲存且重新整理後仍維持新值
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-014
+    acceptance_criteria_ids:
+    - AC-MEMBER-020
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「超級加盟商」按鈕，確認該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核倍數欄位進入 Inline 編輯模式
+    - n: 2
+      action: 修改佣金比例%與行政費為新數值
+    - n: 3
+      action: 點擊列尾 ✓ 確認
+    - n: 4
+      action: 重新整理列表，檢視該列數值
+    expected_result: 數值成功更新並儲存為修改後的新值；重新整理列表後該列仍顯示新值（確認資料已持久化存入後端，非僅前端暫存狀態）
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.3 客製化加盟商設定
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-021
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-045（已退役），其多了「重新整理列表，檢視該列數值」的持久性驗證步驟，Phase 2原版只驗證點擊確認後畫面上顯示更新，未驗證重新整理後是否仍維持（若只是前端樂觀更新、實際未寫入後端，原TC測不出這個缺陷）。依整合原則(深度優先)補上持久性驗證，同時明確列出Inline編輯涉及的6個欄位名稱
+  - draft_id: TC-DRAFT-01M2JH8P293EXX9R7Z490V5T69
+    title: 客製化加盟商 Inline 編輯修改數值後點擊取消，還原為原始值且不儲存
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-014
+    acceptance_criteria_ids:
+    - AC-MEMBER-021
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該列目前的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核倍數原始數值
+    - n: 2
+      action: 點擊「超級加盟商」按鈕進入 Inline 編輯模式，將上述欄位修改為與原始值不同的新數值
+    - n: 3
+      action: 點擊列尾 ✕ 取消
+    - n: 4
+      action: 檢視該列數值；重新整理列表，再次檢視該列數值
+    expected_result: 點擊取消後立即還原為修改前的原始值，先前輸入的變更未被儲存；重新整理列表後仍維持原始值（確認取消動作未在後端留下任何殘留變更）
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.3 客製化加盟商設定
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-022
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-046（已退役），同TC-MEMBER-021/045的問題：Phase 2原版只驗證點擊取消後畫面即時還原，未驗證重新整理後是否仍為原始值（若取消動作其實已呼叫API寫入、只是前端顯示還原，原TC測不出這個缺陷）。依整合原則(深度優先)補上重新整理後的二次驗證，同時明確列出涉及的6個欄位名稱
+history:
+- at: '2026-09-15T12:40:06Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-023
+- at: '2026-09-15T12:45:35Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2JHKQ7JAG14RD51TRNQG81A
+  run_id: RUN-20260915-023

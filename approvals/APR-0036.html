@@ -1,0 +1,190 @@
+<title>APR-0036 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0036 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260914-013 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>42 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？</div>
+<p>共 42 條：grounded 42 條（預期結果有 spec 條文依據）、<b>exploratory 0 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-CASHOUT-001 洗分/出金完成即自動產生一筆待核實紀錄</h2>
+<blockquote>spec：§功能說明　「每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-041">041<br>v1</td><td>grounded</td><td>洗分或出金交易完成後，本頁自動產生一筆待核實紀錄</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>機台送出一筆洗分請求（req-keyout）並完成</li><li>至本頁檢視是否自動出現對應的待核實紀錄</li></ol></td><td>自動出現一筆待核實紀錄，對應該筆洗分交易</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-002 本頁是全平台唯一核實入口，機台交易紀錄不提供核實操作</h2>
+<blockquote>spec：§功能說明 + §相關業務規則　「本頁是全平台唯一的核實入口——機台交易紀錄只顯示核實狀態，不提供操作」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-042">042<br>v1</td><td>grounded</td><td>機台交易紀錄頁不提供核實或作廢操作，須至本頁執行</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>至機台交易紀錄頁，檢視一筆待核實交易的核實狀態欄與可用操作</li></ol></td><td>該頁只顯示核實狀態，不提供核實或作廢操作；須至本頁（洗分出金核實）執行</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-003 開分與入金不需核實，不會出現在本頁</h2>
+<blockquote>spec：§紀錄產生規則　「開分與入金不需核實，不會出現在本頁（兩者都不是付錢給玩家）」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-043">043<br>v1</td><td>grounded</td><td>開分與入金交易不會出現在本頁</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>站台內有已完成的機台開分與機台入金交易</li><li>查詢本頁列表，不篩選任何條件</li></ol></td><td>查無任何開分或入金紀錄，本頁僅列出洗分與出金</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-004 本頁只會有已完成交易產生的核實狀態紀錄，未完成交易不會有核實狀態</h2>
+<blockquote>spec：§紀錄產生規則　「僅交易狀態為「已完成」的機台洗分與機台出金會出現在本頁；待確認、已取消、已逾時、未成立的交易不會出現。機台畫面顯示失敗、本頁又查無該筆時，代表交易可能沒有完成」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-044">044<br>v1</td><td>grounded</td><td>尚未完成的洗分交易本身沒有核實狀態，不會出現在本頁</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆機台洗分交易於機台交易紀錄查得的交易狀態為待確認（尚未完成）</li><li>查詢本頁（本頁沒有交易狀態欄位或篩選器，只有核實狀態）</li></ol></td><td>查無此筆紀錄，因為該筆交易尚未完成、系統根本不會為它建立核實狀態紀錄；不可憑本頁無紀錄直接判斷交易已完成，須至機台交易紀錄查明實際的交易狀態</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-045">045<br>v1</td><td>grounded</td><td>未成立的出金交易同樣沒有核實狀態，不會出現在本頁</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆機台出金交易於機台交易紀錄查得的交易狀態為未成立</li><li>查詢本頁</li></ol></td><td>查無此筆紀錄，因為未成立的交易不會有核實狀態</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-005 待核實狀態定義，待核實的洗分以醒目色標提示</h2>
+<blockquote>spec：§核實狀態　「待核實 | 藍色 | 交易已完成，現金尚未確認交付。待核實的洗分以醒目色標提示（現金可能未交付或現場漏登記）；待核實的出金屬正常（收據不設兌現時效，玩家隔幾天才來兌現很常見）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-046">046<br>v1</td><td>grounded</td><td>待核實的洗分以醒目色標提示</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆機台洗分交易處於待核實狀態</li><li>檢視其於列表中的呈現方式</li></ol></td><td>以醒目色標提示，提醒現金可能尚未交付或現場漏登記</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-047">047<br>v1</td><td>grounded</td><td>待核實的出金正常顯示，不特別醒目提示</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆機台出金交易處於待核實狀態</li><li>檢視其於列表中的呈現方式</li></ol></td><td>正常顯示藍色核實狀態標記，不做醒目提示（收據不設兌現時效，屬正常情況）</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-006 已核實狀態定義，核實當下累計提款次數與金額</h2>
+<blockquote>spec：§核實狀態 + §相關業務規則　「已核實 | 綠色 | 現金已交付並完成登記；出金即「已兌現」。核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-048">048<br>v1</td><td>grounded</td><td>核實當下累計該機台帳號的提款次數與提款金額</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆待核實的洗分交易，核實前先記錄該機台帳號會員列表的提款次數與提款金額</li><li>執行核實</li><li>核實完成當下再次檢視提款次數與提款金額</li></ol></td><td>提款次數 +1；提款金額以站台核心貨幣原值累計此筆實際金額，不換算 USDT</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-007 已作廢狀態僅出金適用</h2>
+<blockquote>spec：§核實狀態　「已作廢 | 灰色 | 僅出金：收據經人工作廢，不再兌付」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-049">049<br>v1</td><td>grounded</td><td>洗分交易的核實狀態不會出現已作廢</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>檢視任一筆機台洗分交易在篩選器與列表中可能出現的核實狀態值</li></ol></td><td>只會是待核實或已核實兩種，不會出現已作廢（已作廢僅出金適用）</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-008 頁面資料範圍跟隨站台切換選單，不另設場館篩選欄位</h2>
+<blockquote>spec：§篩選器　「頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（後台各頁皆有，一次僅顯示所選站台），不另設場館篩選欄位」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-050">050<br>v1</td><td>grounded</td><td>頁面資料範圍跟隨站台切換選單，不提供場館篩選欄位</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>頁面標題下方的站台切換選單切至站台 A</li><li>檢視篩選器所有欄位</li><li>檢視查詢結果範圍</li></ol></td><td>篩選器不存在「場館」欄位；查詢結果僅限站台 A 範圍內的紀錄</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-009 機台帳號篩選支援逗號分隔查詢多筆</h2>
+<blockquote>spec：§篩選器　「機台帳號 | 文字輸入 | 輸入會員編號查詢；支援多筆，以「,」分隔」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-051">051<br>v1</td><td>grounded</td><td>機台帳號篩選支援以逗號分隔查詢多筆會員編號</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>機台帳號篩選欄輸入兩個機台帳號的會員編號，以「,」分隔</li><li>點擊搜尋</li></ol></td><td>查詢結果同時包含這兩個機台帳號的紀錄</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-010 交易類型篩選下拉選項為全部/機台洗分/機台出金</h2>
+<blockquote>spec：§篩選器　「交易類型 | 下拉選單 | 全部 / 機台洗分 / 機台出金」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-052">052<br>v1</td><td>grounded</td><td>交易類型篩選下拉選單含全部、機台洗分、機台出金</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>開啟交易類型篩選下拉選單</li><li>檢視所有可選項</li></ol></td><td>包含「全部」「機台洗分」「機台出金」共三個選項</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-053">053<br>v1</td><td>grounded</td><td>篩選交易類型可正確窄化查詢結果</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>篩選交易類型為「機台出金」並搜尋</li></ol></td><td>查詢結果僅顯示機台出金類型的紀錄</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-011 訂單編號篩選為櫃檯兌現時的主要查詢方式</h2>
+<blockquote>spec：§篩選器　「訂單編號 | 文字輸入 | 出金收據上印製的編號，為櫃檯兌現時的主要查詢方式」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-054">054<br>v1</td><td>grounded</td><td>訂單編號篩選可查出待核銷的出金紀錄</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>輸入一筆出金收據上的訂單編號</li><li>點擊搜尋</li></ol></td><td>查詢結果顯示該筆出金紀錄</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-055">055<br>v1</td><td>grounded</td><td>輸入不存在或錯誤的訂單編號查詢，結果為空且前端顯示失敗提示</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>訂單編號篩選欄輸入一個不存在、或與任何收據皆不相符的編號</li><li>點擊搜尋</li></ol></td><td>查詢結果為空，不會誤配到其他筆紀錄；前端顯示失敗提示：「失敗：查無此訂單編號，請先到「機台交易記錄」查明交易狀態，不要憑印象付款」（已由 Oscar 2026-09-14 依實際畫面截圖確認文案）。本輸入框也是核實（出金）流程第一步用來定位待核銷紀錄的同一個查詢欄位，見 REQ-CASHOUT-022</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-012 核實狀態篩選下拉選項為全部/待核實/已核實/已作廢</h2>
+<blockquote>spec：§篩選器　「核實狀態 | 下拉選單 | 全部 / 待核實 / 已核實 / 已作廢」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-056">056<br>v1</td><td>grounded</td><td>核實狀態篩選可正確窄化查詢結果</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>篩選核實狀態為「待核實」並搜尋</li></ol></td><td>查詢結果僅顯示核實狀態為待核實的紀錄</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-013 交易時間與核實時間皆為日期範圍篩選</h2>
+<blockquote>spec：§篩選器　「交易時間 | 日期範圍 | 出金即收據印出時間 ｜ 核實時間 | 日期範圍 | —」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-057">057<br>v1</td><td>grounded</td><td>交易時間與核實時間範圍篩選皆能正確窄化結果</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>設定交易時間範圍並搜尋，檢視結果</li><li>清除後改設定核實時間範圍並搜尋，檢視結果</li></ol></td><td>兩者皆僅顯示落在所設定範圍內的紀錄</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-CASHOUT-014 金額範圍篩選</h2>
+<blockquote>spec：§篩選器　「金額 | 範圍輸入（min ～ max） | —」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-058">058<br>v1</td><td>grounded</td><td>金額範圍篩選可正確窄化查詢結果</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>設定金額範圍（min～max）並搜尋</li></ol></td><td>僅顯示實際金額落在範圍內的紀錄</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-CASHOUT-015 交易編號欄可跳轉機台交易紀錄查看明細</h2>
+<blockquote>spec：§列表欄位　「交易編號 | 對應的機台交易編號，可點擊跳至機台交易紀錄查看明細」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-059">059<br>v1</td><td>grounded</td><td>點擊交易編號可跳轉至機台交易紀錄查看明細</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>點擊列表中任一筆紀錄的交易編號</li></ol></td><td>導向機台交易紀錄頁，並顯示該筆交易的明細</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-016 訂單編號欄僅出金顯示，洗分顯示橫線</h2>
+<blockquote>spec：§列表欄位　「訂單編號 | 僅出金顯示（收據上印製的識別碼）；洗分顯示「—」」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-060">060<br>v1</td><td>grounded</td><td>訂單編號欄僅出金顯示收據識別碼，洗分顯示橫線</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>檢視一筆機台出金紀錄的訂單編號欄</li><li>檢視一筆機台洗分紀錄的訂單編號欄</li></ol></td><td>出金顯示收據上印製的識別碼；洗分顯示「—」</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-017 機台帳號欄可跳轉會員詳細頁，不顯示場館名稱</h2>
+<blockquote>spec：§列表欄位　「機台帳號 | 會員編號，可點擊進入會員詳細資料頁。場館名稱不顯示——場館已由頁面標題下方的站台切換限定，每列相同、屬冗餘資訊」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-061">061<br>v1</td><td>grounded</td><td>機台帳號欄可跳轉會員詳細頁，列表不顯示場館名稱</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>點擊一筆紀錄的機台帳號欄位值，檢視結果</li><li>檢視列表所有欄位，確認是否顯示場館名稱</li></ol></td><td>第一步導向該機台帳號的會員詳細資料頁；第二步不存在場館名稱欄位或顯示</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-018 實際金額欄：洗分可能小於店員輸入金額，出金即收據面額</h2>
+<blockquote>spec：§列表欄位　「實際金額 | 實際異動的金額。洗分因門檻計算可能小於店員輸入的金額，付現一律以本欄為準；出金即收據面額」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-062">062<br>v1</td><td>grounded</td><td>洗分因門檻計算，實際金額小於店員輸入金額時以實際金額欄為準付現</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆洗分交易因門檻計算，實際扣款金額小於店員操作機台時輸入的金額</li><li>檢視本頁該筆紀錄的實際金額欄</li></ol></td><td>顯示門檻計算後的實際金額（較小值）；核實流程應以此欄金額為準付現，而非店員原輸入的金額</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-063">063<br>v1</td><td>grounded</td><td>出金交易的實際金額欄即收據面額</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆機台出金交易</li><li>檢視本頁該筆紀錄的實際金額欄</li></ol></td><td>顯示與收據面額一致的金額</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-019 核實時間與核實人員欄，待核實時皆顯示橫線</h2>
+<blockquote>spec：§列表欄位　「核實時間 | 執行核實的時間（UTC+0）；待核實顯示「—」 ｜ 核實人員 | 執行核實的後台帳號；待核實顯示「—」」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-064">064<br>v1</td><td>grounded</td><td>核實時間與核實人員欄，待核實時皆顯示橫線</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>檢視一筆已核實紀錄的核實時間與核實人員欄</li><li>檢視一筆待核實紀錄的核實時間與核實人員欄</li></ol></td><td>已核實：顯示執行核實的時間（UTC+0）與後台帳號；待核實：兩欄皆顯示「—」</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-CASHOUT-020 操作欄提供核實與作廢，作廢僅出金</h2>
+<blockquote>spec：§列表欄位　「操作 | 核實、作廢（作廢僅出金）」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-065">065<br>v1</td><td>grounded</td><td>操作欄依交易類型提供不同操作：出金有核實與作廢，洗分僅核實</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>檢視一筆待核實出金紀錄的操作欄，確認可用操作</li><li>檢視一筆待核實洗分紀錄的操作欄，確認可用操作</li></ol></td><td>出金：提供核實與作廢兩個操作；洗分：僅提供核實操作，不提供作廢</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-021 核實（洗分）三步驟流程</h2>
+<blockquote>spec：§操作/核實（洗分）　「1. 依機台帳號（會員編號）或交易時間找到該筆待核實洗分，點擊「核實」 2. 確認彈窗顯示機台帳號、實際金額與交易時間，核對無誤後點擊確認 3. 系統標記為「已核實」，並記錄核實人員與時間」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-066">066<br>v1</td><td>grounded</td><td>核實（洗分）三步驟流程：確認彈窗核對無誤後標記已核實</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>店員已對一筆待核實洗分當場付現，依機台帳號或交易時間找到該筆紀錄，點擊「核實」</li><li>確認彈窗核對機台帳號、實際金額、交易時間皆無誤</li><li>點擊確認（此動作不可撤銷，見 REQ-CASHOUT-027）</li></ol></td><td>系統將該筆標記為「已核實」，並記錄核實人員與時間</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-067">067<br>v1</td><td>grounded</td><td>核實（洗分）確認彈窗內容與實際交易不符時，操作員應取消而不點擊確認，紀錄維持待核實</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>店員找到一筆待核實洗分，點擊「核實」開啟確認彈窗</li><li>發現彈窗顯示的機台帳號或金額與現場實際情況不符（如誤點了另一筆紀錄）</li><li>不點擊確認，改為關閉彈窗或點擊取消</li></ol></td><td>該筆紀錄維持待核實狀態，未被標記為已核實，避免核對有誤仍誤觸不可撤銷的核實動作</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-022 核實（出金）四步驟流程</h2>
+<blockquote>spec：§操作/核實（出金＝核銷收據）　「1. 於頁面上方輸入收據上的訂單編號查詢...或直接在列表點擊「核實」 2. 確認彈窗顯示訂單編號、機台帳號、金額與收據印出時間，核對無誤後點擊確認 3. 系統標記為「已核實」，並記錄核實人員與時間 4. 櫃檯付現金給玩家」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-068">068<br>v1</td><td>grounded</td><td>核實（出金）流程：輸入訂單編號查詢、核對彈窗內容後標記已核實</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>玩家持收據到櫃檯，於頁面上方輸入收據上的訂單編號查詢，定位到該筆待核實出金</li><li>確認彈窗核對訂單編號、機台帳號、金額、收據印出時間皆無誤</li><li>點擊確認（此動作不可撤銷，見 REQ-CASHOUT-027）</li><li>櫃檯付現金給玩家</li></ol></td><td>系統將該筆標記為「已核實」，並記錄核實人員與時間</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-023 過渡期出金以結算結果畫面照片代替收據核銷</h2>
+<blockquote>spec：§功能說明 + §操作/核實（出金）　「過渡期（機台暫無印表機，2026-09-03 廠商告知）：出金完成後由前台顯示結算結果畫面...照片代替收據；櫃檯依照片上的訂單編號核銷，本頁流程與狀態不變」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-069">069<br>v1</td><td>grounded</td><td>過渡期出金依結算結果畫面照片上的訂單編號核銷，流程與狀態不變</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>機台暫無印表機（過渡期現況），玩家出示前台結算結果畫面照片（無實體收據）</li><li>櫃檯依照片上的訂單編號查詢並執行核實</li></ol></td><td>核實流程與狀態與有實體收據時完全相同，系統不因過渡期而有不同行為</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-024 僅待核實狀態可核實，重複核實時系統阻擋</h2>
+<blockquote>spec：§操作 + §相關業務規則　「可核實的狀態 | 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-070">070<br>v1</td><td>grounded</td><td>對已核實的紀錄再次執行核實，系統阻擋並提示</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>取一筆狀態為已核實的紀錄</li><li>嘗試再次對其執行核實</li></ol></td><td>系統阻擋此操作並提示，避免重複付款</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-071">071<br>v1</td><td>grounded</td><td>對已作廢的紀錄嘗試核實，系統阻擋並提示</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>取一筆狀態為已作廢的出金紀錄</li><li>嘗試對其執行核實</li></ol></td><td>系統阻擋此操作並提示</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-025 操作員無切換站台的權限，前後端皆已拒絕，非核實動作本身才被擋</h2>
+<blockquote>spec：§操作（操作員的站台切換權限範圍已於 2026-09-14 由 Oscar 補充確認並更正）　「權限 | Admin、站長、操作員皆可執行（操作員限自身場館）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-072">072<br>v1</td><td>grounded</td><td>操作員的站台切換選單不提供切換至其他場館的入口，僅能核實自身場館紀錄</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以操作員身分登入後台，進入本頁</li><li>檢視頁面標題下方的站台切換選單</li><li>取一筆自身所屬場館內的待核實紀錄，執行核實</li></ol></td><td>站台切換選單不提供切換至其他場館的入口（前端已限制，操作員從一開始就無法檢視其他場館的資料）；對自身場館內的紀錄可正常執行核實</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-073">073<br>v1</td><td>grounded</td><td>操作員略過前端直接呼叫核實 API 指定非自身場館的紀錄，後端拒絕</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以操作員身分取得有效憑證（略過前端 UI 限制）</li><li>直接呼叫核實 API，帶入一筆非自身所屬場館的待核實紀錄</li></ol></td><td>後端拒絕該請求，該筆紀錄狀態不受影響</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-074">074<br>v1</td><td>grounded</td><td>操作員嘗試透過非常規路徑（如頁面深連結／直接帶入紀錄相關網址）接觸非自身場館的紀錄，仍應被阻擋</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以操作員身分登入後台</li><li>嘗試不透過站台切換選單，而是直接以網址或深連結方式開啟本頁並帶入非自身場館的參數（例如仿造其他頁面的交易編號跳轉連結）</li></ol></td><td>系統仍拒絕顯示或操作非自身場館的資料，站台範圍限制不因繞過選單而失效（與 UI 選單限制、後端 API 限制互為防禦深度佐證）</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-026 核實連動回寫機台交易紀錄的核實狀態與核實人員時間</h2>
+<blockquote>spec：§操作　「連動 | 核實結果回寫機台交易紀錄的「核實狀態」「核實人員／時間」欄位」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-075">075<br>v1</td><td>grounded</td><td>核實結果正確回寫機台交易紀錄的核實狀態與核實人員/時間欄位</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆洗分交易於本頁被執行核實</li><li>至機台交易紀錄頁檢視該筆交易的核實狀態與核實人員/時間欄</li></ol></td><td>顯示已核實，核實人員與時間與本頁執行核實時記錄的一致</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-027 核實一經確認即無法撤銷</h2>
+<blockquote>spec：§操作 + §相關業務規則　「核實一經確認即無法撤銷，誤按無法回復，只能透過後台操作紀錄追溯執行人員與時間。因此操作前務必核對彈窗內容」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-076">076<br>v1</td><td>grounded</td><td>已核實的紀錄不提供撤銷核實的操作</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>取一筆已核實的紀錄</li><li>尋找撤銷核實或回復為待核實的操作入口</li></ol></td><td>系統不提供任何撤銷核實的功能；僅能透過後台操作紀錄查得執行人員與時間</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-028 作廢僅 Admin 與站長可執行，須填寫原因</h2>
+<blockquote>spec：§操作/作廢（僅出金）　「僅 Admin 與站長可執行，須填寫作廢原因（必填）；用於收據遺失、爭議或確認不再兌付的情況」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-077">077<br>v1</td><td>grounded</td><td>站長對出金執行作廢並填寫原因，系統接受並標記已作廢</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以站長身分登入後台</li><li>取一筆待核實出金紀錄，點擊作廢，填寫作廢原因（如「收據遺失」）</li><li>送出</li></ol></td><td>系統接受，該筆標記為已作廢</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-078">078<br>v1</td><td>grounded</td><td>作廢時未填寫原因會被系統阻擋</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以站長身分，取一筆待核實出金紀錄，點擊作廢</li><li>不填寫作廢原因，直接嘗試送出</li></ol></td><td>系統阻擋，提示作廢原因為必填欄位</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-029 操作員無法執行作廢</h2>
+<blockquote>spec：§操作/作廢（僅出金）　「僅 Admin 與站長可執行」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-079">079<br>v1</td><td>grounded</td><td>操作員不具備作廢權限</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>以操作員身分登入後台</li><li>檢視一筆待核實出金紀錄，尋找或嘗試執行作廢操作</li></ol></td><td>操作員不具備作廢權限，找不到作廢入口或執行時被系統阻擋</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-CASHOUT-030 作廢後不可復原，分數不會退回機台</h2>
+<blockquote>spec：§操作/作廢（僅出金）　「作廢後不可復原，分數也不會退回機台」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-080">080<br>v1</td><td>grounded</td><td>出金紀錄被作廢後分數不退回機台，且無法復原</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>使用測試站台專用、金額最小化、且已排除出正式日結報表統計的一筆待核實出金紀錄，記錄其對應機台帳號當下的分數</li><li>對該筆執行作廢（不可逆操作，執行前先確認此為測試資料）</li><li>再次檢視該機台帳號的分數，並嘗試尋找復原作廢的操作</li></ol></td><td>分數不會退回機台帳號（維持作廢前的餘額，不因作廢而增加）；系統不提供復原作廢的功能</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-CASHOUT-031 現金淨收計算需已核實才計入，適用洗分與出金兩者</h2>
+<blockquote>spec：§相關業務規則　「現金淨收計算 | 只計入已核實的洗分；待核實洗分不扣除」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHOUT-081">081<br>v1</td><td>grounded</td><td>現金淨收計算僅在洗分核實後才計入扣除項</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆洗分交易處於待核實狀態，檢視場館現金淨收計算</li><li>對該筆執行核實後，再次檢視場館現金淨收計算</li></ol></td><td>核實前：此筆待核實洗分不計入現金淨收扣除項；核實後：此筆已核實洗分計入現金淨收扣除項</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-CASHOUT-082">082<br>v1</td><td>grounded</td><td>現金淨收計算的核實規則出金比照洗分辦理，僅在出金核實後才計入扣除項</td><td>以 Admin 登入後台<br>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</td><td><ol><li>一筆出金交易處於待核實狀態，檢視場館現金淨收計算</li><li>對該筆執行核實（核銷）後，再次檢視場館現金淨收計算</li></ol></td><td>核實前：此筆待核實出金不計入現金淨收扣除項；核實後：此筆已核實出金計入現金淨收扣除項（spec.md 原文只提洗分，已由 Oscar 2026-09-14 確認出金比照辦理）</td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0036 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0036 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0036 --decision reject --by &lt;you&gt; --rationale "..."</div>

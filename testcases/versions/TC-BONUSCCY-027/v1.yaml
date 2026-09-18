@@ -1,0 +1,89 @@
+title: 達標玩家開啟一次前台簽到頁即直接寫入有效會員，後台不需玩家再存一筆即同步
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-013
+acceptance_criteria_ids:
+- AC-BONUSCCY-020
+spec_id: SPEC-BONUSCCY-003
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- state_transition
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 玩家已登入前台
+- 後台可另開一個管理員登入視窗，供比對後台判定結果
+test_data: []
+steps:
+- n: 1
+  action: 玩家的累積存款已達有效會員門檻，但尚未開啟過新版前台簽到頁；開啟前先確認此時後台判定仍顯示「未達有效會員」（尚未重算）
+- n: 2
+  action: 開啟一次前台簽到頁（過程中不觸發任何新存款）
+- n: 3
+  action: 不做任何新存款動作，直接檢視後台的有效會員判定結果
+expected_result: 前台進度條達標並直接寫入有效會員狀態；後台判定也已同步顯示有效會員，不需要玩家再存一筆才會重算——精確驗證 spec 點名的「前台每次開頁就重算並直接寫入、後台被動同步」這個不對稱機制，不是只驗『兩邊最終會一致』這種較弱的陳述
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  location: §改了什麼／②簽到活動的「有效會員」改讀正確的表
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-BONUSCCY-027
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2GP7SR7J5C4FW7AVDAN2C1M
+created_at: '2026-09-14T19:27:54Z'
+updated_at: '2026-09-14T19:32:08Z'
+history:
+- at: '2026-09-14T19:27:54Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2GP227CQHPZKT2CMFNHB6G9
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:27:54Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:27:54Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2GP7SR7J5C4FW7AVDAN2C1M
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:27:54Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:32:08Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0045
+  run_id: RUN-20260915-007
+- at: '2026-09-14T19:32:08Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-007
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0045

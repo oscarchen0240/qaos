@@ -1,0 +1,89 @@
+title: 列印尚未開始的印表機異常：分數不扣但留一筆待確認 PENDING；已送入列印佇列後才卡紙缺紙：分數照扣、收據待補印不可重做
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-023
+- REQ-CASHFLOW-026
+acceptance_criteria_ids:
+- AC-CASHFLOW-0231
+- AC-CASHFLOW-0232
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- functional
+- negative
+design_techniques:
+- equivalence_partitioning
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 呼叫 req-cashout 取得核可金額與 PENDING（TXID_A），但不呼叫 end-cashout（模擬機台判定列印尚未開始即偵測到印表機異常，直接結束流程、不呼叫 end-cashout）
+- n: 2
+  action: 確認機台分數未扣、仍保留在機台上；查詢平台端該筆 PENDING 狀態
+- n: 3
+  action: 另佈置一次出金情境：呼叫 req-cashout 取得核可金額與 PENDING（TXID_B），並以 TXID_B 呼叫 end-cashout 完成（模擬收據已送入列印佇列後才卡紙缺紙，但平台端流程視角與『印表機正常完成列印佇列』一致）
+- n: 4
+  action: 確認 TXID_B 完成後的分數是否已扣，是否存在任何『視為未出金而重做』的入口
+expected_result: 情況一：分數不扣、保留在機台上，但平台因先前 req-cashout 已建立的 PENDING 仍留有一筆「待確認」的出金（現場其實什麼也沒發生，該 PENDING 依 REQ-CASHFLOW-026 之既有機制收斂）；情況二：分數已扣（出金已完成），不存在『視為未出金而重做一次』的操作
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §四種金流/出金 + §四種金流/出金（過渡期）
+  quote: 列印還沒開始就偵測到異常（含按下結算時印表機即有異常）：機台直接結束流程、不通知平台，分數不扣、保留在機台上。平台這邊會留下一筆「待確認」的出金，現場其實什麼也沒發生｜已送入列印佇列後才實體故障（卡紙、缺紙）：如上所述，分數照扣，收據待狀況排除後自動印出
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-088
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

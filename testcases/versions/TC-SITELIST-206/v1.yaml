@@ -1,0 +1,86 @@
+title: 額度上限欄位輸入負數，前後端皆拒絕
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-005
+acceptance_criteria_ids: []
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: ui_e2e
+test_types:
+- negative
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台
+- 進入「站台列表」頁面
+test_data:
+- name: credit_limit
+  value: -1
+steps:
+- n: 1
+  action: 取一個既有的機台類型站台，點擊「編輯」，額度上限欄位輸入 -1 並嘗試儲存
+- n: 2
+  action: 若前端未阻擋而送出請求，觀察後端回應
+expected_result: 前端顯示『值必須大於或等於 0』之類的錯誤提示並阻擋送出；即使繞過前端直接呼叫 API 帶入負數，後端同樣拒絕該請求，額度上限維持修改前的值
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §業務規則與驗證/額度上限（場館）
+assumptions:
+- text: Spec 原文未定義輸入負數時系統的回應（REQ-SITELIST-005 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-002（2026-09-14）回覆『前端顯示錯誤、後端也拒絕（雙層驗證）』，但此答覆未回寫進
+    RequirementModel，故仍以 exploratory 方式標記，執行時需人工再確認實際文案與後端行為
+  requirement_id: REQ-SITELIST-005
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-206
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+created_at: '2026-09-17T15:21:06Z'
+updated_at: '2026-09-17T15:21:22Z'
+history:
+- at: '2026-09-17T15:21:06Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QYWCAGFEFA1KHKSYK3PK6M
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:06Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:06Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:07Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:22Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0113
+  run_id: RUN-20260916-007
+  note: rejected

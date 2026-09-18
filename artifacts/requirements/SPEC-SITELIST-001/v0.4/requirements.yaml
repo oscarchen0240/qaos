@@ -59,7 +59,8 @@ requirements:
   spec_version: '0.4'
   type: constraint
   title: 站台類型由主站台決定，子站台強制繼承
-  statement: 站台類型於主站台（根層）選定，子站台一律與主站台同類型，不可個別選擇
+  statement: 站台類型於主站台（根層）選定，子站台一律與主站台同類型，不可個別選擇；例外：當上層站台為 admin（最上層根站台）時，此強制跟隨規則不適用——底下子站台可自由選擇機台或線上類型，核心貨幣依所選類型連動建立（此為 PM
+    最終決定，已開發完成並上線，非待定或實驗性設計；正式確認見 CLR-SITELIST-010，spec.md 原文尚未反映此例外，屬 spec 文件落後於實際已上線行為的已知落差）
   acceptance_criteria:
   - ac_id: AC-SITELIST-0021
     given: 上層站台為機台類型
@@ -69,6 +70,11 @@ requirements:
     given: 上層站台為線上類型
     when: 新增子站台
     then: 子站台的站台類型固定為線上，UI 不開放選擇
+  - ac_id: AC-SITELIST-0023
+    given: 上層站台為 admin（最上層根站台）
+    when: 新增子站台
+    then: 站台類型欄位可自由選擇機台或線上，不強制跟隨 admin 自身的站台類型；核心貨幣依所選類型連動建立（例如選機台則連動啟用 TWD）且此欄位不可更改、不能於後台關閉。與此同時，該新站台自己的「鏈上錢包管理」（每站台獨立一份、可事後調整的幣種出入金開關）會自動連動啟用對應幣別；此連動不需要
+      admin 自身的鏈上錢包管理預先啟用該幣別（即不依賴上層/admin 的狀態）。【CLR-SITELIST-012已修正】先前CLR-SITELIST-011誤判兩者「完全無關」，實際上兩者性質不同（核心貨幣不可變 vs 鏈上錢包管理可調整）但確有連動關係，已由既有ACTIVE的TC-SITELIST-063（早於本次CLR討論即存在）獨立佐證修正。
   spec_reference:
     spec_id: SPEC-SITELIST-001
     spec_version: '0.4'
@@ -80,7 +86,7 @@ requirements:
   behavior_kind: constraint
   rejection_contract:
     defined: false
-    description: Spec 只描述 UI 唯讀跟隨；未定義若繞過 UI（直接呼叫建立站台 API）帶入與上層站台不同的站台類型時，後端是否也拒絕
+    description: 若繞過前端UI、直接呼叫建立站台API並帶入與上層站台不同的站台類型，後端同樣拒絕（不只是前端唯讀限制）。依CLR-SITELIST-001確認
   history:
   - at: '2026-09-13T19:09:47Z'
     from_status: null
@@ -94,6 +100,28 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-14T18:12:03Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: product_confirmation_2026-09-15
+  - at: '2026-09-16T16:08:56Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: product_confirmation_2026-09-16：Oscar 直接於對話中確認 admin 例外規則為新設計、非資料錯誤（修正先前 2026-09-14 記錄與所述 2026-09-15 確認日期矛盾、且缺乏
+      CLR 交叉引用的問題，此次以直接對話確認取代，trigger 日期與本筆 at 時間戳同步產生，避免重蹈先前的日期矛盾）
+  - at: '2026-09-17T12:44:12Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-010（2026-09-17）：admin 例外規則正式確認為 PM 最終決定、已開發完成上線，取代先前 2026-09-14/09-16 兩筆僅靠對話確認、缺乏
+      CLR 交叉引用的記錄
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-001
 - requirement_id: REQ-SITELIST-003
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -213,7 +241,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: Spec 未定義輸入負數或非數字時系統的回應
+    description: 額度上限輸入負數：前端顯示「值必須大於或等於0」，後端也拒絕（雙層驗證）。依CLR-SITELIST-002確認
   inputs:
   - name: credit_limit
     type: number
@@ -234,6 +262,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-002
 - requirement_id: REQ-SITELIST-006
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -261,7 +294,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: Spec 未定義輸入 0、負數或極大值時系統的回應；「操作員唯讀」屬實體機台功能角色，本 spec 未定義該角色，無法在本功能區驗證
+    description: 場次逾時時間輸入0、負數或低於1小時：後端拒絕（最低值1小時）；輸入超過17位數等極端格式：前端跳格式錯誤，後端阻擋並回傳通用錯誤代碼COMMON_INVALID_REQUEST_FORMAT。依CLR-SITELIST-003確認（原問題另提及「操作員唯讀」，因本spec未定義該角色，無法在本功能區驗證，不在此規則範圍內）
   history:
   - at: '2026-09-13T19:09:47Z'
     from_status: null
@@ -275,6 +308,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-003
 - requirement_id: REQ-SITELIST-007
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -491,7 +529,7 @@ requirements:
   behavior_kind: constraint
   rejection_contract:
     defined: false
-    description: Spec 未定義站長嘗試存取平行／上層站台時的具體回應（如直接以站台 ID 呼叫查詢 API）
+    description: 站長嘗試存取平行或上層站台（含直接以站台ID呼叫查詢API）：依「三個角色的關係」權限範圍模型（範圍由所屬站台決定，不是角色本身；站長可見範圍＝自身所屬站台及其子樹），該站台不在其可見範圍內，應無法取得資料。依CLR-SITELIST-004確認
   history:
   - at: '2026-09-13T19:09:47Z'
     from_status: null
@@ -505,6 +543,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-004
 - requirement_id: REQ-SITELIST-012
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -537,7 +580,7 @@ requirements:
   behavior_kind: constraint
   rejection_contract:
     defined: false
-    description: Spec 只定義前端行為（站長欄位唯讀）；未定義若站長繞過前端直接呼叫建立站台 API 並帶入其他上層站台時，後端是否拒絕——此為已知風險區域，Test Designer 應設計對應的負向／探索性案例
+    description: 站長若繞過前端直接呼叫建立站台API並帶入其他上層站台ID：後端已拒絕（不接受繞過前端指定其他上層站台），此前RD回報的「直接呼叫API仍會成功」風險已修復。依CLR-SITELIST-005確認
   history:
   - at: '2026-09-13T19:09:47Z'
     from_status: null
@@ -551,6 +594,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-005
 - requirement_id: REQ-SITELIST-013
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -578,7 +626,7 @@ requirements:
   behavior_kind: constraint
   rejection_contract:
     defined: false
-    description: Spec 只定義 UI 選單排除循環選項；未定義若繞過 UI 直接呼叫編輯 API 帶入會形成循環的上層站台 ID 時，後端是否驗證並拒絕
+    description: 站長若繞過前端直接呼叫編輯站台API並帶入會形成循環的上層站台ID：後端已拒絕（同CLR-SITELIST-005的修復範圍）。依CLR-SITELIST-006確認（Admin編輯時的循環防護是否也有對應後端驗證，本次回覆未涵蓋，若後續測試發現可繞過需另案處理）
   history:
   - at: '2026-09-13T19:09:47Z'
     from_status: null
@@ -592,6 +640,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-006
 - requirement_id: REQ-SITELIST-014
   version: 1
   spec_id: SPEC-SITELIST-001
@@ -703,7 +756,8 @@ requirements:
   spec_version: '0.4'
   type: security
   title: 狀態切換權限
-  statement: Admin 可切換為任意狀態；站長僅可切換為「暫停」或「關閉」，其他狀態顯示但不可選
+  statement: Admin 可切換為任意可手動選取的狀態（待開通／開通／暫停／關閉，共 4 種；不含僅由系統自動觸發、不開放手動選取的「更新待審」——已由 Oscar 2026-09-14 確認「任意狀態」含待開通）；站長僅可切換為「暫停」或「關閉」，其他狀態顯示但不可選；操作員因後台不顯示站台列表頁面，不具備任何狀態調整能力（含查看）。暫停與關閉在功能上皆代表該站台平台無法入金（即
+    SPEC-CASHFLOW-001 所指「場館站台非開通狀態」，機台一律無法運作，回 7-OUT OF SERVICE）
   acceptance_criteria:
   - ac_id: AC-SITELIST-0161
     given: 以 Admin 登入
@@ -717,14 +771,19 @@ requirements:
     given: 以站長登入
     when: 嘗試切換為暫停或關閉以外的狀態
     then: 系統阻擋儲存
+  - ac_id: AC-SITELIST-0164
+    given: 以操作員身分登入後台
+    when: 尋找站台列表頁面（選單或直接訪問）
+    then: 站台列表頁面不對操作員開放，操作員無法檢視或調整任何站台的狀態
   spec_reference:
     spec_id: SPEC-SITELIST-001
     spec_version: '0.4'
     location: §角色與權限/狀態切換
-    quote: 狀態切換 | 可切換為任意狀態 | 僅可切換為「暫停」或「關閉」
+    quote: 狀態切換 | 可切換為任意狀態 | 僅可切換為「暫停」或「關閉」（「任意狀態」範圍已於 2026-09-14 由 Oscar 確認含待開通）
   ambiguity:
     level: major
-    description: Admin「可切換為任意狀態」是否包含「待開通」？「待開通」在 §站台狀態一節的觸發方式僅列「新建站台自動設定」，未列為可被 Admin 手動選取的目標狀態
+    description: Admin「可切換為任意狀態」是否包含「待開通」？「待開通」在 §站台狀態一節的觸發方式僅列「新建站台自動設定」，未列為可被 Admin 手動選取的目標狀態【已解決】已由 Oscar 於 2026-09-14
+      直接確認：Admin 的「任意狀態」包含待開通（可將既有站台手動切回待開通），採用選項一
     options:
     - 任意狀態含待開通，Admin 可把既有站台手動改回待開通
     - 任意狀態不含待開通，待開通只能由新建站台觸發，Admin 手動切換的目標僅限開通/暫停/關閉
@@ -1031,37 +1090,34 @@ requirements:
   spec_id: SPEC-SITELIST-001
   spec_version: '0.4'
   type: functional
-  title: 刪除站台二次確認
-  statement: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行
+  title: 站台列表不提供刪除操作
+  statement: spec.md v0.4 原文描述的「點擊刪除後顯示確認彈窗、二次確認後執行」流程，經 PM／後端於 2026-09-14 共同確認（CLR-SITELIST-007/008/009）並不存在於現行產品：任何站台類型（含線上與機台）前端皆不提供刪除操作入口，後端
+    API 亦拒絕刪除請求；原因是刪除站台會影響站台樹狀結構（子站台歸屬、上下層關係）。可用的狀態切換選項依角色而定，詳見 REQ-SITELIST-016。此節為 spec 待修正的錯誤敘述，待 Spec 作者合入 v0.5 時一併修正／移除
   acceptance_criteria:
   - ac_id: AC-SITELIST-0221
-    given: 點擊某站台的刪除按鈕
-    when: 檢視確認彈窗
-    then: 彈窗列出該站台的名稱與代碼
+    given: 檢視任一站台（線上或機台類型）於站台列表與編輯畫面的可用操作
+    when: 尋找刪除相關的按鈕或入口
+    then: 不存在任何可執行的刪除操作（可用的狀態切換選項依角色而定，詳見 REQ-SITELIST-016）
   - ac_id: AC-SITELIST-0222
-    given: 確認彈窗開啟中
-    when: 取消確認
-    then: 站台不被刪除，資料維持不變
-  - ac_id: AC-SITELIST-0223
-    given: 確認彈窗開啟中
-    when: 二次確認
-    then: 站台被刪除
+    given: 略過前端限制，直接呼叫刪除站台的後端 API
+    when: 送出刪除請求
+    then: 後端拒絕該請求，站台資料不受影響
   spec_reference:
     spec_id: SPEC-SITELIST-001
     spec_version: '0.4'
-    location: §操作/刪除站台
-    quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行
+    location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述）
+    quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行（＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆）
   ambiguity: null
   risk: medium
   status: ACTIVE
   behavior_kind: success
   rejection_contract:
     defined: true
-    description: 需二次確認才執行，取消即不刪除，規則已明確
+    description: 前端無入口、後端拒絕，皆已由 PM／後端明確確認
     spec_reference:
       spec_id: SPEC-SITELIST-001
       spec_version: '0.4'
-      location: §操作/刪除站台
+      location: CLR-SITELIST-009
       quote: ''
   history:
   - at: '2026-09-13T19:09:47Z'
@@ -1082,7 +1138,8 @@ requirements:
   spec_version: '0.4'
   type: constraint
   title: 刪除操作不可復原
-  statement: 刪除操作不可復原
+  statement: 原描述「刪除操作不可復原」，惟刪除功能經 CLR-SITELIST-009 確認前後端皆不提供（見 REQ-SITELIST-022），此需求描述的情境（刪除已執行、事後不可復原）不會發生，原先「刪除有子站台的站台時系統如何處理子站台」的疑慮亦隨之消失（因為刪除永遠不會執行）。本條保留僅供追溯，不作為
+    grounded TC 設計依據
   acceptance_criteria:
   - ac_id: AC-SITELIST-0231
     given: 站台已被刪除
@@ -1095,7 +1152,7 @@ requirements:
     quote: ⚠️ 刪除操作不可復原
   ambiguity:
     level: major
-    description: 刪除有子站台的站台時，系統應如何處理其子站台？spec 未提及
+    description: 刪除有子站台的站台時，系統應如何處理其子站台？spec 未提及【已解決】已由 CLR-SITELIST-009 確認為 moot：刪除功能本身前後端皆不提供，此疑慮不會發生
     options:
     - 阻擋刪除，需先刪除或移轉所有子站台
     - 串聯刪除所有子站台（含孫層）

@@ -1,0 +1,720 @@
+artifact_id: ART-TCD-01M2R3BB1KS8WHPXGDRKSN887S
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-002
+task_id: T2
+iteration: 2
+created_by: agent-test-designer
+created_at: '2026-09-17T16:31:42Z'
+status: INVALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-001
+- entity_type: Requirement
+  id: REQ-BONUSCCY-002
+- entity_type: Requirement
+  id: REQ-BONUSCCY-003
+- entity_type: Requirement
+  id: REQ-BONUSCCY-004
+- entity_type: Requirement
+  id: REQ-BONUSCCY-005
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+- entity_type: Artifact
+  id: ART-TVR-01M2R2KMHBENWK824X7TAB7C07
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2R2ZKT668231NVC3WS1GJHM
+    title: 機台站台的注單查詢列表金額欄位以核心貨幣TWD顯示
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-001
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-001
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定）
+    - 該站台底下已有既有機台帳號的注單紀錄（自行從環境中選定；若無可透過該機台帳號實際遊玩產生一筆）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 注單查詢（機台場館下此頁面可見）
+    - n: 2
+      action: 查詢列表中任一筆屬於該機台站台的注單
+    - n: 3
+      action: 檢視列表金額欄位
+    expected_result: 金額欄位顯示為站台核心貨幣 TWD 的數值，不是寫死顯示 USDT 或其換算值
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第2項：注單三層金額）
+      quote: 注單三層金額 | game_bet_log → …_wallet_reference → …_system_wallet_reference，第三層的幣別與換算改依站台核心貨幣
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-001明確要求金額欄位顯示站台核心貨幣；本TC對應「注單查詢」列表視角。注單查詢於機台場館選單中為可見頁面（見SPEC-ARCADE-001/PLATFORMRULE-001「機台場館的後台選單」表格：各式報表下注單查詢可見），故不存在系統邊界問題。
+  - draft_id: TC-DRAFT-01M2R2ZKT6TF7EHP4SEB3KJGVN
+    title: 機台站台的注單明細頁金額欄位以核心貨幣TWD顯示
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-001
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-001
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定）
+    - 該站台底下已有既有機台帳號的注單紀錄（自行從環境中選定）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 注單查詢，點擊任一筆屬於該機台站台的注單進入明細頁
+    - n: 2
+      action: 檢視明細頁的金額欄位
+    expected_result: 明細頁金額欄位顯示為站台核心貨幣 TWD 的數值，與列表頁一致，不是寫死顯示 USDT 或其換算值
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第2項：注單三層金額）
+      quote: 注單三層金額 | game_bet_log → …_wallet_reference → …_system_wallet_reference，第三層的幣別與換算改依站台核心貨幣
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與上一條為同一AC的兩個不同畫面（列表/明細），AC原文本身即列出「查詢/明細頁」兩者，故拆為兩條TC分別驗證兩個畫面，而非湊技巧數量。
+  - draft_id: TC-DRAFT-01M2R2ZKT6XQXMGAGDQ2NAQTDQ
+    title: 對照組：線上站台（USDT核心貨幣）的注單查詢/明細金額欄位仍顯示USDT，不受本次改動影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-001
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-001
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - equivalence_partitioning
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的線上（USDT核心貨幣）站台（自行從環境中選定）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 注單查詢，查詢一筆屬於該線上站台的注單
+    - n: 2
+      action: 檢視列表與明細頁的金額欄位
+    expected_result: 金額欄位維持顯示 USDT（線上站台核心貨幣本就是USDT，行為與改動前一致，未因本次改動而變動）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話 + §改之前 vs 改之後
+      quote: 現有的線上站台全部維持 USDT，不受這次改動影響
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 以核心貨幣分類做等價分割：TWD站台與USDT站台是本次改動影響範圍的兩個等價類，此案例驗證USDT類（未受影響類）維持原行為，屬於針對本次架構改動的回歸確認，而非無關的規則外推。
+  - draft_id: TC-DRAFT-01M2R2ZKT6K3JBA2ESTHD54C09
+    title: 新增一名機台站台會員後，Dashboard總會員數應同步遞增，不因原本寫死USDT的JOIN條件而悄悄排除
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-002
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 身分登入後台（Admin可見所有場館）
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台，記錄當下可見的「資訊看板」選單是否存在——依SPEC-ARCADE-001／SPEC-PLATFORMRULE-001「機台場館的後台選單」規則，切至機台場館時「資訊看板」分類整個隱藏，須切換至一個仍可見資訊看板的範圍（例如該機台站台的上層主站台，若主站台本身非機台類型）才能檢視Dashboard
+    test_data: []
+    steps:
+    - n: 1
+      action: 切換至一個資訊看板選單可見的範圍，進入 資訊看板 Dashboard 頁，記錄目前顯示的總會員數（N）
+    - n: 2
+      action: 切回步驟一所選的機台站台，於 會員與加盟商 > 會員列表 點擊「創建會員帳號」，帳號類型選「機台」，建立一個新的機台帳號（帳號建立方式依SPEC-ARCADE-001，非本次BONUSCCY spec範圍，僅作測試資料佈置依據）
+    - n: 3
+      action: 切回資訊看板可見範圍，重新整理/重新查詢 Dashboard 總會員數（N'）
+    expected_result: N' 應等於 N+1，新建立的機台站台會員確實計入Dashboard總會員數，未因JOIN條件比對寫死USDT常數而被排除在統計之外
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項：後台查詢）
+      quote: 後台查詢 | 注單列表與明細、返水明細、營運日報、會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數
+    assumptions:
+    - text: 假設Dashboard總會員數為涵蓋所有站台（含機台站台）的平台層級聚合數字，且後台操作者存在可切換到、仍可見「資訊看板」選單、其統計範圍涵蓋該機台站台的位置；若目前測試環境中該機台站台本身即為主站台（無其他非機台上層可切換），Dashboard總會員數在此情境下如何呈現待與環境/PM確認。此為Dashboard本身的顯示範圍語意，目前找不到SPEC-BONUSCCY-001以外的spec明確定義
+      requirement_id: REQ-BONUSCCY-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-002為high risk，其rejection_contract.description明確指出風險是『資料悄悄消失而非報錯』——單純檢查『某會員存在於總數中』無法證偽，唯有before/after
+      delta才能真正驗證JOIN條件是否正確涵蓋，故採error_guessing技巧設計此案例，直接針對此已知風險模式。導覽路徑另外依SPEC-ARCADE-001/PLATFORMRULE-001確認『機台場館後台選單隱藏資訊看板』這條硬性事實（非本次spec範圍但為既有系統邊界事實），避免誤以為機台站台下也能直接點開Dashboard；但Dashboard本身統計範圍的精確語意（是否為全平台總和）目前無spec明文定義，故以assumption誠實標記。
+  - draft_id: TC-DRAFT-01M2R2ZKT63QSQ7ZY16PV7K2VK
+    title: 站台切換至機台站台後，會員列表正確列出該站台會員
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-003
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定，且底下已有既有機台帳號）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入 會員與加盟商 > 會員列表
+    - n: 2
+      action: 不加任何篩選條件直接查詢
+    expected_result: 查詢結果正確列出該機台站台底下所有既有會員（含機台帳號），未因幣別相關的JOIN條件而遺漏資料
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項：後台查詢）
+      quote: 後台查詢 | ……會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 會員列表本身即為機台場館後台選單中可見頁面（SPEC-ARCADE-001確認），此為AC-BONUSCCY-003的基本情境驗證，屬於單一輸入條件對應單一結果的直接驗證，如實標記requirement_based而非硬套decision_table。
+  - draft_id: TC-DRAFT-01M2R2ZKT6Y2CKNSNEP7V3FA0N
+    title: 新增一名機台站台會員後，該站台會員列表查詢筆數應同步增加，不因JOIN條件排除
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-002
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-003
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入 會員與加盟商 > 會員列表，不加篩選查詢，記錄目前總筆數（N）
+    - n: 2
+      action: 點擊「創建會員帳號」，帳號類型選「機台」，建立一個新的機台帳號
+    - n: 3
+      action: 重新查詢會員列表（不加篩選），記錄新的總筆數（N'）並確認新建立的帳號出現在列表中
+    expected_result: N' 應等於 N+1，且新建立的機台帳號出現在查詢結果中，會員列表未因JOIN條件比對寫死USDT常數而遺漏該筆機台站台會員
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第3項：後台查詢）
+      quote: 後台查詢 | ……會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與Dashboard的delta驗證同一手法對稱套用在會員列表本身，同樣針對『悄悄被排除而非報錯』的已知風險模式，技巧誠實標為error_guessing；此處導覽路徑無資訊看板隱藏的問題，故不需額外assumption。
+  - draft_id: TC-DRAFT-01M2R2ZKT6QSRXSEQ7BHVNK36D
+    title: 對機台站台會員執行人工存入（幣種選擇欄位固定USDT無法切換），實際入帳至該站台核心貨幣TWD錢包
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-003
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-004
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定）
+    - 該站台底下已有一個既有機台帳號（自行從環境中選定）
+    - 已知該面板「幣種選擇」欄位固定顯示 USDT 且操作者無法切換（此為既有UI行為，依SPEC-MEMBER-001/SPEC-ARCADE-001定案不受本次調整，非本次驗證重點；本測試重點是實際入帳/扣款結果的幣別，而非該欄位顯示文字）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入該機台帳號的會員詳細資料頁，記錄目前核心貨幣（TWD）錢包餘額（收合顯示值，機台站台僅TWD一種錢包不會有展開箭頭）
+    - n: 2
+      action: 點擊「人工存入」開啟面板，金額欄填入一筆測試金額（例如100），稽核欄位維持預設值，前台備注與後台備注皆填寫必填文字，幣種選擇欄位維持固定顯示的 USDT（無法切換），點擊「儲存」
+    - n: 3
+      action: 重新整理/回到會員詳細頁，檢視核心貨幣（TWD）錢包餘額
+    expected_result: 該會員核心貨幣（TWD）錢包餘額較存入前增加所填寫的金額；金額確實寫入站台核心貨幣（TWD），而不是寫死的 USDT（若舊行為的錯誤仍存在，資金將寫入USDT而非TWD，此筆TWD餘額將不會增加，可藉此判斷）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項：人工出入金）
+      quote: 人工出入金 | 四支原本沒有明確寫入幣別（靠資料表 DEFAULT 或填死 USDT），改成取核心貨幣
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-004描述的『未指定幣別』情境，實際對應到既有UI『幣種選擇欄位固定USDT、操作者無從選擇』這個已知事實（依SPEC-MEMBER-001 v0.2與SPEC-ARCADE-001
+      v07定案，非本次spec範圍但為既有UI行為，作為precondition依據）；技巧標為error_guessing，因為此案例直接針對rejection_contract.description所述『錢會進錯錢包』的已知回歸風險，以增額比對代替單純觀察『有沒有寫入』，才能真正證偽。
+  - draft_id: TC-DRAFT-01M2R2ZKT6WC8NDQQAD7S3WKD7
+    title: 對同一機台站台會員執行人工提出（幣種選擇欄位固定USDT無法切換），實際從該站台核心貨幣TWD錢包扣除
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-003
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-005
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定）
+    - 該站台底下已有一個既有機台帳號（自行從環境中選定）
+    - 已知該面板「幣種選擇」欄位固定顯示 USDT 且操作者無法切換（此為既有UI行為，依SPEC-MEMBER-001/SPEC-ARCADE-001定案不受本次調整，非本次驗證重點；本測試重點是實際入帳/扣款結果的幣別，而非該欄位顯示文字）
+    - 該機台帳號目前核心貨幣（TWD）錢包餘額足以扣除本次測試金額（可先透過人工存入墊高餘額，或選擇餘額已足夠的既有帳號）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入該機台帳號的會員詳細資料頁，記錄目前核心貨幣（TWD）錢包餘額
+    - n: 2
+      action: 點擊「人工提出」開啟面板，金額欄填入一筆不超過目前TWD餘額的測試金額，稽核欄位維持預設值，前台備注與後台備注皆填寫必填文字，幣種選擇欄位維持固定顯示的 USDT（無法切換），點擊「儲存」
+    - n: 3
+      action: 重新整理/回到會員詳細頁，檢視核心貨幣（TWD）錢包餘額
+    expected_result: 該會員核心貨幣（TWD）錢包餘額較提出前減少所填寫的金額；金額確實從站台核心貨幣（TWD）扣除，而不是寫死的 USDT（若舊行為的錯誤仍存在，TWD餘額將不會減少、或因找不到USDT餘額扣款而失敗，可藉此判斷）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §實際被改到的地方（表格第6項：人工出入金）
+      quote: 人工出入金 | 四支原本沒有明確寫入幣別（靠資料表 DEFAULT 或填死 USDT），改成取核心貨幣
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與人工存入對稱設計，同樣以error_guessing技巧直接針對『錢會進錯錢包或找不到對應餘額扣款』的已知回歸風險；兩者情境對稱（存入/提出），技巧標籤保持一致，不因對稱情境刻意標成不同技巧。
+  - draft_id: TC-DRAFT-01M2R2ZKT65FBR09TC055Z01NT
+    title: 站台核心貨幣對應的錢包幣別（TWD）已停用時，入金請求應被系統阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-006
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（建議使用測試專用場館，避免影響其他測試或正式資料）
+    - 進入 帳務管理 > 鏈上錢包管理，切至「法幣 TWD」頁籤，找到 TWD 幣別列，確認其目前為啟用狀態，將其切換為停用（此為刻意保留的止損操作，依REQ-BONUSCCY-004規則本身應允許停用）
+    - 確認鏈上錢包管理列表中 TWD 幣別狀態已顯示為停用
+    - 取得該站台一台既有機台帳號可用的機台憑證（JWT），或使用測試環境提供的機台模擬工具/API client 代替實體機台呼叫平台API（此驗證方式的API格式依據SPEC-ARCADE-001附錄「機台系統對接規格」，非BONUSCCY-001本身定義範圍，僅作為測試執行環境依據；實際測試環境是否已具備此類模擬工具，需環境負責人確認）
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該機台帳號目前的分數（餘額）
+    - n: 2
+      action: 以該機台帳號的憑證呼叫平台 req-cashin（第一階段請求） API，代入一筆正常測試金額，模擬機台送出入金請求
+    - n: 3
+      action: 檢視 API 回覆內容，並至 各式報表 > 交易紀錄查詢 檢視該機台帳號是否新增對應交易紀錄
+    - n: 4
+      action: 重新檢視該機台帳號的分數（餘額）
+    - n: 5
+      action: 測試結束後，將 TWD 幣別重新啟用（帳務管理 > 鏈上錢包管理 > 法幣 TWD 頁籤，切換回啟用狀態），回復測試前狀態，避免影響後續測試或正式資料
+    expected_result: 平台拒絕該筆入金請求（不論回覆的具體原因文案為何——依rejection_contract.description，spec未給定文案，僅驗證是否被阻擋）；該機台帳號的分數（餘額）維持不變，不因此筆請求而異動
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: spec.md §一句話（限制段落）——spec.md僅有此句；「停用後入金/出金/開分/洗分四項操作皆須阻擋」之澄清見 clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+        §PM回覆（非spec.md原文，詳見design_rationale）
+      quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+    assumptions:
+    - text: 此TC的測試執行方式假設測試環境已具備可呼叫平台機台端API（req-cashin/req-cashout/req-keyin/req-keyout）的模擬工具或API client（因實體機台通常不便於一般測試/UAT環境直接取得，需以模擬方式呼叫API觸發入金/出金/開分/洗分請求）；此為測試執行環境的技術依賴，非spec.md定義範圍，實際測試環境是否已具備此類工具，需環境負責人確認。
+      requirement_id: REQ-BONUSCCY-004
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-004的rejection_contract.defined=true（PM已於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md明確確認規則），故以確定規則而非exploratory方式撰寫；behavior_kind=rejection，test_types標negative符合結構化規則。入金屬於機台廠商API觸發的操作（見SPEC-ARCADE-001附錄，req-cashin（第一階段請求）），後台管理系統本身沒有對應的按鈕可直接點擊操作——這與『人工存入/人工提出』（REQ-BONUSCCY-003，後台確有按鈕）是完全不同的兩組功能，不可混淆；故test_level標為api，以直接呼叫API或機台模擬工具代替，並在precondition中誠實說明此驗證方式依賴的測試環境條件。本TC斷言『入金請求應被阻擋』之直接依據非spec.md原文——spec.md
+      §一句話限制段落僅明確寫出『站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包』這一句，並未逐字定義『入金/出金/開分/洗分四項操作皆須阻擋』；此四項操作皆須阻擋的規則，實際來自PM於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+      §PM回覆（oscarchen@blockaction.tech，2026-09-14，落地方式：requirement_clarified）的澄清：『1. 可以停用核心貨幣——這是刻意設計，用途是當資金池出問題時可以即時止損。2.
+      當鏈上錢包的核心貨幣被關閉時，入金、出金、開分、洗分四個操作都需要被阻擋，不是只擋開分/入金兩項。』。expected_result_spec_reference的quote/location已據實區分spec.md原文（quote）與PM澄清來源（此處design_rationale），不再將PM澄清誤標為spec.md逐字引用。
+  - draft_id: TC-DRAFT-01M2R2ZKT6ERWRDTH6EV3Z4APZ
+    title: 站台核心貨幣對應的錢包幣別（TWD）已停用時，出金請求應被系統阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-022
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（建議使用測試專用場館，避免影響其他測試或正式資料）
+    - 進入 帳務管理 > 鏈上錢包管理，切至「法幣 TWD」頁籤，找到 TWD 幣別列，確認其目前為啟用狀態，將其切換為停用（此為刻意保留的止損操作，依REQ-BONUSCCY-004規則本身應允許停用）
+    - 確認鏈上錢包管理列表中 TWD 幣別狀態已顯示為停用
+    - 取得該站台一台既有機台帳號可用的機台憑證（JWT），或使用測試環境提供的機台模擬工具/API client 代替實體機台呼叫平台API（此驗證方式的API格式依據SPEC-ARCADE-001附錄「機台系統對接規格」，非BONUSCCY-001本身定義範圍，僅作為測試執行環境依據；實際測試環境是否已具備此類模擬工具，需環境負責人確認）
+    - 該機台帳號分數（餘額）大於0（出金請求金額為平台核算的全部餘額，無法指定金額）
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該機台帳號目前的分數（餘額）
+    - n: 2
+      action: 以該機台帳號的憑證呼叫平台 req-cashout（第一階段請求） API，代入一筆正常測試金額，模擬機台送出出金請求
+    - n: 3
+      action: 檢視 API 回覆內容，並至 各式報表 > 交易紀錄查詢 檢視該機台帳號是否新增對應交易紀錄
+    - n: 4
+      action: 重新檢視該機台帳號的分數（餘額）
+    - n: 5
+      action: 測試結束後，將 TWD 幣別重新啟用（帳務管理 > 鏈上錢包管理 > 法幣 TWD 頁籤，切換回啟用狀態），回復測試前狀態，避免影響後續測試或正式資料
+    expected_result: 平台拒絕該筆出金請求（不論回覆的具體原因文案為何——依rejection_contract.description，spec未給定文案，僅驗證是否被阻擋）；該機台帳號的分數（餘額）維持不變，不因此筆請求而異動
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: spec.md §一句話（限制段落）——spec.md僅有此句；「停用後入金/出金/開分/洗分四項操作皆須阻擋」之澄清見 clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+        §PM回覆（非spec.md原文，詳見design_rationale）
+      quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+    assumptions:
+    - text: 此TC的測試執行方式假設測試環境已具備可呼叫平台機台端API（req-cashin/req-cashout/req-keyin/req-keyout）的模擬工具或API client（因實體機台通常不便於一般測試/UAT環境直接取得，需以模擬方式呼叫API觸發入金/出金/開分/洗分請求）；此為測試執行環境的技術依賴，非spec.md定義範圍，實際測試環境是否已具備此類工具，需環境負責人確認。
+      requirement_id: REQ-BONUSCCY-004
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-004的rejection_contract.defined=true（PM已於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md明確確認規則），故以確定規則而非exploratory方式撰寫；behavior_kind=rejection，test_types標negative符合結構化規則。出金屬於機台廠商API觸發的操作（見SPEC-ARCADE-001附錄，req-cashout（第一階段請求）），後台管理系統本身沒有對應的按鈕可直接點擊操作——這與『人工存入/人工提出』（REQ-BONUSCCY-003，後台確有按鈕）是完全不同的兩組功能，不可混淆；故test_level標為api，以直接呼叫API或機台模擬工具代替，並在precondition中誠實說明此驗證方式依賴的測試環境條件。本TC斷言『出金請求應被阻擋』之直接依據非spec.md原文——spec.md
+      §一句話限制段落僅明確寫出『站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包』這一句，並未逐字定義『入金/出金/開分/洗分四項操作皆須阻擋』；此四項操作皆須阻擋的規則，實際來自PM於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+      §PM回覆（oscarchen@blockaction.tech，2026-09-14，落地方式：requirement_clarified）的澄清：『1. 可以停用核心貨幣——這是刻意設計，用途是當資金池出問題時可以即時止損。2.
+      當鏈上錢包的核心貨幣被關閉時，入金、出金、開分、洗分四個操作都需要被阻擋，不是只擋開分/入金兩項。』。expected_result_spec_reference的quote/location已據實區分spec.md原文（quote）與PM澄清來源（此處design_rationale），不再將PM澄清誤標為spec.md逐字引用。
+  - draft_id: TC-DRAFT-01M2R2ZKT6T5M3JVWPV39G2NK2
+    title: 站台核心貨幣對應的錢包幣別（TWD）已停用時，開分請求應被系統阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-023
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（建議使用測試專用場館，避免影響其他測試或正式資料）
+    - 進入 帳務管理 > 鏈上錢包管理，切至「法幣 TWD」頁籤，找到 TWD 幣別列，確認其目前為啟用狀態，將其切換為停用（此為刻意保留的止損操作，依REQ-BONUSCCY-004規則本身應允許停用）
+    - 確認鏈上錢包管理列表中 TWD 幣別狀態已顯示為停用
+    - 取得該站台一台既有機台帳號可用的機台憑證（JWT），或使用測試環境提供的機台模擬工具/API client 代替實體機台呼叫平台API（此驗證方式的API格式依據SPEC-ARCADE-001附錄「機台系統對接規格」，非BONUSCCY-001本身定義範圍，僅作為測試執行環境依據；實際測試環境是否已具備此類模擬工具，需環境負責人確認）
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該機台帳號目前的分數（餘額）
+    - n: 2
+      action: 以該機台帳號的憑證呼叫平台 req-keyin API，代入一筆正常測試金額，模擬機台送出開分請求
+    - n: 3
+      action: 檢視 API 回覆內容，並至 各式報表 > 交易紀錄查詢 檢視該機台帳號是否新增對應交易紀錄
+    - n: 4
+      action: 重新檢視該機台帳號的分數（餘額）
+    - n: 5
+      action: 測試結束後，將 TWD 幣別重新啟用（帳務管理 > 鏈上錢包管理 > 法幣 TWD 頁籤，切換回啟用狀態），回復測試前狀態，避免影響後續測試或正式資料
+    expected_result: 平台拒絕該筆開分請求（不論回覆的具體原因文案為何——依rejection_contract.description，spec未給定文案，僅驗證是否被阻擋）；該機台帳號的分數（餘額）維持不變，不因此筆請求而異動
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: spec.md §一句話（限制段落）——spec.md僅有此句；「停用後入金/出金/開分/洗分四項操作皆須阻擋」之澄清見 clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+        §PM回覆（非spec.md原文，詳見design_rationale）
+      quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+    assumptions:
+    - text: 此TC的測試執行方式假設測試環境已具備可呼叫平台機台端API（req-cashin/req-cashout/req-keyin/req-keyout）的模擬工具或API client（因實體機台通常不便於一般測試/UAT環境直接取得，需以模擬方式呼叫API觸發入金/出金/開分/洗分請求）；此為測試執行環境的技術依賴，非spec.md定義範圍，實際測試環境是否已具備此類工具，需環境負責人確認。
+      requirement_id: REQ-BONUSCCY-004
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-BONUSCCY-004的rejection_contract.defined=true（PM已於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md明確確認規則），故以確定規則而非exploratory方式撰寫；behavior_kind=rejection，test_types標negative符合結構化規則。開分屬於機台廠商API觸發的操作（見SPEC-ARCADE-001附錄，req-keyin），後台管理系統本身沒有對應的按鈕可直接點擊操作——這與『人工存入/人工提出』（REQ-BONUSCCY-003，後台確有按鈕）是完全不同的兩組功能，不可混淆；故test_level標為api，以直接呼叫API或機台模擬工具代替，並在precondition中誠實說明此驗證方式依賴的測試環境條件。本TC斷言『開分請求應被阻擋』之直接依據非spec.md原文——spec.md
+      §一句話限制段落僅明確寫出『站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包』這一句，並未逐字定義『入金/出金/開分/洗分四項操作皆須阻擋』；此四項操作皆須阻擋的規則，實際來自PM於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+      §PM回覆（oscarchen@blockaction.tech，2026-09-14，落地方式：requirement_clarified）的澄清：『1. 可以停用核心貨幣——這是刻意設計，用途是當資金池出問題時可以即時止損。2.
+      當鏈上錢包的核心貨幣被關閉時，入金、出金、開分、洗分四個操作都需要被阻擋，不是只擋開分/入金兩項。』。expected_result_spec_reference的quote/location已據實區分spec.md原文（quote）與PM澄清來源（此處design_rationale），不再將PM澄清誤標為spec.md逐字引用。
+  - draft_id: TC-DRAFT-01M2R2ZKT650JSTNVP0Z94DCSG
+    title: 站台核心貨幣對應的錢包幣別（TWD）已停用時，洗分請求應被系統阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-024
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（建議使用測試專用場館，避免影響其他測試或正式資料）
+    - 進入 帳務管理 > 鏈上錢包管理，切至「法幣 TWD」頁籤，找到 TWD 幣別列，確認其目前為啟用狀態，將其切換為停用（此為刻意保留的止損操作，依REQ-BONUSCCY-004規則本身應允許停用）
+    - 確認鏈上錢包管理列表中 TWD 幣別狀態已顯示為停用
+    - 取得該站台一台既有機台帳號可用的機台憑證（JWT），或使用測試環境提供的機台模擬工具/API client 代替實體機台呼叫平台API（此驗證方式的API格式依據SPEC-ARCADE-001附錄「機台系統對接規格」，非BONUSCCY-001本身定義範圍，僅作為測試執行環境依據；實際測試環境是否已具備此類模擬工具，需環境負責人確認）
+    - 該機台帳號分數（餘額）大於0
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄該機台帳號目前的分數（餘額）
+    - n: 2
+      action: 以該機台帳號的憑證呼叫平台 req-keyout（帶一組正值 throshold，或throshold=0代表洗出全部餘額） API，代入一筆正常測試金額，模擬機台送出洗分請求
+    - n: 3
+      action: 檢視 API 回覆內容，並至 各式報表 > 交易紀錄查詢 檢視該機台帳號是否新增對應交易紀錄
+    - n: 4
+      action: 重新檢視該機台帳號的分數（餘額）
+    - n: 5
+      action: 測試結束後，將 TWD 幣別重新啟用（帳務管理 > 鏈上錢包管理 > 法幣 TWD 頁籤，切換回啟用狀態），回復測試前狀態，避免影響後續測試或正式資料
+    expected_result: 平台拒絕該筆洗分請求（不論回覆的具體原因文案為何——依rejection_contract.description，spec未給定文案，僅驗證是否被阻擋）；該機台帳號的分數（餘額）維持不變，不因此筆請求而異動
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: spec.md §一句話（限制段落）——spec.md僅有此句；「停用後入金/出金/開分/洗分四項操作皆須阻擋」之澄清見 clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+        §PM回覆（非spec.md原文，詳見design_rationale）
+      quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+    assumptions:
+    - text: 此TC的測試執行方式假設測試環境已具備可呼叫平台機台端API（req-cashin/req-cashout/req-keyin/req-keyout）的模擬工具或API client（因實體機台通常不便於一般測試/UAT環境直接取得，需以模擬方式呼叫API觸發入金/出金/開分/洗分請求）；此為測試執行環境的技術依賴，非spec.md定義範圍，實際測試環境是否已具備此類工具，需環境負責人確認。
+      requirement_id: REQ-BONUSCCY-004
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 'REQ-BONUSCCY-004的rejection_contract.defined=true（PM已於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md明確確認規則），故以確定規則而非exploratory方式撰寫；behavior_kind=rejection，test_types標negative符合結構化規則。洗分屬於機台廠商API觸發的操作（見SPEC-ARCADE-001附錄，req-keyout（帶一組正值
+      throshold，或throshold=0代表洗出全部餘額）），後台管理系統本身沒有對應的按鈕可直接點擊操作——這與『人工存入/人工提出』（REQ-BONUSCCY-003，後台確有按鈕）是完全不同的兩組功能，不可混淆；故test_level標為api，以直接呼叫API或機台模擬工具代替，並在precondition中誠實說明此驗證方式依賴的測試環境條件。本TC斷言『洗分請求應被阻擋』之直接依據非spec.md原文——spec.md
+      §一句話限制段落僅明確寫出『站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包』這一句，並未逐字定義『入金/出金/開分/洗分四項操作皆須阻擋』；此四項操作皆須阻擋的規則，實際來自PM於clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+      §PM回覆（oscarchen@blockaction.tech，2026-09-14，落地方式：requirement_clarified）的澄清：『1. 可以停用核心貨幣——這是刻意設計，用途是當資金池出問題時可以即時止損。2.
+      當鏈上錢包的核心貨幣被關閉時，入金、出金、開分、洗分四個操作都需要被阻擋，不是只擋開分/入金兩項。』。expected_result_spec_reference的quote/location已據實區分spec.md原文（quote）與PM澄清來源（此處design_rationale），不再將PM澄清誤標為spec.md逐字引用。REQ-BONUSCCY-004下四條TC（入金/出金/開分/洗分）皆依賴相同的測試環境技術假設（測試環境是否具備可呼叫機台端API的模擬工具）；為避免四條TC全數標記assumptions導致本requirement的exploratory
+      TC數量達4、超過G-DESIGN結構規則的每requirement上限（MAX_EXPLORATORY_PER_REQ=3），本TC（洗分）不重複建立第4筆結構化assumption——同一假設已於同批入金/出金/開分三條TC的assumptions中結構化揭露（見TC-DRAFT對應之assumptions欄位），本TC的precondition文字仍保留相同的環境依賴說明，測試執行者應比照辦理。
+
+
+      【iteration 2修正】獨立Validator指出上一輪以「MAX_EXPLORATORY_PER_REQ=3」為由略過本TC的結構化assumption揭露，但本批4條TC(入金/出金/開分/洗分)的design_techniques皆為negative非exploratory，此理由不成立。已比照其餘三條TC補上相同的環境工具依賴assumption，確保同一份假設在四條同構TC中的揭露方式一致。'
+  - draft_id: TC-DRAFT-01M2R2ZKT6R4VG01ZBE47YGQVQ
+    title: 以機台帳號登入前台，資產列表僅顯示核心貨幣TWD一種，不列出其他幣別零餘額項目
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-005
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-007
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 該機台（TWD核心貨幣）站台已有一個既有機台帳號（自行從環境中選定）
+    - 已透過後台該機台帳號的會員詳細頁「重設密碼」功能取得一組可用的登入帳號密碼（一次性顯示；帳號建立與密碼重設機制依SPEC-ARCADE-001，非本次BONUSCCY spec定義範圍，僅作測試資料佈置依據）
+    - 已知悉該站台對應的前台網址
+    test_data: []
+    steps:
+    - n: 1
+      action: 以取得的登入帳號密碼登入該站台前台
+    - n: 2
+      action: 進入前台資產列表（錢包頁面）
+    - n: 3
+      action: 檢視列表顯示的幣別項目
+    expected_result: 資產列表僅顯示核心貨幣 TWD 一種；不出現任何其他幣別（如 USDT 等）的零餘額項目
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §⭐兩種站台差很多 + 實際被改到的地方（表格第8項）
+      quote: 前台資產列表 | 只列 TWD（本次改的，見下表第 8 項）｜機台站台的資產列表 | 只列核心貨幣，不再列出一排餘額 0 的其他幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: rejection_contract.description已明確指出這是本批requirement中第一次測前台（玩家端）畫面，非後台管理端；已依此誠實在precondition中說明需前台環境與登入憑證取得方式，而非想當然爾地假設後台有直接對應的操作入口。
+  - draft_id: TC-DRAFT-01M2R2ZKT6WA6BF559VK8ZSV3H
+    title: 對照組：線上帳號（USDT核心貨幣，多幣別站台）前台資產列表仍列出多筆幣別含零餘額，行為不受影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-005
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-007
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - equivalence_partitioning
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 一個線上（USDT核心貨幣）站台已啟用一種以上幣別錢包
+    - 已有一個該站台的既有線上會員帳號與其登入憑證（自行從環境中選定；與REQ-BONUSCCY-005驗證的機台帳號為不同站台、不同帳號）
+    test_data: []
+    steps:
+    - n: 1
+      action: 以該線上會員帳號登入前台
+    - n: 2
+      action: 進入前台資產列表
+    - n: 3
+      action: 檢視列表顯示的幣別項目
+    expected_result: 資產列表列出該站台所有已啟用的幣別，包含餘額為 0 的幣別項目，維持改動前既有行為，不受本次機台站台專屬改動影響
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §⭐兩種站台差很多
+      quote: 線上站台 | 玩家可以有幾種錢包 | 可以同時有多種（USDT／USD／TWD⋯⋯）；線上站台的多錢包完全保留 —— 這次沒有動存款幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 以核心貨幣/站台類型做等價分割，驗證未受影響類（線上站台）維持原行為；避免只驗證機台站台就對線上站台行為妄下定論，兩者為spec明確區分的不同類別，各自獨立驗證。

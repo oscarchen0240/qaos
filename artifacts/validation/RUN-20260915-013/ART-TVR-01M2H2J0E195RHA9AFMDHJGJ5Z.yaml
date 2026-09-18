@@ -1,0 +1,129 @@
+artifact_id: ART-TVR-01M2H2J0E195RHA9AFMDHJGJ5Z
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-013
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T23:03:11Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2H1GPXRSX8H9E5YF72WX8VJ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2H1GPXRSX8H9E5YF72WX8VJ
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2H1GPXRSX8H9E5YF72WX8VJ
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2H1GPXPJNYTNWE2M6094GRE
+    issue_type: non_executable_steps
+    severity: blocker
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+    evidence: spec.md 把可提領餘額列為唯讀顯示欄位，「須大於10 USDT方可申請出金」描述的是會員前台業務規則，後台這個區塊只有人工存入/提出，通篇spec沒有後台可點擊的申請出金入口，但TC precondition只寫「以Admin登入後台」，steps卻要求在後台尋找並點擊申請出金入口
+    explanation: high risk 規則的核心 TC 對受測系統範圍根本誤判，無法照原樣執行
+    recommended_change: 釐清這條規則實際驗證的系統範圍（前台會員操作 vs 後台人工存入/提出的間接驗證），重新設計steps
+  - testcase_id: TC-DRAFT-01M2H1GPXPWG0AMRKT3EGY0S71
+    issue_type: non_executable_steps
+    severity: blocker
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+    evidence: 同上一條，TC8 是 TC7 的對照組，同樣的系統邊界誤判
+    explanation: high risk 規則僅有的兩條 TC 都受影響，等於此規則未被真正驗證
+    recommended_change: 同上
+  - testcase_id: TC-DRAFT-01M2H1GPXP27QTFHSJCPA3ZAZV
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-MEMBER-003
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.3
+    evidence: precondition寫「此設定不在本spec範圍內，需洽環境負責人準備」，這本質是一個假設卻沒填進assumptions欄位；TestDesignReport宣稱0 assumptions/no_unsupported_assumptions:true與此矛盾
+    explanation: report對assumption的宣稱不實
+    recommended_change: 把這類外部依賴/假設明確填入assumptions欄位
+  - testcase_id: TC-DRAFT-01M2H1GPXQQF6XDFGKABTHDNX5
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-MEMBER-013
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2
+    evidence: precondition要求「已達成Partner升等門檻」的會員，但spec只定義Badge顯示規則，未定義升等門檻本身，這是依賴spec之外知識的隱性假設，未標記
+    explanation: 同上，report的assumption宣稱不實
+    recommended_change: 標記為assumption
+  - testcase_id: TC-DRAFT-01M2H1GPXQJC50QPQ6T0JPZAGB
+    issue_type: technique_mismatch
+    severity: major
+    violated_requirement: REQ-MEMBER-011
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+    evidence: design_technique標boundary_value，但spec從未對稽核倍數定義任何邊界/範圍，「稽核=1」只是預設值非規格明示的邊界條件；且此TC測稽核=1（預設值），而其覆蓋的AC-015的given明確限定「稽核倍數大於1」，不在AC-015定義範圍內，屬於未標記的外推
+    explanation: technique標記與spec依據脫節，coverage_matrix宣稱覆蓋AC-015不精確
+    recommended_change: 移除boundary_value標記或改為誠實的exploratory案例；coverage_matrix需反映此為外推覆蓋
+  - testcase_id: TC-DRAFT-01M2H1GPXP34SCE7KJF07C6059
+    issue_type: technique_mismatch
+    severity: major
+    violated_requirement: REQ-MEMBER-001
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: 全體design_techniques標記
+    evidence: 整份draft的design_techniques標記系統性不一致：多條標decision_table的TC(如對應AC-003等)只測單一條件對單一結果，沒有組合矩陣，跟requirement_based無實質差異；反例TC14真正測了兩種條件組合卻標requirement_based；對稱情境(TC19確認儲存/TC20取消還原)被標成不同技巧(requirement_based/state_transition)
+    explanation: 技巧標籤看起來是為了達成「技巧多樣性」表面指標而事後貼標，非真正依Requirement性質選擇，且全部24條TC的design_rationale欄位皆為空字串，設計者沒有為技巧選擇留下說明可供檢驗
+    recommended_change: 重新檢視每條TC的design_technique是否有實質依據，並填寫design_rationale說明理由
+  advisories:
+  - testcase_id: TC-DRAFT-01M2H1GPXPT9CST5S1NK02XWG5
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-MEMBER-009
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+    evidence: 使用寫死的會員編號M10001/M10002，未註明以實際環境現有會員編號替代
+    explanation: 若環境中無此編號測試會卡住
+    recommended_change: 改為描述性佔位符或註明替代方式
+  coverage_summary:
+    requirements_total: 18
+    requirements_covered: 18
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+  per_testcase: []
+history:
+- at: '2026-09-14T23:03:16Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-013

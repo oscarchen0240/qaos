@@ -1,0 +1,108 @@
+artifact_id: ART-BVR-01M2GE4XYFKEFSNWZPCDFZE358
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-001
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-14T17:06:31Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M2GDWYJ63BRDKKY53VQGKJNA
+references:
+- entity_type: Artifact
+  id: ART-BD-01M2GDWYJ63BRDKKY53VQGKJNA
+- entity_type: Evidence
+  id: EVD-0048
+- entity_type: Evidence
+  id: EVD-0049
+- entity_type: Evidence
+  id: EVD-0051
+- entity_type: Evidence
+  id: EVD-0052
+requires_approval: null
+payload:
+  result: FAIL
+  bug_draft_artifact_id: ART-BD-01M2GDWYJ63BRDKKY53VQGKJNA
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: false
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: BUG-DRAFT-01M2GDWYJ63BRDKKY53VQGKJNA
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-UPDATEPACK-002
+    spec_reference:
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示／機台場館的情形
+    evidence: EVD-0048 截圖顯示 Arcade（機台帳號）的帳戶餘額(主錢包)欄位帶有展開箭頭（^，代表已展開），但 spec 明文：機台場館僅啟用 TWD 一種幣別，機台帳號的餘額欄不應顯示展開箭頭、應維持單行呈現，且特別警告『實作不得把單一幣別寫死』
+    explanation: 這是同一份證據裡就能看到、且與 REQ-UPDATEPACK-002（展開箭頭僅在啟用幣種超過一種時顯示）直接相關的第二個違規現象，但 bug_draft 的 references／requirement_id／actual_result
+      完全沒有提到，只描述了清單內容錯誤，漏了『不該有箭頭卻有箭頭』這個同根源但獨立可驗證的缺陷
+    recommended_change: 在 actual_result 補一句「Arcade 機台帳號本應僅單行呈現（僅 1 種啟用幣別）卻出現可展開箭頭」，並在 impact 或 suspected_area 提及 REQ-UPDATEPACK-002，讓修復方連帶修正箭頭顯示邏輯
+  - testcase_id: BUG-DRAFT-01M2GDWYJ63BRDKKY53VQGKJNA
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-UPDATEPACK-001
+    spec_reference: null
+    evidence: reproduction_steps 第 2 步只寫「開啟任一機台帳號，檢視帳戶餘額(主錢包)欄位並展開」，沒有指明是會員列表、側邊簡易資料面板、還是會員詳細資料頁——這三處都有此欄位
+    explanation: 第 4 步有明確寫「帳務資訊」，第 2 步卻沒有對應位置說明，他人依步驟重現可能點進不同位置
+    recommended_change: 第 2 步比照第 4 步寫法，明確寫出「進入會員詳細資料頁的帳務資訊區塊」
+  - testcase_id: BUG-DRAFT-01M2GDWYJ63BRDKKY53VQGKJNA
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: reproduction_steps 寫「任一機台帳號」「任一會員帳號」，但 expected/actual 卻寫死具體金額（USDT $1,000.00、USDT $1,033.00）
+    explanation: 若他人選了其他帳號，金額不會相同，可能誤以為沒重現成功
+    recommended_change: 在 preconditions 註明以評測用帳號為例，或指定具體帳號重現
+  - testcase_id: BUG-DRAFT-01M2GDWYJ63BRDKKY53VQGKJNA
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-UPDATEPACK-001
+    spec_reference: null
+    evidence: AC-UPDATEPACK-0012 描述的是「把已啟用幣別改為禁用後，清單即時反映」的動態切換情境，但本次 reproduction_steps 並未實際操作任何啟用/禁用切換，而是靜態比對兩站台既有設定
+    explanation: 引用 AC-0012 作為佐證稍嫌不精確，可能誤導審查者以為做過動態切換測試
+    recommended_change: 保留 AC-UPDATEPACK-0011 為主要依據，AC-0012 若保留請加註「間接佐證」
+  evidence_verification:
+  - evidence_id: EVD-0048
+    hash_verified: true
+    supports_claim: true
+    note: 帳戶餘額(主錢包)展開後確實顯示 TWD $0.00、USDT $1,000.00，且可見展開箭頭已存在（見 issue 1）
+  - evidence_id: EVD-0049
+    hash_verified: true
+    supports_claim: true
+    note: Arcade 鏈上錢包管理只有 Machine 頁籤，2 筆皆為 TWD 啟用，無 USDT 選項
+  - evidence_id: EVD-0051
+    hash_verified: true
+    supports_claim: true
+    note: SpringKyle BEP-20 頁籤 TTK、USDT 皆啟用，8 個頁籤中無任何法幣/TWD 頁籤
+  - evidence_id: EVD-0052
+    hash_verified: true
+    supports_claim: true
+    note: 帳務資訊展開後顯示 USDT $1,033.00、TWD $0.00，確實沒有 TTK
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 顯示層與資料串接錯誤，會讓客服/操作員誤判會員實際持有的幣別與餘額，非資金流失或崩潰，major/high 合理；若納入 issue 1（機台帳號違規出現展開箭頭），影響面比原描述更廣（同時違反兩條 requirement、牽涉
+      spec 明文『不得寫死』警告），仍不足以升級 critical，建議 severity_rationale 補一句反映完整影響範圍
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+history:
+- at: '2026-09-14T17:06:35Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-001

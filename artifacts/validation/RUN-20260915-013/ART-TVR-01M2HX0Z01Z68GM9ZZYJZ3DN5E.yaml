@@ -1,0 +1,86 @@
+artifact_id: ART-TVR-01M2HX0Z01Z68GM9ZZYJZ3DN5E
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-013
+task_id: T3
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-09-15T06:45:44Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2HWNZY62YX5RRFSJ9X1H13X
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2HWNZY62YX5RRFSJ9X1H13X
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2HWNZY62YX5RRFSJ9X1H13X
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2HWNZY3YJ9613VXWDJ7ZJY3
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-MEMBER-007
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 會員啟用狀態
+    evidence: REQ-005的TC7/TC8因驗證動作跨出ba-admin進入會員前台（申請出金），已將test_level由ui_e2e改為integration；REQ-007（本TC）的when子句同樣要求「該會員嘗試登入前台」，結構完全相同（後台切換狀態→驗證動作在前台），卻仍標記test_level:ui_e2e
+    explanation: 這是第二輪FAIL點名要求修正的同一類問題（test_level未反映跨產品依賴），這輪只套用在REQ-005，沒有一致套用到結構相同的REQ-007，代表「跨TC一致性自檢」沒有窮盡檢查，只修了被抓到的那一條。本TC
+      risk:high、critical_path:true，分類錯誤會誤導後續自動化/執行規劃
+    recommended_change: test_level改為integration，並全面掃描其餘22條TC是否還有結構相同但未被套用此原則的情況
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: test_design_report.yaml
+    evidence: 頂層payload.assumptions為空陣列，但TC內實際散落7筆needs_human_confirmation:true的assumption（TC4/TC7/TC8/TC16/TC18）
+    explanation: 若人工審查（含即將觸發的HUMAN_OVERRIDE）只看報告層級摘要，會看不到這些需要確認的項目
+    recommended_change: 報告層級assumptions應摘要列出需要人工確認的項目清單
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: test_design_report.yaml revision_of_issues
+    evidence: revision_of_issues只記錄了REQ-005相關的3項修正，agent自稱本輪額外發現並修正的REQ-MEMBER-004邀請鏈/加盟商身分混淆問題，並未作為正式項目列入
+    explanation: 稽核軌跡不完整
+    recommended_change: 自主發現的修正也應列入revision_of_issues
+  advisories: []
+  coverage_summary:
+    requirements_total: 18
+    requirements_covered: 18
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-15T06:45:49Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-013

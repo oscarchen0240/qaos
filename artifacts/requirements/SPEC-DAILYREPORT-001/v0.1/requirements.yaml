@@ -34,7 +34,7 @@ requirements:
   behavior_kind: constraint
   rejection_contract:
     defined: false
-    description: Spec 未定義越權（例如操作員切換至非自身場館）時系統的回應：拒絕、隱藏選項或回空資料
+    description: 越權時（操作員嘗試切換至非自身場館）：前端已擋（站台切換選單不提供其他場館選項）；後端也擋（直接呼叫API帶非自身場館參數會被拒絕）。依CLR-DAILYREPORT-001確認（含2026-09-14補充）
   history:
   - at: '2026-09-13T11:05:07Z'
     from_status: null
@@ -48,6 +48,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-001
 - requirement_id: REQ-DAILYREPORT-002
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -117,7 +122,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: Spec 未定義輸入不存在或非本場館的機台帳號時的回應（空列表？錯誤提示？）
+    description: '輸入不存在或非本場館的機台帳號：找不到用戶即可，API回rows: []（空列表，不報錯）。依CLR-DAILYREPORT-002確認'
   inputs:
   - name: machine_account
     type: string
@@ -137,6 +142,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-002
 - requirement_id: REQ-DAILYREPORT-004
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -164,7 +174,7 @@ requirements:
   behavior_kind: rejection
   rejection_contract:
     defined: false
-    description: Spec 只寫「必填」，未定義未填時的提示文案或阻擋方式；亦未定義起日晚於迄日時的行為
+    description: '結算日期異常（起日晚於迄日等）：找不到資料即可，API回rows: []；未填結算日期時，前端popup警示「失敗：結算日期為必填」，不送出查詢。依CLR-DAILYREPORT-003確認（含2026-09-14補充）'
   inputs:
   - name: settle_date_from
     type: date
@@ -187,6 +197,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-003
 - requirement_id: REQ-DAILYREPORT-005
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -218,7 +233,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: true
-    description: 下拉選單只能選四種之一，無非法值
+    description: 不完整週：照結算日期範圍實際起迄顯示（不強制補滿整週），只要「完整」的週仍以週一為週起；範圍外的營業日不計入該列合計。依CLR-DAILYREPORT-008確認（含具體算例：結算日期09-03起、按週→列出「2026-09-07~2026-09-13」與「2026-09-03~2026-09-06」兩列，08-31~09-02不計入第一列合計）
     spec_reference:
       spec_id: SPEC-DAILYREPORT-001
       spec_version: '0.1'
@@ -247,6 +262,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-008
 - requirement_id: REQ-DAILYREPORT-006
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -337,7 +357,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: Spec 未定義場館未設定日結時間時的預設值
+    description: 場館未設定日結時間時，以預設值00:00 UTC+0切分營業日（畫面截圖顯示該欄位預設值為上午12:00）。依CLR-DAILYREPORT-004確認
   inputs:
   - name: settle_time
     type: datetime
@@ -358,6 +378,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-004
 - requirement_id: REQ-DAILYREPORT-008
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -414,7 +439,7 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 場次數
-  statement: 「場次數」於「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：依機台明細＝該機台帳號當日場次數；依場館彙總＝該場館底下所有機台帳號當日場次數的加總。
+  statement: 「場次數」於「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：依機台明細＝該機台帳號當日場次數；依場館彙總＝該場館底下所有機台帳號當日場次數的加總。「當日結束」包含「已結束」與「日結結算」兩種狀態（依CLR-DAILYREPORT-007確認：逾時結束的時間必然超過日結時間，而日結時間到達時會強制結束所有進行中場次，故當日內場次只會以「已結束」或「日結結算」收尾，兩者皆計入當日場次數）；僅「進行中」狀態不計入。
   acceptance_criteria:
   - ac_id: AC-DAILYREPORT-0091
     given: 機台 A 當日結束 3 場、機台 B 當日結束 2 場
@@ -444,7 +469,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: true
-    description: 進行中場次不計（『當日結束的場次筆數』）
+    description: 進行中場次不計（『當日結束的場次筆數』）；已結束與日結結算兩種狀態皆計入，此點已由CLR-DAILYREPORT-007正式確認
     spec_reference:
       spec_id: SPEC-DAILYREPORT-001
       spec_version: '0.1'
@@ -463,6 +488,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:37:49Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-007：當日結束場次數計算範圍（已結束+日結結算皆計入）正式套用
 - requirement_id: REQ-DAILYREPORT-010
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -550,7 +580,7 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: 「標示提醒」的呈現方式（顏色／圖示／文字）未定義
+    description: 「標示提醒」的呈現方式：待核實的機台洗分交易列表顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」，已核實者為綠色「已核實」；報表的待核實洗分提醒沿用同款黃色警示標籤。依CLR-DAILYREPORT-005確認
   history:
   - at: '2026-09-13T11:05:07Z'
     from_status: null
@@ -564,6 +594,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-005
 - requirement_id: REQ-DAILYREPORT-012
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -712,7 +747,7 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 非按日週期的彙總規則
-  statement: 統計週期非按日時：各金額與筆數欄為該週期內各營業日的合計；期末餘額取最後營業日；未兌現金額不受週期影響，一律為截至查詢當下的累計。
+  statement: 統計週期非按日時：各金額與筆數欄為該週期內各營業日的合計；期末餘額取最後營業日；未兌現金額不受統計週期切分方式影響，一律為截至查詢當下的累計，但仍受結算日期範圍這個篩選條件限制（依CLR-DAILYREPORT-009確認：範圍外的未兌現收據不計入；「不受週期影響」指的是不會因為切成週/月而被打散或重複計算，不是不受結算日期範圍本身限制）。
   acceptance_criteria:
   - ac_id: AC-DAILYREPORT-0151
     given: 按週，週內三個營業日開分各 100
@@ -757,6 +792,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:38:00Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-009：未兌現金額仍受結算日期範圍限制，正式套用
 - requirement_id: REQ-DAILYREPORT-016
   version: 1
   spec_id: SPEC-DAILYREPORT-001
@@ -788,7 +828,8 @@ requirements:
   behavior_kind: success
   rejection_contract:
     defined: false
-    description: Spec 未定義無資料時匯出 CSV 的行為（空檔？停用按鈕？）
+    description: 無資料時列表仍列出（日期正常顯示、各欄位顯示0）；匯出CSV無資料時的行為推定同列表（一列0）。依CLR-DAILYREPORT-006確認（PM提供的完整欄位清單含「注單數」，但spec.md v0.1列表欄位定義尚未列出此欄，屬文件缺口，已記錄於project
+      memory待後續統一處理，不影響本條rejection_contract的有效性）
   history:
   - at: '2026-09-13T11:05:07Z'
     from_status: null
@@ -802,6 +843,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-006
 - requirement_id: REQ-DAILYREPORT-017
   version: 1
   spec_id: SPEC-DAILYREPORT-001

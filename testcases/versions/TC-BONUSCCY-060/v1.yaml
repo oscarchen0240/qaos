@@ -1,0 +1,98 @@
+title: 人工存款依後台填寫的稽核倍數正常計入稽核流水（提領所需有效投注額隨倍數增加）
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-010
+acceptance_criteria_ids:
+- AC-BONUSCCY-014
+spec_id: SPEC-BONUSCCY-002
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一名既有會員，記錄其存款前的『提領所需有效投注額（流水錢包）』數值
+- 人工存入操作方式依 SPEC-MEMBER-001 v0.2 §2.1.5：會員詳細資料頁帳務資訊區塊的『人工存入』按鈕，右側滑出面板填寫金額／稽核倍數／前台備注／後台備注後點擊『儲存』
+test_data:
+- name: 存入金額（第一筆／第二筆）
+  value: 100
+- name: 稽核倍數（第一筆）
+  value: 1
+- name: 稽核倍數（第二筆）
+  value: 3
+steps:
+- n: 1
+  action: 於該會員詳細資料頁記錄目前的『提領所需有效投注額（流水錢包）』數值作為基準值
+- n: 2
+  action: 使用『人工存入』功能，填入金額 100，稽核倍數設為 1，點擊儲存；重新查看『提領所需有效投注額（流水錢包）』，記錄第一次的增量 Δ1
+- n: 3
+  action: 對同一會員再次使用『人工存入』功能，同樣填入金額 100，這次稽核倍數設為 3，點擊儲存；重新查看『提領所需有效投注額（流水錢包）』，記錄第二次的增量 Δ2
+expected_result: 兩筆人工存款都有依稽核倍數計入稽核流水：Δ1、Δ2 皆大於 0（沒有因為是人工存款就被排除在稽核流水之外）；且在存入金額相同的情況下，稽核倍數較高的第二筆存款，其『提領所需有效投注額』增量 Δ2 明顯大於稽核倍數為
+  1 的第一筆存款增量 Δ1，驗證系統確實依後台當次填寫的稽核倍數計入，而非固定倍數或忽略此設定
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  location: §人工存款
+  quote: 稽核流水（打碼量）✅有，依後台填的稽核倍數
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-060
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+created_at: '2026-09-17T19:22:41Z'
+updated_at: '2026-09-17T19:24:36Z'
+history:
+- at: '2026-09-17T19:22:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RCWEF5XHS0ZFPKVREVXRPF
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:42Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0121
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260918-004
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0121

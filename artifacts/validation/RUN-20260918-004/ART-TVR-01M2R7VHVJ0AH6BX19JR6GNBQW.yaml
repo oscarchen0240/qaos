@@ -1,0 +1,99 @@
+artifact_id: ART-TVR-01M2R7VHVJ0AH6BX19JR6GNBQW
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-004
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T17:50:28Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2R71DEHH9Z89NF3H0QZ3HH4
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2R71DEHH9Z89NF3H0QZ3HH4
+- entity_type: Artifact
+  id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2R71DEHH9Z89NF3H0QZ3HH4
+  validated_against:
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+  issues:
+  - testcase_id: '*'
+    issue_type: missing_coverage
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-006
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+      quote: 每日簽到、累積簽到｜站台系統幣別｜⚠️ 簽到的道具獎勵不是錢，不進錢包、沒有幣別。首存／次存活動｜站台系統幣別｜⚠️ 活動設定裡的「幣種」是選這個活動吃哪一條金流通道，不是選發放幣別。累積存款活動｜站台系統幣別
+    evidence: REQ-BONUSCCY-006.statement：「返水、代理佣金、推薦獎勵、每日/累積簽到、首存/次存活動、累積存款活動，皆發站台系統幣別」。testcase_draft.yaml 中掛在 REQ-BONUSCCY-006/AC-BONUSCCY-008
+      下的只有 3 條 TC（返水、代理佣金、多幣別同時持有的 edge case），推薦獎勵、每日/累積簽到、首存/次存活動、累積存款活動四種紅利完全沒有對應 TC，uncovered_with_reason 對這四種也完全沒有記載。
+    explanation: AC-BONUSCCY-008 用『返水或代理佣金等一般紅利』(『等』字) 概括全部六種類型，但 spec 明確警示簽到、首存/次存這兩種類型在『幣別』語意上與返水/代理佣金不同，代表它們未必能安全併入同一等價類，在沒有
+      TC、也沒有結構化 uncovered_with_reason 的情況下略過屬於本輪應偵測的『未結構化記載的覆蓋縮減』。
+    recommended_change: 至少為『首存/次存活動』與『每日/累積簽到』各補一條 TC；『推薦獎勵』與『累積存款活動』風險相對低，若資源不足，至少應在 uncovered_with_reason 補上結構化說明。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2R6JHSD637Z92VFFP03KEZ8
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 'design_techniques: [equivalence_partitioning]；design_rationale 說明是對『紅利類型』這個維度做等價劃分（返水 vs 代理佣金的計算基礎不同）'
+    explanation: equivalence_partitioning 經典定義是對輸入值域做分割，這裡是把不同紅利類型當成分割維度，屬於較寬鬆/非標準的用法
+    recommended_change: 可考慮改標 requirement_based，或在專案的 design_techniques 定義文件中明確記載此用法
+  - testcase_id: TC-DRAFT-01M2R6JHSECPJXJ59MZ2S1RAZ1
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 'design_techniques: [requirement_based]；但實際手法是比較兩筆不同稽核倍數（1 vs 3）存款的流水增量大小'
+    explanation: 這種『同金額、不同參數值比較增量』的手法更接近 equivalence_partitioning 或比較式測試
+    recommended_change: 可考慮補標 equivalence_partitioning，非必要修改
+  - testcase_id: '*'
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 多條 TC 的 precondition/design_rationale 引用 SPEC-PLATFORMRULE-001、SPEC-BONUSCCY-003 佐證頁面路徑與機制，但本輪只提供 spec.md 與
+      spec-member-001-v0.2.md
+    explanation: 設計者已誠實標註為合理推測且不影響 expected_result 核心斷言，風險較低
+    recommended_change: 下一輪審查請附上這些文件供交叉核實
+  - testcase_id: TC-DRAFT-01M2R6JHSDBNR0F1NG2W83BAP3
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: precondition：『自行從環境中挑選，或於前台以 TTK 餘額完成下注等待返水結算週期產生』
+    explanation: 未定義結算週期的具體時長，若周期過長可能使本 TC 在合理測試視窗內難以執行
+    recommended_change: 補充結算週期的大致時長，或確認後台是否有手動觸發/加速結算的功能
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 9
+    ac_covered: 9
+    uncovered_accepted:
+    - REQ-BONUSCCY-007 / AC-BONUSCCY-009：玩家原本沒有該幣別錢包時會自動出現一列，未獨立設TC——依SPEC-MEMBER-001 v0.2 §2.1.6，幣別列表以站台鏈上錢包管理啟用狀態為準，即使餘額0.00仍列出，此半句斷言在此UI下不是可獨立觀察的離散事件，本輪已查核spec-member-001-v0.2.md原文屬實
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T17:50:31Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-004

@@ -1,0 +1,156 @@
+artifact_id: ART-TCD-01M2EKHEVX3400R37TX75SJYN1
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-007
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T00:02:16Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-016
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-013
+- entity_type: TestCase
+  id: TC-CASHFLOW-016
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - title: 全洗時核可金額依門檻無條件捨去
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-013
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0131
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台餘額 321、門檻 100，送出全洗請求（req-keyout，mode=all）
+    - n: 2
+      action: 檢視核可金額
+    expected_result: 核可金額 300（依門檻 100 無條件捨去 321）
+    expected_result_spec_reference: &id001
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEVWEJ338QD241WE46XW
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-016
+      version: 1
+  - title: 指定金額洗分時核可金額與全洗結果一致
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-013
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0132
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台餘額 321、門檻 100，送出指定金額 300 的洗分請求（req-keyout，mode=value）
+    - n: 2
+      action: 檢視核可金額
+    expected_result: 核可金額 300，與同條件下全洗的結果一致
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEVWQYHQ72153Y0F34VA
+    source_ref: new_required:split_from_TC-CASHFLOW-016
+  - title: 門檻為 0 時洗出全部餘額、不做取整
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-013
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0133
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台餘額 321、門檻改為 0，送出全洗請求（req-keyout，mode=all）
+    - n: 2
+      action: 檢視核可金額
+    expected_result: 核可金額為 321（全額），門檻 0 時不做取整
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKHEVWN957PQCZD4KBZJJ9
+    source_ref: new_required:split_from_TC-CASHFLOW-016
+history:
+- at: '2026-09-14T00:02:23Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-007

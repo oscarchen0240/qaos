@@ -1,0 +1,105 @@
+artifact_id: ART-TVR-01M2JAKJYCKKJXT0V4CXF5R593
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-016
+task_id: T2
+iteration: 3
+created_by: agent-test-validator
+created_at: '2026-09-15T10:43:06Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2JA8XZZP4BK64VPYAMQATSD
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2JA8XZZP4BK64VPYAMQATSD
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2JA8XZZP4BK64VPYAMQATSD
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2JA8XZY5AGGYPN1953M000Y
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: null
+    spec_reference: null
+    evidence: 'testcase_draft.yaml 該TC已新增 assumptions（needs_human_confirmation: true），但 test_design_report.yaml payload.assumptions
+      仍為空陣列 []，self_check.no_unsupported_assumptions 仍標 true，未反映此TC存在一項待人工確認的假設。'
+    explanation: v5本輪修正的目的是『補充進結構化assumptions欄位，以利下游稽核/追蹤流程辨識此依賴』，但test_design_report作為Oscar審批時實際會看的彙總文件，assumptions rollup與self_check欄位並未同步更新，導致審批者若只看report、不逐條打開draft，會完全看不到這條TC帶有未經spec明訂、需人工確認的關鍵機制假設。
+    recommended_change: 將testcase_draft.yaml中兩條TC的assumptions彙總進test_design_report.yaml的payload.assumptions欄位，並將self_check.no_unsupported_assumptions依實際情況調整為false，確保report與draft對assumption狀態的呈現一致。
+  - testcase_id: TC-DRAFT-01M2JA8XZYTR4JGD1K6R9Y6JMD
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: null
+    spec_reference: null
+    evidence: 同上，test_design_report.yaml payload.assumptions為空陣列，未反映此TC的assumptions內容。
+    explanation: 同上一筆，兩條TC共用同一份test_design_report，問題同時適用於本TC。
+    recommended_change: 同上一筆的建議修改，一併處理兩條TC的assumptions彙總。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2JA8XZY5AGGYPN1953M000Y
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: assumptions文字將『金額×稽核倍數＝流水錢包增減量』完全歸因於Oscar實測確認、非spec原文明訂，但REQ-MEMBER-011/AC-MEMBER-015（ACTIVE、G-SPEC PASS）已佐證稽核倍數大於1時方向一致，僅稽核=0特例未涵蓋。
+    explanation: 不影響PASS/FAIL判斷，assumption文字若能區分『已有REQ-MEMBER-011佐證的部分』與『完全未被涵蓋的部分（稽核=0、換算公式本身）』會更精確。
+    recommended_change: 選擇性優化：在assumptions.text中補充提及REQ-MEMBER-011/AC-MEMBER-015作為部分佐證。
+  - testcase_id: TC-DRAFT-01M2JA8XZYTR4JGD1K6R9Y6JMD
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 同上一筆advisory，兩條TC的assumptions文字相同。
+    explanation: 同上。
+    recommended_change: 同上。
+  - testcase_id: TC-DRAFT-01M2JA8XZY5AGGYPN1953M000Y
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: product欄位仍只填ba-admin，但steps 4-5的驗證動作跨到會員前台。
+    explanation: 此為v4已標註、本輪聲明非修正範圍的既有項目，複查後未發現新隱患。
+    recommended_change: 建議未來輪次將product欄位改為同時標註ba-admin與對應前台產品代號。
+  - testcase_id: TC-DRAFT-01M2JA8XZYTR4JGD1K6R9Y6JMD
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_data公式『= 10.01 － 該帳號目前可提領餘額基準值 B』沒有明確引用『先執行步驟1查得B』。
+    explanation: 此為v4已標註、本輪聲明非修正範圍的既有項目，複查未發現新增風險。
+    recommended_change: 建議test_data.value補上『（B來自steps中第1步的查詢結果）』字樣。
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 2
+    ac_covered: 2
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2JA8XZY5AGGYPN1953M000Y
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2JA8XZYTR4JGD1K6R9Y6JMD
+    verdict: issue
+history:
+- at: '2026-09-15T10:43:36Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-016

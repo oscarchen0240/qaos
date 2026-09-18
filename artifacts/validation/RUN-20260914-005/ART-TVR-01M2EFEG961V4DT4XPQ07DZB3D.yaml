@@ -1,0 +1,71 @@
+artifact_id: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-005
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-13T22:50:44Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M2EF4PVFFHSWRKW5W4YQKEFM
+    issue_type: missing_negative_coverage
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-033
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次
+    evidence: 缺一個直接驗證「場次已進行中、餘額已為正時，再發生開分/入金不會另建第二個場次」的案例，目前僅能靠 REQ-039 併發案例間接佐證。
+    explanation: 非缺陷，不影響 PASS 結果，補上會讓驗證更完整。
+    recommended_change: 可考慮新增一案例：場次進行中且餘額為正時，再送出開分或入金，驗證未建立新場次。
+  - testcase_id: TC-DRAFT-01M2EF4PVFFNF46EFZZGAAQC5Z
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 52 個案例中 test_data 欄位仍幾乎全為空，測試數值皆寫在 action 字串內。
+    explanation: 人工執行尚可讀懂，未來自動化才需要結構化，維持上一輪的風格建議。
+    recommended_change: 後續自動化規劃時再抽出 test_data。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 44
+    ac_total: 69
+    ac_covered: 69
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-13T22:50:49Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-005

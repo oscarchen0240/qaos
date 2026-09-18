@@ -1,0 +1,179 @@
+run_id: RUN-20260915-002
+workflow_id: spec-to-bug
+workflow_version: 1.0.0
+status: CANCELLED
+input:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  evidence_ids:
+  - EVD-0053
+  - EVD-0054
+  actual_behavior: Arcade（機台站台）TWD 的稽核設定在鏈上錢包管理/出金設定TWD頁籤出現兩筆完全相同欄位值的紀錄，分別對應開分/洗分與入金/出金兩組稽核設定，但畫面與API回應完全無法區分是哪一組，使用者操作時容易改錯
+  initiated_by: oscarchen@blockaction.tech
+initiated_by: oscarchen@blockaction.tech
+created_at: '2026-09-14T17:03:25Z'
+updated_at: '2026-09-14T17:21:21Z'
+tasks:
+- task_id: T0
+  type: agent
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-spec-analyst
+  gate: G-SPEC
+- task_id: T1
+  type: agent
+  status: DONE
+  iteration: 1
+  input_artifact_ids:
+  - ART-BVR-01M2GE6QP8FDNMFKQHX5ZMY7P6
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-BD-01M2GDZXWBWEJJZE8N0SPXXEAC
+  - ART-BD-01M2GE9QC2EQ86YV5JBR2D74GM
+  agent_id: agent-bug-analyst
+  gate: G-BVAL
+  started_at: '2026-09-14T17:09:12Z'
+  gate_results:
+  - at: '2026-09-14T17:03:53Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugDraft ART-BD-01M2GDZXWBWEJJZE8N0SPXXEAC VALID
+  - at: '2026-09-14T17:03:53Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  - at: '2026-09-14T17:09:13Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugDraft ART-BD-01M2GE9QC2EQ86YV5JBR2D74GM VALID
+  - at: '2026-09-14T17:09:13Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  ended_at: '2026-09-14T17:09:13Z'
+  history:
+  - at: '2026-09-14T17:09:12Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T17:09:13Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-BVAL PASS
+- task_id: T2
+  type: agent
+  status: READY
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-BVR-01M2GEE76T115K6EV0GGDPHAK2
+  agent_id: agent-bug-validator
+  gate: G-BVAL
+  history:
+  - at: '2026-09-14T17:03:53Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T17:07:36Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T17:07:36Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: validator FAIL (ART-BVR-01M2GE6QP8FDNMFKQHX5ZMY7P6)
+  - at: '2026-09-14T17:09:13Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T17:11:36Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T17:11:36Z'
+    from_status: RUNNING
+    to_status: GATE_FAILED
+    by: system
+    trigger: G-BVAL structural
+  - at: '2026-09-14T17:11:36Z'
+    from_status: GATE_FAILED
+    to_status: READY
+    by: system
+    trigger: revise
+  started_at: '2026-09-14T17:11:36Z'
+  gate_results:
+  - at: '2026-09-14T17:07:36Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugValidationReport ART-BVR-01M2GE6QP8FDNMFKQHX5ZMY7P6 VALID
+  - at: '2026-09-14T17:07:36Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  - at: '2026-09-14T17:07:36Z'
+    layer: semantic
+    result: FAIL
+    details:
+    - validator result = FAIL
+  - at: '2026-09-14T17:11:36Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugValidationReport ART-BVR-01M2GEE76T115K6EV0GGDPHAK2 VALID
+  - at: '2026-09-14T17:11:36Z'
+    layer: structural
+    result: FAIL
+    details:
+    - PASS 但 checks 有 false
+- task_id: T3
+  type: approval
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+- task_id: T4
+  type: agent
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-supervisor
+history:
+- at: '2026-09-14T17:03:25Z'
+  from_status: null
+  to_status: CREATED
+  by: system
+  trigger: new_run by oscarchen@blockaction.tech
+  run_id: RUN-20260915-002
+- at: '2026-09-14T17:03:25Z'
+  from_status: CREATED
+  to_status: RUNNING
+  by: system
+  trigger: task graph expanded
+  run_id: RUN-20260915-002
+- at: '2026-09-14T17:21:21Z'
+  from_status: RUNNING
+  to_status: CANCELLED
+  by: oscarchen@blockaction.tech
+  trigger: cancel
+  run_id: RUN-20260915-002
+current_task_id: T2

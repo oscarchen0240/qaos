@@ -1,0 +1,70 @@
+artifact_id: ART-TVR-01M2GJDAEBSXR5MM8ZCQ4EWHC3
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-004
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T18:21:00Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GJ06GXZ0FRC07CEW0QXY29
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GJ06GXZ0FRC07CEW0QXY29
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GJ06GXZ0FRC07CEW0QXY29
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2GJ06GWKVF2TTYYYDSS1CXK
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位
+    evidence: TC2 的 expected_result/design_rationale 都指出它驗證的其實是 REQ-SITELIST-001 的既有規則（建立後不可修改，對應 AC-SITELIST-0012），但正式欄位
+      requirement_ids 只填 REQ-SITELIST-002、acceptance_criteria_ids 只填 AC-SITELIST-0023，AC-0023 的 then 完全沒有提到建立後不可修改
+    explanation: coverage_matrix 因此顯示 AC-SITELIST-0023 有 2 條 TC 覆蓋，但實際上只有 TC1 真正測到 AC-0023 描述的行為，覆蓋率認定失真
+    recommended_change: TC2 的 requirement_ids/acceptance_criteria_ids 應同時列出 REQ-SITELIST-001/AC-SITELIST-0012，coverage_matrix
+      也要同步反映兩條需求各自的覆蓋
+  - testcase_id: TC-DRAFT-01M2GJ06GWN0HAFK03PAR3ZBHH
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: TC1 step2 只檢視機台子站台的核心貨幣與鏈上錢包管理連動；step3 建立線上子站台後沒有任何後續步驟確認 USDT 是否連動啟用
+    explanation: AC-SITELIST-0023 的 then「核心貨幣依所選類型連動建立（例如選機台則連動啟用TWD）」中機台只是舉例，規則應同樣適用線上/USDT分支，但線上分支完全沒有驗證步驟
+    recommended_change: 補一個 step4，檢視新建線上子站台的核心貨幣是否顯示USDT、其鏈上錢包管理是否已連動為啟用狀態，並同步更新 expected_result
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  advisories: []
+history:
+- at: '2026-09-14T18:21:05Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-004

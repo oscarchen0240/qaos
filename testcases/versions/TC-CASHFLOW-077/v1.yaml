@@ -1,0 +1,92 @@
+title: 洗分核可金額 = 餘額以門檻為單位無條件捨去；全洗與指定金額洗出恰為核可金額時結果相同
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-013
+acceptance_criteria_ids:
+- AC-CASHFLOW-0131
+- AC-CASHFLOW-0132
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data:
+- name: 機台餘額
+  value: 321
+- name: throshold
+  value: 100
+steps:
+- n: 1
+  action: 透過人工入金將機台帳號分數佈置為 321（人工入金不影響既有 PENDING、不計入稽核，見 REQ-CASHFLOW-028）
+- n: 2
+  action: 呼叫 req-keyout，mode=all、throshold=100（全洗）
+- n: 3
+  action: 確認回覆的核可金額 value
+- n: 4
+  action: 以另一台（或同一台重新佈置至餘額 321）呼叫 req-keyout，mode=value、throshold=100、指定金額 300
+- n: 5
+  action: 確認回覆的核可金額 value
+expected_result: 全洗：核可金額為 300（321 以 100 為單位捨去）；指定金額洗 300：核可金額同樣為 300，與全洗結果相同
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §四種金流/洗分 + §附錄-洗分
+  quote: 計算規則：核可金額 ＝ 餘額以門檻為單位無條件捨去。例：門檻 100、餘額 321 → 核可 300；門檻 0、餘額 321 → 核可 321（全額）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-077
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

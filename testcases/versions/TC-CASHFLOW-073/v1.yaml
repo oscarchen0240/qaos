@@ -1,0 +1,84 @@
+title: end-cashin 完成入帳時不再重新檢查額度上限，即使額度環境已於期間變化
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-009
+acceptance_criteria_ids:
+- AC-CASHFLOW-0091
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 設場館額度上限為 A，呼叫 req-cashin 送出入金金額 100 並通過（已於 req-cashin 階段判定並預留，此時全場館合計含此筆恰為 A）
+- n: 2
+  action: 在呼叫 end-cashin 之前，以 Admin 將該場館額度上限調降至遠低於 A 的值（模擬若重新判定必定超限的環境變化）
+- n: 3
+  action: 以該筆的 TXID 呼叫 end-cashin
+expected_result: end-cashin 仍正常回 0-OK，關閉 PENDING、更新帳務、預留轉為實際餘額——即使此時的額度上限已被調低到理論上會超限，本階段依規則不再判定額度上限，不會因額度環境變化而失敗
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-入金
+  quote: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、把預留轉為實際餘額，回 0-OK。本階段不再判定額度上限
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-073
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

@@ -1,0 +1,84 @@
+title: 人工存款不計入玩家累積儲值統計，不會推進 VIP 等級
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-010
+acceptance_criteria_ids:
+- AC-BONUSCCY-016
+spec_id: SPEC-BONUSCCY-002
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一名既有會員，其原本未達 VIP 升等所需的累積儲值門檻（自行從環境中選定，或於後台『會員等級設定』查得目前等級的升等門檻後挑選一名接近但未達標的既有會員）
+- 人工存入操作方式依 SPEC-MEMBER-001 v0.2 §2.1.5：會員詳細資料頁帳務資訊區塊的『人工存入』按鈕，右側滑出面板填寫金額／稽核倍數／前台備注／後台備注後點擊『儲存』
+test_data: []
+steps:
+- n: 1
+  action: 於該會員詳細資料頁記錄目前的『總入金金額』（歷史累計入金金額）與『會員等級』
+- n: 2
+  action: 使用『人工存入』功能，填入一筆金額，使其若被計入即可達到 VIP 升等所需的累積儲值門檻，稽核倍數維持預設 1，點擊儲存
+- n: 3
+  action: 重新查看該會員的『總入金金額』與『會員等級』；另查後台『會員等級異動紀錄』，確認是否有這名會員的升等紀錄
+expected_result: 玩家累積儲值統計不計入這筆人工存款金額：『總入金金額』不因這筆人工存款而增加；『會員等級』維持存款前的等級，不會因此推進 VIP 等級；『會員等級異動紀錄』中查無這筆操作對應的升等紀錄
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  location: §人工存款
+  quote: 玩家累積儲值統計（VIP等級的依據）❌不計入，所以也不會推進VIP等級
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-062
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+created_at: '2026-09-17T19:22:41Z'
+updated_at: '2026-09-17T19:24:36Z'
+history:
+- at: '2026-09-17T19:22:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RCWEF5XHS0ZFPKVREVXRPF
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:42Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0121
+  run_id: RUN-20260918-004
+  note: rejected

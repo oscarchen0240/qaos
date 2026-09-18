@@ -32,7 +32,24 @@ def render(apr_id: str) -> str:
                 lines.append(f"| {it['id']} v{it['version']} | {cls} | {v['title']} | {pre} | {steps} | {expct} | {v['priority']}/{v['risk']} |")
             lines.append("")
     if a["type"] == "OPEN_BUG":
-        lines += ["## 內容", "", a.get("diff_summary", "")]
+        lines += ["## 內容", ""]
+        bd = None
+        for aid in a.get("artifact_ids", []):
+            art = store.load(store.find_artifact(aid))
+            if art["artifact_type"] == "BugValidationReport":
+                bd = store.load(store.find_artifact(art["payload"]["bug_draft_artifact_id"]))["payload"]; break
+            if art["artifact_type"] == "BugDraft": bd = art["payload"]; break
+        if bd:
+            lines += [f"- **產品/功能**：{bd['product']} / {bd['functional_area']}　· **Spec**：{bd['spec_id']}@{bd['spec_version']}　· **需求**：{bd['requirement_id']}",
+                      f"- **環境**：{bd['environment'].get('name', '—')}　· **測試帳號**：{bd['environment'].get('account', '—')}", ""]
+            lines += ["**前置條件**"] + [f"- {p}" for p in bd["preconditions"]] + [""]
+            lines += ["**重現步驟**"] + [f"{i+1}. {s}" for i, s in enumerate(bd["reproduction_steps"])] + [""]
+            lines += [f"**預期結果**：{bd['expected_result']}", "", f"**實際結果**：{bd['actual_result']}", ""]
+            if bd.get("actual_result_evidence_map"):
+                lines += ["**證據對照**"] + [f"- {m['claim']}（{m['evidence_id']}）" for m in bd["actual_result_evidence_map"]] + [""]
+            lines += [f"**影響**：{bd['impact']}", "", f"**懷疑方向**：{bd['suspected_area']}", ""]
+        else:
+            lines += [a.get("diff_summary", "（無法載入 BugDraft 內容）")]
     if a.get("artifact_ids"):
         lines += ["", "## 依據 artifact", ""] + [f"- {x}" for x in a["artifact_ids"]]
     lines += ["", "## 決定", "", f"```bash", f"bin/qaos approve {apr_id} --decision approve --by <you>", f"bin/qaos approve {apr_id} --decision approve --by <you> --per-item TC-xxx-001:reject", f"bin/qaos approve {apr_id} --decision reject --by <you> --rationale \"...\"", "```"]
@@ -84,6 +101,26 @@ ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:
                     expct += '<div class=assume>' + "".join(f"⚠ 假設：{H.escape(a_['text'])}" + "".join(f"<br><span class=pm>✅ PM（{c['clarification_id']}）：{H.escape(c['answer'])}</span>" for c in answered.get(a_["requirement_id"], [])) for a_ in v["assumptions"]) + "</div>"
                 out.append(f'<tr class="{"exp" if exp_ else ""}"><td class=id title="{it["id"]}">{short}<br>v{it["version"]}</td><td>{"⚠ exploratory" if exp_ else "grounded"}</td><td>{H.escape(v["title"])}</td><td>{pre}</td><td>{steps}</td><td>{expct}</td><td>{v["priority"]}<br>{v["risk"]}</td></tr>')
             out.append("</table>")
+    elif a["type"] == "OPEN_BUG":
+        bd = None
+        for aid in a.get("artifact_ids", []):
+            art = store.load(store.find_artifact(aid))
+            if art["artifact_type"] == "BugValidationReport":
+                bd = store.load(store.find_artifact(art["payload"]["bug_draft_artifact_id"]))["payload"]; break
+            if art["artifact_type"] == "BugDraft": bd = art["payload"]; break
+        if bd:
+            out.append("<h2>內容</h2>")
+            out.append(f"<blockquote>{H.escape(bd['product'])} / {H.escape(bd['functional_area'])}　· Spec：{H.escape(bd['spec_id'])}@{H.escape(bd['spec_version'])}　· 需求：{H.escape(bd['requirement_id'])}　· 環境：{H.escape(bd['environment'].get('name', '—'))}　· 測試帳號：{H.escape(bd['environment'].get('account', '—'))}</blockquote>")
+            out.append("<p><b>前置條件</b></p><ol>" + "".join(f"<li>{H.escape(p)}</li>" for p in bd["preconditions"]) + "</ol>")
+            out.append("<p><b>重現步驟</b></p><ol>" + "".join(f"<li>{H.escape(s)}</li>" for s in bd["reproduction_steps"]) + "</ol>")
+            out.append(f"<p><b>預期結果</b>：{H.escape(bd['expected_result'])}</p>")
+            out.append(f"<p><b>實際結果</b>：{H.escape(bd['actual_result'])}</p>")
+            if bd.get("actual_result_evidence_map"):
+                out.append("<p><b>證據對照</b></p><ul>" + "".join(f"<li>{H.escape(m['claim'])}（{H.escape(m['evidence_id'])}）</li>" for m in bd["actual_result_evidence_map"]) + "</ul>")
+            out.append(f"<p><b>影響</b>：{H.escape(bd['impact'])}</p>")
+            out.append(f"<p><b>懷疑方向</b>：{H.escape(bd['suspected_area'])}</p>")
+        elif a.get("diff_summary"):
+            out.append("<h2>內容</h2><div class=summary style='white-space:pre-wrap'>" + H.escape(a["diff_summary"]) + "</div>")
     elif a.get("diff_summary"):
         out.append("<h2>內容</h2><div class=summary style='white-space:pre-wrap'>" + H.escape(a["diff_summary"]) + "</div>")
     out.append(f"<h2>決定</h2><div class=cmd>bin/qaos approve {apr_id} --decision approve --by &lt;you&gt;\nbin/qaos approve {apr_id} --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject\nbin/qaos approve {apr_id} --decision reject --by &lt;you&gt; --rationale \"...\"</div>")

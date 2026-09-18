@@ -1,0 +1,91 @@
+artifact_id: ART-TVR-01M2GMZE38WR4JYJ3GYKSN8TDA
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-006
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T19:05:51Z'
+status: INVALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GME15NCKZ1NA6BTHFA6908
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GME15NCKZ1NA6BTHFA6908
+- entity_type: Artifact
+  id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GME15NCKZ1NA6BTHFA6908
+  validated_against:
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+  advisories: []
+  issues:
+  - testcase_id: TC-DRAFT-01M2GME15M2B2JNT4Z6SYRJ2ZG
+    issue_type: missing_coverage
+    severity: critical
+    violated_requirement: REQ-BONUSCCY-010
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §人工存款
+    evidence: REQ-010 statement 列出四項不計入行為，rejection_contract 明確點名『人為推進VIP等級』是risk=high的理由，但原本只有 AC-012/013/014 三條 AC，完全沒有對應『累積存款活動不累積』與『VIP累積儲值統計不計入』的
+      AC/TC
+    explanation: 這個需求自己聲稱風險最高的場景在整份測試設計裡零覆蓋，coverage_matrix 的 acceptance_criteria_covered=true 只是因為上游AC本身沒生成，掩蓋了缺口
+    recommended_change: 補 AC-BONUSCCY-015（累積存款活動不累積）與 AC-BONUSCCY-016（VIP累積儲值不計入），並補對應 TC
+  - testcase_id: TC-DRAFT-01M2GME15M7V1R1WBW1HCRSWBN
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-BONUSCCY-007
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    evidence: expected_result含『玩家原本沒有該幣別錢包時會自動出現一列』，但這句話只在§人工存款的『錢進玩家錢包』列出現過，§每一種紅利發什麼幣別對彩金活動從未提到自動建立錢包列
+    explanation: 跨章節斷言被當成已驗證事實寫進expected_result，卻標成同一個spec_reference.location，追溯關係失真
+    recommended_change: 拆出獨立記錄，標明這是推論延伸、非該章節spec明文
+  - testcase_id: TC-DRAFT-01M2GME15MCQ8YVRERV7JGQE13
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-BONUSCCY-006
+    spec_reference: null
+    evidence: AC-BONUSCCY-008的given要求『使用TTK餘額下注/存款』，但這條TC改成『以系統幣別USDT存款、同時持有TTK』，範圍縮減但design_rationale是空字串
+    explanation: 跟同批TC（返水/代理佣金都用TTK下注）不同調，範圍縮減沒有像REQ-008/009那樣註明是環境限制，看起來像疏漏
+    recommended_change: 補design_rationale說明是同樣的『無非系統幣別存款通道』環境限制
+  - testcase_id: TC-DRAFT-01M2GME15MV3DHQ6TN1V165Y8M
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-BONUSCCY-006
+    spec_reference: null
+    evidence: statement列出六種紅利類型共用同一規則，但只用返水/代理佣金/首存三種代表驗證，簽到、累積存款活動完全沒有TC觸及
+    explanation: risk=high的核心規則用3/6樣本代表全部，且獨漏底層實作機制不同（SQL直接加總 vs 逐筆累加）的兩種類型，代表性不足
+    recommended_change: 補簽到與累積存款活動各一條TC
+  - testcase_id: TC-DRAFT-01M2GME15MV3DHQ6TN1V165Y8M
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: self_check.boundary_considered=true，但9條TC的design_techniques只有negative與requirement_based，沒有任何boundary_value
+    explanation: 報告聲稱與實際draft不符的誠實性問題
+    recommended_change: 改為false或補真正的邊界值案例
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 7
+    ac_covered: 7
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false

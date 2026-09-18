@@ -1,0 +1,90 @@
+artifact_id: ART-TVR-01M2JBVY2G9GC63B6DTJDVSX2V
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-017
+task_id: T2
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-15T11:05:08Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2JBJWDKJ6FYHA5Z3R2P405D
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2JBJWDKJ6FYHA5Z3R2P405D
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2JBJWDKJ6FYHA5Z3R2P405D
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2JBJWDJWFN9CV8VJ97FXBVF
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-MEMBER-013
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2 加盟列表 - 加盟等級 欄位說明
+      quote: （3）未達成（黑底）：會員尚未達成升等門檻
+    evidence: precondition與assumptions主張「只需『無業績』這個明確可觀察的狀態即可成立，不依賴門檻的精確判定，受演算法未定義的影響風險相對最低」
+    explanation: spec完全未定義升等門檻依據哪些指標，若實際演算法把業績以外的指標單獨即可觸發達成門檻，『無業績』並不足以保證帳號處於『未達成』狀態。這個『風險相對最低』的結論本身是在演算法完全未知的情況下做出的未經驗證斷言，與本次修訂原本要杜絕的『把未經證實的機制誤呈現為已知』屬同一類depth
+      defect。
+    recommended_change: 移除『風險相對最低』的結論，讓挑選依據明確依附於『新註冊、各項可觀察指標皆為0/無記錄』，並把『業績是否為門檻必要/充分條件』本身未經證實這件事併入assumptions揭露。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2JBJWDJB2JFYFNJ21VWE7JN
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2
+    evidence: expected_result_spec_reference.location寫『§2.2.2 加盟等級』，但spec該章節標題實際為『2.2.2 加盟列表』，『加盟等級』只是表格內欄位名稱，此措辭沿用自requirement.yaml原本欄位，非本次新增
+    explanation: 既有小瑕疵，非本次修訂引入的新問題，不影響PASS/FAIL判定
+    recommended_change: 後續可考慮同步修正requirement.yaml與TC的location欄位
+  - testcase_id: TC-DRAFT-01M2JBJWDJB2JFYFNJ21VWE7JN
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_data皆為空陣列，步驟未提供篩選線索（如後台篩選器欄位、範例會員編號）
+    explanation: precondition/assumptions已誠實揭露若環境中找不到符合條件的帳號需環境負責人/PM確認，但即使帳號存在仍可能難以快速定位，屬既有揭露範圍內的殘留缺口，不構成blocker
+    recommended_change: 建議後續補上test_data範例或具體篩選方式
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 3
+    ac_covered: 3
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2JBJWDJB2JFYFNJ21VWE7JN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2JBJWDJVMHV1Y6VH2T60BV6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2JBJWDJWFN9CV8VJ97FXBVF
+    verdict: issue
+history:
+- at: '2026-09-15T11:05:08Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-017

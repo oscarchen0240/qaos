@@ -1,0 +1,161 @@
+artifact_id: ART-TCD-01M2EKH38KRYA55Q15RKSY8SEF
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-006
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T00:02:04Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-010
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-008
+- entity_type: TestCase
+  id: TC-CASHFLOW-010
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - title: 入帳成功時，PENDING 的預留額度轉為實際分數餘額
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-008
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0081
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - decision_table
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: PENDING 有預留額度
+    - n: 2
+      action: 機台送出 end-cashin 成功入帳
+    expected_result: 預留轉為實際分數餘額，額度不再被此筆佔用
+    expected_result_spec_reference: &id001
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKH38J8HPJNQW06DDY33VE
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-010
+      version: 1
+  - title: PENDING 超過 24 小時未完成，預留額度隨排程自動釋放
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-008
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0082
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - decision_table
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: PENDING 有預留額度
+    - n: 2
+      action: 超過 24 小時未收到 end-cashin
+    - n: 3
+      action: 系統排程檢查該 PENDING
+    expected_result: 自動轉為已逾時，預留額度釋放，不再佔用額度
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKH38JV9G4M6YTNN6VQTW3
+    source_ref: new_required:split_from_TC-CASHFLOW-010
+  - title: Admin/站長於交易紀錄手動取消 PENDING，預留額度立即釋放
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-008
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0083
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - decision_table
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: PENDING 有預留額度
+    - n: 2
+      action: Admin 或站長於交易紀錄手動取消該筆待確認入金
+    expected_result: 預留額度立即釋放，不再佔用額度
+    expected_result_spec_reference: *id001
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    draft_id: TC-DRAFT-01M2EKH38JWKJ42MY1BW7V99Q8
+    source_ref: new_required:split_from_TC-CASHFLOW-010
+history:
+- at: '2026-09-14T00:02:10Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-006

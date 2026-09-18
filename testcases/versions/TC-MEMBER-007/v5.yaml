@@ -1,0 +1,97 @@
+title: 提領申請金額為 9.99 USDT 時不可出金（邊界值，剛好不達門檻）
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-005
+acceptance_criteria_ids:
+- AC-MEMBER-007
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能。出金門檻判斷對象是「提領申請金額」本身（會員在前台送出申請時實際填寫的金額）是否大於等於 10 USDT，與可提領餘額的精確數值、出金手續費計算皆無關——只要可提領餘額足以支應本次申請金額即可（已由
+  Oscar 2026-09-16 確認；spec §2.1.4原文以「可提領餘額」為主詞、且用「大於」(不含10)，與此處確認的實際門檻對象與方向不同，屬spec原文與實際產品行為的落差，見assumptions，建議另案更新spec原文）。佈置方式：一名會員的可提領餘額至少有
+  15 USDT 以上（確保餘額本身不會成為限制因素；不足可用人工存入補足），無需精確調整可提領餘額至任何特定數值
+test_data:
+- name: 提領申請金額
+  value: 9.99 USDT
+steps:
+- n: 1
+  action: 確認該會員可提領餘額至少 15 USDT 以上，足以支應本次申請金額
+- n: 2
+  action: 以該會員身分登入會員前台，進入出金/提領申請功能
+- n: 3
+  action: 提領申請金額輸入 9.99 USDT，送出提領申請
+expected_result: 不可出金——提領申請金額本身未達 10 USDT 門檻，申請入口不可用，或送出後被系統拒絕而未成功送出
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.4 帳戶資訊
+  quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+assumptions:
+- text: 出金門檻的判斷對象（提領申請金額本身，而非可提領餘額欄位）與方向（大於等於，含10）皆由 Oscar 於 2026-09-16 口頭確認，spec §2.1.4原文並未明確定義門檻判斷對象是提領申請金額還是可提領餘額本身，也寫成「大於」而非「大於等於」；此為spec原文尚未更新反映實際產品行為的已知落差
+  requirement_id: REQ-MEMBER-005
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0098
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: true
+source: change_workflow
+testcase_id: TC-MEMBER-007
+version: 5
+supersedes: 4
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2M4D5AZTER4GTW7T63PDCKN
+created_at: '2026-09-16T03:33:13Z'
+updated_at: '2026-09-16T03:36:23Z'
+history:
+- at: '2026-09-16T03:33:13Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2M46S4T7XCPB75WEMS0ECXM
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:33:13Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:33:13Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2M4D5AZTER4GTW7T63PDCKN
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:33:13Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:36:23Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0098
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:36:23Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260916-001
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0098

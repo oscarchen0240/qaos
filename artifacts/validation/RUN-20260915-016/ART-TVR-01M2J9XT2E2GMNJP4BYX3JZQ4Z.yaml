@@ -1,0 +1,85 @@
+artifact_id: ART-TVR-01M2J9XT2E2GMNJP4BYX3JZQ4Z
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-016
+task_id: T2
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-09-15T10:31:12Z'
+status: INVALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2J9EJXF860Z2X5TRNDFP6DW
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2J9EJXF860Z2X5TRNDFP6DW
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: PASS
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M2J9EJXDPW7AT3ABTQBKWRFW
+    issue_type: spec_reference_location_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊（草案誤填為§2.1.4 帳戶資訊）
+    evidence: expected_result_spec_reference.location寫「§2.1.4 帳戶資訊」，但steps中查看基準值B、執行人工存入/提出的『帳務資訊區塊』實際對應spec §2.1.5會員詳細資料頁的『帳務資訊』段落（人工存入/提出按鈕只存在於此，§2.1.4側邊面板的『帳戶資訊』只是唯讀顯示，無操作按鈕）
+    explanation: 『可提領餘額』欄位定義文字雖然在§2.1.4與§2.1.5重複出現、quote本身正確，但citation指向的段落與steps實際操作段落不一致，會造成追溯時的混淆
+    recommended_change: 將expected_result_spec_reference.location改為『§2.1.5 帳務資訊』，與steps實際操作位置一致
+  - testcase_id: TC-DRAFT-01M2J9EJXDZM1A7FWBXEFN79A7
+    issue_type: spec_reference_location_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊（草案誤填為§2.1.4 帳戶資訊）
+    evidence: 同TC-007，expected_result_spec_reference.location寫「§2.1.4 帳戶資訊」，與steps實際操作的§2.1.5「帳務資訊」段落不一致
+    explanation: 同上
+    recommended_change: 同上，改為『§2.1.5 帳務資訊』
+  - testcase_id: both (TC-MEMBER-007 / TC-MEMBER-008 v4 drafts)
+    issue_type: unstructured_assumption_disclosure
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊（人工存入/提出面板：金額、稽核欄位）
+    evidence: precondition/design_rationale中三項關鍵機制描述（可提領餘額換算公式、金額×稽核倍數＝流水增減量、稽核=0時完全不影響流水錢包）皆標註「已由Oscar 2026-09-15以實際操作範例確認」而非spec原文，但兩條TC的assumptions欄位皆為[]
+    explanation: 這三項機制描述雖已誠實揭露來源，但因未同步記錄在結構化assumptions欄位，依賴該欄位做稽核/追蹤的下游流程無法察覺這個佈置手法整體依賴spec未明訂、僅靠Oscar單次實測確認的行為
+    recommended_change: 建議在assumptions欄位加入至少一條，說明換算公式與稽核=0之效果為Oscar實測確認，非spec原文明訂，若系統行為異動須重新驗證
+  - testcase_id: both (TC-MEMBER-007 / TC-MEMBER-008 v4 drafts)
+    issue_type: product_field_scope_ambiguity
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: product欄位固定填ba-admin，但test_level已標為integration，且步驟4-5的實際驗證斷言發生在會員前台而非ba-admin
+    explanation: product欄位僅反映後台，可能讓僅檢視該欄位的人誤判此測試範圍局限於ba-admin
+    recommended_change: 建議確認schema是否支援多產品線標註，或在preconditions中更明確標示『驗證動作發生於會員前台』
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 2
+    ac_covered: 2
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2J9EJXDPW7AT3ABTQBKWRFW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2J9EJXDZM1A7FWBXEFN79A7
+    verdict: ok

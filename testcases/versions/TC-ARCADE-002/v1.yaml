@@ -1,0 +1,91 @@
+title: 機台帳號投注流水不計入上層加盟商的加盟傭金與代理返傭計算基數
+product: ba-admin
+functional_area: ARCADE
+requirement_ids:
+- REQ-ARCADE-002
+acceptance_criteria_ids:
+- AC-ARCADE-002
+spec_id: SPEC-ARCADE-001
+spec_version: '0.7'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 一台機台帳號掛在某加盟商站台底下
+- 該加盟商在本次測試的結算期間內，除此機台外沒有其他會員產生投注流水（維持乾淨對照，避免其他會員流水污染基準值）
+- 記錄該加盟商上一個已結算期間的加盟傭金/代理返傭發放金額，做為對照基準
+test_data: []
+steps:
+- n: 1
+  action: 讓該機台帳號在本結算期間產生一筆投注流水（開分或入金後遊玩消耗分數）
+- n: 2
+  action: 加盟傭金/代理返傭為結算期間週期性計算（依日/週/月結算），非即時重算——待本結算期間的結算流程跑完（或依系統實際結算週期等待）
+- n: 3
+  action: 切回該加盟商自身所屬的站台（非機台場館站台，因為「加盟傭金發放紀錄」「代理返傭發放紀錄」頁面在機台場館脈絡下被隱藏），至各式報表查看本期的加盟傭金/代理返傭發放紀錄
+expected_result: 本期發放金額與對照基準相比不因這筆機台流水而增加（在沒有其他會員流水的乾淨對照下，本期金額應與無機台流水時的預期值一致）；若實際系統的結算週期或路徑與描述不同，不視為違反本條，僅測機台流水是否被計入
+expected_result_spec_reference:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  location: 既有功能對機台帳號的排除規則／4.5-4.6
+  quote: 4.5 / 4.6｜加盟傭金／代理返傭｜不適用，機台帳號的投注不計入任何上層的傭金基數
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-ARCADE-002
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2GZ48BGVXYFET07P5EA2FDV
+created_at: '2026-09-14T22:03:19Z'
+updated_at: '2026-09-14T22:18:31Z'
+history:
+- at: '2026-09-14T22:03:19Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2GYXGTZG4JQSPXBA0X4RW12
+  run_id: RUN-20260915-010
+- at: '2026-09-14T22:03:19Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-010
+- at: '2026-09-14T22:03:19Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2GZ48BGVXYFET07P5EA2FDV
+  run_id: RUN-20260915-010
+- at: '2026-09-14T22:03:19Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-010
+- at: '2026-09-14T22:18:31Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0051
+  run_id: RUN-20260915-010
+- at: '2026-09-14T22:18:31Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-010
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0051

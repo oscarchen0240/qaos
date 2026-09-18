@@ -1,0 +1,86 @@
+title: 新增一名機台站台會員後，Dashboard總會員數應同步遞增，不因原本寫死USDT的JOIN條件而悄悄排除
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-002
+acceptance_criteria_ids:
+- AC-BONUSCCY-002
+spec_id: SPEC-BONUSCCY-001
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入後台（Admin可見所有場館）
+- 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台，記錄當下可見的「資訊看板」選單是否存在——依SPEC-ARCADE-001／SPEC-PLATFORMRULE-001「機台場館的後台選單」規則，切至機台場館時「資訊看板」分類整個隱藏，須切換至一個仍可見資訊看板的範圍（例如該機台站台的上層主站台，若主站台本身非機台類型）才能檢視Dashboard
+test_data: []
+steps:
+- n: 1
+  action: 切換至一個資訊看板選單可見的範圍，進入 資訊看板 Dashboard 頁，記錄目前顯示的總會員數（N）
+- n: 2
+  action: 切回步驟一所選的機台站台，於 會員與加盟商 > 會員列表 點擊「創建會員帳號」，帳號類型選「機台」，建立一個新的機台帳號（帳號建立方式依SPEC-ARCADE-001，非本次BONUSCCY spec範圍，僅作測試資料佈置依據）
+- n: 3
+  action: 切回資訊看板可見範圍，重新整理/重新查詢 Dashboard 總會員數（N'）
+expected_result: N' 應等於 N+1，新建立的機台站台會員確實計入Dashboard總會員數，未因JOIN條件比對寫死USDT常數而被排除在統計之外
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  location: §實際被改到的地方（表格第3項：後台查詢）
+  quote: 後台查詢 | 注單列表與明細、返水明細、營運日報、會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數
+assumptions:
+- text: 假設Dashboard總會員數為涵蓋所有站台（含機台站台）的平台層級聚合數字，且後台操作者存在可切換到、仍可見「資訊看板」選單、其統計範圍涵蓋該機台站台的位置；若目前測試環境中該機台站台本身即為主站台（無其他非機台上層可切換），Dashboard總會員數在此情境下如何呈現待與環境/PM確認。此為Dashboard本身的顯示範圍語意，目前找不到SPEC-BONUSCCY-001以外的spec明確定義
+  requirement_id: REQ-BONUSCCY-002
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-035
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R3R6NYKMXM86QNY0MM5S23
+created_at: '2026-09-17T16:38:44Z'
+updated_at: '2026-09-17T17:14:12Z'
+history:
+- at: '2026-09-17T16:38:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R3DSWCD3H95921XKFGPXFK
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R3R6NYKMXM86QNY0MM5S23
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-002
+- at: '2026-09-17T17:14:12Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0116
+  run_id: RUN-20260918-002
+  note: rejected

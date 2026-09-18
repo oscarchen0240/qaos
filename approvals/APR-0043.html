@@ -1,0 +1,30 @@
+<title>APR-0043 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0043 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-004 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>2 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？</div>
+<p>共 2 條：grounded 2 條（預期結果有 spec 條文依據）、<b>exploratory 0 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-SITELIST-002 站台類型由主站台決定，子站台強制繼承</h2>
+<blockquote>spec：§站台類型與機台專屬欄位 + §業務規則-站台類型隨主站台　「站台類型於主站台（根層）選定，子站台一律與主站台同類型、不可個別選擇」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-SITELIST-063">063<br>v1</td><td>grounded</td><td>上層站台為 admin 時，子站台類型不強制跟隨，可自由選擇機台或線上</td><td>以 Admin 登入後台<br>admin 為既有的最上層根站台（線上類型；測試環境中此站台目前命名為 admin，如環境有變動請以平台最上層根站台為準）</td><td><ol><li>至後台管理員系統 &gt; 站台列表，新增子站台，上層站台選擇 admin，站台類型選擇「機台」並儲存</li><li>檢視這個新建立的機台子站台，確認核心貨幣欄位與其自身的鏈上錢包管理</li><li>再新增另一個子站台，上層站台同樣選擇 admin，這次站台類型選擇「線上」並儲存</li><li>檢視這個新建立的線上子站台，確認核心貨幣欄位與其自身的鏈上錢包管理</li></ol></td><td>兩次新增站台類型欄位皆可自由選擇，不因上層站台 admin 本身是線上類型而被強制鎖定為線上、UI 也未唯讀跟隨；機台類型的子站台建立後核心貨幣顯示 TWD，且該子站台自己的鏈上錢包管理裡 TWD 已連動為啟用狀態；線上類型的子站台建立後核心貨幣顯示 USDT，且該子站台自己的鏈上錢包管理裡 USDT 同樣已連動為啟用狀態——兩種類型皆不需要 admin 自身的鏈上錢包管理預先啟用對應幣別</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-SITELIST-064">064<br>v1</td><td>grounded</td><td>admin 底下自由選型建立的子站台，建立後站台類型同樣不可修改</td><td>以 Admin 登入後台<br>admin 底下已有一個依特例自由選型建立的機台類型子站台</td><td><ol><li>編輯這個機台類型子站台，檢視站台類型欄位</li></ol></td><td>站台類型欄位唯讀、不可修改——這條驗證的其實是既有的 REQ-SITELIST-001／AC-SITELIST-0012（站台類型二擇一、建立後不可修改），本條案例是確認 admin 特例只解除「建立當下強制跟隨上層」這件事（REQ-SITELIST-002／AC-SITELIST-0023 的範圍），不影響「建立後類型鎖定」這條不同需求下的通用規則</td><td>high<br>high</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0043 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0043 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0043 --decision reject --by &lt;you&gt; --rationale "..."</div>

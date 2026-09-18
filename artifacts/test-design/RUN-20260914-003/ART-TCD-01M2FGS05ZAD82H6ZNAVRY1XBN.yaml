@@ -1,0 +1,124 @@
+artifact_id: ART-TCD-01M2FGS05ZAD82H6ZNAVRY1XBN
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-003
+task_id: T1
+iteration: 3
+created_by: agent-test-designer
+created_at: '2026-09-14T08:33:11Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-SITELIST-042
+references:
+- entity_type: Requirement
+  id: REQ-SITELIST-022
+- entity_type: TestCase
+  id: TC-SITELIST-042
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  testcases:
+  - draft_id: TC-DRAFT-01M2FGS05ZESK1JXK8EW2RB68G
+    title: 任何站台類型皆不提供刪除操作（前端與編輯畫面皆無入口）
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-022
+    acceptance_criteria_ids:
+    - AC-SITELIST-0221
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 進入 站台列表
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個線上類型站台，檢視其列表與編輯畫面的可用操作
+    - n: 2
+      action: 取一個機台類型站台，檢視其列表與編輯畫面的可用操作
+    expected_result: 兩種類型（線上／機台）皆不提供刪除操作／按鈕（列表與編輯畫面皆找不到任何刪除入口）。（原因：刪除站台會影響站台樹狀結構——子站台歸屬與上下層關係——故 PM／後端定案不提供刪除功能，見 CLR-SITELIST-009；可用的狀態切換選項依角色而定，非本案例斷言範圍，見
+      REQ-SITELIST-016）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述，非現行產品行為）
+      quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行（＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-SITELIST-042
+      version: 1
+    source_ref: CLR-SITELIST-009
+    design_rationale: 自 TC-SITELIST-042 v1 修訂：範圍由「機台類型」擴大為「任何類型」，並經 CLR-SITELIST-009 由 PM／後端共同確認前後端皆不可刪除，原因為影響站台樹狀結構
+  - draft_id: TC-DRAFT-01M2FGS05ZK3S9TBDJ2EQ0SHZT
+    title: 略過前端直接呼叫刪除站台 API，後端同樣拒絕
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-022
+    acceptance_criteria_ids:
+    - AC-SITELIST-0222
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 身分取得有效憑證（略過前端 UI 限制）
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個線上類型站台，直接呼叫刪除站台的後端 API，帶入該站台 ID
+    - n: 2
+      action: 取一個機台類型站台，直接呼叫刪除站台的後端 API，帶入該站台 ID
+    expected_result: 兩種類型皆被後端拒絕該請求，站台資料不受影響（原因：刪除站台會影響站台樹狀結構，故 PM／後端定案不提供刪除功能，見 CLR-SITELIST-009）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述，非現行產品行為）
+      quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行（＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    source_ref: new_required:CLR-SITELIST-009
+    design_rationale: 先前 Validator 指出 AC-SITELIST-0222（後端拒絕）未被覆蓋，新增本案例補齊。source_ref 需保留 new_required 前綴（G-DESIGN 規則：mode=change
+      下無 supersedes_testcase 的新案例必須以此標示），僅將 Validator 建議的自由文字後綴 _backend_coverage 換成單純的 CLR 編號
+history:
+- at: '2026-09-14T08:33:16Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-003

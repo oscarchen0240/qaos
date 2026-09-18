@@ -1,0 +1,86 @@
+title: 分數因投注輸完歸 0 時，場次結束並標記為歸零結束
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-036
+acceptance_criteria_ids:
+- AC-CASHFLOW-0361
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: medium
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 佈置一個進行中場次，餘額為一個小額（例如 10）
+- n: 2
+  action: 使玩家投注直到分數歸 0（依實際遊玩或由遊戲/投注系統模擬達成分數歸零，見假設）
+- n: 3
+  action: 查詢場次狀態
+expected_result: 分數歸 0 時場次結束，標記為「歸零結束」，期末餘額為 0
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §場次/場次如何開始與結束
+  quote: 歸零結束 | 分數因投注輸完歸 0 時結束
+assumptions:
+- text: 『分數因投注輸完歸 0』的觸發機制屬於遊戲/投注引擎的範疇，不在本包（機台金流與場次，純後端）定義的四種金流 API 範圍內；本包僅定義『分數歸 0 時場次如何反應』，至於如何在測試環境中實際觸發分數歸 0（例如是否有可直接呼叫的測試用注單模擬介面），需與環境負責人或遊戲引擎測試團隊確認可行的觸發方式
+  requirement_id: REQ-CASHFLOW-036
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-102
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:40Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:40Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

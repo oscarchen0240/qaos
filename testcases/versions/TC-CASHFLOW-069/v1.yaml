@@ -1,0 +1,89 @@
+title: 入金加計後恰等於額度上限可成立並預留，超過則 1-OVER LIMIT 且不建立 PENDING、不預留
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0071
+- AC-CASHFLOW-0072
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 以 Admin 登入 站台列表，設定該場館額度上限為 A，並確認目前全場館機台分數餘額合計＋已預留未入帳入金金額為 A-100
+- n: 2
+  action: 呼叫 req-cashin 送出金額恰為 100 的入金請求
+- n: 3
+  action: 確認回覆建立 PENDING 並將 100 計入預留（此時全場館『餘額合計＋預留』恰為 A）
+- n: 4
+  action: 再呼叫 req-cashin 送出金額 1 的入金請求（此時加計後將超過額度上限 A）
+- n: 5
+  action: 確認此筆的回覆，並確認機台未收到分數變化、無新 PENDING 產生
+expected_result: 第一筆恰等於上限：成立，建立 PENDING 並預留 100；第二筆超過上限：回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-入金
+  quote: 先取得場館鎖…在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-069
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

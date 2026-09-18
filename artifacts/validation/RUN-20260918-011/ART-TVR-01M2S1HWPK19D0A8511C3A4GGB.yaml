@@ -1,0 +1,84 @@
+artifact_id: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-011
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-18T01:19:34Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+- entity_type: Artifact
+  id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+  validated_against:
+    spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    requirement_model_artifact_id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M2RZYXFBEB2M473NYKMZTE7A
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 標了boundary_value，但test_data選用大於0的任意值而非精確邊界值，實質驗證的是倍數=0 vs 倍數>0的類別/狀態邊界
+    explanation: TC已誠實聲明只做定性驗證不驗證精確計算式，範圍限定合理
+    recommended_change: 無需修改
+  - testcase_id: '*'
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: scenario標籤用於TC5/TC6/TC7但TC2/TC3同樣具備跨情境結構卻未標，可用positive/negative主斷言差異解釋
+    explanation: 非缺陷，建議團隊後續明訂scenario標籤適用判準
+    recommended_change: 無需修改
+  - testcase_id: TC-DRAFT-01M2RZYXFB5RZJCDAQAZG9A5JX
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: REQ-ARCADE-002
+    spec_reference: null
+    evidence: high risk需求僅由1條exploratory TC覆蓋
+    explanation: 方法論嚴謹(before/after比對+流水存在性佐證)，符合gate要求，覆蓋廣度可再斟酌
+    recommended_change: 視環境確認結果考慮是否需要輔助案例
+  - testcase_id: TC-DRAFT-01M2RZYXFBEB2M473NYKMZTE7A
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: assumption提及稽核倍數計算公式可能屬SPEC-CASHFLOW-001範圍
+    explanation: 有spec.md原文佐證方向，已用'可能'正確hedge，判斷合理
+    recommended_change: 後續追溯查證該spec ID是否存在
+  coverage_summary:
+    requirements_total: 6
+    requirements_covered: 5
+    ac_total: 7
+    ac_covered: 6
+    uncovered_accepted:
+    - REQ-ARCADE-005：已RETIRED（與REQ-PLATFORMRULE-014重複，詳見Oscar 2026-09-15對操作員選單範圍的確認），不需覆蓋
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-18T01:19:38Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-011

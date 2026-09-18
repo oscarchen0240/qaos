@@ -1,0 +1,233 @@
+run_id: RUN-20260915-009
+workflow_id: spec-to-bug
+workflow_version: 1.0.0
+status: COMPLETED
+input:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  evidence_ids:
+  - EVD-0055
+  - EVD-0056
+  - EVD-0057
+  - EVD-0058
+  - EVD-0059
+  actual_behavior: 核心貨幣TWD停用後：出金(req-cashout→end-cashout)與洗分(req-keyout)兩階段/單階段皆回0-OK成功完成扣分，未被阻擋；入金(req-cashin→end-cashin)與開分(req-keyin)雖然失敗，但回的是
+    7-OUT OF SERVICE（服務不可用 DB/Redis/下游異常）這種下游基礎設施錯誤，而非明確的『核心貨幣已停用』業務拒絕
+  initiated_by: oscarchen@blockaction.tech
+initiated_by: oscarchen@blockaction.tech
+created_at: '2026-09-14T20:29:02Z'
+updated_at: '2026-09-14T20:39:50Z'
+tasks:
+- task_id: T0
+  type: agent
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-spec-analyst
+  gate: G-SPEC
+- task_id: T1
+  type: agent
+  status: DONE
+  iteration: 1
+  input_artifact_ids:
+  - ART-BVR-01M2GT0M5QG7721FBCKZSFJWYK
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ
+  - ART-BD-01M2GT16H2ED99XB65EBXTN8QK
+  agent_id: agent-bug-analyst
+  gate: G-BVAL
+  started_at: '2026-09-14T20:34:15Z'
+  gate_results:
+  - at: '2026-09-14T20:29:40Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugDraft ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ VALID
+  - at: '2026-09-14T20:29:40Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  - at: '2026-09-14T20:34:16Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugDraft ART-BD-01M2GT16H2ED99XB65EBXTN8QK VALID
+  - at: '2026-09-14T20:34:16Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  ended_at: '2026-09-14T20:34:16Z'
+  history:
+  - at: '2026-09-14T20:34:15Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T20:34:16Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-BVAL PASS
+- task_id: T2
+  type: agent
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-BVR-01M2GT55730BMPQZ6E25QCNF1K
+  agent_id: agent-bug-validator
+  gate: G-BVAL
+  history:
+  - at: '2026-09-14T20:29:40Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:33:57Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T20:33:57Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: validator FAIL (ART-BVR-01M2GT0M5QG7721FBCKZSFJWYK)
+  - at: '2026-09-14T20:34:16Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:36:25Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-09-14T20:36:25Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-BVAL PASS
+  started_at: '2026-09-14T20:36:25Z'
+  gate_results:
+  - at: '2026-09-14T20:33:57Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugValidationReport ART-BVR-01M2GT0M5QG7721FBCKZSFJWYK VALID
+  - at: '2026-09-14T20:33:57Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  - at: '2026-09-14T20:33:57Z'
+    layer: semantic
+    result: FAIL
+    details:
+    - validator result = FAIL
+  - at: '2026-09-14T20:36:25Z'
+    layer: structural
+    result: PASS
+    details:
+    - BugValidationReport ART-BVR-01M2GT55730BMPQZ6E25QCNF1K VALID
+  - at: '2026-09-14T20:36:25Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-BVAL structural PASS
+  - at: '2026-09-14T20:36:25Z'
+    layer: semantic
+    result: PASS
+    details:
+    - validator result = PASS
+  ended_at: '2026-09-14T20:36:25Z'
+- task_id: T3
+  type: approval
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs:
+  - entity_type: Bug
+    id: BUG-CASHFLOW-001
+  output_artifact_ids: []
+  history:
+  - at: '2026-09-14T20:36:25Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:36:25Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:39:50Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: decided
+  approval_id: APR-0048
+- task_id: T4
+  type: agent
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-WS-01M2GTBGNMZMTSGCTH4BZKM9DE
+  agent_id: agent-supervisor
+  history:
+  - at: '2026-09-14T20:39:50Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:39:50Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: advance
+  - at: '2026-09-14T20:39:50Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: ART-WS-01M2GTBGNMZMTSGCTH4BZKM9DE
+history:
+- at: '2026-09-14T20:29:02Z'
+  from_status: null
+  to_status: CREATED
+  by: system
+  trigger: new_run by oscarchen@blockaction.tech
+  run_id: RUN-20260915-009
+- at: '2026-09-14T20:29:02Z'
+  from_status: CREATED
+  to_status: RUNNING
+  by: system
+  trigger: task graph expanded
+  run_id: RUN-20260915-009
+- at: '2026-09-14T20:36:25Z'
+  from_status: RUNNING
+  to_status: WAITING_HUMAN
+  by: system
+  trigger: APR-0048
+  run_id: RUN-20260915-009
+- at: '2026-09-14T20:39:50Z'
+  from_status: WAITING_HUMAN
+  to_status: RUNNING
+  by: oscarchen@blockaction.tech
+  trigger: APR-0048
+  run_id: RUN-20260915-009
+- at: '2026-09-14T20:39:50Z'
+  from_status: RUNNING
+  to_status: COMPLETED
+  by: system
+  trigger: ART-WS-01M2GTBGNMZMTSGCTH4BZKM9DE
+  run_id: RUN-20260915-009
+current_task_id: T2
+summary_artifact_id: ART-WS-01M2GTBGNMZMTSGCTH4BZKM9DE

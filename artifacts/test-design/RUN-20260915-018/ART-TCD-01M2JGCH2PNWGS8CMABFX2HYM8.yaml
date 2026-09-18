@@ -1,0 +1,90 @@
+artifact_id: ART-TCD-01M2JGCH2PNWGS8CMABFX2HYM8
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-018
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T12:24:06Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-011
+- entity_type: TestCase
+  id: TC-MEMBER-016
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JGCH2NYATR9F2CDWFQH6AJ
+    title: 稽核欄位輸入 0 為合法值；輸入負數時前端阻擋且後端回400 COMMON_NON_NEGATIVE；留空時前端顯示必填提示
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-011
+    acceptance_criteria_ids:
+    - AC-MEMBER-015
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，開啟一名會員的人工存入面板
+    - 具備使用瀏覽器開發者工具或 API 測試工具（如 Postman）直接呼叫後台 API 的環境與權限，用於步驟3繞過前端驗證後端行為
+    test_data: []
+    steps:
+    - n: 1
+      action: 稽核欄位輸入 0，其餘欄位填妥後點擊儲存
+    - n: 2
+      action: 稽核欄位輸入一個負數（例如 -1），其餘欄位填妥後點擊儲存，觀察前端顯示
+    - n: 3
+      action: 另外使用瀏覽器開發者工具或 API 測試工具（如 Postman），帶入登入後的有效憑證，繞過前端頁面直接呼叫人工存入/提出 API，request body 中稽核帶入一個負數，確認回應的 HTTP 狀態碼與錯誤代碼
+    - n: 4
+      action: 稽核欄位留空，其餘欄位填妥後點擊儲存，確認前端顯示的提示訊息
+    expected_result: 步驟1：系統接受輸入 0，正常完成人工存入/提出（稽核=0已由 Oscar 2026-09-15 實測確認為合法輸入）；步驟2：前端顯示驗證失敗訊息並阻擋送出；步驟3：後端回應 HTTP 400、錯誤代碼
+      COMMON_NON_NEGATIVE（已由 Oscar 2026-09-15 確認，此步驟不依賴前端是否阻擋，主動繞過前端直接驗證後端行為）；步驟4：前端顯示 toast 提示「此欄必填」，阻擋送出（已由 Oscar 2026-09-15
+      確認）
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-016
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-042（已退役），Phase 2原版title「系統應拒絕或退回預設值...不可留下無法計算的投注門檻」偏武斷，雖然expected_result本身有hedge但沒有結構化assumptions記錄這個依賴。Phase
+      3版本完全不預設任何一種反應為正確答案，且有結構化assumptions揭露spec未定義此規則。v1採用此誠實揭露方式後，APR-0088核准前Oscar 2026-09-15補充確認了具體行為：稽核=0為合法輸入；稽核=負數時前端阻擋、後端回400
+      COMMON_NON_NEGATIVE。v2依此新資訊，把0與負數兩個子情境從exploratory改為grounded（有確定expected_result），只保留「留空」這個子情境維持exploratory/assumptions揭露，因為留空目前沒有任何確認依據。v3依獨立Validator
+      FAIL判定修正：v2步驟3寫成「若前端未完全阻擋才檢查API」的被動條件式，但若前端驗證正常運作（步驟2大概率成立），步驟3幾乎不會被執行到，導致「後端回400 COMMON_NON_NEGATIVE」這個v2新增的核心斷言實質上可能從未被驗證過。已改為主動的明確動作：不論前端是否阻擋，都額外使用API測試工具繞過前端直接呼叫API驗證後端行為，並在precondition補充所需的工具/權限，同時補充步驟4的判定標準說明。v4依Oscar
+      2026-09-15補充確認的新資訊修正：留空時前端顯示toast提示「此欄必填」並阻擋送出。三個子情境(0/負數/留空)現皆有確定答案，assumptions欄位清空，title與expected_result同步更新為完全grounded的描述
+history:
+- at: '2026-09-15T12:24:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-018

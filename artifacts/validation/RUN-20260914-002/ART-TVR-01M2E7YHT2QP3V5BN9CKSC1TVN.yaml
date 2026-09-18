@@ -1,0 +1,337 @@
+artifact_id: ART-TVR-01M2E7YHT2QP3V5BN9CKSC1TVN
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-13T20:39:42Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2E75M5QTGBMC777SB57QFJX
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2E75M5QTGBMC777SB57QFJX
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2E75M5QTGBMC777SB57QFJX
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2E75M5P7RW9ZD34NNJRC5K5
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-006
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場次逾時時間
+    evidence: 'Draft acceptance_criteria_ids 僅列 ["AC-SITELIST-0061"]；但 steps 第2步「以站長登入，修改該值為 2 小時並儲存」與 expected_result「站長修改後系統接受並儲存新值」實際驗證的是
+      AC-SITELIST-0062（given: 站長身分／when: 修改場次逾時時間／then: 系統接受修改）。coverage.yaml 中 REQ-SITELIST-006 的 coverage_matrix 也只列出 AC-0061
+      的 draft_ids，AC-0062 完全未出現在矩陣中。'
+    explanation: acceptance_criteria_ids 標記遺漏 AC-SITELIST-0062，導致該 AC 在 Test Design Report 中被靜默視為未覆蓋，且未出現在 uncovered_with_reason
+      清單中說明原因，造成覆蓋率報告失真。
+    recommended_change: 將本 TC 的 acceptance_criteria_ids 補上 "AC-SITELIST-0062"，並同步更新 coverage_matrix，使 REQ-SITELIST-006 的兩條
+      AC 皆有對應 draft_id。
+  - testcase_id: TC-DRAFT-01M2E75M5PPP0FM3NJ0TT4C2MN
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-015
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/模板（切換開通）
+    evidence: 'Draft acceptance_criteria_ids 為 ["AC-SITELIST-0151"]。但 AC-SITELIST-0151 定義為「given: 新建站台／when: 模板留空並送出／then:
+      系統接受建立（狀態為待開通）」——與本 TC 內容無關。本 TC 實際兩步驟「模板為空時切換開通→阻擋」「模板已填時切換開通→成功」，逐字對應 AC-SITELIST-0152（given: 站台狀態非開通，模板為空／when: 切換為開通並儲存／then:
+      系統阻擋儲存，顯示錯誤提示）與 AC-SITELIST-0153（given: 模板已填／then: 系統接受，狀態變更為開通）。'
+    explanation: acceptance_criteria_ids 指向錯誤的 AC，AC-SITELIST-0151 已由另一條 TC（新建站台時模板可留空）覆蓋，本 TC 誤重複掛在同一 AC 上，使 AC-0152、AC-0153
+      在 coverage_matrix 中完全缺席（未被任何 draft_id 覆蓋），但 coverage.yaml 的 uncovered_with_reason 為空，等同於謊報全覆蓋。
+    recommended_change: 將 acceptance_criteria_ids 改為 ["AC-SITELIST-0152", "AC-SITELIST-0153"]，並更新 coverage_matrix 對應。
+  - testcase_id: TC-DRAFT-01M2E75M5P6J7K21886S55M54W
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-016
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限/狀態切換
+    evidence: 'Draft acceptance_criteria_ids 僅列 ["AC-SITELIST-0162"]。expected_result「其他狀態顯示但不可選取；若嘗試送出，系統阻擋儲存」後半句「若嘗試送出，系統阻擋儲存」逐字對應
+      AC-SITELIST-0163（given: 以站長登入／when: 嘗試切換為暫停或關閉以外的狀態／then: 系統阻擋儲存），但未在 acceptance_criteria_ids 中標註。'
+    explanation: AC-SITELIST-0163 因未被任何 TC 標記而在 coverage_matrix 中缺席，屬遺漏標記造成的覆蓋率失真，非真正未測試（本 TC 實際已驗證該行為）。
+    recommended_change: 將 acceptance_criteria_ids 補上 "AC-SITELIST-0163"，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5P36H88P73H5PZK02B
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-017
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態/更新待審
+    evidence: 'Draft acceptance_criteria_ids 為 ["AC-SITELIST-0171"]。AC-SITELIST-0171 定義為「given: 站台狀態為開通／then: 狀態自動變為更新待審」，但本
+      TC 標題與內容為「待開通、暫停或關閉狀態下網域異動不觸發更新待審」，逐字對應 AC-SITELIST-0172（given: 站台狀態為暫停或關閉或待開通／then: 狀態不因網域異動而改變）。'
+    explanation: AC 標記錯誤，使 AC-SITELIST-0172 完全未出現在 coverage_matrix 中（該 requirement 下 draft_ids 全部被歸到 AC-0171），造成覆蓋率報告失真。
+    recommended_change: 將 acceptance_criteria_ids 改為 ["AC-SITELIST-0172"]，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5PH90W5VNR7CQ9MN8Q
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-017
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態/更新待審
+    evidence: 'Draft acceptance_criteria_ids 為 ["AC-SITELIST-0171"]，但本 TC 標題與內容「更新待審狀態下，Admin 可手動切換為其他任意狀態」逐字對應 AC-SITELIST-0173（given:
+      站台狀態為更新待審／when: Admin 手動切換為其他狀態／then: 系統接受），與 AC-0171（開通狀態因網域異動自動轉更新待審）是相反方向的情境。'
+    explanation: AC 標記錯誤，使 AC-SITELIST-0173 完全未出現在 coverage_matrix 中，造成覆蓋率報告失真。
+    recommended_change: 將 acceptance_criteria_ids 改為 ["AC-SITELIST-0173"]，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5PK8BX84XGPGB0FYH6
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-018
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+    evidence: 'Draft acceptance_criteria_ids 為 ["AC-SITELIST-0181"]。AC-SITELIST-0181 定義為「given: 開啟新增站台 Modal／then: 前台與後台網域各預設顯示一個空輸入欄」，與本
+      TC 情境（僅剩最後一列時移除的行為）無關；本 TC 逐字對應 AC-SITELIST-0183（given: 僅剩最後一筆網域列／when: 點擊該列的移除按鈕／then: 輸入欄被清空，但該列本身保留）。'
+    explanation: AC 標記錯誤，使 AC-SITELIST-0183 完全未出現在 coverage_matrix 中，造成覆蓋率報告失真。
+    recommended_change: 將 acceptance_criteria_ids 改為 ["AC-SITELIST-0183"]，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5PK8BX84XGPGB0FYH6
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-SITELIST-018
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+    evidence: 'AC-SITELIST-0182（given: 已有多筆網域列／when: 點擊某一列的移除按鈕／then: 該列被移除，其餘列不變）在 55 條 TC 中查無對應：TC-DRAFT-...PXW05NGYRZW0ZZQSH
+      只測試「新增」多列；本 TC（TC-DRAFT-...PK8BX84XGPGB0FYH6）只測試「僅剩最後一列」情境。沒有任何 TC 驗證「多列中移除中間或非最後一列、其餘列不受影響」的情境。'
+    explanation: AC-SITELIST-0182 屬於真正未被任何 TC 實際執行驗證的情境（非僅標記錯誤），但 coverage.yaml 的 uncovered_with_reason 為空，未揭露此缺口。
+    recommended_change: 新增一條 TC：準備 3 筆以上前台網域列，點擊其中非最後一列的移除按鈕，驗證該列消失且其餘列數值不變，並將其標記為 AC-SITELIST-0182。
+  - testcase_id: TC-DRAFT-01M2E75M5P6C9EKNT3Y25T2P7F
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-022
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台
+    evidence: '本 TC（僅標記 requirement_ids: [REQ-SITELIST-023], acceptance_criteria_ids: [AC-SITELIST-0231]）的 steps 為「取一個線上類型且無子站台的站台」+「刪除並二次確認」，expected_result「站台被刪除，列表查無此站台」，內容同時逐字對應
+      AC-SITELIST-0223（given: 確認彈窗開啟中／when: 二次確認／then: 站台被刪除），但未標記 REQ-SITELIST-022／AC-SITELIST-0223。coverage.yaml 中 REQ-SITELIST-022
+      的 coverage_matrix 只有 AC-0221、AC-0222 有 draft_ids，AC-0223 完全缺席。'
+    explanation: 本 TC 實質上已驗證「二次確認後執行刪除」（AC-0223），但因未跨 requirement 標記，AC-SITELIST-0223 在覆蓋率報告中顯示為未覆蓋，且未見於 uncovered_with_reason。
+    recommended_change: 在本 TC 的 requirement_ids 補上 "REQ-SITELIST-022"，acceptance_criteria_ids 補上 "AC-SITELIST-0223"，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5QG63CD4SC0TX6R0CG
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-SITELIST-024
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/機台主站台可直接經營
+    evidence: Draft steps 僅操作「額度上限」：「機台主站台額度上限為 A，其場館子站台額度上限為 B」「將主站台額度上限改為 A2」，expected_result 卻同時斷言「同理修改子站台不影響主站台」——但 AC-SITELIST-0242
+      明確要求驗證的是「修改機台主站台的場次逾時時間／檢視其場館子站台的場次逾時時間／子站台的值不受影響」，本 TC 全程未操作或檢視「場次逾時時間」欄位。
+    explanation: expected_result 對「場次逾時時間隔離」及「反向（子改主不受影響）」的斷言沒有對應的 steps 實際驅動與檢查點，AC-SITELIST-0242 因此並未被真正執行驗證，僅是文字上的推論延伸。
+    recommended_change: 新增步驟，實際修改機台主站台的「場次逾時時間」，並檢視其場館子站台的場次逾時時間值未受影響（反之亦然），使 steps 與 acceptance_criteria_ids（含 AC-SITELIST-0242）真正對應。
+  - testcase_id: TC-DRAFT-01M2E75M5Q7J5P0TX4X64QDNAC
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-029
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §階層結構與逐層瀏覽
+    evidence: Draft acceptance_criteria_ids 為 ["AC-SITELIST-0291"]。AC-SITELIST-0291 定義為「在根層列表／點擊某站台名稱／進入該站台的子站台列表」，已由另一條 TC（TC-DRAFT-...QB2C8W4QZJ0PH4BZE）覆蓋。本
+      TC 標題與兩個步驟「點擊路徑列中間某節點」「點擊路徑列的『站台列表』」逐字對應 AC-SITELIST-0292 與 AC-SITELIST-0293。
+    explanation: AC 標記錯誤，使 AC-SITELIST-0292、AC-SITELIST-0293 完全未出現在 coverage_matrix 中，造成覆蓋率報告失真。
+    recommended_change: 將 acceptance_criteria_ids 改為 ["AC-SITELIST-0292", "AC-SITELIST-0293"]，並更新 coverage_matrix。
+  - testcase_id: TC-DRAFT-01M2E75M5PTA779WCJ05TG59K3
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-SITELIST-016
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態
+    evidence: expected_result 全文為「系統行為依 spec 對「任意狀態」範圍的認定而定（見假設）」。此為 REQ-SITELIST-016 的 major ambiguity（Admin「任意狀態」是否含「待開通」）,requirements.yaml
+      中列出兩個互斥選項，但本 TC 未指出兩種情境各自應觀察到的具體結果（例如：選項一應可成功切換並看到狀態變為待開通；選項二應被阻擋並顯示錯誤）。
+    explanation: expected_result 沒有提供任何可觀察、可判定通過／失敗的檢查點，執行此 TC 的測試人員無法據以判斷結果是否正確，僅能得知「有爭議」，不符合 TC 應具備明確驗收標準的要求。已正確地以 assumptions
+      標示此為未解決之歧義（未宣稱 PM 已澄清），但缺乏可執行的判定條件。
+    recommended_change: 將 expected_result 改寫為條件式斷言，例如：「若『任意狀態』含待開通（選項一）：系統接受切換，狀態變為待開通；若不含（選項二）：系統阻擋此切換並顯示錯誤提示。實際結果請對照上述兩種情境記錄，並提交
+      Human 確認何者為準」。
+  - testcase_id: TC-DRAFT-01M2E75M5PMMA3SZAZE2PV0NQ4
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-SITELIST-023
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台
+    evidence: expected_result 全文為「系統行為依子站台處理方式而定（見假設）」。requirements.yaml 中 REQ-SITELIST-023 的 ambiguity 列出三種選項（阻擋刪除／串聯刪除／子站台上移），本
+      TC 未針對三種選項分別描述應觀察到的結果。
+    explanation: 與 TC-DRAFT-...PTA779WCJ05TG59K3 同類問題：expected_result 未提供任何可觀察的判定標準，執行者無法判斷通過或失敗，僅得知「未定」。已正確標示為 exploratory
+      並附上未決假設（CLR-SITELIST-008 待回覆），但缺乏可執行的判定條件。
+    recommended_change: 將 expected_result 改寫為條件式斷言，逐一列出三個選項各自對應的可觀察結果（例如：選項一應顯示阻擋提示且站台與子站台皆不變；選項二應該站台與所有子孫站台皆從列表消失；選項三應子站台仍存在但上層站台變更），待
+      CLR-SITELIST-008 回覆後再收斂為單一斷言。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2E75M5PR9HY8BD07Y0ZKTPA
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-SITELIST-020
+    spec_reference: null
+    evidence: steps 第1步「取一個已存在的站台代碼「AB」」未說明此站台代碼從何而來（無對應的建立步驟，test_data 亦為空陣列）。同類寫法（「取一個已建立的...」「取一個已存在的...」）在全份 55 條 TC 中大量出現（如
+      TC-DRAFT-...NBK0Z2MG033PSS94Q、TC-DRAFT-...PJ5H37DECTFTYD34A 等）。
+    explanation: 此類前置條件僅以自然語言描述「已存在」的資料，未具體到可操作（例如：透過哪個既有 TC 建立、或需要哪些 test_data 欄位值），實務執行時測試人員需自行猜測或另外建立，降低可重現性；風險為低，因通常可由測試人員依常理建立，故列為建議而非阻斷項。
+    recommended_change: 為此類 TC 補上明確的 test_data（如指定的 site_code、site_name）或前置步驟（如「若無代碼為 AB 的站台，先建立一個」），或註明可重用某條已執行的 TC 產出的資料。
+  - testcase_id: TC-DRAFT-01M2E75M5PV0PXXVFG4AKVX4K4
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-SITELIST-007
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/日結時間
+    evidence: steps 第2步「至場館日結報表確認分日依此時刻切分（見 SPEC-DAILYREPORT-001 REQ-007）」需要進入另一個尚未在本次驗證範圍內的功能（場館日結報表，屬 SPEC-DAILYREPORT-001）才能完成驗證，本
+      TC 未說明如何進入該報表或該報表目前是否已可用於測試環境。
+    explanation: 此步驟依賴外部/跨規格功能，若 SPEC-DAILYREPORT-001 對應功能尚未就緒，本 TC 第2步將無法執行；風險為低，因 AC-SITELIST-0072 本身即引用該外部規格，此為預期的跨功能相依，但仍建議註記依賴狀態。
+    recommended_change: 在 preconditions 或 test_data 中註明「需場館日結報表功能（SPEC-DAILYREPORT-001）已部署」，並補充報表入口路徑，以利實際執行排程與環境準備。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 29
+    ac_total: 65
+    ac_covered: 53
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2E75M5NX4X03WSKCVDHD8CR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5NBK0Z2MG033PSS94Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5NMBHZKC3XMD2RGCBR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PH9PEBK3S34XB29VX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PHA807XWE5SGK80JR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PBFERMF1F9T3GEVMZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PF0XRA9G84VEV6B7N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PY7YQP9VVKGAGZHYT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P1SXVPN38Y0VY4N3M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P7RW9ZD34NNJRC5K5
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5P93S2WEN35WBRNS9H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PV0PXXVFG4AKVX4K4
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PN4DF3EHVWRDC8QDB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PSC92JFSJBD8DH74M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PF3WXP7TJ7HMKC23S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PJ5H37DECTFTYD34A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PY7A5JZHB3D7V6R1Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PWWEZRYKHWDWG79WJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PH4GJZKA7G04M610P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P7F7DQE1D5QMQFFBT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P9P28ZSEPFJRP6JAJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P4B83VNETE72VG284
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PS52R8SC077RPQPE7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PGC5PB00V18ERK5QM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PPP0FM3NJ0TT4C2MN
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5P9F504PVT5AQ20Q3W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P6J7K21886S55M54W
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PTA779WCJ05TG59K3
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5P6Z4CGF8ZC2TEYRYJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P36H88P73H5PZK02B
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PH90W5VNR7CQ9MN8Q
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PXW05NGYRZW0ZZQSH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PK8BX84XGPGB0FYH6
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PCM11SWKW1BT3JVYR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PVSSDCQ9PHM2M9NFX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PR9HY8BD07Y0ZKTPA
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PXT7H0AHW1958P3EG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5PF6V38Q51FVNMZ2CV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P2PQJ4PR5M2KFAXJ4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P9N1ZRFNSVJDCG8DA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P67H816TZQ9DBXMNQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5P6C9EKNT3Y25T2P7F
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5PMMA3SZAZE2PV0NQ4
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5Q43W0C482W9JRJZSJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QG63CD4SC0TX6R0CG
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2E75M5Q37TSSFPYP6QKAB83
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QA6FH14SA8KMKF1D9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5Q6VEGN6E7DXQYHH1F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QQYQ4AD4MQ35ZK181
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5Q3ST90HX3WX45P505
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QK496HTCKV1AT8FEG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QCF2ZQHJEQSFR8S1V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QP4MDMZ9ZJZ12YAWN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5QB2C8W4QZJ0PH4BZE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2E75M5Q7J5P0TX4X64QDNAC
+    verdict: issue
+history:
+- at: '2026-09-13T20:39:42Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-002

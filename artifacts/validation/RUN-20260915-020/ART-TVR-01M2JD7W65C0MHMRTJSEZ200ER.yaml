@@ -1,0 +1,78 @@
+artifact_id: ART-TVR-01M2JD7W65C0MHMRTJSEZ200ER
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-020
+task_id: T2
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-15T11:29:08Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2JCWATY85722CR4C6TAZFTE
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2JCWATY85722CR4C6TAZFTE
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2JCWATY85722CR4C6TAZFTE
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2JCWATXK0TG654XM0K00MF9
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-MEMBER-003 / AC-MEMBER-004
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.3 KYC驗證階段圖示說明
+      quote: 🟠橘色審核中會員已送出申請，待後台審核
+    evidence: precondition第一條聲稱『可透過後台對該測試帳號的各階段分別執行核准/駁回操作、或部分階段保持未送審來佈置』，但依spec §2.1.5，後台只能執行『通過』或『駁回』，三種方式沒有一種能產生『審核中』——審核中是會員端送出申請、後台尚未處理的狀態
+    explanation: 本次修訂的核心精神是拒絕把未清楚定義的佈置機制籠統寫成『可透過後台執行操作』（已對『已停用』做了此揭露），但同一份precondition中『審核中』的佈置方式存在同一類問題，未被一併處理
+    recommended_change: 在precondition中明確說明審核中的佈置方式，需請會員端實際送出申請或挑選既有帳號，而非籠統歸入後台核准/駁回操作
+  advisories:
+  - testcase_id: TC-DRAFT-01M2JCWATXK0TG654XM0K00MF9
+    issue_type: spec_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.3
+      quote: 已核準
+    evidence: spec原文為『已核準』，requirement.yaml與draft的quote皆引用為『已核准』，此落差源自既有RequirementModel，非本次draft新增
+    explanation: 既有資料落差，非本次修訂造成
+    recommended_change: 建議另行提報RequirementModel修正，非本次TC draft需處理
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2JCWATXK0TG654XM0K00MF9
+    verdict: issue
+history:
+- at: '2026-09-15T11:29:08Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-020

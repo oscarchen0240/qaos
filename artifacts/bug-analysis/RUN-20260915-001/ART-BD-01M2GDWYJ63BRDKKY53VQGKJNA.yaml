@@ -1,0 +1,87 @@
+artifact_id: ART-BD-01M2GDWYJ63BRDKKY53VQGKJNA
+artifact_type: BugDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-001
+task_id: T1
+iteration: 0
+created_by: agent-bug-analyst
+created_at: '2026-09-14T17:02:09Z'
+status: SUPERSEDED
+source:
+  type: Evidence
+  ids: &id001
+  - EVD-0048
+  - EVD-0049
+  - EVD-0051
+  - EVD-0052
+references:
+- entity_type: Requirement
+  id: REQ-UPDATEPACK-001
+- entity_type: Evidence
+  id: EVD-0048
+- entity_type: Evidence
+  id: EVD-0049
+- entity_type: Evidence
+  id: EVD-0051
+- entity_type: Evidence
+  id: EVD-0052
+requires_approval: null
+payload:
+  draft_id: BUG-DRAFT-01M2GDWYHZ84YPCNC6KMZYQBHS
+  title: '[前端/後端][多幣別錢包展開] 帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生，出現不存在/未啟用幣別、漏列已啟用幣別'
+  product: ba-admin
+  functional_area: UPDATEPACK
+  severity_proposed: major
+  priority_proposed: high
+  severity_rationale: 使用者會誤判帳戶實際持有的幣別與餘額（看到不存在的幣別、看不到真正有餘額的幣別），影響客服/對帳判斷；非資料遺失或崩潰，故不到 critical
+  environment:
+    name: stage
+    account: ZZAA00261（管理員）
+  spec_id: SPEC-UPDATEPACK-001
+  spec_version: '0.1'
+  requirement_id: REQ-UPDATEPACK-001
+  acceptance_criteria_ids:
+  - AC-UPDATEPACK-0011
+  - AC-UPDATEPACK-0012
+  preconditions:
+  - 站台 Arcade（機台類型）的鏈上錢包管理 Machine 頁籤僅設定 TWD（New Taiwan Dollar），無 USDT 或任何其他幣別選項
+  - 站台 SpringKyle（線上類型）的鏈上錢包管理 BEP-20 頁籤已啟用 TestToken(TTK) 與 Tether(USDT)，且完全沒有法幣/TWD 頁籤這個選項
+  reproduction_steps:
+  - 以管理員 ZZAA00261 登入後台，站台切換選單切至 Arcade（機台）
+  - 至會員與加盟商 > 會員列表，開啟任一機台帳號，檢視帳戶餘額(主錢包)欄位並展開
+  - 站台切換選單切至 SpringKyle（線上）
+  - 檢視任一會員帳號的帳務資訊，帳戶餘額(主錢包)欄位並展開
+  expected_result: Arcade 帳號的展開清單應只列出鏈上錢包管理實際啟用的幣別（本例應只有 TWD）；SpringKyle 帳號的展開清單應列出實際啟用的 TTK、USDT，不應出現 TWD（該站台的鏈上錢包管理沒有這個選項）
+  expected_result_spec_reference:
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    location: §一、多幣別錢包展開顯示／幣別清單來源
+  actual_result: Arcade 帳號的展開清單多出一列不存在的 USDT $1,000.00；SpringKyle 帳號的展開清單多出一列不存在的 TWD $0.00，且完全漏列已啟用的 TTK，只顯示 USDT $1,033.00
+  actual_result_evidence_map:
+  - claim: Arcade 帳號展開清單顯示 TWD $0.00、USDT $1,000.00
+    evidence_id: EVD-0048
+  - claim: Arcade 鏈上錢包管理 Machine 頁籤只有 TWD，無 USDT 選項
+    evidence_id: EVD-0049
+  - claim: SpringKyle 鏈上錢包管理 BEP-20 頁籤 TTK、USDT 皆啟用，無 TWD 頁籤
+    evidence_id: EVD-0051
+  - claim: SpringKyle 帳號展開清單顯示 USDT $1,033.00、TWD $0.00，未列出 TTK
+    evidence_id: EVD-0052
+  evidence_ids: *id001
+  impact: 使用者（含站長/操作員/客服）可能誤判帳戶實際持有的幣別與餘額；違反 spec 明定「幣別清單須依鏈上錢包管理啟用狀態動態決定、不得寫死」的核心要求，機台與線上站台皆受影響
+  suspected_area: 帳戶餘額展開清單元件（前端或其串接的後端查詢）疑似寫死固定顯示 TWD＋USDT 兩種幣別，未實際依當前站台的鏈上錢包管理啟用狀態動態產生清單
+  ambiguity_suspected: false
+  duplicate_candidates: []
+history:
+- at: '2026-09-14T17:02:14Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-001
+- at: '2026-09-14T17:08:37Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-BD-01M2GE8MB01TCKC6GB3CKCTHF4
+  run_id: RUN-20260915-001

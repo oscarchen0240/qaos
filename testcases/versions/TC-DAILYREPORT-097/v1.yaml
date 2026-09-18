@@ -1,0 +1,81 @@
+title: 機台無進行中場次時，日結時間到達不會憑空產生新場次
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0172
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 尋找一台機台過去某個已經過的營業日，其在該日日結時間點當下沒有任何進行中場次（該機台當天的場次記錄皆已在日結時間之前結束，或當天無任何場次記錄）
+test_data: []
+steps:
+- n: 1
+  action: 查看該機台該營業日日結時間前後的場次記錄列表
+- n: 2
+  action: 確認日結時間點是否額外產生了一筆狀態為『日結結算』的空場次記錄
+expected_result: 該機台在該營業日日結時間點沒有額外產生『日結結算』狀態的場次記錄——沒有進行中場次時，日結不會憑空產生新場次
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §業務規則/場次日結
+  quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-097
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:11Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:11Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

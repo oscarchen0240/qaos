@@ -1,0 +1,88 @@
+title: 操作員略過前端直接呼叫機台交易紀錄查詢 API 指定非自身所屬場館，不得取得該場館資料
+product: ba-admin
+functional_area: PLATFORMRULE
+requirement_ids:
+- REQ-PLATFORMRULE-013
+acceptance_criteria_ids: []
+spec_id: SPEC-PLATFORMRULE-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 站台切換選單已選定一個機台場館站台
+test_data:
+- name: venue_id
+  value: 一個非操作員自身所屬場館的有效場館 ID
+steps:
+- n: 1
+  action: 以操作員身分取得有效憑證（略過前端 UI 限制）
+- n: 2
+  action: 直接呼叫機台交易紀錄查詢 API，查詢參數指定一個非自身所屬場館的場館 ID
+expected_result: 後端不得回傳非自身場館的交易資料——無論是以拒絕回應（4xx）或回傳空結果／已過濾資料，只要不含非自身場館的實際交易內容即視為符合（比照已於 REQ-CASHOUT-025 確認的操作員場館範圍政策：前後端皆已拒絕越權存取）
+expected_result_spec_reference:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  location: §角色與權限
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-PLATFORMRULE-017
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2G4WDH7BT7NG4YJ51VEA8J0
+created_at: '2026-09-14T14:24:39Z'
+updated_at: '2026-09-14T14:28:10Z'
+history:
+- at: '2026-09-14T14:24:39Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2G4SD1SW87QC1ZWXZR901BC
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:24:39Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:24:39Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2G4WDH7BT7NG4YJ51VEA8J0
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:24:39Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:28:10Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0037
+  run_id: RUN-20260914-014
+- at: '2026-09-14T14:28:10Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-014
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0037

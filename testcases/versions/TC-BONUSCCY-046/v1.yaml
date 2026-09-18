@@ -1,0 +1,85 @@
+title: 線上站台存款：存入多少金額，玩家錢包就精確增加多少，幣別與存款當下一致
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-011
+acceptance_criteria_ids:
+- AC-BONUSCCY-017
+spec_id: SPEC-BONUSCCY-003
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 選定一名既有的線上站台會員（自行從環境中選定）。
+- 於 ba-admin 後台查詢該會員目前的錢包餘額與幣別，記錄為存款前基準值。
+test_data: []
+steps:
+- n: 1
+  action: 以該會員身分，透過線上站台實際完成一筆系統存款（非後台人工存款），存入一個可清楚辨識的金額，例如 100 USDT（實際數字可依環境調整，只要能明確辨識即可）。
+- n: 2
+  action: 確認該筆存款於系統顯示為入帳成功。
+- n: 3
+  action: 於 ba-admin 後台重新查詢該會員的錢包餘額與幣別。
+- n: 4
+  action: 於 ba-admin 後台查詢該筆存款的交易/存提記錄明細，記錄其顯示的金額與幣別。
+expected_result: 錢包餘額較存款前增加的金額，恰等於玩家本次實際存入的金額（本例 100），幣別與玩家存款當下所使用的幣別一致（USDT）；存提記錄明細顯示的金額與此一致。不因新拆出的「原始金額」與「核心貨幣金額」兩個欄位而發生算錯或漏算。
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  location: §改了什麼／①存款金額拆成兩個；§這次能測什麼／T2
+  quote: 原始金額｜玩家實際存的錢，玩家看到的幣別｜進錢包、算流水倍數、算手續費／T2 入金金額進錢包正確：存多少就進多少，幣別正確。這是最重要的回歸點
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-BONUSCCY-046
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+created_at: '2026-09-17T17:33:08Z'
+updated_at: '2026-09-17T19:11:34Z'
+history:
+- at: '2026-09-17T17:33:08Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6FS8KT5M4KGSTQT6ZZ9TZ
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-005
+- at: '2026-09-17T19:11:34Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0117
+  run_id: RUN-20260918-005
+  note: rejected

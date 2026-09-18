@@ -1,0 +1,84 @@
+artifact_id: ART-TCD-01M2JH9GHB01XNGZEJ7ZE1D103
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-022
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T12:39:56Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-011
+- entity_type: TestCase
+  id: TC-MEMBER-015
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JH9GHAZKTD39R0PG91ZK46
+    title: 稽核倍數大於1時，提領所需有效投注額依倍數增加而非單純加回存入金額（具體數值驗證）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-011
+    acceptance_criteria_ids:
+    - AC-MEMBER-015
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，進入一名既有會員的詳細資料頁
+    test_data:
+    - name: 人工存入金額
+      value: 100 USDT
+    - name: 稽核倍數
+      value: '3'
+    steps:
+    - n: 1
+      action: 記錄目前帳務資訊區塊「提領所需有效投注額（流水錢包）」數值（設為 X）
+    - n: 2
+      action: 點擊「人工存入」，金額填寫 100 USDT、稽核填寫 3，填妥前後台備注後儲存
+    - n: 3
+      action: 重新整理該會員詳細資料頁，檢視帳務資訊區塊的「提領所需有效投注額」
+    expected_result: 提領所需有效投注額變為 X + (100 × 3) = X + 300，而非單純的 X + 100（存入金額本身），確認稽核倍數確實套用於流水計算
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-015
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-041（已退役），該版本用具體數值(存入100 USDT、稽核3倍、預期X+300)取代Phase
+      2原版「執行人工存入，稽核倍數設為3」「因存入金額乘上稽核倍數而增加」這種抽象描述。抽象描述不利於執行者判定「增加多少才算通過」，具體數值使測試結果可被精確驗證、不留模糊空間。依整合原則(深度優先)採用Phase 3的具體數值版本，同時補上重新整理頁面的驗證步驟以確認資料已持久化
+history:
+- at: '2026-09-15T12:40:00Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-022

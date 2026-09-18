@@ -1,0 +1,2232 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>CASHOUT 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-CASHOUT-001</div>
+      <h1>CASHOUT 測試案例集</h1>
+    </div>
+    <div class="brand-sub">洗分出金核實 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>48</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>47</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>1</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>0</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-CASHOUT-001" class="nav-link"><span class="nav-num">01</span>每一筆已完成的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄</a><a href="#REQ-CASHOUT-002" class="nav-link"><span class="nav-num">02</span>本頁是全平台唯一的核實入口；機台交易紀錄頁只顯示核實狀態，不提供核實或作廢操作</a><a href="#REQ-CASHOUT-003" class="nav-link"><span class="nav-num">03</span>開分與入金不是付錢給玩家的交易，不需核實，不會出現在本頁</a><a href="#REQ-CASHOUT-004" class="nav-link"><span class="nav-num">04</span>本頁本身沒有「交易狀態」欄位或篩選器，只有「核實狀態」；只有交易狀態已達「已完成...</a><a href="#REQ-CASHOUT-005" class="nav-link"><span class="nav-num">05</span>待核實代表交易已完成、現金尚未確認交付；待核實的洗分以醒目色標提示（現金可能未交...</a><a href="#REQ-CASHOUT-006" class="nav-link"><span class="nav-num">06</span>已核實代表現金已交付並完成登記，出金即已兌現；核實當下該筆累計進該機台帳號於會員...</a><a href="#REQ-CASHOUT-007" class="nav-link"><span class="nav-num">07</span>已作廢僅適用於出金：收據經人工作廢，不再兌付；洗分沒有作廢狀態</a><a href="#REQ-CASHOUT-008" class="nav-link"><span class="nav-num">08</span>頁面資料範圍跟隨頁面標題下方的站台切換下拉選單，不提供獨立的場館篩選欄位</a><a href="#REQ-CASHOUT-009" class="nav-link"><span class="nav-num">09</span>機台帳號篩選欄為文字輸入，輸入會員編號查詢，支援以逗號分隔查詢多筆</a><a href="#REQ-CASHOUT-010" class="nav-link"><span class="nav-num">10</span>交易類型篩選為下拉選單，選項含全部、機台洗分、機台出金</a><a href="#REQ-CASHOUT-011" class="nav-link"><span class="nav-num">11</span>訂單編號篩選欄為文字輸入出金收據上印製的編號，是櫃檯兌現時查詢該筆待核實紀錄的主...</a><a href="#REQ-CASHOUT-012" class="nav-link"><span class="nav-num">12</span>核實狀態篩選為下拉選單，選項含全部、待核實、已核實、已作廢</a><a href="#REQ-CASHOUT-013" class="nav-link"><span class="nav-num">13</span>交易時間篩選依交易完成（出金即收據印出）時間篩選；核實時間篩選依執行核實的時間篩...</a><a href="#REQ-CASHOUT-014" class="nav-link"><span class="nav-num">14</span>金額篩選為 min～max 範圍輸入，依實際金額篩選</a><a href="#REQ-CASHOUT-015" class="nav-link"><span class="nav-num">15</span>交易編號欄顯示對應的機台交易編號，可點擊跳至機台交易紀錄頁查看明細</a><a href="#REQ-CASHOUT-016" class="nav-link"><span class="nav-num">16</span>訂單編號欄僅出金交易顯示收據上印製的識別碼，洗分交易此欄顯示橫線</a><a href="#REQ-CASHOUT-017" class="nav-link"><span class="nav-num">17</span>機台帳號欄顯示會員編號，可點擊進入會員詳細資料頁；列表不顯示場館名稱（已由站台切...</a><a href="#REQ-CASHOUT-018" class="nav-link"><span class="nav-num">18</span>實際金額欄顯示實際異動的金額；洗分因門檻計算可能小於店員輸入的金額，付現一律以此...</a><a href="#REQ-CASHOUT-019" class="nav-link"><span class="nav-num">19</span>核實時間欄記錄執行核實的時間（UTC+0），核實人員欄記錄執行核實的後台帳號；待...</a><a href="#REQ-CASHOUT-020" class="nav-link"><span class="nav-num">20</span>操作欄提供核實操作；作廢操作僅出金交易提供</a><a href="#REQ-CASHOUT-021" class="nav-link"><span class="nav-num">21</span>店員當場付現後，依機台帳號或交易時間找到該筆待核實洗分，點擊核實，確認彈窗顯示機...</a><a href="#REQ-CASHOUT-022" class="nav-link"><span class="nav-num">22</span>玩家持收據到櫃檯，於頁面輸入訂單編號查詢（或直接於列表點擊核實），確認彈窗顯示訂...</a><a href="#REQ-CASHOUT-023" class="nav-link"><span class="nav-num">23</span>過渡期（機台暫無印表機）出金核銷時，櫃檯依玩家出示的結算結果畫面照片上的訂單編號...</a><a href="#REQ-CASHOUT-024" class="nav-link"><span class="nav-num">24</span>只有待核實狀態的紀錄可執行核實；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，...</a><a href="#REQ-CASHOUT-025" class="nav-link"><span class="nav-num">25</span>核實操作 Admin、站長、操作員皆可執行；但操作員本身完全不具備切換站台（頁面...</a><a href="#REQ-CASHOUT-026" class="nav-link"><span class="nav-num">26</span>核實結果會回寫機台交易紀錄頁對應交易的核實狀態、核實人員／時間欄位</a><a href="#REQ-CASHOUT-027" class="nav-link"><span class="nav-num">27</span>核實一經確認即無法撤銷，誤按無法回復，僅能透過後台操作紀錄追溯執行人員與時間</a><a href="#REQ-CASHOUT-028" class="nav-link"><span class="nav-num">28</span>作廢操作僅 Admin 與站長可執行，須填寫作廢原因（必填），用於收據遺失、爭議...</a><a href="#REQ-CASHOUT-029" class="nav-link"><span class="nav-num">29</span>作廢操作僅 Admin 與站長可執行，操作員不具備此權限</a><a href="#REQ-CASHOUT-030" class="nav-link"><span class="nav-num">30</span>作廢後不可復原，且分數不會退回機台帳號</a><a href="#REQ-CASHOUT-031" class="nav-link"><span class="nav-num">31</span>場館現金淨收計算只計入已核實的洗分與已核實的出金，待核實的洗分或出金皆不計入（s...</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>CASHOUT 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-CASHOUT-001 底下所有 ACTIVE 狀態的測試案例，共 48 條，涵蓋 31 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 0 條（）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-CASHOUT-001">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-001</span>
+        <h2>每一筆已完成的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-041 洗分或出金交易完成後，本頁自動產生一筆待核實紀錄 req-cashout-001 ac-cashout-0011 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-041</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">洗分或出金交易完成後，本頁自動產生一筆待核實紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>機台送出一筆洗分請求（req-keyout）並完成</span></li><li><span class='step-n'>2</span><span>至本頁檢視是否自動出現對應的待核實紀錄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">自動出現一筆待核實紀錄，對應該筆洗分交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-084 機台出金交易完成後，本頁自動出現一筆對應的待核實紀錄 req-cashout-001 ac-cashout-0011 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-084</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台出金交易完成後，本頁自動出現一筆對應的待核實紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於測試機台完成一筆機台出金（收據印出，或於機台交易紀錄確認一筆出金交易狀態已為『已完成』）</span></li><li><span class='step-n'>2</span><span>進入本頁，檢視是否出現對應該筆交易的紀錄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">本頁自動出現一筆待核實紀錄，其交易編號對應剛完成的出金交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      <span class='spec-quote'>「每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-085 尚未完成（待確認）的洗分交易，系統不會為其建立核實紀錄 req-cashout-001 req-cashout-004 ac-cashout-0011 ac-cashout-0041 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-085</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">尚未完成（待確認）的洗分交易，系統不會為其建立核實紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0011；AC-CASHOUT-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取得（或使一筆）機台洗分交易於機台交易紀錄的交易狀態為『待確認』（尚未完成）</span></li><li><span class='step-n'>2</span><span>進入本頁，以該機台帳號或訂單編號查詢，確認是否有對應紀錄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無此筆紀錄；因為交易尚未完成，系統根本不會為它建立核實狀態紀錄。不可憑本頁無紀錄直接判斷交易狀態，須至機台交易紀錄查明實際狀態後再決定是否付款</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§紀錄產生規則</span>
+      <span class='spec-quote'>「僅交易狀態為「已完成」的機台洗分與機台出金會出現在本頁；待確認、已取消、已逾時、未成立的交易不會出現」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-002">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-002</span>
+        <h2>本頁是全平台唯一的核實入口；機台交易紀錄頁只顯示核實狀態，不提供核實或作廢操作</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-042 機台交易紀錄頁不提供核實或作廢操作，須至本頁執行 req-cashout-002 ac-cashout-0021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-042</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台交易紀錄頁不提供核實或作廢操作，須至本頁執行</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>至機台交易紀錄頁，檢視一筆待核實交易的核實狀態欄與可用操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該頁只顯示核實狀態，不提供核實或作廢操作；須至本頁（洗分出金核實）執行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-003">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-003</span>
+        <h2>開分與入金不是付錢給玩家的交易，不需核實，不會出現在本頁</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-043 開分與入金交易不會出現在本頁 req-cashout-003 ac-cashout-0031 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-043</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">開分與入金交易不會出現在本頁</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台內有已完成的機台開分與機台入金交易</span></li><li><span class='step-n'>2</span><span>查詢本頁列表，不篩選任何條件</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無任何開分或入金紀錄，本頁僅列出洗分與出金</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§紀錄產生規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-004">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-004</span>
+        <h2>本頁本身沒有「交易狀態」欄位或篩選器，只有「核實狀態」；只有交易狀態已達「已完成...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-044 尚未完成的洗分交易本身沒有核實狀態，不會出現在本頁 req-cashout-004 ac-cashout-0041 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-044</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">尚未完成的洗分交易本身沒有核實狀態，不會出現在本頁</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台洗分交易於機台交易紀錄查得的交易狀態為待確認（尚未完成）</span></li><li><span class='step-n'>2</span><span>查詢本頁（本頁沒有交易狀態欄位或篩選器，只有核實狀態）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無此筆紀錄，因為該筆交易尚未完成、系統根本不會為它建立核實狀態紀錄；不可憑本頁無紀錄直接判斷交易已完成，須至機台交易紀錄查明實際的交易狀態</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§紀錄產生規則</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-045 未成立的出金交易同樣沒有核實狀態，不會出現在本頁 req-cashout-004 ac-cashout-0042 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-045</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">未成立的出金交易同樣沒有核實狀態，不會出現在本頁</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0042</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台出金交易於機台交易紀錄查得的交易狀態為未成立</span></li><li><span class='step-n'>2</span><span>查詢本頁</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無此筆紀錄，因為未成立的交易不會有核實狀態</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§紀錄產生規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-005">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-005</span>
+        <h2>待核實代表交易已完成、現金尚未確認交付；待核實的洗分以醒目色標提示（現金可能未交...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-046 待核實的洗分以醒目色標提示 req-cashout-005 ac-cashout-0051 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-046</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">待核實的洗分以醒目色標提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0051</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台洗分交易處於待核實狀態</span></li><li><span class='step-n'>2</span><span>檢視其於列表中的呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">以醒目色標提示，提醒現金可能尚未交付或現場漏登記</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§核實狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-047 待核實的出金正常顯示，不特別醒目提示 req-cashout-005 ac-cashout-0052 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-047</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">待核實的出金正常顯示，不特別醒目提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0052</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台出金交易處於待核實狀態</span></li><li><span class='step-n'>2</span><span>檢視其於列表中的呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">正常顯示藍色核實狀態標記，不做醒目提示（收據不設兌現時效，屬正常情況）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§核實狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-091 轉為已核實後，原本的醒目色標提示消失，改以已核實的一般樣式顯示 req-cashout-005 ac-cashout-0051 high high" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-091</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">轉為已核實後，原本的醒目色標提示消失，改以已核實的一般樣式顯示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0051</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取得一筆原本核實狀態為『待核實』且以醒目色標顯示的洗分交易</span></li><li><span class='step-n'>2</span><span>對其執行核實（見 REQ-CASHOUT-021 核實流程）</span></li><li><span class='step-n'>3</span><span>核實完成後再次檢視該筆紀錄的呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不再顯示待核實的醒目提示樣式，改為已核實狀態對應的綠色一般樣式；醒目提示只在『待核實』這個狀態下出現</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>『核實完成後醒目提示消失』是從核實狀態表『待核實』與『已核實』兩列各自獨立的顏色/說明欄結構推斷而來（已核實列僅寫『現金已交付並完成登記』，未逐字明講『不再有醒目提示』），非spec.md逐字條文；此推斷本身合理（醒目提示的定義只掛在待核實列），但仍建議與前端實作/PM確認後再視為確定規則，避免結構性審查誤把它當成有明確條文依據的規則</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§核實狀態</span>
+      <span class='spec-quote'>「待核實 | 藍色 | ...待核實的洗分以醒目色標提示... ｜ 已核實 | 綠色 | 現金已交付並完成登記」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-006">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-006</span>
+        <h2>已核實代表現金已交付並完成登記，出金即已兌現；核實當下該筆累計進該機台帳號於會員...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-048 核實當下累計該機台帳號的提款次數與提款金額 req-cashout-006 ac-cashout-0061 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-048</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實當下累計該機台帳號的提款次數與提款金額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0061</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆待核實的洗分交易，核實前先記錄該機台帳號會員列表的提款次數與提款金額</span></li><li><span class='step-n'>2</span><span>執行核實</span></li><li><span class='step-n'>3</span><span>核實完成當下再次檢視提款次數與提款金額</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">提款次數 +1；提款金額以站台核心貨幣原值累計此筆實際金額，不換算 USDT</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§核實狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-093 待核實與已作廢的紀錄不計入提款次數與提款金額 req-cashout-006 ac-cashout-0061 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-093</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">待核實與已作廢的紀錄不計入提款次數與提款金額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0061</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取得一筆仍為『待核實』的機台洗分交易，記錄該機台帳號當前的提款次數與提款金額</span></li><li><span class='step-n'>2</span><span>確認未對其執行核實，再次檢視該機台帳號的提款次數與提款金額</span></li><li><span class='step-n'>3</span><span>另取得一筆『已作廢』的機台出金交易，同樣確認其對應機台帳號的提款次數與提款金額未因該筆作廢紀錄而變動</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">待核實與已作廢的紀錄皆不計入提款次數與提款金額，只有『已核實』狀態的紀錄才會在核實當下被計入</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      <span class='spec-quote'>「並於核實當下把該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」（金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計）」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-007">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-007</span>
+        <h2>已作廢僅適用於出金：收據經人工作廢，不再兌付；洗分沒有作廢狀態</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-049 洗分交易的核實狀態不會出現已作廢 req-cashout-007 ac-cashout-0071 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-049</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">洗分交易的核實狀態不會出現已作廢</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0071</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視任一筆機台洗分交易在篩選器與列表中可能出現的核實狀態值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">只會是待核實或已核實兩種，不會出現已作廢（已作廢僅出金適用）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§核實狀態</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-008">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-008</span>
+        <h2>頁面資料範圍跟隨頁面標題下方的站台切換下拉選單，不提供獨立的場館篩選欄位</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-050 頁面資料範圍跟隨站台切換選單，不提供場館篩選欄位 req-cashout-008 ac-cashout-0081 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-050</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">頁面資料範圍跟隨站台切換選單，不提供場館篩選欄位</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0081</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>頁面標題下方的站台切換選單切至站台 A</span></li><li><span class='step-n'>2</span><span>檢視篩選器所有欄位</span></li><li><span class='step-n'>3</span><span>檢視查詢結果範圍</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">篩選器不存在「場館」欄位；查詢結果僅限站台 A 範圍內的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-009">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-009</span>
+        <h2>機台帳號篩選欄為文字輸入，輸入會員編號查詢，支援以逗號分隔查詢多筆</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-051 機台帳號篩選支援以逗號分隔查詢多筆會員編號 req-cashout-009 ac-cashout-0091 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-051</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台帳號篩選支援以逗號分隔查詢多筆會員編號</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0091</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>機台帳號篩選欄輸入兩個機台帳號的會員編號，以「,」分隔</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果同時包含這兩個機台帳號的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-010">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-010</span>
+        <h2>交易類型篩選為下拉選單，選項含全部、機台洗分、機台出金</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-052 交易類型篩選下拉選單含全部、機台洗分、機台出金 req-cashout-010 ac-cashout-0101 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-052</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易類型篩選下拉選單含全部、機台洗分、機台出金</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0101</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>開啟交易類型篩選下拉選單</span></li><li><span class='step-n'>2</span><span>檢視所有可選項</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">包含「全部」「機台洗分」「機台出金」共三個選項</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-053 篩選交易類型可正確窄化查詢結果 req-cashout-010 ac-cashout-0102 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-053</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">篩選交易類型可正確窄化查詢結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0102</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選交易類型為「機台出金」並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果僅顯示機台出金類型的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-011">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-011</span>
+        <h2>訂單編號篩選欄為文字輸入出金收據上印製的編號，是櫃檯兌現時查詢該筆待核實紀錄的主...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-054 訂單編號篩選可查出待核銷的出金紀錄 req-cashout-011 ac-cashout-0111 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-054</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">訂單編號篩選可查出待核銷的出金紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0111</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>輸入一筆出金收據上的訂單編號</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果顯示該筆出金紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-055 輸入不存在或錯誤的訂單編號查詢，結果為空且前端顯示失敗提示 req-cashout-011 req-cashout-022  high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-055</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">輸入不存在或錯誤的訂單編號查詢，結果為空且前端顯示失敗提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>訂單編號篩選欄輸入一個不存在、或與任何收據皆不相符的編號</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果為空，不會誤配到其他筆紀錄；前端顯示失敗提示：「失敗：查無此訂單編號，請先到「機台交易記錄」查明交易狀態，不要憑印象付款」（已由 Oscar 2026-09-14 依實際畫面截圖確認文案）。本輸入框也是核實（出金）流程第一步用來定位待核銷紀錄的同一個查詢欄位，見 REQ-CASHOUT-022</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-100 輸入不存在的訂單編號查詢，結果為空且不誤配到其他紀錄 req-cashout-011 ac-cashout-0111 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-100</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">輸入不存在的訂單編號查詢，結果為空且不誤配到其他紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0111</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於訂單編號篩選欄輸入一個不對應任何既有收據的編號（例如隨機組合一組不存在的短碼）</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果為空，不會誤配到任何其他筆紀錄；依 REQ-CASHOUT-011 的需求陳述，前端應顯示查無資料的失敗提示（本 TC 未取得提示文案的原文依據，僅驗證有提示且結果為空，實際文案請依執行當下畫面核對）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      <span class='spec-quote'>「訂單編號 | 文字輸入 | 出金收據上印製的編號，為櫃檯兌現時的主要查詢方式」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-012">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-012</span>
+        <h2>核實狀態篩選為下拉選單，選項含全部、待核實、已核實、已作廢</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-056 核實狀態篩選可正確窄化查詢結果 req-cashout-012 ac-cashout-0121 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-056</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實狀態篩選可正確窄化查詢結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0121</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選核實狀態為「待核實」並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果僅顯示核實狀態為待核實的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-013">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-013</span>
+        <h2>交易時間篩選依交易完成（出金即收據印出）時間篩選；核實時間篩選依執行核實的時間篩...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-057 交易時間與核實時間範圍篩選皆能正確窄化結果 req-cashout-013 ac-cashout-0131 ac-cashout-0132 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-057</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易時間與核實時間範圍篩選皆能正確窄化結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0131；AC-CASHOUT-0132</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>設定交易時間範圍並搜尋，檢視結果</span></li><li><span class='step-n'>2</span><span>清除後改設定核實時間範圍並搜尋，檢視結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩者皆僅顯示落在所設定範圍內的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-014">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-014</span>
+        <h2>金額篩選為 min～max 範圍輸入，依實際金額篩選</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-058 金額範圍篩選可正確窄化查詢結果 req-cashout-014 ac-cashout-0141 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-058</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">金額範圍篩選可正確窄化查詢結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0141</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>設定金額範圍（min～max）並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">僅顯示實際金額落在範圍內的紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-015">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-015</span>
+        <h2>交易編號欄顯示對應的機台交易編號，可點擊跳至機台交易紀錄頁查看明細</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-059 點擊交易編號可跳轉至機台交易紀錄查看明細 req-cashout-015 ac-cashout-0151 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-059</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">點擊交易編號可跳轉至機台交易紀錄查看明細</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0151</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊列表中任一筆紀錄的交易編號</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">導向機台交易紀錄頁，並顯示該筆交易的明細</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-016">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-016</span>
+        <h2>訂單編號欄僅出金交易顯示收據上印製的識別碼，洗分交易此欄顯示橫線</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-060 訂單編號欄僅出金顯示收據識別碼，洗分顯示橫線 req-cashout-016 ac-cashout-0161 ac-cashout-0162 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-060</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">訂單編號欄僅出金顯示收據識別碼，洗分顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0161；AC-CASHOUT-0162</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆機台出金紀錄的訂單編號欄</span></li><li><span class='step-n'>2</span><span>檢視一筆機台洗分紀錄的訂單編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">出金顯示收據上印製的識別碼；洗分顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-017">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-017</span>
+        <h2>機台帳號欄顯示會員編號，可點擊進入會員詳細資料頁；列表不顯示場館名稱（已由站台切...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-061 機台帳號欄可跳轉會員詳細頁，列表不顯示場館名稱 req-cashout-017 ac-cashout-0171 ac-cashout-0172 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-061</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台帳號欄可跳轉會員詳細頁，列表不顯示場館名稱</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0171；AC-CASHOUT-0172</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊一筆紀錄的機台帳號欄位值，檢視結果</span></li><li><span class='step-n'>2</span><span>檢視列表所有欄位，確認是否顯示場館名稱</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步導向該機台帳號的會員詳細資料頁；第二步不存在場館名稱欄位或顯示</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-018">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-018</span>
+        <h2>實際金額欄顯示實際異動的金額；洗分因門檻計算可能小於店員輸入的金額，付現一律以此...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-062 洗分因門檻計算，實際金額小於店員輸入金額時以實際金額欄為準付現 req-cashout-018 ac-cashout-0181 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-062</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">洗分因門檻計算，實際金額小於店員輸入金額時以實際金額欄為準付現</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0181</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆洗分交易因門檻計算，實際扣款金額小於店員操作機台時輸入的金額</span></li><li><span class='step-n'>2</span><span>檢視本頁該筆紀錄的實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示門檻計算後的實際金額（較小值）；核實流程應以此欄金額為準付現，而非店員原輸入的金額</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-063 出金交易的實際金額欄即收據面額 req-cashout-018 ac-cashout-0182 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-063</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">出金交易的實際金額欄即收據面額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0182</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台出金交易</span></li><li><span class='step-n'>2</span><span>檢視本頁該筆紀錄的實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示與收據面額一致的金額</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-110 實際金額欄在金額趨近於 0 的邊界情況下仍正確顯示數值，不會空白或顯示異常 req-cashout-018 ac-cashout-0181 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-110</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">實際金額欄在金額趨近於 0 的邊界情況下仍正確顯示數值，不會空白或顯示異常</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0181</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入後台</li><li>頁面標題下方的站台切換選單已切換至一個既有的測試站台</li><li>進入 帳務管理 &gt; 洗分出金核實</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取得（或借用）一筆洗分交易，其門檻計算後的實際金額非常接近 0（但大於 0）</span></li><li><span class='step-n'>2</span><span>於本頁檢視該筆紀錄的實際金額欄呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">正確顯示該筆極小的實際金額數值，不會顯示空白、負數或明顯錯誤的格式，欄位呈現規則與一般金額一致</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      <span class='spec-quote'>「實際金額 | 實際異動的金額」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-019">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-019</span>
+        <h2>核實時間欄記錄執行核實的時間（UTC+0），核實人員欄記錄執行核實的後台帳號；待...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-064 核實時間與核實人員欄，待核實時皆顯示橫線 req-cashout-019 ac-cashout-0191 ac-cashout-0192 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-064</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實時間與核實人員欄，待核實時皆顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0191；AC-CASHOUT-0192</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆已核實紀錄的核實時間與核實人員欄</span></li><li><span class='step-n'>2</span><span>檢視一筆待核實紀錄的核實時間與核實人員欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">已核實：顯示執行核實的時間（UTC+0）與後台帳號；待核實：兩欄皆顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-020">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-020</span>
+        <h2>操作欄提供核實操作；作廢操作僅出金交易提供</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-065 操作欄依交易類型提供不同操作：出金有核實與作廢，洗分僅核實 req-cashout-020 ac-cashout-0201 ac-cashout-0202 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-065</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作欄依交易類型提供不同操作：出金有核實與作廢，洗分僅核實</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0201；AC-CASHOUT-0202</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆待核實出金紀錄的操作欄，確認可用操作</span></li><li><span class='step-n'>2</span><span>檢視一筆待核實洗分紀錄的操作欄，確認可用操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">出金：提供核實與作廢兩個操作；洗分：僅提供核實操作，不提供作廢</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-021">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-021</span>
+        <h2>店員當場付現後，依機台帳號或交易時間找到該筆待核實洗分，點擊核實，確認彈窗顯示機...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-066 核實（洗分）三步驟流程：確認彈窗核對無誤後標記已核實 req-cashout-021 ac-cashout-0211 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-066</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實（洗分）三步驟流程：確認彈窗核對無誤後標記已核實</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0211</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>店員已對一筆待核實洗分當場付現，依機台帳號或交易時間找到該筆紀錄，點擊「核實」</span></li><li><span class='step-n'>2</span><span>確認彈窗核對機台帳號、實際金額、交易時間皆無誤</span></li><li><span class='step-n'>3</span><span>點擊確認（此動作不可撤銷，見 REQ-CASHOUT-027）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統將該筆標記為「已核實」，並記錄核實人員與時間</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/核實（洗分）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-067 核實（洗分）確認彈窗內容與實際交易不符時，操作員應取消而不點擊確認，紀錄維持待核實 req-cashout-021  medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-067</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實（洗分）確認彈窗內容與實際交易不符時，操作員應取消而不點擊確認，紀錄維持待核實</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>店員找到一筆待核實洗分，點擊「核實」開啟確認彈窗</span></li><li><span class='step-n'>2</span><span>發現彈窗顯示的機台帳號或金額與現場實際情況不符（如誤點了另一筆紀錄）</span></li><li><span class='step-n'>3</span><span>不點擊確認，改為關閉彈窗或點擊取消</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該筆紀錄維持待核實狀態，未被標記為已核實，避免核對有誤仍誤觸不可撤銷的核實動作</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/核實（洗分）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-022">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-022</span>
+        <h2>玩家持收據到櫃檯，於頁面輸入訂單編號查詢（或直接於列表點擊核實），確認彈窗顯示訂...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-068 核實（出金）流程：輸入訂單編號查詢、核對彈窗內容後標記已核實 req-cashout-022 ac-cashout-0221 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-068</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實（出金）流程：輸入訂單編號查詢、核對彈窗內容後標記已核實</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0221</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家持收據到櫃檯，於頁面上方輸入收據上的訂單編號查詢，定位到該筆待核實出金</span></li><li><span class='step-n'>2</span><span>確認彈窗核對訂單編號、機台帳號、金額、收據印出時間皆無誤</span></li><li><span class='step-n'>3</span><span>點擊確認（此動作不可撤銷，見 REQ-CASHOUT-027）</span></li><li><span class='step-n'>4</span><span>櫃檯付現金給玩家</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統將該筆標記為「已核實」，並記錄核實人員與時間</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/核實（出金＝核銷收據）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-023">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-023</span>
+        <h2>過渡期（機台暫無印表機）出金核銷時，櫃檯依玩家出示的結算結果畫面照片上的訂單編號...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-069 過渡期出金依結算結果畫面照片上的訂單編號核銷，流程與狀態不變 req-cashout-023 ac-cashout-0231 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-069</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">過渡期出金依結算結果畫面照片上的訂單編號核銷，流程與狀態不變</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0231</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>機台暫無印表機（過渡期現況），玩家出示前台結算結果畫面照片（無實體收據）</span></li><li><span class='step-n'>2</span><span>櫃檯依照片上的訂單編號查詢並執行核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">核實流程與狀態與有實體收據時完全相同，系統不因過渡期而有不同行為</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-024">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-024</span>
+        <h2>只有待核實狀態的紀錄可執行核實；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-070 對已核實的紀錄再次執行核實，系統阻擋並提示 req-cashout-024 ac-cashout-0241 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-070</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">對已核實的紀錄再次執行核實，系統阻擋並提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0241</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取一筆狀態為已核實的紀錄</span></li><li><span class='step-n'>2</span><span>嘗試再次對其執行核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統阻擋此操作並提示，避免重複付款</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-071 對已作廢的紀錄嘗試核實，系統阻擋並提示 req-cashout-024 ac-cashout-0242 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-071</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">對已作廢的紀錄嘗試核實，系統阻擋並提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0242</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取一筆狀態為已作廢的出金紀錄</span></li><li><span class='step-n'>2</span><span>嘗試對其執行核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統阻擋此操作並提示</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-025">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-025</span>
+        <h2>核實操作 Admin、站長、操作員皆可執行；但操作員本身完全不具備切換站台（頁面...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-072 操作員的站台切換選單不提供切換至其他場館的入口，僅能核實自身場館紀錄 req-cashout-025 ac-cashout-0251 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-072</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員的站台切換選單不提供切換至其他場館的入口，僅能核實自身場館紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0251</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台，進入本頁</span></li><li><span class='step-n'>2</span><span>檢視頁面標題下方的站台切換選單</span></li><li><span class='step-n'>3</span><span>取一筆自身所屬場館內的待核實紀錄，執行核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">站台切換選單不提供切換至其他場館的入口（前端已限制，操作員從一開始就無法檢視其他場館的資料）；對自身場館內的紀錄可正常執行核實</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-073 操作員略過前端直接呼叫核實 api 指定非自身場館的紀錄，後端拒絕 req-cashout-025 ac-cashout-0252 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-073</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員略過前端直接呼叫核實 API 指定非自身場館的紀錄，後端拒絕</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0252</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分取得有效憑證（略過前端 UI 限制）</span></li><li><span class='step-n'>2</span><span>直接呼叫核實 API，帶入一筆非自身所屬場館的待核實紀錄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">後端拒絕該請求，該筆紀錄狀態不受影響</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-074 操作員嘗試透過非常規路徑（如頁面深連結／直接帶入紀錄相關網址）接觸非自身場館的紀錄，仍應被阻擋 req-cashout-025  medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-074</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員嘗試透過非常規路徑（如頁面深連結／直接帶入紀錄相關網址）接觸非自身場館的紀錄，仍應被阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>嘗試不透過站台切換選單，而是直接以網址或深連結方式開啟本頁並帶入非自身場館的參數（例如仿造其他頁面的交易編號跳轉連結）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統仍拒絕顯示或操作非自身場館的資料，站台範圍限制不因繞過選單而失效（與 UI 選單限制、後端 API 限制互為防禦深度佐證）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-026">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-026</span>
+        <h2>核實結果會回寫機台交易紀錄頁對應交易的核實狀態、核實人員／時間欄位</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-075 核實結果正確回寫機台交易紀錄的核實狀態與核實人員/時間欄位 req-cashout-026 ac-cashout-0261 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-075</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實結果正確回寫機台交易紀錄的核實狀態與核實人員/時間欄位</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0261</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆洗分交易於本頁被執行核實</span></li><li><span class='step-n'>2</span><span>至機台交易紀錄頁檢視該筆交易的核實狀態與核實人員/時間欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示已核實，核實人員與時間與本頁執行核實時記錄的一致</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-027">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-027</span>
+        <h2>核實一經確認即無法撤銷，誤按無法回復，僅能透過後台操作紀錄追溯執行人員與時間</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-076 已核實的紀錄不提供撤銷核實的操作 req-cashout-027 ac-cashout-0271 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-076</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">已核實的紀錄不提供撤銷核實的操作</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0271</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>取一筆已核實的紀錄</span></li><li><span class='step-n'>2</span><span>尋找撤銷核實或回復為待核實的操作入口</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統不提供任何撤銷核實的功能；僅能透過後台操作紀錄查得執行人員與時間</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-028">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-028</span>
+        <h2>作廢操作僅 Admin 與站長可執行，須填寫作廢原因（必填），用於收據遺失、爭議...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-077 站長對出金執行作廢並填寫原因，系統接受並標記已作廢 req-cashout-028 ac-cashout-0281 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-077</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">站長對出金執行作廢並填寫原因，系統接受並標記已作廢</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0281</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以站長身分登入後台</span></li><li><span class='step-n'>2</span><span>取一筆待核實出金紀錄，點擊作廢，填寫作廢原因（如「收據遺失」）</span></li><li><span class='step-n'>3</span><span>送出</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統接受，該筆標記為已作廢</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/作廢（僅出金）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-078 作廢時未填寫原因會被系統阻擋 req-cashout-028 ac-cashout-0282 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-078</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">作廢時未填寫原因會被系統阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0282</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以站長身分，取一筆待核實出金紀錄，點擊作廢</span></li><li><span class='step-n'>2</span><span>不填寫作廢原因，直接嘗試送出</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統阻擋，提示作廢原因為必填欄位</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/作廢（僅出金）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-029">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-029</span>
+        <h2>作廢操作僅 Admin 與站長可執行，操作員不具備此權限</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-079 操作員不具備作廢權限 req-cashout-029 ac-cashout-0291 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-079</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員不具備作廢權限</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0291</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>檢視一筆待核實出金紀錄，尋找或嘗試執行作廢操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員不具備作廢權限，找不到作廢入口或執行時被系統阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/作廢（僅出金）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-030">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-030</span>
+        <h2>作廢後不可復原，且分數不會退回機台帳號</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-080 出金紀錄被作廢後分數不退回機台，且無法復原 req-cashout-030 ac-cashout-0301 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-080</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">出金紀錄被作廢後分數不退回機台，且無法復原</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0301</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>使用測試站台專用、金額最小化、且已排除出正式日結報表統計的一筆待核實出金紀錄，記錄其對應機台帳號當下的分數</span></li><li><span class='step-n'>2</span><span>對該筆執行作廢（不可逆操作，執行前先確認此為測試資料）</span></li><li><span class='step-n'>3</span><span>再次檢視該機台帳號的分數，並嘗試尋找復原作廢的操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">分數不會退回機台帳號（維持作廢前的餘額，不因作廢而增加）；系統不提供復原作廢的功能</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作/作廢（僅出金）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-CASHOUT-031">
+      <div class="req-head">
+        <span class="req-id">REQ-CASHOUT-031</span>
+        <h2>場館現金淨收計算只計入已核實的洗分與已核實的出金，待核實的洗分或出金皆不計入（s...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-cashout-081 現金淨收計算僅在洗分核實後才計入扣除項 req-cashout-031 ac-cashout-0311 ac-cashout-0312 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-081</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">現金淨收計算僅在洗分核實後才計入扣除項</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0311；AC-CASHOUT-0312</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆洗分交易處於待核實狀態，檢視場館現金淨收計算</span></li><li><span class='step-n'>2</span><span>對該筆執行核實後，再次檢視場館現金淨收計算</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">核實前：此筆待核實洗分不計入現金淨收扣除項；核實後：此筆已核實洗分計入現金淨收扣除項</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§相關業務規則</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-cashout-082 現金淨收計算的核實規則出金比照洗分辦理，僅在出金核實後才計入扣除項 req-cashout-031 ac-cashout-0311 ac-cashout-0312 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHOUT-082</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">現金淨收計算的核實規則出金比照洗分辦理，僅在出金核實後才計入扣除項</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-CASHOUT-0311；AC-CASHOUT-0312</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 帳務管理 &gt; 洗分出金核實，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆出金交易處於待核實狀態，檢視場館現金淨收計算</span></li><li><span class='step-n'>2</span><span>對該筆執行核實（核銷）後，再次檢視場館現金淨收計算</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">核實前：此筆待核實出金不計入現金淨收扣除項；核實後：此筆已核實出金計入現金淨收扣除項（spec.md 原文只提洗分，已由 Oscar 2026-09-14 確認出金比照辦理）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§相關業務規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

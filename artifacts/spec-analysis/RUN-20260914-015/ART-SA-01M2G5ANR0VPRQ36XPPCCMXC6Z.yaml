@@ -1,0 +1,61 @@
+artifact_id: ART-SA-01M2G5ANR0VPRQ36XPPCCMXC6Z
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-015
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T14:32:22Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-UPDATEPACK-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-UPDATEPACK-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-UPDATEPACK-001
+  spec_version: '0.1'
+  content_hash: 0bd65a8237e741fc65903388e5e7f8e90dc99efb28527b2e5b3616080e5d0daa
+  summary: 機台功能更新包（開發包⑦）：六包發出之後才定案的規格集合，涵蓋多幣別錢包展開顯示、存款/提款累計欄位、機台憑證 JWT、場館設定洗分門檻、交易紀錄場次編號與餘額不足、場館日結報表場次數與計價幣別、入金額度上限預留共七節。逐節比對後：機台憑證
+    JWT（SPEC-ACCOUNT-001）、場館設定洗分門檻（SPEC-SITELIST-001 + SPEC-CASHFLOW-001）、場館日結報表場次數與計價（SPEC-DAILYREPORT-001）、入金額度上限預留機制（SPEC-CASHFLOW-001）四節內容與既有已核准
+    spec 逐字相同，本次刻意不重複測試。只測三個真正未被覆蓋的範圍：①多幣別錢包展開顯示（全新一般性功能，過去只測過機台帳號 TWD 單一幣別的特例）②人工入金/出金不計入存提款欄位（明確勘誤，過去未獨立測試）③注單查詢頁的場次編號規則（過去只測過交易紀錄查詢頁）。
+  scope:
+    in_scope:
+    - 多幣別錢包展開顯示的完整規則（幣別清單來源、展開條件、收合顯示值、排列順序、0 元仍列出、展開狀態不保留、篩選器與總計不拆分）
+    - 人工入金/出金不計入存款提款欄位的勘誤
+    - 注單查詢頁的場次編號欄位規則
+    out_of_scope:
+    - 已由 SPEC-ACCOUNT-001 驗證的機台憑證 JWT 完整規則（產生/重置/遮罩/唯一性/不設期限）
+    - 已由 SPEC-SITELIST-001 驗證的場館設定無洗分門檻欄位
+    - 已由 SPEC-CASHFLOW-001 驗證的洗分門檻計算規則本身（throshold 捨去、餘數留存、規格外值拒絕）與出金不套門檻
+    - 已由 SPEC-DAILYREPORT-001 驗證的場館日結報表場次數兩種算法與核心貨幣計價
+    - 已由 SPEC-CASHFLOW-001 驗證的入金額度上限判定與預留/釋放機制（req-cashin 場館鎖序列化、三種釋放路徑）
+    - 已由 SPEC-CASHFLOW-001 + SPEC-TXLOG-001 驗證的餘額不足不寫入交易紀錄
+    - 已由 SPEC-ACCOUNT-001 REQ-028 驗證的機台四種金流存提款計入時點本身（開分/入金/洗分/出金各自的計入規則與時點）
+    - 已由 SPEC-ACCOUNT-001 REQ-030 驗證的機台帳號僅 TWD 單一幣別、不顯示展開箭頭的特例
+  requirement_ids:
+  - REQ-UPDATEPACK-001
+  - REQ-UPDATEPACK-002
+  - REQ-UPDATEPACK-003
+  - REQ-UPDATEPACK-004
+  - REQ-UPDATEPACK-005
+  - REQ-UPDATEPACK-006
+  - REQ-UPDATEPACK-007
+  - REQ-UPDATEPACK-008
+  - REQ-UPDATEPACK-009
+  ambiguities: []
+  constraints: []
+  edge_case_candidates: []
+  open_questions: []
+history:
+- at: '2026-09-14T14:32:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-015

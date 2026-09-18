@@ -1,0 +1,90 @@
+title: 場次超過逾時時間無交易與遊玩自動結束為逾時結束；期間任何交易或注單重新起算計時
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-037
+acceptance_criteria_ids:
+- AC-CASHFLOW-0371
+- AC-CASHFLOW-0372
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+- boundary
+design_techniques:
+- state_transition
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 以 Admin 登入 站台列表，將該場館的場次逾時時間調整為便於測試觀察的短值（例如 2 分鐘；實際可設定範圍依 站台列表_spec_v04.md 定義）
+- n: 2
+  action: 佈置一個進行中場次，在逾時時間即將到達前呼叫一筆開分（重新觸發計時起算）
+- n: 3
+  action: 確認場次未因此結束，逾時計時已重新起算
+- n: 4
+  action: 之後不再產生任何交易或注單，等待重新起算後的逾時時間到達
+- n: 5
+  action: 查詢場次狀態
+expected_result: 逾時時間內若有任何交易或注單，計時重新起算、場次不因此結束；之後若確實無任何交易與遊玩超過逾時時間，場次自動結束並標記為「逾時結束」
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §場次/場次如何開始與結束 + §業務規則-場次逾時
+  quote: 超過場館設定的「場次逾時時間」沒有任何交易與遊玩紀錄時，自動結束並標記為「逾時結束」…期間內有任何交易或注單即重新起算
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-103
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:40Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:40Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

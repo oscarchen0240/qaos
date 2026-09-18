@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>QAOS 專案簡報</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #eef0f4;
+  --paper: #f6f6f3;
+  --surface: #ffffff;
+  --ink: #1c1f26;
+  --muted: #626a76;
+  --faint: #8b93a0;
+  --border: #e2e5ea;
+  --border-strong: #cfd4db;
+  --accent: #2f4bd6;
+  --accent-ink: #1f2f8f;
+  --accent-soft: #eaeeff;
+  --good: #1c7a52;
+  --good-soft: #e4f4ec;
+  --human: #a3650f;
+  --human-soft: #fbeed9;
+  --risk: #b23a2e;
+  --risk-soft: #fbe8e5;
+  --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --paper: #171a21;
+    --surface: #1d2129;
+    --ink: #e8eaef;
+    --muted: #9aa2b1;
+    --faint: #676f7e;
+    --border: #2a2f39;
+    --border-strong: #383e4b;
+    --accent: #8393ff;
+    --accent-ink: #c3cbff;
+    --accent-soft: #232a4d;
+    --good: #5ecf9c;
+    --good-soft: #17301f;
+    --human: #e0ab5c;
+    --human-soft: #34270f;
+    --risk: #e7897c;
+    --risk-soft: #33201c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --paper: #171a21;
+  --surface: #1d2129;
+  --ink: #e8eaef;
+  --muted: #9aa2b1;
+  --faint: #676f7e;
+  --border: #2a2f39;
+  --border-strong: #383e4b;
+  --accent: #8393ff;
+  --accent-ink: #c3cbff;
+  --accent-soft: #232a4d;
+  --good: #5ecf9c;
+  --good-soft: #17301f;
+  --human: #e0ab5c;
+  --human-soft: #34270f;
+  --risk: #e7897c;
+  --risk-soft: #33201c;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui);
+  overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+}
+.deck-shell { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; min-height: 0; }
+.frame {
+  position: relative; width: min(100%, 1160px); aspect-ratio: 16/9; background: var(--paper);
+  border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+.slide {
+  position: absolute; inset: 0; padding: 56px 68px; display: flex; flex-direction: column;
+}
+.slide[hidden] { display: none !important; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.slide h1 { font-size: 34px; margin: 0 0 6px; font-weight: 700; text-wrap: balance; line-height: 1.2; }
+.slide h2 { font-size: 26px; margin: 0 0 18px; font-weight: 700; text-wrap: balance; }
+.slide .lede { font-size: 15.5px; color: var(--muted); max-width: 66ch; line-height: 1.6; margin: 0 0 22px; }
+.slide-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.foot { position: absolute; bottom: 20px; left: 68px; right: 68px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--faint); font-family: var(--font-mono); }
+
+/* ---- Slide 1: Title ---- */
+#s1 { justify-content: center; align-items: flex-start; background:
+  radial-gradient(1200px 500px at 85% -10%, var(--accent-soft), transparent 60%), var(--paper); }
+#s1 .mark { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: .12em; margin-bottom: 22px; }
+#s1 h1 { font-size: 52px; margin-bottom: 14px; }
+#s1 .sub { font-size: 18px; color: var(--muted); max-width: 52ch; line-height: 1.55; margin-bottom: 30px; }
+#s1 .meta-row { display: flex; gap: 28px; font-size: 12.5px; color: var(--faint); font-family: var(--font-mono); }
+#s1 .meta-row b { color: var(--ink); font-family: var(--font-ui); font-weight: 600; }
+
+/* ---- pipeline diagram (slide 2) ---- */
+.pipeline { display: flex; align-items: stretch; gap: 0; margin: 14px 0 20px; }
+.pipe-node {
+  flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 14px; display: flex; flex-direction: column; gap: 4px; justify-content: center; min-width: 0;
+}
+.pipe-node .n-label { font-size: 11px; font-family: var(--font-mono); color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
+.pipe-node .n-title { font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.pipe-arrow { flex: 0 0 26px; display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 16px; }
+.pipe-note { font-size: 13px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 14px; line-height: 1.6; }
+
+/* ---- benefit grid (slide 3) ---- */
+.benefit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; flex: 1; }
+.benefit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.benefit-card .b-icon { width: 26px; height: 26px; border-radius: 7px; background: var(--accent-soft); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+.benefit-card h3 { font-size: 15px; margin: 0; font-weight: 700; }
+.benefit-card p { font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.55; }
+
+/* ---- ADR list (slide 4) ---- */
+.adr-list { display: flex; flex-direction: column; gap: 12px; flex: 1; justify-content: center; }
+.adr-row { display: grid; grid-template-columns: 90px 1fr; gap: 16px; align-items: start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+.adr-tag { font-family: var(--font-mono); font-size: 12px; color: var(--accent-ink); background: var(--accent-soft); border-radius: 6px; padding: 4px 8px; text-align: center; height: fit-content; }
+.adr-row h4 { margin: 0 0 3px; font-size: 14px; font-weight: 700; }
+.adr-row p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+/* ---- phase table (slide 5) ---- */
+table.phase-table { width: 100%; border-collapse: collapse; font-size: 12.5px; flex: 1; }
+table.phase-table th, table.phase-table td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; line-height: 1.5; }
+table.phase-table th { background: var(--surface); font-weight: 700; font-size: 12px; }
+table.phase-table td.row-label { font-weight: 600; font-family: var(--font-mono); font-size: 11px; color: var(--muted); background: var(--surface); }
+table.phase-table td.done { color: var(--good); font-weight: 600; }
+table.phase-table td.now { color: var(--accent-ink); font-weight: 600; }
+
+/* ---- phase deep dive (slides 6-7) ---- */
+.deepdive { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; flex: 1; min-height: 0; }
+.dd-col h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin: 0 0 8px; }
+.dd-col ul { margin: 0 0 16px; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--ink); }
+.dd-col ul li { margin-bottom: 6px; }
+.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.stat-box .big { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent-ink); line-height: 1; }
+.stat-box .cap { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.quote-box { background: var(--human-soft); border-left: 3px solid var(--human); border-radius: 8px; padding: 12px 14px; font-size: 12.5px; color: var(--ink); line-height: 1.6; }
+
+/* ---- integration slide (8) ---- */
+.principle-strip { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; font-family: var(--font-mono); font-size: 13px; }
+.principle-strip .p-item { padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.principle-strip .p-arrow { color: var(--faint); }
+.flow-mini { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11.5px; margin-bottom: 16px; flex-wrap: wrap; }
+.flow-mini .f-step { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.flow-mini .f-arrow { color: var(--faint); }
+.result-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.result-strip .r-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.result-strip .r-num { font-size: 26px; font-weight: 700; color: var(--accent-ink); }
+.result-strip .r-cap { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ---- human + agent slide (9) ---- */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; flex: 1; min-height: 0; }
+.split-col { display: flex; flex-direction: column; min-height: 0; }
+.split-col h3 { font-size: 14px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.human { background: var(--human); }
+.dot.agent { background: var(--accent); }
+.human-list { display: flex; flex-direction: column; gap: 8px; }
+.human-item { background: var(--human-soft); border-radius: 8px; padding: 9px 12px; font-size: 12px; line-height: 1.5; color: var(--ink); }
+.agent-table { border-collapse: collapse; width: 100%; font-size: 11.5px; }
+.agent-table th, .agent-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; line-height: 1.45; }
+.agent-table th { background: var(--surface); font-size: 11px; }
+.agent-table td.role { font-weight: 700; font-family: var(--font-mono); font-size: 10.5px; white-space: nowrap; }
+.principle-note { margin-top: 12px; background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: var(--accent-ink); line-height: 1.5; }
+
+/* ---- roadmap slide (10) ---- */
+.roadmap-track { display: flex; align-items: stretch; gap: 0; margin: 10px 0 20px; }
+.rm-node { flex: 1; padding: 12px 14px; border-top: 3px solid var(--border-strong); position: relative; }
+.rm-node.done { border-top-color: var(--good); }
+.rm-node.now { border-top-color: var(--accent); }
+.rm-node .rm-tag { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+.rm-node.done .rm-tag { color: var(--good); }
+.rm-node.now .rm-tag { color: var(--accent-ink); }
+.rm-node .rm-title { font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+.rm-node .rm-desc { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.current-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; gap: 24px; align-items: center; }
+.current-box .c-num { font-size: 30px; font-weight: 700; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+.current-box .c-cap { font-size: 11.5px; color: var(--muted); }
+
+/* ---- nav ---- */
+.nav-bar { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 10px 0 18px; flex-shrink: 0; }
+.nav-btn {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--ink); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.nav-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.dots { display: flex; gap: 7px; }
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); border: none; cursor: pointer; padding: 0; }
+.nav-dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
+.counter { font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); min-width: 46px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="deck-shell">
+  <div class="frame" id="frame">
+
+    <!-- 1 -->
+    <section class="slide" id="s1">
+      <div class="mark">QA AGENT OPERATING SYSTEM</div>
+      <h1>QAOS</h1>
+      <div class="sub">把產品 Spec 變成可稽核、可追溯、AI 與人工分工明確的測試案例產線——不是叫 AI 自由發揮寫測試，而是每一步都變成可被檢查、可重放的紀錄。</div>
+      <div class="meta-row">
+        <div><b>專案簡報</b></div>
+        <div>2026-09-15</div>
+        <div>案例：SPEC-MEMBER-001</div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" id="s2" hidden>
+      <div class="eyebrow">01 · What</div>
+      <h2>這套系統在做什麼</h2>
+      <p class="lede">把「讀 Spec → 設計測試案例 → 驗證 → 核准上線」這條產線，拆成一連串通過 Schema 檢查的 Artifact（結構化檔案），而不是靠 AI 對話記憶接力。</p>
+      <div class="slide-body">
+        <div class="pipeline">
+          <div class="pipe-node"><span class="n-label">Input</span><span class="n-title">產品 Spec 文件</span></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><span class="n-label">Artifact</span><span class="n-title">Requirement / AC</span></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><span class="n-label">Artifact</span><span class="n-title">Test Case Draft</span></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><span class="n-label">Gate</span><span class="n-title">結構化 + 獨立驗證</span></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><span class="n-label">Human</span><span class="n-title">核准</span></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><span class="n-label">Registry</span><span class="n-title">正式測試案例庫</span></div>
+        </div>
+        <div class="pipe-note">每個轉換都必須引用觸發它的 artifact_id 或 approval_id——沒有 artifact，就沒有狀態轉換（ADR-001）。任何一條測試案例都能回頭查到「依據 Spec 哪一句話」。</div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" id="s3" hidden>
+      <div class="eyebrow">02 · Why</div>
+      <h2>為什麼要這樣做</h2>
+      <p class="lede">核心好處不是「讓 AI 寫測試比較快」，是讓 AI 產出的東西變得可信任、可審計。</p>
+      <div class="slide-body">
+        <div class="benefit-grid">
+          <div class="benefit-card"><div class="b-icon">01</div><h3>可追溯</h3><p>任何一條測試案例、任何一個 Bug，都能回溯到 Spec 原文的哪一段、哪一句話——不是「AI 說有這條規則」就算數。</p></div>
+          <div class="benefit-card"><div class="b-icon">02</div><h3>可稽核</h3><p>每次狀態變化都留下 Artifact，可重放、可 diff，不靠對話記憶傳遞——事後任何人都能重建「這個決定是怎麼發生的」。</p></div>
+          <div class="benefit-card"><div class="b-icon">03</div><h3>擋住 AI 亂寫</h3><p>結構化 Gate（程式碼機械檢查）+ 語意 Gate（獨立 Validator 審查）+ 人工核准，三關卡都過才能生效——AI 說「這樣沒問題」不算數。</p></div>
+          <div class="benefit-card"><div class="b-icon">04</div><h3>規模化不犧牲嚴謹</h3><p>人工扮演一輪角色跑完一份 Spec 約需 2 小時；Agent 化之後可以規模化產出，但走的仍是同一套關卡，不是抄捷徑。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide" id="s4" hidden>
+      <div class="eyebrow">03 · Architecture</div>
+      <h2>核心架構三個決定</h2>
+      <p class="lede">Phase 1 定案、目前仍在遵守的三條架構決策（ADR），是整套系統「AI 產出不能自己說了算」的根基。</p>
+      <div class="slide-body">
+        <div class="adr-list">
+          <div class="adr-row"><span class="adr-tag">ADR-001</span><div><h4>Artifact 為中心的狀態機</h4><p>Agent 之間不靠對話記憶傳遞，唯一輸出是通過 Schema 的 Artifact 檔案；狀態轉換必須引用觸發它的 artifact_id。</p></div></div>
+          <div class="adr-row"><span class="adr-tag">ADR-002</span><div><h4>Runtime 與 LLM Agent 分工</h4><p>結構化規則（Gate、狀態轉換、權限、ID 配發）全部由程式碼 `tools/qaos` 執行，不是 LLM 判斷；語意層的審查由獨立 Validator Agent 產出 Artifact，Runtime 只讀取結果欄位。</p></div></div>
+          <div class="adr-row"><span class="adr-tag">ADR-003</span><div><h4>單一事實來源</h4><p>測試案例是否在某個回歸套件裡，只查 Suite Membership，不在 TC 上雙寫狀態——避免兩份紀錄互相矛盾。</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide" id="s5" hidden>
+      <div class="eyebrow">04 · Roadmap</div>
+      <h2>Phase 1 / 2 / 3 總覽</h2>
+      <p class="lede">三個 Phase 分別解決「地基」「證明骨架擋得住錯誤」「讓 AI 真的能上場」三個不同問題。</p>
+      <div class="slide-body">
+        <table class="phase-table">
+          <tr><th></th><th>Phase 1 · 架構設計</th><th>Phase 2 · Foundation</th><th>Phase 3 · Agent Layer</th></tr>
+          <tr><td class="row-label">目的</td><td>把 Brief 的矛盾與缺項定案</td><td>先有不靠 LLM 也擋得住錯誤的骨架</td><td>把人工扮演的角色換成真正的 Agent</td></tr>
+          <tr><td class="row-label">主角</td><td>18 項 Deliverables + ADR</td><td>`tools/qaos`（純程式碼）</td><td>Spec/Test/Bug 相關 Agent + Skills</td></tr>
+          <tr><td class="row-label">用 LLM？</td><td>—</td><td>刻意不用</td><td>開始靠 LLM 產內容，但仍走 Phase 2 的 Gate</td></tr>
+          <tr><td class="row-label">驗收</td><td class="done">已核准（APPROVE ARCHITECTURE）</td><td class="done">違規操作會被擋，有測試證明</td><td class="now">MVP-1 端到端跑通，每步有 Artifact／Audit</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" id="s6" hidden>
+      <div class="eyebrow">05 · Phase 2</div>
+      <h2>Phase 2：人工先把地基踩穩</h2>
+      <div class="slide-body">
+        <div class="deepdive">
+          <div class="dd-col">
+            <h4>做了什麼</h4>
+            <ul>
+              <li>`tools/qaos` CLI：狀態轉換、Gate、核准、ID 配發全部程式碼把關</li>
+              <li>Schema 定義每種 Artifact 的必要欄位，寫錯格式直接擋下</li>
+              <li>Phase 3 Agent 還沒做出來之前，由人扮演 Spec Analyst / Test Designer / Test Validator，寫一次性腳本組出 Artifact，走真實 Spec 全流程</li>
+            </ul>
+            <h4>產出</h4>
+            <ul>
+              <li>SPEC-MEMBER-001：18 項需求 → 26 條 ACTIVE 測試案例（本次簡報案例）</li>
+            </ul>
+          </div>
+          <div class="dd-col">
+            <div class="stat-box"><div class="big">~2 小時</div><div class="cap">人工扮演一輪角色、跑完一份 Spec 的耗時</div></div>
+            <div class="quote-box">這個觀察直接促成了 Phase 3：既然人工扮演角色本身就很耗時，把這個角色換成 Agent 才有意義。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide" id="s7" hidden>
+      <div class="eyebrow">06 · Phase 3</div>
+      <h2>Phase 3：Agent 上場，用「影子測試」驗證信任</h2>
+      <div class="slide-body">
+        <div class="deepdive">
+          <div class="dd-col">
+            <h4>怎麼做</h4>
+            <ul>
+              <li>建立 `qaos-test-designer` Agent，職責跟人工扮演版本一樣：讀 RequirementModel + Spec 原文，產出 Test Case Draft，<b>不自我驗證</b></li>
+              <li>影子測試法：同一份 Spec，讓 Agent 完全獨立重做一次（不給看人工版答案），送進同一套獨立 Validator 機制審查，跟人工版本比較品質</li>
+            </ul>
+            <h4>結果</h4>
+            <ul>
+              <li>三輪迭代：FAIL → 修正被點名的錯誤 → 仍有系統性問題重演 → 觸發 <b>HUMAN_OVERRIDE</b>，交由人工裁決</li>
+            </ul>
+          </div>
+          <div class="dd-col">
+            <div class="stat-box"><div class="big">3 轮</div><div class="cap">Validator 審查輪次，觸及 `max_validation_iterations` 上限</div></div>
+            <div class="quote-box">Agent 學會了「修正被明確點名的錯誤」，但沒有「窮盡式自我審查」的能力——同一類問題會換個位置重演。這是本次影子測試最重要的觀察。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" id="s8" hidden>
+      <div class="eyebrow">07 · Integration</div>
+      <h2>Phase 2 × 3 怎麼整合：交叉比對，不是二選一</h2>
+      <p class="lede">關鍵決策：不是「整批採用 Phase 3」或「維持 Phase 2」二選一，而是逐條交叉比對，取兩邊之中更深入或更完整的處理方式。</p>
+      <div class="slide-body">
+        <div class="principle-strip">
+          <span class="p-item">深度底線（不能誤判）</span><span class="p-arrow">&gt;</span>
+          <span class="p-item">廣度覆蓋（不能留白）</span><span class="p-arrow">&gt;</span>
+          <span class="p-item">深度精進（可以慢慢做）</span>
+        </div>
+        <div class="flow-mini">
+          <span class="f-step">交叉比對找差異</span><span class="f-arrow">→</span>
+          <span class="f-step">tc revise 修訂既有TC</span><span class="f-arrow">→</span>
+          <span class="f-step">獨立 Validator 審查</span><span class="f-arrow">→</span>
+          <span class="f-step">人工核准</span>
+        </div>
+        <div class="result-strip">
+          <div class="r-box"><div class="r-num">26</div><div class="r-cap">ACTIVE 測試案例（總數不變）</div></div>
+          <div class="r-box"><div class="r-num">14</div><div class="r-cap">因整合 Phase 3 發現而修訂</div></div>
+          <div class="r-box"><div class="r-num">24 → 0</div><div class="r-cap">Phase 3 原始草案，不佔用獨立 ID</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" id="s9" hidden>
+      <div class="eyebrow">08 · Human + Agent</div>
+      <h2>人工在哪裡 · Sub-agent 怎麼分工</h2>
+      <div class="slide-body">
+        <div class="split">
+          <div class="split-col">
+            <h3><span class="dot human"></span>人工決策點</h3>
+            <div class="human-list">
+              <div class="human-item"><b>核准每一條測試案例上線</b>——ACTIVATE_TESTCASE 是唯一能把 Artifact 變成正式 Registry 條目的動作，只有人能觸發</div>
+              <div class="human-item"><b>補充 Spec 沒定義的產品知識</b>——例如「稽核=0 的實際效果」「KYC 已停用的真實顯示」，這些是 Agent 無法憑空推論、必須由人補的 grounding</div>
+              <div class="human-item"><b>結構性卡關的裁決</b>——HUMAN_OVERRIDE（Agent 反覆 FAIL）、NEEDS_DECISION（Agent 判斷不出來的分岔）</div>
+              <div class="human-item"><b>流程與風險策略方向</b>——整合原則怎麼訂、審查該分幾級，這類「規則本身」的決定</div>
+            </div>
+          </div>
+          <div class="split-col">
+            <h3><span class="dot agent"></span>Sub-agent 職責（節錄）</h3>
+            <table class="agent-table">
+              <tr><th>角色</th><th>職責</th></tr>
+              <tr><td class="role">Test Designer</td><td>讀 Spec + RequirementModel，產出 Test Case Draft；<b>不自我驗證</b></td></tr>
+              <tr><td class="role">Test Validator</td><td>獨立 subagent、乾淨 context，重新審查 Draft，不信任 Designer 的自我宣告</td></tr>
+              <tr><td class="role">Supervisor</td><td>任務分派、監控迭代次數、觸發斷路器（HUMAN_OVERRIDE），<b>不做語意判斷</b></td></tr>
+              <tr><td class="role">Spec Analyst</td><td>讀 Spec 原文，產出 Requirement / AC，模糊處交人工裁決</td></tr>
+            </table>
+            <div class="principle-note">關鍵原則：設計者與審查者永遠是不同角色、不同 context——避免「自己改自己的作業、自己打分數」（ADR-002 同源偏誤緩解）。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" id="s10" hidden>
+      <div class="eyebrow">09 · Now & Next</div>
+      <h2>現況與下一步</h2>
+      <div class="slide-body">
+        <div class="current-box">
+          <div><div class="c-num">26 / 14</div><div class="c-cap">ACTIVE 測試案例 ／ 經 Phase 2×3 整合修訂</div></div>
+          <div style="flex:1; font-size:12.5px; color:var(--muted); line-height:1.6;">SPEC-MEMBER-001 已完整走完 Phase 2 建構 → Phase 3 影子測試 → 交叉整合三個階段，並在過程中確立了 ADR-007（審查依風險分級）供下一份 Spec 沿用。</div>
+        </div>
+        <div class="roadmap-track">
+          <div class="rm-node done"><div class="rm-tag">PHASE 2</div><div class="rm-title">Foundation</div><div class="rm-desc">Runtime／Gate／規則</div></div>
+          <div class="rm-node now"><div class="rm-tag">PHASE 3</div><div class="rm-title">Agent Layer</div><div class="rm-desc">影子測試進行中，risk-tiered 審查已定案</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 4</div><div class="rm-title">Workflow Layer</div><div class="rm-desc">Spec 變更影響、回歸套件、人工測試納管</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 5</div><div class="rm-title">Automation</div><div class="rm-desc">CI 匯入、自動執行測試</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 6</div><div class="rm-title">Advanced</div><div class="rm-desc">Agent 並行、Supervisor 自主 re-planning</div></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" aria-label="上一頁">‹</button>
+  <div class="dots" id="dots"></div>
+  <div class="counter" id="counter">1 / 10</div>
+  <button class="nav-btn" id="nextBtn" aria-label="下一頁">›</button>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dotsEl = document.getElementById('dots');
+const counterEl = document.getElementById('counter');
+let idx = 0;
+
+slides.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  d.addEventListener('click', () => go(i));
+  dotsEl.appendChild(d);
+});
+const dotEls = Array.from(dotsEl.children);
+
+function go(n) {
+  idx = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => s.hidden = i !== idx);
+  dotEls.forEach((d, i) => d.classList.toggle('active', i === idx));
+  counterEl.textContent = (idx + 1) + ' / ' + slides.length;
+}
+document.getElementById('prevBtn').addEventListener('click', () => go(idx - 1));
+document.getElementById('nextBtn').addEventListener('click', () => go(idx + 1));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(idx + 1);
+  if (e.key === 'ArrowLeft') go(idx - 1);
+});
+go(0);
+</script>
+</body>
+</html>

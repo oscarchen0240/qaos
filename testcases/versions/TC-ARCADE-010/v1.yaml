@@ -1,0 +1,98 @@
+title: 機台帳號產生投注流水後，其所屬加盟商當期的加盟傭金與代理返傭金額不因此增加
+product: ba-admin
+functional_area: ARCADE
+requirement_ids:
+- REQ-ARCADE-002
+acceptance_criteria_ids:
+- AC-ARCADE-002
+spec_id: SPEC-ARCADE-001
+spec_version: '0.7'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一個既有加盟商，其站台樹（含任何層級子站台）底下已包含一個機台場館，且該場館下至少有一台既有機台帳號（自行從環境中選定；此掛載關係是否已存在屬環境事實，若無法確認見下方假設）
+- 於『各式報表 > 加盟傭金發放紀錄』（或加盟商詳細頁的統計區塊），記錄該加盟商在本次查驗前、當期結算週期的加盟傭金與代理返傭金額，作為比對基準
+test_data: []
+steps:
+- n: 1
+  action: 於『各式報表 > 交易紀錄查詢』或『注單查詢』，以該機台帳號查詢確認其於本結算週期內是否已存在（或可產生）至少一筆新的已完成投注紀錄；若當下無現成紀錄，需依機台現場流程使其產生（此步驟涉及機台端硬體操作，非本 spec 定義的後台
+    UI 範圍，見下方假設）
+- n: 2
+  action: 待該筆機台帳號投注流水確認已產生（可於交易紀錄查詢或注單查詢中查得）後，重新查詢『各式報表 > 加盟傭金發放紀錄』（或加盟商詳細頁統計），取得該加盟商本期最新的加盟傭金與代理返傭金額
+- n: 3
+  action: 將本次取得的金額與前置作業記錄的比對基準金額逐一核對
+expected_result: 該加盟商本期的加盟傭金與代理返傭金額與比對基準相同，未因該機台帳號新產生的投注流水而增加；同時該筆機台帳號的投注流水本身在交易紀錄查詢／注單查詢中確實可查得（證明流水真實發生過，排除『沒增加只是因為根本沒發生』的誤判可能）
+expected_result_spec_reference:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  location: 既有功能對機台帳號的排除規則／排除規則總表
+  quote: 4.5 / 4.6 | 加盟傭金／代理返傭 | 不適用，機台帳號的投注不計入任何上層的傭金基數
+assumptions:
+- text: 本 TC 假設測試環境當下存在（或可佈置）一個機台場館作為某既有加盟商站台樹的子站台，且該場館下至少有一台機台帳號；本次精讀的 spec 段落（140-232行、760-819行）未定義機台場館與加盟商站台樹之間具體的掛載機制細節（該機制屬站台列表/加盟商相關
+    spec 範圍），此環境事實需環境負責人確認才能佈置。此外，使該機台帳號實際產生新的投注流水，依賴機台端硬體現場遊玩流程，非本 spec 定義的後台 UI 可直接觸發；若環境當下無法產生新流水，可改用已存在的歷史投注流水，搭配其發生前後對應期間的傭金/返傭計算結果變化進行比對，但仍需環境負責人協助確認該歷史區間的計算結果快照。
+  requirement_id: REQ-ARCADE-002
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0157
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-ARCADE-010
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+created_at: '2026-09-18T01:19:38Z'
+updated_at: '2026-09-18T10:49:52Z'
+history:
+- at: '2026-09-18T01:19:38Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-011
+- at: '2026-09-18T10:49:52Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0157
+  run_id: RUN-20260918-011
+- at: '2026-09-18T10:49:52Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260918-011
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0157

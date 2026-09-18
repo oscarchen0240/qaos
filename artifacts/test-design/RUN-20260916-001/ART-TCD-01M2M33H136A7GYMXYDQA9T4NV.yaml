@@ -1,0 +1,159 @@
+artifact_id: ART-TCD-01M2M33H136A7GYMXYDQA9T4NV
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-001
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-16T03:10:28Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-005
+- entity_type: TestCase
+  id: TC-MEMBER-007
+- entity_type: TestCase
+  id: TC-MEMBER-008
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2M33H120BHFRA7AZPZDYPQW
+    title: 出金手續費10%時，申請提領10 USDT（扣手續費後淨額未達10 USDT）不可出金
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-007
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能。真正決定能否出金的門檻，不是對「可提領餘額」欄位本身判斷、也不是「大於10」(不含)——而是「提領申請金額扣除出金手續費後的淨額」是否達到10 USDT（含）。出金手續費是在後台「帳務管理
+      > 鏈上錢包管理」設定的百分比，可自由調整（已由 Oscar 2026-09-16 確認，spec §2.1.4原文僅寫「可提領餘額...須大於10 USDT方可申請出金」，未提及此手續費機制，屬spec原文與實際產品行為的落差，見assumptions）。佈置方式：先至鏈上錢包管理將該幣別出金手續費設定為
+      10%（測試用值，Oscar 2026-09-16以實際操作範例確認）；確認該會員可提領餘額足夠支應本次申請金額（例如至少 15 USDT以上，避免餘額本身成為限制因素，可用稽核=0的單筆人工存入調整，見TC-MEMBER-007/008
+      v4已驗證過的佈置手法）
+    test_data:
+    - name: 出金手續費
+      value: 10%
+    - name: 提領申請金額
+      value: 10.00 USDT
+    steps:
+    - n: 1
+      action: 於後台「帳務管理 > 鏈上錢包管理」，將該會員可用幣別的出金手續費設定為 10%
+    - n: 2
+      action: 確認該會員可提領餘額足夠支應本次申請金額（不足則以稽核=0的人工存入補足）
+    - n: 3
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 4
+      action: 提領申請金額輸入 10.00 USDT，送出提領申請
+    expected_result: 不可出金——扣除出金手續費後的淨額低於 10 USDT 門檻，系統拒絕或申請入口不可用（已由 Oscar 2026-09-16 確認此具體案例的結果）
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions:
+    - text: 出金手續費10%對應「申請10 USDT→不可出金、申請11 USDT→可出金且到手10 USDT」這組結果，是 Oscar 2026-09-16以實際操作範例直接確認的具體案例；本TC只驗證這組已確認的具體數字組合，不代表已獨立驗證手續費計算公式在其他百分比/金額組合下的四捨五入或計算規則，spec全文也未定義出金手續費此一機制
+      requirement_id: REQ-MEMBER-005
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-007
+      version: 4
+    design_rationale: Oscar 2026-09-16確認TC-007/008(v4)的整個門檻機制假設是錯的：v4測的是『可提領餘額恰為10.00/10.01時能否出金』，門檻判斷對象是『可提領餘額』欄位本身，方向是『大於10』(不含10)。但實際機制是門檻判斷『提領申請金額扣除出金手續費(後台鏈上錢包管理設定%)後的淨額』，且門檻含10(大於等於)。RequirementModel的AC-MEMBER-007/008已於同日修正為version
+      2，本次依修正後的AC重新設計：改為在申請金額上做邊界測試(10 USDT不可出金、11 USDT可出金到手10)，而非在可提領餘額欄位上做邊界測試。v4驗證過的『稽核=0單筆人工存入可精確佈置可提領餘額』手法仍保留用於確保餘額本身不是限制因素，但不再是本次邊界判斷的測試對象
+  - draft_id: TC-DRAFT-01M2M33H12J197RFQMH5SRTAC9
+    title: 出金手續費10%時，申請提領11 USDT（扣手續費後淨額恰為10 USDT）可正常出金
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-008
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能。真正決定能否出金的門檻，不是對「可提領餘額」欄位本身判斷、也不是「大於10」(不含)——而是「提領申請金額扣除出金手續費後的淨額」是否達到10 USDT（含）。出金手續費是在後台「帳務管理
+      > 鏈上錢包管理」設定的百分比，可自由調整（已由 Oscar 2026-09-16 確認，spec §2.1.4原文僅寫「可提領餘額...須大於10 USDT方可申請出金」，未提及此手續費機制，屬spec原文與實際產品行為的落差，見assumptions）。佈置方式：先至鏈上錢包管理將該幣別出金手續費設定為
+      10%（測試用值，Oscar 2026-09-16以實際操作範例確認）；確認該會員可提領餘額足夠支應本次申請金額（例如至少 15 USDT以上，避免餘額本身成為限制因素，可用稽核=0的單筆人工存入調整，見TC-MEMBER-007/008
+      v4已驗證過的佈置手法）
+    test_data:
+    - name: 出金手續費
+      value: 10%
+    - name: 提領申請金額
+      value: 11.00 USDT
+    steps:
+    - n: 1
+      action: 於後台「帳務管理 > 鏈上錢包管理」，將該會員可用幣別的出金手續費設定為 10%
+    - n: 2
+      action: 確認該會員可提領餘額足夠支應本次申請金額（不足則以稽核=0的人工存入補足）
+    - n: 3
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 4
+      action: 提領申請金額輸入 11.00 USDT，送出提領申請
+    expected_result: 可正常出金，申請成功送出，會員實際到手 10 USDT——扣除出金手續費後淨額剛好達到 10 USDT 門檻（含）（已由 Oscar 2026-09-16 確認此具體案例的結果）
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions:
+    - text: 出金手續費10%對應「申請10 USDT→不可出金、申請11 USDT→可出金且到手10 USDT」這組結果，是 Oscar 2026-09-16以實際操作範例直接確認的具體案例；本TC只驗證這組已確認的具體數字組合，不代表已獨立驗證手續費計算公式在其他百分比/金額組合下的四捨五入或計算規則，spec全文也未定義出金手續費此一機制
+      requirement_id: REQ-MEMBER-005
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-008
+      version: 4
+    design_rationale: Oscar 2026-09-16確認TC-007/008(v4)的整個門檻機制假設是錯的：v4測的是『可提領餘額恰為10.00/10.01時能否出金』，門檻判斷對象是『可提領餘額』欄位本身，方向是『大於10』(不含10)。但實際機制是門檻判斷『提領申請金額扣除出金手續費(後台鏈上錢包管理設定%)後的淨額』，且門檻含10(大於等於)。RequirementModel的AC-MEMBER-007/008已於同日修正為version
+      2，本次依修正後的AC重新設計：改為在申請金額上做邊界測試(10 USDT不可出金、11 USDT可出金到手10)，而非在可提領餘額欄位上做邊界測試。v4驗證過的『稽核=0單筆人工存入可精確佈置可提領餘額』手法仍保留用於確保餘額本身不是限制因素，但不再是本次邊界判斷的測試對象
+history:
+- at: '2026-09-16T03:10:35Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-001
+- at: '2026-09-16T03:24:08Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2M3WA1WD1P6VCRVKT1G955E
+  run_id: RUN-20260916-001

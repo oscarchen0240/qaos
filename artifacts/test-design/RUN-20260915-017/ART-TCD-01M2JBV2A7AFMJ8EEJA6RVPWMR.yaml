@@ -1,0 +1,191 @@
+artifact_id: ART-TCD-01M2JBV2A7AFMJ8EEJA6RVPWMR
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-017
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T11:04:40Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-013
+- entity_type: TestCase
+  id: TC-MEMBER-018
+- entity_type: TestCase
+  id: TC-MEMBER-019
+- entity_type: TestCase
+  id: TC-MEMBER-020
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JBV2A6JMS80QAVQGXSJ8SB
+    title: 已達成升等門檻且已申請的會員，一般加盟商 Badge 顯示白底「已申請」
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-013
+    acceptance_criteria_ids:
+    - AC-MEMBER-017
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 一名會員已達成 Partner 升等門檻，且已實際透過前台完成加盟商申請——「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成狀態，改為從環境既有資料中挑選出已呈現「已申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認
+    test_data: []
+    steps:
+    - n: 1
+      action: 於加盟列表既有資料中，找出一名已呈現「已申請」樣式的既有會員
+    - n: 2
+      action: 於後台確認該帳號的升等門檻達成狀態與申請紀錄，作為交叉核對
+    - n: 3
+      action: 於加盟列表檢視該會員的一般加盟商 Badge
+    expected_result: 顯示白底「已申請」樣式
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2 加盟等級
+      quote: （1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻
+    assumptions:
+    - text: 「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成狀態，改為從環境既有資料中挑選出已呈現「已申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認
+      requirement_id: REQ-MEMBER-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-018
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-044（同一REQ的3態合併版），該版本誠實揭露「升等門檻」具體達成算法spec全文未定義，因此不透過人工調整指標去製造目標狀態，只挑選環境既有已呈現對應樣式的帳號。Phase
+      2原版precondition卻寫「依現場設定調整該帳號指標」，把未定義的機制當成已知可操作的方式呈現，這與TC-MEMBER-007/008 v1被抓出的問題屬同一類depth defect（未經證實的機制被誤呈現為已知）。本輪已將此揭露補進precondition與結構化assumptions欄位，保留Phase
+      2原有「一AC一TC」的三條獨立TC結構（此結構本身沒有問題，個別追蹤pass/fail比Phase 3的單一decision_table合併版更清楚，故不採用Phase 3的結構、只採用其誠實揭露的處理方式）。v2依獨立Validator
+      FAIL判定修正TC-MEMBER-020：v1主張「無業績即可成立、風險最低」，但這個論證本身是在演算法完全未定義的情況下對「業績是門檻必要/充分條件」做出未經證實的斷言，屬同一類depth defect；已改為不主張風險相對最低，只以「新註冊、各項可觀察指標皆為0」作為降低（而非消除）不確定性的挑選依據，且此不確定性已併入assumptions揭露
+  - draft_id: TC-DRAFT-01M2JBV2A6ESMGVEV2JEKRD8KD
+    title: 已達成升等門檻但未申請的會員，一般加盟商 Badge 顯示深灰底「達成未申請」
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-013
+    acceptance_criteria_ids:
+    - AC-MEMBER-018
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 一名會員已達成升等門檻，但尚未透過前台申請（未執行申請操作）——「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成未申請狀態，改為從環境既有資料中挑選出已呈現「達成未申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認
+    test_data: []
+    steps:
+    - n: 1
+      action: 於加盟列表既有資料中，找出一名已呈現「達成未申請」樣式的既有會員
+    - n: 2
+      action: 於後台確認該帳號的升等門檻達成狀態、且確認無申請紀錄，作為交叉核對
+    - n: 3
+      action: 於加盟列表檢視該會員的一般加盟商 Badge
+    expected_result: 顯示深灰底「達成未申請」樣式
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2 加盟等級
+      quote: （1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻
+    assumptions:
+    - text: 「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成未申請狀態，改為從環境既有資料中挑選出已呈現「達成未申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認
+      requirement_id: REQ-MEMBER-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-019
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-044（同一REQ的3態合併版），該版本誠實揭露「升等門檻」具體達成算法spec全文未定義，因此不透過人工調整指標去製造目標狀態，只挑選環境既有已呈現對應樣式的帳號。Phase
+      2原版precondition卻寫「依現場設定調整該帳號指標」，把未定義的機制當成已知可操作的方式呈現，這與TC-MEMBER-007/008 v1被抓出的問題屬同一類depth defect（未經證實的機制被誤呈現為已知）。本輪已將此揭露補進precondition與結構化assumptions欄位，保留Phase
+      2原有「一AC一TC」的三條獨立TC結構（此結構本身沒有問題，個別追蹤pass/fail比Phase 3的單一decision_table合併版更清楚，故不採用Phase 3的結構、只採用其誠實揭露的處理方式）。v2依獨立Validator
+      FAIL判定修正TC-MEMBER-020：v1主張「無業績即可成立、風險最低」，但這個論證本身是在演算法完全未定義的情況下對「業績是門檻必要/充分條件」做出未經證實的斷言，屬同一類depth defect；已改為不主張風險相對最低，只以「新註冊、各項可觀察指標皆為0」作為降低（而非消除）不確定性的挑選依據，且此不確定性已併入assumptions揭露
+  - draft_id: TC-DRAFT-01M2JBV2A6990HZY199MSES17G
+    title: 尚未達成升等門檻的會員，一般加盟商 Badge 顯示黑底「未達成」
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-013
+    acceptance_criteria_ids:
+    - AC-MEMBER-019
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 一名會員尚未達成升等門檻（挑選一般新註冊、各項可觀察指標皆為0/無記錄的既有會員）
+    test_data: []
+    steps:
+    - n: 1
+      action: 於後台確認該帳號為一般新註冊、各項可觀察指標（業績、推薦人數、儲值等）皆為0/無記錄的既有會員
+    - n: 2
+      action: 於加盟列表檢視該會員的一般加盟商 Badge
+    expected_result: 顯示黑底「未達成」樣式
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2 加盟等級
+      quote: （1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻
+    assumptions:
+    - text: 「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造未達成狀態，改為從環境既有資料中挑選出已呈現「未達成」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認；「業績/推薦人數等指標」是否確實為升等門檻演算法的必要或充分條件，本身同樣未經spec證實，故不主張此case風險比TC-018/019低，僅以「新註冊、各項可觀察指標皆為0」作為挑選依據以降低（而非消除）不確定性
+      requirement_id: REQ-MEMBER-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-020
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-044（同一REQ的3態合併版），該版本誠實揭露「升等門檻」具體達成算法spec全文未定義，因此不透過人工調整指標去製造目標狀態，只挑選環境既有已呈現對應樣式的帳號。Phase
+      2原版precondition卻寫「依現場設定調整該帳號指標」，把未定義的機制當成已知可操作的方式呈現，這與TC-MEMBER-007/008 v1被抓出的問題屬同一類depth defect（未經證實的機制被誤呈現為已知）。本輪已將此揭露補進precondition與結構化assumptions欄位，保留Phase
+      2原有「一AC一TC」的三條獨立TC結構（此結構本身沒有問題，個別追蹤pass/fail比Phase 3的單一decision_table合併版更清楚，故不採用Phase 3的結構、只採用其誠實揭露的處理方式）。v2依獨立Validator
+      FAIL判定修正TC-MEMBER-020：v1主張「無業績即可成立、風險最低」，但這個論證本身是在演算法完全未定義的情況下對「業績是門檻必要/充分條件」做出未經證實的斷言，屬同一類depth defect；已改為不主張風險相對最低，只以「新註冊、各項可觀察指標皆為0」作為降低（而非消除）不確定性的挑選依據，且此不確定性已併入assumptions揭露
+history:
+- at: '2026-09-15T11:05:14Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-017

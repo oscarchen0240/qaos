@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1  §§篩選器/結算日期
 - 相關需求：REQ-DAILYREPORT-004
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 結算日期為日期範圍、必填；不設區間上限。

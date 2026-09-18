@@ -1,0 +1,99 @@
+artifact_id: ART-BD-01M2GSRRE5MHM7RQP8S0HW02EQ
+artifact_type: BugDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-009
+task_id: T1
+iteration: 0
+created_by: agent-bug-analyst
+created_at: '2026-09-14T20:29:35Z'
+status: SUPERSEDED
+source:
+  type: Evidence
+  ids: &id001
+  - EVD-0055
+  - EVD-0056
+  - EVD-0057
+  - EVD-0058
+  - EVD-0059
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-004
+- entity_type: Evidence
+  id: EVD-0055
+- entity_type: Evidence
+  id: EVD-0056
+- entity_type: Evidence
+  id: EVD-0057
+- entity_type: Evidence
+  id: EVD-0058
+- entity_type: Evidence
+  id: EVD-0059
+requires_approval: null
+payload:
+  draft_id: BUG-DRAFT-01M2GSRRE4K9AFRK08ASPY9JP1
+  title: '[前後台][機台站台] 核心貨幣(TWD)停用後，出金/洗分仍可成功執行，未被阻擋'
+  product: ba-admin
+  functional_area: CASHFLOW
+  severity_proposed: critical
+  priority_proposed: high
+  severity_rationale: REQ-BONUSCCY-004 已由 PM 2026-09-15 明確確認：核心貨幣停用後，入金/出金/開分/洗分四項操作皆須被阻擋，目的是資金池出問題時即時止損。實測顯示出金、洗分兩項操作在核心貨幣已停用的情況下仍正常扣分成功，直接違反止損設計初衷——站台明明已經表態「這個幣別不能再動」，玩家分數卻仍能被兌現出金/洗掉，止損機制形同虛設。severity
+    定為 critical：涉及資金安全控制且是 PM 剛確認的明確規則，非模糊地帶
+  environment:
+    name: stage
+    account: ACAA00349（站長）
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  requirement_id: REQ-BONUSCCY-004
+  acceptance_criteria_ids:
+  - AC-BONUSCCY-022
+  - AC-BONUSCCY-024
+  preconditions:
+  - 機台站台（Arcade Machine）的鏈上錢包管理中，核心貨幣 TWD 對應的兩筆錢包幣別紀錄皆已停用（見 EVD-0055）
+  reproduction_steps:
+  - 登入機台版後台，至鏈上錢包管理，將該站台核心貨幣 TWD 對應的兩筆錢包幣別紀錄狀態改為停用
+  - 切到機台版前台，依序嘗試：入金（投紙鈔，觸發 req-cashin → end-cashin）、出金（按 CASHOUT 鍵，觸發 req-cashout → end-cashout）、開分（店員收現金加分，觸發 req-keyin）、洗分（觸發
+    req-keyout）
+  - 觀察四項操作各自的系統回應
+  expected_result: 四項操作（入金、出金、開分、洗分）皆應被系統阻擋，不應完成入帳/扣分
+  expected_result_spec_reference:
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    location: §一句話（限制段落）
+    quote: 補充（2026-09-15 PM確認）：核心貨幣可停用作即時止損用途，停用後入金/出金/開分/洗分四項操作皆須被阻擋
+  actual_result: 出金（req-cashout→end-cashout）與洗分（req-keyout）皆回 0-OK，成功完成扣分，未被阻擋；入金（req-cashin→end-cashin）與開分（req-keyin）雖然失敗，但回的是「7-OUT
+    OF SERVICE（服務不可用 DB/Redis/下游異常）」這種下游基礎設施錯誤訊息，而非「核心貨幣已停用」的明確業務拒絕——目前看似被擋，但實際上可能只是巧合的下游異常，而非系統刻意的止損邏輯
+  actual_result_evidence_map:
+  - claim: 鏈上錢包管理中，該站台核心貨幣 TWD 的兩筆紀錄皆為停用狀態
+    evidence_id: EVD-0055
+  - claim: 核心貨幣已停用時，入金 end-cashin 回 7-OUT OF SERVICE（服務不可用），而非明確的核心貨幣已停用拒絕
+    evidence_id: EVD-0056
+  - claim: 核心貨幣已停用時，開分 req-keyin 回 7-OUT OF SERVICE（服務不可用），而非明確的核心貨幣已停用拒絕
+    evidence_id: EVD-0057
+  - claim: 核心貨幣已停用時，出金 req-cashout→end-cashout 兩階段皆回 0-OK，成功完成扣分——未被阻擋
+    evidence_id: EVD-0058
+  - claim: 核心貨幣已停用時，洗分 req-keyout 回 0-OK（平台核可金額:100），成功完成扣分——未被阻擋
+    evidence_id: EVD-0059
+  evidence_ids: *id001
+  api:
+    url: req-cashout / end-cashout / req-keyout
+    method: POST
+  impact: 核心貨幣停用做為資金池出問題時的緊急止損手段完全失效：出金與洗分仍可正常把玩家分數兌現/清空，等同於停用形同虛設。入金/開分雖目前意外被擋，但擋下的原因是下游基礎設施異常（DB/Redis）而非業務邏輯判斷，一旦下游恢復正常，入金/開分很可能也會跟出金/洗分一樣被錯誤放行——四項操作背後應是同一個判斷點（核心貨幣
+    enabled 狀態），目前顯然缺乏統一的檢查
+  suspected_area: 後端：cashflow 服務（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout 四支 API）在處理交易前，未檢查該站台核心貨幣對應的
+    wallet_currency.enabled 狀態；出金/洗分完全遺漏此檢查，入金/開分目前的失敗疑似只是下游服務異常的巧合，非刻意設計的阻擋邏輯
+  ambiguity_suspected: false
+  duplicate_candidates: []
+history:
+- at: '2026-09-14T20:29:40Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-009
+- at: '2026-09-14T20:34:16Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-BD-01M2GT16H2ED99XB65EBXTN8QK
+  run_id: RUN-20260915-009

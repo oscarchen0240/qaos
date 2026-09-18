@@ -1,0 +1,51 @@
+<title>APR-0051 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0051 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-010 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>7 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 1 條 exploratory，approve 即確認其假設）</div>
+<p>共 7 條：grounded 6 條（預期結果有 spec 條文依據）、<b>exploratory 1 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-ARCADE-001 機台場館前台暫不開放自行註冊</h2>
+<blockquote>spec：業務規則與驗證／前台自行註冊　「機台場館的前台暫不開放自行註冊（未來營運需求、開放時程未定）」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ARCADE-001">001<br>v1</td><td>grounded</td><td>機台場館前台找不到自行註冊入口，對照線上站台前台正常提供</td><td>有一個機台場館站台與一個線上站台可供對照</td><td><ol><li>於站台列表分別查看該機台場館站台與該線上站台各自的網域欄位</li><li>以瀏覽器開啟機台場館的前台網域，尋找「註冊」入口</li><li>以瀏覽器開啟線上站台的前台網域，尋找「註冊」入口</li></ol></td><td>機台場館前台找不到任何自行註冊功能；線上站台前台則正常提供註冊入口，兩者形成對照</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-ARCADE-002 機台帳號的投注不計入任何上層加盟商/代理的傭金與返傭計算基數</h2>
+<blockquote>spec：既有功能對機台帳號的排除規則／4.5-4.6　「4.5 / 4.6｜加盟傭金／代理返傭｜不適用，機台帳號的投注不計入任何上層的傭金基數」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ARCADE-002">002<br>v1</td><td>grounded</td><td>機台帳號投注流水不計入上層加盟商的加盟傭金與代理返傭計算基數</td><td>一台機台帳號掛在某加盟商站台底下<br>該加盟商在本次測試的結算期間內，除此機台外沒有其他會員產生投注流水（維持乾淨對照，避免其他會員流水污染基準值）<br>記錄該加盟商上一個已結算期間的加盟傭金/代理返傭發放金額，做為對照基準</td><td><ol><li>讓該機台帳號在本結算期間產生一筆投注流水（開分或入金後遊玩消耗分數）</li><li>加盟傭金/代理返傭為結算期間週期性計算（依日/週/月結算），非即時重算——待本結算期間的結算流程跑完（或依系統實際結算週期等待）</li><li>切回該加盟商自身所屬的站台（非機台場館站台，因為「加盟傭金發放紀錄」「代理返傭發放紀錄」頁面在機台場館脈絡下被隱藏），至各式報表查看本期的加盟傭金/代理返傭發放紀錄</li></ol></td><td>本期發放金額與對照基準相比不因這筆機台流水而增加（在沒有其他會員流水的乾淨對照下，本期金額應與無機台流水時的預期值一致）；若實際系統的結算週期或路徑與描述不同，不視為違反本條，僅測機台流水是否被計入</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ARCADE-003 機台帳號的交易不會出現在優惠彩金審核佇列中</h2>
+<blockquote>spec：既有功能對機台帳號的排除規則／3.3　「3.3｜優惠彩金審核｜不適用」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ARCADE-003">003<br>v1</td><td>grounded</td><td>機台帳號的交易不會出現在優惠彩金審核佇列中</td><td>一台機台帳號已建立且可正常操作</td><td><ol><li>對該機台帳號完成任意一筆金流交易（開分/入金/洗分/出金其中一種）</li><li>檢視優惠彩金審核佇列</li></ol></td><td>該機台帳號的交易不會出現在審核佇列中</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-ARCADE-004 鏈上錢包管理TWD頁籤可設定機台場館的稽核倍數</h2>
+<blockquote>spec：機台帳號的稽核／設定位置　「（254行）鏈上錢包管理（僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏——稽核倍數設定在此）；（195行原文用詞「帳務管理&gt;出金設定」已由 Oscar 2026-09-15 確認不準確）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ARCADE-004">004<br>v1</td><td>grounded</td><td>鏈上錢包管理TWD頁籤可設定機台場館稽核倍數，預設0，修改後套用於開分/入金計算</td><td>以 Admin 登入後台，站台切換至一個機台場館</td><td><ol><li>至鏈上錢包管理 &gt; TWD 頁籤，確認稽核倍數欄位預設值為 0</li><li>修改稽核倍數為大於 0 的值（例如 3）並儲存</li><li>對該機台場館的一個機台帳號執行一筆開分或入金</li><li>檢視稽核明細，確認該筆交易確實依新設定的倍數計算出稽核門檻，而非沿用舊倍數或不計算</li></ol></td><td>可見稽核倍數設定欄位，預設值顯示為 0；修改數值並儲存後，該倍數即套用於後續的機台開分與入金計算——稽核明細顯示的計算結果反映新倍數，不是單純存檔留存而已</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-ARCADE-005">005<br>v1</td><td>⚠ exploratory</td><td>鏈上錢包管理TWD頁籤稽核倍數輸入負數或非數字時的系統反應（探索性，spec未定義此輸入驗證規則）</td><td>以 Admin 登入後台，站台切換至一個機台場館<br>至鏈上錢包管理 &gt; TWD 頁籤</td><td><ol><li>嘗試將稽核倍數欄位輸入負數或非數字格式</li><li>點擊儲存，觀察系統反應</li></ol></td><td>預期系統應阻擋此輸入（假設此欄位比照一般數值欄位有基本輸入驗證）；spec.md 對稽核倍數欄位本身未定義任何輸入驗證規則，此為 Test Designer 合理假設非 spec 明文，需開發或 PM 確認實際行為；若系統目前未做此驗證，不視為違反本條，僅記錄實際現況<div class=assume>⚠ 假設：稽核倍數欄位應比照一般數值欄位有基本輸入驗證（阻擋負數/非數字），spec.md未定義此規則，此為合理假設非明文規定</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-ARCADE-006 洗分出金核實的核實與作廢動作須寫入後台操作紀錄</h2>
+<blockquote>spec：對既有章節的影響／7.4 操作紀錄　「洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ARCADE-006">006<br>v1</td><td>grounded</td><td>洗分出金核實的核實動作寫入後台操作紀錄</td><td>有一筆待核實的機台洗分或機台出金交易</td><td><ol><li>於洗分出金核實頁對該筆執行「核實」操作</li><li>檢視後台操作紀錄</li></ol></td><td>該筆核實動作被記錄，內容含執行的操作人員、時間，以及對應的交易編號</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ARCADE-007">007<br>v1</td><td>grounded</td><td>洗分出金核實的作廢動作寫入後台操作紀錄</td><td>有一筆待核實的機台出金收據</td><td><ol><li>於洗分出金核實頁對該筆執行「作廢」操作（填寫必填的作廢原因）</li><li>檢視後台操作紀錄</li></ol></td><td>該筆作廢動作被記錄，內容含執行的操作人員、時間，以及對應的交易編號</td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0051 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0051 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0051 --decision reject --by &lt;you&gt; --rationale "..."</div>

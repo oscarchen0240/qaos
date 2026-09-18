@@ -1,0 +1,208 @@
+artifact_id: ART-TVR-01M2ECEPMWWCDZNB50BXEF750J
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-004
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-13T21:58:25Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2EBZJFP49TYJ2XAHBT8T5M5
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2EBZJFP49TYJ2XAHBT8T5M5
+- entity_type: Artifact
+  id: ART-RM-01M2EACWVWTZ2AGGA50EKHT3H2
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2EBZJFP49TYJ2XAHBT8T5M5
+  validated_against:
+    spec_id: SPEC-ACCOUNT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EACWVWTZ2AGGA50EKHT3H2
+  issues:
+  - testcase_id: TC-DRAFT-01M2EBZJFMBECG2Z428VBJF59N
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-ACCOUNT-001
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §功能說明
+    evidence: TC 標題「帳號類型欄位只能是線上或機台，無其他可選值」，steps 為「開啟創建會員帳號 Modal」「檢視帳號類型欄位的所有可選項」，expected_result 為「僅有『線上』與『機台』兩個選項，沒有其他值可選」——驗證對象是
+      Modal 下拉選單的可選項集合（建立前的欄位定義）。但它宣告對應的 AC-ACCOUNT-0011（given 後台建立一個線上帳號 / when 檢視該會員紀錄 / then 帳號類型欄位值為線上）與 AC-ACCOUNT-0012（given
+      後台建立一個機台帳號 / when 檢視該會員紀錄 / then 帳號類型欄位值為機台，且與既有會員資料表同一套），兩者的 given/when/then 講的是『已建立帳號後，檢視該筆會員紀錄的欄位值』，與本 TC 實際驗證的『建立前
+      Modal 下拉選單有哪些選項』是不同的斷言、不同的操作時機。本包另有 TC-DRAFT-01M2EBZJFM2E5HPP6SMNVBCZJD 才是真正驗證 AC-0011/0012 給定情境的案例。
+    explanation: acceptance_criteria_ids 指向的 AC 與 TC 實際的 steps/expected_result 內容不相符：AC-0011/0012 驗證的是『建立後記錄上的帳號類型值』，TC 驗證的是『建立前欄位下拉選單只有兩個選項』。兩者雖同屬
+      REQ-ACCOUNT-001 的合理延伸驗證，但不是同一個 given/when/then，屬於 AC 標記不精準（與過去 DAILYREPORT／SITELIST 驗證中最常見的錯誤同類型）。
+    recommended_change: 移除本 TC 對 AC-ACCOUNT-0011／AC-ACCOUNT-0012 的掛勾；若要保留本 TC 作為『帳號類型僅有線上/機台兩值』的獨立驗證，建議在 Requirement 端新增對應
+      AC（例如描述 Modal 欄位可選值集合的 AC），或將 acceptance_criteria_ids 留空並僅保留 requirement_ids，避免宣稱驗證了實際上未驗證的 given/when/then。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2EBZJFMAYA26PDAYZSZ17H1
+    issue_type: requirement_mismatch
+    severity: minor
+    violated_requirement: REQ-ACCOUNT-003
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/建立站台歸屬
+    evidence: TC 為 API 層繞過測試（直接呼叫建立帳號 API 並夾帶其他站台 B 的 ID），但宣告對應的 AC-ACCOUNT-0031（given 操作者站台切換選單目前所在站台為 A / when 點擊創建會員帳號並建立
+      / then 新帳號歸屬站台 A）與 AC-ACCOUNT-0032（given 開啟 Modal / when 檢視表單欄位 / then 不存在所屬場館欄位）字面上描述的都是 UI Modal 操作情境，並未提及 API 層的竄改防護。
+    explanation: 本 TC 驗證的規則本質（帳號一律歸屬操作當下站台、不可跨站台指定）與 AC 相同，屬於同一驗收準則在 API 層的縱深測試（defense-in-depth），不是內容錯誤，只是宣告的 AC 之 given/when
+      字面上未涵蓋 API 呼叫情境，屬於追溯精準度的小瑕疵，不影響測試本身的正確性。
+    recommended_change: 可維持現狀，或在 acceptance_criteria_ids 旁加註本案例為 AC-0031 的 API 層延伸驗證，使追溯關係更精準對應 given/when 描述的操作層級。
+  - testcase_id: TC-DRAFT-01M2EBZJFMAGCCN4AJH3M9HC9Y
+    issue_type: requirement_mismatch
+    severity: minor
+    violated_requirement: REQ-ACCOUNT-004
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §操作/創建會員帳號
+    evidence: TC 為 API 層繞過測試（線上站台下直接呼叫 API 並帶入帳號類型＝機台），但宣告對應的 AC-ACCOUNT-0042（given 目前站台為線上站台 / when 開啟創建會員帳號 Modal / then
+      帳號類型預設為線上，機台選項停用不可選）字面描述的是 Modal 下拉選單的預設值與可選狀態，並未提及 API 層的強制驗證。
+    explanation: 與上一則同類：測試的業務規則本質相符（機台帳號只能建立於機台場館），只是透過 API 層繞過 UI 限制來驗證後端是否同樣強制此規則，屬於同一驗收準則的縱深測試，不是內容錯誤，僅追溯精準度上與 AC 字面的 given/when（UI
+      情境）有落差。
+    recommended_change: 可維持現狀，或在 acceptance_criteria_ids 旁加註本案例為 AC-0042 的 API 層延伸驗證。
+  coverage_summary:
+    requirements_total: 32
+    requirements_covered: 32
+    ac_total: 67
+    ac_covered: 67
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2EBZJFM2E5HPP6SMNVBCZJD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMBECG2Z428VBJF59N
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2EBZJFM4YWENK2KXF7P7PPH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFM0JZW1SFZ5K96QY2B
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFM0H8M9JFS0AYW7PHY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMAYA26PDAYZSZ17H1
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2EBZJFMBCXT056P698D2A8R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMAGCCN4AJH3M9HC9Y
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2EBZJFMTG5BW8DY9927BT76
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMCMQMBHSWYTGE4YCK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMSJDBJYKCA008BHHM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMVTN25XT0JP7502ZH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFMST7YCTAX1RDDPK1R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNHD13BFRB4WCB7G3H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN0GPP8TY3T4EYP0RW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNGN6N038M1MBMGCWS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN707V6HPTJBTEPGE2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNSNNEJXVYVVVRE5RA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNERFEZY44DYDGZJQS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN20CEKE0F954GE904
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN0MZRSTJA0VGXSHN5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN211JZB84D0QN5P0X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNAEZJHWK4R1656SX5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN13EW4ZJQC4MMF1AZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN9R0P5EJ2D3Y5CRP8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN3JBQMBS01JHSAS2J
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN9CZH7A78EH5Q281V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN4WVVNDCF1PPV6VH1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNGZA05JMDPAFPPBZ4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN38QHJ4DHZCHHDS08
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNQHCSTP3MQ9ER5JMS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNTGVV1BP4JSNBTVD8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNS8BQ9QXSQ6XCRPB7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNGDK4NQTJS6TNVKZA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNC87SE5XHJF237PX3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN0PJ1KNVX6A2NC2BF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNMN04V651MMGF0R7F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNGZJK7VREY8Y8SCVZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNB13PZARKKHC8GC33
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNJ6FZMBWJEDK0W848
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNFG4HRQQQ2ADRDA7Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNB2GHNE538FJN7YNN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNR2PYDAHKNKK2X7A7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNNRKRVA9H5FC96D8M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNMYYW4211H3RNJY9K
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN3BYR0RXF4YYQYM3N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNTTCSCPF58HYCKHVX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNPCHC6FPH1FDHG2HT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN2YMDWG3MCR67M3BY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFN8W331NH5SC3S383W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFNZBKVY51TM7TENE15
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFP1AA98ND5088BBW52
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFP2DER1TBZG5S3CAP3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFPF28TXR29BRDHYGV4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFPW6YZY2A5SEHHC2DF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFPSM4YCZG5N75QCR1T
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2EBZJFPXXB383ERVKTV4FMP
+    verdict: ok
+history:
+- at: '2026-09-13T21:58:25Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-004

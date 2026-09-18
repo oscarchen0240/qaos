@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1  §§列表欄位末段 + §操作
 - 相關需求：REQ-DAILYREPORT-016
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 列表底部顯示當前篩選結果的各欄總計；頁面右上角「匯出 CSV」匯出當前篩選結果。本頁為統計檢視，不提供新增／編輯／刪除／審核。

@@ -1,0 +1,343 @@
+artifact_id: ART-RM-01M2G5ANR2EPARZ77K8VG61CHV
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-015
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T14:32:22Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-UPDATEPACK-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-UPDATEPACK-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-UPDATEPACK-001
+  spec_version: '0.1'
+  requirements:
+  - requirement_id: REQ-UPDATEPACK-001
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: functional
+    title: 幣別清單來源依鏈上錢包管理啟用狀態決定
+    statement: 會員餘額類欄位可展開的幣別清單，依「帳務管理 > 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤幣別）；關閉或禁用的幣種不列出；幣種增減隨鏈上錢包管理的啟用狀態自動連動，本功能不另行設定幣別清單
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0011
+      given: 站台在鏈上錢包管理啟用了三種幣別（含法幣 TWD 頁籤）
+      when: 展開任一會員的餘額欄
+      then: 展開清單恰好列出這三種已啟用的幣別
+    - ac_id: AC-UPDATEPACK-0012
+      given: 站台將其中一種幣別於鏈上錢包管理改為禁用
+      when: 再次展開同一會員的餘額欄
+      then: 該幣別不再列出，清單即時反映鏈上錢包管理目前的啟用狀態
+    spec_reference: &id001
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 幣別清單來源 | 依「帳務管理 > 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤的幣別）；狀態為關閉或禁用的幣種不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能不另行設定幣別清單
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-002
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: functional
+    title: 展開箭頭僅在啟用幣種超過一種時顯示，三個位置皆適用
+    statement: 已啟用幣種超過一種時，會員列表、側邊簡易資料面板、會員詳細資料頁的餘額類欄位皆顯示展開箭頭；僅啟用一種幣別時不顯示箭頭，維持單行呈現
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0021
+      given: 站台已啟用兩種以上幣別
+      when: 檢視會員列表的帳戶餘額欄
+      then: 顯示展開箭頭
+    - ac_id: AC-UPDATEPACK-0022
+      given: 同一會員，站台已啟用兩種以上幣別
+      when: 檢視該會員的側邊簡易資料面板與會員詳細資料頁的餘額類欄位（帳戶餘額、提領所需有效投注額、可提領餘額）
+      then: 三個欄位皆顯示展開箭頭
+    spec_reference: &id002
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 展開箭頭顯示條件 | 已啟用幣種超過一種時才顯示展開箭頭；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-003
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: functional
+    title: 收合時顯示核心貨幣錢包餘額，不做匯率換算、不是各幣別加總
+    statement: 收合狀態顯示的數值為該站台核心貨幣錢包的餘額，不做匯率換算，也不是各幣別金額的加總；核心貨幣為主站台層級設定，子站台一律繼承、不可各自指定
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0031
+      given: 會員在核心貨幣以外的幣別也持有餘額
+      when: 檢視收合狀態的帳戶餘額欄
+      then: 顯示的數值僅為核心貨幣錢包的原始餘額，不含其他幣別換算或加總後的數字
+    spec_reference: &id003
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接關係金額正確性，算錯會誤導客服與財務判斷
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-004
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: constraint
+    title: 展開後排列順序：核心貨幣固定第一列，其餘依鏈上錢包管理幣種順序接續
+    statement: 展開後核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每列顯示「幣種代碼＋金額」
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0041
+      given: 展開一個已啟用三種幣別的會員餘額欄
+      when: 檢視展開後的列表順序與每列內容
+      then: 核心貨幣列在第一列，其餘兩種依鏈上錢包管理設定的順序接續排列；每列皆顯示幣種代碼與金額
+    spec_reference: &id004
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 展開後的排列順序 | 核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每列顯示「幣種代碼＋金額」
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-005
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: constraint
+    title: 金額為 0 的幣別展開時仍列出並顯示 0.00
+    statement: 展開後，金額為 0 的幣別仍列出並顯示 0.00，不因無餘額而隱藏
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0051
+      given: 會員某個已啟用幣別的餘額為 0
+      when: 展開該會員的餘額欄
+      then: 該幣別仍列出並顯示 0.00
+    spec_reference: &id005
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 金額為 0 的幣別 | 仍列出並顯示 0.00，不因無餘額而隱藏
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-006
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: constraint
+    title: 展開/收合狀態僅作用於當次瀏覽，換頁或重新進入頁面後回到收合預設
+    statement: 逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0061
+      given: 已將某會員的餘額欄展開
+      when: 換頁或重新查詢
+      then: 該欄回到收合預設狀態
+    - ac_id: AC-UPDATEPACK-0062
+      given: 已將某會員的餘額欄展開
+      when: 離開後重新進入該頁面
+      then: 回到收合預設狀態，不記得先前的展開狀態
+    spec_reference: &id006
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 展開狀態的保留 | 逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-007
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: constraint
+    title: 篩選器帳戶餘額範圍與列表總計維持單一數值，不依幣別拆分
+    statement: 篩選器的「帳戶餘額（主錢包）min～max」與列表底部「總計」列維持現行行為，皆以收合時的單一數值（核心貨幣錢包餘額）為準，不依幣別拆分，也不提供幣別選擇
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0071
+      given: 站台已啟用多種幣別
+      when: 檢視帳戶餘額篩選器
+      then: 僅提供單一 min～max 範圍輸入，不提供依幣別分別篩選的選項，篩選依核心貨幣餘額計算
+    - ac_id: AC-UPDATEPACK-0072
+      given: 站台已啟用多種幣別
+      when: 檢視列表底部總計列
+      then: 總計以核心貨幣餘額加總計算，不依幣別拆分顯示，也不提供幣別選擇
+    spec_reference: &id007
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §一、多幣別錢包展開顯示
+      quote: 不變更的範圍：2.1.2 篩選器的「帳戶餘額（主錢包）min ～ max」與列表底部「總計」列維持現行行為——皆以收合時的單一數值（核心貨幣錢包餘額）為準，不依幣別拆分，也不提供幣別選擇
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，是本節唯一明訂的「不變更範圍」守門規則，容易被誤實作成連動拆分
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §一、多幣別錢包展開顯示
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-008
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: functional
+    title: 人工入金／人工出金不計入存款/提款次數與金額欄位
+    statement: 會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金，一律不含人工入金與人工出金；手冊原文曾寫「含人工入金/出金」，該敘述已作廢
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0081
+      given: 一筆人工入金操作完成
+      when: 檢視該會員的存款次數與存款金額
+      then: 兩者皆不變動，不計入此筆人工入金
+    - ac_id: AC-UPDATEPACK-0082
+      given: 一筆人工出金操作完成
+      when: 檢視該會員的提款次數與提款金額
+      then: 兩者皆不變動，不計入此筆人工出金
+    spec_reference: &id008
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §二、存款／提款累計欄位
+      quote: 本功能說明：存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金，一律不含人工入金與人工出金。⚠️ 手冊原文曾寫「含人工入金／出金」，該敘述已作廢——人工存入與人工提出一律不計入這四個欄位
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且是手冊已知勘誤（原文寫錯），金額統計錯誤會誤導風控與財報，優先級高
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §二、存款／提款累計欄位
+        quote: ''
+  - requirement_id: REQ-UPDATEPACK-009
+    version: 1
+    spec_id: SPEC-UPDATEPACK-001
+    spec_version: '0.1'
+    type: constraint
+    title: 注單查詢頁的場次編號欄位：線上帳號顯示橫線，機台帳號顯示所屬場次編號
+    statement: 與交易紀錄查詢頁共用場次編號欄位規則的注單查詢頁，線上帳號的場次編號欄一律顯示「—」；機台帳號顯示該筆注單所屬的場次編號
+    acceptance_criteria:
+    - ac_id: AC-UPDATEPACK-0091
+      given: 注單查詢頁的查詢結果包含線上會員的注單
+      when: 檢視其場次編號欄
+      then: 顯示「—」
+    - ac_id: AC-UPDATEPACK-0092
+      given: 注單查詢頁的查詢結果包含機台帳號的注單
+      when: 檢視其場次編號欄
+      then: 顯示該筆注單所屬的場次編號
+    spec_reference: &id009
+      spec_id: SPEC-UPDATEPACK-001
+      spec_version: '0.1'
+      location: §五、交易紀錄的兩項欄位規則
+      quote: 場次編號欄位：與線上會員共用的頁面（交易紀錄查詢、注單查詢）的「場次編號」欄位，線上帳號的資料一律顯示「—」，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；交易紀錄查詢頁已由 SPEC-TXLOG-001 REQ-006 驗證，本條測的是從未被任何 spec 測過的注單查詢頁
+      spec_reference:
+        spec_id: SPEC-UPDATEPACK-001
+        spec_version: '0.1'
+        location: §五、交易紀錄的兩項欄位規則
+        quote: ''
+  traceability:
+  - requirement_id: REQ-UPDATEPACK-001
+    spec_reference: *id001
+  - requirement_id: REQ-UPDATEPACK-002
+    spec_reference: *id002
+  - requirement_id: REQ-UPDATEPACK-003
+    spec_reference: *id003
+  - requirement_id: REQ-UPDATEPACK-004
+    spec_reference: *id004
+  - requirement_id: REQ-UPDATEPACK-005
+    spec_reference: *id005
+  - requirement_id: REQ-UPDATEPACK-006
+    spec_reference: *id006
+  - requirement_id: REQ-UPDATEPACK-007
+    spec_reference: *id007
+  - requirement_id: REQ-UPDATEPACK-008
+    spec_reference: *id008
+  - requirement_id: REQ-UPDATEPACK-009
+    spec_reference: *id009
+history:
+- at: '2026-09-14T14:32:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-015

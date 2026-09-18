@@ -1,0 +1,82 @@
+title: 現金淨收允許為負值，不會被限制為非負或以錯誤取代
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-012
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0122
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 尋找或選定一個當日已核實洗分與已兌現金額合計，明顯大於開分與進鈔金額合計的既有機台或場館（使公式計算結果為負值；若查詢範圍內找不到現成案例，可嘗試放寬結算日期或改選其他機台尋找）
+test_data: []
+steps:
+- n: 1
+  action: 進入場館日結報表，設定選定的機台與涵蓋日期，查詢
+- n: 2
+  action: 檢視該列的現金淨收欄位數值，並依公式手動計算核對
+expected_result: 現金淨收欄位正常顯示負值（不會被系統攔截、顯示為 0、或以錯誤訊息取代），且該負值等於依公式計算的結果——代表場館端現金應淨減少多少
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §操作/欄位說明附註
+  quote: 代表場館端當日現金應該增減多少
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-085
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:10Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:10Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

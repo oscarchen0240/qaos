@@ -1,0 +1,70 @@
+artifact_id: ART-TCD-01M2H03QK2R1GWHRQGJQGND1MQ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-012
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-14T22:20:26Z'
+status: INVALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-ARCADE-004
+- entity_type: Artifact
+  id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  testcases:
+  - draft_id: TC-DRAFT-01M2H03QK1HBC2JZZVRDXFBEBX
+    title: 鏈上錢包管理TWD頁籤稽核倍數輸入負數時，前端阻擋且後端回傳400 COMMON_NON_NEGATIVE
+    product: ba-admin
+    functional_area: ARCADE
+    requirement_ids:
+    - REQ-ARCADE-004
+    acceptance_criteria_ids:
+    - AC-ARCADE-004
+    spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，站台切換至一個機台場館
+    - 至鏈上錢包管理 > TWD 頁籤
+    test_data: []
+    steps:
+    - n: 1
+      action: 將稽核倍數欄位輸入負數
+    - n: 2
+      action: 點擊儲存，觀察前端畫面反應
+    - n: 3
+      action: 檢視 API 回應內容
+    expected_result: 前端阻擋此輸入並顯示錯誤訊息「不可小於0」；後端 API 回傳 400 狀態碼，錯誤代碼 COMMON_NON_NEGATIVE，稽核倍數不會被儲存為負數（已由 Oscar 2026-09-15 實測確認）
+    expected_result_spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.7'
+      location: 機台帳號的稽核／設定位置
+      quote: 設定位置｜鏈上錢包管理，於 TWD 頁籤設定稽核倍數（負數輸入驗證行為由 Oscar 2026-09-15 實測確認，spec.md 原文未明訂此輸入驗證規則）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 原版（TC-ARCADE-005 v1）為 exploratory 假設，已由 Oscar 2026-09-15 實機測試證實：前端顯示「失敗，不可小於0」，後端回傳 400 COMMON_NON_NEGATIVE，改為
+      grounded TC，不再需要 needs_human_confirmation
+    source_ref: new_required:oscar_confirmed_negative_input_validation_2026-09-15

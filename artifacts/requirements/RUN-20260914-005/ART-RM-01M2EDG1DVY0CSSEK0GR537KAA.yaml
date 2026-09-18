@@ -1,0 +1,1593 @@
+artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-005
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-13T22:16:38Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-CASHFLOW-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-CASHFLOW-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirements:
+  - requirement_id: REQ-CASHFLOW-001
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 稽核倍數預設 0 倍
+    statement: 機台開分與入金依出金設定的幣種稽核倍數計算，計入的交易為機台開分與機台入金，稽核明細照常寫入；預設值為 0 倍，即不產生稽核門檻
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0011
+      given: 場館未特別設定稽核倍數
+      when: 機台開分或入金完成
+      then: 稽核明細照常寫入，類型顯示為「機台開分」或「機台入金」；因倍數為 0，不產生稽核門檻，玩家可隨時洗分與出金
+    spec_reference: &id001
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+      quote: 預設值 | 0 倍——即開分與入金不產生稽核門檻，玩家隨時可洗分與出金
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 預設值與計入交易皆已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §機台帳號的稽核
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-002
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 稽核倍數大於 0 時扣除未完成稽核部分
+    statement: 稽核倍數大於 0 時，洗分與出金的核可金額須先扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0021
+      given: 場館稽核倍數設為大於 0（如 1 倍）且有未完成稽核金額
+      when: 計算洗分或出金的核可金額
+      then: 核可金額已扣除未完成稽核部分
+    - ac_id: AC-CASHFLOW-0022
+      given: 扣除未完成稽核後金額為 0
+      when: 嘗試洗分或出金
+      then: 視同餘額不足，回 1-NO CREDITS
+    spec_reference: &id002
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核 + §業務規則-稽核倍數
+      quote: 倍數大於 0 時 | 洗分與出金的核可金額須扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足，機台畫面顯示餘額不足
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 扣除規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/稽核倍數
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-003
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 開分交易的紀錄與累計
+    statement: 開分向平台請求後立即生效，交易紀錄類型記為機台開分、金額為正值；交易完成當下直接累計存款次數與存款金額（不需核實）
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0031
+      given: 店員以鑰匙開啟機台選單為玩家開分
+      when: 請求送達平台
+      then: 立即生效，分數增加；交易紀錄類型為機台開分、金額為正值；當下直接累計存款次數與金額
+    spec_reference: &id003
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/開分
+      quote: 交易紀錄的類型記為「機台開分」，金額為正值。交易完成（分數入帳）當下直接累計進該機台帳號於會員列表的「存款次數」「存款金額」（不需核實）
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/開分
+        quote: ''
+    states:
+    - from: 無請求
+      to: 已生效
+      trigger: req-keyin 判定通過
+  - requirement_id: REQ-CASHFLOW-004
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 開分超過額度上限則拒絕
+    statement: 若開分後會使全場館機台分數餘額合計超過場館額度上限，平台拒絕，機台畫面顯示失敗，分數不變、不寫入任何帳務異動
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0041
+      given: 加計本次開分金額後將使全場館機台分數餘額合計超過場館額度上限
+      when: 送出開分請求
+      then: 平台回 1-OVER LIMIT，分數不變、不寫入任何帳務異動
+    spec_reference: &id004
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/開分 + §附錄-開分
+      quote: 超過額度上限回 1-OVER LIMIT，不寫入任何帳務異動
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-開分
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-005
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 開分無唯一識別碼，系統不做防重複判斷
+    statement: 開分請求不帶唯一識別碼，機台不會自動重送，平台把每一筆開分請求一律當作新交易處理；重複交易只可能來自現場人員重新操作，系統本身無天然防護
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0051
+      given: 在額度上限內，對同一機台連續送出兩筆內容相同的開分請求（模擬現場重按）
+      when: 兩筆請求皆判定通過
+      then: 兩筆分別入帳，分數增加兩次——系統不會偵測或阻擋重複，此為既定行為而非缺陷
+    spec_reference: &id005
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/單階段交易防重複 + §附錄-開分
+      quote: 開分無任何自然防護——只要不超過額度上限，重按幾次就加幾次，是最高風險項
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: constraint
+    rejection_contract:
+      defined: true
+      description: 此為 spec 明確承認且刻意不做系統防護的行為（現場 SOP 因應），非缺陷
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/單階段交易防重複
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-006
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 入金兩階段與 PENDING 建立
+    statement: 收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號可同時存在多筆有效入金 PENDING
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0061
+      given: 機台送出 req-cashin
+      when: 平台處理請求
+      then: 建立新 PENDING 並產生唯一 TXID
+    - ac_id: AC-CASHFLOW-0062
+      given: 同一帳號已有一筆有效入金 PENDING
+      when: 再送出一筆新的 req-cashin
+      then: 建立第二筆 PENDING，不使第一筆失效，兩筆並存
+    spec_reference: &id006
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號可同時存在多筆有效入金 PENDING
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-007
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 入金額度於 req-cashin 階段判定並預留
+    statement: 額度上限於 req-cashin 階段以場館鎖內「當下全場館餘額合計＋已預留未入帳的入金金額＋本筆金額」判定；未超限才建立 PENDING 並預留，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0071
+      given: 全場館餘額合計＋已預留金額＋本筆金額 未超過額度上限
+      when: 送出 req-cashin
+      then: 建立 PENDING 並將本筆金額計入預留
+    - ac_id: AC-CASHFLOW-0072
+      given: 全場館餘額合計＋已預留金額＋本筆金額 將超過額度上限
+      when: 送出 req-cashin
+      then: 回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔
+    - ac_id: AC-CASHFLOW-0073
+      given: 兩筆入金請求幾乎同時送達，各自單看都不超限但合計會超限
+      when: 依場館鎖逐筆序列化處理
+      then: 第一筆通過並預留後，第二筆的判定基準已包含第一筆的預留，因而正確被擋下
+    spec_reference: &id007
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 先取得場館鎖…在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 場館鎖序列化與預留機制已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-008
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 入金預留額度的釋放
+    statement: 入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋放；Admin／站長手動取消該筆待確認入金時立即釋放；預留與釋放須成對
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0081
+      given: PENDING 有預留額度
+      when: end-cashin 成功入帳
+      then: 預留轉為實際分數餘額，額度不再被此筆佔用
+    - ac_id: AC-CASHFLOW-0082
+      given: PENDING 有預留額度
+      when: 超過 24 小時未完成
+      then: 自動轉為已逾時，預留額度釋放
+    - ac_id: AC-CASHFLOW-0083
+      given: PENDING 有預留額度
+      when: Admin 或站長於交易紀錄手動取消
+      then: 預留額度立即釋放
+    spec_reference: &id008
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 預留額度的釋放（v07 定案）：入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋放；Admin／站長於交易紀錄手動取消該筆待確認入金時立即釋放
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 三種釋放情況已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+    states:
+    - from: PENDING(已預留)
+      to: 已完成(轉實際餘額)
+      trigger: end-cashin 成功
+    - from: PENDING(已預留)
+      to: 已逾時(釋放)
+      trigger: 24 小時逾時
+    - from: PENDING(已預留)
+      to: 已取消(釋放)
+      trigger: 人工取消
+  - requirement_id: REQ-CASHFLOW-009
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: end-cashin 完成入帳且不再判定額度
+    statement: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、預留轉為實際餘額，回 0-OK；本階段不再判定額度上限
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0091
+      given: PENDING 存在且 TXID 相符
+      when: 收到 end-cashin
+      then: 關閉 PENDING、更新帳務、預留轉實際餘額，回 0-OK，且不再重新檢查額度上限
+    spec_reference: &id009
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、把預留轉為實際餘額，回 0-OK。本階段不再判定額度上限
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-010
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: end-cashin 查無對應 PENDING
+    statement: 收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD，不變更任何資料
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0101
+      given: 送出的 end-cashin 的 TXID 查無對應 PENDING（或已被取消/逾時關閉）
+      when: 平台處理該請求
+      then: 僅記錄 log，回 1-NO RECORD，不變更任何帳務或 PENDING 資料
+    spec_reference: &id010
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD，不變更任何資料
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-011
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: end-cashin 具備冪等性
+    statement: 機台可能重複送出 end-cashin（15 秒未收到成功回覆即重送，跨斷電續送）；平台對相同 TXID 第二次以後收到時，若該 PENDING 已完成，直接回 0-OK 且不重複加值
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0111
+      given: 某 TXID 的 end-cashin 已成功處理過一次（分數已入帳）
+      when: 同一 TXID 的 end-cashin 再次送達
+      then: 回 0-OK，但分數不再重複增加
+    spec_reference: &id011
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 平台必須具備冪等性：相同 TXID 第二次以後收到時，若該 PENDING 已完成，直接回 0-OK 且不重複加值
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 冪等性規則已明確定義，且是防止重複入帳的關鍵防線
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-012
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 入金 PENDING 保留 24 小時後逾時
+    statement: 入金 PENDING 保留 24 小時，逾期自動轉為已逾時；之後再收到 end-cashin 一律回 1-NO RECORD，機台停止重送、流程收斂
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0121
+      given: 入金 PENDING 建立超過 24 小時仍未收到 end-cashin
+      when: 系統排程檢查
+      then: 該 PENDING 自動轉為已逾時，預留額度釋放
+    - ac_id: AC-CASHFLOW-0122
+      given: PENDING 已轉為已逾時
+      when: 之後才收到該 TXID 的 end-cashin
+      then: 回 1-NO RECORD，不變更任何資料
+    spec_reference: &id012
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-PENDING 保留期限
+      quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 end-cashin 一律回 1-NO RECORD，機台停止重送，流程收斂
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-PENDING 保留期限
+        quote: ''
+    states:
+    - from: PENDING
+      to: 已逾時
+      trigger: 超過 24 小時
+    - from: 已逾時
+      to: 已逾時
+      trigger: 逾時後仍收到 end-cashin，回 1-NO RECORD
+  - requirement_id: REQ-CASHFLOW-013
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分核可金額以門檻為單位捨去
+    statement: 洗分核可金額＝餘額以機台送來的門檻（throshold）為單位無條件捨去；門檻為 0 時表示洗出全部餘額、不做取整
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0131
+      given: 機台餘額 321，門檻 100，全洗
+      when: 送出洗分請求
+      then: 核可金額 300
+    - ac_id: AC-CASHFLOW-0132
+      given: 機台餘額 321，門檻 100，指定金額洗 300
+      when: 送出洗分請求
+      then: 核可金額 300，與全洗結果相同
+    - ac_id: AC-CASHFLOW-0133
+      given: 機台餘額 321，門檻 0，全洗
+      when: 送出洗分請求
+      then: 核可金額 321（全額，不取整）
+    spec_reference: &id013
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 計算規則：核可金額 ＝ 餘額以門檻為單位無條件捨去。例：門檻 100、餘額 321 → 核可 300；門檻 0、餘額 321 → 核可 321（全額）
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 計算規則與範例已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/洗分
+        quote: ''
+    inputs:
+    - name: throshold
+      type: number
+      required: true
+      constraints:
+        min: 0
+        note: 機台隨請求送上，正值或 0
+  - requirement_id: REQ-CASHFLOW-014
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分餘數留在機台帳號上
+    statement: 門檻大於 0 時，不足一個門檻單位的餘數不付現，繼續留在機台帳號上，不會被清除，系統不另記交易；餘數單獨存在時可洗金額為 0、無法洗出
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0141
+      given: 機台餘額 321，門檻 100，全洗
+      when: 洗分完成
+      then: 洗出 300，機台餘額變為 21（餘數留在帳號上，未被清除）
+    - ac_id: AC-CASHFLOW-0142
+      given: 機台餘額為單獨的餘數（如 21，小於門檻 100）
+      when: 再次嘗試洗分
+      then: 核可金額為 0，回 1-NO CREDITS，無法洗出（可改按出金全額領回）
+    spec_reference: &id014
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §業務規則-餘數保留
+      quote: 餘數保留 | 洗分（門檻大於 0 時）僅扣除核可金額，不足一個門檻單位的餘數留在機台帳號上；系統不另記交易、不清空餘額
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則與範例已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/洗分
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-015
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分規格外門檻值防禦性拒絕
+    statement: 門檻值若為負值、缺漏或非數值（規格外情形），平台防禦性拒絕，回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0151
+      given: 洗分請求的 throshold 為負值
+      when: 送出請求
+      then: 平台拒絕，回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+    - ac_id: AC-CASHFLOW-0152
+      given: 洗分請求缺少 throshold 欄位或為非數值
+      when: 送出請求
+      then: 同樣回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+    spec_reference: &id015
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-洗分
+      quote: 規格外的值（負值、缺漏、非數值）屬廠商保證外情形，防禦性處理：拒絕該筆、回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 防禦性處理規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-洗分
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-016
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分核可金額為 0 時回餘額不足
+    statement: 計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足（1-NO CREDITS），不寫入任何帳務異動與交易紀錄
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0161
+      given: 機台餘額不足一個門檻單位（或為 0）
+      when: 送出洗分請求
+      then: 回 1-NO CREDITS，不寫入任何帳務異動與交易紀錄
+    spec_reference: &id016
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 核可金額為 0 時回 1-NO CREDITS，不寫入任何帳務異動與交易紀錄
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-洗分
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-017
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分為單階段且立即結束當前場次
+    statement: 洗分回 0-OK 即代表分數已扣除、無回滾機制；完成當下當前場次即結束，餘數由新場次承接
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0171
+      given: 洗分請求回 0-OK
+      when: 檢視分數與場次
+      then: 分數已扣除且無法回滾；當前場次立即結束，若有餘數則新場次立即開始承接（期初餘額＝餘數）
+    spec_reference: &id017
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 單階段，回 0-OK 即已完成扣款，無回滾機制；完成當下當前場次即結束，餘數由新場次承接
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-洗分
+        quote: ''
+    states:
+    - from: 進行中
+      to: 已結束(洗分)
+      trigger: 洗分回 0-OK
+    - from: 已結束(洗分,有餘數)
+      to: 進行中(新場次)
+      trigger: 立即承接
+  - requirement_id: REQ-CASHFLOW-018
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分無唯一識別碼，重複操作在特定情境下會重複扣款
+    statement: 洗分請求不帶唯一識別碼、機台不會自動重送，平台把每筆請求當新交易受理；多數重複操作會被「餘額不足」擋下，但指定金額洗分且洗完後餘額仍足夠再洗一次同額時，第二次仍會成功造成重複扣款
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0181
+      given: 機台餘額 1000，門檻 100，指定金額洗 300（回 0-OK，餘額變 700）
+      when: 誤判失敗後重按，再次送出指定金額洗 300
+      then: 第二次同樣回 0-OK 並扣款 300（餘額變 400）——系統不會阻擋，此為 spec 明確點名的風險情境，需靠現場 SOP（先查後台再決定是否重做）因應
+    spec_reference: &id018
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分（機台顯示失敗時要怎麼辦）
+      quote: 指定金額洗分、且洗完後餘額仍足夠再洗一次同額時，第二次會成功…玩家就被扣了兩次卻只拿到一次現金
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: constraint
+    rejection_contract:
+      defined: true
+      description: 此為 spec 明確承認且刻意不做系統防護的行為，非缺陷
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/洗分
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-019
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金 PENDING 唯一性與取代
+    statement: 同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時若已有既存 PENDING，必須先標記失效再建立新的
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0191
+      given: 機台帳號已有一筆有效出金 PENDING
+      when: 再次送出 req-cashout
+      then: 既存 PENDING 被標記失效，同時建立一筆新的 PENDING，全程只有一筆有效
+    spec_reference: &id019
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時若已有既存 PENDING，必須先標記失效再建立新的
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: ''
+    states:
+    - from: PENDING(舊)
+      to: 已取消
+      trigger: 新的 req-cashout 送達
+  - requirement_id: REQ-CASHFLOW-020
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金核可金額為全部餘額且不套門檻
+    statement: 核可金額＝req-cashout 當下的全部餘額，不套門檻取整、無餘數；核可金額為 0 時回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0201
+      given: 機台餘額 321
+      when: 送出 req-cashout
+      then: 核可金額為 321（全額），不因門檻而取整
+    - ac_id: AC-CASHFLOW-0202
+      given: 機台餘額為 0
+      when: 送出 req-cashout
+      then: 回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    spec_reference: &id020
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 核可金額 ＝ req-cashout 當下的全部餘額（清空餘額、不套門檻）…核可金額為 0 時回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-021
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: end-cashout 完成扣分且立即結束場次
+    statement: end-cashout 扣分完成當下，餘額歸 0（無餘數承接）、當前場次立即結束；同樣須對相同 TXID 具備冪等性
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0211
+      given: 出金 PENDING 存在且 TXID 相符
+      when: 收到 end-cashout
+      then: 扣分完成，餘額歸 0，當前場次立即結束
+    - ac_id: AC-CASHFLOW-0212
+      given: 該筆 end-cashout 已成功處理過一次
+      when: 同一 TXID 再次送達
+      then: 回應成功但不重複扣分（分數已是 0，不會變負）
+    spec_reference: &id021
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: end-cashout 扣分完成當下當前場次即結束，餘額歸 0、無餘數承接…同樣須對相同 TXID 的重複 end-cashout 具備冪等性
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: ''
+    states:
+    - from: 進行中
+      to: 已結束(出金)
+      trigger: end-cashout 扣分完成
+  - requirement_id: REQ-CASHFLOW-022
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: end-cashout 查無對應 PENDING
+    statement: 收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0221
+      given: 送出的 end-cashout 的 TXID 查無對應 PENDING（例如已被新請求取代）
+      when: 平台處理該請求
+      then: 僅記錄 log，回 1-NO RECORD，不變更任何資料
+    spec_reference: &id022
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-023
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金印表機異常的兩種情況
+    statement: 列印還沒開始就偵測到異常時，機台直接結束流程不通知平台，分數不扣、保留在機台上；已送入列印佇列後才實體故障（卡紙缺紙）時，分數照扣、收據待狀況排除後自動印出
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0231
+      given: 按下結算時印表機已有異常（列印尚未開始）
+      when: 機台直接結束流程
+      then: 不通知平台，分數不扣、保留在機台上，平台這邊沒有任何交易紀錄
+    - ac_id: AC-CASHFLOW-0232
+      given: 收據已送入列印佇列後才卡紙或缺紙
+      when: 檢視分數與收據狀態
+      then: 分數已扣（出金已完成），收據仍在佇列中，待現場排除狀況後自動印出，不可視為未出金而重做
+    spec_reference: &id023
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金
+      quote: 列印還沒開始就偵測到異常…分數不扣、保留在機台上…已送入列印佇列後才實體故障…分數照扣，收據待狀況排除後自動印出
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 兩種情況與各自結果已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/出金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-024
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金按下結算無反應時不扣分
+    statement: 按了結算卻沒有任何反應（機台連不上平台）時，機台自行結束流程，分數一毛都沒扣；可再按一次結算，前一筆待確認的出金會被新的一筆自動取代
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0241
+      given: 按下結算鍵後機台連不上平台、自行結束流程
+      when: 檢視分數
+      then: 分數未扣
+    - ac_id: AC-CASHFLOW-0242
+      given: 再次按下結算鍵
+      when: 送出新的 req-cashout
+      then: 前一筆待確認出金自動被取代，新請求正常處理
+    spec_reference: &id024
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金
+      quote: 按了結算卻沒有任何反應…分數一毛都沒扣，請玩家或店員再按一次結算即可。就算平台端留有前一筆待確認的出金，也會被新的一筆自動取代，不需人工處理
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/出金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-025
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金過渡期由前台依序呼叫完成
+    statement: 機台暫無印表機期間，出金改由前台依序呼叫 req-cashout 與 end-cashout；扣分時點與場次結束時點皆為前台回報完成、平台扣分成功當下；請求出金到回報完成之間不提供取消
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0251
+      given: 機台暫無印表機（過渡期現況）
+      when: 玩家按下結算鍵
+      then: 前台依序呼叫 req-cashout 取得核可後立即回報 end-cashout，收到完成回覆當下才扣分並結束場次
+    - ac_id: AC-CASHFLOW-0252
+      given: 出金請求已送出、尚未收到回報完成
+      when: 玩家或店員嘗試取消
+      then: 系統不提供取消（結算畫面的取消鍵僅在送出請求前有效）
+    spec_reference: &id025
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 扣分時點＝前台回報完成、平台扣分成功當下（不再以「送入列印佇列」為準）；場次亦於此時結束。前台在請求出金到回報完成之間不提供取消
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 過渡期流程已明確定義為現行規則
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/出金（過渡期）
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-026
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金第一階段 15 秒逾時的死單風險
+    statement: 機台送出 req-cashout 後 15 秒未收到回覆即直接結束程序（收據不印），但平台此時已建立 PENDING，該筆將永遠等不到 end-cashout，須由新的 req-cashout 取代或 Admin
+      手動取消收斂
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0261
+      given: req-cashout 已建立 PENDING，機台 15 秒內未收到回覆而結束程序
+      when: 檢視該 PENDING 狀態
+      then: PENDING 持續停留在待確認，不會自動結束；需靠新的 req-cashout（會依 REQ-CASHFLOW-019 取代它）或 Admin 手動取消
+    spec_reference: &id026
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 第一階段有 15 秒逾時…但平台此時已建立 PENDING，該筆將永遠等不到 end-cashout，須由新的 req-cashout 取代或 Admin 手動取消收斂
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: constraint
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義為已知風險
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-027
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 人工出金連動取消既有 PENDING
+    statement: 櫃檯對機台帳號人工出金時，系統必須同時取消該機台尚未完成的出金交易，避免同一筆錢被領兩次
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0271
+      given: 機台帳號有一筆尚未完成的出金 PENDING
+      when: 櫃檯對其執行人工出金
+      then: 系統同時取消該筆既有的出金 PENDING
+    spec_reference: &id027
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金 + §業務規則-人工出金連動
+      quote: 櫃檯對機台帳號人工出金時，必須同時取消該機台尚未完成的出金交易
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/人工出金連動
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-028
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 人工入金不需處理既有入金 PENDING
+    statement: 櫃檯對機台帳號人工入金時，不需使既有的入金 PENDING 失效（與人工出金的連動取消規則不同）
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0281
+      given: 機台帳號有一筆或多筆尚未完成的入金 PENDING
+      when: 櫃檯對其執行人工入金
+      then: 既有的入金 PENDING 皆不受影響，仍可各自繼續走完流程
+    spec_reference: &id028
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/人工入金
+      quote: 櫃檯對機台帳號人工入金時，不需處理尚未完成的入金
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且與出金的連動規則相反，屬易混淆點
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/人工入金
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-029
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 未成立原因狀態碼對照
+    statement: 機台請求被拒絕時依原因回對應狀態碼：超過額度上限(1-OVER LIMIT)、查無對應交易(1-NO RECORD)、機台停用中或場館未開通(7-OUT OF SERVICE)、憑證失效或系統錯誤(9-OTHER
+      ERROR)、資料格式錯誤(6-BAD DATA/FORMAT)
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0291
+      given: 加計後將超過場館額度上限
+      when: 送出開分或入金請求
+      then: 回 1-OVER LIMIT
+    - ac_id: AC-CASHFLOW-0292
+      given: 查無對應 PENDING 或 TXID 不符
+      when: 送出 end-cashin 或 end-cashout
+      then: 回 1-NO RECORD
+    - ac_id: AC-CASHFLOW-0293
+      given: 機台為停用狀態，或所屬場館站台非開通狀態
+      when: 送出任一交易請求
+      then: 回 7-OUT OF SERVICE
+    - ac_id: AC-CASHFLOW-0294
+      given: 機台憑證已失效（被重置）
+      when: 送出任一交易請求
+      then: 回 9-OTHER ERROR
+    - ac_id: AC-CASHFLOW-0295
+      given: 請求欄位缺漏、型別錯誤，或 currency 與主站台核心貨幣不符，或金額為負
+      when: 送出任一交易請求
+      then: 回 6-BAD DATA/FORMAT
+    spec_reference: &id029
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-狀態碼對照
+      quote: 平台一律以 status 表達業務結果，不以 HTTP 狀態碼表達
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 狀態碼與觸發條件對照表已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-狀態碼對照
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-030
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 餘額不足不寫入交易紀錄
+    statement: 洗分或出金因餘額不足（1-NO CREDITS）被拒絕時，不寫入交易紀錄，僅回覆該狀態碼；本表其餘未成立原因才會留下交易紀錄
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0301
+      given: 洗分或出金因餘額不足被拒絕
+      when: 檢視機台交易紀錄
+      then: 查無此次拒絕的紀錄，僅收到 1-NO CREDITS 回覆
+    - ac_id: AC-CASHFLOW-0302
+      given: 交易因額度上限或其他原因被拒絕
+      when: 檢視機台交易紀錄
+      then: 有留下「未成立」的交易紀錄，可查得拒絕原因
+    spec_reference: &id030
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/交易不成立的原因 + §附錄-狀態碼對照
+      quote: 餘額不足 | 洗分時可洗金額為 0…或出金時餘額為 0。屬正常情形。不寫入交易紀錄——平台僅回覆機台餘額不足；本表其餘原因才會留下「未成立」紀錄
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 此為明確定義的例外規則，容易被誤以為所有拒絕都會留紀錄
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §四種金流/交易不成立的原因
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-031
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: constraint
+    title: 2-OCCUPIED 狀態碼不啟用
+    statement: 廠商文件保留的 2-OCCUPIED 狀態碼（情境為被網頁玩家占用）平台不使用，因機台帳號的前台登入僅供機台本身遊戲畫面使用，平台不把前台登入狀態當作機台交易的阻擋條件
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0311
+      given: 機台帳號的前台登入狀態為任意狀態（已登入或未登入）
+      when: 送出任一交易請求且其餘條件皆合法
+      then: 平台不因前台登入狀態回 2-OCCUPIED 或拒絕交易，此碼永遠不會被使用
+    spec_reference: &id031
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-狀態碼對照
+      quote: 2-OCCUPIED | （不啟用）| 平台不回此碼…平台不把前台登入狀態當作機台交易的阻擋條件，不啟用此碼
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 明確定義為不啟用
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-狀態碼對照
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-032
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 幣別不一致拒絕交易
+    statement: 機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤（6-BAD DATA/FORMAT）
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0321
+      given: 機台送出的請求中 currency 欄位與所屬主站台核心貨幣不符
+      when: 送出任一交易請求
+      then: 平台拒絕，回 6-BAD DATA/FORMAT，記為資料格式錯誤
+    spec_reference: &id032
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/幣別一致性
+      quote: 機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為「資料格式錯誤」
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/幣別一致性
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-033
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 場次開始規則
+    statement: 無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；前一場次因洗分結束後留有餘數時，立即建立新場次承接（期初餘額＝餘數）
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0331
+      given: 機台目前無進行中場次（分數為 0）
+      when: 開分或入金完成使分數轉正
+      then: 建立新場次，期初餘額為 0
+    - ac_id: AC-CASHFLOW-0332
+      given: 前一場次因洗分結束且留有餘數 21
+      when: 洗分交易完成當下
+      then: 立即建立新場次承接，期初餘額為 21
+    spec_reference: &id033
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；或前一場次因洗分結束後留有餘數，立即建立新場次承接
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 開始規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+    states:
+    - from: 無場次
+      to: 進行中
+      trigger: 分數由 0 轉正（開分/入金）
+    - from: 已結束(洗分,有餘數)
+      to: 進行中(新場次)
+      trigger: 立即承接
+  - requirement_id: REQ-CASHFLOW-034
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 場次進行中期間的交易歸屬
+    statement: 場次進行中期間所有的開分、入金、洗分、出金與注單一律歸屬於這個場次；結束場次的那筆洗分／出金交易，歸屬於被它結束的場次
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0341
+      given: 場次進行中，期間發生多筆開分/入金/注單
+      when: 檢視這些交易與注單的場次編號
+      then: 皆歸屬於當前這個場次，包含結束此場次的那筆洗分或出金交易本身
+    spec_reference: &id034
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 進行中期間所有的開分、入金、洗分、出金與注單，一律歸屬於這個場次；結束場次的那筆洗分／出金交易，歸屬於被它結束的場次
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 歸屬規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-035
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 洗分或出金完成即結束場次
+    statement: 任一筆洗分或出金交易完成（扣分成功）當下，場次即結束——不分全洗或指定金額、不論是否留有餘數；交易被取消或未成立不觸發；不等核實
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0351
+      given: 場次進行中，一筆洗分交易回 0-OK（扣分成功）
+      when: 檢視場次狀態
+      then: 場次立即結束，不需等待該筆洗分於「洗分出金核實」頁核實
+    - ac_id: AC-CASHFLOW-0352
+      given: 一筆洗分或出金請求被拒絕（未成立）或取消
+      when: 檢視場次狀態
+      then: 場次不受影響，仍為進行中
+    spec_reference: &id035
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 任一筆洗分或出金交易完成（扣分成功）當下，場次即結束…核實僅是付現核銷
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-036
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 分數歸零結束場次
+    statement: 分數因投注輸完歸 0 時，場次結束（歸零結束），期末餘額為 0
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0361
+      given: 場次進行中，玩家投注導致分數歸 0
+      when: 檢視場次狀態
+      then: 場次結束，標記為歸零結束，期末餘額為 0
+    spec_reference: &id036
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 歸零結束 | 分數因投注輸完歸 0 時結束
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-037
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 場次逾時結束
+    statement: 分數還有餘額但超過場館設定的場次逾時時間（預設 1 小時）沒有任何交易與遊玩紀錄時，自動結束並標記為逾時結束；期間內有任何交易或注單即重新起算
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0371
+      given: 場次有餘額，超過場館設定的逾時時間（如 1 小時）無任何交易或遊玩
+      when: 系統排程檢查
+      then: 場次自動結束，標記為逾時結束
+    - ac_id: AC-CASHFLOW-0372
+      given: 場次即將逾時前發生一筆交易或注單
+      when: 檢視逾時計時
+      then: 計時重新起算，場次不因此結束
+    spec_reference: &id037
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束 + §業務規則-場次逾時
+      quote: 超過場館設定的「場次逾時時間」沒有任何交易與遊玩紀錄時，自動結束並標記為「逾時結束」…期間內有任何交易或注單即重新起算
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-038
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 場館日結時間結束所有進行中場次
+    statement: 場館日結時間到達時，所有進行中的場次一律結束並標記為日結結算，剩餘分數轉為隔日新場次的期初餘額
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0381
+      given: 場館日結時間到達，多台機台皆有進行中場次
+      when: 系統執行日結
+      then: 所有進行中場次皆結束並標記為日結結算，各自剩餘分數轉為隔日新場次的期初餘額
+    spec_reference: &id038
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 日結結算 | 場館日結時間到達時，所有進行中的場次一律結束並標記為「日結結算」，剩餘分數轉為隔日新場次的期初餘額
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-039
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: constraint
+    title: 一台機台同時只有一個進行中場次
+    statement: 併發限制：一台機台同時間只會有一個進行中的場次
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0391
+      given: 機台目前有一個進行中場次
+      when: 同時嘗試觸發第二個場次的開始條件（理論情境）
+      then: 系統仍只維持一個進行中場次，不會產生併發的第二個進行中場次
+    spec_reference: &id039
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 併發 | 一台機台同時間只會有一個進行中的場次
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-040
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 線上帳號的場次欄位一律顯示為橫線
+    statement: 線上會員沒有場次，與線上帳號共用的頁面（交易紀錄查詢、注單查詢等）所帶的場次編號欄位一律顯示「—」
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0401
+      given: 查詢一筆線上會員的交易紀錄或注單
+      when: 檢視其場次編號欄位
+      then: 顯示「—」
+    spec_reference: &id040
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/場次欄位於線上帳號
+      quote: 與線上會員共用的頁面…所帶的場次編號欄位，線上帳號沒有場次，一律顯示「—」
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/場次欄位於線上帳號
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-041
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 機台停用或場館未開通時交易一律被拒
+    statement: 機台為停用狀態，或所屬場館站台非開通狀態時，任何交易請求皆被拒絕（回 7-OUT OF SERVICE），該機台無法運作；停用不影響既有餘額與尚未完成的交易
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0411
+      given: 機台被後台設為停用
+      when: 送出任一交易請求（開分/入金/洗分/出金）
+      then: 皆回 7-OUT OF SERVICE，機台無法運作；帳號餘額與尚未完成的交易不受影響
+    - ac_id: AC-CASHFLOW-0412
+      given: 機台所屬場館站台狀態非「開通」
+      when: 送出任一交易請求
+      then: 同樣皆回 7-OUT OF SERVICE，該場館所有機台皆無法運作
+    spec_reference: &id041
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/機台停用、場館站台狀態 + §附錄-狀態碼對照
+      quote: 場館站台（含自行經營的機台主站台）不是「開通」狀態時，該場館所有機台一律無法運作
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §業務規則與驗證/機台停用
+        quote: ''
+  - requirement_id: REQ-CASHFLOW-042
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金過渡期前台呼叫的認證方式尚未定案
+    statement: 機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cashout；前台呼叫時使用的認證方式（是否沿用機台憑證）spec 明確標註待確認
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0421
+      given: 前台於過渡期呼叫 req-cashout／end-cashout
+      when: 檢視其攜帶的身分驗證方式
+      then: 應與正式定案後的認證方式一致（詳見假設）
+    spec_reference: &id042
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 待確認：前台呼叫的認證方式（是否沿用機台憑證）
+    ambiguity:
+      level: major
+      description: 前台呼叫 req-cashout/end-cashout 時使用的認證方式未定案
+      options:
+      - 沿用機台憑證（JWT）
+      - 另立一套前台專屬的認證機制
+      - 尚未決定，需開發團隊與前台一併定案
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: false
+      description: Spec 原文明確標註此項「待確認」，非分析階段推測的空白；前台呼叫時的認證機制尚未定案
+  - requirement_id: REQ-CASHFLOW-043
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: functional
+    title: 出金過渡期 end-cashout 失敗時前台重送策略尚未定案
+    statement: req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的重送策略 spec 明確標註待確認；前台無法補送時交易停在 PENDING，依既有人工出金連動取消處理
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0431
+      given: 前台呼叫 req-cashout 成功，但 end-cashout 失敗
+      when: 前台依既定策略處理
+      then: 應依重送策略定案後的規則執行（詳見假設）；若前台無法補送，交易停在 PENDING，需依人工出金連動取消處理
+    spec_reference: &id043
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 待確認：req-cashout 成功後 end-cashout 失敗時前台的重送策略；前台無法補送時交易停在 PENDING，依既有人工出金連動取消處理
+    ambiguity:
+      level: major
+      description: 前台 end-cashout 失敗時的重送策略未定案
+      options:
+      - 前台自動重試數次後才視為失敗
+      - 前台立即視為失敗、交由人工處理
+      - 尚未決定，需前台團隊定案
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: false
+      description: Spec 原文明確標註此項「待確認」，非分析階段推測的空白；前台失敗後的重送策略尚未定案
+  - requirement_id: REQ-CASHFLOW-044
+    version: 1
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    type: constraint
+    title: 開分招待本次不實作
+    statement: 客戶回覆機台目前不需要稽核（維持預設 0 倍），「開分招待」活動本次不實作；現行稽核倍數機制無法實現此活動（倍數為幣種層級設定、招待需綁定特定一筆且無現金流），此為刻意排除的範圍
+    acceptance_criteria:
+    - ac_id: AC-CASHFLOW-0441
+      given: 檢視機台開分／稽核相關功能
+      when: 任一操作情境
+      then: 不存在「開分招待」（開分即綁定流水門檻的活動）功能；稽核倍數為幣種層級設定，無法綁定至單筆交易
+    spec_reference: &id044
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+      quote: 未來活動需求——開分招待（v07 定案：本次不實作）
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 明確定義為本次不實作的範圍，此規則本身即是「不應存在」
+      spec_reference:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §機台帳號的稽核
+        quote: ''
+  traceability:
+  - requirement_id: REQ-CASHFLOW-001
+    spec_reference: *id001
+  - requirement_id: REQ-CASHFLOW-002
+    spec_reference: *id002
+  - requirement_id: REQ-CASHFLOW-003
+    spec_reference: *id003
+  - requirement_id: REQ-CASHFLOW-004
+    spec_reference: *id004
+  - requirement_id: REQ-CASHFLOW-005
+    spec_reference: *id005
+  - requirement_id: REQ-CASHFLOW-006
+    spec_reference: *id006
+  - requirement_id: REQ-CASHFLOW-007
+    spec_reference: *id007
+  - requirement_id: REQ-CASHFLOW-008
+    spec_reference: *id008
+  - requirement_id: REQ-CASHFLOW-009
+    spec_reference: *id009
+  - requirement_id: REQ-CASHFLOW-010
+    spec_reference: *id010
+  - requirement_id: REQ-CASHFLOW-011
+    spec_reference: *id011
+  - requirement_id: REQ-CASHFLOW-012
+    spec_reference: *id012
+  - requirement_id: REQ-CASHFLOW-013
+    spec_reference: *id013
+  - requirement_id: REQ-CASHFLOW-014
+    spec_reference: *id014
+  - requirement_id: REQ-CASHFLOW-015
+    spec_reference: *id015
+  - requirement_id: REQ-CASHFLOW-016
+    spec_reference: *id016
+  - requirement_id: REQ-CASHFLOW-017
+    spec_reference: *id017
+  - requirement_id: REQ-CASHFLOW-018
+    spec_reference: *id018
+  - requirement_id: REQ-CASHFLOW-019
+    spec_reference: *id019
+  - requirement_id: REQ-CASHFLOW-020
+    spec_reference: *id020
+  - requirement_id: REQ-CASHFLOW-021
+    spec_reference: *id021
+  - requirement_id: REQ-CASHFLOW-022
+    spec_reference: *id022
+  - requirement_id: REQ-CASHFLOW-023
+    spec_reference: *id023
+  - requirement_id: REQ-CASHFLOW-024
+    spec_reference: *id024
+  - requirement_id: REQ-CASHFLOW-025
+    spec_reference: *id025
+  - requirement_id: REQ-CASHFLOW-026
+    spec_reference: *id026
+  - requirement_id: REQ-CASHFLOW-027
+    spec_reference: *id027
+  - requirement_id: REQ-CASHFLOW-028
+    spec_reference: *id028
+  - requirement_id: REQ-CASHFLOW-029
+    spec_reference: *id029
+  - requirement_id: REQ-CASHFLOW-030
+    spec_reference: *id030
+  - requirement_id: REQ-CASHFLOW-031
+    spec_reference: *id031
+  - requirement_id: REQ-CASHFLOW-032
+    spec_reference: *id032
+  - requirement_id: REQ-CASHFLOW-033
+    spec_reference: *id033
+  - requirement_id: REQ-CASHFLOW-034
+    spec_reference: *id034
+  - requirement_id: REQ-CASHFLOW-035
+    spec_reference: *id035
+  - requirement_id: REQ-CASHFLOW-036
+    spec_reference: *id036
+  - requirement_id: REQ-CASHFLOW-037
+    spec_reference: *id037
+  - requirement_id: REQ-CASHFLOW-038
+    spec_reference: *id038
+  - requirement_id: REQ-CASHFLOW-039
+    spec_reference: *id039
+  - requirement_id: REQ-CASHFLOW-040
+    spec_reference: *id040
+  - requirement_id: REQ-CASHFLOW-041
+    spec_reference: *id041
+  - requirement_id: REQ-CASHFLOW-042
+    spec_reference: *id042
+  - requirement_id: REQ-CASHFLOW-043
+    spec_reference: *id043
+  - requirement_id: REQ-CASHFLOW-044
+    spec_reference: *id044
+history:
+- at: '2026-09-13T22:16:43Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-005

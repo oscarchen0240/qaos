@@ -1,0 +1,74 @@
+artifact_id: ART-TVR-01M2FHKV6NDNVFYXSTR4XKP4XW
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-010
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T08:47:51Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2FGKX5ZBMC3C5SV0K9GYQVC
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2FGKX5ZBMC3C5SV0K9GYQVC
+- entity_type: Artifact
+  id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2FGKX5ZBMC3C5SV0K9GYQVC
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+  issues:
+  - testcase_id: TC-DRAFT-01M2FGKX5XYR2H59R529VYW80C
+    issue_type: spec_mismatch
+    severity: major
+    violated_requirement: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態 + §相關業務規則
+    evidence: expected_result 仍保留『或 Admin 手動取消為止』，與 Oscar 確認的『手動取消不存在』矛盾；requirements.yaml 中 REQ-TXLOG-017 本身也還沒同步修正。
+    explanation: REQ-017 是 high risk 需求，描述卡住的出金待確認交易有哪些合法收斂路徑，殘留錯誤路徑會誤導執行者。
+    recommended_change: requirements.yaml 與 TC 的 expected_result 皆移除『Admin 手動取消』，改為轉介洗分出金核實頁。
+  - testcase_id: TC-DRAFT-01M2FGKX5YZ22EZ2A1Y2FQC5YA
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-TXLOG-030
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: AC-TXLOG-0301
+    evidence: AC-TXLOG-0301.then 仍是舊文字『僅有查看明細與手動取消』，與 TC 的 expected_result（已正確排除手動取消）不一致。
+    explanation: Requirement 內部的 AC 與 spec_reference 註記不一致，造成追溯落差。
+    recommended_change: AC-TXLOG-0301.then 同步改為『不存在任何核實或手動取消操作，僅有查看明細一項』。
+  advisories: []
+  coverage_summary:
+    requirements_total: 30
+    requirements_covered: 29
+    ac_total: 50
+    ac_covered: 48
+    uncovered_accepted:
+    - REQ-TXLOG-029 (MOOT)
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: false
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-14T08:47:55Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-010

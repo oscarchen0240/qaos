@@ -1,0 +1,81 @@
+artifact_id: ART-TVR-01M2FDRAMDZM710W11S3W8PVC0
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-010
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T07:40:24Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2FD1P7P1J44TTT9DGRCQPES
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2FD1P7P1J44TTT9DGRCQPES
+- entity_type: Artifact
+  id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2FD1P7P1J44TTT9DGRCQPES
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+  issues:
+  - testcase_id: TC-DRAFT-01M2FD1P7NZVXTAPMY0Z5TF0R5
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作
+    evidence: test_types 含 boundary 但三個步驟純屬成功路徑走查，沒有實際邊界情境。
+    explanation: high risk 需求的 boundary 標籤名不符實，會誤導覆蓋率統計。
+    recommended_change: 新增真正的邊界情境（快速連續點擊確認兩次），boundary 標籤放到該新增案例。
+  - testcase_id: TC-DRAFT-01M2FD1P7NC6N5EDSDNGXMC1W9
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-025
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §相關業務規則
+    evidence: 步驟主動觸發 CASHFLOW 層冪等性機制並斷言生成層結果，而非只驗證查詢頁顯示層。
+    explanation: 模糊了 TXLOG 與 CASHFLOW 兩包測試邊界。
+    recommended_change: 前置條件改為已存在重送次數=1 的記錄，expected_result 收斂為顯示層驗證。
+  - testcase_id: TC-DRAFT-01M2FD1P7NBA2WNTH5KWVF1PY3
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 全部 42 個 TestCaseDraft 的 priority 一律為 high，未依底層 Requirement risk 分級。
+    explanation: priority 欄位失去執行排序作用。
+    recommended_change: 依 risk 分級設定 priority。
+  advisories: []
+  coverage_summary:
+    requirements_total: 30
+    requirements_covered: 30
+    ac_total: 50
+    ac_covered: 50
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+history:
+- at: '2026-09-14T07:40:30Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-010

@@ -1,0 +1,202 @@
+artifact_id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-006
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T18:48:02Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-BONUSCCY-002@1.0
+references:
+- entity_type: SpecVersion
+  id: SPEC-BONUSCCY-002
+  version: '1.0'
+requires_approval: null
+payload:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  requirements:
+  - requirement_id: REQ-BONUSCCY-006
+    version: 1
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    type: functional
+    title: 一般紅利一律發站台系統幣別，不受玩家使用其他已啟用幣別下注或存款影響
+    statement: 返水、代理佣金、推薦獎勵、每日/累積簽到、首存/次存活動、累積存款活動，皆發站台系統幣別；玩家用哪個錢包下注、用什麼幣別存款，都不影響這些紅利發出來的幣別
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-008
+      given: 玩家所屬線上站台已啟用兩種以上幣別（例如TTK、USDT，站台系統幣別為USDT），玩家持有並使用TTK餘額下注/存款
+      when: 該玩家獲得一筆返水或代理佣金等一般紅利
+      then: 紅利發放進站台系統幣別（USDT）錢包，不是玩家下注/存款所用的TTK
+    spec_reference: &id001
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §一句話 + §每一種紅利發什麼幣別
+      quote: 除了「彩金活動」與「遊戲商JACKPOT／促銷派彩」，其他紅利一律發「站台系統幣別」。玩家拿哪個錢包下注、用什麼幣別存款，都不影響紅利發出來的幣別
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，是本包核心規則；錯發幣別直接是金流正確性問題
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-002
+        spec_version: '1.0'
+        location: §每一種紅利發什麼幣別
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-007
+    version: 1
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    type: functional
+    title: 彩金活動的發放幣別為後台建立活動時自行指定的幣別
+    statement: 彩金活動是全站唯一可以自己選發放幣別的紅利類型，不受站台系統幣別限制，依後台建活動時選定的幣別，送進玩家對應幣別的錢包
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-009
+      given: 後台建立一個彩金活動，指定發放幣別為站台系統幣別以外的某個已啟用幣別（例如TTK）
+      when: 玩家符合條件獲得該筆彩金
+      then: 彩金送進玩家的TTK錢包（後台指定的幣別），不是站台系統幣別，且玩家原本沒有該幣別錢包時會自動出現一列
+    spec_reference: &id002
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+      quote: 彩金活動 | 後台建活動時自己填的幣別 | 全站唯一可以自己選發放幣別的紅利 ｜ 2026-09-02 與 PM 確認：彩金依後台建活動時選的幣別，送進玩家對應幣別的錢包
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且是本包唯一的例外規則
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-002
+        spec_version: '1.0'
+        location: §每一種紅利發什麼幣別
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-008
+    version: 1
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    type: functional
+    title: 遊戲商JACKPOT／促銷派彩的發放幣別為玩家下注當下所使用的錢包幣別
+    statement: 遊戲商JACKPOT／促銷派彩由玩家該筆遊戲的錢包幣別決定，依遊戲幣別依匯率換算後入帳（PP、AWC、SABA等遊戲商）
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-010
+      given: 玩家使用TTK錢包餘額在某遊戲商遊戲下注，中得該遊戲商發放的JACKPOT或促銷派彩
+      when: 檢視派彩入帳結果
+      then: 派彩依匯率換算後進入TTK錢包（玩家下注當下所用的錢包幣別），不是站台系統幣別
+    spec_reference: &id003
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+      quote: 遊戲商 JACKPOT／促銷派彩 | 玩家該筆遊戲的錢包幣別 | 由遊戲幣別依匯率換算後入帳（PP、AWC、SABA 等）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；執行時依賴測試環境是否有可觸發JACKPOT/促銷派彩的遊戲商遊戲，若環境不支援可標記為待執行
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-002
+        spec_version: '1.0'
+        location: §每一種紅利發什麼幣別
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-009
+    version: 1
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    type: functional
+    title: 推薦註冊金進入收款人所屬站台的幣別
+    statement: 推薦獎勵、推薦註冊金皆發站台系統幣別；推薦註冊金特別之處在於，是進「收款人所屬站台」的系統幣別，不是贈送人/推薦人所屬站台的幣別
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-011
+      given: 推薦人所屬站台A（系統幣別X）推薦一名新玩家於站台B（系統幣別Y）註冊，A、B系統幣別不同
+      when: 新玩家獲得推薦註冊金
+      then: 註冊金依收款人（新玩家）所屬站台B的系統幣別Y發放，不是推薦人所屬站台A的幣別X
+    spec_reference: &id004
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+      quote: 推薦獎勵、推薦註冊金 | 站台系統幣別 | 註冊金進「收款人所屬站台」的幣別
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；此為跨站台情境，執行時需要兩個系統幣別不同的站台互相推薦關係，若測試環境不易建置可標記為待執行
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-002
+        spec_version: '1.0'
+        location: §每一種紅利發什麼幣別
+        quote: ''
+  - requirement_id: REQ-BONUSCCY-010
+    version: 1
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    type: functional
+    title: 人工存款不觸發任何活動與累積統計，但稽核流水正常計入
+    statement: 人工存款不會進任何活動與累積統計：不觸發首存/次存活動、不累積存款活動的累積門檻、不計入簽到活動的有效會員門檻、不計入玩家累積儲值統計（不推進VIP等級）；但稽核流水（打碼量）仍依後台填的稽核倍數正常計入。「錢進玩家錢包」這個基本行為已由
+      SPEC-BONUSCCY-001 REQ-BONUSCCY-003 驗證，本條不重複測
+    acceptance_criteria:
+    - ac_id: AC-BONUSCCY-012
+      given: 玩家原本未達首存活動門檻，對其執行一筆金額足以達標的人工存款
+      when: 檢視首存活動是否被觸發、是否發放獎勵
+      then: 不觸發，該玩家不算首儲，也不會配到任何存款活動
+    - ac_id: AC-BONUSCCY-013
+      given: 玩家原本未達簽到活動的有效會員門檻，對其執行一筆金額足以達標的人工存款
+      when: 檢視簽到活動的有效會員狀態
+      then: 門檻不計入這筆人工存款金額，玩家不會因此變成有效會員
+    - ac_id: AC-BONUSCCY-014
+      given: 對玩家執行一筆人工存款
+      when: 檢視該筆存款是否計入稽核流水（打碼量）
+      then: 依後台填寫的稽核倍數正常計入稽核流水
+    spec_reference: &id005
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+      quote: 人工存款不會進任何活動與累積統計。它只做兩件事：把錢加進錢包、寫一筆交易紀錄 ｜ 首存／次存活動 ❌不觸發，不算首儲、也不會配到任何存款活動 ｜ 累積存款活動 ❌不累積 ｜ 簽到活動的「有效會員」門檻 ❌不計入 ｜ 玩家累積儲值統計（VIP等級的依據）
+        ❌不計入，所以也不會推進VIP等級 ｜ 稽核流水（打碼量） ✅有，依後台填的稽核倍數
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且 2026-09-02 已由 PM 二次確認（後台人工存款目前走 v4，不計入累積儲值，對 VIP 等級也沒有影響）；若人工存款被誤計入活動或統計，可能被用來刷首存/次存優惠或人為推進 VIP
+        等級，風險標 high
+      spec_reference:
+        spec_id: SPEC-BONUSCCY-002
+        spec_version: '1.0'
+        location: §人工存款
+        quote: ''
+  traceability:
+  - requirement_id: REQ-BONUSCCY-006
+    spec_reference: *id001
+  - requirement_id: REQ-BONUSCCY-007
+    spec_reference: *id002
+  - requirement_id: REQ-BONUSCCY-008
+    spec_reference: *id003
+  - requirement_id: REQ-BONUSCCY-009
+    spec_reference: *id004
+  - requirement_id: REQ-BONUSCCY-010
+    spec_reference: *id005
+history:
+- at: '2026-09-14T18:48:07Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-006

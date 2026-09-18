@@ -1,0 +1,52 @@
+artifact_id: ART-SA-01M2GNGD6HPDFMZ39PGDFBBZS0
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-007
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T19:15:07Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-BONUSCCY-003@1.0
+references:
+- entity_type: SpecVersion
+  id: SPEC-BONUSCCY-003
+  version: '1.0'
+requires_approval: null
+payload:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  content_hash: c0f9b966357fb3a248c0196c3a17634da282dd9902f9171a9b8b37a6a5064a6f
+  summary: 20 紅利調整說明：這次部署只改兩件事——存款金額拆成原始金額/核心貨幣金額兩欄位（目前數值相同、結構先做好）、簽到活動有效會員改讀 deposit_log_v2（唯一會讓數字變的改動）。spec.md 自己列出本次能測的
+    5 項（T1~T5）與測不了的 1 項（幣別換算，無真實通道）。逐項比對後：T4（現有USDT站台首儲/次儲/累積存款/VIP等級/獎勵發放金額改前改後完全不變）本質是重跑既有回歸，這些行為已由 SPEC-BONUSCCY-002 的
+    TC 完整測過，本次不重複設計新 TC，執行時直接重跑那批既有 TC 即可；幣別換算 spec 明講無真實情境可測，排除。只測 T1/T2/T3/T5 四項真正需要新設計案例的回歸重點。
+  scope:
+    in_scope:
+    - T2：存款原始金額正確進玩家錢包（本次最重要回歸點）
+    - T3：流水倍數與手續費以原始金額為基數
+    - T1：簽到活動前台進度條與後台判定一致（讀取deposit_log_v2）
+    - T5：簽到活動有效會員每月重置機制
+    out_of_scope:
+    - T4：現有USDT站台紅利數字完全不變——已由 SPEC-BONUSCCY-002 的 TC（REQ-006/007/010對應TC）完整測過，執行時重跑既有TC作為本次部署回歸依據，不重複設計新TC
+    - 幣別換算是否算得對——spec明講目前無任何存款會觸發換算，無真實情境可測，等線上站台開出非USDT存款通道後再補測
+    - 機台站台——spec明講機台站台目前沒有任何紅利活動，不在這次測試範圍
+  requirement_ids:
+  - REQ-BONUSCCY-011
+  - REQ-BONUSCCY-012
+  - REQ-BONUSCCY-013
+  - REQ-BONUSCCY-014
+  ambiguities: []
+  constraints: []
+  edge_case_candidates: []
+  open_questions: []
+history:
+- at: '2026-09-14T19:15:12Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-007

@@ -1,0 +1,104 @@
+title: 機台類型根層站台建立時，核心貨幣依所選類型正確連動帶出 TWD
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-002
+acceptance_criteria_ids:
+- AC-SITELIST-0023
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台
+- 進入「後台管理員系統 > 站台列表」頁面（根層，路徑列顯示「站台列表」）
+test_data:
+- name: 上層站台
+  value: 留空（＝建立根層站台，即 AC-SITELIST-0023 所稱「上層為 admin」的情境）
+- name: 站台類型
+  value: 機台
+- name: 預期連動的核心貨幣
+  value: TWD
+- name: 站台名稱
+  value: 自訂可辨識名稱，例如「AC0023-核心貨幣連動驗證」
+- name: 站台代碼
+  value: 兩碼大寫英文字，取環境中尚未使用的組合（例如 ZT）；若提示重複改試另一組
+  note: 代碼格式規則見 spec.md §業務規則與驗證/站台代碼格式
+steps:
+- n: 1
+  action: 點擊右上角「+ 新增站台」開啟 Modal，「上層站台」欄位保持留空，「站台類型」選「機台」，檢視此時「核心貨幣」欄位的值（不做任何幣別啟用、匯入或其他前置操作）。
+  expected: 核心貨幣欄位依所選「機台」類型過濾後自動帶出 TWD（可選清單機台僅 TWD 一種，等同自動帶入）
+- n: 2
+  action: 填妥站台名稱與兩碼大寫站台代碼等其餘必填欄位後，點擊「建立站台」。
+  expected: 站台建立成功，列表新增一筆該站台，狀態為「待開通」
+- n: 3
+  action: 在站台列表找到剛建立的站台，點擊該列「編輯」開啟 Modal，檢視「核心貨幣」欄位的顯示值。
+  expected: 核心貨幣顯示為 TWD，與新增當下依機台類型連動帶出的值一致。（欄位是否唯讀屬 AC-SITELIST-0101／REQ-SITELIST-010 的斷言範圍，已由 TC-DRAFT-01M2NCSW5D3W9ZQDASZW5FV4BK
+    覆蓋，本步驟只取其顯示值作為「連動建立」的證據，不在此重複斷言唯讀性）
+expected_result: 上層站台留空建立的機台類型根層站台（即 AC-SITELIST-0023 所稱「上層為 admin」之情境），核心貨幣欄位在新增當下與建立完成後皆正確依所選類型連動帶出 TWD——step1 顯示下拉過濾後自動帶出的值、step2
+  確認建立成功、step3 確認建立完成後編輯畫面顯示值仍為 TWD，三者共同構成「核心貨幣依所選類型連動建立」的完整證據。核心貨幣欄位本身是否唯讀不在本 TC 斷言範圍內（見 AC-SITELIST-0101／REQ-SITELIST-010）。「此連動建立與鏈上錢包管理無關」這項判斷依據
+  CLR-SITELIST-011，但其稽核強度仍待加強，見 assumptions，執行者請一併確認。
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §核心貨幣（第一項）＋ §操作/新增站台「核心貨幣」欄
+  quote: 主站台（根層站台）的核心貨幣為下拉選單，選項依站台類型過濾——可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種，故實際上等同自動帶入（2026-08-21 客戶定案）
+assumptions:
+- text: '本TC的expected_result斷言「核心貨幣連動建立與鏈上錢包管理（platform級幣種出入金風控開關）完全無關、不互相依賴」，依據為CLR-SITELIST-011（status: APPLIED）。獨立Validator審查指出，CLR-SITELIST-011的provenance明顯弱於本專案同功能區其餘CLR-SITELIST-001~009的既有慣例（同一帳號於11秒內提出/回答/套用，無asked_to/asked_at欄位、無ASKED中繼狀態、無可獨立核查的第三方來源；spec.md全文「鏈上錢包」零命中，此概念完全由RequirementModel/CLR自行注入）。Oscar確認此為對話中直接確認的內容、非資料錯誤，但為維持本專案的驗證標準（稽核強度需獨立於orchestrating
+    session本身），選擇不強制通過此爭議、改保留為待確認假設。執行此TC前，建議先取得更具外部可查核性的來源（如實際會議記錄、ticket連結）以升級此判斷的確定性層級。'
+  requirement_id: REQ-SITELIST-002
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-262
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+created_at: '2026-09-17T15:21:07Z'
+updated_at: '2026-09-17T15:21:22Z'
+history:
+- at: '2026-09-17T15:21:07Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QYWCAGFEFA1KHKSYK3PK6M
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:07Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:07Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:07Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:22Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0113
+  run_id: RUN-20260916-007
+  note: rejected

@@ -1,0 +1,88 @@
+title: 場次逾時時間輸入低於 1 小時或超長格式時系統拒絕
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-006
+acceptance_criteria_ids: []
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: ui_e2e
+test_types:
+- negative
+- boundary
+design_techniques:
+- boundary_value
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台
+- 進入「站台列表」頁面
+test_data:
+- name: session_timeout_below_min
+  value: 0.5hr
+- name: session_timeout_overflow
+  value: '99999999999999999'
+steps:
+- n: 1
+  action: 取一個既有的機台類型站台，編輯場次逾時時間，輸入一個明顯小於 1 小時的值並嘗試儲存
+- n: 2
+  action: 另開一次編輯，於場次逾時時間欄位輸入一個超過 17 位數的極端數字格式並嘗試儲存
+expected_result: 第一步：系統阻擋，因後端最低值設計為 1 小時，低於 1 小時會被拒絕；第二步：前端跳出格式錯誤提示，後端阻擋並回傳通用錯誤代碼 COMMON_INVALID_REQUEST_FORMAT
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §業務規則與驗證/場次逾時
+assumptions:
+- text: Spec 原文未定義輸入 0、負數或極端值時系統的回應（REQ-SITELIST-006 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-003（2026-09-14）回覆『後端最低值
+    1 小時、超過 17 位數格式錯誤回 COMMON_INVALID_REQUEST_FORMAT』，此答覆未回寫進 RequirementModel，故以 exploratory 標記，執行時需人工再確認實際錯誤代碼與文案
+  requirement_id: REQ-SITELIST-006
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-143
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QWM8CV91FT4P5BEJPDYX2R
+created_at: '2026-09-17T14:34:15Z'
+updated_at: '2026-09-17T15:03:53Z'
+history:
+- at: '2026-09-17T14:34:15Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QW79PJTZS66RGF8N26Z2K0
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QWM8CV91FT4P5BEJPDYX2R
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:03:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0111
+  run_id: RUN-20260916-007
+  note: rejected

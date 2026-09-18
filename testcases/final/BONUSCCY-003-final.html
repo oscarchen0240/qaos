@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>BONUSCCY-003 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-BONUSCCY-003</div>
+      <h1>BONUSCCY-003 測試案例集</h1>
+    </div>
+    <div class="brand-sub">紅利幣別-簽到有效會員與存款拆欄修正 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>6</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>6</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>0</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>0</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-BONUSCCY-011" class="nav-link"><span class="nav-num">11</span>存款金額拆成「原始金額」（進錢包、算流水倍數、算手續費）與「核心貨幣金額」（比活...</a><a href="#REQ-BONUSCCY-012" class="nav-link"><span class="nav-num">12</span>存款後的「提領所需有效投注額」（流水門檻）與手續費，應以玩家實際存入的原始金額為...</a><a href="#REQ-BONUSCCY-013" class="nav-link"><span class="nav-num">13</span>簽到活動「有效會員」的判定，前台進度條與後台判定改為皆讀取 deposit_lo...</a><a href="#REQ-BONUSCCY-014" class="nav-link"><span class="nav-num">14</span>簽到活動若開啟「有效會員每月重置」設定，跨月後有效會員的累積進度應正確歸零並重新...</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>BONUSCCY-003 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-BONUSCCY-003 底下所有 ACTIVE 狀態的測試案例，共 6 條，涵蓋 4 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 0 條（）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-BONUSCCY-011">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-011</span>
+        <h2>存款金額拆成「原始金額」（進錢包、算流水倍數、算手續費）與「核心貨幣金額」（比活...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-023 系統存款正確進玩家錢包，金額與幣別一致 req-bonusccy-011 ac-bonusccy-017 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-023</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">系統存款正確進玩家錢包，金額與幣別一致</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-017</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家於線上站台完成一筆系統存款（非人工存款）</span></li><li><span class='step-n'>2</span><span>檢視入帳結果的金額與幣別</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">存入多少金額就進玩家錢包多少金額，幣別與存款當下一致，不因新拆出的「原始金額」欄位而算錯或漏算</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§這次能測什麼</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-024 存款金額精確到小數點時，進錢包金額不因欄位拆分而被無條件取整或截斷 req-bonusccy-011 ac-bonusccy-017 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-024</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">存款金額精確到小數點時，進錢包金額不因欄位拆分而被無條件取整或截斷</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-017</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家於線上站台完成一筆帶小數點的系統存款（例如 100.55）</span></li><li><span class='step-n'>2</span><span>檢視入帳結果的金額</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">進錢包金額精確為 100.55，不因新拆出「原始金額」欄位而被無條件取整或截斷</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§改了什麼／①存款金額拆成兩個</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-012">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-012</span>
+        <h2>存款後的「提領所需有效投注額」（流水門檻）與手續費，應以玩家實際存入的原始金額為...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-025 存款後流水門檻與手續費以實際存入的原始金額為基數計算 req-bonusccy-012 ac-bonusccy-018 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-025</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">存款後流水門檻與手續費以實際存入的原始金額為基數計算</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-018</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家完成一筆系統存款</span></li><li><span class='step-n'>2</span><span>檢視存款後的提領所需有效投注額（流水門檻）與手續費計算結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">皆以玩家實際存入的原始金額為基數計算，不是核心貨幣金額或其他換算後的數字</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§這次能測什麼</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-013">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-013</span>
+        <h2>簽到活動「有效會員」的判定，前台進度條與後台判定改為皆讀取 deposit_lo...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-026 未達標時前台簽到進度條正確顯示，與後台判定一致，不再永遠顯示0 req-bonusccy-013 ac-bonusccy-019 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-026</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">未達標時前台簽到進度條正確顯示，與後台判定一致，不再永遠顯示0</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-019</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>玩家已登入前台</li><li>後台可另開一個管理員登入視窗，供比對後台判定結果</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家有已入帳成功的存款記錄，尚未達到有效會員門檻</span></li><li><span class='step-n'>2</span><span>以該玩家身分登入前台，檢視簽到頁的有效會員進度條</span></li><li><span class='step-n'>3</span><span>同時查後台該玩家的累積金額判定，與前台顯示的進度比對</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">前台進度條正確顯示累積金額，與後台判定的累積金額一致，不再是以前那樣永遠顯示 0</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§改了什麼／②簽到活動的「有效會員」改讀正確的表</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-027 達標玩家開啟一次前台簽到頁即直接寫入有效會員，後台不需玩家再存一筆即同步 req-bonusccy-013 ac-bonusccy-020 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-027</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">達標玩家開啟一次前台簽到頁即直接寫入有效會員，後台不需玩家再存一筆即同步</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-020</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>玩家已登入前台</li><li>後台可另開一個管理員登入視窗，供比對後台判定結果</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>玩家的累積存款已達有效會員門檻，但尚未開啟過新版前台簽到頁；開啟前先確認此時後台判定仍顯示「未達有效會員」（尚未重算）</span></li><li><span class='step-n'>2</span><span>開啟一次前台簽到頁（過程中不觸發任何新存款）</span></li><li><span class='step-n'>3</span><span>不做任何新存款動作，直接檢視後台的有效會員判定結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">前台進度條達標並直接寫入有效會員狀態；後台判定也已同步顯示有效會員，不需要玩家再存一筆才會重算——精確驗證 spec 點名的「前台每次開頁就重算並直接寫入、後台被動同步」這個不對稱機制，不是只驗『兩邊最終會一致』這種較弱的陳述</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§改了什麼／②簽到活動的「有效會員」改讀正確的表</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-014">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-014</span>
+        <h2>簽到活動若開啟「有效會員每月重置」設定，跨月後有效會員的累積進度應正確歸零並重新...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-028 簽到有效會員每月重置，跨月後進度正確歸零重算 req-bonusccy-014 ac-bonusccy-021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-028</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">簽到有效會員每月重置，跨月後進度正確歸零重算</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>簽到活動已開啟「有效會員每月重置」設定，玩家上個月的累積進度已達有效會員門檻</span></li><li><span class='step-n'>2</span><span>跨月後檢視該玩家本月的有效會員進度</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">進度正確歸零，重新從 0 開始累積計算，不因改讀 deposit_log_v2 而受影響（例如不會誤讀到上個月已計入歸零前的舊資料）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§這次能測什麼</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

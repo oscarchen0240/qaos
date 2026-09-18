@@ -1,0 +1,78 @@
+artifact_id: ART-TVR-01M2QQVJMG6DTM8MQJ3DAYX9T3
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T13:10:51Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2QPKZ950XF3BQ9M1HKQPM4B
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2QPKZ950XF3BQ9M1HKQPM4B
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2QPKZ950XF3BQ9M1HKQPM4B
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2NCSW5D81FCS58EVQ44M0D0
+    issue_type: missing_coverage
+    severity: blocker
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: uncovered_with_reason宣稱AC-SITELIST-0023「唯一額外聲稱的斷言（核心貨幣依所選類型連動建立）已由AC-SITELIST-0091/0092完整涵蓋」，但實際核對該TC的expected_result只驗證「下拉選單依類型過濾」，全份65條TC對「鏈上/錢包/預先啟用」關鍵字grep零命中，AC-0023
+      then子句裡「不需admin自身的鏈上錢包管理預先啟用該幣別」這個具體斷言完全沒有任何TC測到。
+    explanation: 即使規則真實性成立，這個coverage宣稱本身在事實層面不成立，是真正的廣度缺口，不是重複。
+    recommended_change: 應針對「核心貨幣連動不需預先啟用」這個獨立斷言設計一條精簡TC，不要整條AC移除；型別選擇重複的部分維持移除即可。
+  - testcase_id: TC-DRAFT-01M2NCSW5C2NPYX0YR2ATYY7QA
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: coverage_matrix中AC-SITELIST-0023.draft_ids指向此TC與另一條，但這兩條TC自身的acceptance_criteria_ids欄位都沒有列入AC-SITELIST-0023。
+    explanation: coverage_matrix宣稱的覆蓋關係與TC本體記載不一致。
+    recommended_change: 若部分覆蓋成立，應同步讓TC本體的acceptance_criteria_ids反映實際涵蓋的AC。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2NCSW5DCHMTM4ZVB90KXN76
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: REQ-SITELIST-020「恰好兩碼大寫英文字」的長度邊界（過濾後長度不等於2）未見對應AC或TC。
+    explanation: 屬RequirementModel本身AC未涵蓋，非本輪TestCaseDraft遺漏既有AC。
+    recommended_change: 建議另開Clarification詢問長度不足2碼時系統行為，待RM補上對應AC後再設計boundary_value TC。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 63
+    uncovered_accepted:
+    - AC-SITELIST-0072
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: false
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T13:10:52Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

@@ -1,0 +1,143 @@
+<title>BUG-CASHFLOW-001</title>
+<style>
+:root{
+  --bg:#faf9f7; --surface:#fff; --border:#e4e0da; --border-strong:#cfc9c0;
+  --text:#221f1c; --text-dim:#6b6459; --text-faint:#8f887c;
+  --accent:#b3401f; --accent-bg:#fbeae4; --accent-border:#e8b8a5;
+  --ok:#2f6b3d; --ok-bg:#e9f3ea;
+  --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --sans: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#18160f; --surface:#211e17; --border:#3a352a; --border-strong:#4c4636;
+    --text:#f0ece2; --text-dim:#b6ac98; --text-faint:#8b8270;
+    --accent:#e2764e; --accent-bg:#3a2019; --accent-border:#6b3a26;
+    --ok:#7fc98d; --ok-bg:#1c2b1e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#18160f; --surface:#211e17; --border:#3a352a; --border-strong:#4c4636;
+  --text:#f0ece2; --text-dim:#b6ac98; --text-faint:#8b8270;
+  --accent:#e2764e; --accent-bg:#3a2019; --accent-border:#6b3a26;
+  --ok:#7fc98d; --ok-bg:#1c2b1e;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);margin:0;padding:40px 20px;line-height:1.6}
+.page{max-width:860px;margin:0 auto}
+.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;letter-spacing:.02em}
+.tag.sev{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.tag.area{background:var(--surface);color:var(--text-dim);border:1px solid var(--border-strong)}
+.tag.scope{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+h1{font-size:22px;font-weight:700;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+.bugid{font-family:var(--mono);font-size:13px;color:var(--text-faint);margin-bottom:24px}
+h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.meta-cell{background:var(--surface);padding:12px 14px}
+.meta-cell .k{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.meta-cell .v{font-size:14px;font-weight:600}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.box + .box{margin-top:10px}
+.box .label{font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:6px}
+ol.steps{margin:0;padding-left:20px}
+ol.steps li{margin-bottom:8px}
+ol.steps li:last-child{margin-bottom:0}
+.result-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.result-pair{grid-template-columns:1fr}}
+.result-pair .box.expected{border-left:3px solid var(--ok)}
+.result-pair .box.actual{border-left:3px solid var(--accent)}
+.evidence-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media (max-width:640px){.evidence-grid{grid-template-columns:1fr}}
+figure{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;border-bottom:1px solid var(--border)}
+figcaption{padding:10px 12px;font-size:12.5px;color:var(--text-dim)}
+figcaption b{color:var(--text);font-weight:600}
+.api-box{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre}
+.footer-note{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--text-faint)}
+</style>
+
+<div class="page">
+  <div class="tag-row">
+    <span class="tag sev">CRITICAL / HIGH</span>
+    <span class="tag area">CASHFLOW</span>
+    <span class="tag scope">處理範圍：後端</span>
+  </div>
+  <h1>[前後台][機台站台] 核心貨幣(TWD)停用後，出金/洗分仍可成功執行，未被阻擋</h1>
+  <div class="bugid">BUG-CASHFLOW-001　·　REQ-BONUSCCY-004　·　開單 2026-09-15</div>
+
+  <h2>Detail</h2>
+  <div class="meta-grid">
+    <div class="meta-cell"><div class="k">遊戲商</div><div class="v">—</div></div>
+    <div class="meta-cell"><div class="k">遊戲名稱</div><div class="v">機台站台 Arcade Machine（現金機）</div></div>
+    <div class="meta-cell"><div class="k">測試環境</div><div class="v">stage</div></div>
+    <div class="meta-cell"><div class="k">測試帳號</div><div class="v">ACAA00349（站長）</div></div>
+    <div class="meta-cell"><div class="k">測試時間</div><div class="v">2026-09-15</div></div>
+    <div class="meta-cell"><div class="k">處理範圍</div><div class="v">後端（cashflow 服務缺少 wallet_currency.enabled 檢查）</div></div>
+  </div>
+
+  <h2>問題詳述</h2>
+  <div class="box">
+    REQ-BONUSCCY-004 已由 PM 2026-09-15 明確確認：核心貨幣停用是刻意設計的即時止損手段，停用後入金/出金/開分/洗分四項操作皆須被系統阻擋。
+    實測發現<b>出金與洗分</b>在核心貨幣已停用的情況下仍可正常完成扣分，止損機制形同虛設。入金/開分雖目前失敗，但回應的是「7-OUT OF SERVICE（服務不可用 DB/Redis/下游異常）」這種下游基礎設施錯誤，而非「核心貨幣已停用」的明確業務拒絕——目前看似被擋，實際上可能只是下游異常的巧合，並非系統刻意的止損邏輯。四項操作背後應是同一個判斷點（核心貨幣 wallet_currency.enabled 狀態），目前顯然缺乏統一檢查。
+  </div>
+
+  <h2>預期結果 / 實際結果</h2>
+  <div class="result-pair">
+    <div class="box expected">
+      <div class="label">預期結果</div>
+      四項操作（入金、出金、開分、洗分）皆應被系統阻擋，不應完成入帳/扣分。
+    </div>
+    <div class="box actual">
+      <div class="label">實際結果</div>
+      出金、洗分皆回 <b>0-OK</b> 成功完成扣分；入金、開分回 <b>7-OUT OF SERVICE</b>（非明確業務拒絕）。
+    </div>
+  </div>
+
+  <h2>複製步驟</h2>
+  <div class="box">
+    <ol class="steps">
+      <li>登入機台版後台，至鏈上錢包管理，將該站台核心貨幣 TWD 對應的兩筆錢包幣別紀錄狀態改為停用</li>
+      <li>切到機台版前台，依序嘗試：入金（投紙鈔，觸發 req-cashin → end-cashin）、出金（按 CASHOUT 鍵，觸發 req-cashout → end-cashout）、開分（店員收現金加分，觸發 req-keyin）、洗分（觸發 req-keyout）</li>
+      <li>觀察四項操作各自的系統回應</li>
+    </ol>
+  </div>
+
+  <h2>API URL</h2>
+  <div class="api-box">req-cashin → end-cashin   （入金，兩階段）
+req-cashout → end-cashout （出金，兩階段）
+req-keyin                 （開分，單階段）
+req-keyout                （洗分，單階段）</div>
+
+  <h2>畫面證據</h2>
+  <div class="evidence-grid">
+    <figure>
+      <img src="img/twd-disabled.png" alt="鏈上錢包管理，TWD 已停用">
+      <figcaption><b>EVD-0055</b> — 鏈上錢包管理，該站台核心貨幣 TWD 兩筆紀錄皆已停用（狀態經 Oscar 2026-09-15 直接確認）</figcaption>
+    </figure>
+    <figure>
+      <img src="img/cashin-fail.png" alt="入金失敗">
+      <figcaption><b>EVD-0056</b> — 入金 end-cashin 回 7-OUT OF SERVICE（服務不可用）</figcaption>
+    </figure>
+    <figure>
+      <img src="img/keyin-fail.png" alt="開分失敗">
+      <figcaption><b>EVD-0057</b> — 開分 req-keyin 回 7-OUT OF SERVICE（服務不可用）</figcaption>
+    </figure>
+    <figure>
+      <img src="img/cashout-success.png" alt="出金成功（不應成功）">
+      <figcaption><b>EVD-0058</b> — 出金 req-cashout→end-cashout 兩階段皆回 0-OK，<b>未被阻擋</b></figcaption>
+    </figure>
+    <figure>
+      <img src="img/keyout-success.png" alt="洗分成功（不應成功）">
+      <figcaption><b>EVD-0059</b> — 洗分 req-keyout 回 0-OK（平台核可金額:100），<b>未被阻擋</b></figcaption>
+    </figure>
+  </div>
+
+  <h2>懷疑方向</h2>
+  <div class="box">
+    後端 cashflow 服務（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout 四支 API）在處理交易前，未檢查該站台核心貨幣對應的 <code>wallet_currency.enabled</code> 狀態；出金/洗分完全遺漏此檢查，入金/開分目前的失敗疑似只是下游服務異常的巧合，非刻意設計的阻擋邏輯。
+  </div>
+
+  <div class="footer-note">QAOS · REQ-BONUSCCY-004 · 已通過兩輪獨立 Bug Validator 審查（G-BVAL PASS）· APR-0048 核准人 oscarchen@blockaction.tech</div>
+</div>

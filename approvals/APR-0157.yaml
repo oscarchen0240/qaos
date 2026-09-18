@@ -1,0 +1,88 @@
+approval_id: APR-0157
+type: ACTIVATE_TESTCASE
+run_id: RUN-20260918-011
+task_id: T4
+status: DECIDED
+summary: 7 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 5 條 exploratory，approve 即確認其假設）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-009
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-010
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-011
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-012
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-013
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-014
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-015
+  version: 1
+artifact_ids:
+- ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-009
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-010
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-011
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-012
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-013
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-014
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-ARCADE-015
+  version: 1
+requested_by: agent-supervisor
+requested_at: '2026-09-18T01:19:38Z'
+diff_summary: '[exploratory] TC-ARCADE-010 v1 機台帳號產生投注流水後，其所屬加盟商當期的加盟傭金與代理返傭金額不因此增加：本 TC 假設測試環境當下存在（或可佈置）一個機台場館作為某既有加盟商站台樹的子站台，且該場館下至少有一台機台帳號；本次精讀的
+  spec 段落（140-232行、760-819行）未定義機台場館與加盟商站台樹之間具體的掛載機制細節（該機制屬站台列表/加盟商相關 spec 範圍），此環境事實需環境負責人確認才能佈置。此外，使該機台帳號實際產生新的投注流水，依賴機台端硬體現場遊玩流程，非本
+  spec 定義的後台 UI 可直接觸發；若環境當下無法產生新流水，可改用已存在的歷史投注流水，搭配其發生前後對應期間的傭金/返傭計算結果變化進行比對，但仍需環境負責人協助確認該歷史區間的計算結果快照。
+
+  [exploratory] TC-ARCADE-011 v1 機台帳號完成金流交易後，優惠彩金審核佇列查無該筆交易：機台帳號的開分／入金／洗分／出金交易本身是玩家在機台端實際操作產生的紀錄，非後台 UI 可直接建立的動作；本 TC 假設測試環境當下可透過機台現場流程（或既有模擬工具）使該機台帳號產生至少一筆新的已完成金流交易供查驗，若環境當下無法產生，需洽環境負責人協助，此步驟超出本
+  spec 定義範圍。
+
+  [exploratory] TC-ARCADE-013 v1 稽核倍數調整為大於 0 並儲存後，尚未完成稽核的部分會使機台洗分／出金的核可金額被扣減：本 TC 涉及兩個超出本次精讀 spec 段落定義範圍的環節，皆需環境負責人協助確認：①使機台帳號實際產生開分/入金交易，依賴機台端硬體現場流程，非後台
+  UI 可直接觸發；②稽核倍數轉換為『未完成稽核金額』的精確計算公式（例如倍數如何與單筆或累計金額相乘、稽核在什麼條件下視為『完成』）不在本次精讀的 140-232行/760-819行段落中，該計算細節可能屬SPEC-CASHFLOW-001（既有出金設定的稽核倍數機制）延伸範圍；本
+  TC 僅定性驗證『調高倍數後核可金額確實受影響』這個功能連動是否成立，不驗證扣減金額的精確數字是否正確——精確算式的驗證應由稽核倍數機制本身既有的 spec 與其 TC 負責，避免本 TC 重複驗證不屬於ARCADE 開發包範圍的計算公式。
+
+  [exploratory] TC-ARCADE-014 v1 對一筆待核實的機台洗分或機台出金執行核實操作後，後台操作紀錄如實記錄該筆核實動作：待核實的機台洗分／機台出金項目，其產生前提是機台帳號先於機台現場完成一筆洗分或出金交易，此為機台端硬體現場流程，非後台
+  UI 可直接觸發；本 TC 假設測試環境當下存在（或可佈置）至少一筆狀態為『待核實』的機台洗分或機台出金項目供核實操作使用，若環境當下查無待核實項目，需洽環境負責人透過既有測試工具或機台模擬方式補上，此步驟超出本 spec定義範圍。
+
+  [exploratory] TC-ARCADE-015 v1 對一筆待核實的機台出金收據執行作廢操作後，後台操作紀錄如實記錄該筆作廢動作：同 AC-ARCADE-006 的 TC，待核實的機台出金項目其產生前提依賴機台端硬體現場流程，非後台
+  UI 可直接觸發；本 TC 假設測試環境當下存在（或可佈置）至少一筆狀態為『待核實』的機台出金項目供作廢操作使用，若環境當下查無，需洽環境負責人協助佈置，此步驟超出本spec 定義範圍。另外，v0.7.md 第709行明訂『作廢僅 Admin
+  與站長可執行』，故本 TC 以Admin 身分執行，未使用操作員角色，避免混入權限判斷（權限判斷不在本 requirement 的AC 範圍內）。'
+decision:
+  decision: reject
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-09-18T10:49:52Z'
+  per_item:
+  - id: TC-ARCADE-010
+    decision: approve
+  - id: TC-ARCADE-013
+    decision: approve

@@ -1,0 +1,95 @@
+title: 稽核欄位輸入 0 為合法值；輸入負數時前端阻擋且後端回400 COMMON_NON_NEGATIVE；留空時前端顯示必填提示
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-011
+acceptance_criteria_ids:
+- AC-MEMBER-015
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- negative
+- boundary
+design_techniques:
+- boundary_value
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台，開啟一名會員的人工存入面板
+- 具備使用瀏覽器開發者工具或 API 測試工具（如 Postman）直接呼叫後台 API 的環境與權限，用於步驟3繞過前端驗證後端行為
+test_data: []
+steps:
+- n: 1
+  action: 稽核欄位輸入 0，其餘欄位填妥後點擊儲存
+- n: 2
+  action: 稽核欄位輸入一個負數（例如 -1），其餘欄位填妥後點擊儲存，觀察前端顯示
+- n: 3
+  action: 另外使用瀏覽器開發者工具或 API 測試工具（如 Postman），帶入登入後的有效憑證，繞過前端頁面直接呼叫人工存入/提出 API，request body 中稽核帶入一個負數，確認回應的 HTTP 狀態碼與錯誤代碼
+- n: 4
+  action: 稽核欄位留空，其餘欄位填妥後點擊儲存，確認前端顯示的提示訊息
+expected_result: 步驟1：系統接受輸入 0，正常完成人工存入/提出（稽核=0已由 Oscar 2026-09-15 實測確認為合法輸入）；步驟2：前端顯示驗證失敗訊息並阻擋送出；步驟3：後端回應 HTTP 400、錯誤代碼 COMMON_NON_NEGATIVE（已由
+  Oscar 2026-09-15 確認，此步驟不依賴前端是否阻擋，主動繞過前端直接驗證後端行為）；步驟4：前端顯示 toast 提示「此欄必填」，阻擋送出（已由 Oscar 2026-09-15 確認）
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.5 帳務資訊
+  quote: 稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: true
+source: change_workflow
+testcase_id: TC-MEMBER-016
+version: 4
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2JGJ64GHRAHM27EVC8MCRCJ
+created_at: '2026-09-15T12:27:12Z'
+updated_at: '2026-09-15T12:28:01Z'
+history:
+- at: '2026-09-15T12:27:12Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2JGCH2PNWGS8CMABFX2HYM8
+  run_id: RUN-20260915-018
+- at: '2026-09-15T12:27:12Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-018
+- at: '2026-09-15T12:27:12Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2JGJ64GHRAHM27EVC8MCRCJ
+  run_id: RUN-20260915-018
+- at: '2026-09-15T12:27:12Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-018
+- at: '2026-09-15T12:28:01Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0092
+  run_id: RUN-20260915-018
+- at: '2026-09-15T12:28:01Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-018
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0092

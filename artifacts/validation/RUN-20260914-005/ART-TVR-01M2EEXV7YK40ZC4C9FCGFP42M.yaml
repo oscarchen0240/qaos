@@ -1,0 +1,139 @@
+artifact_id: ART-TVR-01M2EEXV7YK40ZC4C9FCGFP42M
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-005
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-13T22:41:39Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2EE8VP41NXM8461V0V349RH
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2EE8VP41NXM8461V0V349RH
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2EE8VP41NXM8461V0V349RH
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2EE8VP2VD9ZYS489G1VXG99
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-CASHFLOW-023
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 過渡期不適用：「印出成功」的定義、印表機異常兩種情況、收據延遲印出。
+    evidence: TC 測試印表機異常兩種情況，但 preconditions 未註明此規則僅適用於印表機到位後的正式流程，現行過渡期（見 REQ-CASHFLOW-025）不適用。
+    explanation: 與 REQ-CASHFLOW-025 描述的現行過渡期行為互斥，執行者在目前系統上會發現行為對不上。
+    recommended_change: precondition 加註本案例僅適用印表機到位後；並修正情境一 expected_result（平台仍留有一筆待確認出金 PENDING，非『沒有任何交易紀錄』）。
+  - testcase_id: TC-DRAFT-01M2EE8VP24HAPKB4V1HBEZR02
+    issue_type: unreasonable_edge_case
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-007
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+    evidence: 步驟未說明如何在測試環境中可重現地製造兩筆請求真正競爭同一把場館鎖的情境。
+    explanation: 併發時序敏感行為僅靠人工幾乎同時操作難以穩定重現。
+    recommended_change: 補充具體併發觸發手法（併發 HTTP 呼叫或人為延遲）。
+  - testcase_id: TC-DRAFT-01M2EE8VP3CXG660EAXJ2MAQ21
+    issue_type: unreasonable_edge_case
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-039
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+    evidence: 步驟過度理論化，未說明具體如何在既有場次進行中人為製造第二次場次建立的競態。
+    explanation: 缺乏具體重現手法，容易流於形式化通過。
+    recommended_change: 改為具體情境並說明測試如何強制製造併發時序。
+  - testcase_id: TC-DRAFT-01M2EE8VP30ZY6BN83Y3MA11BK
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-029
+    spec_reference: null
+    evidence: preconditions 繼承共用錨點（機台啟用、場館開通），但情境三/四要求違反此前提才能測試。
+    explanation: 正式 preconditions 欄位與情境步驟矛盾。
+    recommended_change: 為停用/未開通/憑證失效情境拆出獨立 precondition。
+  - testcase_id: TC-DRAFT-01M2EE8VP39NE5RB47G5S4VSXB
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-041
+    spec_reference: null
+    evidence: preconditions 繼承共用錨點（機台啟用、場館開通），但本案例整體要測試機台停用/場館未開通情境。
+    explanation: 與宣稱前提直接衝突。
+    recommended_change: 定義專屬 preconditions（機台已停用／場館站台非開通）。
+  - testcase_id: TC-DRAFT-01M2EE8VP23S2SWDZHTBAPCC7F
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-003
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-API一覽
+    evidence: 開分／洗分相關案例步驟一律用業務用語，未使用 spec 定義的 API 名稱 req-keyin/req-keyout，與入金/出金案例用詞不一致。
+    explanation: 系統性可執行性缺口，執行者不清楚實際呼叫哪支 API。
+    recommended_change: 補上對應 API 名稱 req-keyin（開分）/req-keyout（洗分）。
+  - testcase_id: TC-DRAFT-01M2EE8VP3KY9MD4WF1NS57VG1
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-044
+    spec_reference: null
+    evidence: design_techniques 填入 negative，與 test_types 的 negative 重複、非具體設計技術。
+    explanation: design_techniques 應反映設計方法而非測試類型分類。
+    recommended_change: 改為 requirement_based。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2EE8VP3DDRSC08GF1X187BC
+    issue_type: missing_negative_coverage
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-033
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+    evidence: 缺少「場次已進行中時再開分/入金不會建立第二個新場次」的直接案例（與 REQ-039/034 有間接重疊）。
+    explanation: 非缺陷，僅為建議加強。
+    recommended_change: 可考慮新增一案例直接驗證。
+  - testcase_id: TC-DRAFT-01M2EE8VP28EQ57TJCP6F0QHXM
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_data 欄位幾乎全為空，測試數值皆寫在 action 字串內。
+    explanation: 人工執行尚可讀懂，未來自動化才需要結構化。
+    recommended_change: 後續自動化規劃時再抽出 test_data。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 44
+    ac_total: 69
+    ac_covered: 69
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+history:
+- at: '2026-09-13T22:41:43Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-005

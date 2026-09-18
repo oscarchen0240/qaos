@@ -1,0 +1,75 @@
+artifact_id: ART-TVR-01M2R3AJJCVTFE6SMCYHSH527J
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T16:31:17Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2R2ZKT738P8M4H6E6CZRZWG
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2R2ZKT738P8M4H6E6CZRZWG
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2R2ZKT738P8M4H6E6CZRZWG
+  validated_against:
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+  issues:
+  - testcase_id: TC-DRAFT-01M2R2ZKT650JSTNVP0Z94DCSG
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference: null
+    evidence: 洗分TC的precondition跟入金/出金/開分三條幾乎相同(都依賴測試環境是否具備機台模擬工具)，但assumptions為空，其餘三條都有結構化assumption且needs_human_confirmation:true。design_rationale用MAX_EXPLORATORY_PER_REQ=3解釋，但這4條TC的design_techniques全是negative，全份draft找不到exploratory這個技巧類別的定義或計數，理由不成立。
+    explanation: 同一份環境依賴假設在四條同構TC中揭露不一致，理由本身站不住腳。
+    recommended_change: 比照其餘三條補上結構化assumptions；若exploratory限制不適用於negative技巧的TC，四條都應補齊。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2R2ZKT6ERWRDTH6EV3Z4APZ
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: CLR-BONUSCCY-002記載Oscar實測確認出金/洗分未被阻擋，屬已知追蹤中Bug，但這兩條TC未提及此現況。
+    explanation: 執行者可能誤判是新發現而重複開單。
+    recommended_change: 補充說明目前預期結果為FAIL、屬已知bug。
+  - testcase_id: TC-DRAFT-01M2R2ZKT65FBR09TC055Z01NT
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_design_report.yaml的assumptions有3筆重複文字未去重。
+    explanation: 降低可讀性。
+    recommended_change: 去重並列出適用draft_ids。
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 10
+    ac_covered: 10
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T16:31:17Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-002

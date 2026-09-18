@@ -1,0 +1,91 @@
+title: 金額範圍篩選（min~max）僅回傳實際金額落在範圍內的紀錄
+product: ba-admin
+functional_area: CASHOUT
+requirement_ids:
+- REQ-CASHOUT-014
+acceptance_criteria_ids:
+- AC-CASHOUT-0141
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: low
+risk: low
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入後台
+- 頁面標題下方的站台切換選單已切換至一個既有的測試站台
+- 進入 帳務管理 > 洗分出金核實
+test_data:
+- name: min(邊界內)
+  value: = 所選紀錄之實際金額 X
+- name: max(邊界內)
+  value: = X
+- name: min(邊界外)
+  value: X + 0.01
+- name: max(邊界外)
+  value: X + 100
+steps:
+- n: 1
+  action: 取一筆已知實際金額為 X 的紀錄，設定金額篩選範圍 min=X, max=X（恰為邊界）並搜尋，確認該筆包含在結果內
+- n: 2
+  action: 將範圍改為 min=X+0.01, max=X+100（不含 X）並搜尋，確認該筆被排除
+expected_result: 金額範圍恰好等於 X 時該筆出現在結果中；範圍不含 X 時該筆被排除，篩選以實際金額為準確比對邊界
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.1'
+  location: §篩選器
+  quote: 金額 | 範圍輸入（min ～ max） | —
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: low
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHOUT-103
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+created_at: '2026-09-17T17:38:03Z'
+updated_at: '2026-09-17T19:15:28Z'
+history:
+- at: '2026-09-17T17:38:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6NEJ8SFRQWXWDBMMXRVAB
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-003
+- at: '2026-09-17T19:15:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0118
+  run_id: RUN-20260918-003
+  note: rejected

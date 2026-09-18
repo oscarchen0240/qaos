@@ -1,0 +1,46 @@
+<title>APR-0045 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0045 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-007 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>6 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？</div>
+<p>共 6 條：grounded 6 條（預期結果有 spec 條文依據）、<b>exploratory 0 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-BONUSCCY-011 存款原始金額正確進玩家錢包，不受「原始金額/核心貨幣金額」欄位拆分影響</h2>
+<blockquote>spec：§改了什麼／①存款金額拆成兩個 + §這次能測什麼／T2　「原始金額 | 玩家實際存的錢，玩家看到的幣別 | 進錢包、算流水倍數、算手續費 ｜ T2 入金金額進錢包正確：存多少就進多少，幣別正確。這是最重要的回歸點」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-023">023<br>v1</td><td>grounded</td><td>系統存款正確進玩家錢包，金額與幣別一致</td><td>以 Admin 登入後台</td><td><ol><li>玩家於線上站台完成一筆系統存款（非人工存款）</li><li>檢視入帳結果的金額與幣別</li></ol></td><td>存入多少金額就進玩家錢包多少金額，幣別與存款當下一致，不因新拆出的「原始金額」欄位而算錯或漏算</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-024">024<br>v1</td><td>grounded</td><td>存款金額精確到小數點時，進錢包金額不因欄位拆分而被無條件取整或截斷</td><td>以 Admin 登入後台</td><td><ol><li>玩家於線上站台完成一筆帶小數點的系統存款（例如 100.55）</li><li>檢視入帳結果的金額</li></ol></td><td>進錢包金額精確為 100.55，不因新拆出「原始金額」欄位而被無條件取整或截斷</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-BONUSCCY-012 流水倍數與手續費以實際存入金額（原始金額）為基數計算</h2>
+<blockquote>spec：§改了什麼／①存款金額拆成兩個 + §這次能測什麼／T3　「原始金額 | … | 進錢包、算流水倍數、算手續費 ｜ T3 流水倍數與手續費的基數正確：存款後的「提領所需有效投注額」要以實際存入金額為基數算，不是別的數字」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-025">025<br>v1</td><td>grounded</td><td>存款後流水門檻與手續費以實際存入的原始金額為基數計算</td><td>以 Admin 登入後台</td><td><ol><li>玩家完成一筆系統存款</li><li>檢視存款後的提領所需有效投注額（流水門檻）與手續費計算結果</li></ol></td><td>皆以玩家實際存入的原始金額為基數計算，不是核心貨幣金額或其他換算後的數字</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-BONUSCCY-013 簽到活動前台進度條與後台判定一致，皆讀取正確的入帳資料表</h2>
+<blockquote>spec：§改了什麼／②簽到活動的「有效會員」改讀正確的表 + §這次能測什麼／T1　「後台判定：以前讀區塊鏈明細表，現在讀 deposit_log_v2（入帳成功的都在裡面）；前台進度條：以前讀另一張更舊的區塊鏈表，現在同上、與後台一致 ｜ T1 前台進度條會動、且與後台一致：前台簽到頁的有效會員進度條，數字應該跟後台判定的累積金額一致。以前前台永遠顯示 0」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-026">026<br>v1</td><td>grounded</td><td>未達標時前台簽到進度條正確顯示，與後台判定一致，不再永遠顯示0</td><td>玩家已登入前台<br>後台可另開一個管理員登入視窗，供比對後台判定結果</td><td><ol><li>玩家有已入帳成功的存款記錄，尚未達到有效會員門檻</li><li>以該玩家身分登入前台，檢視簽到頁的有效會員進度條</li><li>同時查後台該玩家的累積金額判定，與前台顯示的進度比對</li></ol></td><td>前台進度條正確顯示累積金額，與後台判定的累積金額一致，不再是以前那樣永遠顯示 0</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-027">027<br>v1</td><td>grounded</td><td>達標玩家開啟一次前台簽到頁即直接寫入有效會員，後台不需玩家再存一筆即同步</td><td>玩家已登入前台<br>後台可另開一個管理員登入視窗，供比對後台判定結果</td><td><ol><li>玩家的累積存款已達有效會員門檻，但尚未開啟過新版前台簽到頁；開啟前先確認此時後台判定仍顯示「未達有效會員」（尚未重算）</li><li>開啟一次前台簽到頁（過程中不觸發任何新存款）</li><li>不做任何新存款動作，直接檢視後台的有效會員判定結果</li></ol></td><td>前台進度條達標並直接寫入有效會員狀態；後台判定也已同步顯示有效會員，不需要玩家再存一筆才會重算——精確驗證 spec 點名的「前台每次開頁就重算並直接寫入、後台被動同步」這個不對稱機制，不是只驗『兩邊最終會一致』這種較弱的陳述</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-BONUSCCY-014 簽到活動「有效會員每月重置」機制，跨月後進度正確歸零重算</h2>
+<blockquote>spec：§這次能測什麼／T5　「T5 每月重置仍正常：簽到活動若開了「有效會員每月重置」，跨月後進度應歸零重算」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-BONUSCCY-028">028<br>v1</td><td>grounded</td><td>簽到有效會員每月重置，跨月後進度正確歸零重算</td><td>以 Admin 登入後台</td><td><ol><li>簽到活動已開啟「有效會員每月重置」設定，玩家上個月的累積進度已達有效會員門檻</li><li>跨月後檢視該玩家本月的有效會員進度</li></ol></td><td>進度正確歸零，重新從 0 開始累積計算，不因改讀 deposit_log_v2 而受影響（例如不會誤讀到上個月已計入歸零前的舊資料）</td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0045 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0045 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0045 --decision reject --by &lt;you&gt; --rationale "..."</div>

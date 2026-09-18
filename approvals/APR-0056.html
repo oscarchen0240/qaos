@@ -1,0 +1,120 @@
+<title>APR-0056 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0056 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-013 · 狀態 PENDING · 提出 2026-09-15</div>
+<div class=summary>24 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 5 條 exploratory，approve 即確認其假設）</div>
+<p>共 24 條：grounded 19 條（預期結果有 spec 條文依據）、<b>exploratory 5 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-MEMBER-001 OTP 報表可查詢特定年月的 OTP 使用次數</h2>
+<blockquote>spec：§2.1.1 頁面頂部功能　「查詢特定月份的 OTP 使用次數。操作步驟：1.點擊「OTP報表」按鈕，開啟彈窗 2.輸入欲查詢的年份與月份 3.點擊「搜尋」查看結果 4.點擊✕關閉彈窗」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-027">027<br>v1</td><td>grounded</td><td>OTP 報表可查詢指定年月的 OTP 使用次數</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面</td><td><ol><li>點擊頁面頂部「OTP報表」按鈕，開啟彈窗</li><li>輸入指定年份與月份（例如 2026 / 08）</li><li>點擊「搜尋」</li><li>檢視查詢結果</li><li>點擊 ✕ 關閉彈窗，確認返回會員列表頁</li></ol></td><td>彈窗顯示指定年月的 OTP 使用次數查詢結果；點擊 ✕ 後彈窗關閉，返回會員列表頁不受影響</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-MEMBER-002 篩選器 KYC 狀態須搭配 KYC 階段使用，不可單獨篩選</h2>
+<blockquote>spec：§2.1.2 篩選器　「KYC 階段：需先選擇 KYC 階段，才可篩選 KYC 狀態」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-028">028<br>v1</td><td>grounded</td><td>未選 KYC 階段時，KYC 狀態篩選欄位不可單獨作用</td><td>以 Admin 登入後台，進入會員列表頁面，篩選器的 KYC 階段欄位維持未選擇（預設空值）</td><td><ol><li>嘗試直接操作 KYC 狀態篩選欄位（點擊下拉或嘗試選取任一狀態值）</li></ol></td><td>KYC 狀態欄位不可篩選或無作用（例如反灰無法點擊、或即使可操作也不影響搜尋結果）——須先選定 KYC 階段才可有效篩選 KYC 狀態</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-MEMBER-029">029<br>v1</td><td>grounded</td><td>已選定 KYC 階段後，搭配 KYC 狀態可正確篩選</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面</td><td><ol><li>篩選器選擇 KYC 階段「身分證明文件驗證」</li><li>KYC 狀態選「審核中」</li><li>點擊搜尋</li></ol></td><td>搜尋結果僅包含『身分證明文件驗證』階段目前狀態為『審核中』的會員，不符合此組合條件的會員不出現在結果中</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-003 會員列表 KYC 狀態以五個圖示的顏色顯示各驗證階段狀態</h2>
+<blockquote>spec：§2.1.3 KYC驗證階段圖示說明　「🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-030">030<br>v1</td><td>⚠ exploratory</td><td>會員列表 KYC 狀態欄五個圖示依各階段實際狀態正確顯示顏色與 Tooltip</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面<br>需要一名會員，其五個 KYC 階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明）合計涵蓋已核准、審核中、待補件、未申請、已停用五種狀態中至少三種以上——「已核准」「待補件」可由後台人員於會員詳細頁 KYC 狀態區塊對已開放審核的階段分別執行「通過」/「駁回」取得；「未申請」為該階段本就尚未送審的既有帳號；「審核中」需為會員已透過前台送出、後台尚未審核的既有測試帳號；「已停用」這個狀態要如何產生，spec 全文未描述任何後台操作入口（見 assumptions），本 TC 假設可從測試環境既有帳號中找到已涵蓋此狀態的會員，若環境中找不到則此 TC 無法完整驗證五態，需另外確認</td><td><ol><li>於會員列表找到目標會員，檢視其 KYC 狀態欄五個圖示（由左至右對應：個人基本資訊、身分證明文件、身分證件自拍、居住地址、資產證明）</li><li>逐一核對每個圖示顏色是否對應該階段目前的實際狀態（綠=已核准、橘=審核中、紅=待補件、淺灰=未申請、深灰=已停用）</li><li>滑鼠移至任一圖示，確認顯示 Tooltip</li></ol></td><td>五個圖示顏色分別正確對應各自階段的實際狀態；滑鼠移至任一圖示時顯示 Tooltip，內容包含該階段名稱與目前狀態文字<div class=assume>⚠ 假設：「已停用」狀態如何產生（是否有後台操作入口、或僅為系統/環境層級設定）spec 全文未定義；本 TC 假設測試環境存在已涵蓋此狀態的既有帳號，實際佈置方式需環境負責人確認</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-004 側邊面板邀請鏈：非透過邀請鏈註冊的會員，上層顯示為站長</h2>
+<blockquote>spec：§2.1.4 側邊簡易資料面板　「若該會員為加盟商，則顯示其成為加盟商的時間與邀請鏈。邀請鏈顯示完整的上下層關係（如：上層會員編號 → 當前會員編號 → 會員 N 人）；若該會員非透過邀請鏈註冊，則上層顯示為站長」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-031">031<br>v1</td><td>grounded</td><td>加盟商會員透過邀請鏈註冊時，側邊面板正確顯示完整上下層邀請鏈</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面<br>取一名既有會員，須同時符合兩個各自獨立的條件：(a) 目前已具加盟商身分——加盟商身分的取得條件見 REQ-MEMBER-013，與註冊方式無關；(b) 當初是透過『另一名既有會員』的前台邀請連結完成註冊——這只決定其邀請鏈的上層是誰，不代表註冊本身會讓人自動升級為加盟商。自行從環境中選定同時符合這兩個條件的既有帳號</td><td><ol><li>於會員列表點擊該會員的會員編號，開啟右側簡易資料面板</li><li>檢視面板頂部的邀請鏈顯示</li></ol></td><td>面板頂部顯示完整的上下層關係：上層會員編號 → 當前會員編號 → 會員N人（N為其下層會員數），且上層顯示的是實際邀請該會員註冊的會員編號</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-MEMBER-032">032<br>v1</td><td>grounded</td><td>非透過邀請鏈註冊的加盟商會員，側邊面板上層顯示為站長</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面<br>取一名並非透過前台邀請鏈註冊（例如由後台人員直接建立會員帳號）、且目前已具加盟商身分的會員</td><td><ol><li>於會員列表點擊該會員的會員編號，開啟右側簡易資料面板</li><li>檢視面板頂部的邀請鏈顯示</li></ol></td><td>邀請鏈的上層顯示為「站長」，而非空白、錯誤資料或系統報錯</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-005 可提領餘額須大於 10 USDT 才可申請出金</h2>
+<blockquote>spec：§2.1.4 帳戶資訊　「可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-033">033<br>v1</td><td>⚠ exploratory</td><td>可提領餘額恰為 10 USDT 時不可於前台申請出金（邊界值，剛好不達門檻）</td><td>此規則定義於帳務資訊「可提領餘額」欄位（見 §2.1.4 / §2.1.5）：後台此欄位只是唯讀顯示，通篇 spec 沒有描述後台有可點擊的「申請出金」入口；「申請出金」是會員在前台自行操作的功能，後台頂多是透過「人工提出」代為出金，但那是後台人員主動操作、不受此門檻文字描述的「申請」語境限制，spec 也未說明人工提出是否套用同一道門檻。因此本規則實際生效與可驗證的入口是會員前台的申請出金功能，不在 ba-admin 後台範圍內（見 assumptions）<br>需要一名會員的「可提領餘額」恰為 10.00 USDT。spec 分別定義了帳戶餘額（主錢包）『即時可用餘額』、提領所需有效投注額（流水錢包）『會員需達到此投注額方可提領』、可提領餘額『目前符合提領條件的金額』三個獨立欄位，也定義了人工存入/提出的『金額』直接影響主錢包餘額、『稽核』設定該筆金額所需完成的可提領投注倍數（見 REQ-MEMBER-011，同批 TC 已示範稽核倍數會使『提領所需有效投注額』增加，不是單純把存入金額加回可提領餘額）——但 spec 全文並未給出『可提領餘額』如何由前述欄位換算得出的公式，也未定義稽核=1時存入金額是否、以及何時會反映到可提領餘額。因此本 TC 不預設任何特定存入/提出金額與稽核倍數組合能『精確且立即』把可提領餘額調到 10.00 USDT（見 assumptions）。佈置方式：透過人工存入/人工提出反覆調整，每次調整後回到帳務資訊區塊查看實際顯示的可提領餘額數值，直到確認顯示值恰為 10.00 USDT 為止，不依賴任何計算公式預先斷定應存入/提出多少金額</td><td><ol><li>於後台帳務資訊區塊確認可提領餘額顯示為 10.00 USDT</li><li>以該會員身分登入會員前台，進入出金/提領申請功能</li><li>嘗試送出出金申請</li></ol></td><td>前台阻擋出金申請（規則為『須大於10 USDT』，剛好等於10不符合條件）：申請入口不可用，或送出後被系統拒絕而未成功送出<div class=assume>⚠ 假設：步驟中「以該會員身分登入前台並嘗試申請出金」需要會員前台的測試環境與登入方式；spec 未定義後台是否存在可直接驗證此門檻的入口，前台測試環境是否可用、以及人工提出是否適用同一道 &gt;10 USDT 門檻，需環境負責人 / PM 確認⚠ 假設：可提領餘額與帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、稽核倍數之間的精確換算公式，spec 全文未定義；本 TC 假設可透過人工存入/提出搭配後台實際讀數反覆調整至目標邊界值，但無法保證這是唯一或最有效率的方式，也無法保證『調整完成後餘額不會再隨時間變動』，此換算機制需環境負責人 / PM 確認</div></td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-034">034<br>v1</td><td>⚠ exploratory</td><td>可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）</td><td>此規則定義於帳務資訊「可提領餘額」欄位（見 §2.1.4 / §2.1.5）：後台此欄位只是唯讀顯示，通篇 spec 沒有描述後台有可點擊的「申請出金」入口；「申請出金」是會員在前台自行操作的功能，後台頂多是透過「人工提出」代為出金，但那是後台人員主動操作、不受此門檻文字描述的「申請」語境限制，spec 也未說明人工提出是否套用同一道門檻。因此本規則實際生效與可驗證的入口是會員前台的申請出金功能，不在 ba-admin 後台範圍內（見 assumptions）<br>需要一名會員的「可提領餘額」恰為 10.01 USDT。spec 分別定義了帳戶餘額（主錢包）『即時可用餘額』、提領所需有效投注額（流水錢包）『會員需達到此投注額方可提領』、可提領餘額『目前符合提領條件的金額』三個獨立欄位，也定義了人工存入/提出的『金額』直接影響主錢包餘額、『稽核』設定該筆金額所需完成的可提領投注倍數（見 REQ-MEMBER-011，同批 TC 已示範稽核倍數會使『提領所需有效投注額』增加，不是單純把存入金額加回可提領餘額）——但 spec 全文並未給出『可提領餘額』如何由前述欄位換算得出的公式，也未定義稽核=1時存入金額是否、以及何時會反映到可提領餘額。因此本 TC 不預設任何特定存入/提出金額與稽核倍數組合能『精確且立即』把可提領餘額調到 10.01 USDT（見 assumptions）。佈置方式：透過人工存入/人工提出反覆調整，每次調整後回到帳務資訊區塊查看實際顯示的可提領餘額數值，直到確認顯示值恰為 10.01 USDT 為止，不依賴任何計算公式預先斷定應存入/提出多少金額</td><td><ol><li>於後台帳務資訊區塊確認可提領餘額顯示為 10.01 USDT</li><li>以該會員身分登入會員前台，進入出金/提領申請功能</li><li>送出出金申請</li></ol></td><td>前台允許正常申請出金，申請成功送出<div class=assume>⚠ 假設：步驟中「以該會員身分登入前台並嘗試申請出金」需要會員前台的測試環境與登入方式；spec 未定義後台是否存在可直接驗證此門檻的入口，前台測試環境是否可用、以及人工提出是否適用同一道 &gt;10 USDT 門檻，需環境負責人 / PM 確認⚠ 假設：可提領餘額與帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、稽核倍數之間的精確換算公式，spec 全文未定義；本 TC 假設可透過人工存入/提出搭配後台實際讀數反覆調整至目標邊界值，但無法保證這是唯一或最有效率的方式，也無法保證『調整完成後餘額不會再隨時間變動』，此換算機制需環境負責人 / PM 確認</div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-MEMBER-006 會員詳細頁 KYC 審核：駁回須選原因，未開放階段不可操作</h2>
+<blockquote>spec：§2.1.5 KYC狀態　「審核結果選擇「通過」或「駁回」；選擇駁回時，需從下拉選單選取駁回原因 ｜ ⚠️未開放審核的階段（顯示--）不可操作」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-035">035<br>v1</td><td>grounded</td><td>KYC 審核選擇駁回但未選取駁回原因時，系統阻擋儲存</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁<br>取該會員 KYC 狀態區塊中至少一個目前已開放審核（狀態非「--」）的階段</td><td><ol><li>對該階段選擇審核結果為「駁回」，不選取下拉選單中的駁回原因</li><li>點擊右上角「儲存」</li></ol></td><td>系統阻擋儲存，要求先選取駁回原因才能完成儲存；未選原因前該次審核變更不會生效</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-MEMBER-036">036<br>v1</td><td>grounded</td><td>顯示為『--』（未開放審核）的 KYC 階段不可執行審核操作</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁<br>取該會員 KYC 狀態區塊中至少一個目前顯示為『--』（未開放審核）的階段</td><td><ol><li>找到顯示為『--』的階段，嘗試對其執行審核操作（如點選通過/駁回或尋找操作入口）</li></ol></td><td>該階段不存在可用的審核操作入口（無法選擇通過/駁回，或相關控制項呈現不可點擊/停用狀態），無法對其執行任何審核動作</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-007 會員啟用狀態切換為停用後，該會員無法登入或進入平台</h2>
+<blockquote>spec：§2.1.5 會員啟用狀態　「顯示該會員目前的帳號狀態，分為「啟用」與「停用」兩種。處於停用狀態的會員將無法登入或進入平台。點擊鉛筆圖示可切換狀態」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-037">037<br>v1</td><td>grounded</td><td>會員帳號狀態切換為停用後，該會員無法登入前台</td><td>以 Admin 登入後台，一名會員目前帳號狀態為啟用</td><td><ol><li>於該會員詳細資料頁點擊帳號狀態旁的鉛筆圖示，將狀態從啟用切換為停用，確認後台顯示已更新為停用</li><li>該會員嘗試以自己的帳號登入前台</li></ol></td><td>該會員無法登入，前台系統拒絕其登入請求</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-MEMBER-008 會員等級可由後台人員手動編輯，含後台備註與自動帶入的操作人員</h2>
+<blockquote>spec：§2.1.5 等級資訊　「會員等級｜可透過「編輯」按鈕手動調整；點擊後右側滑出「會員等級編輯」面板，填寫以下欄位後點擊「儲存」：會員編號（唯讀）、會員等級（下拉選單）、後台備注（選填）、操作人員（自動帶入當前登入帳號，唯讀）」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-038">038<br>v1</td><td>grounded</td><td>會員等級可由後台人員編輯，操作人員自動帶入當前登入帳號</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁</td><td><ol><li>點擊會員等級旁的「編輯」按鈕，確認右側滑出「會員等級編輯」面板</li><li>面板中選擇一個與目前不同的會員等級</li><li>後台備注欄位選填，可留空</li><li>點擊「儲存」</li></ol></td><td>會員等級成功更新為新選擇的等級；操作人員欄位自動帶入當前登入帳號，不需手動填寫</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-009 人工存入/提出可一次對多筆會員編號批次執行</h2>
+<blockquote>spec：§2.1.5 帳務資訊　「會員編號｜預設帶入當前會員編號；亦可使用「,」分隔多個會員編號，一次對多筆會員執行操作」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-039">039<br>v1</td><td>grounded</td><td>人工存入可用「,」分隔一次對多筆會員編號批次執行</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁，開啟人工存入面板</td><td><ol><li>確認會員編號欄已預設帶入當前會員編號</li><li>額外以「,」分隔輸入另一名不同的既有會員編號（自行從環境中選定，兩筆會員編號需彼此不同）</li><li>填寫金額、前台備注、後台備注等其他必填欄位後點擊儲存</li></ol></td><td>系統對輸入的所有會員編號（當前會員與額外輸入的另一名會員）各自執行一筆相同金額的人工存入操作</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-010 人工存入/提出的前台備注與後台備注皆為必填</h2>
+<blockquote>spec：§2.1.5 帳務資訊　「前台備注｜必填；填寫後顯示於會員端，作為該筆金額異動的說明 ｜ 後台備注｜必填；僅後台人員可見，作為該筆操作紀錄的內部說明」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-040">040<br>v1</td><td>grounded</td><td>人工存入前台備注與後台備注兩個必填欄位的組合驗證：任一或兩者留空即阻擋，皆填寫才允許送出</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁，開啟人工存入面板</td><td><ol><li>情境一：金額等其他欄位填妥，前台備注留空、後台備注填寫，點擊儲存，觀察結果</li><li>情境二：金額等其他欄位填妥，前台備注填寫、後台備注留空，點擊儲存，觀察結果</li><li>情境三：金額等其他欄位填妥，前台備注與後台備注皆留空，點擊儲存，觀察結果</li><li>情境四：前台備注與後台備注皆填寫，點擊儲存，觀察結果</li></ol></td><td>情境一、二、三皆被系統阻擋，不允許在缺少任一（或兩個）必填備注的情況下送出；情境四（兩者皆填寫）成功送出</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-011 人工存入/提出的稽核倍數會影響會員後續的提領所需有效投注額</h2>
+<blockquote>spec：§2.1.5 帳務資訊　「稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-041">041<br>v1</td><td>grounded</td><td>稽核倍數大於1時，提領所需有效投注額依倍數增加而非單純加回存入金額</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁</td><td><ol><li>記錄目前帳務資訊區塊「提領所需有效投注額（流水錢包）」數值（設為 X）</li><li>點擊「人工存入」，金額填寫 100 USDT、稽核填寫 3，填妥前後台備注後儲存</li><li>重新整理該會員詳細資料頁，檢視帳務資訊區塊的「提領所需有效投注額」</li></ol></td><td>提領所需有效投注額變為 X + (100 × 3) = X + 300，而非單純的 X + 100（存入金額本身），確認稽核倍數確實套用於流水計算</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-042">042<br>v1</td><td>⚠ exploratory</td><td>稽核欄位輸入 0、負數或留空時的系統反應（exploratory，spec 未明確定義此規則）</td><td>以 Admin 登入後台，開啟一名既有會員的人工存入面板</td><td><ol><li>稽核欄位分別嘗試輸入 0、負數、留空</li><li>填妥其他必填欄位後點擊儲存，逐一觀察系統反應</li></ol></td><td>spec 僅定義稽核『預設為 1』與『會影響提款條件』，完全沒有定義輸入 0、負數或留空時系統應如何反應（是否阻擋、是否退回預設值 1、或是否接受並產生無法計算的投注門檻）；本 TC 只能記錄實際觀察到的行為，不預設任何一種反應為正確答案，需另外向 PM 確認正確規則後再回填為確定案例<div class=assume>⚠ 假設：稽核欄位對 0 / 負數 / 留空等無效輸入的系統反應，spec 全文未定義；本 TC 依常識推測這是一個應被阻擋或應退回預設值的欄位，但這是推測而非明文規則，正確行為需 PM 確認</div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-MEMBER-012 加盟列表狀態 Toggle 可切換會員的加盟商啟用/停用身分</h2>
+<blockquote>spec：§2.2.2 加盟列表　「點擊狀態Toggle：切換該加盟商的啟用或停用狀態 ｜ 狀態｜全部/啟用/停用；啟用表示該會員具加盟商身分，停用表示不具加盟商身分」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-043">043<br>v1</td><td>grounded</td><td>加盟列表點擊狀態 Toggle 可將啟用中的加盟商切換為停用</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 加盟列表」<br>篩選狀態為「啟用」並搜尋，取一名啟用中的加盟商會員</td><td><ol><li>點擊該會員所在列的狀態 Toggle</li><li>檢視該列狀態欄位的顯示</li><li>將篩選器狀態改為「停用」並重新搜尋</li></ol></td><td>點擊後該會員的加盟商狀態變更為停用；篩選器改選停用並重新搜尋後可查到該筆記錄，確認狀態已真正切換而非僅前端顯示變化</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-013 一般加盟商（全民加盟）以三種 Badge 樣式顯示 Partner 等級達成狀態</h2>
+<blockquote>spec：§2.2.2 加盟等級　「（1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-044">044<br>v1</td><td>⚠ exploratory</td><td>加盟列表一般加盟商 Badge 依「是否達成升等門檻」與「是否已透過前台申請」正確顯示三種樣式</td><td>以 Admin 登入後台，進入「會員與加盟商 &gt; 加盟列表」<br>從加盟列表既有資料中，找出分別呈現三種 Badge 樣式（已申請/達成未申請/未達成）的既有會員各一名，作為 A（已申請）、B（達成未申請）、C（未達成）——「升等門檻」的具體算法 spec 全文未定義，本 TC 不透過人工調整指標去製造達成/未達成狀態，只挑選環境中既有已呈現對應樣式的帳號（見 assumptions）</td><td><ol><li>於加盟列表檢視會員 A（已申請）的一般加盟商 Badge</li><li>檢視會員 B（達成未申請）的一般加盟商 Badge</li><li>檢視會員 C（未達成）的一般加盟商 Badge</li></ol></td><td>A 顯示白底『已申請』樣式；B 顯示深灰底『達成未申請』樣式；C 顯示黑底『未達成』樣式，三者樣式互不相同且分別對應各自狀態<div class=assume>⚠ 假設：「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec 全文未定義；本 TC 假設可從環境既有資料中挑選出三種樣式各自對應的會員，若環境中找不到齊全的三種樣式，如何人工佈置達門檻/未達門檻的測試資料需環境負責人確認</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-014 客製化加盟商（S Partner）可透過 Inline 編輯直接修改佣金相關欄位</h2>
+<blockquote>spec：§2.2.3 客製化加盟商設定　「3.該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核欄位進入Inline編輯模式 4.直接修改各欄位數值 5.點擊列尾的✓確認儲存；或點擊✕取消並還原原始值」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-045">045<br>v1</td><td>grounded</td><td>客製化加盟商 Inline 編輯修改欄位數值後點擊確認可成功儲存</td><td>以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員</td><td><ol><li>點擊「超級加盟商」按鈕，確認該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核倍數欄位進入 Inline 編輯模式</li><li>修改佣金比例%與行政費為新數值</li><li>點擊列尾 ✓ 確認</li><li>重新整理列表，檢視該列數值</li></ol></td><td>數值成功更新並儲存為修改後的新值，重新整理後仍維持新值</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-MEMBER-046">046<br>v1</td><td>grounded</td><td>客製化加盟商 Inline 編輯修改數值後點擊取消，還原為原始值且不儲存</td><td>以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員</td><td><ol><li>記錄該列目前的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核倍數原始數值</li><li>點擊「超級加盟商」按鈕進入 Inline 編輯模式，將上述欄位修改為與原始值不同的新數值</li><li>點擊列尾 ✕ 取消</li><li>檢視該列數值</li></ol></td><td>數值還原為修改前的原始值，先前輸入的變更未被儲存</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-015 從會員頁點擊最後登入 IP 可跳轉至登入網域查詢頁並自動帶入該 IP 篩選</h2>
+<blockquote>spec：§2.3.1 篩選器　「從會員列表側邊面板或會員詳細資料頁點擊「最後登入IP」跳轉至此頁時，系統會自動帶入該IP進行篩選」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-047">047<br>v1</td><td>grounded</td><td>點擊最後登入IP可跳轉至登入網域查詢頁並自動帶入該IP篩選</td><td>以 Admin 登入後台，進入一名既有會員的詳細資料頁</td><td><ol><li>點擊「最後登入IP」欄位值</li></ol></td><td>自動跳轉至登入網域查詢頁，並帶入該 IP 值作為篩選條件，查詢結果為曾使用該 IP 登入的所有會員及登入時間</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-MEMBER-016 推薦註冊金設定新增時會員編號為必填，不可為空</h2>
+<blockquote>spec：§2.4.2 新增設定　「會員編號為必填（必填），不可為空」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-048">048<br>v1</td><td>grounded</td><td>推薦註冊金設定新增時，會員編號留空應被系統阻擋</td><td>以 Admin 登入後台，進入推薦註冊金設定頁，開啟新增方案面板</td><td><ol><li>會員編號欄位留空</li><li>點擊「新增」送出</li></ol></td><td>系統阻擋，提示會員編號為必填</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-017 推薦註冊金設定刪除為不可復原操作，須二次確認</h2>
+<blockquote>spec：§2.4.3 列表欄位　「建立時間｜該筆設定的建立時間；點擊旁側刪除圖示後，彈出確認視窗，確認後刪除該筆設定，操作不可復原」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-049">049<br>v1</td><td>grounded</td><td>刪除推薦註冊金設定須二次確認，確認後永久刪除且不可復原</td><td>推薦註冊金設定列表存在至少一筆既有設定</td><td><ol><li>點擊該筆設定旁的刪除圖示，確認彈出確認視窗</li><li>於確認視窗點擊確認</li><li>重新整理列表，確認該筆設定已從清單移除</li><li>確認畫面上不存在任何可將此筆設定復原的操作入口</li></ol></td><td>彈出確認視窗；確認後該筆設定被永久刪除，清單中不再出現；系統不提供復原此操作的功能</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-MEMBER-018 暱稱禁用詞設定分四個類別分頁，各自獨立管理</h2>
+<blockquote>spec：§2.5.1 分頁說明　「各分頁的操作方式相同，設定互相獨立」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-MEMBER-050">050<br>v1</td><td>grounded</td><td>暱稱禁用詞四分頁設定互相獨立</td><td>以 Admin 登入後台，進入暱稱禁用詞設定頁，Violence 與 Other 分頁目前皆為空（或至少不含將在本 TC 新增的那個詞）</td><td><ol><li>切換至 Violence 分頁，於輸入框輸入一個測試用禁用詞，按 Enter 確認，確認該詞以 Tag 形式顯示</li><li>切換至 Other 分頁，檢視禁用詞清單</li></ol></td><td>Other 分頁的清單不包含剛才在 Violence 分頁新增的那個詞，兩個分頁的設定互相獨立</td><td>low<br>low</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0056 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0056 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0056 --decision reject --by &lt;you&gt; --rationale "..."</div>

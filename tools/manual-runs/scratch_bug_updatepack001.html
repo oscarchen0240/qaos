@@ -1,0 +1,149 @@
+<title>錢包展開清單異常</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Major / High</span>
+    <span class="badge scope">前端 ＋ 後端（待排查確認）</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[前後台][Arcade／SpringKyle] 帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生</h1>
+  <div class="subtitle">BUG-UPDATEPACK-001 · ba-admin 後台 · 會員與加盟商</div>
+
+  <div class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>不適用（後台會員帳務功能，非特定遊戲）</dd>
+      <dt>遊戲名稱</dt><dd>不適用</dd>
+      <dt>測試環境</dt><dd>Stage</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ZZAA00261</code>（管理員）</dd>
+      <dt>測試時間</dt><dd>2026-09-15</dd>
+    </dl>
+  </div>
+
+  <div class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell">後端</div>
+      <div class="scope-cell active">雙方協助排查</div>
+    </div>
+    <p class="notice">目前只掌握「畫面顯示錯誤」的現象，尚未取得帳戶餘額展開清單這支查詢本身的 API request/response，無法單獨鎖定是前端寫死、還是後端回傳內容本身就錯。麻煩後端先確認：查詢帳戶餘額展開清單時，回傳的幣別內容是否真的依鏈上錢包管理即時查詢產生；若後端回傳正確、前端卻顯示錯誤，才能鎖定為前端問題。</p>
+  </div>
+
+  <div class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">Arcade（機台站台）與 SpringKyle（線上站台）的帳戶餘額展開清單，皆未依鏈上錢包管理實際啟用狀態動態產生，看起來像是寫死固定顯示 TWD＋USDT 兩種幣別，違反了 spec 明訂的兩件事：幣別清單必須依鏈上錢包管理的啟用狀態產生；以及僅啟用一種幣別時不應顯示展開箭頭：</p>
+    <ul class="evmap" style="margin-top:10px">
+      <li><span class="tag">Arcade</span>鏈上錢包管理只啟用 TWD，展開清單卻多出不存在的 USDT $1,000.00</li>
+      <li><span class="tag">Arcade</span>該帳號僅 1 種啟用幣別，依規則不應顯示展開箭頭，但畫面仍可展開</li>
+      <li><span class="tag">SpringKyle</span>鏈上錢包管理啟用 TTK、USDT，沒有 TWD 這個選項，展開清單卻多出不存在的 TWD $0.00</li>
+      <li><span class="tag">SpringKyle</span>已啟用的 TTK 完全沒有被列出</li>
+    </ul>
+    <div class="specquote"><b>spec 原文（多幣別錢包展開顯示／幣別清單來源）：</b>「依「帳務管理 > 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤的幣別）；狀態為關閉或禁用的幣種不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能不另行設定幣別清單」</div>
+    <div class="specquote"><b>spec 原文（多幣別錢包展開顯示／展開箭頭顯示條件）：</b>「已啟用幣種超過一種時才顯示展開箭頭；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現」</div>
+    <div class="specquote"><b>spec 原文（多幣別錢包展開顯示／機台場館的情形）：</b>「機台場館的核心貨幣為 TWD，鏈上錢包管理在機台場館僅顯示法幣 TWD 一個頁籤、只啟用這一種幣別，因此機台帳號的餘額欄不顯示展開箭頭、維持單行呈現……⚠️ 實作不得把『單一幣別』寫死——幣別數量須由鏈上錢包管理的啟用狀態決定，未來場館啟用第二種幣別時展開行為要能自動適用。」這段話幾乎是針對 Arcade 這個現象的預先警告，符合「幣別清單寫死」這個最可能的根因猜測。</div>
+  </div>
+
+  <div class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期：</b>Arcade 帳號的展開清單應只列出實際啟用的 TWD，且因僅 1 種幣別不應顯示展開箭頭、維持單行呈現；SpringKyle 帳號的展開清單應列出實際啟用的 TTK、USDT，不應出現 TWD。</div>
+    <div class="actual"><b>實際：</b>Arcade 帳號展開清單多出不存在的 USDT $1,000.00，且違規顯示展開箭頭；SpringKyle 帳號展開清單多出不存在的 TWD $0.00，且漏列已啟用的 TTK，只顯示 USDT $1,033.00。</div>
+  </div>
+
+  <div class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>以管理員 <code class="inline">ZZAA00261</code> 登入後台，站台切換選單切至 <b>Arcade</b>（機台）</li>
+      <li>至會員與加盟商 &gt; 會員列表，開啟任一機台帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開</li>
+      <li>站台切換選單切至 <b>SpringKyle</b>（線上）</li>
+      <li>開啟任一會員帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開</li>
+    </ol>
+    <p class="notice">以下截圖金額以評測用帳號為例，其他帳號實際金額可能不同，但清單內容錯誤的模式應一致重現。</p>
+  </div>
+
+  <div class="card">
+    <h2>API URL</h2>
+    <p class="body-text" style="color:var(--text-faint)">帳戶餘額展開清單查詢對應的 API 尚未確認，待後端提供對應 endpoint 以便進一步排查。</p>
+  </div>
+
+  <div class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure><img src="EVD-0048.jpg" alt="Arcade 帳號帳戶餘額展開，顯示 TWD 與不存在的 USDT"><figcaption>EVD-0048 · Arcade 帳號展開清單（TWD $0.00／USDT $1,000.00，帶展開箭頭）</figcaption></figure>
+      <figure><img src="EVD-0049.png" alt="Arcade 鏈上錢包管理，只有 TWD 選項"><figcaption>EVD-0049 · Arcade 鏈上錢包管理（Machine 頁籤，僅 TWD，無 USDT）</figcaption></figure>
+      <figure><img src="EVD-0051.jpg" alt="SpringKyle 鏈上錢包管理，TTK 與 USDT 啟用，無 TWD 頁籤"><figcaption>EVD-0051 · SpringKyle 鏈上錢包管理（BEP-20，TTK／USDT 啟用，無 TWD）</figcaption></figure>
+      <figure><img src="EVD-0052.jpg" alt="SpringKyle 帳號帳務資訊，顯示 USDT 與不存在的 TWD，缺少 TTK"><figcaption>EVD-0052 · SpringKyle 帳號展開清單（USDT $1,033.00／TWD $0.00，缺 TTK）</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>ba-admin 後台 · 會員與加盟商 · 多幣別錢包展開顯示</span>
+    <span>BUG-UPDATEPACK-001</span>
+  </div>
+</div>

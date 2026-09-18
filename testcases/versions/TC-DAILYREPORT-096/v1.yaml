@@ -1,0 +1,81 @@
+title: 日結時間到達時，進行中場次強制結束為日結結算狀態，餘額承接為隔日新場次的期初餘額
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0171
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 透過『機台交易紀錄』或對應的場次查詢功能，尋找一台機台過去某個已經過的營業日，其在該日日結時間點當下有一筆進行中場次的既有歷史記錄（此記錄應已因日結時間到達而被系統處理）
+test_data: []
+steps:
+- n: 1
+  action: 查看該筆場次記錄的狀態、結束時間，並記下承接前的餘額（該場次結束時的分數）
+- n: 2
+  action: 查看同一機台緊接在後的下一筆場次記錄，檢視其開始時間與期初餘額
+expected_result: 前一筆場次的狀態為『日結結算』，結束時間等於該場館當日的日結時間；下一筆（隔日新）場次的期初餘額，等於前一筆場次結束時的餘額（承接金額）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §業務規則/場次日結 + §背景:場次資訊/場次狀態、期初餘額
+  quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-096
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:11Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:11Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

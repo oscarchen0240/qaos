@@ -1,0 +1,34 @@
+clarification_id: CLR-SITELIST-011
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+question: AC-SITELIST-0023「核心貨幣依所選類型連動建立，不需admin自身的鏈上錢包管理預先啟用該幣別」這句話裡，鏈上錢包管理跟站台核心貨幣是什麼關係？
+context: TC設計階段需要確認：鏈上錢包管理管理的幣別啟用/禁用跟站台的核心貨幣欄位是否為同一套機制、是否互相依賴。spec.md全文查無「鏈上錢包」相關描述，此關係僅能透過PM口頭確認
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-17T14:06:07Z'
+status: APPLIED
+history:
+- at: '2026-09-17T14:06:07Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-17T14:06:18Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM（經 Oscar Chen 於 2026-09-17 對話直接確認）
+- at: '2026-09-17T14:06:33Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 確認鏈上錢包管理與站台核心貨幣為互不相依的獨立概念，TC設計需依此重新調整，不應以鏈上錢包管理狀態當作核心貨幣連動建立的驗證依據
+requirement_id: REQ-SITELIST-002
+impact_if_unanswered: 若不釐清兩者關係，TC設計會誤把鏈上錢包管理的啟用狀態當作站台核心貨幣連動建立的驗證依據，設計出邏輯錯誤的測試案例
+answer: 鏈上錢包管理與站台核心貨幣是兩個完全不同、互不相依的概念。鏈上錢包管理管理的是「此平台整體能使用的幣種有哪些」，啟用/禁用代表該幣種能否出入金，目的是作為平台出問題時的即時止損開關（platform級風險控管，不分站台）。站台的核心貨幣則是站台建立時依站台類型連動決定的設定欄位（例如機台類型連動TWD），屬SITELIST頁面自身的站台設定，跟鏈上錢包管理的啟用狀態無關、不互相依賴。因此AC-SITELIST-0023「不需admin自身的鏈上錢包管理預先啟用該幣別」這句話，本質是在說明這兩個系統彼此獨立、互不閘門——站台核心貨幣的連動建立不需要、也不會去檢查鏈上錢包管理的任何狀態。
+answered_by: PM（經 Oscar Chen 於 2026-09-17 對話直接確認）
+answered_at: '2026-09-17T14:06:18Z'
+resolution: requirement_clarified

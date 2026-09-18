@@ -1,0 +1,120 @@
+artifact_id: ART-TVR-01M2FD4P1FM8NEPB2P4B19J68F
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-003
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T07:29:40Z'
+status: SUPERSEDED
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2E9A3Y00JD7S96794WGP8Z3
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2E9A3Y00JD7S96794WGP8Z3
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2E9A3Y00JD7S96794WGP8Z3
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-SITELIST-042
+    issue_type: requirement_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-023
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: requirements.yaml REQ-SITELIST-023/AC-SITELIST-0231 對照 REQ-SITELIST-022/AC-SITELIST-0221
+    evidence: draft.yaml 引用 REQ-SITELIST-023/AC-SITELIST-0231（給定站台已被刪除、嘗試復原），但 TC 步驟與斷言（不提供刪除操作、僅暫停/關閉）語意對應的是 REQ-SITELIST-022
+      的 AC-SITELIST-0221。
+    explanation: requirements.yaml 已將『任何類型皆不可刪除』的斷言正式歸屬到 REQ-SITELIST-022，REQ-023 明確標註『本條保留僅供追溯，不作為 grounded TC 設計依據』。繼續引用
+      023 會使可追溯性失效。
+    recommended_change: requirement_ids 改為 [REQ-SITELIST-022]，acceptance_criteria_ids 改為 [AC-SITELIST-0221]。
+  - testcase_id: TC-SITELIST-042
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-SITELIST-023
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: REQ-SITELIST-022.rejection_contract
+    evidence: 'draft.yaml 仍帶一條 assumption 引用已被取代的 CLR-007/008，標記 needs_human_confirmation: true。'
+    explanation: CLR-SITELIST-009 是 PM/後端正式定案回覆，REQ-022.rejection_contract.defined 已為 true，繼續帶 exploratory 假設會誤導 reviewer。
+    recommended_change: 移除 assumptions（設為空陣列）。
+  - testcase_id: TC-SITELIST-042
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-SITELIST-022
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: CLR-SITELIST-009
+    evidence: expected_result 未提及 CLR-009 的關鍵原因（刪除會影響站台樹狀結構），只重複結論。
+    explanation: 只斷言結論、不帶原因，降低斷言的可稽核價值。
+    recommended_change: 在 expected_result 補上「（原因：刪除站台會影響站台樹狀結構，故 PM／後端定案不提供刪除功能，見 CLR-SITELIST-009）」。
+  - testcase_id: TC-SITELIST-042
+    issue_type: missing_reference
+    severity: major
+    violated_requirement: REQ-SITELIST-022
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台
+    evidence: expected_result_spec_reference 未標註 spec.md 該節與斷言矛盾、已由 CLR-009 認定為錯誤敘述。
+    explanation: spec.md 原文寫『可刪除』與此 TC 斷言矛盾，若不加註會誤導後續讀者。
+    recommended_change: expected_result_spec_reference.location 改為含『（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述，非現行產品行為）』的標註。
+  - testcase_id: TC-SITELIST-042
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: source_ref 仍為 CLR-SITELIST-008，design_rationale 未提及最終定案的 CLR-SITELIST-009。
+    explanation: 應反映最終依據來源，避免誤以為仍停留在未定案階段。
+    recommended_change: source_ref 改為 CLR-SITELIST-009，design_rationale 補充定案說明。
+  advisories:
+  - testcase_id: TC-SITELIST-042
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: REQ-SITELIST-022
+    spec_reference: null
+    evidence: AC-SITELIST-0222（後端 API 拒絕）目前沒有步驟驗證。
+    explanation: 屬範圍取捨，非必須立即修正。
+    recommended_change: 可在本 TC 增加一步直接呼叫刪除 API 並斷言拒絕，或於 uncovered_with_reason 註記待補。
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 0
+    ac_total: 2
+    ac_covered: 1
+    uncovered_accepted:
+    - AC-SITELIST-0222
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: false
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-14T07:29:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-003
+- at: '2026-09-14T07:30:00Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TVR-01M2FD546BQHEWWVRFQPJR77KV
+  run_id: RUN-20260914-003

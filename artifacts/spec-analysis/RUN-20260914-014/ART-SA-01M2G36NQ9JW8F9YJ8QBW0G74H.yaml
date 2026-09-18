@@ -1,0 +1,92 @@
+artifact_id: ART-SA-01M2G36NQ9JW8F9YJ8QBW0G74H
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-014
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T13:55:14Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-PLATFORMRULE-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-PLATFORMRULE-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  content_hash: 7bb4b9f52a4095f951a5f80a8204d13f562f0448986f9d4757a2858893db21cd
+  summary: 機台場館平台規則（開發包⑥，跨頁政策層）：機台帳號排除規則政策層、後台選單顯示規則、正式定義「操作員」角色與完整權限表、機台場館遊戲更新規則、Free Spin 例外、出金設定 TWD 頁籤、時區。大量權限/排除規則內容已由
+    SPEC-ACCOUNT-001（新增機台/編輯機台/機台憑證/機台停用啟用的 Admin/站長權限、排除規則必須實作項與天然不會發生）、SPEC-DAILYREPORT-001（場館日結報表角色範圍）、SPEC-CASHFLOW-001（稽核倍數規則本身）驗證過，本次刻意排除重複，只測「操作員」角色正式定義後才浮現的新增/補充權限、後台選單顯示規則、遊戲更新規則、Free
+    Spin 例外、出金設定頁籤等本包獨有內容。
+  scope:
+    in_scope:
+    - 排除規則表中尚未被其他包驗證過的項目（出金審核、稽核明細顯示、Free Spin）
+    - 機台場館後台選單顯示/隱藏規則
+    - 操作員角色的完整權限矩陣（含補充其他包遺漏的角色維度）
+    - 機台場館遊戲更新規則
+    - 出金設定 TWD 頁籤
+    out_of_scope:
+    - 已由 SPEC-ACCOUNT-001 驗證的新增機台/編輯機台/機台憑證/機台停用啟用的 Admin 與站長權限、排除規則必須實作項與天然不會發生兩表
+    - 已由 SPEC-DAILYREPORT-001 驗證的場館日結報表角色範圍
+    - 已由 SPEC-CASHFLOW-001 驗證的稽核倍數計算規則本身
+    - 已由 SPEC-ACCOUNT-001 驗證的機台場館前台不開放自行註冊
+  requirement_ids:
+  - REQ-PLATFORMRULE-001
+  - REQ-PLATFORMRULE-002
+  - REQ-PLATFORMRULE-003
+  - REQ-PLATFORMRULE-004
+  - REQ-PLATFORMRULE-005
+  - REQ-PLATFORMRULE-006
+  - REQ-PLATFORMRULE-007
+  - REQ-PLATFORMRULE-008
+  - REQ-PLATFORMRULE-009
+  - REQ-PLATFORMRULE-010
+  - REQ-PLATFORMRULE-011
+  - REQ-PLATFORMRULE-012
+  - REQ-PLATFORMRULE-013
+  - REQ-PLATFORMRULE-014
+  - REQ-PLATFORMRULE-015
+  - REQ-PLATFORMRULE-016
+  - REQ-PLATFORMRULE-017
+  - REQ-PLATFORMRULE-018
+  - REQ-PLATFORMRULE-019
+  - REQ-PLATFORMRULE-020
+  - REQ-PLATFORMRULE-021
+  - REQ-PLATFORMRULE-022
+  - REQ-PLATFORMRULE-023
+  ambiguities: []
+  constraints:
+  - text: 排除規則必須做成集中、可逐項解除的政策層（policy），各功能不得自行硬編碼帳號類型判斷——這是架構/實作規範，非使用者可觀察的黑箱行為，不另立可獨立驗證的 Requirement
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: 核心架構要求
+      quote: ''
+  - text: 時區：後台所有時間欄位一律顯示為 UTC+0——此為跨頁通用規則，已在 TXLOG/CASHOUT 等包個別欄位的 Requirement 中驗證過（如交易時間、核實時間），本包不重複逐頁測試
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §業務規則與驗證
+      quote: ''
+  edge_case_candidates:
+  - text: 某項排除規則被解除（如未來的「開分招待」活動上線）時，對應的後台選單頁面是否確實跟著自動恢復顯示，目前無實際案例可測試
+    requirement_id: REQ-PLATFORMRULE-011
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §機台場館的後台選單
+      quote: ''
+  open_questions: []
+history:
+- at: '2026-09-14T13:55:20Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-014

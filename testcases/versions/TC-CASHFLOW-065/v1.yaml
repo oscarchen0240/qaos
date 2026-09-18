@@ -1,0 +1,91 @@
+title: 開分請求送達即立即生效，交易紀錄類型正確且當下直接累計存款次數與金額（不需核實）
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-003
+acceptance_criteria_ids:
+- AC-CASHFLOW-0031
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+- state_transition
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 查詢機台帳號於會員列表的目前「存款次數」「存款金額」作為基準值
+- n: 2
+  action: 呼叫 req-keyin 送出開分請求，金額 X（模擬店員以鑰匙開啟機台選單為玩家開分）
+- n: 3
+  action: 確認回覆立即生效，機台分數增加 X
+- n: 4
+  action: 至機台交易紀錄查詢該筆（若查詢頁尚未部署，可改查詢後端資料紀錄核對），確認類型為「機台開分」、金額為正值 X
+- n: 5
+  action: 立即（不進行任何額外的核實或審核操作）重新查詢會員列表的存款次數與存款金額
+- n: 6
+  action: 嘗試尋找任何可撤銷／回滾這筆開分存款次數與金額累計的後台操作
+expected_result: 分數立即增加 X；交易紀錄類型為「機台開分」、金額為正值；存款次數 +1、存款金額 +X，且是在交易完成當下就直接累計（不等待核實），累計後不存在任何撤銷或回滾入口
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §四種金流/開分
+  quote: 交易紀錄的類型記為「機台開分」，金額為正值。交易完成（分數入帳）當下直接累計進該機台帳號於會員列表的「存款次數」「存款金額」（不需核實）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-065
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

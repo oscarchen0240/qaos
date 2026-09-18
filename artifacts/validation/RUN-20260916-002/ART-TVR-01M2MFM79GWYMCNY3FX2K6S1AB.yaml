@@ -1,0 +1,107 @@
+artifact_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T06:49:18Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2MBHFR6A6Y344W8M8RGB34Z
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: steps[3].action = 「呼叫 req-keyout（threshold 任意值）或 req-cashout 嘗試洗分/出金」，AC-CASHFLOW-0022 的規則同時適用洗分與出金，但步驟用「或」並列兩支不同
+      API，未明確要求執行者兩者都測還是任選其一。
+    explanation: 可能因執行者而異、影響再現性。
+    recommended_change: 拆成兩個子步驟分別驗證 req-keyout 與 req-cashout，或明確註明『任選一支驗證即可，兩支邏輯相同』。
+  - testcase_id: TC-DRAFT-01M2MBHFR7GAYKTSCJ7ZSNGAF1
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_design_report.yaml 的 revision_of_issues issue_index=2 只記錄此 TC 一筆 draft_id，但另外 3 條 TC（TC-DRAFT-...DWN957ZRBKQNHYGF、...73WF9S3D39DM64KQJ、...7AN6YRP73P88CB402）的
+      design_rationale 也各自陳述同樣『原先誤標 decision_table，改標為 equivalence_partitioning』的修正。
+    explanation: 草案內容本身正確（四條 TC 目前皆已是 equivalence_partitioning），不影響測試正確性，但若屬同一輪修訂，revision_of_issues 只登記其中一條，稽核軌跡不完整，外部審閱者單看
+      revision_of_issues 會誤以為只改了一條。
+    recommended_change: revision_of_issues issue_index=2 的 draft_id 欄位改為陣列，列出全部同批修正的 draft_id；若另三條其實是更早一輪修正的，應在 action 文字中註明版本區隔。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2MBHFR6D578YPFV41R9NWHN
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 此 TC 與 TC-DRAFT-01M2MBHFR6DCNCAB8P4Z88GE0E 皆須各自獨立『等待 PENDING 建立超過 24 小時』（24 小時為系統固定值，無法加速），驗證焦點不同（REQ-008額度釋放
+      vs REQ-012協定層拒絕）但共用同一個高成本前置條件卻分成兩條獨立 TC 各自等待一次。
+    explanation: 非真重複，但執行成本可觀。
+    recommended_change: 評估合併為單一 TC：同一次 24 小時逾時佈置後，先查額度釋放，再對同一 TXID 驗證 1-NO RECORD，一次滿足多個 AC，降低重複等待。
+  - testcase_id: TC-DRAFT-01M2MBHFR6DWN957ZRBKQNHYGF
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: requirement_ids 包含 REQ-CASHFLOW-026，但 acceptance_criteria_ids 只有屬 REQ-023 的 AC，此 TC 對 REQ-026 只是 expected_result
+      裡的旁引說明，並非實際驗證 REQ-026 行為。
+    explanation: coverage_matrix 本身處理正確，純屬 TC 欄位標記精確度問題，可能讓人誤以為此 TC 對 REQ-026 有實質覆蓋。
+    recommended_change: 可在 TC 層級加註此為情境延伸說明非主要驗證對象，或移除 requirement_ids 中的 REQ-026。
+  - testcase_id: TC-DRAFT-01M2MBHFR6VK7VQ6491GXPR5NK
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: test_design_report.yaml 的 assumptions 陣列第 1、2 項為逐字相同的稽核倍數機制假設文字（分別對應本 TC 與 TC-DRAFT-...A6Y344W8M8RGB34Z）。
+    explanation: 內容正確、非錯誤，但未去重，report 層級的 assumptions 彙總列表閱讀時容易誤以為是筆誤重複。
+    recommended_change: 彙總 assumptions 時可對完全相同文字的項目去重，或加註適用於哪些 TC 合併為一項。
+  - testcase_id: TC-DRAFT-01M2MBHFR7FFFGAH13FXKK91BC
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: steps[6].action 描述『機台分數為 0、無任何開分/入金發生的情況下，單純的注單/遊戲操作不應能建立新場次』，但步驟自承『分數為0時亦無法投注』，等於承認此步驟在真實環境中無法真正被觸發執行。
+    explanation: 屬恆真的理論陳述而非可執行驗證步驟，雖已誠實標註為理論情境不算誤導，但作為步驟略顯多餘。
+    recommended_change: 考慮將此點從 steps 移至 design_rationale 或 assumptions 作為設計說明，而非留在可執行步驟清單中。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 42
+    ac_total: 69
+    ac_covered: 66
+    uncovered_accepted:
+    - AC-CASHFLOW-0421
+    - AC-CASHFLOW-0431
+    - AC-CASHFLOW-0083
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-002

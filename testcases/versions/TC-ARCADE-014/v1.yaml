@@ -1,0 +1,89 @@
+title: 對一筆待核實的機台洗分或機台出金執行核實操作後，後台操作紀錄如實記錄該筆核實動作
+product: ba-admin
+functional_area: ARCADE
+requirement_ids:
+- REQ-ARCADE-006
+acceptance_criteria_ids:
+- AC-ARCADE-006
+spec_id: SPEC-ARCADE-001
+spec_version: '0.7'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- scenario
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 站台切換下拉選單切換至一個既有機台場館
+- 於『帳務管理 > 洗分出金核實』頁面，尋找一筆狀態為『待核實』的機台洗分或機台出金項目，記錄其交易編號與（若為出金）訂單編號（若當下查無待核實項目，見下方假設）
+test_data: []
+steps:
+- n: 1
+  action: 對該筆待核實項目點擊『核實』，於確認彈窗核對機台帳號、金額與交易/收據印出時間無誤後點擊確認，記錄本次執行的操作人員（即目前登入帳號）與操作時間
+- n: 2
+  action: 進入『後台管理員系統』的操作紀錄查詢頁面，以剛才核實的時間範圍查詢（若頁面提供關鍵字查詢，亦可用該筆交易編號查詢）
+- n: 3
+  action: 檢視查詢結果中是否存在對應本次核實動作的紀錄，並核對其操作人員、時間、對象交易欄位內容
+expected_result: 後台操作紀錄中存在一筆對應本次核實動作的紀錄，其操作人員為本次實際執行核實的登入帳號、時間與實際操作時間相符（合理誤差內），對象交易為剛才核實的那筆交易編號
+expected_result_spec_reference:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  location: 對既有章節的影響／7.4 操作紀錄
+  quote: 洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）
+assumptions:
+- text: 待核實的機台洗分／機台出金項目，其產生前提是機台帳號先於機台現場完成一筆洗分或出金交易，此為機台端硬體現場流程，非後台 UI 可直接觸發；本 TC 假設測試環境當下存在（或可佈置）至少一筆狀態為『待核實』的機台洗分或機台出金項目供核實操作使用，若環境當下查無待核實項目，需洽環境負責人透過既有測試工具或機台模擬方式補上，此步驟超出本
+    spec定義範圍。
+  requirement_id: REQ-ARCADE-006
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-ARCADE-014
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+created_at: '2026-09-18T01:19:38Z'
+updated_at: '2026-09-18T10:49:52Z'
+history:
+- at: '2026-09-18T01:19:38Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RZYXFCQECYP64Q8CDW5SZ2
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2S1HWPK19D0A8511C3A4GGB
+  run_id: RUN-20260918-011
+- at: '2026-09-18T01:19:38Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-011
+- at: '2026-09-18T10:49:52Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0157
+  run_id: RUN-20260918-011
+  note: rejected

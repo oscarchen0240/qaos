@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1
 - 相關需求：REQ-DAILYREPORT-005
 - 提出者：oscarchen@blockaction.tech（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 TC-DAILYREPORT-014 的兩條假設

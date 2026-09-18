@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>BONUSCCY-001 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-BONUSCCY-001</div>
+      <h1>BONUSCCY-001 測試案例集</h1>
+    </div>
+    <div class="brand-sub">紅利彩金 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>16</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>16</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>0</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>1</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-BONUSCCY-001" class="nav-link"><span class="nav-num">01</span>機台站台（TWD核心貨幣）的注單三層金額（game_bet_log → wallet_reference → syste</a><a href="#REQ-BONUSCCY-002" class="nav-link"><span class="nav-num">02</span>後台查詢頁（會員列表、Dashboard 總會員數等）原本的 JOIN 條件比對寫死的 USDT 常數，已改為依站台核心</a><a href="#REQ-BONUSCCY-003" class="nav-link"><span class="nav-num">03</span>人工出入金四支功能原本沒有明確寫入幣別（靠資料表 DEFAULT 或寫死 USDT），已改為取站台核心貨幣；對機台（TW</a><a href="#REQ-BONUSCCY-004" class="nav-link"><span class="nav-num">04</span>核心貨幣本身只能從資料庫層級關閉，站台使用者無法在鏈上錢包管理直接關閉核心貨幣這個抽象設定；鏈上錢包管理中「停用」某幣別</a><a href="#REQ-BONUSCCY-005" class="nav-link"><span class="nav-num">05</span>機台（TWD核心貨幣）站台玩家只有 TWD 一種錢包；前台資產列表只列核心貨幣（TWD），不再像以前那樣列出一排餘額 0</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>BONUSCCY-001 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-BONUSCCY-001 底下所有 ACTIVE 狀態的測試案例，共 16 條，涵蓋 5 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 1 條（TC-BONUSCCY-008）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-BONUSCCY-001">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-001</span>
+        <h2>機台站台（TWD核心貨幣）的注單三層金額（game_bet_log → wallet_reference → syste</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-001 機台站台的注單查詢/明細頁金額以核心貨幣(twd)顯示 req-bonusccy-001 ac-bonusccy-001 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-001</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台站台的注單查詢/明細頁金額以核心貨幣(TWD)顯示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-001</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換選單切至機台（TWD核心貨幣）站台</span></li><li><span class='step-n'>2</span><span>依實際選單導覽至注單查詢/明細頁，開啟一筆機台注單的明細</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">金額欄位以站台核心貨幣（TWD）顯示，不是寫死顯示 USDT 或其換算值</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第2項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-033 機台站台的注單明細頁金額欄位以核心貨幣twd顯示 req-bonusccy-001 ac-bonusccy-001 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-033</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台站台的注單明細頁金額欄位以核心貨幣TWD顯示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-001</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（自行從環境中選定）</li><li>該站台底下已有既有機台帳號的注單紀錄（自行從環境中選定）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>進入 各式報表 &gt; 注單查詢，點擊任一筆屬於該機台站台的注單進入明細頁</span></li><li><span class='step-n'>2</span><span>檢視明細頁的金額欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">明細頁金額欄位顯示為站台核心貨幣 TWD 的數值，與列表頁一致，不是寫死顯示 USDT 或其換算值</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第2項：注單三層金額）</span>
+      <span class='spec-quote'>「注單三層金額 | game_bet_log → …_wallet_reference → …_system_wallet_reference，第三層的幣別與換算改依站台核心貨幣」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-034 對照組：線上站台（usdt核心貨幣）的注單查詢/明細金額欄位仍顯示usdt，不受本次改動影響 req-bonusccy-001 ac-bonusccy-001 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-034</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">對照組：線上站台（USDT核心貨幣）的注單查詢/明細金額欄位仍顯示USDT，不受本次改動影響</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-001</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單切換至一個既有的線上（USDT核心貨幣）站台（自行從環境中選定）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>進入 各式報表 &gt; 注單查詢，查詢一筆屬於該線上站台的注單</span></li><li><span class='step-n'>2</span><span>檢視列表與明細頁的金額欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">金額欄位維持顯示 USDT（線上站台核心貨幣本就是USDT，行為與改動前一致，未因本次改動而變動）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一句話 + §改之前 vs 改之後</span>
+      <span class='spec-quote'>「現有的線上站台全部維持 USDT，不受這次改動影響」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-002">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-002</span>
+        <h2>後台查詢頁（會員列表、Dashboard 總會員數等）原本的 JOIN 條件比對寫死的 USDT 常數，已改為依站台核心</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-002 新增機台站台會員前後，dashboard 總會員數正確 +1（比對基準） req-bonusccy-002 ac-bonusccy-002 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-002</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">新增機台站台會員前後，Dashboard 總會員數正確 +1（比對基準）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-002</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄目前 Dashboard 總會員數 N</span></li><li><span class='step-n'>2</span><span>在機台（TWD核心貨幣）站台新增一位會員</span></li><li><span class='step-n'>3</span><span>再次檢視 Dashboard 總會員數</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">總會員數為 N+1，正確計入這名新增的機台站台會員；若仍為 N，代表該會員被 JOIN 條件悄悄排除</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第3項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-003 會員列表切換至機台站台時，列出筆數與該站台實際會員數一致（比對基準） req-bonusccy-002 ac-bonusccy-003 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-003</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">會員列表切換至機台站台時，列出筆數與該站台實際會員數一致（比對基準）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-003</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以帳號類型篩選＝機台，記錄該機台站台的實際會員數 M（或以其他管道取得已知筆數）</span></li><li><span class='step-n'>2</span><span>站台切換選單切至該機台站台，不加篩選檢視會員列表筆數</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">會員列表筆數與 M 一致，沒有因幣別相關的查詢條件而遺漏資料</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第3項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-004 平台同時有線上與機台站台會員時，dashboard 總會員數正確加總兩者，不會只計入線上會員 req-bonusccy-002  high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-004</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">平台同時有線上與機台站台會員時，Dashboard 總會員數正確加總兩者，不會只計入線上會員</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄線上站台會員數 A 與機台（TWD）站台會員數 B（各自以帳號類型/站台篩選取得）</span></li><li><span class='step-n'>2</span><span>檢視 Dashboard 總會員數</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">總會員數 ＝ A + B；若總數等於 A（只有線上會員數），代表機台站台會員被原本寫死 USDT 的 JOIN 條件悄悄排除在外</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第3項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-037 新增一名機台站台會員後，該站台會員列表查詢筆數應同步增加，不因join條件排除 req-bonusccy-002 ac-bonusccy-003 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-037</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">新增一名機台站台會員後，該站台會員列表查詢筆數應同步增加，不因JOIN條件排除</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-003</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單切換至一個既有的機台（TWD核心貨幣）站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>進入 會員與加盟商 &gt; 會員列表，不加篩選查詢，記錄目前總筆數（N）</span></li><li><span class='step-n'>2</span><span>點擊「創建會員帳號」，帳號類型選「機台」，建立一個新的機台帳號</span></li><li><span class='step-n'>3</span><span>重新查詢會員列表（不加篩選），記錄新的總筆數（N&#x27;）並確認新建立的帳號出現在列表中</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">N&#x27; 應等於 N+1，且新建立的機台帳號出現在查詢結果中，會員列表未因JOIN條件比對寫死USDT常數而遺漏該筆機台站台會員</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第3項：後台查詢）</span>
+      <span class='spec-quote'>「後台查詢 | ……會員列表、Dashboard 總會員數 —— 這些的 JOIN 條件原本比對常數」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-003">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-003</span>
+        <h2>人工出入金四支功能原本沒有明確寫入幣別（靠資料表 DEFAULT 或寫死 USDT），已改為取站台核心貨幣；對機台（TW</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-005 人工存入未指定幣別時寫入站台核心貨幣(twd) req-bonusccy-003 ac-bonusccy-004 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-005</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工存入未指定幣別時寫入站台核心貨幣(TWD)</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-004</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>對一個機台（TWD核心貨幣）帳號執行人工存入，未指定幣別</span></li><li><span class='step-n'>2</span><span>檢視入帳結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">金額寫入該站台核心貨幣（TWD）錢包，不是寫死的 USDT</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第6項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-006 人工提出未指定幣別時從站台核心貨幣(twd)扣除 req-bonusccy-003 ac-bonusccy-005 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-006</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工提出未指定幣別時從站台核心貨幣(TWD)扣除</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-005</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>對同一機台帳號執行人工提出，未指定幣別</span></li><li><span class='step-n'>2</span><span>檢視扣款結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">從該站台核心貨幣（TWD）錢包扣除，不是寫死的 USDT</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第6項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-007 人工存入時明確指定幣別，系統依指定幣別入帳（預設規則僅在未指定時生效） req-bonusccy-003  medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-007</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工存入時明確指定幣別，系統依指定幣別入帳（預設規則僅在未指定時生效）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>對一個機台（TWD核心貨幣）帳號執行人工存入，後台明確指定幣別欄位（若畫面提供此選項）</span></li><li><span class='step-n'>2</span><span>檢視入帳結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">依後台明確指定的幣別入帳；「未指定則預設核心貨幣」這條規則只在沒有明確指定時生效，不會覆蓋已明確指定的選擇</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§實際被改到的地方（表格第6項）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-004">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-004</span>
+        <h2>核心貨幣本身只能從資料庫層級關閉，站台使用者無法在鏈上錢包管理直接關閉核心貨幣這個抽象設定；鏈上錢包管理中「停用」某幣別</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-008 核心貨幣對應幣別已停用時，入金操作應被阻擋 req-bonusccy-004 ac-bonusccy-006 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-008</span>
+      <span class="tc-ver">v3</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">核心貨幣對應幣別已停用時，入金操作應被阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-006</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用</li><li>必須使用機台站台（非線上站台）——入金為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於機台版前台投紙鈔，觸發 req-cashin（建立入金 PENDING）</span></li><li><span class='step-n'>2</span><span>接著觸發 end-cashin（確認入金）</span></li><li><span class='step-n'>3</span><span>觀察兩階段的回應（是否仍回 0-OK 並完成入帳）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">req-cashin 或 end-cashin 任一階段應被阻擋（不應兩階段皆回 0-OK 並完成入帳）；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一句話（限制段落，2026-09-15 PM 補充確認）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-029 核心貨幣對應幣別已停用時，出金操作應被阻擋 req-bonusccy-004 ac-bonusccy-022 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-029</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核心貨幣對應幣別已停用時，出金操作應被阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-022</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用</li><li>必須使用機台站台（非線上站台）——出金為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於機台版前台按 CASHOUT 鍵，觸發 req-cashout（建立出金 PENDING，核可金額為全部餘額）</span></li><li><span class='step-n'>2</span><span>接著觸發 end-cashout（確認出金，帶入 TXID）</span></li><li><span class='step-n'>3</span><span>觀察兩階段的回應（是否仍回 0-OK 並完成扣分）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">req-cashout 或 end-cashout 任一階段應被阻擋（不應兩階段皆回 0-OK 並完成扣分）；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一句話（限制段落，2026-09-15 PM 補充確認）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-030 核心貨幣對應幣別已停用時，開分操作應被阻擋 req-bonusccy-004 ac-bonusccy-023 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-030</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核心貨幣對應幣別已停用時，開分操作應被阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-023</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用</li><li>必須使用機台站台（非線上站台）——開分為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於機台版前台（店員操作）輸入金額 value（必須 &gt; 0），觸發 req-keyin（開分，單階段立即加分）</span></li><li><span class='step-n'>2</span><span>觀察回應（是否回 0-OK 並完成加分）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">req-keyin 應被阻擋，不應回 0-OK 並完成加分；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一句話（限制段落，2026-09-15 PM 補充確認）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-031 核心貨幣對應幣別已停用時，洗分操作應被阻擋 req-bonusccy-004 ac-bonusccy-024 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-031</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核心貨幣對應幣別已停用時，洗分操作應被阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-024</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用</li><li>必須使用機台站台（非線上站台）——洗分為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於機台版前台選擇「全洗 all」或輸入指定金額 value，觸發 req-keyout（洗分，單階段立即結束當前場次並扣分）</span></li><li><span class='step-n'>2</span><span>觀察回應（是否回 0-OK 並完成扣分）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">req-keyout 應被阻擋，不應回 0-OK 並完成扣分；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一句話（限制段落，2026-09-15 PM 補充確認）</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-BONUSCCY-005">
+      <div class="req-head">
+        <span class="req-id">REQ-BONUSCCY-005</span>
+        <h2>機台（TWD核心貨幣）站台玩家只有 TWD 一種錢包；前台資產列表只列核心貨幣（TWD），不再像以前那樣列出一排餘額 0</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-bonusccy-009 機台站台前台資產列表僅顯示核心貨幣(twd) req-bonusccy-005 ac-bonusccy-007 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-009</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台站台前台資產列表僅顯示核心貨幣(TWD)</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-007</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以機台帳號登入前台</span></li><li><span class='step-n'>2</span><span>檢視前台資產列表</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">只顯示核心貨幣 TWD 一種，不列出其他幣別的零餘額項目</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§⭐兩種站台差很多 + 實際被改到的地方（表格第8項）</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-bonusccy-045 對照組：線上帳號（usdt核心貨幣，多幣別站台）前台資產列表仍列出多筆幣別含零餘額，行為不受影響 req-bonusccy-005 ac-bonusccy-007 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-BONUSCCY-045</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">對照組：線上帳號（USDT核心貨幣，多幣別站台）前台資產列表仍列出多筆幣別含零餘額，行為不受影響</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-BONUSCCY-007</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一個線上（USDT核心貨幣）站台已啟用一種以上幣別錢包</li><li>已有一個該站台的既有線上會員帳號與其登入憑證（自行從環境中選定；與REQ-BONUSCCY-005驗證的機台帳號為不同站台、不同帳號）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以該線上會員帳號登入前台</span></li><li><span class='step-n'>2</span><span>進入前台資產列表</span></li><li><span class='step-n'>3</span><span>檢視列表顯示的幣別項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">資產列表列出該站台所有已啟用的幣別，包含餘額為 0 的幣別項目，維持改動前既有行為，不受本次機台站台專屬改動影響</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§⭐兩種站台差很多</span>
+      <span class='spec-quote'>「線上站台 | 玩家可以有幾種錢包 | 可以同時有多種（USDT／USD／TWD⋯⋯）；線上站台的多錢包完全保留 —— 這次沒有動存款幣別」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

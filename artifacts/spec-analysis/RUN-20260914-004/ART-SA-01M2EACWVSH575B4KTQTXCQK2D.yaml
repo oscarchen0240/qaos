@@ -1,0 +1,124 @@
+artifact_id: ART-SA-01M2EACWVSH575B4KTQTXCQK2D
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-004
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-13T21:22:29Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-ACCOUNT-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-ACCOUNT-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-ACCOUNT-001
+  spec_version: '0.1'
+  content_hash: a82ede28b69474a85d7a8b50bafeb46b1f8fbb08ccb61b794b0a1466666332cf
+  summary: 創建會員帳號（開發包①）：後台建立線上／機台帳號，機台帳號綁定一台實體機台。涵蓋帳號類型與建立途徑、創建 Modal 規則、機台資訊與編輯、兩種密碼重設流程（後台重設 + 前台忘記密碼）、機台憑證（JWT，產生/重置/唯一性）、停用/啟用、機台不可刪除、會員列表與詳細頁同步修訂、對既有功能（加盟/等級/KYC/推薦/優惠簽到）的排除規則。前置相依站台列表的站台類型與核心貨幣。
+  scope:
+    in_scope:
+    - 創建會員帳號 Modal
+    - 機台資訊/編輯
+    - 重設密碼
+    - 前台忘記密碼
+    - 機台憑證
+    - 停用/啟用
+    - 會員列表與詳細頁修訂
+    - 排除規則
+    out_of_scope:
+    - 機台金流/開分洗分入金出金（開發包③）
+    - 機台交易紀錄（開發包④）
+    - 洗分出金核實/場館日結報表（開發包⑤）
+    - 操作員角色（開發包⑥）
+  requirement_ids:
+  - REQ-ACCOUNT-001
+  - REQ-ACCOUNT-002
+  - REQ-ACCOUNT-003
+  - REQ-ACCOUNT-004
+  - REQ-ACCOUNT-005
+  - REQ-ACCOUNT-006
+  - REQ-ACCOUNT-007
+  - REQ-ACCOUNT-008
+  - REQ-ACCOUNT-009
+  - REQ-ACCOUNT-010
+  - REQ-ACCOUNT-011
+  - REQ-ACCOUNT-012
+  - REQ-ACCOUNT-013
+  - REQ-ACCOUNT-014
+  - REQ-ACCOUNT-015
+  - REQ-ACCOUNT-016
+  - REQ-ACCOUNT-017
+  - REQ-ACCOUNT-018
+  - REQ-ACCOUNT-019
+  - REQ-ACCOUNT-020
+  - REQ-ACCOUNT-021
+  - REQ-ACCOUNT-022
+  - REQ-ACCOUNT-023
+  - REQ-ACCOUNT-024
+  - REQ-ACCOUNT-025
+  - REQ-ACCOUNT-026
+  - REQ-ACCOUNT-027
+  - REQ-ACCOUNT-028
+  - REQ-ACCOUNT-029
+  - REQ-ACCOUNT-030
+  - REQ-ACCOUNT-031
+  - REQ-ACCOUNT-032
+  ambiguities: []
+  constraints:
+  - text: 本功能未對客戶開放（INTERNAL）
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: 首行標記
+      quote: ''
+  - text: 機台對接 API（開分/洗分/入金/出金）屬開發包③，本包上線前不會有機台金流發生；驗證憑證的 API 也尚不存在
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: 開發包①附註 + §機台憑證警語
+      quote: ''
+  - text: 重疊部分與實體機台正本 v07 有出入時以正本為準
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: 開發包①附註
+      quote: ''
+  edge_case_candidates:
+  - text: 同一時間對同一機台重複點擊「重置憑證」兩次（併發）
+    requirement_id: REQ-ACCOUNT-020
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §機台憑證
+      quote: ''
+  - text: 重設密碼與前台忘記密碼幾乎同時發生（後台剛重設、會員同時點了前台的重設連結）
+    requirement_id: REQ-ACCOUNT-016
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §重設密碼
+      quote: ''
+  - text: 機台場館的核心貨幣站台若日後從 TWD 改為其他幣別（目前定案僅 TWD），既有機台帳號幣別是否隨之變動
+    requirement_id: REQ-ACCOUNT-026
+    spec_reference:
+      spec_id: SPEC-ACCOUNT-001
+      spec_version: '0.1'
+      location: §機台帳號的特性/幣別
+      quote: ''
+  open_questions:
+  - 操作員嘗試建立帳號時前端/後端各自的具體回應為何？（REQ-010）
+  - 已使用過的忘記密碼連結被再次點擊時的提示內容？（REQ-016）
+history:
+- at: '2026-09-13T21:22:34Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-004

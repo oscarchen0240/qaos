@@ -1,0 +1,57 @@
+artifact_id: ART-SA-01M2GFSZG6QRD4NCD82W9N94QC
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-003
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T17:35:29Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-BONUSCCY-001@1.0
+references:
+- entity_type: SpecVersion
+  id: SPEC-BONUSCCY-001
+  version: '1.0'
+requires_approval: null
+payload:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  content_hash: 78c6a70e4fa32200c9b9e77443506cc64a41d501541110123e99c01867b06324
+  summary: 17 給 QA 的說明：系統記帳幣別（核心貨幣/系統幣別）從全平台寫死 USDT，改成每個站台開站時自訂，機台站台用 TWD、線上站台維持 USDT，影響 21 處原寫死 USDT 的地方（發獎勵、注單三層金額、後台查詢、開站流程、新玩家註冊、人工出入金、擋阻檢查、機台前台資產列表）。逐項比對後：核心貨幣設定/繼承/不可修改/依站台類型過濾清單已由
+    SPEC-SITELIST-001 驗證、鏈上錢包管理僅TWD頁籤已由 SPEC-PLATFORMRULE-001 驗證、機台帳號幣別取自核心貨幣已由 SPEC-ACCOUNT-001 驗證，本次不重複。發獎勵進核心貨幣錢包的逐紅利類型細節屬於
+    SPEC-BONUSCCY-002（18紅利幣別盤點）範圍，本次不重複測試。新玩家註冊初始錢包對線上帳號因現無非USDT線上站台可測，暫不可測。只測真正未覆蓋且有明確規則陳述的範圍：注單查詢頁金額顯示、後台查詢(會員列表/Dashboard)JOIN條件正確性、人工出入金預設幣別、核心貨幣須為啟用幣別的防呆、機台前台資產列表。
+  scope:
+    in_scope:
+    - 注單查詢/明細頁金額以核心貨幣顯示
+    - 會員列表/Dashboard 對機台(TWD)站台的查詢正確性（不因JOIN條件遺漏）
+    - 人工存入/提出未指定幣別時預設用核心貨幣
+    - 核心貨幣須為啟用中幣別的設定防呆
+    - 機台站台前台資產列表僅列核心貨幣
+    out_of_scope:
+    - 已由 SPEC-SITELIST-001 驗證的核心貨幣設定/繼承/不可修改/依站台類型過濾清單規則本身
+    - 已由 SPEC-PLATFORMRULE-001 驗證的鏈上錢包管理僅顯示法幣TWD頁籤
+    - 已由 SPEC-ACCOUNT-001 驗證的機台帳號幣別取自核心貨幣
+    - 逐紅利類型（返水/簽到/代理/推薦/活動等）發放幣別的詳細規則，屬 SPEC-BONUSCCY-002 範圍
+    - 線上帳號新註冊初始錢包依核心貨幣——現無非USDT線上站台可測，暫不可測
+    - 機台場館前台不開放自行註冊——屬背景說明，非本檔改動內容，且已在其他包記錄為既定行為
+  requirement_ids:
+  - REQ-BONUSCCY-001
+  - REQ-BONUSCCY-002
+  - REQ-BONUSCCY-003
+  - REQ-BONUSCCY-004
+  - REQ-BONUSCCY-005
+  ambiguities: []
+  constraints: []
+  edge_case_candidates: []
+  open_questions: []
+history:
+- at: '2026-09-14T17:35:34Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-003

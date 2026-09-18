@@ -1,0 +1,85 @@
+artifact_id: ART-TVR-01M2NGDF19ZAJZVNKJYHT1HSYM
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T16:22:20Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2NDK7CFZGE5ZN3V15MX6E1S
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2NDK7CFZGE5ZN3V15MX6E1S
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2NDK7CFZGE5ZN3V15MX6E1S
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2NCSW5C4CVZTP2HE4NCEX54
+    issue_type: critical_ambiguity
+    severity: blocker
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: TC標題「上層站台為admin（根層）時例外」，step1「上層站台留空（即建立於最上層admin根節點之下、成為根層站台）」，把「上層站台留空」直接等同於「上層站台為admin」。但REQ-SITELIST-011/AC-0111對「根層站台」的定義是「無上層站台」，spec.md全文也從未定義任何名為admin的可作為上層站台的實體。REQ-SITELIST-002的history顯示：紀錄時間2026-09-14T18:12:03Z，但trigger卻寫product_confirmation_2026-09-15，確認事件晚於紀錄本身一天，時序矛盾；此例外也未走文件其他Oscar/PM確認慣用的CLR-SITELIST-xxx交叉引用結構，直接寫入statement欄位，且與spec.md明文直接衝突。TC的assumptions欄位為空陣列，未標記needs_human_confirmation。
+    explanation: 若依TC步驟執行，操作上完全無法區分於AC-SITELIST-0011的一般根層案例，卻假裝驗證了一個來源可疑、與REQ-011根層定義相矛盾的admin例外規則，會造成此高風險例外已被驗證的假象。
+    recommended_change: 在未取得明確定義前應標記exploratory；或確認規則真實性後，需說明本TC操作情境與AC-0011的關係，不能假裝是獨立可執行路徑。
+  - testcase_id: TC-DRAFT-01M2NCSW5DRAA52SKEK2PP7534
+    issue_type: spec_mismatch
+    severity: major
+    violated_requirement: REQ-SITELIST-017
+    spec_reference: null
+    evidence: expected_result_spec_reference.quote「僅開通與更新待審兩狀態下的網域異動觸發此規則，其餘狀態不觸發」在spec.md全文中不存在，實際逐字取自requirements.yaml中REQ-SITELIST-017的rejection_contract.description欄位，並非spec.md原文。
+    explanation: 把RequirementModel其他欄位當成spec.md原文引用，且未揭露，與AC-0023已修復的同類問題屬同一類，顯示上輪修復不系統化。
+    recommended_change: 改為spec.md站台狀態表格更新待審列的原文片段，或明確揭露此句非spec.md原文。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2NCSW5DTY026ESA9BXX381Z
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: quote混入Oscar確認的括號註記，非spec.md逐字文字。
+    explanation: 風險較低，有正式ambiguity.resolved_note可追溯，但quote欄位仍不夠純粹。
+    recommended_change: quote收斂為純spec.md原文，確認註記移到design_rationale。
+  - testcase_id: TC-DRAFT-01M2NCSW5DTY026ESA9BXX381Z
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 全份draft多條TC用「取一個既有的X站台」描述測試對象，未明確交代fixture如何確保存在，尤其critical_path=true的高優先案例。
+    explanation: 手動執行下可行，但嚴謹度有落差。
+    recommended_change: 為critical_path=true案例補充明確的test_data/precondition或fallback建立方式。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 64
+    uncovered_accepted:
+    - AC-SITELIST-0072
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T16:22:20Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

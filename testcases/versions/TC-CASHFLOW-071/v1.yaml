@@ -1,0 +1,89 @@
+title: end-cashin 成功入帳後，預留轉為實際分數餘額，該筆分數可正常被使用
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-008
+acceptance_criteria_ids:
+- AC-CASHFLOW-0081
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+- state_transition
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING 生命週期皆由機台廠商韌體呼叫
+  API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+test_data: []
+steps:
+- n: 1
+  action: 呼叫 req-cashin 送出入金請求金額 X，取得 TXID，確認此時機台畫面分數尚未增加（僅平台端有預留）
+- n: 2
+  action: 以該 TXID 呼叫 end-cashin
+- n: 3
+  action: 確認機台分數立即增加 X
+- n: 4
+  action: 以 throshold=0 呼叫 req-keyout 全洗，確認可正常洗出含這筆 X 在內的全部餘額
+- n: 5
+  action: 再次以相同 TXID 呼叫 end-cashin（驗證預留轉正後是否仍具備冪等性）
+expected_result: end-cashin 成功後預留立即轉為實際分數餘額（分數增加 X 且可被正常使用於洗分/出金），額度不再被此筆持續佔用；重複呼叫同一 TXID 的 end-cashin 回 0-OK 但不重複加值
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-入金
+  quote: 預留額度的釋放（v07 定案）：入帳成功時預留轉為實際分數餘額
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-071
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+created_at: '2026-09-16T06:49:23Z'
+updated_at: '2026-09-16T10:34:39Z'
+history:
+- at: '2026-09-16T06:49:23Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2ME4M1J8F7TWYZQWT83B47T
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2MFM79GWYMCNY3FX2K6S1AB
+  run_id: RUN-20260916-002
+- at: '2026-09-16T06:49:23Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-002
+- at: '2026-09-16T10:34:39Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0100
+  run_id: RUN-20260916-002
+  note: rejected

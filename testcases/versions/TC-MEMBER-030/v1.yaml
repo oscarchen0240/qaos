@@ -1,0 +1,101 @@
+title: 會員列表 KYC 狀態欄五個圖示依各階段實際狀態正確顯示顏色與 Tooltip
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-003
+acceptance_criteria_ids:
+- AC-MEMBER-004
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台，進入「會員與加盟商 > 會員列表」頁面
+- 需要一名會員，其五個 KYC 階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明）合計涵蓋已核准、審核中、待補件、未申請、已停用五種狀態中至少三種以上——「已核准」「待補件」可由後台人員於會員詳細頁 KYC 狀態區塊對已開放審核的階段分別執行「通過」/「駁回」取得；「未申請」為該階段本就尚未送審的既有帳號；「審核中」需為會員已透過前台送出、後台尚未審核的既有測試帳號；「已停用」這個狀態要如何產生，spec
+  全文未描述任何後台操作入口（見 assumptions），本 TC 假設可從測試環境既有帳號中找到已涵蓋此狀態的會員，若環境中找不到則此 TC 無法完整驗證五態，需另外確認
+test_data: []
+steps:
+- n: 1
+  action: 於會員列表找到目標會員，檢視其 KYC 狀態欄五個圖示（由左至右對應：個人基本資訊、身分證明文件、身分證件自拍、居住地址、資產證明）
+- n: 2
+  action: 逐一核對每個圖示顏色是否對應該階段目前的實際狀態（綠=已核准、橘=審核中、紅=待補件、淺灰=未申請、深灰=已停用）
+- n: 3
+  action: 滑鼠移至任一圖示，確認顯示 Tooltip
+expected_result: 五個圖示顏色分別正確對應各自階段的實際狀態；滑鼠移至任一圖示時顯示 Tooltip，內容包含該階段名稱與目前狀態文字
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.3 KYC驗證階段圖示說明
+  quote: 🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用
+assumptions:
+- text: 「已停用」狀態如何產生（是否有後台操作入口、或僅為系統/環境層級設定）spec 全文未定義；本 TC 假設測試環境存在已涵蓋此狀態的既有帳號，實際佈置方式需環境負責人確認
+  requirement_id: REQ-MEMBER-003
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0056
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-MEMBER-030
+version: 1
+supersedes: null
+status: RETIRED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2HX0Z01Z68GM9ZZYJZ3DN5E
+created_at: '2026-09-15T09:02:03Z'
+updated_at: '2026-09-15T11:15:06Z'
+history:
+- at: '2026-09-15T09:02:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2HWNZY62YX5RRFSJ9X1H13X
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2HX0Z01Z68GM9ZZYJZ3DN5E
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:12:23Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0056
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:12:23Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:15:06Z'
+  from_status: ACTIVE
+  to_status: RETIRED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0068
+  note: 指令誤用導致本條隨APR-0056整批被核准為ACTIVE，違反Oscar 2026-09-15已明確否決的『整批擇一採用』做法；本專案的既定整合原則是逐條與Phase 2既有TC交叉比對、依深度優先整合，非整批以新ID生效。本條退役後保留完整內容於testcases/versions，待後續依序交叉比對整合
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0056

@@ -1,0 +1,2026 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>TXLOG 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-TXLOG-001</div>
+      <h1>TXLOG 測試案例集</h1>
+    </div>
+    <div class="brand-sub">機台交易紀錄 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>43</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>43</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>0</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>0</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-TXLOG-001" class="nav-link"><span class="nav-num">01</span>併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成、被取消與未成立的交易（既有 4.1 只顯示已生效</a><a href="#REQ-TXLOG-002" class="nav-link"><span class="nav-num">02</span>本包只擴充機台交易的查詢與呈現，非機台（線上會員）交易的既有查詢行為維持不變</a><a href="#REQ-TXLOG-003" class="nav-link"><span class="nav-num">03</span>頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台），不提供獨立的「場館」篩選欄位</a><a href="#REQ-TXLOG-004" class="nav-link"><span class="nav-num">04</span>機台帳號篩選欄為文字輸入，輸入會員編號查詢，且支援以「,」分隔輸入多筆會員編號一次查詢</a><a href="#REQ-TXLOG-005" class="nav-link"><span class="nav-num">05</span>交易編號篩選欄為文字輸入，用於查詢特定一筆交易</a><a href="#REQ-TXLOG-006" class="nav-link"><span class="nav-num">06</span>場次編號篩選欄（文字輸入或點擊列表中該欄位值）可查出同一場次內的所有交易；線上帳號沒有場次，其交易的場次編號欄一律顯示「</a><a href="#REQ-TXLOG-007" class="nav-link"><span class="nav-num">07</span>訂單編號篩選欄用於查詢出金交易（即收據上印製的編號），其餘交易類型無訂單編號可查</a><a href="#REQ-TXLOG-008" class="nav-link"><span class="nav-num">08</span>交易類型篩選實際為多選 chip 選擇器（可同時勾選多種類型，非單選下拉），未勾選時預設顯示全部類型；可選項目的實際標籤</a><a href="#REQ-TXLOG-009" class="nav-link"><span class="nav-num">09</span>交易狀態篩選實際為多選 chip 選擇器，且可選項目依交易類型篩選而分為兩組技術值（非 spec.md 描述的單一 5 </a><a href="#REQ-TXLOG-010" class="nav-link"><span class="nav-num">10</span>核實狀態篩選實際只有 3 個可選值：「待核實」「已核實」「已作廢」，不含 spec.md 原文的「不適用」（「不適用」僅</a><a href="#REQ-TXLOG-011" class="nav-link"><span class="nav-num">11</span>交易時間篩選為日期範圍，依交易發生時間篩選；金額篩選為 min～max 範圍輸入</a><a href="#REQ-TXLOG-012" class="nav-link"><span class="nav-num">12</span>設定篩選條件後點擊「搜尋」執行查詢；點擊「清除」重置所有篩選條件</a><a href="#REQ-TXLOG-013" class="nav-link"><span class="nav-num">13</span>待確認狀態代表交易已受理但尚未收到機台的完成回報，分數尚未異動</a><a href="#REQ-TXLOG-014" class="nav-link"><span class="nav-num">14</span>已完成代表交易完成、分數已異動；已取消代表出金交易被新的出金請求或櫃檯人工出金取代而作廢，分數未異動</a><a href="#REQ-TXLOG-015" class="nav-link"><span class="nav-num">15</span>已逾時狀態僅入金交易會出現：超過 24 小時仍未收到機台回報而自動關閉，分數未異動；出金不設逾時</a><a href="#REQ-TXLOG-016" class="nav-link"><span class="nav-num">16</span>未成立狀態代表平台拒絕了這筆請求，分數未異動；因餘額不足被拒絕的交易不寫入紀錄，故未成立狀態不含餘額不足的情形</a><a href="#REQ-TXLOG-017" class="nav-link"><span class="nav-num">17</span>入金的待確認超過 24 小時自動轉為已逾時；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出</a><a href="#REQ-TXLOG-018" class="nav-link"><span class="nav-num">18</span>列表底部顯示當前篩選結果的金額總計，依交易類型分列呈現</a><a href="#REQ-TXLOG-019" class="nav-link"><span class="nav-num">19</span>機台帳號欄顯示會員編號，可點擊進入會員詳細資料頁；非機台交易顯示「—」；場館名稱不顯示於此欄或其他欄位（已由站台切換限定</a><a href="#REQ-TXLOG-020" class="nav-link"><span class="nav-num">20</span>請求金額為機台送出的金額（出金則為平台核算的可出金額）；實際金額為實際異動的金額，洗分因門檻計算可能小於請求金額，出金一</a><a href="#REQ-TXLOG-021" class="nav-link"><span class="nav-num">21</span>核實狀態欄僅機台洗分與機台出金顯示值（待核實／已核實／已作廢），其餘交易類型顯示「—」；待核實的洗分以醒目色標提示，待核</a><a href="#REQ-TXLOG-022" class="nav-link"><span class="nav-num">22</span>核實人員／時間欄記錄於「洗分出金核實」頁執行核實的後台帳號與時間（UTC+0），待核實時顯示「—」</a><a href="#REQ-TXLOG-023" class="nav-link"><span class="nav-num">23</span>未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表</a><a href="#REQ-TXLOG-024" class="nav-link"><span class="nav-num">24</span>交易時間與完成時間皆以 UTC+0 呈現；完成時間於交易尚未完成時顯示「—」</a><a href="#REQ-TXLOG-025" class="nav-link"><span class="nav-num">25</span>spec.md v0.1 描述「重送次數欄記錄機台重複回報同一筆交易的次數」為現行產品尚未實作的敘述：目前此欄位不論是否</a><a href="#REQ-TXLOG-026" class="nav-link"><span class="nav-num">26</span>spec.md v0.1 描述「來源欄記錄交易發生的位置，空值時顯示大廳」為現行產品尚未實作的敘述：目前此欄位一律固定顯</a><a href="#REQ-TXLOG-027" class="nav-link"><span class="nav-num">27</span>點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄；面板下半部為技術欄位供開發團隊排查用，站務人員以上半部的摘要為準</a><a href="#REQ-TXLOG-028" class="nav-link"><span class="nav-num">28</span>spec.md v0.1 §操作 描述的「手動取消：僅 Admin 可對待確認狀態的交易執行」為錯誤敘述，非現行產品行為</a><a href="#REQ-TXLOG-030" class="nav-link"><span class="nav-num">30</span>本頁不提供核實操作，洗分與出金的核實一律於帳務管理「洗分出金核實」頁執行，本頁的核實狀態欄位僅供查帳</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>TXLOG 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-TXLOG-001 底下所有 ACTIVE 狀態的測試案例，共 43 條，涵蓋 29 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 0 條（）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-TXLOG-001">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-001</span>
+        <h2>併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成、被取消與未成立的交易（既有 4.1 只顯示已生效</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-125 查詢範圍擴充後，機台交易的待確認/取消/逾時/未成立皆會列出，不只已完成 req-txlog-001 ac-txlog-0011 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-125</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">查詢範圍擴充後，機台交易的待確認/取消/逾時/未成立皆會列出，不只已完成</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台內有一筆機台開分已完成、一筆入金待確認、一筆出金已取消、一筆入金已逾時、一筆開分未成立</span></li><li><span class='step-n'>2</span><span>不篩選狀態，檢視查詢結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">五筆交易皆列出，不只顯示已完成（已生效）的那一筆</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-002">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-002</span>
+        <h2>本包只擴充機台交易的查詢與呈現，非機台（線上會員）交易的既有查詢行為維持不變</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-126 非機台（線上會員）交易的查詢呈現不受本包擴充影響 req-txlog-002 ac-txlog-0021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-126</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">非機台（線上會員）交易的查詢呈現不受本包擴充影響</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>查詢結果包含一筆線上會員的既有交易</span></li><li><span class='step-n'>2</span><span>檢視其呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">與擴充前的既有 4.1 行為一致，欄位與呈現不受機台視角擴充影響</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§功能說明</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-003">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-003</span>
+        <h2>頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台），不提供獨立的「場館」篩選欄位</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-127 頁面資料範圍跟隨站台切換選單，篩選器不提供獨立場館欄位 req-txlog-003 ac-txlog-0031 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-127</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">頁面資料範圍跟隨站台切換選單，篩選器不提供獨立場館欄位</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>頁面標題下方的站台切換選單切至站台 A</span></li><li><span class='step-n'>2</span><span>檢視篩選器所有欄位</span></li><li><span class='step-n'>3</span><span>檢視查詢結果範圍</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">篩選器不存在「場館」欄位；查詢結果僅限站台 A 範圍內的交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-004">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-004</span>
+        <h2>機台帳號篩選欄為文字輸入，輸入會員編號查詢，且支援以「,」分隔輸入多筆會員編號一次查詢</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-128 機台帳號篩選支援以逗號分隔查詢多筆會員編號 req-txlog-004 ac-txlog-0041 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-128</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台帳號篩選支援以逗號分隔查詢多筆會員編號</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>機台帳號篩選欄輸入兩個機台帳號的會員編號，以「,」分隔</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果同時包含這兩個機台帳號的交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-005">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-005</span>
+        <h2>交易編號篩選欄為文字輸入，用於查詢特定一筆交易</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-129 交易編號篩選可精確查出特定一筆交易 req-txlog-005 ac-txlog-0051 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-129</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易編號篩選可精確查出特定一筆交易</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0051</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>交易編號篩選欄輸入一筆已知的交易編號</span></li><li><span class='step-n'>2</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果僅顯示該筆交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-006">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-006</span>
+        <h2>場次編號篩選欄（文字輸入或點擊列表中該欄位值）可查出同一場次內的所有交易；線上帳號沒有場次，其交易的場次編號欄一律顯示「</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-130 場次編號可透過文字輸入或點擊列表值兩種方式篩出同場次所有交易 req-txlog-006 ac-txlog-0061 ac-txlog-0062 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-130</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">場次編號可透過文字輸入或點擊列表值兩種方式篩出同場次所有交易</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0061；AC-TXLOG-0062</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>場次編號篩選欄輸入一個已知的場次編號，點擊搜尋，檢視結果</span></li><li><span class='step-n'>2</span><span>清除篩選後，改為在列表中點擊某筆機台交易的場次編號值，檢視結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩種方式皆能篩出同一場次內的所有交易，結果一致</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器 + §列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-131 線上會員交易的場次編號欄一律顯示橫線 req-txlog-006 ac-txlog-0063 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-131</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">線上會員交易的場次編號欄一律顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0063</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>查詢結果包含一筆線上會員的交易</span></li><li><span class='step-n'>2</span><span>檢視其場次編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-007">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-007</span>
+        <h2>訂單編號篩選欄用於查詢出金交易（即收據上印製的編號），其餘交易類型無訂單編號可查</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-132 訂單編號篩選僅出金交易適用，其餘交易類型此欄為橫線 req-txlog-007 ac-txlog-0071 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-132</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">訂單編號篩選僅出金交易適用，其餘交易類型此欄為橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0071</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>訂單編號篩選欄輸入一筆機台出金交易的訂單編號，點擊搜尋</span></li><li><span class='step-n'>2</span><span>另檢視一筆機台入金交易的訂單編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步查詢結果顯示該筆出金交易；第二步入金交易的訂單編號欄顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器 + §列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-176 非出金交易類型（開分／洗分／入金）的訂單編號欄一律顯示「—」 req-txlog-007 ac-txlog-0071 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-176</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">非出金交易類型（開分／洗分／入金）的訂單編號欄一律顯示「—」</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0071</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入 ba-admin 後台</li><li>頁面標題下方的站台切換選單已選定一個機台場館站台</li><li>已進入 各式報表 &gt; 交易紀錄查詢 頁面（機台交易紀錄為此頁面的機台視角擴充，不另設獨立頁面）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>查詢結果中任選開分、洗分、入金各一筆交易</span></li><li><span class='step-n'>2</span><span>分別檢視其訂單編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">三筆交易的訂單編號欄皆顯示「—」，僅出金交易類型才有實際訂單編號值</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      <span class='spec-quote'>「訂單編號 | 出金交易顯示收據上的編號，其餘顯示「—」」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-008">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-008</span>
+        <h2>交易類型篩選實際為多選 chip 選擇器（可同時勾選多種類型，非單選下拉），未勾選時預設顯示全部類型；可選項目的實際標籤</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-133 交易類型篩選為多選 chip，實際標籤為開分/入鈔/出鈔/洗分 req-txlog-008 ac-txlog-0081 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-133</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易類型篩選為多選 chip，實際標籤為開分/入鈔/出鈔/洗分</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0081</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>開啟交易類型篩選</span></li><li><span class='step-n'>2</span><span>檢視所有可選項目</span></li><li><span class='step-n'>3</span><span>同時勾選「開分」與「入鈔」兩個項目（測試是否可複選）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">可選項目為「開分」「入鈔」「出鈔」「洗分」四項，不含「機台」字首；可同時勾選多個項目，非單選</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-134 勾選多個交易類型時查詢結果為聯集 req-txlog-008 ac-txlog-0082 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-134</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">勾選多個交易類型時查詢結果為聯集</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0082</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>同時勾選「出鈔」與「洗分」兩個交易類型並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果同時包含這兩種類型的交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-009">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-009</span>
+        <h2>交易狀態篩選實際為多選 chip 選擇器，且可選項目依交易類型篩選而分為兩組技術值（非 spec.md 描述的單一 5 </h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-135 交易類型為開分/入鈔時，交易狀態可選 7 種技術值 req-txlog-009 ac-txlog-0091 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-135</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易類型為開分/入鈔時，交易狀態可選 7 種技術值</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0091</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>交易類型篩選勾選「開分」或「入鈔」</span></li><li><span class='step-n'>2</span><span>開啟交易狀態篩選，檢視可選項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">可選項目為「已逾時、錯誤、無、成功、等待中、已取消、無效」共 7 項（與出鈔/洗分的選項不同）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-136 交易類型為出鈔/洗分時，交易狀態可選 6 種技術值 req-txlog-009 ac-txlog-0092 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-136</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易類型為出鈔/洗分時，交易狀態可選 6 種技術值</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0092</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>交易類型篩選勾選「出鈔」或「洗分」</span></li><li><span class='step-n'>2</span><span>開啟交易狀態篩選，檢視可選項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">可選項目為「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項（與開分/入鈔的選項不同）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-010">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-010</span>
+        <h2>核實狀態篩選實際只有 3 個可選值：「待核實」「已核實」「已作廢」，不含 spec.md 原文的「不適用」（「不適用」僅</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-137 核實狀態篩選只有 3 個可選值，不含不適用 req-txlog-010 ac-txlog-0101 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-137</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實狀態篩選只有 3 個可選值，不含不適用</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0101</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>開啟核實狀態篩選</span></li><li><span class='step-n'>2</span><span>檢視可選項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">僅有「待核實」「已核實」「已作廢」三個可選值，不含「不適用」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-138 核實狀態篩選「待核實」僅窄化出機台洗分與機台出金交易 req-txlog-010 ac-txlog-0102 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-138</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實狀態篩選「待核實」僅窄化出機台洗分與機台出金交易</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0102</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選核實狀態為「待核實」並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果僅顯示核實狀態為待核實的機台洗分或機台出金交易，不包含開分/入金</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-011">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-011</span>
+        <h2>交易時間篩選為日期範圍，依交易發生時間篩選；金額篩選為 min～max 範圍輸入</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-139 交易時間與金額範圍篩選皆能正確窄化結果 req-txlog-011 ac-txlog-0111 ac-txlog-0112 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-139</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易時間與金額範圍篩選皆能正確窄化結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0111；AC-TXLOG-0112</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>設定交易時間範圍並搜尋，檢視結果</span></li><li><span class='step-n'>2</span><span>清除後改設定金額範圍（min～max）並搜尋，檢視結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩者皆僅顯示落在所設定範圍內的交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-012">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-012</span>
+        <h2>設定篩選條件後點擊「搜尋」執行查詢；點擊「清除」重置所有篩選條件</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-140 點擊清除重置所有篩選條件 req-txlog-012 ac-txlog-0121 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-140</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">點擊清除重置所有篩選條件</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0121</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>設定多個篩選條件（如交易類型、交易狀態、金額範圍）</span></li><li><span class='step-n'>2</span><span>點擊清除</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">所有篩選條件重置為預設值，查詢結果回到未篩選狀態</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-013">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-013</span>
+        <h2>待確認狀態代表交易已受理但尚未收到機台的完成回報，分數尚未異動</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-141 待確認分類（畫面顯示為等待中／待處理，兩組皆可能出現等待中）的交易分數尚未異動 req-txlog-013 req-txlog-009 ac-txlog-0131 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-141</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">待確認分類（畫面顯示為等待中／待處理，兩組皆可能出現等待中）的交易分數尚未異動</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0131</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選出一筆交易狀態為「等待中」（開分/入鈔或出鈔/洗分皆可能出現）或「待處理」（出鈔/洗分類型另有的待確認值）的交易——皆對應 spec.md 的「待確認」分類</span></li><li><span class='step-n'>2</span><span>檢視其分數異動情形（可對照會員帳務或機台帳號餘額）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">分數尚未異動</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-014">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-014</span>
+        <h2>已完成代表交易完成、分數已異動；已取消代表出金交易被新的出金請求或櫃檯人工出金取代而作廢，分數未異動</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-142 已完成分類（開分/入鈔顯示為成功，出鈔/洗分顯示為已處理）的交易分數已異動 req-txlog-014 req-txlog-009 ac-txlog-0141 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-142</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">已完成分類（開分/入鈔顯示為成功，出鈔/洗分顯示為已處理）的交易分數已異動</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0141</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選出一筆交易狀態為「成功」（開分/入鈔類型）的交易，檢視其分數異動情形</span></li><li><span class='step-n'>2</span><span>另篩選出一筆交易狀態為「已處理」（出鈔/洗分類型）的交易，檢視其分數異動情形</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩種情境皆為 spec.md 的「已完成」分類，分數皆已異動</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-143 出金交易被新出金或人工出金取代時標記為已取消（畫面顯示為已取消或失效）且分數未異動 req-txlog-014 req-txlog-009 ac-txlog-0142 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-143</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">出金交易被新出金或人工出金取代時標記為已取消（畫面顯示為已取消或失效）且分數未異動</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0142</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆出金交易被新的出金請求或櫃檯人工出金取代</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">狀態顯示為「已取消」或「失效」（對應 spec.md 的「已取消」分類），分數未異動</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-015">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-015</span>
+        <h2>已逾時狀態僅入金交易會出現：超過 24 小時仍未收到機台回報而自動關閉，分數未異動；出金不設逾時</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-144 入金交易超過 24 小時未回報自動轉為已逾時 req-txlog-015 ac-txlog-0151 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-144</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">入金交易超過 24 小時未回報自動轉為已逾時</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0151</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆入金交易超過 24 小時未收到機台回報</span></li><li><span class='step-n'>2</span><span>檢視其狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">自動轉為「已逾時」，分數未異動</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-145 篩選已逾時狀態只會出現入金交易，不會出現出金 req-txlog-015 req-txlog-009 ac-txlog-0152 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-145</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">篩選已逾時狀態只會出現入金交易，不會出現出金</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0152</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>交易類型篩選勾選「入鈔」，交易狀態篩選勾選「已逾時」並搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查詢結果只包含入鈔（入金）交易，不會出現出鈔（出金）交易（出金不設逾時、出鈔的狀態選項清單裡也沒有已逾時這個值）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-016">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-016</span>
+        <h2>未成立狀態代表平台拒絕了這筆請求，分數未異動；因餘額不足被拒絕的交易不寫入紀錄，故未成立狀態不含餘額不足的情形</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-146 交易因額度上限等原因被拒絕時顯示未成立分類（畫面顯示為錯誤/已拒絕/無效）且可查得原因 req-txlog-016 req-txlog-009 ac-txlog-0161 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-146</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易因額度上限等原因被拒絕時顯示未成立分類（畫面顯示為錯誤/已拒絕/無效）且可查得原因</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0161</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆交易因額度上限被平台拒絕</span></li><li><span class='step-n'>2</span><span>檢視其交易狀態（畫面顯示為「錯誤」「已拒絕」或「無效」之一，對應 spec.md 的「未成立」分類）與未成立原因欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">狀態顯示為未成立分類對應的技術值，分數未異動，未成立原因欄可查得拒絕原因</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-147 餘額不足被拒絕的交易不會以未成立狀態出現在列表中 req-txlog-016 ac-txlog-0162 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-147</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">餘額不足被拒絕的交易不會以未成立狀態出現在列表中</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0162</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆洗分或出金因餘額不足被拒絕</span></li><li><span class='step-n'>2</span><span>檢視交易紀錄列表</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無此筆交易，不會以未成立分類的技術值出現</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§交易狀態</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-017">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-017</span>
+        <h2>入金的待確認超過 24 小時自動轉為已逾時；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-148 出金待確認不會自動逾時，只能靠新請求取代、人工出金連動取消，或轉介洗分出金核實頁收斂 req-txlog-017 ac-txlog-0171 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-148</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">出金待確認不會自動逾時，只能靠新請求取代、人工出金連動取消，或轉介洗分出金核實頁收斂</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0171</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆出金交易長期處於待確認狀態，機台從未補送完成回報（超過入金逾時時限的 24 小時）</span></li><li><span class='step-n'>2</span><span>持續檢視其狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不會自動轉為已逾時，持續保留為待確認，直到被新出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁（SPEC-CASHOUT-001）由人工處理</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§相關業務規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-018">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-018</span>
+        <h2>列表底部顯示當前篩選結果的金額總計，依交易類型分列呈現</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-149 列表底部依交易類型分列顯示金額總計且與明細加總一致 req-txlog-018 ac-txlog-0181 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-149</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">列表底部依交易類型分列顯示金額總計且與明細加總一致</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0181</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選出一批包含機台開分與機台入金兩種類型的結果</span></li><li><span class='step-n'>2</span><span>檢視列表底部金額總計</span></li><li><span class='step-n'>3</span><span>手動加總各類型明細金額</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">列表底部依交易類型分列顯示金額總計，且與該類型交易的金額加總一致</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-019">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-019</span>
+        <h2>機台帳號欄顯示會員編號，可點擊進入會員詳細資料頁；非機台交易顯示「—」；場館名稱不顯示於此欄或其他欄位（已由站台切換限定</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-150 機台帳號欄可點擊進入會員詳細頁，非機台交易顯示橫線 req-txlog-019 ac-txlog-0191 ac-txlog-0192 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-150</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台帳號欄可點擊進入會員詳細頁，非機台交易顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0191；AC-TXLOG-0192</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊一筆機台交易的機台帳號欄位值，檢視結果</span></li><li><span class='step-n'>2</span><span>檢視一筆線上會員交易的機台帳號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步導向該機台帳號的會員詳細資料頁；第二步線上會員交易顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-151 列表不顯示場館名稱欄位 req-txlog-019 ac-txlog-0193 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-151</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">列表不顯示場館名稱欄位</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0193</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視列表所有欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不存在場館名稱欄位或顯示（場館已由站台切換限定）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-020">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-020</span>
+        <h2>請求金額為機台送出的金額（出金則為平台核算的可出金額）；實際金額為實際異動的金額，洗分因門檻計算可能小於請求金額，出金一</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-152 洗分因門檻計算，實際金額小於請求金額時兩欄分別顯示 req-txlog-020 ac-txlog-0201 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-152</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">洗分因門檻計算，實際金額小於請求金額時兩欄分別顯示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0201</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆洗分交易門檻計算後實際扣款小於機台請求的金額</span></li><li><span class='step-n'>2</span><span>檢視請求金額與實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">請求金額為機台送出值；實際金額為門檻計算後的較小值，兩者不相同</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-153 出金交易的請求金額與實際金額皆為全額清空的餘額 req-txlog-020 ac-txlog-0202 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-153</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">出金交易的請求金額與實際金額皆為全額清空的餘額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0202</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台出金交易</span></li><li><span class='step-n'>2</span><span>檢視請求金額與實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩者皆為當下全部餘額（全額清空），數值相同</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-154 尚未完成的交易實際金額欄顯示橫線 req-txlog-020 ac-txlog-0203 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-154</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">尚未完成的交易實際金額欄顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0203</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆交易尚未完成（待確認）</span></li><li><span class='step-n'>2</span><span>檢視其實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-199 洗分門檻恰好等於請求金額的邊界情況，實際金額應等於請求金額，不因洗分規則而被人為調小 req-txlog-020 ac-txlog-0201 critical high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-199</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">洗分門檻恰好等於請求金額的邊界情況，實際金額應等於請求金額，不因洗分規則而被人為調小</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 critical</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0201</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 身分登入 ba-admin 後台</li><li>頁面標題下方的站台切換選單已選定一個機台場館站台</li><li>已進入 各式報表 &gt; 交易紀錄查詢 頁面（機台交易紀錄為此頁面的機台視角擴充，不另設獨立頁面）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>安排一筆洗分交易，使其門檻計算結果恰好等於機台請求的金額（例如請求金額與門檻皆為同一數值）</span></li><li><span class='step-n'>2</span><span>檢視該筆交易的請求金額欄與實際金額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">實際金額等於請求金額，不因『洗分因門檻計算可能小於請求金額』這條規則而被錯誤地調小——該規則只在門檻小於請求金額時才生效，門檻等於請求金額是這條規則『是否生效』的邊界</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      <span class='spec-quote'>「實際金額 | ...洗分因門檻計算可能小於請求金額...」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-021">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-021</span>
+        <h2>核實狀態欄僅機台洗分與機台出金顯示值（待核實／已核實／已作廢），其餘交易類型顯示「—」；待核實的洗分以醒目色標提示，待核</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-155 核實狀態欄僅洗分/出金顯示值，待核實的洗分醒目提示、出金不提示 req-txlog-021 ac-txlog-0211 ac-txlog-0212 ac-txlog-0213 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-155</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實狀態欄僅洗分/出金顯示值，待核實的洗分醒目提示、出金不提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0211；AC-TXLOG-0212；AC-TXLOG-0213</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆機台開分交易的核實狀態欄</span></li><li><span class='step-n'>2</span><span>檢視一筆待核實的機台洗分交易，確認呈現方式</span></li><li><span class='step-n'>3</span><span>檢視一筆待核實的機台出金交易，確認呈現方式</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步機台開分顯示「—」；第二步待核實洗分以醒目色標提示；第三步待核實出金正常顯示、不特別提示</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-156 本頁不提供修改核實狀態的操作，此欄唯讀 req-txlog-021 ac-txlog-0214 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-156</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">本頁不提供修改核實狀態的操作，此欄唯讀</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0214</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>嘗試在本頁（交易紀錄查詢）直接修改任一筆交易的核實狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">本頁不提供此操作，核實狀態欄純顯示，無法在本頁修改</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位 + §操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-022">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-022</span>
+        <h2>核實人員／時間欄記錄於「洗分出金核實」頁執行核實的後台帳號與時間（UTC+0），待核實時顯示「—」</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-157 核實人員／時間欄唯讀顯示核實紀錄，待核實時顯示橫線 req-txlog-022 ac-txlog-0221 ac-txlog-0222 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-157</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">核實人員／時間欄唯讀顯示核實紀錄，待核實時顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0221；AC-TXLOG-0222</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆已於核實頁被核實的交易，檢視此欄</span></li><li><span class='step-n'>2</span><span>檢視一筆仍待核實的交易，檢視此欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步顯示執行核實的後台帳號與時間（UTC+0）；第二步顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-023">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-023</span>
+        <h2>未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-158 未成立原因欄僅未成立狀態顯示內容 req-txlog-023 ac-txlog-0231 ac-txlog-0232 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-158</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">未成立原因欄僅未成立狀態顯示內容</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0231；AC-TXLOG-0232</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆狀態為未成立的交易，檢視未成立原因欄</span></li><li><span class='step-n'>2</span><span>檢視一筆狀態為已完成的交易，檢視未成立原因欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步顯示對應的拒絕原因文字；第二步不顯示內容（顯示「—」）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-024">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-024</span>
+        <h2>交易時間與完成時間皆以 UTC+0 呈現；完成時間於交易尚未完成時顯示「—」</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-159 交易時間與完成時間欄皆為 utc+0，未完成時完成時間顯示橫線 req-txlog-024 ac-txlog-0241 ac-txlog-0242 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-159</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">交易時間與完成時間欄皆為 UTC+0，未完成時完成時間顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0241；AC-TXLOG-0242</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視一筆已完成交易的完成時間欄</span></li><li><span class='step-n'>2</span><span>檢視一筆尚未完成（待確認）交易的完成時間欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">第一步顯示以 UTC+0 表示的完成時間；第二步顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-025">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-025</span>
+        <h2>spec.md v0.1 描述「重送次數欄記錄機台重複回報同一筆交易的次數」為現行產品尚未實作的敘述：目前此欄位不論是否</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-160 重送次數欄目前固定顯示橫線，即使交易曾被重複回報也不顯示實際次數 req-txlog-025 ac-txlog-0251 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-160</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">重送次數欄目前固定顯示橫線，即使交易曾被重複回報也不顯示實際次數</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0251</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>資料庫中已存在一筆交易記錄：曾被機台重複回報 1 次（由 SPEC-CASHFLOW-001 的 end-cashin/end-cashout 冪等性機制處理，分數僅異動一次）</span></li><li><span class='step-n'>2</span><span>於交易紀錄查詢頁檢視該筆交易的重送次數欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">重送次數欄固定顯示「—」，不顯示實際重複次數（現行產品尚未實作此顯示，已由 Oscar 與 PM/RD 確認）；分數本身仍只異動一次，不受此欄位顯示問題影響，該部分由 SPEC-CASHFLOW-001 驗證</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-txlog-161 從未被重複回報的交易，重送次數欄同樣顯示橫線 req-txlog-025 ac-txlog-0252 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-161</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">從未被重複回報的交易，重送次數欄同樣顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0252</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆交易從未被機台重複回報</span></li><li><span class='step-n'>2</span><span>檢視重送次數欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-026">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-026</span>
+        <h2>spec.md v0.1 描述「來源欄記錄交易發生的位置，空值時顯示大廳」為現行產品尚未實作的敘述：目前此欄位一律固定顯</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-162 來源欄位目前固定顯示橫線，不顯示大廳或其他實際位置值 req-txlog-026 ac-txlog-0261 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-162</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">來源欄位目前固定顯示橫線，不顯示大廳或其他實際位置值</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0261</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>任意檢視一筆交易的來源欄（不論該交易實際發生位置為何）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">固定顯示「—」，不顯示「大廳」或其他實際位置值（現行產品尚未實作此顯示，已由 Oscar 與 PM/RD 確認）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§列表欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-027">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-027</span>
+        <h2>點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄；面板下半部為技術欄位供開發團隊排查用，站務人員以上半部的摘要為準</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-163 查看明細面板區分摘要與技術欄位兩區塊 req-txlog-027 ac-txlog-0271 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-163</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">查看明細面板區分摘要與技術欄位兩區塊</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0271</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊列表中任一筆交易</span></li><li><span class='step-n'>2</span><span>檢視開啟的右側面板結構</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示該筆交易的完整往來紀錄，上半部為摘要區塊（站務人員用）、下半部為技術欄位區塊（開發排查用）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-028">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-028</span>
+        <h2>spec.md v0.1 §操作 描述的「手動取消：僅 Admin 可對待確認狀態的交易執行」為錯誤敘述，非現行產品行為</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-164 本頁不提供手動取消操作，待確認交易需至洗分出金核實頁處理 req-txlog-028 ac-txlog-0281 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-164</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">本頁不提供手動取消操作，待確認交易需至洗分出金核實頁處理</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0281</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視本頁（交易紀錄查詢）任一筆待確認狀態的交易</span></li><li><span class='step-n'>2</span><span>尋找手動取消相關的按鈕或入口</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不存在任何可執行的手動取消操作；spec.md §操作 描述的「手動取消」為錯誤敘述，非現行產品行為（已由 Oscar 2026-09-14 確認）。待確認交易的後續處理需至「洗分出金核實」頁（SPEC-CASHOUT-001）進行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-TXLOG-030">
+      <div class="req-head">
+        <span class="req-id">REQ-TXLOG-030</span>
+        <h2>本頁不提供核實操作，洗分與出金的核實一律於帳務管理「洗分出金核實」頁執行，本頁的核實狀態欄位僅供查帳</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-txlog-165 本頁不提供任何核實或取消相關的人工操作 req-txlog-030 ac-txlog-0301 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-TXLOG-165</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">本頁不提供任何核實或取消相關的人工操作</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-TXLOG-0301</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>進入 各式報表 &gt; 交易紀錄查詢，站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視本頁（交易紀錄查詢）的所有可用操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">本頁不存在任何核實或手動取消操作，僅有查看明細一項；核實與待確認交易的人工處理一律於「洗分出金核實」頁（SPEC-CASHOUT-001）進行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§操作</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

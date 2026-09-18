@@ -4,7 +4,7 @@
 - 規格：SPEC-SITELIST-001 v0.4  §§角色與權限 + §階層結構與逐層瀏覽-根層顯示
 - 相關需求：REQ-SITELIST-011
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 Admin 可見全部站台；站長僅可見自身所屬站台及其所有子站台，不包含平行或上層站台

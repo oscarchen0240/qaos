@@ -1,0 +1,84 @@
+title: 人工存款不計入簽到活動的有效會員門檻，玩家不會因此變成有效會員
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-010
+acceptance_criteria_ids:
+- AC-BONUSCCY-013
+spec_id: SPEC-BONUSCCY-002
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 選定一名既有會員，其累積存款金額尚未達到簽到活動的有效會員門檻（可先於後台『優惠活動管理』查得該簽到活動設定的有效會員門檻金額，再選一名累積入帳存款低於此門檻的既有會員）
+- 本 TC 需要能以該會員身分存取線上站台前台簽到頁，非純後台操作；另需一個可另開的 Admin 後台登入視窗供人工存入操作
+- 人工存入操作方式依 SPEC-MEMBER-001 v0.2 §2.1.5：會員詳細資料頁帳務資訊區塊的『人工存入』按鈕，右側滑出面板填寫金額／稽核倍數／前台備注／後台備注後點擊『儲存』
+test_data: []
+steps:
+- n: 1
+  action: 以該會員身分登入前台，開啟簽到頁，記錄目前的有效會員進度條數值與有效會員狀態
+- n: 2
+  action: 回後台，於該會員詳細資料頁使用『人工存入』功能，存入一筆金額，使其若被計入即可達到有效會員門檻，稽核倍數維持預設 1
+- n: 3
+  action: 再次以該會員身分開啟前台簽到頁（存款期間不觸發任何其他系統存款），觀察有效會員進度條與有效會員狀態是否變動
+expected_result: 有效會員進度條數值不因這筆人工存款而增加，維持人工存款前的數值；玩家仍未達成有效會員狀態，不因這筆人工存款而變成有效會員
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  location: §人工存款
+  quote: 人工存款不會進任何活動與累積統計。簽到活動的「有效會員」門檻❌不計入
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-059
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+created_at: '2026-09-17T19:22:41Z'
+updated_at: '2026-09-17T19:24:36Z'
+history:
+- at: '2026-09-17T19:22:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RCWEF5XHS0ZFPKVREVXRPF
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0121
+  run_id: RUN-20260918-004
+  note: rejected

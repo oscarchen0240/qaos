@@ -1,0 +1,112 @@
+title: 可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-005
+acceptance_criteria_ids:
+- AC-MEMBER-008
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 此規則定義於帳務資訊「可提領餘額」欄位（見 §2.1.4 / §2.1.5）：後台此欄位只是唯讀顯示，通篇 spec 沒有描述後台有可點擊的「申請出金」入口；「申請出金」是會員在前台自行操作的功能，後台頂多是透過「人工提出」代為出金，但那是後台人員主動操作、不受此門檻文字描述的「申請」語境限制，spec
+  也未說明人工提出是否套用同一道門檻。因此本規則實際生效與可驗證的入口是會員前台的申請出金功能，不在 ba-admin 後台範圍內（見 assumptions）
+- 需要一名會員的「可提領餘額」恰為 10.01 USDT。spec 分別定義了帳戶餘額（主錢包）『即時可用餘額』、提領所需有效投注額（流水錢包）『會員需達到此投注額方可提領』、可提領餘額『目前符合提領條件的金額』三個獨立欄位，也定義了人工存入/提出的『金額』直接影響主錢包餘額、『稽核』設定該筆金額所需完成的可提領投注倍數（見
+  REQ-MEMBER-011，同批 TC 已示範稽核倍數會使『提領所需有效投注額』增加，不是單純把存入金額加回可提領餘額）——但 spec 全文並未給出『可提領餘額』如何由前述欄位換算得出的公式，也未定義稽核=1時存入金額是否、以及何時會反映到可提領餘額。因此本
+  TC 不預設任何特定存入/提出金額與稽核倍數組合能『精確且立即』把可提領餘額調到 10.01 USDT（見 assumptions）。佈置方式：透過人工存入/人工提出反覆調整，每次調整後回到帳務資訊區塊查看實際顯示的可提領餘額數值，直到確認顯示值恰為
+  10.01 USDT 為止，不依賴任何計算公式預先斷定應存入/提出多少金額
+test_data:
+- name: 可提領餘額
+  value: 10.01 USDT
+steps:
+- n: 1
+  action: 於後台帳務資訊區塊確認可提領餘額顯示為 10.01 USDT
+- n: 2
+  action: 以該會員身分登入會員前台，進入出金/提領申請功能
+- n: 3
+  action: 送出出金申請
+expected_result: 前台允許正常申請出金，申請成功送出
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.4 帳戶資訊
+  quote: 須大於 10 USDT 方可申請出金
+assumptions:
+- text: 步驟中「以該會員身分登入前台並嘗試申請出金」需要會員前台的測試環境與登入方式；spec 未定義後台是否存在可直接驗證此門檻的入口，前台測試環境是否可用、以及人工提出是否適用同一道 >10 USDT 門檻，需環境負責人 / PM
+    確認
+  requirement_id: REQ-MEMBER-005
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0056
+- text: 可提領餘額與帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、稽核倍數之間的精確換算公式，spec 全文未定義；本 TC 假設可透過人工存入/提出搭配後台實際讀數反覆調整至目標邊界值，但無法保證這是唯一或最有效率的方式，也無法保證『調整完成後餘額不會再隨時間變動』，此換算機制需環境負責人
+    / PM 確認
+  requirement_id: REQ-MEMBER-005
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0056
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-MEMBER-034
+version: 1
+supersedes: null
+status: RETIRED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2HX0Z01Z68GM9ZZYJZ3DN5E
+created_at: '2026-09-15T09:02:03Z'
+updated_at: '2026-09-15T11:15:07Z'
+history:
+- at: '2026-09-15T09:02:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2HWNZY62YX5RRFSJ9X1H13X
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2HX0Z01Z68GM9ZZYJZ3DN5E
+  run_id: RUN-20260915-013
+- at: '2026-09-15T09:02:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:12:24Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0056
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:12:24Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-013
+- at: '2026-09-15T11:15:07Z'
+  from_status: ACTIVE
+  to_status: RETIRED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0072
+  note: 指令誤用導致本條隨APR-0056整批被核准為ACTIVE，違反Oscar 2026-09-15已明確否決的『整批擇一採用』做法；本專案的既定整合原則是逐條與Phase 2既有TC交叉比對、依深度優先整合，非整批以新ID生效。本條退役後保留完整內容於testcases/versions，待後續依序交叉比對整合
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0056

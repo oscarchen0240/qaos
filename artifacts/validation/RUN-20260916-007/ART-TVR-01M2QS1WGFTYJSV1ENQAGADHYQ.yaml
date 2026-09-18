@@ -1,0 +1,85 @@
+artifact_id: ART-TVR-01M2QS1WGFTYJSV1ENQAGADHYQ
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T13:31:47Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2QR8VA7WG0RQMTC2A5MKWBT
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2QR8VA7WG0RQMTC2A5MKWBT
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2QR8VA7WG0RQMTC2A5MKWBT
+  validated_against:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    requirement_model_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+  issues:
+  - testcase_id: TC-DRAFT-01M2QR8VA6H9TKKST1WYK73T74
+    issue_type: critical_ambiguity
+    severity: major
+    violated_requirement: REQ-SITELIST-002
+    spec_reference: null
+    evidence: AC-SITELIST-0023「不需admin自身的鏈上錢包管理預先啟用該幣別」這句話在spec.md全文與CLR-SITELIST-010的答覆中都查無出處，CLR-010只解決了型別自由選擇那半句。
+    explanation: 容易讓人誤以為AC-0023已透過CLR-010完全解決，實際上這個具體技術斷言仍未有權威來源確認。
+    recommended_change: 另開CLR專門確認此句，在確認前RequirementModel應明確標註此句尚待確認、CLR-010範圍不含此句。
+  - testcase_id: TC-DRAFT-01M2QR8VA6H9TKKST1WYK73T74
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-SITELIST-010
+    spec_reference: null
+    evidence: step4斷言「核心貨幣顯示為TWD，且為唯讀（建立後不可修改）」，唯讀屬AC-SITELIST-0101範圍，已由TC-DRAFT-01M2NCSW5D3W9ZQDASZW5FV4BK完整覆蓋，本TC卻只宣告acceptance_criteria_ids:[AC-SITELIST-0023]，未申報這個範圍外斷言。
+    explanation: 若唯讀規則被破壞，會被誤歸因為AC-0023的缺陷。
+    recommended_change: 拿掉step4的唯讀斷言，只保留核心貨幣值正確性檢查。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2QR8VA6H9TKKST1WYK73T74
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 同一TC混合spec明文支持的斷言跟完全無依據的斷言，expected_result需寫成條件式判定。
+    explanation: 確定性層級混雜，Pass/Fail難以乾淨判定。
+    recommended_change: 可考慮拆成確定TC跟exploratory TC兩條。
+  - testcase_id: TC-DRAFT-01M2QR8VA6H9TKKST1WYK73T74
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: assumptions引用SPEC-ARCADE-001/SPEC-UPDATEPACK-001佐證站台切換/鏈上錢包管理頁面存在，本輪審查素材未包含這兩份文件無法獨立核實。
+    explanation: 已誠實揭露，非隱瞞。
+    recommended_change: 核准前應把這兩份spec納入審查素材核對。
+  coverage_summary:
+    requirements_total: 29
+    requirements_covered: 28
+    ac_total: 66
+    ac_covered: 65
+    uncovered_accepted:
+    - AC-SITELIST-0072
+    - AC-SITELIST-0231
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T13:31:47Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

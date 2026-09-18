@@ -1,0 +1,557 @@
+artifact_id: ART-TCD-01M2GMZVDNW9X4Z34VJDGMHE39
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-006
+task_id: T2
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-09-14T19:06:05Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-006
+- entity_type: Requirement
+  id: REQ-BONUSCCY-007
+- entity_type: Requirement
+  id: REQ-BONUSCCY-008
+- entity_type: Requirement
+  id: REQ-BONUSCCY-009
+- entity_type: Requirement
+  id: REQ-BONUSCCY-010
+- entity_type: Artifact
+  id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GMZVDM62E0H2B2M0Y5639F
+    title: 返水發放進站台系統幣別，不受玩家持有其他已啟用幣別影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-006
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-008
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: &id001
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家所屬線上站台（如 SpringKyle）已啟用 TTK、USDT，系統幣別為 USDT；該玩家持有 TTK 餘額並以此下注
+    - n: 2
+      action: 該玩家依有效投注產生一筆返水
+    expected_result: 返水發放進站台系統幣別 USDT 錢包，不是玩家下注所用的 TTK
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDM85JN8CWH9WNP9FVG
+    title: 代理佣金發放進站台系統幣別，不受下級玩家使用其他已啟用幣別影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-006
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-008
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 代理底下的下級玩家使用 TTK 餘額下注並產生流水，站台系統幣別為 USDT
+    - n: 2
+      action: 代理獲得對應的代理佣金
+    expected_result: 代理佣金發放進站台系統幣別 USDT 錢包，不是下級玩家下注所用的 TTK
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDMCG9G5PM4YWAK3BPM
+    title: 首存活動獎勵發放進站台系統幣別，即使玩家同時持有其他已啟用幣別餘額也不受影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-006
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-008
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家所屬線上站台系統幣別為 USDT，玩家以系統幣別存款達首存門檻，且該玩家同時持有其他已啟用幣別（如TTK）的餘額
+    - n: 2
+      action: 檢視首存活動獎勵的發放幣別
+    expected_result: 首存獎勵發放進站台系統幣別 USDT，不受玩家同時持有的其他已啟用幣別餘額影響
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-BONUSCCY-008 的 given 原文是「使用TTK餘額下注/存款」，但目前系統無非系統幣別的存款通道可用（spec.md §要注意的事：現在還沒有非系統幣別的存款會進來），本案例改測『持有』其他幣別餘額不影響首存判定與發放幣別這個較弱、但目前實際可執行的情境；『用其他幣別存款觸發首存』待該通道上線後補測
+  - draft_id: TC-DRAFT-01M2GMZVDMFYQMD53TVTDA5R1D
+    title: 每日/累積簽到獎勵發放進站台系統幣別，不受玩家使用其他已啟用幣別下注影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-006
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-008
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家所屬線上站台已啟用TTK、USDT，系統幣別為USDT；玩家使用TTK餘額下注完成當日簽到條件
+    - n: 2
+      action: 檢視簽到獎勵（現金類部分，若有）的發放幣別
+    expected_result: 簽到獎勵的現金類部分發放進站台系統幣別USDT，不是玩家下注所用的TTK（道具類獎勵本身不進錢包、無幣別，不在本案例驗證範圍）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDM7MXR3NMYQCTFWY7X
+    title: 累積存款活動獎勵發放進站台系統幣別，不受玩家持有其他已啟用幣別影響
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-006
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-008
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家所屬線上站台系統幣別為USDT，玩家以系統幣別存款累積達累積存款活動門檻，且同時持有其他已啟用幣別（如TTK）的餘額
+    - n: 2
+      action: 檢視累積存款活動獎勵的發放幣別
+    expected_result: 累積存款活動獎勵發放進站台系統幣別USDT，不受玩家同時持有的其他已啟用幣別餘額影響
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 比照首存活動 TC 的同一個環境限制（無非系統幣別存款通道），本案例驗證『持有』其他幣別餘額不影響，非『用其他幣別存款累積』情境
+  - draft_id: TC-DRAFT-01M2GMZVDMP53R522NQB0MWYKK
+    title: 彩金活動依後台建活動時指定的幣別發放，可不同於站台系統幣別
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-007
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-009
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 後台建立一個彩金活動，指定發放幣別為站台系統幣別以外的某個已啟用幣別（例如TTK，站台系統幣別為USDT）
+    - n: 2
+      action: 玩家符合條件獲得該筆彩金
+    expected_result: 彩金送進玩家的 TTK 錢包（後台指定的幣別），不是站台系統幣別 USDT
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 「若玩家原本沒有該幣別錢包會自動出現一列」這句未寫進 expected_result 主斷言：spec.md §每一種紅利發什麼幣別對彩金活動只有主斷言本身，「自動出現一列」原文只出現在 §人工存款
+      的錢進玩家錢包一列，是跨章節推論延伸、非彩金活動本身的 spec 明文，故拆出獨立記錄於此，執行時可觀察是否成立，但不作為本條的主要判定依據
+  - draft_id: TC-DRAFT-01M2GMZVDMAEC58F3TC04WDXDK
+    title: 遊戲商JACKPOT/促銷派彩依玩家下注當下所用的錢包幣別入帳
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-008
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-010
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家使用 TTK 錢包餘額在某遊戲商遊戲下注（站台系統幣別為USDT）
+    - n: 2
+      action: 該玩家中得該遊戲商發放的 JACKPOT 或促銷派彩
+    expected_result: 派彩依匯率換算後進入 TTK 錢包（玩家下注當下所用的錢包幣別），不是站台系統幣別 USDT
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 執行依賴測試環境是否有可實際觸發JACKPOT/促銷派彩的遊戲商遊戲（PP/AWC/SABA等），若環境不支援，執行時標記為待執行/不適用，不視為設計缺陷
+  - draft_id: TC-DRAFT-01M2GMZVDM8F9ZXQDGNRB5ZZF4
+    title: 推薦註冊金依收款人所屬站台的系統幣別發放，不是推薦人所屬站台的幣別
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-009
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-011
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 推薦人所屬站台A（系統幣別X，例如USDT）推薦一名新玩家於站台B（系統幣別Y，例如TWD）註冊，確認A、B系統幣別不同
+    - n: 2
+      action: 新玩家獲得推薦註冊金
+    expected_result: 註冊金依收款人（新玩家）所屬站台B的系統幣別Y（TWD）發放，不是推薦人所屬站台A的幣別X（USDT）
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §每一種紅利發什麼幣別
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 執行依賴測試環境是否已建置兩個系統幣別不同、且具備互推關係的站台；若環境不支援，執行時標記為待執行/不適用，不視為設計缺陷
+  - draft_id: TC-DRAFT-01M2GMZVDMJHDZ82YMPQ1V0378
+    title: 人工存款不觸發首存活動，即使金額達標也不算首儲
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-010
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-012
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家原本未達首存活動門檻
+    - n: 2
+      action: 對其執行一筆金額足以達標的人工存款
+    - n: 3
+      action: 檢視首存活動是否被觸發、是否發放獎勵
+    expected_result: 不觸發，該玩家不算首儲，也不會配到任何存款活動
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDMMARME70JY72JKTJP
+    title: 人工存款不計入簽到活動的有效會員門檻
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-010
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-013
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 玩家原本未達簽到活動的有效會員門檻
+    - n: 2
+      action: 對其執行一筆金額足以達標的人工存款
+    - n: 3
+      action: 檢視簽到活動的有效會員狀態
+    expected_result: 門檻不計入這筆人工存款金額，玩家不會因此變成有效會員
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDM8KYVNCQEGEJRGNYZ
+    title: 人工存款正常計入稽核流水（打碼量）
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-010
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-014
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 對玩家執行一筆人工存款，後台填寫稽核倍數大於0
+    - n: 2
+      action: 檢視該筆存款是否計入稽核流水（打碼量）
+    expected_result: 依後台填寫的稽核倍數正常計入稽核流水，與「不觸發活動/統計」這件事是兩個獨立機制，不互相影響
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2GMZVDMAH6AP3WCG8CK652Y
+    title: 人工存款金額剛好達到累積存款活動門檻，門檻仍不計入、活動不觸發
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-010
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-015
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄玩家目前累積存款活動的累積進度，確認距門檻仍差一筆金額X
+    - n: 2
+      action: 對其執行一筆金額恰為X的人工存款（存入後若計入則會剛好達標）
+    - n: 3
+      action: 檢視累積存款活動的累積進度與是否被觸發
+    expected_result: 累積進度不變（不計入這筆X），活動不會被觸發——即使金額剛好卡在會讓門檻達標的邊界值也一樣
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 用剛好達標的邊界金額測試，比單純『足以達標』更嚴謹地排除『系統只在明顯超額時才擋、卡在邊界時漏判』的可能
+  - draft_id: TC-DRAFT-01M2GMZVDMWJ9Q2TMT8H9XC7E7
+    title: 人工存款金額剛好達到 VIP 升等門檻，累積儲值統計仍不計入、不推進 VIP 等級
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-010
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-016
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 記錄玩家目前 VIP 累積儲值進度與目前等級，確認距升等門檻仍差一筆金額Y
+    - n: 2
+      action: 對其執行一筆金額恰為Y的人工存款（存入後若計入則會剛好達標升等）
+    - n: 3
+      action: 檢視玩家的累積儲值統計與目前 VIP 等級
+    expected_result: 累積儲值統計不變（不計入這筆Y），VIP 等級維持不變、不會被推進——即使金額剛好卡在會讓門檻達標的邊界值也一樣
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §人工存款
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 這是 REQ-BONUSCCY-010 rejection_contract 點名風險最高的場景（人工存款被拿來人為推進VIP等級），用邊界金額測試確保沒有漏判空間
+history:
+- at: '2026-09-14T19:06:10Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-006

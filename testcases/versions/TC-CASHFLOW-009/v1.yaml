@@ -1,0 +1,90 @@
+title: 兩筆入金請求幾乎同時送達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0073
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+- boundary
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+test_data: []
+steps:
+- n: 1
+  action: 建構場館餘額合計已接近額度上限的情境（例如尚餘額度剛好等於單筆入金金額）
+- n: 2
+  action: 以測試工具對同一場館的兩台不同機台併發送出兩個 req-cashin HTTP 請求（同一時間發出，不依序等待回應），金額皆等於尚餘額度，各自單看皆不超限，但兩筆合計會超限
+- n: 3
+  action: 檢視兩筆請求的回應與是否建立 PENDING
+expected_result: 依場館鎖逐筆序列化處理：先取得鎖的一筆通過並建立預留後，另一筆的判定基準已包含前者的預留，因而正確被擋下回 1-OVER LIMIT、不建立 PENDING；不會兩筆皆通過而使全場館餘額超過額度上限
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-入金
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-009
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+created_at: '2026-09-13T22:50:49Z'
+updated_at: '2026-09-13T23:16:37Z'
+history:
+- at: '2026-09-13T22:50:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0018
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0018

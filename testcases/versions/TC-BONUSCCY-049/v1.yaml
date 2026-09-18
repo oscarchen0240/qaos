@@ -1,0 +1,86 @@
+title: 累積存款未達有效會員門檻時，前台簽到頁進度條與後台判定的累積金額一致（不再永遠顯示 0）
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-013
+acceptance_criteria_ids:
+- AC-BONUSCCY-019
+spec_id: SPEC-BONUSCCY-003
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 選定一名既有的線上站台會員（自行從環境中選定）。
+- 透過線上站台以該會員身分完成一筆或多筆存款（不可用後台人工存款——spec 明定後台人工存款不計入累積儲值與有效會員判定），使其累積存款金額大於 0，但低於所屬簽到活動設定的『有效會員門檻』。
+- 於 ba-admin 後台開啟該簽到活動的設定頁面，記錄其設定的『有效會員門檻』數值。
+test_data: []
+steps:
+- n: 1
+  action: 登入會員前台網站（非 ba-admin 後台），以該會員身分開啟簽到活動頁面。
+- n: 2
+  action: 查看頁面上『有效會員』進度條顯示的累積金額。
+- n: 3
+  action: 於 ba-admin 後台開啟該會員的簽到活動有效會員判定/查詢頁面，查看後台判定的累積金額。
+- n: 4
+  action: 比對前台進度條顯示的數字與後台判定的數字。
+expected_result: 前台進度條顯示的累積金額，與後台判定的累積金額一致（兩者皆反映該會員透過線上存款且已入帳成功的累積總額，讀取自 deposit_log_v2），不再像修改前一樣恆為 0；因累積金額尚未達門檻，前後台皆應顯示會員仍非有效會員狀態。
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  location: §改了什麼／②簽到活動的「有效會員」改讀正確的表；§這次能測什麼／T1
+  quote: 前台進度條會動、且與後台一致｜前台簽到頁的有效會員進度條，數字應該跟後台判定的累積金額一致。以前前台永遠顯示 0
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-049
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+created_at: '2026-09-17T17:33:08Z'
+updated_at: '2026-09-17T19:11:34Z'
+history:
+- at: '2026-09-17T17:33:08Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6FS8KT5M4KGSTQT6ZZ9TZ
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-005
+- at: '2026-09-17T19:11:34Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0117
+  run_id: RUN-20260918-005
+  note: rejected

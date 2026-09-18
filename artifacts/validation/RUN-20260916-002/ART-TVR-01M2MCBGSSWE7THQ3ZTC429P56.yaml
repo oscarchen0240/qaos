@@ -1,0 +1,104 @@
+artifact_id: ART-TVR-01M2MCBGSSWE7THQ3ZTC429P56
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T05:52:07Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2MBHFR84GTKRE91A7V17TX0
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2MBHFR84GTKRE91A7V17TX0
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2MBHFR84GTKRE91A7V17TX0
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-CASHFLOW-008
+    spec_reference: null
+    evidence: REQ-CASHFLOW-008 的 statement 已於 2026-09-15 由 Oscar 更正移除「後台人工取消」路徑，其下 AC-CASHFLOW-0083 在 coverage_matrix 中完全未被任何
+      draft 引用，也未出現在 uncovered_with_reason 清單中；TestDesignReport 的 self_check.requirements_covered / acceptance_criteria_covered
+      皆標記為 true。與REQ-CASHFLOW-008相關的兩條TC（TC-DRAFT-...BHQFH、TC-DRAFT-...R9NWHN）的 design_rationale 欄位皆為空字串，並未說明為何略過 AC-CASHFLOW-0083。對照之下，REQ-CASHFLOW-026
+      有類似的 statement/AC 落差情形，但該TC的design_rationale確實有記錄理由——顯示Test Designer在兩個類似案例上的處理不一致。
+    explanation: AC-CASHFLOW-0083 屬於已被人工修正過statement的需求下的驗收條件，若因statement變更而判斷該AC不再適用，必須在uncovered_with_reason中明確記載理由並讓self_check如實反映；目前是被靜默省略，且self_check欄位失真，屬於報告可信度層級的缺陷，非單純漏測。
+    recommended_change: Test Designer需重新檢視AC-CASHFLOW-0083是否仍適用於更正後的REQ-CASHFLOW-008 statement：若仍適用，補上對應TC；若已不適用（因人工取消路徑已移除），需在uncovered_with_reason中明確記載並附上理由（比照REQ-CASHFLOW-026的處理方式），同時修正self_check.requirements_covered/acceptance_criteria_covered使其如實反映此狀況。
+  - testcase_id: TC-DRAFT-01M2MBHFR6DWN957ZRBKQNHYGF
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 該TC標記design_techniques為decision_table，但內容僅為「列印尚未開始 vs 已送入列印佇列」兩種二元情境的對照，並非多條件交叉的決策矩陣。
+    explanation: decision_table技巧應對應多個獨立條件變數交叉組合出不同結果的情境；本TC僅為簡單的二選一分支，較適合標記為equivalence_partitioning或boundary_value等技巧，標記為decision_table會誤導後續對測試設計覆蓋技巧多樣性的統計。
+    recommended_change: 將design_techniques由decision_table改為更貼切的技巧標籤（如equivalence_partitioning）。
+  - testcase_id: TC-DRAFT-01M2MBHFR73WF9S3D39DM64KQJ
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 該TC標記為decision_table，但內容僅比較「餘額不足(1-NO CREDITS)」與「其餘未成立原因」兩種情況是否寫入交易紀錄，屬二元對照而非多條件矩陣。
+    explanation: 同上一則issue，此為二選一情境而非真正的決策表。
+    recommended_change: 改標記為更貼切的技巧標籤（如equivalence_partitioning）。
+  - testcase_id: TC-DRAFT-01M2MBHFR7AN6YRP73P88CB402
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 該TC標記為decision_table，但內容僅為「機台停用」或「站台非開通」任一條件觸發即回7-OUT OF SERVICE的單一結果情境，並非多條件交叉出不同結果的矩陣。
+    explanation: 同上，屬單一結果的條件判斷，非真正的決策表。
+    recommended_change: 改標記為更貼切的技巧標籤（如equivalence_partitioning或boundary_value，視實際判斷邏輯而定）。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: CASHFLOW/CASHOUT兩開發包在提款次數/金額累計時機的交接規則，未見對應的專屬REQ條目。
+    explanation: 此為套件邊界處潛在的覆蓋缺口，非本次RUN的必要修正項，但建議後續CASHOUT的Phase 3或Phase 2×3整合時特別留意此邊界規則是否已被涵蓋。
+    recommended_change: 後續處理CASHOUT時，確認提款次數/金額累計時機規則有無明確REQ與對應TC；若無，建議建立CLR追蹤。
+  - testcase_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 本次審查任務描述中轉述「Test Designer在完成報告中提到已略過該條AC並在design_rationale說明理由」，但獨立查證實際檔案後發現該兩條TC的design_rationale皆為空字串，與轉述不符。
+    explanation: 本項issue的根本原因判定完全基於獨立重新查證原始檔案而非採信任務描述，這正是獨立驗證機制存在的目的；建議未來派工描述應避免轉述agent自身總結內容作為既定事實，應以驗證者自行讀取的原始檔案為準。
+    recommended_change: 無需修改TC本身；建議未來Validator派工流程中，任務描述應僅提供檔案路徑與待查範圍，不應包含對檔案內容的預先轉述，以避免無意中誘導確認偏誤。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 42
+    ac_total: 69
+    ac_covered: 66
+    uncovered_accepted:
+    - AC-CASHFLOW-0421
+    - AC-CASHFLOW-0431
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T05:52:12Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-002

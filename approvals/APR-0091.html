@@ -1,0 +1,29 @@
+<title>APR-0091 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0091 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-018 · 狀態 PENDING · 提出 2026-09-15</div>
+<div class=summary>1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 1 條 exploratory，approve 即確認其假設）</div>
+<p>共 1 條：grounded 0 條（預期結果有 spec 條文依據）、<b>exploratory 1 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-MEMBER-011 人工存入/提出的稽核倍數會影響會員後續的提領所需有效投注額</h2>
+<blockquote>spec：§2.1.5 帳務資訊　「稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-016">016<br>v3</td><td>⚠ exploratory</td><td>稽核欄位輸入 0 為合法值、輸入負數時前端阻擋且後端回400 COMMON_NON_NEGATIVE；留空時系統反應待確認</td><td>以 Admin 登入後台，開啟一名會員的人工存入面板<br>具備使用瀏覽器開發者工具或 API 測試工具（如 Postman）直接呼叫後台 API 的環境與權限，用於步驟3繞過前端驗證後端行為</td><td><ol><li>稽核欄位輸入 0，其餘欄位填妥後點擊儲存</li><li>稽核欄位輸入一個負數（例如 -1），其餘欄位填妥後點擊儲存，觀察前端顯示</li><li>另外使用瀏覽器開發者工具或 API 測試工具（如 Postman），帶入登入後的有效憑證，繞過前端頁面直接呼叫人工存入/提出 API，request body 中稽核帶入一個負數，確認回應的 HTTP 狀態碼與錯誤代碼</li><li>稽核欄位留空，其餘欄位填妥後點擊儲存，觀察並記錄系統實際反應</li></ol></td><td>步驟1：系統接受輸入 0，正常完成人工存入/提出（稽核=0已由 Oscar 2026-09-15 實測確認為合法輸入）；步驟2：前端顯示驗證失敗訊息並阻擋送出；步驟3：後端回應 HTTP 400、錯誤代碼 COMMON_NON_NEGATIVE（已由 Oscar 2026-09-15 確認，此步驟不依賴前端是否阻擋，主動繞過前端直接驗證後端行為）；步驟4：留空時的系統反應 spec §2.1.5 全文未定義，也尚未有其他確認依據，本TC只能如實記錄實際觀察到的行為，不預設任何一種反應為正確答案，需另外向 PM 確認正確規則後再回填為確定案例；步驟4以「完整記錄實際觀察行為」作為該步驟的完成標準，不影響步驟1-3斷言成立時的整體TC判定<div class=assume>⚠ 假設：稽核欄位留空時的系統反應，spec §2.1.5全文未定義（僅定義「預設為1」與「會影響提款條件」），且不同於0/負數的情況(已由Oscar 2026-09-15確認具體行為)，留空目前沒有任何確認依據；本TC不預設這是一個應被阻擋或應退回預設值的欄位，只如實記錄實測行為，正確規則需 PM 確認</div></td><td>high<br>high</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0091 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0091 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0091 --decision reject --by &lt;you&gt; --rationale "..."</div>

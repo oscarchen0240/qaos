@@ -1,0 +1,1895 @@
+artifact_id: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-007
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T20:35:49Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-001
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-002
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-003
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-004
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-005
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-006
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-007
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-008
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-009
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-010
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-011
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-012
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-013
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-014
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-015
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-016
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-017
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2RHAA6ZFVYQYJX2MPAT3FF3
+    title: Admin 切換任一站台後可查看該站台所有場館的日結資料
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-001
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0011
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個底下有多個場館（或多台機台分屬不同場館）的既有站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 於頁面標題下方的站台切換下拉選單，切換至選定的站台
+    - n: 2
+      action: 進入『各式報表 > 場館日結報表』，統計維度選『依場館彙總』，結算日期設定涵蓋當日或近期有資料的區間並查詢
+    - n: 3
+      action: 檢視列表出現的場館筆數與範圍
+    expected_result: 列表顯示該站台底下所有場館的日結彙總列，不因 Admin 身分而被排除任何場館；若改切換至另一個站台，列表資料範圍隨之切換為該站台的全部場館
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §功能說明/權限表
+      quote: 場館日結報表 | 全部 | 管轄範圍 | 自身場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0011 對應 spec 權限表 Admin 欄『全部』；本案只驗證 Admin 可見範圍是否為所選站台的全部場館，不涉及站台切換選單本身如何決定資料範圍（該部分由 REQ-DAILYREPORT-002
+      覆蓋），避免兩條 TC 斷言重疊
+  - draft_id: TC-DRAFT-01M2RHAA6ZHPA9TRVAY1TS9GH0
+    title: 站長只能查看自身及子站台管轄範圍內的場館資料，看不到管轄範圍以外的場館
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-001
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0012
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以站長身分登入後台
+    - 確認該站長帳號的管轄範圍為特定一至多個場館（非站台全部場館），且該站台底下另有管轄範圍以外的場館存在，供後續比對
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 場館日結報表』，統計維度選『依場館彙總』，結算日期設定涵蓋當日或近期的區間並查詢，記錄列表顯示的場館清單
+    - n: 2
+      action: 另以 Admin 身分查看同一站台、相同結算日期的場館日結報表，記錄該站台底下的全部場館清單
+    - n: 3
+      action: 比對兩份清單
+    expected_result: 站長看到的場館清單為其管轄範圍內的場館，是 Admin 所見全部場館清單的真子集合；管轄範圍以外的場館不出現在站長的列表中
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §功能說明/權限表
+      quote: 場館日結報表 | 全部 | 管轄範圍 | 自身場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證方式採『站長清單 ⊆ Admin 清單』的比對法，而非斷言站長只能看到某個具體場館名稱——『管轄範圍』的實際場館組成因帳號設定而異，比對法可在不寫死特定測試帳號或場館編號的前提下驗證範圍限制是否生效
+  - draft_id: TC-DRAFT-01M2RHAA6Z1E0DSQE6SCQQ6RE3
+    title: 操作員只能查看自身場館資料，無法透過機台帳號篩選看到其他場館的日結資料
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-001
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0013
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以操作員身分登入後台
+    - 確認該操作員帳號僅對應單一自身場館，且該站台底下另有其他場館存在（非操作員自身場館），供後續比對
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 場館日結報表』，統計維度選『依場館彙總』，結算日期設定涵蓋當日或近期的區間並查詢，記錄列表顯示的場館筆數與名稱／代碼
+    - n: 2
+      action: 嘗試於『機台帳號』篩選欄輸入一個已知不屬於該操作員自身場館的其他場館機台帳號並搜尋，觀察結果
+    expected_result: 步驟1 的列表只出現操作員自身場館一列（依場館彙總維度應僅一列），不出現任何其他場館資料；步驟2 輸入非自身場館的機台帳號後，列表不會回傳該其他場館的日結資料（不論呈現方式是空結果或維持原自身場館範圍，皆不應洩漏其他場館的資料）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §功能說明/權限表
+      quote: 場館日結報表 | 全部 | 管轄範圍 | 自身場館
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-DAILYREPORT-001 為 high risk，本案為其 non-happy 覆蓋：驗證操作員無法透過機台帳號篩選繞過場館範圍限制看到他人場館資料。rejection_contract.defined=false（spec
+      未定義越權時系統的具體回應方式：拒絕／隱藏／空結果），故 expected_result 刻意只斷言『不洩漏其他場館資料』這個必然要件，不預設具體呈現方式（不寫死錯誤訊息或空白頁面文案）——這是對 spec 未定義部分保持開放而非把未定義行為當成確定規則來斷言，因此不需標為
+      exploratory
+  - draft_id: TC-DRAFT-01M2RHAA6Z0M3GFX74GJQMR661
+    title: 場館資料範圍完全由站台切換下拉選單決定，頁面不存在獨立的場館篩選欄位
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-002
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0021
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 確認至少有兩個不同站台可供切換，且各自底下有不同的場館／機台資料
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入『各式報表 > 場館日結報表』，透過頁面標題下方的站台切換下拉選單切換至站台 A，設定結算日期並查詢，記錄列表資料範圍
+    - n: 2
+      action: 檢視篩選器區域的所有欄位名稱，確認是否存在『場館』相關的篩選欄位
+    - n: 3
+      action: 切換站台下拉選單至站台 B（不變更其他篩選條件），重新查詢，記錄列表資料範圍
+    expected_result: 篩選器區域不存在任何『場館』篩選欄位（僅有機台帳號／結算日期／統計週期／統計維度）；切換站台後，列表資料範圍隨之變為站台 B 的資料，不再顯示站台 A 的場館資料——場館資料範圍完全由站台切換下拉選單決定
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器 + §業務規則-場館範圍跟隨站台切換
+      quote: 不另設場館篩選欄位
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0021 同時包含『資料隨站台切換』與『無場館篩選欄位』兩個斷言，兩者皆直接引自同一句 spec 原文，合併於同一條 TC 驗證，避免拆成兩條而在 steps 上高度重複
+  - draft_id: TC-DRAFT-01M2RHAA6ZF9GE1R9W560ENCT1
+    title: 機台帳號篩選欄留空時，列表包含場館全部機台的資料
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-003
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0031
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個底下有多台機台的既有場館所屬站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 切換至該站台，進入場館日結報表，統計維度選『依機台明細』
+    - n: 2
+      action: 機台帳號欄位留空，結算日期設定涵蓋當日或近期的區間並查詢
+    expected_result: 列表包含該場館（站台範圍內）全部機台的資料列，機台帳號留空不會限縮或排除任何機台
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/機台帳號
+      quote: 輸入會員編號；留空為場館全部機台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z9G3YJG3XAMFMBTY2
+    title: 機台帳號篩選欄輸入特定機台帳號後，列表只包含該機台的資料
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-003
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0032
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個既有機台帳號（自行從環境中選定一台目前有交易資料的機台）
+    test_data: []
+    steps:
+    - n: 1
+      action: 切換至該機台所屬站台，進入場館日結報表，統計維度選『依機台明細』
+    - n: 2
+      action: 機台帳號欄位輸入選定機台的完整帳號，結算日期設定涵蓋當日或近期的區間並查詢
+    expected_result: 列表只包含輸入的該機台帳號一列資料，不出現同場館其他機台的資料列
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/機台帳號
+      quote: 輸入會員編號；留空為場館全部機台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 不寫死具體機台帳號（如固定編號），改由執行者自行從環境中選定既有機台，避免 TC 在不同測試環境中因帳號不存在而無法執行
+  - draft_id: TC-DRAFT-01M2RHAA6ZRV596W1D4F64CEXA
+    title: 未填結算日期即查詢時，系統不執行查詢
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-004
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0041
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 進入場館日結報表頁面（尚未進行任何查詢）
+    test_data: []
+    steps:
+    - n: 1
+      action: 不填寫結算日期（保持空白），其餘篩選條件可任意或維持預設
+    - n: 2
+      action: 點擊查詢／搜尋
+    expected_result: 系統不執行查詢：不送出查詢請求，列表不出現新的查詢結果（維持查詢前的初始狀態，或出現要求填寫結算日期的提示——具體提示文案與呈現方式 spec 未定義，不在本案斷言範圍內）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+      quote: 必填；不設區間上限，與手冊其他報表一致
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 結算日期必填之規則直接引自 spec；expected_result 只斷言 AC-0041 明確要求的『系統不執行查詢』這個結果，不臆測具體錯誤提示文案或阻擋方式（rejection_contract.defined=false
+      已記載此點未定義），故不需標為 exploratory
+  - draft_id: TC-DRAFT-01M2RHAA6ZEAJBBE9JHPQKRW40
+    title: 結算日期輸入跨越一年以上的區間時，系統正常接受並回傳資料，不因區間長度拒絕
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-004
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0042
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data:
+    - name: 結算日期區間
+      value: 刻意設定超過一年（例如 400 天以上）的起訖日期
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期選擇一個起訖相差超過一年（例如 400 天以上）的區間
+    - n: 2
+      action: 統計週期任選一種（如按日或按月），點擊查詢
+    expected_result: 系統正常接受查詢並回傳資料（或合理的無資料結果），不因區間長度而彈出錯誤訊息或拒絕查詢；不因『不設區間上限』而對長區間查詢加上未公開的隱性限制
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/結算日期
+      quote: 必填；不設區間上限，與手冊其他報表一致
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『不設區間上限』是 spec 明確定義的邊界規則（無上限本身即邊界條件），本案以刻意選擇極大區間的方式驗證系統確實未對此設下未公開的隱性限制，屬邊界值分析而非一般案例
+  - draft_id: TC-DRAFT-01M2RHAA6ZE2WEZJP4NS7D165S
+    title: 開啟頁面未變更統計週期時，預設為按日
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-005
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0051
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表（尚未手動變更統計週期）
+    - n: 2
+      action: 檢視統計週期下拉選單目前選中的值
+    expected_result: 統計週期下拉選單預設值為『按日』
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+      quote: 按日（預設）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z5JB4663RRNZKPD5P
+    title: 結算日期涵蓋跨兩週的區間、統計週期選按週時，依週一為週起切分成兩列
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-005
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0052
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個近期有交易資料的機台或場館所屬站台
+    test_data:
+    - name: 結算日期區間
+      value: 2026-09-02（三）至 2026-09-10（四）
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為 2026-09-02（三）至 2026-09-10（四），統計週期選『按週』，查詢
+    - n: 2
+      action: 檢視列表列數與每列的結算期間（週起訖日期）
+    expected_result: 列表列出兩列：一列週起訖為 2026-08-31（一）～2026-09-06（日），另一列週起訖為 2026-09-07（一）～2026-09-13（日）；週的切分以週一為起，不論所選結算日期區間的起訖日是否恰為週一
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 所選結算日期區間（週三至週四）刻意不與自然週對齊，用以驗證『週一為週起』這個邊界切分規則確實依週一切分而非依所選查詢區間的起訖日切分，屬邊界值分析
+  - draft_id: TC-DRAFT-01M2RHAA6Z3888HTHN620AFFCK
+    title: 統計週期選區間合計時，只出現一列，各欄為區間內所有營業日合計
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-005
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0053
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個涵蓋多個營業日、且各營業日皆有交易資料的既有場館或機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設定涵蓋多個營業日的區間，統計週期選『區間合計』，查詢
+    expected_result: 列表只出現一列，該列各欄金額與筆數為區間內所有營業日的合計
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZRZVC93DZ2D39A18C
+    title: 統計維度選依場館彙總時，只出現一列場館彙總資料
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-006
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0061
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個底下有多台機台、且當日已有多個已結束場次的既有場館所屬站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依場館彙總』，結算日期設為當日或近期，查詢
+    expected_result: 列表只出現一列，代表該場館的彙總資料，不逐機台或逐場次列出
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計維度
+      quote: 依場館彙總 / 依機台明細 / 依場次明細
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZM11B9YNQKK41THKS
+    title: 統計維度選依機台明細時，每台機台各自一列，不再彙總為單一場館列
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-006
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0062
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 沿用同一場館與同一結算日期查詢範圍（該場館底下有多台機台）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期同前，查詢
+    - n: 2
+      action: 核對列表列數與該場館底下機台帳號的數量
+    expected_result: 列表列數等於該場館底下機台帳號的數量，每台機台各自一列
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計維度
+      quote: 依場館彙總 / 依機台明細 / 依場次明細
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z75A6M6XWSDZAAF33
+    title: 統計維度選依場次明細時，即使統計週期選區間合計，列表仍逐場次列出、不彙總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-006
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0063
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日（或近期單一營業日）已有多個已結束場次的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依場次明細』，統計週期選『區間合計』，結算日期涵蓋該機台已知有多個已結束場次的區間，查詢
+    - n: 2
+      action: 記錄列表的列數，並與該機台在此區間內實際的已結束場次數（可透過『機台交易紀錄』頁依場次篩選核對）比對
+    expected_result: 列表逐場次列出，列數與該區間內實際場次數相符，不因統計週期選了『區間合計』就把多個場次彙總成一列——統計週期在此維度下僅決定查詢範圍，不影響列表是否逐場次呈現
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計維度
+      quote: 「依場次明細」時統計週期僅決定查詢範圍，列表仍逐場次列出、不彙總
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此為刻意針對『開發者可能誤以為區間合計一定要彙總，而在依場次明細維度下也套用彙總邏輯』這個合理懷疑而設計的案例（error_guessing），驗證這個明確定義的例外規則有被正確處理；REQ-DAILYREPORT-006
+      rejection_contract.defined=true（下拉選單三選一有明確限制），故本案不需標為 exploratory
+  - draft_id: TC-DRAFT-01M2RHAA6Z75HXT5P1RN7CEYZG
+    title: 交易發生在日結時間前一分鐘時，計入前一個營業日
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-007
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0071
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個日結時間設定為 06:00 UTC+0 的既有場館（可於場館設定頁核對）
+    - 確認該場館下有一筆交易或場次記錄的時間點落在 2026-09-05 05:59 UTC+0（即日結時間前一分鐘）；若無現成案例，可改選其他已知落在對應場館日結時間前一分鐘的既有交易記錄
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計週期選『按日』，統計維度選『依場館彙總』或『依機台明細』，結算日期設為涵蓋 2026-09-04 與 2026-09-05 的範圍，查詢
+    - n: 2
+      action: 檢視 2026-09-05 05:59 UTC+0 這筆交易被計入哪一個『結算期間』（營業日）列
+    expected_result: 該筆 05:59 UTC+0 的交易被計入營業日 2026-09-04 那一列，而非 2026-09-05
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/結算期間 + §業務規則/日結時間
+      quote: 按日顯示營業日（依場館日結時間切分）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 05:59 恰為日結時間 06:00 前一分鐘，是本規則切分邊界的關鍵測試點；場館日結時間本身是開發包③定義的場館設定欄位，本包僅消費該設定作為分日依據，precondition 中『如何設定日結時間』的具體操作路徑不在本包定義範圍內，執行時以既有已設定該時間的場館為準
+  - draft_id: TC-DRAFT-01M2RHAA6Z1G066H098MQ8REYG
+    title: 交易發生在日結時間當下時，計入當日營業日
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-007
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0072
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個日結時間設定為 06:00 UTC+0 的既有場館
+    - 確認該場館下有一筆交易或場次記錄的時間點恰為 2026-09-05 06:00:00 UTC+0（即日結時間當下）；若無現成案例，可改選其他已知恰落在對應場館日結時間點的既有交易記錄
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計週期選『按日』，統計維度選『依場館彙總』或『依機台明細』，結算日期設為涵蓋 2026-09-04 與 2026-09-05 的範圍，查詢
+    - n: 2
+      action: 檢視 2026-09-05 06:00 UTC+0 這筆交易被計入哪一個『結算期間』（營業日）列
+    expected_result: 該筆 06:00 UTC+0 的交易被計入營業日 2026-09-05，而非 2026-09-04——日結時間點本身歸屬新的營業日
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/結算期間 + §業務規則/日結時間
+      quote: 按日顯示營業日（依場館日結時間切分）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZC7AA41DC35E224JY
+    title: 統計週期為按月時，結算期間欄顯示該月的起訖日期
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-007
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0073
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計週期選『按月』，結算日期涵蓋單一自然月，查詢
+    - n: 2
+      action: 檢視列表『結算期間』欄位顯示內容
+    expected_result: 結算期間欄顯示該月的起訖日期（該月第一個營業日至最後一個營業日的日期範圍），而非個別單日
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/結算期間
+      quote: 按週／按月／區間合計顯示該週期的起訖日期
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZTDZQ0KS7CDE3RJ5V
+    title: 統計維度選依場次明細時，每列顯示場次編號、開始／結束時間與場次時長
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-008
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0081
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日已有已結束場次的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依場次明細』，結算日期涵蓋該機台已知的場次，查詢
+    - n: 2
+      action: 檢視列表每一列包含的欄位
+    expected_result: 每一列顯示場次編號，並附開始時間、結束時間（UTC+0）、場次時長三個欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號 + §背景:場次資訊
+      quote: 僅「依場次明細」維度顯示；另附開始／結束時間與場次時長
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z8DNHKHAGMG243VB7
+    title: 統計維度選依場館彙總或依機台明細時，不顯示場次編號欄
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-008
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0082
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 沿用一個當日已有已結束場次的既有機台所屬場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 統計維度選『依場館彙總』，查詢，檢視欄位
+    - n: 2
+      action: 統計維度改選『依機台明細』，查詢，檢視欄位
+    expected_result: 兩種維度下列表皆不出現『場次編號』欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號
+      quote: 僅「依場次明細」維度顯示；另附開始／結束時間與場次時長
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-DAILYREPORT-008 為 high risk，本案為其 non-happy 覆蓋；rejection_contract.defined=true（『非場次明細維度不顯示該欄』為明確定義），可直接斷言不需標為
+      exploratory
+  - draft_id: TC-DRAFT-01M2RHAA6ZJ40C7YCRVD8RRQV4
+    title: 進行中場次於依場次明細列表中，結束時間顯示「—」、場次時長為累計至查詢當下
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-008
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0083
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台目前有進行中場次的既有機台（可先於會員詳細頁『機台資訊』區塊確認該機台目前有進行中場次）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依場次明細』，結算日期涵蓋當日，查詢
+    - n: 2
+      action: 找到該進行中場次所在列，檢視結束時間與場次時長欄位
+    expected_result: 結束時間欄顯示「—」；場次時長欄顯示自該場次開始時間至目前查詢當下的累計時間差（而非固定值，重新查詢應隨時間推移增加）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景:場次資訊/場次資訊表
+      quote: 進行中的場次結束時間顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z6QPHG4FAQ50W650H
+    title: 場次數：依機台明細等於該機台當日已結束場次數，依場館彙總等於底下所有機台場次數加總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-009
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0091
+    - AC-DAILYREPORT-0092
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個場館，其底下至少兩台機台當日皆有已結束場次記錄（僅使用狀態明確為『已結束』的場次，避開逾時結束或日結結算狀態，以迴避場次結束狀態範圍尚未明確定義的模糊地帶）
+    test_data: []
+    steps:
+    - n: 1
+      action: 透過『機台交易紀錄』或對應的場次查詢功能，分別核對這兩台機台當日各自狀態為『已結束』的場次筆數，記錄下來
+    - n: 2
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，記錄每台機台的『場次數』欄位
+    - n: 3
+      action: 統計維度改選『依場館彙總』，查詢，記錄場館彙總列的『場次數』
+    expected_result: 依機台明細：每台機台的場次數與步驟1核對的該機台已結束場次筆數相符；依場館彙總：場次數等於該場館底下所有機台場次數的加總（＝步驟1兩台機台場次數之和）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+      quote: 依場館彙總＝**該場館底下所有機台帳號當日場次數的加總**
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 刻意只選狀態為『已結束』的場次做為驗證基礎，用最單純的情境驗證場次數的基本加總邏輯（依機台明細＝已結束筆數、依場館彙總＝各機台加總）。日結結算狀態是否計入、逾時結束為何不在當日範圍出現，由另一條TC（TC-DRAFT-01M2RHAA6ZAP989GFK7AD6CF76）專門驗證，本案與其分工互補、不重複
+  - draft_id: TC-DRAFT-01M2RHAA6ZQ8Y244VFRX2D9PVX
+    title: 進行中場次不計入當日場次數
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-009
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0093
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台目前有進行中場次的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 於會員詳細頁『機台資訊』區塊或機台交易紀錄，核對該機台當日已結束的場次筆數（不含目前進行中的這一場）
+    - n: 2
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，檢視該機台的『場次數』欄位
+    expected_result: 該機台的場次數等於步驟1核對的已結束場次筆數，不因目前有一場進行中場次而多算一筆
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+      quote: 為當日結束的場次筆數
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZAP989GFK7AD6CF76
+    title: 日結結算狀態的場次同樣計入當日場次數，不因是被強制結束而排除
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-009
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0091
+    - AC-DAILYREPORT-0092
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台場次記錄同時包含『已結束』與『日結結算』兩種狀態的既有機台（可於機台交易紀錄依場次狀態篩選查找；不要求存在『逾時結束』狀態的樣本——依CLR-DAILYREPORT-007的邏輯，逾時結束的判定時間必然超過日結時間，日結時間到達時會搶先強制結束所有進行中場次，故『當日』範圍內結構上不會出現逾時結束這個終結狀態，本TC不要求也不依賴此類樣本）
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台交易紀錄核對該機台當日場次的狀態分布，分別記錄『已結束』與『日結結算』各自的筆數
+    - n: 2
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，檢視該機台的『場次數』
+    expected_result: 該機台的場次數＝已結束場次數＋日結結算場次數，不含進行中場次；依CLR-DAILYREPORT-007確認：日結結算狀態的場次（因日結時間到達被系統強制結束，非自然結束）同樣計入當日場次數，不因是被強制結束而被排除——這是本規則相對於『僅計已結束』這個較窄解讀的關鍵差異點。『逾時結束』依同一份CLR的邏輯推導，其判定時間必然超過日結時間，故當日範圍內結構上不會出現這個終結狀態，不在本TC的驗證範圍內
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+      quote: 為當日結束的場次筆數
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 第一輪獨立Validator指出：前版expected_result寫『已結束+逾時結束+日結結算』三者相加，卻又在同段引用CLR-007『只會以已結束或日結結算收尾』的結論，兩者自相矛盾；precondition要求尋找『當日逾時結束』樣本，但依CLR-007的推理，這個狀態結構上不應出現在當日資料中，等於要求執行者尋找一個理論上不存在的樣本，可能造成執行卡關。已依Validator建議(a)修正：聚焦驗證『已結束+日結結算』兩者相加，不再要求逾時結束樣本；本案與另一條TC（TC-DRAFT-01M2RHAA6Z6QPHG4FAQ50W650H，僅用已結束狀態、刻意迴避模糊地帶的保守設計）形成互補——那條驗證『純已結束』情境，本案專門驗證CLR-007新增的關鍵斷言：日結結算狀態也要計入，不重複，各自聚焦不同情境
+  - draft_id: TC-DRAFT-01M2RHAA6ZS994PAV97HSX3SJY
+    title: 開分／洗分／進鈔／收據金額分別等於當日對應類型交易的加總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-010
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0101
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台當日已有開分、洗分、入金、出金四種交易皆發生過的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 透過『機台交易紀錄』頁篩選該機台當日的交易紀錄，分別加總開分金額、洗分金額、入金金額、出金金額（收據金額）四類總額，記錄作為比對基準
+    - n: 2
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，檢視該機台列的開分金額、洗分金額、進鈔金額、收據金額四欄
+    expected_result: 報表四欄金額分別與步驟1由機台交易紀錄加總出的開分、洗分、入金、出金總額相符（開分金額＝開分總額；洗分金額＝洗分總額；進鈔金額＝入金總額；收據金額＝出金總額）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/開分~收據金額
+      quote: 收據金額 | 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z407TXRHBJQ9K3BAP
+    title: 過渡期無印表機的機台，收據金額欄取結算結果畫面顯示的出金金額合計
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-010
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0102
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一台目前處於『過渡期尚未安裝印表機』狀態的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 核對該機台當日的出金交易，記錄『結算結果畫面』顯示的出金金額合計（若此畫面非後台可直接查看，需經由對應的機台端或維運紀錄確認）
+    - n: 2
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，檢視該機台的『收據金額』欄位
+    expected_result: 收據金額欄顯示的數值與步驟1記錄的結算結果畫面出金金額合計相符（而非印出的收據面額合計，因該機台過渡期無印表機）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/開分~收據金額
+      quote: 結算結果畫面顯示的出金金額合計
+    assumptions:
+    - text: 如何在後台判斷／辨識一台機台目前是否屬於『過渡期尚無印表機』狀態，本包與目前可讀的其他 spec 皆未定義對應欄位或查詢方式；此為測試資料佈置所需但 spec 未提供依據的判斷，需人工確認辨識方式
+      requirement_id: REQ-DAILYREPORT-010
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZDZ2SK9M7K02JVWKA
+    title: 當日待核實洗分金額不為 0 時，該欄位有提醒標示
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-011
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0111
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日洗分金額中有部分仍待核實的既有場館或機台（可先於帳務管理『洗分出金核實』頁查找當日仍有待核實項目的機台）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，統計維度選『依機台明細』，查詢
+    - n: 2
+      action: 檢視該機台列的『待核實洗分』欄位數值與呈現方式
+    expected_result: 待核實洗分欄位顯示大於 0 的金額，且該欄位出現某種提醒標示；spec 未定義具體呈現形式為顏色／圖示／文字，本案僅斷言『有提醒標示這個事實存在』，不斷言標示的具體視覺形式
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/已核實洗分~未兌現金額
+      quote: 不為 0 時標示提醒
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6Z1EX4JCVA8RG3GS5V
+    title: 當日洗分全部已核實、待核實洗分為 0 時，不出現提醒標示
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-011
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0112
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日洗分已全數核實完畢（待核實洗分為 0）的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，統計維度選『依機台明細』，查詢
+    - n: 2
+      action: 檢視該機台列的『待核實洗分』欄位
+    expected_result: 待核實洗分顯示 0，且不出現提醒標示（無論該提醒平常以何種視覺形式呈現，此時皆不應出現）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/已核實洗分~未兌現金額
+      quote: 不為 0 時標示提醒
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-DAILYREPORT-011 為 high risk，本案為其 non-happy 覆蓋；提醒『不出現』是 AC-0112 明確要求的結果，不涉及未定義的視覺形式細節，故不需標為 exploratory
+  - draft_id: TC-DRAFT-01M2RHAA6ZF2KWEJFGC1HHBXJK
+    title: 已兌現金額與未兌現金額分別等於已核銷與仍待核實的收據金額合計
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-011
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0113
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日收據金額中部分已核銷、部分仍待核實的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，統計維度選『依機台明細』，查詢
+    - n: 2
+      action: 檢視該機台列的『已兌現金額』與『未兌現金額』兩欄，並與帳務管理『洗分出金核實』頁該機台當日收據核實狀態的明細加總比對
+    expected_result: 已兌現金額＝該機台當日已核實（核銷）的收據金額合計；未兌現金額＝截至查詢當下仍待核實的收據金額合計；兩者與『洗分出金核實』頁的明細加總相符
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/已核實洗分~未兌現金額
+      quote: 已核實（核銷）的收據金額合計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA6ZJYKBN6DSCRRRGXPG
+    title: 於洗分出金核實頁將一筆待核實洗分核實後，報表的已核實／待核實數字對應變動
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-011
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0114
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一筆帳務管理『洗分出金核實』頁中目前狀態為待核實的洗分項目
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，查詢該筆待核實項目所屬機台與日期，記錄目前的『已核實洗分』『待核實洗分』數值
+    - n: 2
+      action: 前往帳務管理『洗分出金核實』頁，將該筆待核實項目核實
+    - n: 3
+      action: 回場館日結報表，以相同篩選條件重新查詢，記錄『已核實洗分』『待核實洗分』數值
+    expected_result: 重新查詢後，已核實洗分金額增加該筆項目的金額，待核實洗分金額對應減少相同金額，兩者變動相符
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/已核實洗分~未兌現金額 + §拆包說明
+      quote: 已在「洗分出金核實」頁核實的金額合計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70SN6DM4QNY58K9W54
+    title: 現金淨收等於開分＋進鈔－已核實洗分－已兌現，且不扣待核實洗分
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-012
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0121
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日開分、進鈔、已核實洗分、已兌現皆有數值的既有機台或場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，查詢，記錄該列的開分金額、進鈔金額、已核實洗分、已兌現金額、現金淨收五個欄位數值
+    - n: 2
+      action: 依公式『開分＋進鈔－已核實洗分－已兌現』手動計算，比對計算結果與報表顯示的現金淨收欄位
+    expected_result: 報表顯示的現金淨收欄位數值，等於手動依公式計算的結果（開分＋進鈔－已核實洗分－已兌現），且不因待核實洗分有數值而被扣除
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/現金淨收 + §業務規則/現金淨收計算
+      quote: 待核實洗分不扣除
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70ANNBSQ5VBZ7FFRNP
+    title: 現金淨收允許為負值，不會被限制為非負或以錯誤取代
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-012
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0122
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 尋找或選定一個當日已核實洗分與已兌現金額合計，明顯大於開分與進鈔金額合計的既有機台或場館（使公式計算結果為負值；若查詢範圍內找不到現成案例，可嘗試放寬結算日期或改選其他機台尋找）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，設定選定的機台與涵蓋日期，查詢
+    - n: 2
+      action: 檢視該列的現金淨收欄位數值，並依公式手動計算核對
+    expected_result: 現金淨收欄位正常顯示負值（不會被系統攔截、顯示為 0、或以錯誤訊息取代），且該負值等於依公式計算的結果——代表場館端現金應淨減少多少
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §操作/欄位說明附註
+      quote: 代表場館端當日現金應該增減多少
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 『增減多少』一詞明確暗示現金淨收可能為負值（減少），本案驗證公式在此情境下確實允許並正確呈現負值而非被限制為非負，屬邊界值分析（測試公式輸出範圍的下界行為）；若當前查詢期間找不到現成負值案例，執行者可調整查詢範圍尋找，不強行捏造資料
+  - draft_id: TC-DRAFT-01M2RHAA70Z9RKNEB3F9G40DEJ
+    title: 機台場館的有效投注額與損益以 TWD 表示，損益為正值時以綠色呈現
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-013
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0131
+    - AC-DAILYREPORT-0132
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個核心貨幣為 TWD 的機台場館，且當日損益為正值的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，查詢，檢視該機台列的有效投注額與損益欄位
+    expected_result: 有效投注額與損益欄位數值皆以 TWD（新台幣）表示；損益為正值時，該欄位以綠色呈現
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/有效投注額、損益（2026-09-03 定案）
+      quote: 投注總額，以主站台核心貨幣計算（機台場館為 TWD
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA705JWSA9KE1K8WKHCJ
+    title: 損益為負值時，該欄位以紅色呈現
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-013
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0133
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個當日損益為負值的既有機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期設為當日，查詢，檢視該機台列的損益欄位
+    expected_result: 損益為負值時，該欄位以紅色呈現
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/有效投注額、損益（2026-09-03 定案）
+      quote: 損益 | 當日投注損益，以主站台核心貨幣計算；正值綠色、負值紅色
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70JC3NP4CZYMXHW3J5
+    title: 依場館彙總維度的期末餘額，等於底下各機台期末餘額的加總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-014
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0141
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個底下至少兩台機台的既有場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，記錄每台機台的期末餘額
+    - n: 2
+      action: 統計維度改選『依場館彙總』，查詢，檢視場館彙總列的期末餘額
+    expected_result: 場館彙總列的期末餘額，等於步驟1各機台期末餘額的加總
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/期末餘額
+      quote: 該日結算時點各機台的分數合計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA706TWE8FFW1YKNEEWS
+    title: 統計週期為按週時，期末餘額取週內最後一個營業日的值，而非該週各日加總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-014
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0142
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個場館，確認其在某個週期間（週一至週日）內至少兩個營業日皆有結算資料，且各營業日期末餘額不同
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依場館彙總』，統計週期選『按日』，結算日期涵蓋該週的各營業日，查詢，記錄每個營業日的期末餘額（尤其是週內最後一個營業日）
+    - n: 2
+      action: 統計週期改選『按週』，結算日期涵蓋同一週，查詢，檢視該週那一列的期末餘額
+    expected_result: 按週那一列顯示的期末餘額，等於步驟1中『週內最後一個營業日』單日的期末餘額，而非該週所有營業日期末餘額的加總或平均
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/期末餘額 + 欄位說明附註
+      quote: 最後一個營業日
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA702BTAVMN4PC940A0F
+    title: 非按日週期（按週／區間合計）的金額欄，等於各營業日的合計，三種統計週期呈現的總額互相一致
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-015
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0151
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個場館，其在同一週內至少三個營業日皆有開分交易
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計週期選『按日』，統計維度選『依場館彙總』，結算日期涵蓋該週三個（或以上）營業日，查詢，記錄每個營業日的開分金額
+    - n: 2
+      action: 統計週期改選『按週』，同一結算日期區間，查詢，檢視該週列的開分金額
+    - n: 3
+      action: 統計週期改選『區間合計』，同一結算日期區間，查詢，檢視該列的開分金額
+    expected_result: 按週列與區間合計列的開分金額皆等於步驟1各營業日開分金額的加總；三種統計週期呈現的總額互相一致，不因彙總方式不同而算出不同的總額——非按日週期不會漏算或多算任何一個營業日
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+      quote: 該週期內各營業日的合計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70R447Z05K7BWK0HSQ
+    title: 未兌現金額不受統計週期切分方式影響，四種統計週期下數值一致
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-015
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0152
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個目前有未兌現金額（收據尚待核實）的既有場館或機台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計週期選『按日』，結算日期設為涵蓋今日的單日，查詢，記錄該機台／場館的未兌現金額
+    - n: 2
+      action: 統計週期改選『按週』『按月』『區間合計』（結算日期涵蓋同一段包含今日的區間），分別查詢，記錄每種週期下的未兌現金額
+    expected_result: 四種統計週期下，同一機台／場館的未兌現金額數值皆相同，不因統計週期的彙總方式不同而改變——未兌現金額一律為截至查詢當下的累計值，不受統計週期切分影響
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+      quote: 「未兌現金額」不受週期影響、一律為截至查詢當下的累計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70FX26FSA3CVJDA83H
+    title: 未兌現金額仍受結算日期範圍限制，範圍外的未核實收據不計入
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-015
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0152
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個目前有未兌現金額的既有機台，記錄其目前實際全部未核實收據的總金額與各筆的核實/收據日期
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，結算日期範圍設定為明確不含任一筆未核實收據日期的窄區間，查詢，檢視該機台的『未兌現金額』欄位
+    - n: 2
+      action: 改以結算日期範圍設定為涵蓋全部未核實收據日期的區間，查詢，比較兩次『未兌現金額』的差異
+    expected_result: 第一次查詢（範圍不含未核實收據日期）：未兌現金額不含這些收據，數值應為0或明顯小於全部未核實收據總額；第二次查詢（範圍涵蓋）：未兌現金額等於這些收據的總額。驗證未兌現金額仍以結算日期範圍為篩選條件，範圍外的未核實收據不計入——依CLR-DAILYREPORT-009確認：『不受週期影響』指的是不受統計週期切分方式影響（不會因切成週/月而被打散或重複計算），不是不受結算日期範圍本身限制
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+      quote: 「未兌現金額」不受週期影響、一律為截至查詢當下的累計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 原設計為僅觀察不斷言的exploratory案例，因RequirementModel當時標記此為major ambiguity；現已依CLR-DAILYREPORT-009的PM正式回覆（含具體算例）修正REQ-DAILYREPORT-015的statement，改為『範圍含/不含對照』的equivalence_partitioning
+      grounded案例，直接驗證範圍才是篩選依據這個修正後的正確機制
+  - draft_id: TC-DRAFT-01M2RHAA70Y81ZJEEX5ZXDD8H1
+    title: 列表底部總計列的各欄數值，等於該欄所有列的加總
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-016
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0161
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 選定一個查詢後會回傳多筆列（例如依機台明細且場館下有多台機台）的既有場館
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，記錄列表每一列的各數值欄位
+    - n: 2
+      action: 手動加總每一欄（開分、洗分、進鈔、收據等）的各列數值，與列表底部顯示的總計列比對
+    expected_result: 底部總計列的每一欄數值，皆等於該欄所有列的加總
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位末段
+      quote: 各欄總計
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70QCTDWSKC901DWH5P
+    title: 匯出 CSV 的內容與當前篩選結果一致
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-016
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0162
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 已完成一次有資料回傳的查詢（任一篩選條件組合）
+    test_data: []
+    steps:
+    - n: 1
+      action: 於場館日結報表完成查詢後，記錄目前列表顯示的所有列與欄位數值
+    - n: 2
+      action: 點擊頁面右上角『匯出 CSV』，開啟下載的 CSV 檔案
+    expected_result: CSV 檔案內容（列數與各欄數值）與步驟1記錄的當前篩選結果列表一致，不多不少、數值相符
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §操作/匯出 CSV
+      quote: 匯出當前篩選結果
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70DZ4MBZDF99DTV8KD
+    title: 頁面不存在新增／編輯／刪除／審核相關按鈕
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-016
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0163
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以任一角色（Admin／站長／操作員擇一）登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入場館日結報表，瀏覽整個頁面（篩選器、列表、頁首頁尾）
+    expected_result: 頁面不存在任何新增、編輯、刪除或審核相關的按鈕或操作入口，僅提供查詢與匯出 CSV 功能
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §操作
+      quote: 本頁為統計檢視，不提供新增／編輯／刪除／審核操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+  - draft_id: TC-DRAFT-01M2RHAA70EZF5FT6V2TYAF03R
+    title: 日結時間到達時，進行中場次強制結束為日結結算狀態，餘額承接為隔日新場次的期初餘額
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0171
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 透過『機台交易紀錄』或對應的場次查詢功能，尋找一台機台過去某個已經過的營業日，其在該日日結時間點當下有一筆進行中場次的既有歷史記錄（此記錄應已因日結時間到達而被系統處理）
+    test_data: []
+    steps:
+    - n: 1
+      action: 查看該筆場次記錄的狀態、結束時間，並記下承接前的餘額（該場次結束時的分數）
+    - n: 2
+      action: 查看同一機台緊接在後的下一筆場次記錄，檢視其開始時間與期初餘額
+    expected_result: 前一筆場次的狀態為『日結結算』，結束時間等於該場館當日的日結時間；下一筆（隔日新）場次的期初餘額，等於前一筆場次結束時的餘額（承接金額）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結 + §背景:場次資訊/場次狀態、期初餘額
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: high
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 採用回溯既有歷史場次記錄的方式驗證日結強制結束機制，而非在測試當下主動調整場館日結時間設定並等待觸發——後者需要假設『變更日結時間設定會立即套用於下一次判斷』這個 spec 未定義的系統行為，回溯法可在不引入此假設的前提下驗證同一條規則；REQ-DAILYREPORT-017
+      明確定義了 states 轉換規則，本案標記 state_transition 技巧以符合結構規則要求
+  - draft_id: TC-DRAFT-01M2RHAA707PZ8PRDJ1QT046K8
+    title: 機台無進行中場次時，日結時間到達不會憑空產生新場次
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0172
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    - 尋找一台機台過去某個已經過的營業日，其在該日日結時間點當下沒有任何進行中場次（該機台當天的場次記錄皆已在日結時間之前結束，或當天無任何場次記錄）
+    test_data: []
+    steps:
+    - n: 1
+      action: 查看該機台該營業日日結時間前後的場次記錄列表
+    - n: 2
+      action: 確認日結時間點是否額外產生了一筆狀態為『日結結算』的空場次記錄
+    expected_result: 該機台在該營業日日結時間點沒有額外產生『日結結算』狀態的場次記錄——沒有進行中場次時，日結不會憑空產生新場次
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: ''
+history:
+- at: '2026-09-17T20:35:59Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-007

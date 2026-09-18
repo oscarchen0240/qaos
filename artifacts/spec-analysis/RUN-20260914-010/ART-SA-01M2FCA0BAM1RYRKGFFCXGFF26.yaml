@@ -1,0 +1,119 @@
+artifact_id: ART-SA-01M2FCA0BAM1RYRKGFFCXGFF26
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-010
+task_id: T1
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-09-14T07:15:06Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-TXLOG-001@0.1
+references:
+- entity_type: SpecVersion
+  id: SPEC-TXLOG-001
+  version: '0.1'
+requires_approval: null
+payload:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  summary: 機台交易紀錄（開發包④，既有『交易紀錄查詢 4.1』的機台視角擴充）：查詢範圍含未完成/取消/未成立的機台交易，新增機台/場次/交易類型/交易狀態/核實狀態等篩選器，列表新增多個機台專屬欄位（含金額、狀態、核實狀態、重送次數等），並提供查看明細與
+    Admin 手動取消兩個操作。底層交易資料模型（產生、狀態流轉）已在 SPEC-CASHFLOW-001 定義，本包只測查詢/篩選/呈現層與手動取消動作，不重複測試 CASHFLOW 已驗證的交易生成規則。
+  scope:
+    in_scope:
+    - 篩選器（機台帳號/交易編號/場次編號/訂單編號/交易類型/交易狀態/核實狀態/交易時間/金額）
+    - 列表欄位呈現規則
+    - 查看明細操作
+    - Admin 手動取消操作
+    - 入金與出金待確認收斂機制的差異
+    out_of_scope:
+    - 交易的產生、金額計算、狀態流轉規則（SPEC-CASHFLOW-001）
+    - 洗分出金核實頁本身的核實操作（開發包⑤）
+    - 站台列表與站台切換機制本身（SPEC-SITELIST-001）
+  requirement_ids:
+  - REQ-TXLOG-001
+  - REQ-TXLOG-002
+  - REQ-TXLOG-003
+  - REQ-TXLOG-004
+  - REQ-TXLOG-005
+  - REQ-TXLOG-006
+  - REQ-TXLOG-007
+  - REQ-TXLOG-008
+  - REQ-TXLOG-009
+  - REQ-TXLOG-010
+  - REQ-TXLOG-011
+  - REQ-TXLOG-012
+  - REQ-TXLOG-013
+  - REQ-TXLOG-014
+  - REQ-TXLOG-015
+  - REQ-TXLOG-016
+  - REQ-TXLOG-017
+  - REQ-TXLOG-018
+  - REQ-TXLOG-019
+  - REQ-TXLOG-020
+  - REQ-TXLOG-021
+  - REQ-TXLOG-022
+  - REQ-TXLOG-023
+  - REQ-TXLOG-024
+  - REQ-TXLOG-025
+  - REQ-TXLOG-026
+  - REQ-TXLOG-027
+  - REQ-TXLOG-028
+  - REQ-TXLOG-029
+  - REQ-TXLOG-030
+  ambiguities:
+  - requirement_id: REQ-TXLOG-029
+    ambiguity:
+      level: major
+      description: 非 Admin 或對非待確認狀態嘗試手動取消時，系統的具體阻擋機制未定義
+      options:
+      - 按鈕/操作項對不符合條件者直接隱藏，不give操作入口
+      - 按鈕顯示但停用（disabled），無法點擊
+      - 允許點擊，但送出後由後端拒絕並顯示錯誤訊息
+  constraints:
+  - text: 本功能未對客戶開放（INTERNAL），與正本有出入時以正本 實體機台_spec_v07.md 為準
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: 首行標記 + §開發包說明
+      quote: ''
+  - text: 手動取消前應先與現場確認實體狀況（紙鈔/收據），屬人工 SOP 提醒，非系統可驗證的行為，不列為 Requirement
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作 警告區塊
+      quote: ''
+  - text: 收據可能延遲印出、過渡期以結算結果畫面取代收據判斷、Operator Reset 後待確認永久保留，皆屬手動取消前人工判斷的 SOP 提醒或已由 REQ-TXLOG-017/028 涵蓋的既有機制，不另立 Requirement
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作 警告區塊
+      quote: ''
+  edge_case_candidates:
+  - text: 現場對機台執行 Operator Reset 後，該筆待確認交易永遠不會再收到機台回報，只能靠 Admin 手動取消清理（極端情境下待確認會無限期累積）
+    requirement_id: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作 警告區塊
+      quote: ''
+  - text: 同一場次內同時存在開分、入金、洗分、出金等多種交易類型時，場次編號篩選/點擊是否能正確一次撈出全部類型
+    requirement_id: REQ-TXLOG-006
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: ''
+  open_questions:
+  - 非 Admin 或對非待確認狀態嘗試手動取消時，系統的具體阻擋機制？（REQ-TXLOG-029）
+history:
+- at: '2026-09-14T07:15:14Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-010

@@ -1,0 +1,130 @@
+"""M7 測試執行 API。/api/testruns"""
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+
+from ..services import testruns as svc
+from ..services import tickets as ticket_svc
+
+router = APIRouter(prefix="/api/testruns", tags=["testruns"])
+
+
+class ItemIn(BaseModel):
+    group_key: str
+    testcase_id: str
+
+
+class RunIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    environment: str = ""
+    build: str = ""
+    notes: str = ""
+    import_all: bool = False
+    items: list[ItemIn]
+
+
+class RunPatch(BaseModel):
+    name: str | None = None
+    environment: str | None = None
+    build: str | None = None
+    notes: str | None = None
+    status: str | None = None
+    import_all: bool | None = None
+
+
+class ResultPatch(BaseModel):
+    result: str | None = None
+    actual_result: str | None = None
+    notes: str | None = None
+    duration_ms: int | None = None
+
+
+class FinishIn(BaseModel):
+    status: str = "done"
+
+
+def _err(e: svc.TestRunError):
+    raise HTTPException(e.status, str(e))
+
+
+@router.get("")
+def list_runs():
+    return svc.list_runs()
+
+
+@router.post("", status_code=201)
+def create_run(body: RunIn):
+    try:
+        return svc.create_run(body.name, body.environment, body.build, body.notes, [i.model_dump() for i in body.items], ticket_svc.operator(), body.import_all)
+    except svc.TestRunError as e:
+        _err(e)
+
+
+@router.get("/meta")
+def meta():
+    return {"results": list(svc.RESULTS), "evidence_types": list(svc.EVIDENCE_TYPES), "run_status": list(svc.RUN_STATUS), "max_evidence_bytes": svc.MAX_EVIDENCE_BYTES}
+
+
+@router.get("/{run_id}")
+def get_run(run_id: int):
+    r = svc.get_run(run_id)
+    if not r:
+        raise HTTPException(404, "回合不存在")
+    return r
+
+
+@router.patch("/{run_id}")
+def patch_run(run_id: int, body: RunPatch):
+    try:
+        r = svc.patch_run(run_id, body.model_dump())
+    except svc.TestRunError as e:
+        _err(e)
+    if not r:
+        raise HTTPException(404, "回合不存在")
+    return r
+
+
+@router.delete("/{run_id}", status_code=204)
+def delete_run(run_id: int):
+    svc.delete_run(run_id)
+
+
+@router.patch("/{run_id}/results/{result_id}")
+def set_result(run_id: int, result_id: int, body: ResultPatch):
+    try:
+        return svc.set_result(run_id, result_id, body.model_dump(), ticket_svc.operator())
+    except svc.TestRunError as e:
+        _err(e)
+
+
+@router.post("/{run_id}/results/{result_id}/evidence", status_code=201)
+async def add_evidence(run_id: int, result_id: int, file: UploadFile = File(...), type: str = Form("screenshot"), description: str = Form("")):
+    data = await file.read()
+    try:
+        return svc.add_evidence(run_id, result_id, file.filename or "file", data, type, description, ticket_svc.operator())
+    except svc.TestRunError as e:
+        _err(e)
+
+
+@router.delete("/{run_id}/results/{result_id}/evidence/{eid}", status_code=204)
+def remove_evidence(run_id: int, result_id: int, eid: str):
+    try:
+        svc.remove_evidence(run_id, result_id, eid)
+    except svc.TestRunError as e:
+        _err(e)
+
+
+@router.get("/{run_id}/evidence/{eid}")
+def get_evidence(run_id: int, eid: str):
+    p = svc.evidence_path(run_id, eid)
+    if not p:
+        raise HTTPException(404, "證據不存在")
+    return FileResponse(p, filename=p.name.split("_", 1)[-1])
+
+
+@router.post("/{run_id}/finish")
+def finish(run_id: int, body: FinishIn):
+    try:
+        return svc.finish(run_id, body.status)
+    except svc.TestRunError as e:
+        _err(e)

@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>UPDATEPACK 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-UPDATEPACK-001</div>
+      <h1>UPDATEPACK 測試案例集</h1>
+    </div>
+    <div class="brand-sub">機台更新包 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>18</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>18</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>0</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>0</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-UPDATEPACK-001" class="nav-link"><span class="nav-num">01</span>會員餘額類欄位可展開的幣別清單，依「帳務管理 &gt; 鏈上錢包管理」中狀態為啟用的幣...</a><a href="#REQ-UPDATEPACK-002" class="nav-link"><span class="nav-num">02</span>已啟用幣種超過一種時，會員列表、側邊簡易資料面板、會員詳細資料頁的餘額類欄位皆顯...</a><a href="#REQ-UPDATEPACK-003" class="nav-link"><span class="nav-num">03</span>收合狀態顯示的數值為該站台核心貨幣錢包的餘額，不做匯率換算，也不是各幣別金額的加...</a><a href="#REQ-UPDATEPACK-004" class="nav-link"><span class="nav-num">04</span>展開後核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每...</a><a href="#REQ-UPDATEPACK-005" class="nav-link"><span class="nav-num">05</span>展開後，金額為 0 的幣別仍列出並顯示 0.00，不因無餘額而隱藏</a><a href="#REQ-UPDATEPACK-006" class="nav-link"><span class="nav-num">06</span>逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合...</a><a href="#REQ-UPDATEPACK-007" class="nav-link"><span class="nav-num">07</span>篩選器的「帳戶餘額（主錢包）min～max」與列表底部「總計」列維持現行行為，皆...</a><a href="#REQ-UPDATEPACK-008" class="nav-link"><span class="nav-num">08</span>會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金...</a><a href="#REQ-UPDATEPACK-009" class="nav-link"><span class="nav-num">09</span>與交易紀錄查詢頁共用場次編號欄位規則的注單查詢頁，線上帳號的場次編號欄一律顯示「...</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>UPDATEPACK 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-UPDATEPACK-001 底下所有 ACTIVE 狀態的測試案例，共 18 條，涵蓋 9 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 0 條（）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-001">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-001</span>
+        <h2>會員餘額類欄位可展開的幣別清單，依「帳務管理 &gt; 鏈上錢包管理」中狀態為啟用的幣...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-001 幣別清單來源依鏈上錢包管理啟用狀態決定 req-updatepack-001 ac-updatepack-0011 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-001</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">幣別清單來源依鏈上錢包管理啟用狀態決定</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台在帳務管理 &gt; 鏈上錢包管理啟用了三種幣別（含法幣 TWD 頁籤）</span></li><li><span class='step-n'>2</span><span>展開任一會員的餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">展開清單恰好列出這三種已啟用的幣別，不多不少</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-002 禁用某幣別後展開清單即時反映鏈上錢包管理目前的啟用狀態 req-updatepack-001 ac-updatepack-0012 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-002</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">禁用某幣別後展開清單即時反映鏈上錢包管理目前的啟用狀態</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0012</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台將其中一種已啟用幣別於鏈上錢包管理改為禁用</span></li><li><span class='step-n'>2</span><span>再次展開同一會員的餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該幣別不再列出，清單即時反映鏈上錢包管理目前的啟用狀態，不需額外於本功能設定幣別清單</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-002">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-002</span>
+        <h2>已啟用幣種超過一種時，會員列表、側邊簡易資料面板、會員詳細資料頁的餘額類欄位皆顯...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-003 已啟用幣種超過一種時，會員列表帳戶餘額欄顯示展開箭頭 req-updatepack-002 ac-updatepack-0021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-003</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">已啟用幣種超過一種時，會員列表帳戶餘額欄顯示展開箭頭</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台已啟用兩種以上幣別</span></li><li><span class='step-n'>2</span><span>檢視會員列表的帳戶餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示展開箭頭</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-004 同一會員的側邊簡易資料面板與詳細資料頁餘額類欄位也一併顯示展開箭頭 req-updatepack-002 ac-updatepack-0022 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-004</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">同一會員的側邊簡易資料面板與詳細資料頁餘額類欄位也一併顯示展開箭頭</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0022</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>延續同一會員（站台已啟用兩種以上幣別）</span></li><li><span class='step-n'>2</span><span>檢視其側邊簡易資料面板的帳戶餘額/提領所需有效投注額/可提領餘額</span></li><li><span class='step-n'>3</span><span>檢視其會員詳細資料頁的相同三個欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">三個位置的帳戶餘額、提領所需有效投注額（流水錢包）、可提領餘額欄位皆顯示展開箭頭</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-005 僅啟用一種幣別的站台，餘額欄不顯示展開箭頭，維持單行呈現 req-updatepack-002  medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-005</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">僅啟用一種幣別的站台，餘額欄不顯示展開箭頭，維持單行呈現</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一個線上站台僅在鏈上錢包管理啟用一種幣別</span></li><li><span class='step-n'>2</span><span>檢視該站台任一會員的帳戶餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不顯示展開箭頭，維持單行呈現（機台場館僅 TWD 一種的特例已由 SPEC-ACCOUNT-001 REQ-030 驗證，本條驗證的是一般線上站台的相同規則）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-003">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-003</span>
+        <h2>收合狀態顯示的數值為該站台核心貨幣錢包的餘額，不做匯率換算，也不是各幣別金額的加...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-006 收合時顯示核心貨幣錢包餘額，不做匯率換算也不是各幣別加總 req-updatepack-003 ac-updatepack-0031 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-006</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">收合時顯示核心貨幣錢包餘額，不做匯率換算也不是各幣別加總</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>會員在核心貨幣以外的已啟用幣別也持有餘額</span></li><li><span class='step-n'>2</span><span>檢視收合狀態的帳戶餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示的數值僅為核心貨幣錢包的原始餘額，不含其他幣別換算後的數字，也不是所有幣別金額加總後的數字</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-007 會員核心貨幣餘額為 0、但其他已啟用幣別有餘額時，收合仍顯示核心貨幣的 0，不會誤顯示其他幣別金額 req-updatepack-003  high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-007</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">會員核心貨幣餘額為 0、但其他已啟用幣別有餘額時，收合仍顯示核心貨幣的 0，不會誤顯示其他幣別金額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>會員的核心貨幣錢包餘額為 0，但另一個已啟用幣別有實際餘額</span></li><li><span class='step-n'>2</span><span>檢視收合狀態的帳戶餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示 0（核心貨幣餘額），不會因為其他幣別有餘額而誤顯示該幣別的金額</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-021 收合狀態的帳戶餘額欄顯示的即為核心貨幣錢包的原始餘額 req-updatepack-003 ac-updatepack-0031 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-021</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">收合狀態的帳戶餘額欄顯示的即為核心貨幣錢包的原始餘額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>選定一個已啟用兩種以上幣別的既有線上站台（核心貨幣為 USDT），並選定一名同時持有核心貨幣與至少一種非核心貨幣餘額的既有會員；若當前環境找不到現成案例，需先於『帳務管理 &gt; 鏈上錢包管理』確認幣別已啟用，並尋找已有跨幣別餘額紀錄的會員</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>先展開該會員的帳戶餘額欄，記錄核心貨幣（USDT）那一列顯示的金額</span></li><li><span class='step-n'>2</span><span>收合該欄位，檢視收合狀態顯示的數值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">收合狀態顯示的數值，與展開後核心貨幣（USDT）那一列的金額完全相同</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示/顯示規則</span>
+      <span class='spec-quote'>「收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-022 收合狀態顯示的數值不是各幣別加總、也不是匯率換算後的結果 req-updatepack-003 ac-updatepack-0031 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-022</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">收合狀態顯示的數值不是各幣別加總、也不是匯率換算後的結果</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>選定一名核心貨幣（USDT）餘額與另一種已啟用幣別餘額，兩者數值明顯不同且皆非 0 的既有會員（例如核心貨幣餘額與另一幣別餘額至少相差一個數量級，以利肉眼判斷收合值不是兩者加總或換算結果）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>展開該會員的帳戶餘額欄，逐列記錄每個已啟用幣別各自的金額</span></li><li><span class='step-n'>2</span><span>手動計算『各幣別金額加總』作為對照值 A</span></li><li><span class='step-n'>3</span><span>收合該欄位，記錄收合狀態顯示的數值</span></li><li><span class='step-n'>4</span><span>比對收合值分別與步驟1的核心貨幣列金額、步驟2的對照值 A 是否相符</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">收合狀態顯示的數值等於核心貨幣錢包的原始金額，且明顯不等於各幣別加總後的對照值 A（除非巧合下非核心貨幣餘額恰為 0，此情形應改選其他會員以確保比對有效）；收合值不做任何匯率換算</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示/顯示規則</span>
+      <span class='spec-quote'>「收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-004">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-004</span>
+        <h2>展開後核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-008 展開後核心貨幣固定列第一列，其餘依鏈上錢包管理幣種順序接續 req-updatepack-004 ac-updatepack-0041 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-008</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">展開後核心貨幣固定列第一列，其餘依鏈上錢包管理幣種順序接續</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>展開一個已啟用三種幣別的會員餘額欄</span></li><li><span class='step-n'>2</span><span>檢視展開後的列表順序與每列內容</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">核心貨幣列在第一列，其餘兩種依鏈上錢包管理設定的順序接續排列；每列皆顯示幣種代碼與金額</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-005">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-005</span>
+        <h2>展開後，金額為 0 的幣別仍列出並顯示 0.00，不因無餘額而隱藏</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-009 金額為 0 的幣別展開時仍列出並顯示 0.00 req-updatepack-005 ac-updatepack-0051 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-009</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">金額為 0 的幣別展開時仍列出並顯示 0.00</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0051</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>會員某個已啟用幣別的餘額為 0</span></li><li><span class='step-n'>2</span><span>展開該會員的餘額欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該幣別仍列出並顯示 0.00，不因無餘額而隱藏</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-006">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-006</span>
+        <h2>逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-010 展開/收合狀態僅作用於當次瀏覽，換頁或重新進入頁面後回到收合預設 req-updatepack-006 ac-updatepack-0061 ac-updatepack-0062 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-010</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">展開/收合狀態僅作用於當次瀏覽，換頁或重新進入頁面後回到收合預設</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0061；AC-UPDATEPACK-0062</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>將某會員的餘額欄展開，換頁或重新查詢後檢視該欄</span></li><li><span class='step-n'>2</span><span>將另一會員的餘額欄展開，離開頁面後重新進入，檢視該欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩種情況皆回到收合預設狀態，不記得先前的展開狀態</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-007">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-007</span>
+        <h2>篩選器的「帳戶餘額（主錢包）min～max」與列表底部「總計」列維持現行行為，皆...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-011 帳戶餘額篩選器僅提供單一 min~max 範圍，不依幣別拆分 req-updatepack-007 ac-updatepack-0071 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-011</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">帳戶餘額篩選器僅提供單一 min~max 範圍，不依幣別拆分</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0071</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台已啟用多種幣別</span></li><li><span class='step-n'>2</span><span>檢視帳戶餘額篩選器</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">僅提供單一 min～max 範圍輸入，不提供依幣別分別篩選的選項；篩選依核心貨幣餘額計算</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-012 列表底部總計列以核心貨幣加總，不依幣別拆分顯示 req-updatepack-007 ac-updatepack-0072 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-012</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">列表底部總計列以核心貨幣加總，不依幣別拆分顯示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0072</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台已啟用多種幣別</span></li><li><span class='step-n'>2</span><span>檢視列表底部總計列</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">總計以核心貨幣餘額加總計算，不依幣別拆分顯示，也不提供幣別選擇</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§一、多幣別錢包展開顯示</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-008">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-008</span>
+        <h2>會員列表的存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-013 人工入金完成後不計入存款次數與存款金額 req-updatepack-008 ac-updatepack-0081 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-013</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工入金完成後不計入存款次數與存款金額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0081</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄某會員當下的存款次數與存款金額</span></li><li><span class='step-n'>2</span><span>對該會員執行一筆人工入金操作</span></li><li><span class='step-n'>3</span><span>再次檢視其存款次數與存款金額</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩者皆不變動，不計入此筆人工入金</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§二、存款／提款累計欄位</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-014 人工出金完成後不計入提款次數與提款金額 req-updatepack-008 ac-updatepack-0082 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-014</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工出金完成後不計入提款次數與提款金額</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0082</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄某會員當下的提款次數與提款金額</span></li><li><span class='step-n'>2</span><span>對該會員執行一筆人工出金操作</span></li><li><span class='step-n'>3</span><span>再次檢視其提款次數與提款金額</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩者皆不變動，不計入此筆人工出金</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§二、存款／提款累計欄位</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-UPDATEPACK-009">
+      <div class="req-head">
+        <span class="req-id">REQ-UPDATEPACK-009</span>
+        <h2>與交易紀錄查詢頁共用場次編號欄位規則的注單查詢頁，線上帳號的場次編號欄一律顯示「...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-updatepack-015 注單查詢頁查詢結果為線上會員注單時，場次編號欄顯示橫線 req-updatepack-009 ac-updatepack-0091 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-015</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">注單查詢頁查詢結果為線上會員注單時，場次編號欄顯示橫線</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0091</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>注單查詢頁的查詢結果包含一筆線上會員的注單</span></li><li><span class='step-n'>2</span><span>檢視其場次編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示「—」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§五、交易紀錄的兩項欄位規則</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-updatepack-016 注單查詢頁查詢結果為機台帳號注單時，場次編號欄顯示所屬場次編號 req-updatepack-009 ac-updatepack-0092 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-UPDATEPACK-016</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">注單查詢頁查詢結果為機台帳號注單時，場次編號欄顯示所屬場次編號</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-UPDATEPACK-0092</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>注單查詢頁的查詢結果包含一筆機台帳號的注單</span></li><li><span class='step-n'>2</span><span>檢視其場次編號欄</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示該筆注單所屬的場次編號</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§五、交易紀錄的兩項欄位規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

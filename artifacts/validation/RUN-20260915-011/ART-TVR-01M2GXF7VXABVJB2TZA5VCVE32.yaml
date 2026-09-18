@@ -1,0 +1,86 @@
+artifact_id: ART-TVR-01M2GXF7VXABVJB2TZA5VCVE32
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-011
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T21:34:17Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GX9RMTBJ31XW2YRX6X558A
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GX9RMTBJ31XW2YRX6X558A
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GX9RMTBJ31XW2YRX6X558A
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+  issues:
+  - testcase_id: TC-DRAFT-01M2GX9RMS8BMYQW6JMBP2FAHE
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: spec.md 全文搜尋「逾時」「場次逾時」皆無匹配，「場次逾時時間」不在 SPEC-PLATFORMRULE-001 原文中（它其實只出現在 ARCADE 正本），requirement.yaml/testcase_draft.yaml
+      卻把它列入本 REQ 的驗收範圍
+    explanation: self_check.no_unsupported_assumptions 宣告為 true，但此欄位既無 spec 依據也未見於 Oscar 的確認紀錄
+    recommended_change: 移除場次逾時時間，或改為向 Oscar 明確確認此欄位後另外處理
+  - testcase_id: TC-DRAFT-01M2GX9RMS8BMYQW6JMBP2FAHE
+    issue_type: spec_mismatch
+    severity: blocker
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: spec.md §角色與權限權限表中，操作員對「機台停用／啟用」「人工入金／出金（櫃檯）」「洗分出金核實」為可操作，對「機台交易紀錄查詢」「場館日結報表」為自身場館可見——這些同屬場館層級的功能操作員明顯是可以進入操作的
+    explanation: 「操作員對站台列表/場館設定整頁無法進入」與同一張權限表裡其他可操作項目矛盾，TC 未釐清「額度上限所在的頁面」與這些可操作頁面是否為不同實體頁面，就直接外推成整頁級別的限制
+    recommended_change: 向 Oscar 確認清楚：無法進入的具體是哪一個頁面（是否僅限額度上限/場次逾時時間所在的『站台列表/場館設定』本身，不影響機台管理、人工入出金、洗分出金核實等其他獨立頁面）
+  - testcase_id: TC-DRAFT-01M2GX9RMS8BMYQW6JMBP2FAHE
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+    evidence: spec.md「編輯機台基本資料」對操作員同樣標示唯讀，與「額度上限」處境相同，卻未被本次修訂一併處理或說明排除理由
+    explanation: 若邏輯是「整頁進不去所以唯讀欄位其實都進不去」，理應一併涵蓋同樣標唯讀的欄位，否則覆蓋範圍看起來是拼裝的
+    recommended_change: 說明是否排除「編輯機台基本資料」，若排除需說明理由
+  advisories: []
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-14T21:34:21Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-011

@@ -1,0 +1,90 @@
+artifact_id: ART-TVR-01M2RCV8ZXT4AN7ZYNW8N1BX90
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-004
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-17T19:17:42Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2R7RE1CT6ZQD1SZWE76M39Z
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2R7RE1CT6ZQD1SZWE76M39Z
+- entity_type: Artifact
+  id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2R7RE1CT6ZQD1SZWE76M39Z
+  validated_against:
+    spec_id: SPEC-BONUSCCY-002
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GKYSV5VCR08R55SQPW9YM6
+  issues:
+  - testcase_id: '*'
+    issue_type: missing_traceability
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-006
+    spec_reference: null
+    evidence: TC-DRAFT-01M2R7RE1B091RRKNRJVZG0X7Q（簽到）與TC-DRAFT-01M2R7RE1B027CGX3DSYVCP2K2（首存/次存）的requirement_ids/acceptance_criteria_ids皆標示REQ-BONUSCCY-006/AC-BONUSCCY-008，但test_design_report.yaml的coverage_matrix中REQ-BONUSCCY-006/AC-BONUSCCY-008底下的draft_ids仍只有原本3條，未納入這兩條新增TC。
+    explanation: 本輪修正的核心交付就是為REQ-BONUSCCY-006補齊缺口，但coverage_matrix未同步更新，report本身無法反映缺口已補齊，self_check宣稱的requirements_covered/expected_results_traceable與實際不符。
+    recommended_change: 更新coverage_matrix，在REQ-BONUSCCY-006的draft_ids與AC-BONUSCCY-008.draft_ids中補上這兩條新增TC的draft_id。
+  - testcase_id: TC-DRAFT-01M2R7RE1B027CGX3DSYVCP2K2
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-BONUSCCY-006
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-002
+      spec_version: '1.0'
+      location: §要注意的事 > 本次不調整的理由
+      quote: 現在還沒有非系統幣別的存款會進來——機台的開分／入金要等實體機台的交易寫入上線才會真的有交易，線上站台也不會用非系統幣別的通道存款，所以這幾條目前都是死路。
+    evidence: TC precondition要求『已建立或存在一個首存或次存活動，其「幣種」欄位選定的是TTK這條金流通道』，step 2要求『使該會員透過TTK這條金流通道完成一筆存款』，但spec.md明確指出目前線上站台不會用非系統幣別的通道存款、現況為死路。
+    explanation: TC的assumptions只揭露了幣種欄位UI呈現方式的不確定性，未揭露這個更根本的環境限制，也沒有像其他TC那樣附上環境不支援則標記待執行的退路，執行者可能卡在step 2。
+    recommended_change: 在precondition補一條，比照JACKPOT/跨站台推薦TC的寫法：若測試環境當下沒有可實際完成TTK通道存款的機制，本TC需標記為待執行，待環境支援後再測。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2R7RE1B091RRKNRJVZG0X7Q
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: expected_result主張『道具類簽到獎勵...只會出現在道具持有清單而非任何錢包』，但spec.md與可讀文件皆未定義任何『道具持有清單』頁面。
+    explanation: 這是TC自行外推的UI細節，未透過assumptions揭露。
+    recommended_change: 拿掉這句或改為條件式，或在assumptions中新增一筆揭露。
+  - testcase_id: TC-DRAFT-01M2R7RE1B091RRKNRJVZG0X7Q
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: precondition未像同批次AC-BONUSCCY-013的TC那樣明確寫出『本TC需要能以該會員身分存取線上站台前台簽到頁，非純後台操作』。
+    explanation: 與同批次已有更清楚寫法的TC相比，環境需求揭露不足。
+    recommended_change: 補一句比照AC-BONUSCCY-013的TC。
+  coverage_summary:
+    requirements_total: 5
+    requirements_covered: 5
+    ac_total: 9
+    ac_covered: 9
+    uncovered_accepted:
+    - REQ-BONUSCCY-007 / AC-BONUSCCY-009：玩家原本沒有該幣別錢包時會自動出現一列，未獨立設TC，已查核SPEC-MEMBER-001 v0.2原文屬實
+    - REQ-BONUSCCY-006：累積存款活動未另立TC，已查核spec.md原文與返水/代理佣金同構、無特殊陷阱
+    - REQ-BONUSCCY-006：推薦獎勵未在REQ-006底下另立TC，已由REQ-BONUSCCY-009既有TC覆蓋，有條件接受
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-17T19:17:45Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-004

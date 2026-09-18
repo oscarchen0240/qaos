@@ -1,0 +1,109 @@
+title: 可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-005
+acceptance_criteria_ids:
+- AC-MEMBER-008
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能；「須大於10 USDT」這道門檻僅在前台實際送出出金申請（API）時才會被檢查，後台人工提出操作本身不受此門檻限制（已由 Oscar 2026-09-15
+  確認）。換算公式與人工存入/提出機制（已由 Oscar 2026-09-15 以實際操作範例確認）：可提領餘額 ＝ 帳戶餘額（主錢包） － 提領所需有效投注額（流水錢包）；人工存入/提出時，「金額」欄位數字直接增減主錢包，「金額×稽核倍數」則是流水錢包的增減量——稽核倍數可設為
+  0（已實測確認為合法輸入），此時金額只會影響主錢包、完全不影響流水錢包。佈置方式：先於該會員的帳務資訊區塊確認目前的可提領餘額基準值（設為 B），接著執行一筆人工存入，金額 ＝ 10.01 － B、稽核倍數設為 0，使主錢包精確增加 (目標值－B)、流水錢包不變，存入後可提領餘額即精確等於
+  10.01 USDT；若 B 已大於目標值，改用同樣稽核=0 的人工提出，金額 ＝ B － 10.01，使可提領餘額精確降至 10.01 USDT
+test_data:
+- name: 人工存入/提出金額
+  value: = 10.01 － 該帳號目前可提領餘額基準值 B（稽核倍數固定填0）
+steps:
+- n: 1
+  action: 於該會員的帳務資訊區塊查看目前的可提領餘額基準值 B
+- n: 2
+  action: 依 B 與目標值 10.01 的差額，執行一筆稽核倍數=0的人工存入或人工提出（差額為正時存入、為負時提出），將可提領餘額精確調整至 10.01 USDT
+- n: 3
+  action: 重新整理該頁面，確認帳務資訊區塊顯示的可提領餘額精確為 10.01 USDT
+- n: 4
+  action: 以該會員身分登入會員前台，進入出金/提領申請功能
+- n: 5
+  action: 送出出金申請
+expected_result: 前台允許正常申請出金，申請成功送出
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.5 帳務資訊
+  quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+assumptions:
+- text: 本TC的邊界值佈置手法依賴以下機制，spec §2.1.5僅定義「金額」欄位直接影響主錢包、「稽核」欄位設定投注倍數會影響提款條件，但未明訂「可提領餘額＝主錢包－流水錢包」的換算公式、「金額×稽核倍數＝流水錢包增減量」的具體算式、以及稽核=0時是否為合法輸入與其效果；這三項皆由
+    Oscar 於 2026-09-15 以實際操作範例確認，非spec原文明訂。其中「稽核倍數影響流水錢包增減量」這部分方向上與REQ-MEMBER-011/AC-MEMBER-015（稽核倍數大於1時，提領所需有效投注額因存入金額乘上稽核倍數而增加）一致，但REQ-MEMBER-011並未涵蓋稽核=0這個特例，故本assumption標記在REQ-MEMBER-005（本TC實際驗證的需求）下。若後續系統行為變動（例如稽核=0被系統限制或停用），須重新驗證此佈置手法是否仍然可行
+  requirement_id: REQ-MEMBER-005
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0063
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: change_workflow
+testcase_id: TC-MEMBER-008
+version: 4
+supersedes: 1
+status: SUPERSEDED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2JB679BG5NRWA0X6JS16ZZ9
+created_at: '2026-09-15T10:53:17Z'
+updated_at: '2026-09-16T03:36:23Z'
+history:
+- at: '2026-09-15T10:53:17Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2JAXDYNPNP3MG09RGTVNTK4
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:53:17Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:53:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2JB679BG5NRWA0X6JS16ZZ9
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:53:17Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:56:37Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0063
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:56:37Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260915-016
+- at: '2026-09-16T03:36:23Z'
+  from_status: ACTIVE
+  to_status: SUPERSEDED
+  by: system
+  trigger: v5 ACTIVE
+  run_id: RUN-20260916-001
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0063

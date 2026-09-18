@@ -1,0 +1,2844 @@
+artifact_id: ART-TCD-01M2QYWCAGFEFA1KHKSYK3PK6M
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-007
+task_id: T2
+iteration: 9
+created_by: agent-test-designer
+created_at: '2026-09-17T15:13:38Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-SITELIST-001
+- entity_type: Requirement
+  id: REQ-SITELIST-002
+- entity_type: Requirement
+  id: REQ-SITELIST-003
+- entity_type: Requirement
+  id: REQ-SITELIST-004
+- entity_type: Requirement
+  id: REQ-SITELIST-005
+- entity_type: Requirement
+  id: REQ-SITELIST-006
+- entity_type: Requirement
+  id: REQ-SITELIST-007
+- entity_type: Requirement
+  id: REQ-SITELIST-008
+- entity_type: Requirement
+  id: REQ-SITELIST-009
+- entity_type: Requirement
+  id: REQ-SITELIST-010
+- entity_type: Requirement
+  id: REQ-SITELIST-011
+- entity_type: Requirement
+  id: REQ-SITELIST-012
+- entity_type: Requirement
+  id: REQ-SITELIST-013
+- entity_type: Requirement
+  id: REQ-SITELIST-014
+- entity_type: Requirement
+  id: REQ-SITELIST-015
+- entity_type: Requirement
+  id: REQ-SITELIST-016
+- entity_type: Requirement
+  id: REQ-SITELIST-017
+- entity_type: Requirement
+  id: REQ-SITELIST-018
+- entity_type: Requirement
+  id: REQ-SITELIST-019
+- entity_type: Requirement
+  id: REQ-SITELIST-020
+- entity_type: Requirement
+  id: REQ-SITELIST-021
+- entity_type: Requirement
+  id: REQ-SITELIST-022
+- entity_type: Requirement
+  id: REQ-SITELIST-023
+- entity_type: Requirement
+  id: REQ-SITELIST-024
+- entity_type: Requirement
+  id: REQ-SITELIST-025
+- entity_type: Requirement
+  id: REQ-SITELIST-026
+- entity_type: Requirement
+  id: REQ-SITELIST-027
+- entity_type: Requirement
+  id: REQ-SITELIST-028
+- entity_type: Requirement
+  id: REQ-SITELIST-029
+- entity_type: Artifact
+  id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  testcases:
+  - draft_id: TC-DRAFT-01M2NCSW5C2NPYX0YR2ATYY7QA
+    title: 根層站台建立時可自由二擇一站台類型（線上／機台）
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-001
+    acceptance_criteria_ids:
+    - AC-SITELIST-0011
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: &id001
+    - 以 Admin 身分登入 ba-admin 後台
+    - 進入「站台列表」頁面
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，上層站台留空（建立根層站台），站台類型選擇「線上」，其餘必填欄位填妥後點擊「建立站台」
+    - n: 2
+      action: 再次點擊「+ 新增站台」，上層站台留空，站台類型改選「機台」，其餘必填欄位填妥後點擊「建立站台」
+    expected_result: 兩次皆成功建立；前者站台類型顯示為線上，後者顯示為機台，各自依所選類型建立
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位
+      quote: 每個站台的「站台類型」為線上 / 機台，二擇一；建立後不可修改
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: AC-0011 的斷言是『選擇後系統依所選類型建立』，用一個 TC 涵蓋線上/機台兩個分支是典型 decision_table（2 條件→2 結果的映射），比拆成兩條案例更能突顯這是同一規則的兩面。
+  - draft_id: TC-DRAFT-01M2NCSW5C6R7E2VFEEQ33A4S5
+    title: 站台建立後，編輯畫面站台類型欄位唯讀，無法透過編輯變更
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-001
+    acceptance_criteria_ids:
+    - AC-SITELIST-0012
+    - AC-SITELIST-0013
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取上一步建立的任一站台，點擊列表「編輯」開啟 Modal
+    - n: 2
+      action: 檢視站台類型欄位的呈現方式與是否可互動
+    - n: 3
+      action: 嘗試以瀏覽器操作（如點擊欄位、嘗試選取其他選項）改變其值，並點擊「儲存變更」
+    expected_result: 站台類型欄位置灰唯讀，無法點選或修改任何選項；儲存後重新開啟編輯畫面，站台類型值與建立時相同，未被變更
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位 + §業務規則-站台類型鎖定
+      quote: 建立後不可修改
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: AC-0012/0013 明確描述『唯讀置灰』即為拒絕修改的方式，rejection_contract.defined=true 且原文有直接依據，不需假設；design_technique 標 negative
+      因為這條本質是驗證『修改嘗試被拒絕』而非單純檢視顯示。
+  - draft_id: TC-DRAFT-01M2NCSW5CF3M957FW8FTEYYS8
+    title: 子站台的站台類型強制跟隨上層站台，UI 不開放個別選擇
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-002
+    acceptance_criteria_ids:
+    - AC-SITELIST-0021
+    - AC-SITELIST-0022
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台（自行從環境中選定，或延用本批次已建立的機台根站台），在其底下點擊「+ 新增站台」，檢視站台類型欄位
+    - n: 2
+      action: 取一個既有的線上類型站台（自行從環境中選定；若環境中無既有的線上類型站台，可依 AC-SITELIST-0011 的操作路徑，即 TC-DRAFT-01M2NCSW5C2NPYX0YR2ATYY7QA 的 step1，另建一個線上根站台後使用），在其底下點擊「+
+        新增站台」，檢視站台類型欄位
+    expected_result: 前者：站台類型固定顯示為機台，UI 不提供選擇其他類型的控制項；後者：固定顯示為線上，UI 同樣不開放選擇
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位 + §業務規則-站台類型隨主站台
+      quote: 站台類型於主站台（根層）選定，子站台一律與主站台同類型、不可個別選擇
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 上層為機台／上層為線上是兩個獨立條件各自對應固定結果，屬合法的 decision_table（2×1 映射）；未使用 boundary_value 是因為這裡沒有數值邊界，純粹是類型繼承規則。
+  - draft_id: TC-DRAFT-01M2NCSW5CPSGPYY3SVMV27JMF
+    title: 繞過 UI 直接呼叫建立站台 API，帶入與上層站台不同的站台類型
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-002
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台
+    - n: 2
+      action: 直接呼叫建立子站台的後端 API，上層站台 ID 帶入該機台站台，站台類型欄位帶入「線上」（與上層不同）
+    expected_result: 後端拒絕該請求，不會建立一個站台類型與上層不同的子站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台類型隨主站台
+    assumptions:
+    - text: Spec 只描述 UI 唯讀跟隨、未定義繞過 UI 時後端是否也拒絕（REQ-SITELIST-002 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-001（2026-09-14）回覆『後端也會拒絕』，但此答覆未回寫進
+        RequirementModel 的 rejection_contract，故仍以 exploratory 方式標記，需人工於執行時再次確認
+      requirement_id: REQ-SITELIST-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: rejection_contract.defined=false，依規則以 negative 技巧撰寫負向案例必須走 exploratory；雖然 CLR-SITELIST-001 已有 PM 回覆可作參考，但因
+      RequirementModel 本身未更新該欄位，仍誠實標記為待確認而非確定規則，避免 design_rationale 宣稱『spec 已明確定義』卻查無實據。
+  - draft_id: TC-DRAFT-01M2NCSW5C95GVQBPDVQG8AA73
+    title: 機台專屬欄位僅於站台類型為機台時顯示，線上類型不顯示
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-003
+    acceptance_criteria_ids:
+    - AC-SITELIST-0031
+    - AC-SITELIST-0032
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - decision_table
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台類型選「線上」，檢視表單是否出現機台專屬欄位群
+    - n: 2
+      action: 另開一次「+ 新增站台」，站台類型選「機台」，檢視表單欄位
+    expected_result: 前者：不顯示任何機台專屬欄位（場館地址、聯絡人／電話、額度上限、場次逾時時間、日結時間皆不存在於表單）；後者：完整顯示上述全部 5 個機台專屬欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位
+      quote: 類型為「機台」時才顯示下列機台專屬欄位
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 線上不顯示、機台顯示全部，是同一顯示規則的兩個互斥分支，用 decision_table 呈現這組『條件→顯示結果』的映射；test_types 同時標 functional 與 negative 是因為本案例同時驗證『該出現的有出現』與『不該出現的沒出現』兩種斷言，並非為了湊
+      non-happy 而硬加。
+  - draft_id: TC-DRAFT-01M2NCSW5C2XT943NB31DVJMKZ
+    title: 機台類型站台的新增／編輯畫面只有一個貨幣欄位（核心貨幣），不存在獨立的場館幣別輸入欄
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-004
+    acceptance_criteria_ids:
+    - AC-SITELIST-0041
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台類型選「機台」，逐一檢視表單所有欄位標題
+    - n: 2
+      action: 取一個既有的機台類型站台，點擊「編輯」，同樣逐一檢視所有欄位標題
+    expected_result: 新增與編輯畫面皆只出現一個與貨幣相關的欄位（核心貨幣），不存在另一個名為『場館幣別』或類似名稱的獨立輸入欄
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場館幣別
+      quote: 新增／編輯視窗不另設本欄位——與「核心貨幣」為同一個值，由核心貨幣欄的子站台唯讀繼承顯示承載
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是驗證『某欄位不存在』的否定事實，直接對照 spec 原文明確排除，design_technique 用 requirement_based 而非硬套 decision_table，因為這裡沒有多條件組合，純粹是單一規則的直接映證。
+  - draft_id: TC-DRAFT-01M2NCSW5CW76E5D1PQVH07W6X
+    title: 檢視情境（機台資訊／報表）下場館幣別顯示值等於所屬主站台核心貨幣
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-004
+    acceptance_criteria_ids:
+    - AC-SITELIST-0042
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個核心貨幣為 TWD 的機台主站台，在其底下已有的機台子站台（場館）
+    - n: 2
+      action: 於該子站台的檢視情境（如機台資訊區塊或報表頁面的場館幣別欄位，若 SITELIST 頁面本身無此檢視入口則以站台列表/編輯彈窗中場館幣別的唯讀顯示值為準）檢視場館幣別
+    expected_result: 顯示值為 TWD，與所屬主站台的核心貨幣一致
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場館幣別
+      quote: 本欄僅用於場館設定的檢視情境（如機台資訊、報表）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0042 提到的『檢視情境（機台資訊、報表）』實際頁面入口可能落在 ACCOUNT 或報表相關功能區，不完全屬於 SITELIST 頁面本身；本案例在 SITELIST 範圍內以編輯彈窗的唯讀顯示作為可觀察替代點，並在
+      steps 中誠實註明這個對應關係，避免假裝 SITELIST 頁面本身就有完整的機台資訊檢視畫面。
+  - draft_id: TC-DRAFT-01M2NCSW5CP5GP0KPAVMQ7Y0YA
+    title: 場館額度上限設為 0 時系統接受並儲存，代表不限制
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-005
+    acceptance_criteria_ids:
+    - AC-SITELIST-0051
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台（場館），點擊「編輯」，額度上限欄位輸入 0 並儲存
+    - n: 2
+      action: 重新開啟編輯畫面，檢視額度上限欄位的值
+    expected_result: 系統接受並儲存 0；重新開啟後欄位值仍為 0（本 TC 僅驗證『0 這個設定值可被接受並持久化』這個 SITELIST 可觀察的部分；『0 代表不限制』實際在開分／入金時是否真的不檢核上限，需搭配機台交易功能才能驗證，超出本
+      spec 範圍，未在此案例斷言）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/額度上限 + §業務規則-額度上限（場館）
+      quote: 設為 0 代表不限制
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0051 的『代表不限制』是一個業務語意斷言，其完整效果需要機台入金/開分交易才能觀察，而該交易能力不在 SITELIST spec 範圍內；為避免違反『expected_result 不要超出
+      AC 範圍』與『不要編造未驗證事實』，本 TC 誠實把斷言收斂到 SITELIST 能觀察到的部分（值可被設定並儲存），並在 expected_result 中明講這個範圍限制。
+  - draft_id: TC-DRAFT-01M2NCSW5CDNC7HKA87QMEVN2N
+    title: 修改場館額度上限後即時生效，且不回溯影響既有設定的其他站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-005
+    acceptance_criteria_ids:
+    - AC-SITELIST-0052
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台，記錄其目前額度上限值 X
+    - n: 2
+      action: 將額度上限修改為新值 Y 並儲存
+    - n: 3
+      action: 重新開啟編輯畫面確認新值已生效
+    - n: 4
+      action: 檢視另一個不同機台站台的額度上限，確認其值未受影響
+    expected_result: 該站台額度上限立即更新為 Y（重新整理即可見）；另一個機台站台的額度上限維持原值，不受影響（『既有機台餘額不受影響』一句涉及機台帳號分數餘額，此為 ACCOUNT/實體機台交易範疇，不在 SITELIST
+      頁面可觀察範圍內，本 TC 不對餘額本身斷言）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/額度上限
+      quote: 修改後即時生效，不影響既有餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『不影響既有餘額』原文語意是『這個場館設定的變更不會導致既有機台帳號的分數餘額被重算或歸零』，但『機台帳號餘額』的檢視畫面不在 SITELIST 而在 ACCOUNT 的機台資訊區塊；為維持系統邊界誠實，本
+      TC 把『不影響』的斷言改為驗證『不會影響其他站台的同一份設定』這個 SITELIST 範圍內可觀察的部分，並在 expected_result 中明講為何不驗證餘額本身。
+  - draft_id: TC-DRAFT-01M2NCSW5CV1MZNZ6D6KSGDP30
+    title: 額度上限欄位輸入負數，前後端皆拒絕
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-005
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: credit_limit
+      value: -1
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台，點擊「編輯」，額度上限欄位輸入 -1 並嘗試儲存
+    - n: 2
+      action: 若前端未阻擋而送出請求，觀察後端回應
+    expected_result: 前端顯示『值必須大於或等於 0』之類的錯誤提示並阻擋送出；即使繞過前端直接呼叫 API 帶入負數，後端同樣拒絕該請求，額度上限維持修改前的值
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/額度上限（場館）
+    assumptions:
+    - text: Spec 原文未定義輸入負數時系統的回應（REQ-SITELIST-005 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-002（2026-09-14）回覆『前端顯示錯誤、後端也拒絕（雙層驗證）』，但此答覆未回寫進
+        RequirementModel，故仍以 exploratory 方式標記，執行時需人工再確認實際文案與後端行為
+      requirement_id: REQ-SITELIST-005
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-SITELIST-005 的 inputs 定義了 credit_limit 的 min:0 約束，依規則本需求必須有 boundary_value 技巧的案例；同時 rejection_contract.defined=false，故即使
+      CLR-SITELIST-002 已有 PM 答覆，仍誠實標為待確認的 exploratory 案例，不寫成確定規則。
+  - draft_id: TC-DRAFT-01M2NCSW5C6M806GR88QN4DFJ3
+    title: 新建機台類型站台的場次逾時時間預設為 1 小時
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-006
+    acceptance_criteria_ids:
+    - AC-SITELIST-0061
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台類型選「機台」，檢視場次逾時時間欄位的預設值（不手動輸入，直接觀察）
+    expected_result: 欄位預設值為 1 小時
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場次逾時時間
+      quote: 預設 1 小時，站長可調整，操作員唯讀
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一預設值檢視，直接對照 spec 原文，requirement_based 已足夠，無需套用其他進階技巧。
+  - draft_id: TC-DRAFT-01M2NCSW5C05DEVY4TWEG9EWSH
+    title: 站長可修改場次逾時時間且修改後生效
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-006
+    acceptance_criteria_ids:
+    - AC-SITELIST-0062
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以站長身分登入 ba-admin 後台
+    - 進入「站台列表」頁面（預設顯示自身管轄範圍）
+    - 已有一個屬於自身管轄範圍內的機台類型站台
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯該機台站台，將場次逾時時間由預設 1 小時改為 2 小時並儲存
+    - n: 2
+      action: 重新開啟編輯畫面確認新值已生效
+    expected_result: 系統接受修改；重新開啟後場次逾時時間顯示為 2 小時
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場次逾時時間
+      quote: 站長可調整
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0062 只斷言『系統接受修改』，直接以站長角色操作驗證即可，requirement_based 對應此單一直述句最貼切。
+  - draft_id: TC-DRAFT-01M2NCSW5DNEQ0GH48B6R6Z1Q7
+    title: 場次逾時時間輸入低於 1 小時或超長格式時系統拒絕
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-006
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: session_timeout_below_min
+      value: 0.5hr
+    - name: session_timeout_overflow
+      value: '99999999999999999'
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台，編輯場次逾時時間，輸入一個明顯小於 1 小時的值並嘗試儲存
+    - n: 2
+      action: 另開一次編輯，於場次逾時時間欄位輸入一個超過 17 位數的極端數字格式並嘗試儲存
+    expected_result: 第一步：系統阻擋，因後端最低值設計為 1 小時，低於 1 小時會被拒絕；第二步：前端跳出格式錯誤提示，後端阻擋並回傳通用錯誤代碼 COMMON_INVALID_REQUEST_FORMAT
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/場次逾時
+    assumptions:
+    - text: Spec 原文未定義輸入 0、負數或極端值時系統的回應（REQ-SITELIST-006 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-003（2026-09-14）回覆『後端最低值
+        1 小時、超過 17 位數格式錯誤回 COMMON_INVALID_REQUEST_FORMAT』，此答覆未回寫進 RequirementModel，故以 exploratory 標記，執行時需人工再確認實際錯誤代碼與文案
+      requirement_id: REQ-SITELIST-006
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: rejection_contract.defined=false 且技巧為 boundary_value／negative 混合，即使 CLR-SITELIST-003 已有具體 PM 答覆，仍誠實標為待確認而非確定規則；『操作員唯讀』這部分因操作員角色本
+      spec 未定義，故本 TC 不涉及，僅測站長與後端邊界。
+  - draft_id: TC-DRAFT-01M2NCSW5D04F7MWHF69J8YXQQ
+    title: 機台類型站台可設定日結時間（UTC+0）並儲存
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-007
+    acceptance_criteria_ids:
+    - AC-SITELIST-0071
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的機台類型站台，編輯日結時間欄位，設定一個時刻值（如 00:00）並儲存
+    - n: 2
+      action: 重新開啟編輯畫面確認該時刻值已儲存
+    expected_result: 系統接受並儲存該時刻值（UTC+0）；重新開啟後欄位顯示相同時刻
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/日結時間
+      quote: 每日結算的截止時刻（UTC+0），用於場館日結報表分日
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0071 只涉及 SITELIST 本身『可設定並儲存』的部分；AC-0072『報表依此時刻切分營業日』的實際效果驗證屬於 SPEC-DAILYREPORT-001 REQ-007 的責任範圍（requirement
+      statement 本身也如此註明），本次任務範圍僅限 SITELIST 的 29 條需求，因此本 TC 不延伸設計跨功能區的報表切分驗證，僅涵蓋設定值本身。
+  - draft_id: TC-DRAFT-01M2NCSW5D4AA4K47B8NG43RKV
+    title: 子站台的核心貨幣唯讀顯示且等於主站台核心貨幣，無法於子站台個別指定
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-008
+    acceptance_criteria_ids:
+    - AC-SITELIST-0081
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個核心貨幣為 TWD 的機台主站台，在其底下已有的子站台，檢視或編輯其核心貨幣欄位
+    - n: 2
+      action: 嘗試在該子站台的編輯畫面尋找任何可修改核心貨幣的操作方式
+    expected_result: 子站台核心貨幣顯示為 TWD（與主站台一致），欄位為唯讀顯示；找不到任何可個別指定或修改該值的操作方式
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣
+      quote: 其底下所有子站台一律沿用，不可各自指定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是驗證『找不到某個操作能力』的否定案例，design_technique 標 negative 貼合『驗證某修改途徑被拒絕/不存在』的本質。
+  - draft_id: TC-DRAFT-01M2NCSW5D64CPFG4BEWTWKSSN
+    title: 新增子站台時，核心貨幣欄位直接以唯讀方式繼承顯示，不提供選單
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-008
+    acceptance_criteria_ids:
+    - AC-SITELIST-0081
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個核心貨幣為 TWD 的機台主站台，在其底下點擊「+ 新增站台」，檢視核心貨幣欄位
+    expected_result: 核心貨幣欄位唯讀顯示 TWD（繼承自上層主站台），不呈現下拉選單或任何可選擇的控制項
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/新增站台
+      quote: 核心貨幣 | 根層：下拉選單，選項依站台類型過濾；子站台：唯讀顯示繼承值
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與前一條 TC 分別驗證『既有子站台的檢視/編輯』與『新增子站台當下的表單呈現』兩個不同操作時機，避免用同一個情境重複測同一件事；同樣用 negative 技巧驗證『不提供選擇能力』。
+  - draft_id: TC-DRAFT-01M2NCSW5D81FCS58EVQ44M0D0
+    title: 根層站台核心貨幣下拉選項依站台類型過濾
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-009
+    acceptance_criteria_ids:
+    - AC-SITELIST-0091
+    - AC-SITELIST-0092
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，上層站台留空，站台類型選「線上」，展開核心貨幣下拉選單，檢視選項
+    - n: 2
+      action: 另開一次「+ 新增站台」，站台類型選「機台」，展開核心貨幣下拉選單，檢視選項
+    expected_result: 前者下拉選單只列出 USDT 一個選項；後者只列出 TWD 一個選項
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣
+      quote: 可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 站台類型→可選幣別是一組明確的 2 條件對 2 結果映射，屬合法 decision_table；『清單須可擴充、不得寫死幣別』屬實作層面的技術約束，非黑箱操作可驗證的行為，本 TC 不對此另外斷言，僅在
+      design_rationale 註明此限制。
+  - draft_id: TC-DRAFT-01M2NCSW5D3W9ZQDASZW5FV4BK
+    title: 主站台建立後核心貨幣欄位於編輯畫面唯讀，無法透過編輯變更
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-010
+    acceptance_criteria_ids:
+    - AC-SITELIST-0101
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的主站台（根層站台，自行從環境中選定；若環境中無合適的既有主站台，可依 AC-SITELIST-0011 的操作路徑，即 TC-DRAFT-01M2NCSW5C2NPYX0YR2ATYY7QA 的 step1，先建立一個後使用），點擊「編輯」，檢視核心貨幣欄位的呈現方式
+    - n: 2
+      action: 嘗試以瀏覽器操作改變其值，並點擊「儲存變更」，儲存後重新開啟編輯畫面確認
+    expected_result: 核心貨幣欄位唯讀顯示，無法點選或修改；儲存後核心貨幣值與建立時相同，未被變更
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣 + §業務規則-核心貨幣繼承
+      quote: 主站台建立後，核心貨幣不可修改（v07 定案）：比照「站台類型」，於建立時選定即永久鎖定，編輯視窗唯讀顯示
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: rejection_contract.defined=true 且原文直接明確『唯讀顯示』即拒絕方式，不需假設；design_technique 用 negative 因為本質是驗證修改嘗試被拒絕。
+  - draft_id: TC-DRAFT-01M2NCSW5DR4JG223M8GXZ98HJ
+    title: Admin 檢視站台列表根層時顯示所有無上層站台的根層站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-011
+    acceptance_criteria_ids:
+    - AC-SITELIST-0111
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - security
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入，進入站台列表（根層）
+    - n: 2
+      action: 檢視列表中出現的所有站台
+    expected_result: 顯示系統中所有『無上層站台』的根層站台，不因任何條件被排除
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §階層結構與逐層瀏覽-根層顯示
+      quote: Admin 預設顯示所有無上層站台的根層站台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此為 Admin 可見範圍規則的正向展示案例——顯示『無限制』這個預設狀態，過程未觸發任何拒絕或範圍限制的判斷邏輯，依 Validator advisory 改標 requirement_based（原標
+      security_rule 較貼合『驗證拒絕/限制被觸發』的案例，例如 AC-SITELIST-0113 才是真正繞不過去的拒絕驗證，繼續保留 security_rule）。
+  - draft_id: TC-DRAFT-01M2NCSW5D7HSAZ2GV8MSA3FE9
+    title: 站長檢視站台列表時只看到自身所屬站台及其所有子站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-011
+    acceptance_criteria_ids:
+    - AC-SITELIST-0112
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - security
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: &id002
+    - 以站長身分登入 ba-admin 後台
+    - 進入「站台列表」頁面（預設顯示自身管轄範圍）
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入站台列表，檢視預設顯示的內容
+    - n: 2
+      action: 逐層點擊鑽入子站台，確認每一層看到的站台都在自身所屬站台的子樹之內
+    expected_result: 預設顯示自身所屬站台；可見範圍僅限自身所屬站台及其所有子站台，看不到超出此子樹之外的任何站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限
+      quote: 僅自身站台及所有子站台（不含平行或上層站台）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 AC-SITELIST-0111（Admin 的正向對照案例）同樣是『預設可見範圍』的正向展示，本身未觸發任何拒絕/繞過機制，依 Validator advisory 改標 requirement_based，並與
+      AC-0111 保持一致標記，避免對稱情境貼不同技巧標籤；真正涉及『範圍外存取被拒絕』的驗證留給 AC-SITELIST-0113（security_rule）與 API 繞過案例負責。
+  - draft_id: TC-DRAFT-01M2NCSW5D3WAA0X34EC3YDGPS
+    title: 站長透過 UI 逐層瀏覽無法到達平行或上層站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-011
+    acceptance_criteria_ids:
+    - AC-SITELIST-0113
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 進入站台列表，嘗試透過路徑列、搜尋欄或任何 UI 導覽入口尋找平行站台或自身所屬站台的上層站台
+    expected_result: UI 導覽範圍受限於自身所屬子樹，找不到任何可到達平行站台或上層站台的入口，站台列表也不會顯示該等資料
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §階層結構與逐層瀏覽
+      quote: 可見站台範圍 | 全部站台 | 僅自身站台及所有子站台（不含平行或上層站台）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是 UI 導覽層級的驗證，直接對照 spec 表格文字，不涉及繞過機制，屬於已明確定義的行為，非 exploratory。
+  - draft_id: TC-DRAFT-01M2NCSW5DMDVMGP7CRV5SDEBJ
+    title: 站長直接以站台 ID 呼叫查詢 API 存取平行或上層站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-011
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 取得一個平行站台或上層站台的站台 ID（例如從其他角色的畫面得知）
+    - n: 2
+      action: 以站長身分直接呼叫該站台的查詢 API
+    expected_result: 無法取得該站台資料（回應應為拒絕或查無資料，而非回傳站台詳細內容）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證
+    assumptions:
+    - text: Spec 未定義站長嘗試以站台 ID 直接呼叫查詢 API 存取平行／上層站台時的具體回應（REQ-SITELIST-011 的 rejection_contract.defined=false）；PM 已於 CLR-SITELIST-004（2026-09-14）回覆『依範圍模型應無法取得資料』，但未定義精確的錯誤格式，且此答覆未回寫進
+        RequirementModel，故以 exploratory 標記，需人工確認實際回應格式
+      requirement_id: REQ-SITELIST-011
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是繞過 UI 的深度防護測試，rejection_contract.defined=false，即使 CLR-SITELIST-004 已有 PM 方向性答覆，仍缺乏精確回應格式，誠實標為待確認。
+  - draft_id: TC-DRAFT-01M2NCSW5D2MJX4A236M5DS4DN
+    title: Admin 新增站台時可自由搜尋並改選上層站台，留空則建立根層站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-012
+    acceptance_criteria_ids:
+    - AC-SITELIST-0121
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，上層站台欄位搜尋並選取一個任意既有站台，填妥其餘欄位後建立
+    - n: 2
+      action: 另開一次「+ 新增站台」，上層站台留空，填妥其餘欄位後建立
+    expected_result: 前者：系統接受，新站台的上層即為所選站台；後者：系統接受，新站台建立為根層站台（無上層）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §操作/新增站台
+      quote: 自動帶入當前所在層；可搜尋改選任意站台（搜尋結果顯示站台名稱、代碼及完整路徑）；留空為根層
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『改選任意站台』與『留空』是兩個獨立分支各自對應不同結果，屬合法 decision_table。
+  - draft_id: TC-DRAFT-01M2NCSW5D6X9E2V4E2WD9JEHM
+    title: 站長新增站台時上層站台欄位唯讀，固定為當前所在層
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-012
+    acceptance_criteria_ids:
+    - AC-SITELIST-0122
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以站長身分登入 ba-admin 後台
+    - 進入「站台列表」頁面（預設顯示自身管轄範圍）
+    - 已鑽入某個子站台層級
+    test_data: []
+    steps:
+    - n: 1
+      action: 於當前層級點擊「+ 新增站台」，檢視上層站台欄位
+    - n: 2
+      action: 嘗試修改該欄位
+    expected_result: 上層站台欄位唯讀，固定顯示當前所在層，無法搜尋或改選任何其他站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §操作/新增站台
+      quote: 預帶當前所在層，唯讀不可修改
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接對照 spec 表格文字，屬明確定義行為；用 security_rule 技巧標記角色權限差異，非 exploratory。
+  - draft_id: TC-DRAFT-01M2NCSW5D8EK8HBZWE2QE1P45
+    title: 站長繞過前端直接呼叫建立站台 API 並帶入其他上層站台 ID
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-012
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 以站長身分，直接呼叫建立站台 API，上層站台 ID 帶入非當前所在層的其他站台
+    expected_result: 後端拒絕該請求，不會建立一個上層站台與站長當前所在層不同的站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證
+    assumptions:
+    - text: Spec 只定義前端行為（欄位唯讀），未定義繞過前端直接呼叫 API 時後端是否拒絕（REQ-SITELIST-012 的 rejection_contract.defined=false，且 requirement 本身註明此為已知風險區域）；PM
+        已於 CLR-SITELIST-005（2026-09-14）回覆『後端已拒絕，此前 RD 回報的可繞過風險已修復』，但此答覆未回寫進 RequirementModel，故以 exploratory 標記，需人工再次確認後端行為
+      requirement_id: REQ-SITELIST-012
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是 requirement 本身明確點名的已知風險區域，即使 CLR-SITELIST-005 已有 PM 答覆確認修復，仍依規則誠實標為待確認的 exploratory 案例。
+  - draft_id: TC-DRAFT-01M2NCSW5DB9CBATN3164VRC9P
+    title: Admin 編輯站台的上層站台選單自動排除自身與其所有子站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-013
+    acceptance_criteria_ids:
+    - AC-SITELIST-0131
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的、底下至少有一層子站台的站台 A
+    - n: 2
+      action: 點擊「編輯」A，開啟上層站台選單，檢視可選項目清單
+    expected_result: 選單中不包含 A 自身，也不包含 A 的所有子站台（含孫層）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §操作/編輯站台 + §業務規則-上層站台循環防護
+      quote: 編輯時，不可將自身或自身的子站台選為上層站台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是驗證『特定選項被排除』的否定案例，design_technique 用 security_rule 因其本質是循環防護這條業務規則的直接驗證，而非單純的欄位顯示測試。
+  - draft_id: TC-DRAFT-01M2NCSW5DRZSB1206KMPMPEBX
+    title: 站長編輯站台時上層站台欄位唯讀顯示目前值
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-013
+    acceptance_criteria_ids:
+    - AC-SITELIST-0132
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯自身管轄範圍內的一個站台，檢視上層站台欄位
+    expected_result: 唯讀顯示目前的上層站台值，無法修改；如需變更需另外通知 Admin
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限 + §操作/編輯站台
+      quote: 唯讀顯示；如需變更須通知 Admin 操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接對照 spec 表格文字，明確定義行為，非 exploratory。
+  - draft_id: TC-DRAFT-01M2NCSW5D4JTJK91FXZBPZN61
+    title: 站長繞過前端直接呼叫編輯站台 API 修改上層站台
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-013
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 以站長身分，直接呼叫編輯站台 API，將自身管轄範圍內某站台的上層站台 ID 改為其他站台
+    expected_result: 後端拒絕該請求，該站台的上層站台維持不變
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證
+    assumptions:
+    - text: Spec 只定義 UI 選單排除循環選項，未定義繞過 UI 直接呼叫編輯 API 時後端是否驗證並拒絕站長的修改（REQ-SITELIST-013 的 rejection_contract.defined=false）；PM
+        已於 CLR-SITELIST-006（2026-09-14）回覆『同 CLR-005，站長編輯時的上層站台唯讀限制後端已拒絕』，但此答覆未回寫進 RequirementModel，故以 exploratory 標記
+      requirement_id: REQ-SITELIST-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 REQ-012 的 API bypass 案例對稱，同樣因 rejection_contract.defined=false 誠實標為待確認。
+  - draft_id: TC-DRAFT-01M2NCSW5D7J4TC115RG2MJQ4Y
+    title: Admin 繞過前端直接呼叫編輯站台 API，帶入會形成循環的上層站台 ID
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-013
+    acceptance_criteria_ids: []
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的、底下至少有一層子站台的站台 A
+    - n: 2
+      action: 以 Admin 身分，直接呼叫編輯站台 A 的 API，上層站台 ID 帶入 A 自身或 A 的某個子站台
+    expected_result: 預期後端拒絕該請求，避免形成循環的父子關係；此結果目前未經確認，執行時若發現後端接受了此請求（形成循環），應視為高風險缺陷立即上報，而非視為預期行為
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/上層站台循環防護
+    assumptions:
+    - text: CLR-SITELIST-006 的 PM 回覆明確聲明『本次確認聚焦於站長權限，Admin 編輯時的循環防護是否也有對應後端驗證，未在本次回覆中明確涵蓋，若後續測試發現可繞過，需另案處理』；也就是說 Admin 這一側的後端防護目前完全沒有人力確認過，屬於比站長那一側更不確定的風險
+      requirement_id: REQ-SITELIST-013
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是全份 Draft 裡罕見『目前完全沒有任何人（含 CLR）確認過』的風險點，特別標記為 exploratory 且在 expected_result 中明講『若後端接受此請求應視為缺陷立即上報』，避免執行者誤以為『後端拒絕』是已驗證的既定事實。
+  - draft_id: TC-DRAFT-01M2NCSW5D62GEA0BF7N6AJ6KV
+    title: Admin 新增或編輯站台時可選取或修改模板
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-014
+    acceptance_criteria_ids:
+    - AC-SITELIST-0141
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，模板欄位選取一個既有模板，填妥其餘欄位後建立
+    - n: 2
+      action: 編輯剛建立的站台，將模板改為另一個既有模板並儲存
+    expected_result: 兩次操作系統皆接受；建立時所選模板正確儲存，編輯時模板成功變更為新選取的模板
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §模板設定 + §角色與權限
+      quote: 指定權限：僅 Admin 可指定或修改
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一角色的正向能力驗證，requirement_based 已足夠貼切。
+  - draft_id: TC-DRAFT-01M2NCSW5DMTE7XZJ5S5ZGCYW6
+    title: 站長新增站台時模板欄位不顯示，編輯時唯讀且無法修改
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-014
+    acceptance_criteria_ids:
+    - AC-SITELIST-0142
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，檢視表單是否有模板欄位
+    - n: 2
+      action: 編輯自身管轄範圍內一個已有模板的站台，檢視模板欄位的呈現方式並嘗試修改
+    expected_result: 新增畫面不顯示模板欄位；編輯畫面模板欄位唯讀顯示目前值，無法修改
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §模板設定 + §角色與權限
+      quote: 站長的模板欄位為唯讀，如需變更須通知 Admin
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接對照 spec 明確文字，用 security_rule 標記角色權限差異。
+  - draft_id: TC-DRAFT-01M2NCSW5DS66DHH0C7Q21MHG2
+    title: 新建站台時模板可留空，系統接受建立為待開通狀態
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-015
+    acceptance_criteria_ids:
+    - AC-SITELIST-0151
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，模板欄位留空，填妥其餘必填欄位後點擊「建立站台」
+    expected_result: 系統接受建立；新站台狀態為「待開通」（新建站台固定從待開通開始，狀態欄位不顯示於新增表單）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §模板設定/填寫規則 + §操作/新增站台
+      quote: 新建站台時模板可留空
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單純驗證留空可被接受，requirement_based 對應此直述句。
+  - draft_id: TC-DRAFT-01M2NCSW5D94C4Y7TXVH4PCC84
+    title: 模板為空時切換狀態為開通會被阻擋並提示錯誤
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-015
+    acceptance_criteria_ids:
+    - AC-SITELIST-0152
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - state_transition
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個模板為空、狀態非開通的站台（可用上一條 TC 建立的待開通站台）
+    - n: 2
+      action: 編輯該站台，將狀態切換為「開通」並點擊「儲存變更」
+    expected_result: 系統阻擋儲存，顯示錯誤提示要求先設定模板；站台狀態維持原狀，未變更為開通
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §模板設定/填寫規則 + §業務規則-模板（切換開通）
+      quote: 當狀態切換為「開通」時，模板為必填，否則阻擋儲存並提示錯誤
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 這是一個明確定義的狀態轉換前置條件（非開通→開通，需模板已填），design_technique 標 state_transition 因為斷言的核心是『轉換是否被允許』而非單純欄位驗證；REQ-SITELIST-015
+      的 states 定義也要求至少一條 state_transition 案例，本條與下一條共同滿足。
+  - draft_id: TC-DRAFT-01M2NCSW5DZPS5F0FR84FE18P6
+    title: 模板已填時切換狀態為開通可正常儲存
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-015
+    acceptance_criteria_ids:
+    - AC-SITELIST-0153
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個狀態非開通、且模板已填妥的站台
+    - n: 2
+      action: 編輯該站台，將狀態切換為「開通」並點擊「儲存變更」
+    expected_result: 系統接受，站台狀態成功變更為「開通」
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則-模板（切換開通）
+      quote: 當狀態切換為「開通」時，模板為必填
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與前一條形成完整的狀態轉換允許/拒絕對照組，同樣用 state_transition 技巧保持一致標記。
+  - draft_id: TC-DRAFT-01M2NCSW5DTY026ESA9BXX381Z
+    title: Admin 可切換站台為 5 種狀態中除更新待審外的任一可手動選取狀態
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-016
+    acceptance_criteria_ids:
+    - AC-SITELIST-0161
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有站台，編輯並將狀態依序切換為待開通、開通（模板已填妥）、暫停、關閉，每次切換後儲存並確認
+    expected_result: 四種目標狀態皆可成功切換（『任意狀態』範圍已於 2026-09-14 由 Oscar 確認含待開通）；更新待審不在手動可選項目中，因其僅由系統自動觸發
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限/狀態切換
+      quote: 可切換為任意狀態
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是驗證『Admin 可手動選取的狀態集合』這一個等價類（4 種皆可、更新待審不可選）的案例，equivalence_partitioning 比 decision_table 更貼切，因為這裡不是多條件組合，而是同一角色對同一組可選值域的驗證。quote
+      欄位已收斂為 spec.md「角色與權限」表格「狀態切換」列 Admin 欄的純原文「可切換為任意狀態」；iteration 1 版本的 quote 混入了 requirements.yaml REQ-SITELIST-016 spec_reference.quote
+      欄位裡附加的括號註記「（『任意狀態』範圍已於 2026-09-14 由 Oscar 確認含待開通）」，這段確認記錄本身並非 spec.md 逐字文字，而是 RequirementModel 記載的產品確認（因為 spec.md『站台狀態』表格的『待開通』觸發方式只列『新建站台自動設定』，未直接列為
+      Admin 可手動選取的目標狀態，此處存在解讀空間，已由 Oscar 於 2026-09-14 直接確認『任意狀態』的範圍包含待開通）。本次修訂已將此確認記錄移至此處design_rationale 說明，expected_result
+      中保留此註記則是為了讓執行者理解『四種目標狀態皆可切換』這個斷言範圍的依據，不影響 quote 欄位的純粹性。
+  - draft_id: TC-DRAFT-01M2NCSW5DFG2R3S6W55RFQCG3
+    title: 站長只能切換為暫停或關閉，其餘選項顯示但不可點選
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-016
+    acceptance_criteria_ids:
+    - AC-SITELIST-0162
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯自身管轄範圍內一個站台，檢視狀態切換選單的所有選項
+    - n: 2
+      action: 嘗試點選暫停或關閉以外的選項
+    expected_result: 狀態選單顯示全部選項，但只有暫停與關閉可被點選；其餘選項（待開通、開通、更新待審）呈現但不可互動選取
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限/狀態切換
+      quote: 僅可切換為「暫停」或「關閉」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接對照 spec 明確文字，用 security_rule 標記角色權限差異。
+  - draft_id: TC-DRAFT-01M2NCSW5DNWH86SC7FR8MSV3F
+    title: 站長嘗試將狀態切換為暫停或關閉以外的狀態時系統阻擋儲存
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-016
+    acceptance_criteria_ids:
+    - AC-SITELIST-0163
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id002
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯自身管轄範圍內一個站台，嘗試以非常規方式（如瀏覽器操作）觸發送出暫停/關閉以外的狀態值並儲存
+    expected_result: 系統阻擋儲存，狀態不會變更為暫停/關閉以外的任何值
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/狀態（站長編輯）
+      quote: 僅可切換為「暫停」或「關閉」；選取其他狀態時阻擋儲存
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 業務規則表格原文『選取其他狀態時阻擋儲存』已明確涵蓋送出時的後端行為，非僅前端 UI 限制，故不需標為 exploratory；用 security_rule 技巧維持角色權限案例的一致標記。
+  - draft_id: TC-DRAFT-01M2NCSW5DJSH6HAE2T3QQY1TM
+    title: 操作員無法檢視或調整任何站台的狀態
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-016
+    acceptance_criteria_ids:
+    - AC-SITELIST-0164
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以操作員身分登入後台
+    - n: 2
+      action: 於選單中尋找「站台列表」入口，或嘗試直接訪問站台列表頁面網址
+    expected_result: 站台列表頁面不對操作員開放，操作員無法檢視任何站台或調整其狀態
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限/狀態切換
+    assumptions:
+    - text: 本 spec（SPEC-SITELIST-001 v0.4）的「角色與權限」表格只定義 Admin 與站長兩種角色，全文未見任何『操作員』的角色定義或本頁面的存取限制描述；「操作員」在本文件中僅出現於『場次逾時時間…操作員唯讀』與一則註腳『操作員為實體機台功能新增角色，本章不另定義，詳見實體機台_spec_v07.md』。AC-SITELIST-0164
+        關於操作員完全無法存取站台列表頁面的斷言，在本文件中找不到直接依據，可能源自實體機台_spec_v07.md 或其他功能區（如 ACCOUNT）的權限設計慣例，需要人工確認此斷言的實際來源與正確性後才能視為確定規則
+      requirement_id: REQ-SITELIST-016
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是本份 Draft 中最明確的『AC 斷言查無 spec.md 原文依據』案例：與 REQ-SITELIST-006 的『操作員唯讀』同樣屬於實體機台角色、本 spec 未定義的情況，若在 design_rationale
+      假裝『spec 已明確定義』會是最嚴重一類的錯誤，故誠實標記為 exploratory 並具體說明查找過程。
+  - draft_id: TC-DRAFT-01M2NCSW5D9XQCZV6MBVYQ9AQJ
+    title: 開通狀態下網域異動並儲存後自動切換為更新待審
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-017
+    acceptance_criteria_ids:
+    - AC-SITELIST-0171
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個狀態為開通的站台（自行從環境中選定；若環境中無現成的開通狀態站台，可依 AC-SITELIST-0153 的操作路徑，即 TC-DRAFT-01M2NCSW5DZPS5F0FR84FE18P6 的 step1-2，取一個模板已填妥的站台，將狀態切換為開通後使用）
+    - n: 2
+      action: 編輯該站台，新增一筆前台網域並點擊「儲存變更」
+    - n: 3
+      action: 檢視站台狀態
+    expected_result: 儲存後站台狀態自動變為「更新待審」
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態/更新待審
+      quote: 站台處於「開通」或「更新待審」狀態下，若前台或後台網域有異動，儲存後自動切換
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 這是一條明確定義的自動狀態轉換規則，REQ-SITELIST-017 的 states 定義也要求至少一條 state_transition 案例，本條與 TC3 共同滿足。
+  - draft_id: TC-DRAFT-01M2NCSW5DRAA52SKEK2PP7534
+    title: 待開通、暫停、關閉狀態下網域異動不觸發狀態改變
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-017
+    acceptance_criteria_ids:
+    - AC-SITELIST-0172
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個狀態為待開通的站台，編輯新增一筆網域並儲存，檢視狀態是否改變
+    - n: 2
+      action: 取一個狀態為暫停的站台，編輯新增一筆網域並儲存，檢視狀態是否改變
+    - n: 3
+      action: 取一個狀態為關閉的站台，編輯新增一筆網域並儲存，檢視狀態是否改變
+    expected_result: 三種情況下，站台狀態皆維持原狀（待開通/暫停/關閉），不會因網域異動而自動切換為更新待審
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態（「更新待審」列） + §業務規則與驗證（「網域異動觸發」列）
+      quote: 站台處於「開通」或「更新待審」狀態下，若前台或後台網域有異動，儲存後自動切換；待技術部門完成設定後由 Admin 人工切回「開通」／站台為「開通」或「更新待審」時，儲存若有網域新增或刪除，系統自動切為「更新待審」；適用於所有角色
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: iteration 1 版本的 quote 逐字擷取自 requirements.yaml REQ-SITELIST-017 的 rejection_contract.description 欄位（『僅「開通」與「更新待審」兩狀態下的網域異動觸發此規則，其餘狀態不觸發』），卻呈現成
+      spec.md 原文，這段話實際上並非 spec.md 逐字文字（Validator 已指出）。iteration 2 修訂已改引 spec.md 兩處真實原文——「站台狀態」表格「更新待審」列（第 58 行）的觸發說明，以及「業務規則與驗證」表格「網域異動觸發」列（第
+      185 行）；兩處皆只明確列出「開通」與「更新待審」兩個狀態會因網域異動而觸發自動切換，未提及任何其他狀態。本 TC 斷言的『待開通/暫停/關閉狀態下網域異動不觸發』，是從這兩處條文的封閉列舉（只定義了這兩個狀態會觸發，未定義其他狀態也會觸發）推導出的否定推論，而非
+      spec.md 逐字包含『其餘狀態不觸發』這句話本身，在此誠實揭露這個推論過程，避免讓執行者誤以為 spec.md 有一句逐字的『其餘狀態不觸發』。本輪（iteration 3）進一步修正：iteration 2 的 quote 欄位用『』括起兩處原文中的狀態名稱，但
+      spec.md 第 58、185 行實際引號風格是「」、且原文本身沒有巢狀括號結構（不是『「」中再包一層『』』），iteration 2 的『』屬於 Test Designer 自行加註強調、並非逐字重現spec.md 的引號字元，Validator
+      指出此風格不一致（minor-turned-major，因與 REQ-SITELIST-002 那次逐字性錯誤同屬一類問題）。本次已將 quote 改為兩段用「／」分隔的純逐字句子，句子內部的狀態名稱一律用 spec.md 原文的「」括號，不再使用『』；REQ-SITELIST-017
+      的 rejection_contract.defined=true 且以上兩處原文已足以支撐此推論，design_technique 用 equivalence_partitioning 是因為三個起始狀態（待開通/暫停/關閉）對同一觸發事件產生完全相同的結果（不觸發），屬同一等價類的多個代表值驗證。
+  - draft_id: TC-DRAFT-01M2NCSW5D4XTRXZ3QSKDHH1CX
+    title: 更新待審狀態下 Admin 可手動切換為其他任意狀態
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-017
+    acceptance_criteria_ids:
+    - AC-SITELIST-0173
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個狀態為更新待審的站台
+    - n: 2
+      action: 以 Admin 身分編輯該站台，將狀態切換為「開通」（需先確認模板已填妥）並儲存
+    expected_result: 系統接受，狀態成功變更為開通
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態/更新待審
+      quote: Admin 可在此狀態下手動切換為其他任意狀態
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 TC1 共同構成『自動觸發進入更新待審』與『Admin 手動切出』的完整狀態轉換閉環，同樣用 state_transition 技巧。
+  - draft_id: TC-DRAFT-01M2NCSW5D3Z8MQFWEA0VX0FXV
+    title: 新增站台 Modal 前台與後台網域各預設顯示一個空輸入欄
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-018
+    acceptance_criteria_ids:
+    - AC-SITELIST-0181
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，檢視前台網域與後台網域區塊的初始狀態
+    expected_result: 前台網域與後台網域各自預設顯示一個空的輸入欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+      quote: 預設顯示一個空輸入欄位
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單純初始狀態檢視，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2NCSW5D1TC22MRY52QVE4J4
+    title: 已有多筆網域列時移除其中一列，其餘列不受影響
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-018
+    acceptance_criteria_ids:
+    - AC-SITELIST-0182
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯一個站台，於前台網域區塊點擊「＋ 新增前台網域」兩次，使共有 3 列輸入欄並各自輸入不同網域值
+    - n: 2
+      action: 點擊中間那一列的移除按鈕
+    expected_result: 該列被移除，剩餘 2 列的內容維持原輸入值不變
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+      quote: 每列右側有移除按鈕
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: requirement_based 對應此直述句即可。
+  - draft_id: TC-DRAFT-01M2NCSW5DV45CF2A0YFAB2CN0
+    title: 僅剩最後一筆網域列時移除，清空輸入欄但保留該列
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-018
+    acceptance_criteria_ids:
+    - AC-SITELIST-0183
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯一個網域區塊只剩下一列（且已有輸入值）的站台，點擊該唯一一列的移除按鈕
+    expected_result: 該列的輸入欄被清空，但該列本身仍保留在畫面上，不會變成 0 列（即畫面上依然存在至少一個空輸入欄）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+      quote: 若僅剩最後一列，點擊移除後清空輸入欄但保留該列
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『僅剩最後一列』本身就是集合大小＝1 的邊界情境，屬於典型的 boundary_value 應用（測試集合大小的邊界，而非測試數值範圍），標記合理。
+  - draft_id: TC-DRAFT-01M2NCSW5D5FJSRHXH3VF4NYJ4
+    title: 網域欄位輸入不符合網域格式的字串時系統接受並儲存，不做格式檢查
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-019
+    acceptance_criteria_ids:
+    - AC-SITELIST-0191
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 編輯一個站台，於前台網域欄位輸入純數字字串（如 12345）並儲存
+    - n: 2
+      action: 另開一次編輯，於後台網域欄位輸入含空白與符號的字串（如 not a domain!!）並儲存
+    expected_result: 兩種情況系統皆接受並儲存，不阻擋、不顯示任何格式錯誤提示
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/網域格式
+      quote: 不做格式驗證，由管理員自行確保正確性
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 輸入了兩個屬於『不符合網域格式』這個等價類的代表值，驗證它們都得到相同的『被接受』結果，屬 equivalence_partitioning 的合理應用；test_type 標 negative 是因為輸入本身是不良格式資料，即使預期結果是接受也不影響這個分類。
+  - draft_id: TC-DRAFT-01M2NCSW5DCHMTM4ZVB90KXN76
+    title: 站台代碼輸入小寫或含非英文字元時自動轉大寫並過濾非英文字元
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-020
+    acceptance_criteria_ids:
+    - AC-SITELIST-0201
+    - AC-SITELIST-0202
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: site_code_lowercase
+      value: ab
+    - name: site_code_mixed
+      value: a1b2
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台代碼欄位輸入小寫字母（如 ab）
+    - n: 2
+      action: 另開一次，站台代碼欄位輸入包含數字或符號的字串（如 a1b2 或 a!b）
+    expected_result: 第一步：欄位值自動轉為大寫（AB）；第二步：非英文字元被過濾，不計入代碼（僅保留英文字母部分）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台代碼格式
+      quote: 必須為恰好兩碼大寫英文字；輸入時自動轉大寫並過濾非英文字元
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 兩個輸入分別驗證『轉大寫』與『過濾非英文字元』兩條獨立的格式處理規則，屬於對輸入定義域的等價分割驗證，而非數值邊界測試，故不用 boundary_value。
+  - draft_id: TC-DRAFT-01M2NCSW5EMJD6MP4N3EF1ER9Q
+    title: 新增站台代碼與既有站台重複時系統阻擋儲存並提示錯誤
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-020
+    acceptance_criteria_ids:
+    - AC-SITELIST-0203
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有站台的站台代碼值（自行從環境中選定）
+    - n: 2
+      action: 點擊「+ 新增站台」，站台代碼欄位輸入與該既有站台完全相同的代碼，填妥其餘欄位後送出
+    expected_result: 系統阻擋儲存，提示代碼重複的錯誤訊息；新站台未被建立
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台代碼唯一性
+      quote: 重複時阻擋儲存並提示錯誤
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 直接明確定義的拒絕規則，requirement_based 對應此直述句。
+  - draft_id: TC-DRAFT-01M2NCSW5EK864FMWM202TS29C
+    title: 站台代碼建立後於編輯畫面唯讀，無法修改
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-020
+    acceptance_criteria_ids:
+    - AC-SITELIST-0204
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有站台，點擊「編輯」，檢視站台代碼欄位的呈現方式並嘗試修改
+    expected_result: 站台代碼欄位唯讀（置灰），無法點選或修改
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台代碼鎖定
+      quote: 建立後不可修改，編輯彈窗中顯示為唯讀
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證修改嘗試被拒絕，design_technique 用 negative 貼合本質。
+  - draft_id: TC-DRAFT-01M2NCSW5ET2NW6QDDHWWKFGTE
+    title: 站台名稱留空時系統阻擋儲存並顯示紅框錯誤提示
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-021
+    acceptance_criteria_ids:
+    - AC-SITELIST-0211
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台名稱欄位留空，填妥其餘必填欄位後嘗試送出
+    - n: 2
+      action: 另開一個既有站台的編輯畫面，將站台名稱清空後嘗試儲存
+    expected_result: 兩種情況系統皆阻擋儲存，站台名稱輸入框顯示紅框與錯誤提示
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台名稱必填
+      quote: 名稱為空時阻擋儲存，輸入框標示紅框與錯誤提示
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 新增與編輯兩個情境驗證同一條必填規則，requirement_based 對應此直述句即可，不涉及數值邊界。
+  - draft_id: TC-DRAFT-01M2NCSW5EW8HBFZBD8ZHT91F3
+    title: 線上與機台類型站台的列表與編輯畫面皆不存在任何刪除操作入口
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-022
+    acceptance_criteria_ids:
+    - AC-SITELIST-0221
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的線上類型站台，檢視其於站台列表的可用操作按鈕，以及編輯畫面內的可用操作
+    - n: 2
+      action: 取一個既有的機台類型站台，同樣檢視列表與編輯畫面的可用操作
+    expected_result: 兩種類型的站台，於列表與編輯畫面皆不存在任何可執行的刪除按鈕或入口；可用的操作僅限編輯與狀態切換（狀態切換選項依角色而定）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述）
+      quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行（＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此處引用的 spec_reference 直接沿用 RequirementModel 本身對 REQ-SITELIST-022 的 spec_reference（含 CLR-SITELIST-009
+      已確認此節為錯誤敘述的註記），避免用一段與斷言矛盾的原文假裝支持『不可刪除』這個結論；expected_result 與 quote 對得上——quote 呈現的正是『這段原文已被 PM／後端於 CLR-SITELIST-009 推翻』的完整脈絡，而非斷章取義。
+  - draft_id: TC-DRAFT-01M2NCSW5E4MB3097XRT8CVMWJ
+    title: 繞過前端直接呼叫刪除站台的後端 API，請求被拒絕
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-022
+    acceptance_criteria_ids:
+    - AC-SITELIST-0222
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有的站台（線上或機台類型皆可）
+    - n: 2
+      action: 直接呼叫刪除該站台的後端 API
+    expected_result: 後端拒絕該請求，站台資料不受影響，仍存在於系統中
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述）
+      quote: ＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-SITELIST-022 的 rejection_contract.defined=true（CLR-SITELIST-008/009 已由 PM／後端共同明確確認前後端皆拒絕），故本案例可直接寫成確定規則，不需
+      exploratory；design_technique 用 negative 貼合『驗證請求被拒絕』的本質。此處 expected_result_spec_reference.quote 沿用 RequirementModel 本身對
+      REQ-SITELIST-022 的 spec_reference，其中包含編輯註記「＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆」——這段註記並非 spec.md 對『刪除流程如何運作』的正面陳述，而是標註
+      spec.md 原文『點擊列表「刪除」後顯示確認彈窗…』一段已被 CLR-SITELIST-009 的 PM／後端回覆推翻、此流程實際不存在於現行產品的來源說明。比照姊妹案例 TC-DRAFT-01M2NCSW5EW8HBFZBD8ZHT91F3（AC-SITELIST-0221）在
+      design_rationale 的揭露方式，於此一併揭露，避免執行者誤以為這段引文是spec.md 對刪除流程存在與否的正面確認。
+  - draft_id: TC-DRAFT-01M2NCSW5EW0PEHHTBB8672Y7T
+    title: 機台主站台自身的場館設定與其底下新建子站台的場館設定各自獨立、互不影響
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-024
+    acceptance_criteria_ids:
+    - AC-SITELIST-0241
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個機台類型的主站台（根層站台），編輯並設定其額度上限為某值 A（若尚未設定機台專屬欄位，先行設定）
+    - n: 2
+      action: 在該主站台底下新增一個機台類型子站台（場館），設定其額度上限為不同的值 B
+    - n: 3
+      action: 重新檢視主站台自身的額度上限，確認仍為 A；檢視新建子站台的額度上限，確認為 B
+    expected_result: 主站台的額度上限維持 A 不變；子站台的額度上限為 B；兩者各自一份設定，互不影響
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位 + §業務規則-機台主站台可直接經營
+      quote: 每份場館設定（額度上限、場次逾時、日結時間）的作用範圍為該站台自身、不含子站台，主站台與各場館各自一份、互不影響
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接驗證 AC-0241 描述的獨立性斷言，requirement_based 對應此直述句。
+  - draft_id: TC-DRAFT-01M2NCSW5EHR3Y6Z8SVZ1GMXGX
+    title: 修改機台主站台的場次逾時時間後，新建立的子站台仍以系統預設值起始、不繼承主站台已修改的值
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-024
+    acceptance_criteria_ids:
+    - AC-SITELIST-0242
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個機台類型的主站台，將其場次逾時時間由預設 1 小時修改為 2 小時並儲存
+    - n: 2
+      action: 在該主站台底下新增一個機台類型子站台（場館），檢視其場次逾時時間的預設值
+    - n: 3
+      action: 重新檢視主站台自身的場次逾時時間，確認仍為修改後的 2 小時
+    expected_result: 新建子站台的場次逾時時間為系統預設的 1 小時，不會因主站台已修改為 2 小時而連帶繼承該值；主站台自身的值仍維持 2 小時，不受新建子站台影響
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/機台主站台可直接經營
+      quote: 作用範圍為該站台自身、不含子站台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是刻意驗證『不會發生的錯誤繼承』這個否定事實，設計成 negative 案例：先製造一個『主站台已被修改過』的狀態，再驗證新建子站台不會意外沿用這個修改值，比單純的『各自設定互不影響』(TC1) 更能揭露『新站台預設值來源』這個容易被誤植的邏輯（例如若實作誤將子站台預設值抓成『上層目前的值』而非『系統固定預設值』就會在此案例中被抓到）；為
+      REQ-SITELIST-024（high risk）提供真正的 negative 覆蓋，而非用不相關的案例硬湊。
+  - draft_id: TC-DRAFT-01M2NCSW5EG7AX57ZZP3R4JTMT
+    title: 機台類型站台的新增／編輯畫面不存在洗分／出金最低門檻欄位
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-025
+    acceptance_criteria_ids:
+    - AC-SITELIST-0251
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊「+ 新增站台」，站台類型選「機台」，逐一檢視機台專屬欄位群的所有欄位名稱
+    - n: 2
+      action: 取一個既有的機台類型站台，點擊「編輯」，同樣逐一檢視機台專屬欄位群
+    expected_result: 新增與編輯畫面皆不存在名為「洗分／出金最低門檻」或類似名稱的欄位；機台專屬欄位群僅包含場館地址、聯絡人／電話、額度上限、場次逾時時間、日結時間
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/洗分門檻採用值 + §變更記錄 v04
+      quote: 移除機台專屬欄位「洗分／出金最低門檻」——洗分門檻定案改於機台端設定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證欄位不存在的否定案例，negative 技巧貼合本質。
+  - draft_id: TC-DRAFT-01M2NCSW5E14F8BTNN0M6VTEZ6
+    title: 列表依子站數量顯示或不顯示「N 個子站」文字
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-026
+    acceptance_criteria_ids:
+    - AC-SITELIST-0261
+    - AC-SITELIST-0262
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個有 3 個子站的既有站台，檢視其於站台列表的名稱呈現
+    - n: 2
+      action: 取一個沒有子站的既有站台，檢視其於站台列表的名稱呈現
+    expected_result: 前者：名稱旁顯示「3 個子站」；後者：名稱旁不顯示任何子站數量文字
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位
+      quote: 有子站時名稱旁顯示「N 個子站」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『有子站 vs 無子站』是兩個互斥條件各自產生不同顯示結果，屬合法 decision_table。
+  - draft_id: TC-DRAFT-01M2NCSW5EQ611VC8YC7T3KPJ2
+    title: 列表網域欄僅顯示前台／後台網域筆數，不展開完整清單
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-026
+    acceptance_criteria_ids:
+    - AC-SITELIST-0263
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個前台網域 2 筆、後台網域 1 筆的既有站台（或先行編輯設定成此狀態），檢視其於站台列表的網域欄
+    expected_result: 顯示「前台 2 個 / 後台 1 個」，不展開列出完整網域清單（需點擊進入編輯彈窗才能看到完整清單）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位
+      quote: 前台與後台網域合併顯示，僅顯示數量（如「前台 2 個 / 後台 1 個」）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一顯示格式驗證，requirement_based 對應直述句即可。
+  - draft_id: TC-DRAFT-01M2NCSW5E4WZ42NNXXCS4ZWK3
+    title: 列表模板欄未指定模板時顯示「—」
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-026
+    acceptance_criteria_ids:
+    - AC-SITELIST-0264
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個未指定模板的既有站台（或新建一個模板留空的站台），檢視其於站台列表的模板欄
+    expected_result: 模板欄顯示「—」
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位
+      quote: 未指定顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一顯示格式驗證，requirement_based 對應直述句即可。
+  - draft_id: TC-DRAFT-01M2NCSW5EHYWP8037E9PYZHS3
+    title: 新建站台的時間紀錄欄：創建時間有值、修改時間為空、最後登入顯示從未登入
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-027
+    acceptance_criteria_ids:
+    - AC-SITELIST-0271
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 新建一個站台
+    - n: 2
+      action: 檢視該站台的時間紀錄欄（創建時間、修改時間、最後登入）
+    expected_result: 創建時間有值（建立當下的時刻）；修改時間為空；最後登入顯示「從未登入」
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位/時間紀錄
+      quote: 新建站台修改時間為空、從未登入顯示「從未登入」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一初始狀態驗證，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2NCSW5EKD4ZJASA1BE0B6V9
+    title: 站台被編輯後修改時間更新為最近一次編輯時刻
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-027
+    acceptance_criteria_ids:
+    - AC-SITELIST-0272
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取一個既有站台，記錄其目前修改時間
+    - n: 2
+      action: 編輯該站台任一欄位並儲存
+    - n: 3
+      action: 重新檢視修改時間
+    expected_result: 修改時間更新為本次儲存操作的時刻，與編輯前的值不同
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位/時間紀錄
+      quote: 均為系統自動產生（UTC+0），不開放編輯
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一狀態變化驗證，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2NCSW5EV4MEE6F96HM09F6P
+    title: 任何角色皆無法編輯時間紀錄欄位
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-027
+    acceptance_criteria_ids:
+    - AC-SITELIST-0273
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入，編輯一個既有站台，檢視創建時間、修改時間、最後登入欄位是否可互動編輯
+    - n: 2
+      action: 以站長登入，編輯一個自身管轄範圍內的站台，同樣檢視這三個欄位
+    expected_result: 兩種角色皆無法編輯這三個欄位，欄位為唯讀顯示，不提供任何輸入或修改的控制項
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位/時間紀錄
+      quote: 均為系統自動產生（UTC+0），不開放編輯
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證兩種角色皆無編輯能力的否定案例，negative 技巧貼合本質。
+  - draft_id: TC-DRAFT-01M2NCSW5EDZRX24P8H9CX6QVV
+    title: 狀態篩選與關鍵字搜尋可同時作用，結果需同時符合兩個條件
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-028
+    acceptance_criteria_ids:
+    - AC-SITELIST-0281
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 於站台列表選擇狀態篩選為「開通」，同時於關鍵字欄輸入一個已知存在、且該站台狀態為開通的站台名稱或代碼片段
+    - n: 2
+      action: 檢視搜尋結果
+    expected_result: 結果僅包含同時符合『狀態為開通』且『名稱或代碼含關鍵字』兩個條件的站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §篩選器
+      quote: 與狀態篩選可同時作用
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AND 邏輯的組合驗證，requirement_based 對應此直述句；未套用 decision_table 是因為這裡只有一組具體組合被驗證，不是系統性列舉多組條件×結果的矩陣。
+  - draft_id: TC-DRAFT-01M2NCSW5EFV39J7GHZN0XMYXC
+    title: 篩選與搜尋僅作用於當前所在層，不跨層查詢
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-028
+    acceptance_criteria_ids:
+    - AC-SITELIST-0282
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - boundary
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 在根層對某關鍵字進行搜尋，確認結果不包含子層才有的站台
+    - n: 2
+      action: 鑽入某個子站台層級，套用一個篩選條件，確認即使上層或其他層級有符合條件的站台，結果也不會出現
+    expected_result: 無論在哪一層套用篩選或搜尋，結果都只限於當前所在層的站台，不包含其他層級（即使其他層級也有符合條件的站台）
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §篩選器
+      quote: 篩選與搜尋均僅作用於當前所在層，不跨層查詢
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是驗證『查詢範圍邊界不會被跨越』的案例，test_type 標 boundary 貼合『階層範圍邊界』這個語意（而非數值邊界），design_technique 仍如實標為 requirement_based，因為驗證方法本身是直接對照規則陳述，未套用真正的邊界值分析技巧。
+  - draft_id: TC-DRAFT-01M2NCSW5EVENDCCWJFDFXXXEX
+    title: 點擊站台名稱進入其子站台列表，路徑列同步顯示對應路徑
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-029
+    acceptance_criteria_ids:
+    - AC-SITELIST-0291
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 在根層列表點擊某個有子站的站台名稱
+    - n: 2
+      action: 檢視畫面內容與頁面頂部路徑列
+    expected_result: 進入該站台的子站台列表；路徑列顯示從根層到該站台的路徑
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §階層結構與逐層瀏覽/鑽入、路徑列
+      quote: 點擊任意站台名稱，進入該站台的子站台列表
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一導覽行為驗證，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2NCSW5ED8C5Y60QZ655X75W
+    title: 點擊路徑列中間節點跳回該層
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-029
+    acceptance_criteria_ids:
+    - AC-SITELIST-0292
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 連續點擊站台名稱鑽入至少三層，記錄路徑列上的各層節點
+    - n: 2
+      action: 點擊路徑列中間某一個節點（非最後一個、非「站台列表」）
+    expected_result: 畫面回到該節點對應的層級，顯示該層的站台列表
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §階層結構與逐層瀏覽/鑽入、路徑列
+      quote: 點擊任意節點可跳回該層
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一導覽行為驗證，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2NCSW5E3HJK0WBGMW4W9NEP
+    title: 點擊路徑列「站台列表」回到根層
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-029
+    acceptance_criteria_ids:
+    - AC-SITELIST-0293
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 連續點擊站台名稱鑽入至少兩層
+    - n: 2
+      action: 點擊路徑列最前端的「站台列表」節點
+    expected_result: 畫面回到根層，顯示所有根層站台
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §階層結構與逐層瀏覽/鑽入、路徑列
+      quote: 點擊「站台列表」回到根層
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 單一導覽行為驗證，requirement_based 已足夠。
+  - draft_id: TC-DRAFT-01M2QVAHBKMNQJ86FVMGVCV7QG
+    title: 機台類型根層站台建立時，核心貨幣依所選類型正確連動帶出 TWD
+    product: ba-admin
+    functional_area: SITELIST
+    requirement_ids:
+    - REQ-SITELIST-002
+    acceptance_criteria_ids:
+    - AC-SITELIST-0023
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 身分登入 ba-admin 後台
+    - 進入「後台管理員系統 > 站台列表」頁面（根層，路徑列顯示「站台列表」）
+    test_data:
+    - name: 上層站台
+      value: 留空（＝建立根層站台，即 AC-SITELIST-0023 所稱「上層為 admin」的情境）
+    - name: 站台類型
+      value: 機台
+    - name: 預期連動的核心貨幣
+      value: TWD
+    - name: 站台名稱
+      value: 自訂可辨識名稱，例如「AC0023-核心貨幣連動驗證」
+    - name: 站台代碼
+      value: 兩碼大寫英文字，取環境中尚未使用的組合（例如 ZT）；若提示重複改試另一組
+      note: 代碼格式規則見 spec.md §業務規則與驗證/站台代碼格式
+    steps:
+    - n: 1
+      action: 點擊右上角「+ 新增站台」開啟 Modal，「上層站台」欄位保持留空，「站台類型」選「機台」，檢視此時「核心貨幣」欄位的值（不做任何幣別啟用、匯入或其他前置操作）。
+      expected: 核心貨幣欄位依所選「機台」類型過濾後自動帶出 TWD（可選清單機台僅 TWD 一種，等同自動帶入）
+    - n: 2
+      action: 填妥站台名稱與兩碼大寫站台代碼等其餘必填欄位後，點擊「建立站台」。
+      expected: 站台建立成功，列表新增一筆該站台，狀態為「待開通」
+    - n: 3
+      action: 在站台列表找到剛建立的站台，點擊該列「編輯」開啟 Modal，檢視「核心貨幣」欄位的顯示值。
+      expected: 核心貨幣顯示為 TWD，與新增當下依機台類型連動帶出的值一致。（欄位是否唯讀屬 AC-SITELIST-0101／REQ-SITELIST-010 的斷言範圍，已由 TC-DRAFT-01M2NCSW5D3W9ZQDASZW5FV4BK
+        覆蓋，本步驟只取其顯示值作為「連動建立」的證據，不在此重複斷言唯讀性）
+    expected_result: 上層站台留空建立的機台類型根層站台（即 AC-SITELIST-0023 所稱「上層為 admin」之情境），核心貨幣欄位在新增當下與建立完成後皆正確依所選類型連動帶出 TWD——step1 顯示下拉過濾後自動帶出的值、step2
+      確認建立成功、step3 確認建立完成後編輯畫面顯示值仍為 TWD，三者共同構成「核心貨幣依所選類型連動建立」的完整證據。核心貨幣欄位本身是否唯讀不在本 TC 斷言範圍內（見 AC-SITELIST-0101／REQ-SITELIST-010）。「此連動建立與鏈上錢包管理無關」這項判斷依據
+      CLR-SITELIST-011，但其稽核強度仍待加強，見 assumptions，執行者請一併確認。
+    expected_result_spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣（第一項）＋ §操作/新增站台「核心貨幣」欄
+      quote: 主站台（根層站台）的核心貨幣為下拉選單，選項依站台類型過濾——可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種，故實際上等同自動帶入（2026-08-21 客戶定案）
+    assumptions:
+    - text: '本TC的expected_result斷言「核心貨幣連動建立與鏈上錢包管理（platform級幣種出入金風控開關）完全無關、不互相依賴」，依據為CLR-SITELIST-011（status: APPLIED）。獨立Validator審查指出，CLR-SITELIST-011的provenance明顯弱於本專案同功能區其餘CLR-SITELIST-001~009的既有慣例（同一帳號於11秒內提出/回答/套用，無asked_to/asked_at欄位、無ASKED中繼狀態、無可獨立核查的第三方來源；spec.md全文「鏈上錢包」零命中，此概念完全由RequirementModel/CLR自行注入）。Oscar確認此為對話中直接確認的內容、非資料錯誤，但為維持本專案的驗證標準（稽核強度需獨立於orchestrating
+        session本身），選擇不強制通過此爭議、改保留為待確認假設。執行此TC前，建議先取得更具外部可查核性的來源（如實際會議記錄、ticket連結）以升級此判斷的確定性層級。'
+      requirement_id: REQ-SITELIST-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: '本 TC 取代前一版 TC-DRAFT-01M2QR8VA6H9TKKST1WYK73T74（已於 APR-0109 被 Oscar 退回）。前一版誤把『鏈上錢包管理』的幣別啟用狀態當作驗證『核心貨幣連動建立』的依據，在
+      precondition／steps 中安排了跨頁面的站台切換與鏈上錢包管理檢視；但 CLR-SITELIST-011（status: APPLIED）已正式確認鏈上錢包管理（platform 級幣種出入金風控開關，跟站台無關）與站台核心貨幣（SITELIST
+      頁面自身、站台建立時依類型連動的設定欄位）是兩個完全不同、互不相依的概念，彼此不檢查對方狀態。本輪移除所有跨頁面／站台切換相關的步驟與 assumptions，改為只在 SITELIST 頁面本身完整黑箱驗證『機台類型根層站台（上層站台留空）建立時，核心貨幣欄位正確連動帶出
+      TWD』這件事：step1 看新增當下的下拉過濾結果、step2 確認建立成功、step3 確認建立完成後編輯畫面顯示值仍為 TWD。design_technique 標 requirement_based 而非 decision_table：本
+      TC 只走「機台」這一條路徑（單一條件對單一結果），沒有 2×2 以上的條件組合矩陣，也不驗證拒絕行為，不落入 REQ-SITELIST-002 rejection_contract.defined=false 對 negative／error_guessing
+      案例的 exploratory 限制。因 CLR-SITELIST-011 已把『鏈上錢包管理與核心貨幣的關係』這個先前未解決的問題正式確認清楚，本 TC 不再是依賴未解假設的探索性案例，assumptions 留空、不標 exploratory。與
+      TC-DRAFT-01M2NCSW5D81FCS58EVQ44M0D0（AC-0091/0092）的差別：那條驗證的是『新增站台 Modal 的核心貨幣下拉選單依站台類型過濾顯示哪些選項』，停在選單顯示層；本 TC 額外驗證『建立完成後該值是否持續正確顯示』這個連動建立的結果面，兩者互補、不重複。step3
+      刻意只取核心貨幣的顯示值、不斷言其唯讀性——唯讀性屬 AC-SITELIST-0101／REQ-SITELIST-010 的斷言範圍，已由另一條 TC 覆蓋，維持 AC 邊界不越界。
+
+
+      【iteration 7 修正】獨立Validator指出CLR-SITELIST-011的provenance偏弱（詳見上方assumptions說明），Oscar決定維持本專案的驗證標準、不override，把「鏈上錢包管理與核心貨幣無關」這項判斷改標為exploratory
+      assumption，而非直接寫入design_rationale當作確定事實。TC本身的3步驟設計（只在SITELIST頁面內驗證核心貨幣連動建立，不涉及鏈上錢包管理操作）維持不變，因為這部分的正確性不依賴CLR-011，純粹是SITELIST頁面自身可黑箱觀察的行為。'
+history:
+- at: '2026-09-17T15:13:48Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-007

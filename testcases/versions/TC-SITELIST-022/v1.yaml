@@ -1,0 +1,91 @@
+title: 直接呼叫編輯站台 API，帶入會形成循環的上層站台 ID
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-013
+acceptance_criteria_ids:
+- AC-SITELIST-0132
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 進入 後台管理員系統 > 站台列表
+test_data: []
+steps:
+- n: 1
+  action: 取一個有子站台 B 的站台 A
+- n: 2
+  action: 直接呼叫編輯 API，將站台 A 的上層站台設為其子站台 B
+expected_result: 後端拒絕此請求，不得形成循環的階層關係
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §業務規則與驗證/上層站台循環防護
+assumptions:
+- text: Spec 只定義 UI 選單排除循環選項；PM 對站長權限的後端驗證已於 CLR-SITELIST-006 確認，但 Admin 編輯時的循環防護是否也有對應後端驗證未明確涵蓋，需另行確認
+  requirement_id: REQ-SITELIST-013
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0012
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-022
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2E88TGZWRFKZ0CTZT8Y6AF8
+created_at: '2026-09-13T20:45:19Z'
+updated_at: '2026-09-13T20:56:38Z'
+history:
+- at: '2026-09-13T20:45:19Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2E7YRXH3KSSYHEVDTDPEENX
+  run_id: RUN-20260914-002
+- at: '2026-09-13T20:45:19Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-002
+- at: '2026-09-13T20:45:19Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2E88TGZWRFKZ0CTZT8Y6AF8
+  run_id: RUN-20260914-002
+- at: '2026-09-13T20:45:19Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-002
+- at: '2026-09-13T20:56:38Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0012
+  run_id: RUN-20260914-002
+- at: '2026-09-13T20:56:38Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-002
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0012

@@ -1,0 +1,87 @@
+artifact_id: ART-TCD-01M2HSTB783MGWFQBGENC06R37
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-014
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T05:49:41Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-026
+- entity_type: TestCase
+  id: TC-CASHFLOW-031
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2HSTB77HZXHDH0WTK4DSA3P
+    title: req-cashout 已建立 PENDING 後機台 15 秒逾時結束程序，該 PENDING 不會自動結束，需新請求取代或人工出金連動取消
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-026
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0261
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 機台送出 req-cashout，平台已建立 PENDING
+    - n: 2
+      action: 機台 15 秒內未收到回覆，直接結束程序（不印收據）
+    - n: 3
+      action: 檢視該筆 PENDING 的狀態
+    expected_result: 該 PENDING 持續停留在待確認，不會自動結束；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依 REQ-CASHFLOW-027 連動取消既有
+      PENDING）才能收斂——交易紀錄查詢頁不存在手動取消操作，已由 Oscar 2026-09-15 確認（CLR-CASHFLOW-004）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 須由新的 req-cashout 取代或人工出金連動取消（REQ-CASHFLOW-027）收斂（2026-09-15已修正，原「Admin手動取消」路徑不存在）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-031
+      version: 1
+    design_rationale: 原版斷言「Admin手動取消」是收斂路徑之一，已由 Oscar 2026-09-15 確認此操作不存在於交易紀錄查詢頁，改為實際存在的兩條路徑：新請求取代、人工出金連動取消
+history:
+- at: '2026-09-15T05:49:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-014
+- at: '2026-09-15T05:55:09Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2HT46N1JGEGMA7W192CKS8Y
+  run_id: RUN-20260915-014

@@ -1,0 +1,94 @@
+title: 交易時間與核實時間範圍篩選皆能正確限定結果
+product: ba-admin
+functional_area: CASHOUT
+requirement_ids:
+- REQ-CASHOUT-013
+acceptance_criteria_ids:
+- AC-CASHOUT-0131
+- AC-CASHOUT-0132
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: low
+risk: low
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入後台
+- 頁面標題下方的站台切換選單已切換至一個既有的測試站台
+- 進入 帳務管理 > 洗分出金核實
+test_data:
+- name: D1_交易時間範圍(含)
+  value: 以既有紀錄之交易時間所在日期為準
+- name: D1_交易時間範圍(不含)
+  value: D1 之後的區間，不含 D1
+- name: D2_核實時間範圍(含)
+  value: 以既有已核實紀錄之核實時間所在日期為準
+- name: D2_核實時間範圍(不含)
+  value: D2 之後的區間，不含 D2
+steps:
+- n: 1
+  action: 取一筆已知交易時間為 D1 的紀錄，設定交易時間篩選範圍為 [D1, D1]（同一天）並搜尋，確認該筆包含在結果內
+- n: 2
+  action: 將交易時間篩選範圍改為不含 D1 的區間（例如 [D1+1天, D1+30天]）並搜尋，確認該筆被排除
+- n: 3
+  action: 清除交易時間篩選，改取一筆已核實、已知核實時間為 D2 的紀錄，比照上兩步分別以含 D2 與不含 D2 的核實時間範圍篩選並比對結果
+expected_result: 交易時間範圍恰好包含 D1 時該筆出現、不包含時被排除；核實時間範圍恰好包含 D2 時該筆出現、不包含時被排除，兩個篩選欄位皆以邊界日期正確納入/排除紀錄
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.1'
+  location: §篩選器
+  quote: 交易時間 | 日期範圍 | 出金即收據印出時間 ｜ 核實時間 | 日期範圍 | —
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHOUT-102
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+created_at: '2026-09-17T17:38:03Z'
+updated_at: '2026-09-17T19:15:28Z'
+history:
+- at: '2026-09-17T17:38:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6NEJ8SFRQWXWDBMMXRVAB
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-003
+- at: '2026-09-17T19:15:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0118
+  run_id: RUN-20260918-003
+  note: rejected

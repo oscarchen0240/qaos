@@ -1,0 +1,78 @@
+artifact_id: ART-TVR-01M2JFZQY9DR1Q7HN9RV8YWZQM
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-018
+task_id: T2
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-09-15T12:17:07Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2JFNAG08AM48DRETEH7JZJJ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2JFNAG08AM48DRETEH7JZJJ
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2JFNAG08AM48DRETEH7JZJJ
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2JFNAFZ1D0CX8ZQ9JD9WF3G
+    issue_type: critical_ambiguity
+    severity: major
+    violated_requirement: REQ-MEMBER-011
+    spec_reference: null
+    evidence: 步驟3原文『（若前端未完全阻擋、允許送出）檢視對應的API request/response』，是被動等待前端出錯才觸發的條件，但Oscar確認的原始描述是『若繞過前端直接呼叫API，後端回400』，這是需要主動繞過前端的動作
+    explanation: 若前端驗證正常運作（步驟2大概率成立），步驟3幾乎不會被執行到，導致v2新增的核心斷言『後端回應HTTP 400、錯誤代碼COMMON_NON_NEGATIVE』實質上可能從未被真正驗證
+    recommended_change: 改為不依賴前端是否阻擋的明確主動動作，使用API測試工具繞過前端直接呼叫API驗證
+  advisories:
+  - testcase_id: TC-DRAFT-01M2JFNAFZ1D0CX8ZQ9JD9WF3G
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: expected_result多處寫『已由Oscar 2026-09-15確認』，但references清單沒有對應的Clarification/決策記錄artifact ID
+    explanation: 缺少結構化決策記錄引用，未來稽核出處較不易追溯
+    recommended_change: 若存在對應Clarification/Decision artifact，建議加入references
+  - testcase_id: TC-DRAFT-01M2JFNAFZ1D0CX8ZQ9JD9WF3G
+    issue_type: critical_ambiguity
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 步驟1-3有明確斷言，步驟4刻意不預設答案，沒有明講整體TC的PASS/FAIL判定準則是否受步驟4影響
+    explanation: 同一TC混合兩種判定方式
+    recommended_change: 補充步驟4的完成標準說明，不影響整體TC判定
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2JFNAFZ1D0CX8ZQ9JD9WF3G
+    verdict: issue
+history:
+- at: '2026-09-15T12:17:07Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-018

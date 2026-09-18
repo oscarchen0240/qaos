@@ -1,0 +1,85 @@
+title: 操作員直接呼叫核實 API 並指定非自身場館的紀錄時，後端拒絕該請求
+product: ba-admin
+functional_area: CASHOUT
+requirement_ids:
+- REQ-CASHOUT-025
+acceptance_criteria_ids:
+- AC-CASHOUT-0252
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- security
+- negative
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以操作員身分（自行從環境中選定的既有帳號）取得其登入憑證，用於直接呼叫後端 API
+- 非自身場館的一筆待核實紀錄，其場館為該操作員帳號未被授權的場館
+test_data: []
+steps:
+- n: 1
+  action: 以操作員身分取得其登入 session/token
+- n: 2
+  action: 略過前端限制，直接呼叫核實 API，並在請求中指定一筆不屬於該操作員所屬場館的紀錄
+expected_result: 後端拒絕該請求（回傳權限錯誤，不執行核實），不會因為只在前端擋就讓後端在缺乏前端保護時被繞過
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.1'
+  location: §操作
+  quote: 操作員限自身場館
+assumptions:
+- text: 『操作員』角色的權限範圍（含是否限定單一場館）定義於開發包⑥ PLATFORMRULE，該包尚未完成 Phase 3 測試設計；本 TC 引用的規則文字取自 SPEC-CASHOUT-001 本身（非本 TC 自行推測），但目前測試環境中是否已存在一個確實依此規則設定好場館範圍的操作員帳號、以及後端是否已如文字所述拒絕跨場館請求，尚未獨立確認，需環境/PLATFORMRULE負責人協助確認後才能視為可重複執行的既定案例
+  requirement_id: REQ-CASHOUT-025
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHOUT-119
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+created_at: '2026-09-17T17:38:03Z'
+updated_at: '2026-09-17T19:15:28Z'
+history:
+- at: '2026-09-17T17:38:03Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6NEJ8SFRQWXWDBMMXRVAB
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R74SS8R681HG9RHXJAW0PP
+  run_id: RUN-20260918-003
+- at: '2026-09-17T17:38:03Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-003
+- at: '2026-09-17T19:15:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0118
+  run_id: RUN-20260918-003
+  note: rejected

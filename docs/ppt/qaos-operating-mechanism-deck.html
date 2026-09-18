@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>QAOS 運作機制簡報</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #eef0f4;
+  --paper: #f6f6f3;
+  --surface: #ffffff;
+  --ink: #1c1f26;
+  --muted: #626a76;
+  --faint: #8b93a0;
+  --border: #e2e5ea;
+  --border-strong: #cfd4db;
+  --accent: #2f4bd6;
+  --accent-ink: #1f2f8f;
+  --accent-soft: #eaeeff;
+  --good: #1c7a52;
+  --good-soft: #e4f4ec;
+  --human: #a3650f;
+  --human-soft: #fbeed9;
+  --risk: #b23a2e;
+  --risk-soft: #fbe8e5;
+  --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115; --paper: #171a21; --surface: #1d2129; --ink: #e8eaef; --muted: #9aa2b1; --faint: #676f7e;
+    --border: #2a2f39; --border-strong: #383e4b; --accent: #8393ff; --accent-ink: #c3cbff; --accent-soft: #232a4d;
+    --good: #5ecf9c; --good-soft: #17301f; --human: #e0ab5c; --human-soft: #34270f; --risk: #e7897c; --risk-soft: #33201c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115; --paper: #171a21; --surface: #1d2129; --ink: #e8eaef; --muted: #9aa2b1; --faint: #676f7e;
+  --border: #2a2f39; --border-strong: #383e4b; --accent: #8393ff; --accent-ink: #c3cbff; --accent-soft: #232a4d;
+  --good: #5ecf9c; --good-soft: #17301f; --human: #e0ab5c; --human-soft: #34270f; --risk: #e7897c; --risk-soft: #33201c;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+.deck-shell { flex: 1; display: flex; align-items: center; justify-content: center; padding: 22px; min-height: 0; position: relative; }
+.frame { position: relative; width: min(100%, 1180px); aspect-ratio: 16/9; background: var(--paper); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden; }
+.slide { position: absolute; inset: 0; padding: 46px 60px; display: flex; flex-direction: column; }
+.slide[hidden] { display: none !important; }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.slide h1 { font-size: 30px; margin: 0 0 6px; font-weight: 700; text-wrap: balance; line-height: 1.2; }
+.slide h2 { font-size: 23px; margin: 0 0 14px; font-weight: 700; text-wrap: balance; }
+.slide .lede { font-size: 13.5px; color: var(--muted); max-width: 74ch; line-height: 1.55; margin: 0 0 16px; }
+.slide-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* cover */
+#s1 { justify-content: center; align-items: flex-start; background: radial-gradient(1200px 500px at 85% -10%, var(--accent-soft), transparent 60%), var(--paper); }
+#s1 .mark { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent); letter-spacing: .1em; margin-bottom: 18px; }
+#s1 h1 { font-size: 44px; margin-bottom: 12px; }
+#s1 .sub { font-size: 16px; color: var(--muted); max-width: 56ch; line-height: 1.55; margin-bottom: 24px; }
+#s1 .meta-row { display: flex; gap: 24px; font-size: 12px; color: var(--faint); font-family: var(--font-mono); }
+#s1 .meta-row b { color: var(--ink); font-family: var(--font-ui); font-weight: 600; }
+
+/* pain point (slide 2) */
+.pain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-height: 0; }
+.pain-col { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.pain-col h4 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+.pain-col ul { margin: 0; padding-left: 16px; font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+.pain-col.problem { border-left: 3px solid var(--risk); }
+.pain-col.solve { border-left: 3px solid var(--good); }
+.stat-inline { display: flex; gap: 10px; align-items: baseline; margin-top: 4px; }
+.stat-inline .n { font-size: 24px; font-weight: 700; color: var(--risk); font-family: var(--font-mono); }
+.stat-inline .n.good { color: var(--good); }
+.stat-inline span.cap { font-size: 11.5px; color: var(--muted); }
+
+/* one-liner (slide 3) */
+#s3 .slide-body { justify-content: center; align-items: center; text-align: center; }
+.big-line { font-size: 30px; font-weight: 700; line-height: 1.4; max-width: 22ch; text-wrap: balance; }
+.big-line .not { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--risk); font-weight: 500; }
+.big-line .is { color: var(--accent-ink); }
+.compare-row { display: flex; gap: 40px; margin-top: 26px; }
+.compare-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.compare-item .tag { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border-radius: 999px; }
+.compare-item.no .tag { background: var(--risk-soft); color: var(--risk); }
+.compare-item.yes .tag { background: var(--good-soft); color: var(--good); }
+.compare-item p { font-size: 12px; color: var(--muted); margin: 0; max-width: 20ch; }
+
+/* 5-layer table (slide 4) */
+table.layer-table { width: 100%; border-collapse: collapse; font-size: 12px; flex: 1; }
+table.layer-table th, table.layer-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; line-height: 1.5; }
+table.layer-table th { background: var(--surface); font-weight: 700; font-size: 11.5px; }
+table.layer-table td.tag { font-family: var(--font-mono); font-weight: 700; font-size: 11px; white-space: nowrap; }
+.crosscut { margin-top: 10px; font-size: 11.5px; color: var(--muted); background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; }
+
+/* invariants (slide 5) */
+.inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; }
+.inv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.inv-card .inv-num { font-family: var(--font-mono); font-size: 11px; color: var(--accent-ink); background: var(--accent-soft); border-radius: 6px; padding: 2px 7px; display: inline-block; margin-bottom: 6px; }
+.inv-card h4 { margin: 0 0 4px; font-size: 13.5px; font-weight: 700; }
+.inv-card p { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+/* simple role pipeline (slides 6,7) */
+.role-pipeline { display: flex; align-items: stretch; gap: 0; margin: 8px 0 18px; }
+.role-node { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 18px; display: flex; flex-direction: column; gap: 8px; }
+.role-node.human { background: var(--human-soft); border-color: var(--human); }
+.role-node .r-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
+.role-node.human .r-icon { background: var(--human); color: #fff; }
+.role-node .r-name { font-size: 15px; font-weight: 700; }
+.role-node .r-job { font-size: 12px; color: var(--muted); line-height: 1.55; }
+.role-arrow { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 18px; }
+.flow-footnote { font-size: 12px; color: var(--muted); background: var(--surface); border-left: 3px solid var(--risk); border-radius: 8px; padding: 11px 14px; line-height: 1.55; }
+
+/* case comparison (slide 10) */
+.tc-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+.tc-card-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; display: flex; flex-direction: column; gap: 7px; }
+.tcm-badge { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; width: fit-content; }
+.tcm-badge.p2 { background: var(--good-soft); color: var(--good); }
+.tcm-badge.p3 { background: var(--accent-soft); color: var(--accent-ink); }
+.tcm-id { font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; }
+.tcm-row { font-size: 11.5px; color: var(--ink); line-height: 1.55; }
+.tcm-row b { color: var(--muted); font-weight: 600; }
+.tcm-meta { display: flex; gap: 10px; margin-top: 2px; }
+.tcm-meta span { font-family: var(--font-mono); font-size: 10px; color: var(--faint); background: var(--paper); border-radius: 5px; padding: 2px 7px; }
+
+/* principle strip (reused from v1 deck) */
+.principle-strip { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 13px 18px; margin-bottom: 14px; font-family: var(--font-mono); font-size: 12px; flex-wrap: wrap; }
+.principle-strip .p-item { padding: 5px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.principle-strip .p-arrow { color: var(--faint); }
+
+/* shadow test slide */
+.round-track { display: flex; gap: 10px; margin-bottom: 12px; }
+.round-box { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
+.round-box .rd-tag { font-family: var(--font-mono); font-size: 10px; color: var(--faint); }
+.round-box .rd-title { font-size: 11.5px; font-weight: 700; margin: 3px 0 4px; }
+.round-box .rd-desc { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+.round-box.blocked { border-left: 3px solid var(--risk); }
+.round-box.blocked .rd-tag { color: var(--risk); }
+.quote-box { background: var(--human-soft); border-left: 3px solid var(--human); border-radius: 8px; padding: 12px 14px; font-size: 12.5px; color: var(--ink); line-height: 1.6; margin-bottom: 12px; }
+
+/* agent responsibility (slide 9) */
+table.role-table { width: 100%; border-collapse: collapse; font-size: 11px; flex: 1; }
+table.role-table th, table.role-table td { border: 1px solid var(--border); padding: 6px 9px; text-align: left; line-height: 1.4; }
+table.role-table th { background: var(--surface); font-size: 10.5px; }
+table.role-table td.role { font-weight: 700; font-family: var(--font-mono); font-size: 10px; white-space: nowrap; }
+
+/* constraints (slide 10) */
+.constraint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; flex: 1; min-height: 0; }
+.constraint-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: auto; }
+.forbid-item { background: var(--risk-soft); border-radius: 8px; padding: 8px 11px; font-size: 11.5px; line-height: 1.5; }
+.forbid-item b { color: var(--risk); font-family: var(--font-mono); font-size: 10.5px; display: block; margin-bottom: 2px; }
+.converge-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 11.5px; line-height: 1.5; }
+.converge-item b { color: var(--accent-ink); }
+
+/* model policy (slide 11) */
+.model-split { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; flex: 1; min-height: 0; }
+.default-box { background: var(--good-soft); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.default-box .d-label { font-family: var(--font-mono); font-size: 11px; color: var(--good); text-transform: uppercase; letter-spacing: .05em; }
+.default-box .d-model { font-size: 30px; font-weight: 700; color: var(--good); margin: 6px 0; }
+.default-box p { font-size: 12px; color: var(--ink); margin: 0; line-height: 1.5; }
+.exception-list { display: flex; flex-direction: column; gap: 8px; }
+.exception-item { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--human); border-radius: 8px; padding: 10px 13px; font-size: 12px; line-height: 1.5; }
+.exception-item b { color: var(--human); }
+.never-note { margin-top: 10px; font-size: 11px; color: var(--muted); background: var(--surface); border-radius: 8px; padding: 8px 12px; }
+
+/* progress (slide 12) */
+.roadmap-track { display: flex; align-items: stretch; gap: 0; margin: 10px 0 8px; }
+.rm-node { flex: 1; padding: 9px 14px; border-top: 3px solid var(--border-strong); }
+.rm-node.done { border-top-color: var(--good); }
+.rm-node.now { border-top-color: var(--accent); }
+.rm-node .rm-tag { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+.rm-node.done .rm-tag { color: var(--good); }
+.rm-node.now .rm-tag { color: var(--accent-ink); }
+.rm-node .rm-title { font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+.rm-node .rm-desc { font-size: 10.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.current-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; display: flex; gap: 22px; align-items: center; }
+.current-box .c-num { font-size: 26px; font-weight: 700; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+.current-box .c-cap { font-size: 11px; color: var(--muted); }
+.example-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.example-card .ex-tag { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent-ink); margin-bottom: 2px; }
+.example-card .ex-row { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.example-card .ex-row b { color: var(--ink); }
+.ex-timeline { display: flex; flex-direction: column; gap: 6px; }
+.et-row { display: grid; grid-template-columns: 108px 1fr; gap: 10px; padding: 7px 12px; border-radius: 7px; background: var(--paper); align-items: baseline; }
+.et-row .et-tag { font-family: var(--font-mono); font-size: 9.5px; color: var(--faint); line-height: 1.4; }
+.et-row .et-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.et-row.voided .et-desc { text-decoration: line-through; text-decoration-color: var(--risk); }
+.et-row.current { background: var(--good-soft); }
+.et-row.current .et-tag { color: var(--good); font-weight: 600; }
+.et-row.current .et-desc { color: var(--ink); text-decoration: none; font-weight: 500; }
+
+/* nav */
+.nav-bar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 0 14px; flex-shrink: 0; }
+.nav-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.nav-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.notes-btn { border-radius: 8px; width: auto; padding: 0 12px; font-size: 11px; font-family: var(--font-mono); gap: 6px; }
+.notes-btn.active { background: var(--human-soft); border-color: var(--human); color: var(--human); }
+.dots { display: flex; gap: 6px; }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); border: none; cursor: pointer; padding: 0; }
+.nav-dot.active { background: var(--accent); width: 18px; border-radius: 4px; }
+.counter { font-family: var(--font-mono); font-size: 11px; color: var(--faint); min-width: 44px; text-align: center; }
+
+/* speaker notes panel */
+.notes-panel {
+  position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 2px solid var(--human);
+  padding: 16px 60px; font-size: 12.5px; line-height: 1.6; color: var(--ink); max-height: 38%; overflow-y: auto;
+  box-shadow: 0 -4px 14px rgba(0,0,0,.08);
+}
+.notes-panel[hidden] { display: none !important; }
+.notes-panel .np-label { font-family: var(--font-mono); font-size: 10.5px; color: var(--human); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="deck-shell">
+  <div class="frame" id="frame">
+
+    <!-- 1 cover -->
+    <section class="slide" id="s1" data-notes="這份簡報的目標受眾是同事／新加入的人，用來快速建立「QAOS 是什麼、怎麼跑、我該怎麼用」的心智模型。重點先破題：這不是又一個 AI 工具，是一個把 AI 產出關進審查關卡的作業系統。">
+      <div class="mark">QA AGENT OPERATING SYSTEM</div>
+      <h1>QAOS 運作機制</h1>
+      <div class="sub">是什麼、怎麼運作、Workflow 長什麼樣、同事怎麼用、Agent 職責與限制、模型政策。</div>
+      <div class="meta-row"><div><b>內部簡報</b></div><div>2026-09-15</div><div>案例：SPEC-MEMBER-001</div></div>
+    </section>
+
+    <!-- 2 pain point -->
+    <section class="slide" id="s2" hidden data-notes="這頁要說服聽眾「為什麼值得投資做這套系統」。核心痛點不是速度，是可信任度：人工測試設計本身沒有留下可稽核的中間產物，出了問題很難回溯。2小時/份spec這個數字來自Phase 2實測，不是估算。">
+      <div class="eyebrow">01 · 為什麼做 QAOS</div>
+      <h2>解決什麼問題</h2>
+      <p class="lede">QAOS 是一套 QA Agent Operating System：把「讀 Spec → 設計測試案例 / 找 Bug → 驗證 → 核准上線」變成可稽核的產線，而不是一個人（或一顆 AI）憑經驗做完就結案。</p>
+      <div class="slide-body">
+        <div class="pain-grid">
+          <div class="pain-col problem">
+            <h4>人工作業的痛點</h4>
+            <ul>
+              <li>一份 Spec 從頭設計測試案例，人工要扮演分析、設計、驗證每個角色，逐一手動完成</li>
+              <li>判斷過程留在腦中或對話記憶裡，事後很難重建「這條測試案例當初為什麼這樣寫」</li>
+              <li>沒有結構化關卡，容易把「未經證實的假設」當成「已驗證的規則」寫進測試案例</li>
+            </ul>
+            <div class="stat-inline"><span class="n">~2 小時</span><span class="cap">人工扮演一輪角色、跑完一份 Spec 的實測耗時</span></div>
+          </div>
+          <div class="pain-col solve">
+            <h4>QAOS 的作法</h4>
+            <ul>
+              <li>每一步的產出都是通過 Schema 檢查的 Artifact 檔案，可重放、可 diff、可離線稽核</li>
+              <li>結構化 Gate（程式碼機械檢查）＋獨立 Validator（語意審查）＋ Human 核准，三關卡都過才算數</li>
+              <li>任何一條測試案例、任何一個 Bug 都能回溯到 Spec 原文哪一句話</li>
+            </ul>
+            <div class="stat-inline"><span class="n good">26</span><span class="cap">SPEC-MEMBER-001 目前 ACTIVE 測試案例，全數可追溯到需求與 Spec 原文</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 one-liner -->
+    <section class="slide" id="s3" hidden data-notes="這頁是定位句，講給第一次接觸的人聽。強調「以Artifact為中心的狀態機」是Phase 1就定案的架構決策（ADR-001），不是行銷用語——後面每一頁的機制都是為了撐住這句話。">
+      <div class="eyebrow">02 · 一句話</div>
+      <h2>QAOS 是什麼</h2>
+      <div class="slide-body">
+        <div class="big-line"><span class="not">不是 Prompt 聊天機器人接力</span><br>而是<span class="is">以 Artifact 為中心的狀態機</span></div>
+        <div class="compare-row">
+          <div class="compare-item no"><span class="tag">✕ 對話記憶傳遞</span><p>Agent 之間靠聊天記錄接力，無法重放、無法離線驗證</p></div>
+          <div class="compare-item yes"><span class="tag">✓ Artifact 接力</span><p>每個 Agent 唯一輸出是通過 Schema 的檔案；狀態轉換必須引用觸發它的 artifact_id</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 five layers -->
+    <section class="slide" id="s4" hidden data-notes="這是官方架構圖（01-system-architecture.md）的五層表格版。重點講L1：Supervisor是LLM負責分類/routing，但實際的Gate判斷、狀態轉換、權限檢查是L1裡的Deterministic Runtime（純程式碼），這是ADR-002的核心——LLM不能自己當自己的裁判。">
+      <div class="eyebrow">03 · 架構</div>
+      <h2>系統五層</h2>
+      <p class="lede">貫穿五層的橫切關注點：Schema Validation、State Machine、Quality Gate、Permission Boundary、Audit Trail。</p>
+      <div class="slide-body">
+        <table class="layer-table">
+          <tr><th>層</th><th>內容</th><th>決策性質</th></tr>
+          <tr><td class="tag">L0 人工層</td><td>QA 工程師發起 Task、回答 [NEEDS_DECISION]、做 approve / reject / override</td><td>最終業務決策</td></tr>
+          <tr><td class="tag">L1 協調層</td><td>Supervisor（LLM 分類/routing）＋ Deterministic Runtime（Schema/State/Gate/Permission，非 LLM）</td><td>Task 分派、Gate 觸發</td></tr>
+          <tr><td class="tag">L2 代理層</td><td>8 個 Role Agent，在 Allowed Actions 邊界內產生 Artifact</td><td>Propose / Draft / Validate</td></tr>
+          <tr><td class="tag">L3 技能層</td><td>可重用方法論（test-design、traceability、change-impact…）</td><td>無決策權，純能力</td></tr>
+          <tr><td class="tag">L4 儲存層</td><td>Registry / Suite / Bug / Artifact / Execution / Evidence / Approval / Run，皆為版本化檔案</td><td>唯一事實來源</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5 invariants -->
+    <section class="slide" id="s5" hidden data-notes="官方文件定義了10條不變式，這裡挑4條跟本次簡報最相關的。No Artifact No Transition是最根本的一條，後面Workflow那兩頁的每個箭頭都是在體現這條。Human owns business decisions要特別強調：Agent永遠只能propose，不能自己下業務決定。">
+      <div class="eyebrow">04 · 核心不變式</div>
+      <h2>系統遵守的規則（節錄 4 條）</h2>
+      <div class="slide-body">
+        <div class="inv-grid">
+          <div class="inv-card"><span class="inv-num">INVARIANT 1</span><h4>沒有 Artifact，就沒有狀態轉換</h4><p>Workflow 狀態只能由「通過 Schema 驗證的 Artifact」推進，不靠對話記憶。</p></div>
+          <div class="inv-card"><span class="inv-num">INVARIANT 2</span><h4>沒有通過驗證，就不能進 Registry</h4><p>只有 VALIDATED 以上的 Test Case 才能存在於 Registry。</p></div>
+          <div class="inv-card"><span class="inv-num">INVARIANT 3</span><h4>沒有核准，正式環境就不能變更</h4><p>Registry ACTIVE 版本、Suite Membership、Bug OPEN 以後狀態，只能由 Human ApprovalDecision 觸發。</p></div>
+          <div class="inv-card"><span class="inv-num">INVARIANT 9</span><h4>業務決策的最終權力屬於人</h4><p>Agent 只有 propose / draft / analyze / validate / compare / recommend 的權力，不能自己下業務決定。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 workflow Spec->TC (simple role pipeline) -->
+    <section class="slide" id="s6" hidden data-notes="這頁用角色接力的方式講Spec→TC，不用工程圖，方便口頭講解。三個Agent各自的一句話職責，加上頭尾兩個人工節點。重點口述：每一關都可能被退回上一關重寫，Validator連續卡3次才會升級給人；只有人能按下核准，TC才會變成正式上線的ACTIVE版本。">
+      <div class="eyebrow">05 · Workflow（一）</div>
+      <h2>Spec → Test Case：三個角色接力</h2>
+      <p class="lede">每個角色只做一件事，把結果交給下一棒；任何一關沒過，退回上一關重做。</p>
+      <div class="slide-body" style="justify-content:center;">
+        <div class="role-pipeline">
+          <div class="role-node"><span class="r-icon">1</span><span class="r-name">Spec Analyst</span><span class="r-job">讀 Spec 原文，整理成結構化的需求與驗收條件</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node"><span class="r-icon">2</span><span class="r-name">Test Designer</span><span class="r-job">依需求設計測試案例，不驗證自己的產出</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node"><span class="r-icon">3</span><span class="r-name">Test Validator</span><span class="r-job">獨立重新審查，判斷是否符合 Spec</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node human"><span class="r-icon">✓</span><span class="r-name">人工核准</span><span class="r-job">審查通過後，人按下核准，才正式寫入測試案例庫</span></div>
+        </div>
+        <div class="flow-footnote">任何一關沒過 → 退回上一關重做；同一個問題反覆卡 3 次仍過不了、或 Spec 本身有模糊地帶 → 停下來交給人裁決。</div>
+      </div>
+    </section>
+
+    <!-- 7 workflow Spec->Bug (simple role pipeline) -->
+    <section class="slide" id="s7" hidden data-notes="Bug流程更短，只有兩個Agent。強調前提：一定要先有證據(截圖/log)，沒有證據這關直接卡住，連進到Validator都不行。最後一樣要人核准(OPEN_BUG)才會正式登記、RD才看得到。">
+      <div class="eyebrow">06 · Workflow（二）</div>
+      <h2>Spec → Bug：兩個角色接力</h2>
+      <p class="lede">前提：要先有證據（截圖、log），沒有證據這一關直接卡住。</p>
+      <div class="slide-body" style="justify-content:center;">
+        <div class="role-pipeline">
+          <div class="role-node"><span class="r-icon">1</span><span class="r-name">Bug Analyst</span><span class="r-job">比對「Spec 說應該怎樣」跟「證據顯示實際怎樣」，寫成 Bug 草稿</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node"><span class="r-icon">2</span><span class="r-name">Bug Validator</span><span class="r-job">獨立驗證是否成立，順便檢查是不是重複單</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node human"><span class="r-icon">✓</span><span class="r-name">人工核准</span><span class="r-job">確認後，人核准 Bug 正式登記，RD 才看得到</span></div>
+        </div>
+        <div class="flow-footnote">沒有證據 → 連第一關都過不了；判斷是重複單、或規則本身有模糊地帶 → 交給人確認。</div>
+      </div>
+    </section>
+
+    <!-- 9 agent responsibility -->
+    <section class="slide" id="s9" hidden data-notes="8個Role來自agent-contracts/README.md的Responsibility Matrix，這是Phase 1就定案的正式文件，不是我這次歸納的。R=產出、V=驗證、O=orchestrate、A=只有Human能approve。重點：R跟V永遠是不同的Agent，沒有一個角色可以同時設計又驗證自己的東西。">
+      <div class="eyebrow">07 · Agent 職責</div>
+      <h2>8 個 Role Agent 一覽</h2>
+      <div class="slide-body">
+        <table class="role-table">
+          <tr><th>角色</th><th>職責</th><th>產出</th></tr>
+          <tr><td class="role">Supervisor<br>監督者</td><td>Task 分類、Workflow Run 建立、Routing、Gate 觸發（O，不自己設計內容）</td><td>WorkflowRun / Task / WorkflowSummary</td></tr>
+          <tr><td class="role">Spec Analyst<br>規格分析師</td><td>讀 Spec 原文，建立 Requirement / AC（R）</td><td>SpecAnalysis、RequirementModel</td></tr>
+          <tr><td class="role">Test Designer<br>測試設計師</td><td>從 Spec 產生 Test Case（R），不驗證自己的產出</td><td>TestDesignReport、TestCaseDraft</td></tr>
+          <tr><td class="role">Test Validator<br>測試驗證員</td><td>獨立審查 Test Case 是否符合 Spec（R/V）</td><td>TestValidationReport</td></tr>
+          <tr><td class="role">Bug Analyst<br>缺陷分析師</td><td>依 Spec + Evidence 找 Bug、結構化 Bug Report（R）</td><td>BugDraft</td></tr>
+          <tr><td class="role">Bug Validator<br>缺陷驗證員</td><td>驗證 Bug Report（V），查 duplicate</td><td>BugValidationReport</td></tr>
+          <tr><td class="role">Change Impact Analyst<br>變更影響分析師</td><td>Spec 改版的影響分析、比較新舊 Test Case（R）</td><td>ChangeImpactReport、VersionComparisonReport</td></tr>
+          <tr><td class="role">Regression Curator<br>回歸測試策展人</td><td>維護 Full / CI / Hotfix Suite（R）</td><td>RegressionProposal</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 constraints -->
+    <section class="slide" id="s10" hidden data-notes="左邊是真實的forbidden_actions（agents/*.yaml），不是我發明的規則。特別講Test Validator那條：不能讀Test Designer的推理過程，只能看Draft本身——這是刻意設計來避免同源偏誤（Validator跟Designer都是LLM，太熟悉對方的邏輯反而會互相說服）。右邊是收斂機制：Schema擋格式錯、Gate擋結構/語意錯、迭代上限擋Agent鬼打牆、問人擋Spec本身的空白。">
+      <div class="eyebrow">08 · 限制與收斂</div>
+      <h2>Agent 不能做什麼、怎麼收斂</h2>
+      <div class="slide-body">
+        <div class="constraint-grid">
+          <div class="constraint-col">
+            <h4 style="font-size:12px;color:var(--faint);margin:0 0 4px;">FORBIDDEN（節錄自 agents/*.yaml）</h4>
+            <div class="forbid-item"><b>全域禁止</b>MODIFY_SPEC——Spec 只能由 Human 匯入新版本，沒有任何 Agent 可以改</div>
+            <div class="forbid-item"><b>Test Designer</b>不得 VALIDATE_TESTCASE 並自我宣告 PASS；不得自行配發正式 testcase_id；不得為了湊數量產生重複案例</div>
+            <div class="forbid-item"><b>Test Validator</b>不得 UPDATE_DRAFT（只能在 issue 裡建議）；不得讀取 Test Designer 的推理過程（避免同源偏誤）</div>
+            <div class="forbid-item"><b>Supervisor</b>不得自行設計 Test Case／撰寫 Bug 內容；不得跳過任何 Gate；不得代替 Human 做 approve/reject/override</div>
+          </div>
+          <div class="constraint-col">
+            <h4 style="font-size:12px;color:var(--faint);margin:0 0 4px;">收斂機制</h4>
+            <div class="converge-item"><b>Schema</b>——唯一結構契約，欄位/型別不對直接擋下，不進入下一步</div>
+            <div class="converge-item"><b>Gate</b>——結構化 Gate（程式碼機械檢查）+ 語意 Gate（獨立 Validator 產出的 TestValidationReport）</div>
+            <div class="converge-item"><b>迭代上限</b>——`max_validation_iterations` 預設 3，Validator 連續 FAIL 達上限，Runtime 自動升級為 HUMAN_OVERRIDE，不會無限重試</div>
+            <div class="converge-item"><b>問人</b>——Spec 模糊、Agent 判斷不出來的分岔，一律走 Clarification / [NEEDS_DECISION]，不准自己腦補</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 model policy -->
+    <section class="slide" id="s11" hidden data-notes="這是現行政策，來源是docs/decisions/MODEL-ROUTING-POLICY.md，2026-09-14訂。三個例外要背下來：改架構決策、Validator語義FAIL達迭代上限仍修不好（只升那一次修訂，不是整顆Agent換模型）、跨檔案architecture audit。故意不做Model Router，現在升級權在Human手上，Agent不能自己申請。Spec模糊永遠問人，不准用換模型來蒙混過去。">
+      <div class="eyebrow">09 · 模型政策</div>
+      <h2>預設 Sonnet，升級是例外</h2>
+      <div class="slide-body">
+        <div class="model-split">
+          <div class="default-box">
+            <div class="d-label">Default</div>
+            <div class="d-model">Sonnet</div>
+            <p>Schema/CLI/workflow、日常 Spec Analyst / Test Designer / Bug Analyst / Regression Curator、Supervisor 分類與 Summary、一般 coding/debug，全部預設 Sonnet。</p>
+          </div>
+          <div class="exception-list">
+            <div class="exception-item"><b>例外 1</b> 改架構決策——architecture / state machine / permission / agent 邊界 / workflow 依賴衝突</div>
+            <div class="exception-item"><b>例外 2</b> Validator 語義失敗達迭代上限（預設 3）仍修不好——只升「這一次修訂」，不是整顆 Agent 換模型</div>
+            <div class="exception-item"><b>例外 3</b> 跨多檔／跨 workflow 的 architecture audit——例如整體一致性／traceability 斷裂排查</div>
+            <div class="never-note">升級權目前在 Human 手上，Agent／Supervisor 不得自行申請 Opus；Spec 模糊、業務假設不明，永遠用 Clarification 問人，不准用換模型解決。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- shadow test -->
+    <section class="slide" id="s11b" hidden data-notes="這頁補上Phase 3為什麼要配獨立Validator+人工override的理由：影子測試實測發現Agent會修正被點名的錯誤，但沒有窮盡式自我審查能力，同一類問題換個位置就重演。這是後面『限制與收斂』那頁規則的來源，也是下一頁案例對照的背景——TC-MEMBER-033就是這次影子測試產出的24條之一。三輪都FAIL，第三輪碰到迭代上限，觸發HUMAN_OVERRIDE，由人裁決是否放行——放行的依據是test_level這個欄位在Runtime裡零邏輯依賴，不影響正確性判斷，但放行不等於整批核准進Registry，後面還要走交叉整合。">
+      <div class="eyebrow">10 · 影子測試</div>
+      <h2>Phase 3 怎麼驗證信任：影子測試</h2>
+      <p class="lede">同一份 RequirementModel，讓 Agent 完全獨立重做一次（不給看人工版答案），送進同一套獨立 Validator 機制審查，跟人工版本比較品質。</p>
+      <div class="slide-body">
+        <div class="round-track">
+          <div class="round-box blocked"><div class="rd-tag">ROUND 1 · FAIL</div><div class="rd-title">系統邊界誤判</div><div class="rd-desc">假設後台有「申請出金」按鈕（blocker）；assumptions 未誠實揭露；design_technique 系統性亂貼</div></div>
+          <div class="round-box blocked"><div class="rd-tag">ROUND 2 · FAIL</div><div class="rd-title">同類問題換位重演</div><div class="rd-desc">修好了 Round 1 的問題，但新藏了一個「稽核=1」假設，跟同批另一條 TC 自相矛盾</div></div>
+          <div class="round-box blocked"><div class="rd-tag">ROUND 3 · FAIL → 觸頂</div><div class="rd-title">迭代上限，升級人工</div><div class="rd-desc">Agent 自主抓到並修正一個沒被點名的新問題，但同一類系統性疏漏仍未窮盡排查——觸發 HUMAN_OVERRIDE</div></div>
+        </div>
+        <div class="quote-box">關鍵發現：Agent 學會了「修正被明確點名的錯誤」，但沒有「窮盡式自我審查」的能力——同一類問題會換個位置重演。這正是「限制與收斂」那頁規則的由來。</div>
+        <div class="flow-footnote">HUMAN_OVERRIDE 不是「整批核准進 Registry」——是人裁決「可以進入下一步」，後續仍要逐條跟人工版本交叉整合（見下兩頁）。</div>
+      </div>
+    </section>
+
+    <!-- 12 case comparison -->
+    <section class="slide" id="s12a" hidden data-notes="這頁展示同一個需求(REQ-MEMBER-005，可提領餘額須大於10USDT)，人工版跟agent版各自獨立設計出的原始TC。重點口述：兩份都通過各自的Validator結構審查，格式都沒問題——但這不代表內容都對。Phase2的precondition只有一句話，看起來乾淨俐落，但『稽核=1』這個假設其實是編的，跟同批另一條TC自相矛盾。Phase3寫得囉唆很多，但誠實承認換算公式不知道，佈置方式用反覆試錯代替武斷假設。這頁先讓聽眾自己感受兩份的差異，下一頁再講我怎麼判斷、怎麼合。這兩份原始草案本身是歷史事實、內容不變，但先預告一下：後面『現況』那頁會揭曉，連這次整合出的『最終版』隔天都還被推翻過一次——這不影響這頁的教學重點（怎麼看出兩份各自的優缺點）。">
+      <div class="eyebrow">11 · 案例對照</div>
+      <h2>同一個需求，兩份獨立產出</h2>
+      <p class="lede">REQ-MEMBER-005（可提領餘額須大於 10 USDT 才可申請出金）：Phase 2 人工版與 Phase 3 Agent 版各自獨立設計了一條邊界值測試案例，寫法差很多。</p>
+      <div class="slide-body">
+        <div class="tc-compare">
+          <div class="tc-card-mini">
+            <span class="tcm-badge p2">Phase 2 · 人工版</span>
+            <span class="tcm-id">TC-MEMBER-007 v1</span>
+            <div class="tcm-row"><b>前置條件：</b>「可透過人工存入/人工提出功能（稽核倍數設為 1，避免投注門檻影響判斷），將可提領餘額精確調整為 10.00 USDT」</div>
+            <div class="tcm-row"><b>步驟：</b>僅 1 步——「嘗試申請出金」</div>
+            <div class="tcm-meta"><span>test_level: ui_e2e</span><span>assumptions: 0</span></div>
+          </div>
+          <div class="tc-card-mini">
+            <span class="tcm-badge p3">Phase 3 · Agent 版</span>
+            <span class="tcm-id">TC-MEMBER-033</span>
+            <div class="tcm-row"><b>前置條件：</b>「後台『申請出金』入口不存在，是前台功能……spec 全文並未給出換算公式……佈置方式：反覆調整人工存入/提出，直到顯示值恰為 10.00 USDT」</div>
+            <div class="tcm-row"><b>步驟：</b>3 步——後台確認顯示 → 登入前台 → 送出申請</div>
+            <div class="tcm-meta"><span>test_level: integration</span><span>assumptions: 2</span></div>
+          </div>
+        </div>
+        <div class="flow-footnote">兩份都通過各自的結構化 Gate 與 Validator 審查——格式跟邏輯自洽都沒問題，但這不代表任何一份是「完整正確」的最終答案。</div>
+      </div>
+    </section>
+
+    <!-- 13 integration logic -->
+    <section class="slide" id="s12b" hidden data-notes="這頁講我怎麼判斷跟合的具體邏輯。核心：不是比較『哪份寫得比較好』，是拆開來看每份各自的洞見跟缺陷。Phase2的缺陷『稽核=1』是會誤判的depth defect，直接丟棄；Phase3的洞見『這是前台驗證』是對的系統邊界判斷，採用；但Phase3的佈置方式『反覆調整』不夠精確，也不是答案。最後發現兩邊都沒有的關鍵資訊——稽核到底怎麼影響餘額——只能問Oscar，問到『稽核=0』這個機制後，才合成出比兩邊都完整的最終版本。這頁的重點是讓聽眾理解：整合不是機械式合併文字，是先誠實判斷對錯、再找出共同缺的那塊資訊。补充：這次合成出的v4後來(隔天)被證實還有更根本的問題(門檻判斷對象、方向都錯了)，但整合方法論本身(拆開看洞見/缺陷、問人補缺口)沒有錯，只是需要反覆進行、不是一次就能到位——這點留到下一頁講。">
+      <div class="eyebrow">12 · 整合邏輯</div>
+      <h2>怎麼判斷關係、合成同一份</h2>
+      <div class="slide-body">
+        <div class="principle-strip">
+          <span class="p-item">深度底線（不能誤判）</span><span class="p-arrow">&gt;</span>
+          <span class="p-item">廣度覆蓋（不能留白）</span><span class="p-arrow">&gt;</span>
+          <span class="p-item">深度精進（可以慢慢做）</span>
+        </div>
+        <div class="role-pipeline" style="margin-bottom:10px;">
+          <div class="role-node"><span class="r-icon">1</span><span class="r-name">逐項比對差異</span><span class="r-job">同一個需求，兩份寫法哪裡不一樣</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node"><span class="r-icon">2</span><span class="r-name">拆開判斷對錯</span><span class="r-job">分開看每份各自的洞見與缺陷，不比較「哪份整體比較好」</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node"><span class="r-icon">3</span><span class="r-name">找出共同缺口</span><span class="r-job">兩份都沒有的關鍵資訊，問人補齊</span></div>
+          <div class="role-arrow">→</div>
+          <div class="role-node human"><span class="r-icon">✓</span><span class="r-name">合成最終版</span><span class="r-job">採對的部分＋補新資訊，寫成一份比兩邊都完整的 TC</span></div>
+        </div>
+        <div class="pain-grid" style="flex:none;">
+          <div class="pain-col problem"><h4>Phase 2 · TC-MEMBER-007</h4><ul><li>✓ 洞見：後台欄位是唯讀顯示，抓對了觀察起點</li><li>✕ 缺陷：「稽核＝1 可避免干擾」是編的，跟同批另一條 TC 自相矛盾——誤判風險，直接丟棄</li></ul></div>
+          <div class="pain-col solve"><h4>Phase 3 · TC-MEMBER-033</h4><ul><li>✓ 洞見：判斷出這是前台驗證行為，系統邊界抓對了，誠實揭露換算公式未知</li><li>✕ 缺陷：「反覆調整湊數值」不是精確方法，仍不算真正解法</li></ul></div>
+        </div>
+        <div class="flow-footnote">兩邊都沒有的關鍵資訊——稽核倍數到底怎麼影響餘額——問了 Oscar 才補上「稽核＝0」這個精確機制，合成出 TC-MEMBER-007 v4（2026-09-15 核准）。但這不是故事的結尾——下一頁會看到，連核准過的版本隔天都還被推翻。</div>
+      </div>
+    </section>
+
+    <!-- 14 progress -->
+    <section class="slide" id="s12" hidden data-notes="收尾頁，給聽眾一個「現在走到哪」的座標。範例改成三段式時間軸：Phase2原版→v4(09-15核准，整合Phase3洞見用稽核=0精確佈置)→v5(09-16隔天Oscar又給更精確資訊，推翻v4，門檻改成只看提領申請金額本身>=10，跟手續費/可提領餘額都無關)。重點口述：這不是失敗案例，是系統設計本來就支援的正常流程——`tc revise`讓已核准的TC可以在新資訊出現時再修訂，走一樣的Gate+Validator+人工核准全套，核准不是『封版』而是『目前最佳版本』。Phase 2骨架已經拿真實spec跑通，Phase 3目前只有Test Designer真正agent化並做過影子測試，其餘角色仍是人工扮演。">
+      <div class="eyebrow">13 · 現況</div>
+      <h2>現在進度與下一步</h2>
+      <div class="slide-body">
+        <div class="current-box">
+          <div><div class="c-num">26 / 14</div><div class="c-cap">SPEC-MEMBER-001 ACTIVE 測試案例／經 Phase 2×3 交叉整合修訂</div></div>
+          <div style="flex:1;font-size:12px;color:var(--muted);line-height:1.6;">Phase 2 骨架已用真實 Spec 跑通（不只是單元測試）；Phase 3 目前只有 Test Designer 角色真正 Agent 化並完成影子測試驗證，其餘角色仍由人工扮演。</div>
+        </div>
+        <div class="example-card">
+          <span class="ex-tag">TC-MEMBER-007 · 出金門檻判斷——核准不是終點，這條 TC 隔天又被推翻了一次</span>
+          <div class="ex-timeline">
+            <div class="et-row voided"><span class="et-tag">Phase 2 原版</span><span class="et-desc">precondition 假設「稽核倍數設為1可避免干擾」，跟同批另一條TC自我矛盾</span></div>
+            <div class="et-row voided"><span class="et-tag">v4·09-15核准</span><span class="et-desc">整合Phase 3洞見，改用「稽核=0單筆存入」精確佈置「可提領餘額」到10.00/10.01（門檻：可提領餘額 &gt;10，不含）</span></div>
+            <div class="et-row current"><span class="et-tag">v5·09-16現行</span><span class="et-desc">推翻v4：門檻其實只看「提領申請金額本身」是否 ≥10（含），跟可提領餘額精確值、手續費都無關——不需要精確佈置，測試設計反而更簡單</span></div>
+          </div>
+        </div>
+        <div class="roadmap-track">
+          <div class="rm-node done"><div class="rm-tag">PHASE 2</div><div class="rm-title">Foundation</div><div class="rm-desc">Runtime／Gate／規則，真實 Spec 已跑通</div></div>
+          <div class="rm-node now"><div class="rm-tag">PHASE 3</div><div class="rm-title">Agent Layer</div><div class="rm-desc">Test Designer 已上場並完成影子測試</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 4</div><div class="rm-title">Workflow Layer</div><div class="rm-desc">Spec 變更影響、回歸套件、人工測試納管</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 5</div><div class="rm-title">Automation</div><div class="rm-desc">CI 匯入、自動執行測試</div></div>
+          <div class="rm-node"><div class="rm-tag">PHASE 6</div><div class="rm-title">Advanced</div><div class="rm-desc">Agent 並行、Supervisor 自主 re-planning</div></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+  <div class="notes-panel" id="notesPanel" hidden>
+    <div class="np-label">講者備註</div>
+    <div id="notesText"></div>
+  </div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" aria-label="上一頁">‹</button>
+  <div class="dots" id="dots"></div>
+  <div class="counter" id="counter">1 / 14</div>
+  <button class="nav-btn" id="nextBtn" aria-label="下一頁">›</button>
+  <button class="nav-btn notes-btn" id="notesBtn">備註 N</button>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dotsEl = document.getElementById('dots');
+const counterEl = document.getElementById('counter');
+const notesPanel = document.getElementById('notesPanel');
+const notesText = document.getElementById('notesText');
+const notesBtn = document.getElementById('notesBtn');
+let idx = 0;
+let notesOn = false;
+
+slides.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  d.addEventListener('click', () => go(i));
+  dotsEl.appendChild(d);
+});
+const dotEls = Array.from(dotsEl.children);
+
+function renderNotes() {
+  notesText.textContent = slides[idx].dataset.notes || '（此頁無備註）';
+}
+function go(n) {
+  idx = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => s.hidden = i !== idx);
+  dotEls.forEach((d, i) => d.classList.toggle('active', i === idx));
+  counterEl.textContent = (idx + 1) + ' / ' + slides.length;
+  if (notesOn) renderNotes();
+}
+document.getElementById('prevBtn').addEventListener('click', () => go(idx - 1));
+document.getElementById('nextBtn').addEventListener('click', () => go(idx + 1));
+notesBtn.addEventListener('click', () => {
+  notesOn = !notesOn;
+  notesPanel.hidden = !notesOn;
+  notesBtn.classList.toggle('active', notesOn);
+  if (notesOn) renderNotes();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(idx + 1);
+  if (e.key === 'ArrowLeft') go(idx - 1);
+  if (e.key.toLowerCase() === 'n') notesBtn.click();
+});
+go(0);
+</script>
+</body>
+</html>

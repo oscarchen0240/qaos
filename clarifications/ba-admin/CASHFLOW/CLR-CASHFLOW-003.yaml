@@ -1,0 +1,30 @@
+clarification_id: CLR-CASHFLOW-003
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+question: 交易紀錄查詢頁的「Admin 手動取消待確認交易」操作，實際上存不存在？
+context: 正本 SPEC-ARCADE-001（實體機台_spec_v07.md）612/620/584行描述交易紀錄查詢頁有「Admin 對待確認交易執行手動取消」的操作。但 SPEC-TXLOG-001 的 REQ-TXLOG-028（已由
+  Oscar 2026-09-14 依實際畫面確認）指出：交易紀錄查詢頁實際上不提供手動取消操作，正本此處敘述有誤。問題是 SPEC-CASHFLOW-001 的 REQ-CASHFLOW-008（入金額度預留釋放）與 REQ-CASHFLOW-026（出金第一階段15秒逾時死單）都把「Admin/站長於交易紀錄手動取消該筆」列為解決死單的途徑之一——如果這個操作真的不存在，這兩條風控機制的死單收斂入口在哪？
+options:
+- 手動取消操作確實不存在，CASHFLOW-008/026所述的收斂機制需要修正為其他實際存在的處理方式（例如僅能靠逾時自動釋放，或另有其他頁面提供此操作）
+- 手動取消操作存在，但不在交易紀錄查詢頁，而是在其他頁面（例如洗分出金核實頁或其他後台工具）——需指出實際入口
+- 手動取消操作存在且就在交易紀錄查詢頁，TXLOG-028的確認有誤，需要重新核實
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-14T21:11:15Z'
+status: WITHDRAWN
+history:
+- at: '2026-09-14T21:11:15Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-15T05:28:25Z'
+  from_status: OPEN
+  to_status: WITHDRAWN
+  by: oscarchen@blockaction.tech
+  trigger: withdrawn
+  note: 問法不夠精確——開單前未完整讀取正本裡「手動取消」操作的所有相關段落(612/616/620/778/809/829/894/913/916/944行)交叉核對。這些段落反覆、明確定義此操作存在，不是規則模糊需要PM解釋，而是「Oscar
+    2026-09-14依實際畫面確認此操作不存在」與spec明文定義之間的落差，應改問「請重新核實實際畫面」而非開放式問規則定義。改開CLR-CASHFLOW-004取代，附完整spec原文
+requirement_id: REQ-CASHFLOW-008
+impact_if_unanswered: 若手動取消機制不存在，CASHFLOW的REQ-CASHFLOW-008/026與對應TC的expected_result可能需要修正；TXLOG-028與正本本身也需要同步確認一致

@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>PLATFORMRULE 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --surface-2: #fbfbf9; --text: #1c1f26; --text-muted: #626a76; --text-faint: #8b93a0;
+  --border: #e4e6e9; --border-strong: #d3d7dc; --accent: #2f4bd6; --accent-ink: #1f2f8f; --accent-soft: #eaeeff;
+  --grounded: #1c7a52; --grounded-soft: #e4f4ec; --exploratory: #a3650f; --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e; --risk-high-soft: #fbe8e5; --risk-medium: #92660c; --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568; --risk-low-soft: #eceef1; --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+    --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+    --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc; --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1b1e25; --surface-2: #20232b; --text: #e7e9ee; --text-muted: #a0a7b4; --text-faint: #6f7684;
+  --border: #2b2f38; --border-strong: #363b46; --accent: #7d90ff; --accent-ink: #c2caff; --accent-soft: #232a4a;
+  --grounded: #5fcf9c; --grounded-soft: #1a3329; --exploratory: #e0ab5c; --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c; --risk-high-soft: #3a201d; --risk-medium: #e0b262; --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc; --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; }
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2); }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px; }
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip { font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui); }
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note { margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6; }
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n { flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } .main { padding: 24px 18px 60px; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-PLATFORMRULE-001</div>
+      <h1>PLATFORMRULE 測試案例集</h1>
+    </div>
+    <div class="brand-sub">機台場館平台規則 · 最終整合版</div>
+    <div class="stat-strip">
+      <div class="stat"><b>34</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>33</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>1</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>1</b><span>Phase 3 整合修訂</span></div>
+    </div>
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-PLATFORMRULE-001" class="nav-link"><span class="nav-num">01</span>機台出金為現場即時核可並印出收據，不需經過後台的出金審核流程</a><a href="#REQ-PLATFORMRULE-002" class="nav-link"><span class="nav-num">02</span>開分與入金比照既有的出金設定，可依幣種設定稽核倍數，稽核明細照常寫入稽核明細頁面...</a><a href="#REQ-PLATFORMRULE-003" class="nav-link"><span class="nav-num">03</span>Free Spin 適用機台帳號，同一般會員；可將機台帳號指定加入 Free S...</a><a href="#REQ-PLATFORMRULE-004" class="nav-link"><span class="nav-num">04</span>站台切換下拉選單選到機台場館時，後台選單隱藏不適用的頁面；同一操作者切回線上站台...</a><a href="#REQ-PLATFORMRULE-005" class="nav-link"><span class="nav-num">05</span>站台切換至機台場館時，資訊看板這個分類整個隱藏</a><a href="#REQ-PLATFORMRULE-006" class="nav-link"><span class="nav-num">06</span>站台切換至機台場館時，會員與加盟商分類僅顯示會員列表，加盟列表、登入網域查詢、推...</a><a href="#REQ-PLATFORMRULE-007" class="nav-link"><span class="nav-num">07</span>站台切換至機台場館時，帳務管理分類顯示鏈上錢包管理（僅法幣TWD頁籤，區塊鏈頁籤...</a><a href="#REQ-PLATFORMRULE-008" class="nav-link"><span class="nav-num">08</span>站台切換至機台場館時，各式報表分類顯示交易紀錄查詢、注單查詢、稽核明細、場館日結...</a><a href="#REQ-PLATFORMRULE-009" class="nav-link"><span class="nav-num">09</span>站台切換至機台場館時，系統管理分類顯示公告設定、Free Spin 管理、橫幅管...</a><a href="#REQ-PLATFORMRULE-010" class="nav-link"><span class="nav-num">10</span>站台切換至機台場館時，遊戲商管理分類（遊戲商管理、遊戲貢獻值設定）與後台管理員系...</a><a href="#REQ-PLATFORMRULE-012" class="nav-link"><span class="nav-num">12</span>操作員是本功能新增的後台帳號權限角色，權限小於站長；與正本名詞「Operator...</a><a href="#REQ-PLATFORMRULE-013" class="nav-link"><span class="nav-num">13</span>操作員的可見場館範圍僅限自身所屬場館；Admin 可見全部場館，站長可見自身站台...</a><a href="#REQ-PLATFORMRULE-014" class="nav-link"><span class="nav-num">14</span>操作員角色的後台選單完全沒有「站台列表」這個項目（已由 Oscar 2026-0...</a><a href="#REQ-PLATFORMRULE-015" class="nav-link"><span class="nav-num">15</span>機台交易紀錄查詢頁面（SPEC-TXLOG-001）的可見範圍依角色不同：Adm...</a><a href="#REQ-PLATFORMRULE-016" class="nav-link"><span class="nav-num">16</span>人工入金／出金（櫃檯）操作，Admin、站長、操作員皆可執行</a><a href="#REQ-PLATFORMRULE-017" class="nav-link"><span class="nav-num">17</span>重設密碼（所有會員帳號）Admin 可直接操作，站長操作須二次確認，操作員不可執...</a><a href="#REQ-PLATFORMRULE-018" class="nav-link"><span class="nav-num">18</span>編輯機台基本資料操作員僅能檢視（唯讀）；發放／重置機台憑證操作員不可執行</a><a href="#REQ-PLATFORMRULE-019" class="nav-link"><span class="nav-num">19</span>新增機台操作員不可執行此操作</a><a href="#REQ-PLATFORMRULE-020" class="nav-link"><span class="nav-num">20</span>機台停用／啟用操作，Admin、站長、操作員皆可執行</a><a href="#REQ-PLATFORMRULE-021" class="nav-link"><span class="nav-num">21</span>平台新增任何遊戲、或對既有遊戲發佈更新後，該遊戲在所有機台場館一律預設為停用，包...</a><a href="#REQ-PLATFORMRULE-022" class="nav-link"><span class="nav-num">22</span>遊戲的開啟方式：由站長自行於遊戲商管理啟用該遊戲；操作員不可操作；平台不代為開啟</a><a href="#REQ-PLATFORMRULE-023" class="nav-link"><span class="nav-num">23</span>遊戲更新預設停用的規則僅適用站台類型為「機台」的場館；線上站台維持既有行為，不受...</a></nav>
+  </aside>
+  <main class="main">
+    <div class="page-head">
+      <h1>PLATFORMRULE 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-PLATFORMRULE-001 底下所有 ACTIVE 狀態的測試案例，共 34 條，涵蓋 22 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 1 條（TC-PLATFORMRULE-018）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則確認納入的整合版本或新增案例。
+      </div>
+    </div>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-001">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-001</span>
+        <h2>機台出金為現場即時核可並印出收據，不需經過後台的出金審核流程</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-001 機台出金完成後不會進入出金審核流程 req-platformrule-001 ac-platformrule-0011 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-001</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台出金完成後不會進入出金審核流程</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台出金交易完成（現場即時核可並印出收據）</span></li><li><span class='step-n'>2</span><span>檢視出金審核頁面列表</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無該筆機台出金的審核項目；本頁僅列出線上會員的出金審核</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§既有功能對機台帳號的排除規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-002">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-002</span>
+        <h2>開分與入金比照既有的出金設定，可依幣種設定稽核倍數，稽核明細照常寫入稽核明細頁面...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-002 機台開分與入金交易照常寫入稽核明細頁面 req-platformrule-002 ac-platformrule-0021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-002</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台開分與入金交易照常寫入稽核明細頁面</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一筆機台開分交易完成，至稽核明細頁面查詢</span></li><li><span class='step-n'>2</span><span>一筆機台入金交易完成，至稽核明細頁面查詢</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩筆交易皆正常出現在稽核明細頁面，交易類型分別可辨識為機台開分、機台入金（精確標籤文字定義於正本交易類型清單，超出本開發包 §既有功能對機台帳號的排除規則 範圍，此處僅驗證兩者皆有寫入且可區分類型）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§既有功能對機台帳號的排除規則</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-003">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-003</span>
+        <h2>Free Spin 適用機台帳號，同一般會員；可將機台帳號指定加入 Free S...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-003 free spin 管理選擇會員時允許指定機台帳號 req-platformrule-003 ac-platformrule-0031 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-003</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">Free Spin 管理選擇會員時允許指定機台帳號</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0031</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>進入 Free Spin 管理，選擇要派發的會員</span></li><li><span class='step-n'>2</span><span>嘗試選取一個機台帳號</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統允許選擇機台帳號加入活動，不因帳號類型為機台而被排除</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§Free Spin 例外</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-004 機台帳號的 free spin 由後台直接派發到帳，不需玩家領取 req-platformrule-003 ac-platformrule-0032 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-004</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台帳號的 Free Spin 由後台直接派發到帳，不需玩家領取</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0032</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>後台對一個機台帳號派發一筆 Free Spin</span></li><li><span class='step-n'>2</span><span>檢視該機台帳號的免費旋轉狀態</span></li><li><span class='step-n'>3</span><span>檢視該筆派發紀錄的幣種欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">免費旋轉直接到帳，不需要玩家額外操作領取；幣種欄位顯示為該機台場館的核心貨幣（TWD）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§Free Spin 例外</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-004">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-004</span>
+        <h2>站台切換下拉選單選到機台場館時，後台選單隱藏不適用的頁面；同一操作者切回線上站台...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-005 站台切換選單切至機台場館時，後台選單依規則隱藏不適用頁面 req-platformrule-004 ac-platformrule-0041 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-005</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">站台切換選單切至機台場館時，後台選單依規則隱藏不適用頁面</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換下拉選單切至一個機台場館站台</span></li><li><span class='step-n'>2</span><span>檢視後台選單整體結構</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">選單依隱藏規則調整，不適用頁面（資訊看板、加盟列表等）消失</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-006 切回線上站台後選單恢復完整 req-platformrule-004 ac-platformrule-0042 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-006</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">切回線上站台後選單恢復完整</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0042</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>延續前一操作，將站台切換選單切回線上站台</span></li><li><span class='step-n'>2</span><span>檢視後台選單</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">選單恢復完整，先前隱藏的頁面全部重新出現</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-007 從一個機台場館切換至另一個機台場館，選單維持隱藏狀態不會恢復完整 req-platformrule-004  medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-007</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">從一個機台場館切換至另一個機台場館，選單維持隱藏狀態不會恢復完整</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換選單已選定機台場館站台 A（選單已依規則隱藏）</span></li><li><span class='step-n'>2</span><span>將站台切換選單切至另一個機台場館站台 B</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">選單仍維持隱藏狀態，不因切換的目標仍是機台場館而恢復完整；隱藏規則跟隨「是否為機台場館」判斷，不是跟隨「是否曾經顯示過完整選單」</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-005">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-005</span>
+        <h2>站台切換至機台場館時，資訊看板這個分類整個隱藏</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-008 機台場館選單：資訊看板分類整個隱藏 req-platformrule-005 ac-platformrule-0051 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-008</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：資訊看板分類整個隱藏</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0051</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，檢視左側選單分類</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不存在「資訊看板」這個分類</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-006">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-006</span>
+        <h2>站台切換至機台場館時，會員與加盟商分類僅顯示會員列表，加盟列表、登入網域查詢、推...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-009 機台場館選單：會員與加盟商分類僅顯示會員列表 req-platformrule-006 ac-platformrule-0061 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-009</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：會員與加盟商分類僅顯示會員列表</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0061</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，展開會員與加盟商分類</span></li><li><span class='step-n'>2</span><span>檢視可見項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">僅顯示會員列表；加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定皆不顯示</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-007">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-007</span>
+        <h2>站台切換至機台場館時，帳務管理分類顯示鏈上錢包管理（僅法幣TWD頁籤，區塊鏈頁籤...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-010 機台場館選單：帳務管理分類顯示鏈上錢包管理與洗分出金核實，隱藏出金審核與優惠彩金審核 req-platformrule-007 ac-platformrule-0071 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-010</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：帳務管理分類顯示鏈上錢包管理與洗分出金核實，隱藏出金審核與優惠彩金審核</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0071</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，展開帳務管理分類</span></li><li><span class='step-n'>2</span><span>檢視可見項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示鏈上錢包管理與洗分出金核實；不顯示出金審核與優惠彩金審核</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-011 機台場館的鏈上錢包管理僅顯示法幣 twd 頁籤，區塊鏈頁籤隱藏 req-platformrule-007 ac-platformrule-0072 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-011</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館的鏈上錢包管理僅顯示法幣 TWD 頁籤，區塊鏈頁籤隱藏</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0072</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，開啟鏈上錢包管理頁面</span></li><li><span class='step-n'>2</span><span>檢視頁籤</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">僅顯示法幣 TWD 頁籤，區塊鏈幣別頁籤隱藏</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-008">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-008</span>
+        <h2>站台切換至機台場館時，各式報表分類顯示交易紀錄查詢、注單查詢、稽核明細、場館日結...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-012 機台場館選單：各式報表分類顯示交易紀錄查詢等四項，隱藏返水等四項 req-platformrule-008 ac-platformrule-0081 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-012</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：各式報表分類顯示交易紀錄查詢等四項，隱藏返水等四項</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0081</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，展開各式報表分類</span></li><li><span class='step-n'>2</span><span>檢視可見項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示交易紀錄查詢、注單查詢、稽核明細、場館日結報表；不顯示返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-009">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-009</span>
+        <h2>站台切換至機台場館時，系統管理分類顯示公告設定、Free Spin 管理、橫幅管...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-013 機台場館選單：系統管理分類顯示公告等四項，隱藏 kyc 等六項 req-platformrule-009 ac-platformrule-0091 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-013</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：系統管理分類顯示公告等四項，隱藏 KYC 等六項</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0091</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，展開系統管理分類</span></li><li><span class='step-n'>2</span><span>檢視可見項目</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示公告設定、Free Spin 管理、橫幅管理、消稽核設定；不顯示 KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-010">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-010</span>
+        <h2>站台切換至機台場館時，遊戲商管理分類（遊戲商管理、遊戲貢獻值設定）與後台管理員系...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-014 機台場館選單：遊戲商管理與後台管理員系統分類全部顯示，沒有任何項目被隱藏 req-platformrule-010 ac-platformrule-0101 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-014</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台場館選單：遊戲商管理與後台管理員系統分類全部顯示，沒有任何項目被隱藏</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0101</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>站台切換至機台場館，展開遊戲商管理與後台管理員系統分類</span></li><li><span class='step-n'>2</span><span>逐項檢視是否顯示</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">兩個分類的所有項目皆顯示，沒有任何一項被隱藏</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的後台選單</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-012">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-012</span>
+        <h2>操作員是本功能新增的後台帳號權限角色，權限小於站長；與正本名詞「Operator...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-015 新增後台使用者時，角色選項包含操作員並可指定所屬場館 req-platformrule-012 ac-platformrule-0121 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-015</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">新增後台使用者時，角色選項包含操作員並可指定所屬場館</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0121</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>後台管理員系統 &gt; 新增使用者</span></li><li><span class='step-n'>2</span><span>檢視角色選項</span></li><li><span class='step-n'>3</span><span>選擇操作員角色</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">角色選項包含操作員；選定後可指定其所屬場館</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-013">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-013</span>
+        <h2>操作員的可見場館範圍僅限自身所屬場館；Admin 可見全部場館，站長可見自身站台...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-016 操作員檢視任一支援場館範圍的頁面時，資料範圍僅限自身所屬場館 req-platformrule-013 ac-platformrule-0131 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-016</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員檢視任一支援場館範圍的頁面時，資料範圍僅限自身所屬場館</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0131</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>檢視機台交易紀錄查詢頁面的站台切換選單（若有提供）與查詢結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">無論頁面是否提供切換至其他場館的入口，查詢/顯示結果一律僅限自身所屬場館範圍內的資料；若入口存在且可選擇其他場館，選擇後應查無資料或被系統阻擋（Spec 只定義可見場館範圍這個資料層規則，UI 切換器入口是否隱藏屬實作細節，見 REQ-PLATFORMRULE-015 對機台交易紀錄查詢頁的對應測試）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-017 操作員略過前端直接呼叫機台交易紀錄查詢 api 指定非自身所屬場館，不得取得該場館資料 req-platformrule-013  high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-017</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員略過前端直接呼叫機台交易紀錄查詢 API 指定非自身所屬場館，不得取得該場館資料</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral"></span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分取得有效憑證（略過前端 UI 限制）</span></li><li><span class='step-n'>2</span><span>直接呼叫機台交易紀錄查詢 API，查詢參數指定一個非自身所屬場館的場館 ID</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">後端不得回傳非自身場館的交易資料——無論是以拒絕回應（4xx）或回傳空結果／已過濾資料，只要不含非自身場館的實際交易內容即視為符合（比照已於 REQ-CASHOUT-025 確認的操作員場館範圍政策：前後端皆已拒絕越權存取）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-048 操作員嘗試查詢自身所屬場館以外的場館日結報表，查無資料或無法選取 req-platformrule-013 ac-platformrule-0131 high high" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-048</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員嘗試查詢自身所屬場館以外的場館日結報表，查無資料或無法選取</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0131</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>承上，操作員帳號所屬場館為既有機台場館 X</li><li>以該操作員帳號登入後台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於『各式報表 &gt; 場館日結報表』頁面，嘗試尋找或選取場館 X 以外的另一個機台場館 Y</span></li><li><span class='step-n'>2</span><span>若介面允許直接查詢，嘗試以場館 Y 為條件查詢；若介面本身無場館選擇欄位，確認結果是否仍侷限於場館 X</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員無法查得或選取場館 X 以外（例如場館 Y）的任何場館日結報表資料——場館選擇欄位（若存在）不包含場館 Y，或選取後查無資料，僅能查得場館 X 範圍內的資料</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>本 TC 需要測試環境當下存在至少兩個不同的既有機台場館（操作員所屬場館 X 之外，另需一個場館 Y 作為『其他場館』對照）；若環境當下僅有一個機台場館，需先依既有機台場館的建立方式另外建立一個測試用機台場館 Y 才能執行本 TC 的對照比較</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      <span class='spec-quote'>「可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-014">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-014</span>
+        <h2>操作員角色的後台選單完全沒有「站台列表」這個項目（已由 Oscar 2026-0...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-018 操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改 req-platformrule-014 ac-platformrule-0141 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-018</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0141</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以操作員身分登入後台</li><li>站台切換選單已選定自身所屬的機台場館</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視後台左側選單，確認「站台列表」是否存在於選單中</span></li><li><span class='step-n'>2</span><span>確認「會員與加盟商&gt;會員列表」「帳務管理&gt;洗分出金核實」「各式報表&gt;交易紀錄查詢/場館日結報表」是否正常存在於選單中</span></li><li><span class='step-n'>3</span><span>若嘗試直接以網址存取站台列表頁面，觀察系統反應</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（本 spec 原文欄位）與場次逾時時間（SPEC-ARCADE-001 正本定義的欄位，本 spec 原文未提及）皆無從檢視，更無法修改；會員列表、洗分出金核實、交易紀錄查詢、場館日結報表等其他操作員可操作項目正常存在於選單中，不受影響（若直接以網址嘗試存取站台列表頁面，若實際錯誤訊息/阻擋方式與選單消失不同，不視為違反本條，僅測是否被阻擋）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      <span class='spec-quote'>「額度上限（場館層級） | 可設定 | 可設定 | 唯讀（本spec原文欄位，經 Oscar 2026-09-15 選單截圖確認整頁無法進入，非可檢視唯讀）。場次逾時時間欄位本身不在本 spec 原文中，出處見 SPEC-ARCADE-001 §場館設定」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-015">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-015</span>
+        <h2>機台交易紀錄查詢頁面（SPEC-TXLOG-001）的可見範圍依角色不同：Adm...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-019 機台交易紀錄查詢頁，操作員僅能查得自身所屬場館範圍內的交易 req-platformrule-015 ac-platformrule-0151 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-019</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台交易紀錄查詢頁，操作員僅能查得自身所屬場館範圍內的交易</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0151</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台，於機台交易紀錄查詢頁嘗試查詢自身場館以外的交易</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">查無其他場館的交易紀錄，僅能查得自身所屬場館範圍內的交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-051 admin 可查全部場館、站長僅可查其管轄範圍內的機台交易紀錄 req-platformrule-015 ac-platformrule-0151 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-051</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">Admin 可查全部場館、站長僅可查其管轄範圍內的機台交易紀錄</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0151</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>選定一個既有的站長帳號，確認其管轄的站台樹（自身站台及所有子站台）下涵蓋至少一個機台場館</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以 Admin 登入後台，進入『各式報表 &gt; 交易紀錄查詢』，不限定場館查詢，確認結果涵蓋來自不同機台場館的交易紀錄</span></li><li><span class='step-n'>2</span><span>改以前置作業準備好的站長帳號登入，重複同樣的查詢，檢視結果範圍</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">Admin 查詢結果涵蓋系統內全部機台場館範圍的交易紀錄；站長查詢結果僅涵蓋其自身站台及所有子站台下機台場館範圍內的交易，不包含管轄範圍以外的機台場館交易</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      <span class='spec-quote'>「機台交易紀錄查詢 | 全部 | 管轄範圍 | 自身場館」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-016">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-016</span>
+        <h2>人工入金／出金（櫃檯）操作，Admin、站長、操作員皆可執行</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-020 人工入金／出金操作，操作員具備執行權限 req-platformrule-016 ac-platformrule-0161 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-020</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工入金／出金操作，操作員具備執行權限</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0161</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>對自身場館內一個機台帳號執行人工入金或人工出金</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統允許執行，操作員具備此權限</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-017">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-017</span>
+        <h2>重設密碼（所有會員帳號）Admin 可直接操作，站長操作須二次確認，操作員不可執...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-021 站長執行重設密碼須經二次確認才會生效 req-platformrule-017 ac-platformrule-0171 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-021</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">站長執行重設密碼須經二次確認才會生效</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0171</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以站長身分對一個會員帳號執行重設密碼</span></li><li><span class='step-n'>2</span><span>檢視流程是否要求二次確認</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">須經過二次確認才會生效</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-022 操作員不具備重設密碼權限 req-platformrule-017 ac-platformrule-0172 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-022</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員不具備重設密碼權限</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0172</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>嘗試對任一會員帳號執行重設密碼操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員不具備此權限，找不到入口或執行時被系統阻擋</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-018">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-018</span>
+        <h2>編輯機台基本資料操作員僅能檢視（唯讀）；發放／重置機台憑證操作員不可執行</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-023 編輯機台基本資料操作員僅能檢視，無法儲存修改 req-platformrule-018 ac-platformrule-0181 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-023</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">編輯機台基本資料操作員僅能檢視，無法儲存修改</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0181</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台，檢視機台基本資料編輯畫面</span></li><li><span class='step-n'>2</span><span>嘗試修改內容並儲存</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">欄位僅供檢視，無法儲存修改</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-024 操作員不可發放或重置機台憑證 req-platformrule-018 ac-platformrule-0182 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-024</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員不可發放或重置機台憑證</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0182</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>嘗試發放或重置任一機台的憑證</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員不具備此權限，無法執行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-019">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-019</span>
+        <h2>新增機台操作員不可執行此操作</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-025 操作員不可新增機台 req-platformrule-019 ac-platformrule-0191 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-025</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員不可新增機台</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0191</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台，尋找或嘗試執行新增機台操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員不具備此權限，無法執行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-020">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-020</span>
+        <h2>機台停用／啟用操作，Admin、站長、操作員皆可執行</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-026 操作員可執行機台停用／啟用操作 req-platformrule-020 ac-platformrule-0201 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-026</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員可執行機台停用／啟用操作</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0201</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分登入後台</span></li><li><span class='step-n'>2</span><span>對自身場館內一台機台執行停用，再執行啟用</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統皆允許執行，操作員具備此權限</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§角色與權限</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-021">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-021</span>
+        <h2>平台新增任何遊戲、或對既有遊戲發佈更新後，該遊戲在所有機台場館一律預設為停用，包...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-027 遊戲發佈更新後，原已在機台場館啟用的該遊戲被重新設為停用 req-platformrule-021 ac-platformrule-0211 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-027</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">遊戲發佈更新後，原已在機台場館啟用的該遊戲被重新設為停用</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0211</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一款遊戲原已在某機台場館啟用</span></li><li><span class='step-n'>2</span><span>平台對該遊戲發佈更新</span></li><li><span class='step-n'>3</span><span>檢視更新後該遊戲於此機台場館的狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">更新後該遊戲在此機台場館被重新設為停用，需重新手動開啟；不因更新前已啟用而維持啟用</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-028 平台新增全新遊戲時，所有機台場館預設為停用 req-platformrule-021 ac-platformrule-0212 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-028</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">平台新增全新遊戲時，所有機台場館預設為停用</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0212</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>平台新增一款全新遊戲</span></li><li><span class='step-n'>2</span><span>檢視該遊戲於各機台場館的預設狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">所有機台場館皆預設停用</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-022">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-022</span>
+        <h2>遊戲的開啟方式：由站長自行於遊戲商管理啟用該遊戲；操作員不可操作；平台不代為開啟</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-029 站長可於遊戲商管理手動開啟因更新被停用的遊戲 req-platformrule-022 ac-platformrule-0221 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-029</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">站長可於遊戲商管理手動開啟因更新被停用的遊戲</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0221</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一款遊戲於某機台場館因更新被設為停用</span></li><li><span class='step-n'>2</span><span>以站長身分至遊戲商管理手動開啟該遊戲</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統允許站長執行開啟操作</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-030 操作員不可開啟被停用的遊戲 req-platformrule-022 ac-platformrule-0222 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-030</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">操作員不可開啟被停用的遊戲</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0222</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以操作員身分嘗試開啟一款於自身場館被停用的遊戲</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">操作員不具備此權限，無法執行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-platformrule-031 遊戲被平台新增或更新後，系統不會自動代為開啟 req-platformrule-022 ac-platformrule-0223 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-031</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">遊戲被平台新增或更新後，系統不會自動代為開啟</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0223</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一款遊戲被平台新增或更新後，未經任何人工操作</span></li><li><span class='step-n'>2</span><span>檢視該遊戲於機台場館的狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">維持停用狀態，平台不會主動代為開啟，須人工由站長執行</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-PLATFORMRULE-023">
+      <div class="req-head">
+        <span class="req-id">REQ-PLATFORMRULE-023</span>
+        <h2>遊戲更新預設停用的規則僅適用站台類型為「機台」的場館；線上站台維持既有行為，不受...</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-platformrule-032 遊戲更新預設停用規則不影響線上站台，原已啟用的遊戲維持啟用 req-platformrule-023 ac-platformrule-0231 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-PLATFORMRULE-032</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">遊戲更新預設停用規則不影響線上站台，原已啟用的遊戲維持啟用</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-PLATFORMRULE-0231</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台</li><li>站台切換選單已選定一個機台場館站台</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>一款遊戲原已在一個線上站台啟用</span></li><li><span class='step-n'>2</span><span>平台對該遊戲發佈更新</span></li><li><span class='step-n'>3</span><span>檢視該遊戲於此線上站台的狀態</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">維持啟用狀態不變，不受機台場館的預設停用規則影響</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§機台場館的遊戲更新</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

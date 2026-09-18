@@ -1,0 +1,131 @@
+artifact_id: ART-TVR-01M2GTYAYFPH2T2ZX9717MZW0M
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-008
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T20:50:06Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GTJD7DVYFAYGV4DC75J8TS
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GTJD7DVYFAYGV4DC75J8TS
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GTJD7DVYFAYGV4DC75J8TS
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2GTJD7BBVGVDKA67343HMDR
+    issue_type: missing_traceability
+    severity: blocker
+    violated_requirement: REQ-MEMBER-011
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+    evidence: 此 TC 的 precondition 是「稽核倍數維持預設值1」，但其掛勾的 AC-MEMBER-015 的 given 明確是「稽核倍數設定為大於1的值」，兩者矛盾；expected_result 斷言的「增加量恰等於存入金額本身」也不是
+      AC-015 then 子句定義的內容，是設計者自行延伸
+    explanation: 這條 TC 標記為 boundary_value，實際測的仍是預設值下的成功路徑，並未真正提供 REQ-MEMBER-011（high risk）所需的非快樂路徑覆蓋，等於用一條包裝過的 TC 掩蓋了此需求真正缺乏
+      negative 覆蓋的事實
+    recommended_change: 移除此 TC，改寫為真正的負向測試（例如稽核欄位輸入 0/負數/留空時系統應如何處理），並將稽核倍數合法性規則在 spec 中未定義一事記錄下來
+  - testcase_id: TC-DRAFT-01M2GTJD7BM4B976TN3A20S81E
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-MEMBER-003
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.3 KYC驗證階段圖示說明
+    evidence: precondition 只說「五個階段分別處於不同狀態」，未說明如何佈置測試資料（尤其「已停用」狀態在一般流程中無法自然產生）
+    explanation: execution_mode=manual 的 TC 若不說明如何佈置前置狀態，執行者無法自行判斷，影響可執行性
+    recommended_change: 補充具體佈置方式（例如透過後台操作各階段狀態，或指定使用測試環境既有測試帳號）
+  - testcase_id: TC-DRAFT-01M2GTJD7BXT118R6WEEXV80YR
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-MEMBER-004
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 側邊簡易資料面板
+    evidence: precondition「一名加盟商會員是透過邀請鏈註冊」未說明如何取得或建立此類測試帳號
+    explanation: 同上，影響可執行性
+    recommended_change: 補充具體佈置方式
+  - testcase_id: TC-DRAFT-01M2GTJD7B3H14BX26924CTFXP
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 帳戶資訊
+    evidence: precondition「可提領餘額恰為 10 USDT」未說明如何精準把餘額調整到這個數值
+    explanation: 同上，邊界值 TC 若無法精準佈置到邊界，測試將無效
+    recommended_change: 補充具體佈置方式（例如透過人工存入/提出功能）
+  - testcase_id: TC-DRAFT-01M2GTJD7B4Y0Z80PNXS19T35Y
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-MEMBER-013
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2 加盟等級
+    evidence: precondition「一名會員已達成 Partner 升等門檻」未說明具體指標與如何達成，三條 Badge TC 皆有此問題
+    explanation: 同上，影響可執行性
+    recommended_change: 補充具體佈置方式與確認步驟
+  - testcase_id: TC-DRAFT-01M2GTJD7BT4KPB1ASS6H1JQAT
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-MEMBER-008
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 等級資訊
+    evidence: expected_result 額外斷言「會員編號欄位為唯讀」，AC-MEMBER-012 的 then 子句未定義此斷言
+    explanation: 對 AC 的過度延伸
+    recommended_change: 移除此斷言，聚焦於 AC then 子句定義的行為
+  - testcase_id: TC-DRAFT-01M2GTJD7BXRF3SP0FFDPHP34K
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: REQ-MEMBER-004
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4 側邊簡易資料面板
+    evidence: 「非加盟商會員不應顯示邀請鏈區塊」超出本輪 AC 範圍，但 test_design_report.yaml 的 uncovered_with_reason 為空，未記錄此已知範圍外情境
+    explanation: 範圍外情境應明確記錄以利追蹤，而非留白
+    recommended_change: 於 uncovered_with_reason 補一筆說明
+  advisories: []
+  coverage_summary:
+    requirements_total: 18
+    requirements_covered: 18
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-14T20:50:10Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-008

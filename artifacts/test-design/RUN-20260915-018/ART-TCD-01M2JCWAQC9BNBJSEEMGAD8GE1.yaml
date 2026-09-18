@@ -1,0 +1,84 @@
+artifact_id: ART-TCD-01M2JCWAQC9BNBJSEEMGAD8GE1
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-018
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T11:22:49Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-011
+- entity_type: TestCase
+  id: TC-MEMBER-016
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JCWAQBTP0NDRTRZY44X7D8
+    title: 稽核欄位輸入 0、負數或留空時的系統反應（spec 未明確定義此規則，僅能觀察記錄）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-011
+    acceptance_criteria_ids:
+    - AC-MEMBER-015
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，開啟一名會員的人工存入面板
+    test_data: []
+    steps:
+    - n: 1
+      action: 稽核欄位分別嘗試輸入 0、負數、留空
+    - n: 2
+      action: 點擊儲存，觀察並記錄系統實際反應（是否阻擋、是否退回預設值1、或是否接受並產生對應的流水門檻計算結果）
+    expected_result: spec §2.1.5僅定義稽核「預設為 1」與「將影響會員後續提款條件」，完全沒有定義輸入 0、負數或留空時系統應如何反應（是否阻擋、是否退回預設值 1、或是否接受並產生無法計算/異常的投注門檻）；本TC只能如實記錄實際觀察到的行為，不預設任何一種反應為正確答案，需另外向
+      PM 確認正確規則後再回填為確定案例
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1
+    assumptions:
+    - text: 稽核欄位對 0 / 負數 / 留空等無效輸入的系統反應，spec §2.1.5全文未定義（僅定義「預設為1」與「會影響提款條件」，未定義無效輸入時的處理方式）；本TC不預設這是一個應被阻擋或應退回預設值的欄位，只如實記錄實測行為，正確規則需
+        PM 確認
+      requirement_id: REQ-MEMBER-011
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-016
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-042（已退役），Phase 2原版title「系統應拒絕或退回預設值...不可留下無法計算的投注門檻」偏武斷，雖然expected_result本身有hedge但沒有結構化assumptions記錄這個依賴。Phase
+      3版本完全不預設任何一種反應為正確答案，且有結構化assumptions揭露spec未定義此規則，更符合本專案已確立的『誠實揭露要進結構化assumptions欄位、不能只藏在文字描述裡』的原則（與TC-MEMBER-007/008、TC-MEMBER-018/019/020的修訂同一類問題）。本輪已將title、expected_result、assumptions皆改為與Phase
+      3一致的誠實揭露方式
+history:
+- at: '2026-09-15T11:22:56Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-018

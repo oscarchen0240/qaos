@@ -1,0 +1,163 @@
+artifact_id: ART-TCD-01M2JA81J3BC4628A9ZW70QMDC
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-016
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T10:36:48Z'
+status: SUPERSEDED
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-005
+- entity_type: TestCase
+  id: TC-MEMBER-007
+- entity_type: TestCase
+  id: TC-MEMBER-008
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JA81J23PTYHH89WZAMMZTG
+    title: 可提領餘額恰為 10 USDT 時不可於前台申請出金（邊界值，剛好不達門檻）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-007
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能；「須大於10 USDT」這道門檻僅在前台實際送出出金申請（API）時才會被檢查，後台人工提出操作本身不受此門檻限制（已由 Oscar 2026-09-15
+      確認）。換算公式與人工存入/提出機制（已由 Oscar 2026-09-15 以實際操作範例確認）：可提領餘額 ＝ 帳戶餘額（主錢包） － 提領所需有效投注額（流水錢包）；人工存入/提出時，「金額」欄位數字直接增減主錢包，「金額×稽核倍數」則是流水錢包的增減量——稽核倍數可設為
+      0（已實測確認為合法輸入），此時金額只會影響主錢包、完全不影響流水錢包。佈置方式：先於該會員的帳務資訊區塊確認目前的可提領餘額基準值（設為 B），接著執行一筆人工存入，金額 ＝ 10.00 － B、稽核倍數設為 0，使主錢包精確增加
+      (目標值－B)、流水錢包不變，存入後可提領餘額即精確等於 10.00 USDT；若 B 已大於目標值，改用同樣稽核=0 的人工提出，金額 ＝ B － 10.00，使可提領餘額精確降至 10.00 USDT
+    test_data:
+    - name: 人工存入/提出金額
+      value: = 10.00 － 該帳號目前可提領餘額基準值 B（稽核倍數固定填0）
+    steps:
+    - n: 1
+      action: 於該會員的帳務資訊區塊查看目前的可提領餘額基準值 B
+    - n: 2
+      action: 依 B 與目標值 10.00 的差額，執行一筆稽核倍數=0的人工存入或人工提出（差額為正時存入、為負時提出），將可提領餘額精確調整至 10.00 USDT
+    - n: 3
+      action: 重新整理該頁面，確認帳務資訊區塊顯示的可提領餘額精確為 10.00 USDT
+    - n: 4
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 5
+      action: 嘗試送出出金申請
+    expected_result: 前台阻擋出金申請（規則為「須大於10 USDT」，剛好等於10不符合條件）：申請入口不可用，或送出後被系統拒絕而未成功送出
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions:
+    - text: 本TC的邊界值佈置手法依賴以下機制，spec §2.1.5僅定義「金額」欄位直接影響主錢包、「稽核」欄位設定投注倍數會影響提款條件，但未明訂「可提領餘額＝主錢包－流水錢包」的換算公式、「金額×稽核倍數＝流水錢包增減量」的具體算式、以及稽核=0時是否為合法輸入與其效果；這三項皆由
+        Oscar 於 2026-09-15 以實際操作範例確認，非spec原文明訂。若後續系統行為變動（例如稽核=0被系統限制或停用），須重新驗證此佈置手法是否仍然可行
+      requirement_id: REQ-MEMBER-005
+      needs_human_confirmation: false
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-007
+      version: 1
+    design_rationale: v3版本被Validator指出「前台實際投注消耗流水門檻」具機率性、無法精確到0.01邊界，且「人工提出調整門檻」的具體機制未交代清楚。已由 Oscar 2026-09-15 以實際操作範例確認人工存入/提出的精確機制：金額直接增減主錢包，金額×稽核倍數為流水錢包增減量，稽核倍數可設為0（已實測確認合法）。v4改用「稽核=0的單筆人工存入/提出」這個確定可行、精確可控的方式佈置邊界值，不再依賴機率性投注或未驗證的門檻編輯欄位。v5依獨立Validator第三輪PASS審查的2項minor
+      advisory修正：(1) expected_result_spec_reference.location由§2.1.4帳戶資訊（唯讀側邊面板，無操作按鈕）改為§2.1.5帳務資訊（人工存入/提出面板實際所在段落，與steps操作位置一致）；(2)
+      將原本只在precondition文字裡揭露的「換算公式/稽核=0效果為Oscar實測確認、非spec原文」補充進結構化assumptions欄位，以利下游稽核/追蹤流程辨識此依賴
+  - draft_id: TC-DRAFT-01M2JA81J250M6GZGT2KPRZ5QS
+    title: 可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-005
+    acceptance_criteria_ids:
+    - AC-MEMBER-008
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: integration
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能；「須大於10 USDT」這道門檻僅在前台實際送出出金申請（API）時才會被檢查，後台人工提出操作本身不受此門檻限制（已由 Oscar 2026-09-15
+      確認）。換算公式與人工存入/提出機制（已由 Oscar 2026-09-15 以實際操作範例確認）：可提領餘額 ＝ 帳戶餘額（主錢包） － 提領所需有效投注額（流水錢包）；人工存入/提出時，「金額」欄位數字直接增減主錢包，「金額×稽核倍數」則是流水錢包的增減量——稽核倍數可設為
+      0（已實測確認為合法輸入），此時金額只會影響主錢包、完全不影響流水錢包。佈置方式：先於該會員的帳務資訊區塊確認目前的可提領餘額基準值（設為 B），接著執行一筆人工存入，金額 ＝ 10.01 － B、稽核倍數設為 0，使主錢包精確增加
+      (目標值－B)、流水錢包不變，存入後可提領餘額即精確等於 10.01 USDT；若 B 已大於目標值，改用同樣稽核=0 的人工提出，金額 ＝ B － 10.01，使可提領餘額精確降至 10.01 USDT
+    test_data:
+    - name: 人工存入/提出金額
+      value: = 10.01 － 該帳號目前可提領餘額基準值 B（稽核倍數固定填0）
+    steps:
+    - n: 1
+      action: 於該會員的帳務資訊區塊查看目前的可提領餘額基準值 B
+    - n: 2
+      action: 依 B 與目標值 10.01 的差額，執行一筆稽核倍數=0的人工存入或人工提出（差額為正時存入、為負時提出），將可提領餘額精確調整至 10.01 USDT
+    - n: 3
+      action: 重新整理該頁面，確認帳務資訊區塊顯示的可提領餘額精確為 10.01 USDT
+    - n: 4
+      action: 以該會員身分登入會員前台，進入出金/提領申請功能
+    - n: 5
+      action: 送出出金申請
+    expected_result: 前台允許正常申請出金，申請成功送出
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+    assumptions:
+    - text: 本TC的邊界值佈置手法依賴以下機制，spec §2.1.5僅定義「金額」欄位直接影響主錢包、「稽核」欄位設定投注倍數會影響提款條件，但未明訂「可提領餘額＝主錢包－流水錢包」的換算公式、「金額×稽核倍數＝流水錢包增減量」的具體算式、以及稽核=0時是否為合法輸入與其效果；這三項皆由
+        Oscar 於 2026-09-15 以實際操作範例確認，非spec原文明訂。若後續系統行為變動（例如稽核=0被系統限制或停用），須重新驗證此佈置手法是否仍然可行
+      requirement_id: REQ-MEMBER-005
+      needs_human_confirmation: false
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-008
+      version: 1
+    design_rationale: v3版本被Validator指出「前台實際投注消耗流水門檻」具機率性、無法精確到0.01邊界，且「人工提出調整門檻」的具體機制未交代清楚。已由 Oscar 2026-09-15 以實際操作範例確認人工存入/提出的精確機制：金額直接增減主錢包，金額×稽核倍數為流水錢包增減量，稽核倍數可設為0（已實測確認合法）。v4改用「稽核=0的單筆人工存入/提出」這個確定可行、精確可控的方式佈置邊界值，不再依賴機率性投注或未驗證的門檻編輯欄位。v5依獨立Validator第三輪PASS審查的2項minor
+      advisory修正：(1) expected_result_spec_reference.location由§2.1.4帳戶資訊（唯讀側邊面板，無操作按鈕）改為§2.1.5帳務資訊（人工存入/提出面板實際所在段落，與steps操作位置一致）；(2)
+      將原本只在precondition文字裡揭露的「換算公式/稽核=0效果為Oscar實測確認、非spec原文」補充進結構化assumptions欄位，以利下游稽核/追蹤流程辨識此依賴
+history:
+- at: '2026-09-15T10:36:52Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-016
+- at: '2026-09-15T10:37:21Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2JA8XZZP4BK64VPYAMQATSD
+  run_id: RUN-20260915-016

@@ -1,0 +1,70 @@
+artifact_id: ART-TVR-01M2FZTYCTPC8WE6MEED7FGW69
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-013
+task_id: T3
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-09-14T12:56:24Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2FZB2P5QF20QVEXC8AFC9F7
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2FZB2P5QF20QVEXC8AFC9F7
+- entity_type: Artifact
+  id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2FZB2P5QF20QVEXC8AFC9F7
+  validated_against:
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+  issues:
+  - testcase_id: TC-DRAFT-01M2FZB2P44N7EDRCV27B1B4HZ
+    issue_type: other
+    severity: major
+    violated_requirement: REQ-CASHOUT-031
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.1'
+      location: §相關業務規則
+    evidence: spec_reference.quote 欄位被混入非 spec 原文的補充註記。
+    explanation: quote 欄位應為逐字引用，混入註記破壞可回頭比對 spec.md 的契約。
+    recommended_change: 還原 quote 為純逐字文字，補充說明只留在 statement。
+  - testcase_id: TC-DRAFT-01M2FZB2P3AT8D2G8E7GY7VMHR
+    issue_type: missing_negative_coverage
+    severity: minor
+    violated_requirement: REQ-CASHOUT-025
+    spec_reference: null
+    evidence: 改寫後的 TC 移除了嘗試透過非常規路徑（深連結）接觸非自身場館紀錄的驗證。
+    explanation: UI 選單限制 + API 層限制之間缺少中間層級的防禦深度驗證。
+    recommended_change: 新增一條測試非常規路徑存取的 TC。
+  advisories: []
+  coverage_summary:
+    requirements_total: 31
+    requirements_covered: 31
+    ac_total: 45
+    ac_covered: 45
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-14T12:56:29Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-013

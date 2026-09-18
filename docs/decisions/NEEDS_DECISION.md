@@ -67,6 +67,7 @@
 - **Recommended**：**B**，除非你有特定來源。
 - **Risk if undecided**：Phase 3 skill 工作量估計。
 - **附帶**：`ll0v0ll/test-case-designer` README 未標 License；fork 前需向作者確認或改為「重寫但註明方法論出處」。
+- **⚠️ 2026-09-15 更新**：Recommended（Fork + Adapt）已由 [ADR-005](ADR-005-phase2-corrections-to-adr004.md) 修正為「不 clone/fork，僅作方法論參考」，理由見該檔。
 
 ### NEEDS_DECISION-10 · 既有資料是否遷移
 - **問題**：`../test-cases/claim-bonus-event-reward/`（test-case-gen 產出）與 `../bug-reports/`（9 個 mcp-admin bug）是否匯入 QAOS。
@@ -96,3 +97,12 @@
 - **Option C**：B 但 checkpoint 可由 workflow input 的 `analysis_review: required|skip` 開關（預設 skip，高風險 spec 時開）。
 - **Recommended**：**C**。保留原 skill 「分析先於生成」的價值，但不讓每次都卡 Human；Validator 仍是必經的機械防線。
 - **Risk if undecided**：WF-A 的 task 數、`ApprovalType` enum 是否要加 `REVIEW_TEST_ANALYSIS`、Designer contract 是否拆兩階段。
+- **⚠️ 2026-09-15 更新**：Recommended（Option C，T2 之後的 `REVIEW_TEST_ANALYSIS`）已由 [ADR-005](ADR-005-phase2-corrections-to-adr004.md) 修正——Phase 2 實測 10 份 spec，這個機制從未被觸發過；實際自然演化出的 checkpoint 是「T1 完成、G-SPEC PASS 後，匯出 RequirementModel 給 Human 審閱，才進 T2」，卡在 Requirement 層級、且是必經（非可開關）。Phase 3 落地時改採此模式，新 approval type 為 `REVIEW_REQUIREMENTS`。
+
+### NEEDS_DECISION-14 · `spec-to-bug` 需要「優化建議 / Enhancement」票種，不只是「Bug」
+- **問題**：2026-09-15 實測發現：`bug-validation-report.schema.json` 的 `checks` 物件（含 `violates_spec`）在 `result=PASS` 時被 `gates.py` 強制要求全部為 `true`（見 `if not all(p["checks"].values())`）。但實務上會遇到「證據屬實、Validator 也同意內容正確，但這件事本身**不是**違反 spec 的 defect，只是可用性/UX 建議」的情況（案例：`SPEC-UPDATEPACK-001` 的錢包展開清單 bug 排查過程中，順帶發現 Arcade 站台 TWD 稽核設定有兩筆完全無法區分的紀錄——這是 UX 問題不是資料錯誤）。目前 Bug 實體的 schema（`requirement_id` 必填、`expected_result_spec_reference` 必填）與 gate 邏輯整個是繞著「違反 spec」這個前提設計，無法乾淨地讓這類票種走到 `OPEN` 狀態；當時的因應是讓 run 卡在 `RUNNING/T2`（`RUN-20260915-002`），最後由 Human 決定 `run cancel`，改用 RD 內容輸出到卻沒有列入 Bug repository。
+- **Option A**：新增獨立的 `EnhancementDraft` artifact 類型與對應 `spec-to-enhancement` workflow（比照 `spec-to-bug` 但不要求 `violates_spec`，改用 `usability_rationale` 類欄位），Gate 只檢查證據與 severity 合理性，不檢查是否違反 spec。
+- **Option B**：擴充既有 `BugValidationResult` enum 加入 `SUGGESTION`（或擴充 `checks` 讓 `violates_spec` 在特定 `result` 值下可以是 `false` 而不觸發 `PASS 但 checks 有 false` 的結構性錯誤），沿用同一套 BugDraft/Bug schema，只是狀態機多一條分支（例如 `VALIDATED_AS_SUGGESTION`），最終落地時標記 `bug.type: defect|enhancement`。
+- **Option C**：不進 QAOS 追蹤，優化建議一律只走 RD 面文件（`bug-report` skill 產出的 HTML/MD + 可 publish 連結），不佔用 Bug repository，QAOS 完全不介入。2026-09-15 當下臨時採用的做法就是這個，但屬於權宜之計，未落地為架構決策。
+- **Recommended**：**A**。Enhancement 與 Bug 的驗證重點本質不同（Bug 驗證「是否真的違反 spec」；Enhancement 驗證「觀察是否屬實、建議是否合理」），硬塞進同一個 schema 會持續製造 gate 摩擦；獨立 artifact 類型也讓兩者的 Approval 流程可以分開（Enhancement 或許不需要 `OPEN_BUG` 這麼重的 Human Approval）。
+- **Risk if undecided**：每次遇到「屬實但非違規」的觀察，都要嘛被迫塞進 Bug（severity/violates_spec 造假）、要嘛卡在 run 裡等 Human 手動 cancel，兩者都不是乾淨的長期解法；Phase 3 若要讓 agent-bug-analyst 自主判斷 bug vs enhancement，現在的 schema 邊界必須先定案。

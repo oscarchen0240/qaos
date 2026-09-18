@@ -1,0 +1,79 @@
+artifact_id: ART-TVR-01M2MW54VCG36NJ2CNRB69QK8Z
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-006
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T10:28:16Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2MVQJDJ1D5ABBA645BPKPKZ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2MVQJDJ1D5ABBA645BPKPKZ
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2MVQJDJ1D5ABBA645BPKPKZ
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2MVQJDH3SXYNQ4BSMPYR5JZ
+    issue_type: spec_mismatch
+    severity: major
+    violated_requirement: REQ-CASHFLOW-022
+    spec_reference: null
+    evidence: expected_result_spec_reference.quote 寫的是「end-cashout 查無對應 PENDING 或 TXID 不符時，僅記錄 log 並回 1-NO RECORD，不變更任何資料」。查證spec.md第336行end-cashout原文為「收到
+      end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD」——沒有「不變更任何資料」這句；該句只出現在第325行end-cashin的條款。已核准的AC-CASHFLOW-0221自身的spec_reference.quote也是逐字照抄end-cashout原文、沒有這句，證明本專案quote欄位的既定慣例是逐字引用。
+    explanation: 把end-cashin條款的字句嫁接到end-cashout的quote上，且改寫了「後丟棄」為「並」，違反quote欄位逐字忠實的既定慣例，會誤導後續稽核者以為spec明文對end-cashout也寫了「不變更任何資料」。
+    recommended_change: quote改為逐字引用spec.md第336行：「收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD」，「不變更任何資料」的推論可留在expected_result自由敘述欄位。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2MVQJDH3SXYNQ4BSMPYR5JZ
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 步驟2「對該機台帳號執行既有的人工出金功能」未指出實際頁面/按鈕名稱，本spec本身未定義該UI路徑（屬另一份spec範圍）。
+    explanation: 對沒讀過spec的執行者不夠具體，但非本spec範圍內可補的資訊。
+    recommended_change: 若能取得對應admin spec，補上具體頁面/按鈕名稱。
+  - testcase_id: TC-DRAFT-01M2MVQJDH3SXYNQ4BSMPYR5JZ
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: priority從舊版high改為medium，design_rationale未說明理由，risk同時為high。
+    explanation: 可能無意間降低執行優先級。
+    recommended_change: 改回high或說明理由。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 42
+    ac_total: 69
+    ac_covered: 66
+    uncovered_accepted:
+    - AC-CASHFLOW-0421
+    - AC-CASHFLOW-0431
+    - AC-CASHFLOW-0083
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T10:28:16Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-006

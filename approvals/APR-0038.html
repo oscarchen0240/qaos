@@ -1,0 +1,76 @@
+<title>APR-0038 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0038 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260914-015 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>16 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？</div>
+<p>共 16 條：grounded 16 條（預期結果有 spec 條文依據）、<b>exploratory 0 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-UPDATEPACK-001 幣別清單來源依鏈上錢包管理啟用狀態決定</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「幣別清單來源 | 依「帳務管理 &gt; 鏈上錢包管理」中狀態為啟用的幣種為準（含法幣頁籤的幣別）；狀態為關閉或禁用的幣種不列出。幣種增減隨鏈上錢包管理的啟用狀態連動，本功能不另行設定幣別清單」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-001">001<br>v1</td><td>grounded</td><td>幣別清單來源依鏈上錢包管理啟用狀態決定</td><td>以 Admin 登入後台</td><td><ol><li>站台在帳務管理 &gt; 鏈上錢包管理啟用了三種幣別（含法幣 TWD 頁籤）</li><li>展開任一會員的餘額欄</li></ol></td><td>展開清單恰好列出這三種已啟用的幣別，不多不少</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-002">002<br>v1</td><td>grounded</td><td>禁用某幣別後展開清單即時反映鏈上錢包管理目前的啟用狀態</td><td>以 Admin 登入後台</td><td><ol><li>站台將其中一種已啟用幣別於鏈上錢包管理改為禁用</li><li>再次展開同一會員的餘額欄</li></ol></td><td>該幣別不再列出，清單即時反映鏈上錢包管理目前的啟用狀態，不需額外於本功能設定幣別清單</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-002 展開箭頭僅在啟用幣種超過一種時顯示，三個位置皆適用</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「展開箭頭顯示條件 | 已啟用幣種超過一種時才顯示展開箭頭；僅啟用一種幣別的站台不顯示箭頭，維持單行呈現」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-003">003<br>v1</td><td>grounded</td><td>已啟用幣種超過一種時，會員列表帳戶餘額欄顯示展開箭頭</td><td>以 Admin 登入後台</td><td><ol><li>站台已啟用兩種以上幣別</li><li>檢視會員列表的帳戶餘額欄</li></ol></td><td>顯示展開箭頭</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-004">004<br>v1</td><td>grounded</td><td>同一會員的側邊簡易資料面板與詳細資料頁餘額類欄位也一併顯示展開箭頭</td><td>以 Admin 登入後台</td><td><ol><li>延續同一會員（站台已啟用兩種以上幣別）</li><li>檢視其側邊簡易資料面板的帳戶餘額/提領所需有效投注額/可提領餘額</li><li>檢視其會員詳細資料頁的相同三個欄位</li></ol></td><td>三個位置的帳戶餘額、提領所需有效投注額（流水錢包）、可提領餘額欄位皆顯示展開箭頭</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-005">005<br>v1</td><td>grounded</td><td>僅啟用一種幣別的站台，餘額欄不顯示展開箭頭，維持單行呈現</td><td>以 Admin 登入後台</td><td><ol><li>一個線上站台僅在鏈上錢包管理啟用一種幣別</li><li>檢視該站台任一會員的帳戶餘額欄</li></ol></td><td>不顯示展開箭頭，維持單行呈現（機台場館僅 TWD 一種的特例已由 SPEC-ACCOUNT-001 REQ-030 驗證，本條驗證的是一般線上站台的相同規則）</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-003 收合時顯示核心貨幣錢包餘額，不做匯率換算、不是各幣別加總</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「收合時顯示的數值 | 該站台核心貨幣錢包的餘額——不做匯率換算，也不是各幣別的加總。核心貨幣為主站台層級的設定，底下子站台一律繼承、不可各自指定」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-006">006<br>v1</td><td>grounded</td><td>收合時顯示核心貨幣錢包餘額，不做匯率換算也不是各幣別加總</td><td>以 Admin 登入後台</td><td><ol><li>會員在核心貨幣以外的已啟用幣別也持有餘額</li><li>檢視收合狀態的帳戶餘額欄</li></ol></td><td>顯示的數值僅為核心貨幣錢包的原始餘額，不含其他幣別換算後的數字，也不是所有幣別金額加總後的數字</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-007">007<br>v1</td><td>grounded</td><td>會員核心貨幣餘額為 0、但其他已啟用幣別有餘額時，收合仍顯示核心貨幣的 0，不會誤顯示其他幣別金額</td><td>以 Admin 登入後台</td><td><ol><li>會員的核心貨幣錢包餘額為 0，但另一個已啟用幣別有實際餘額</li><li>檢視收合狀態的帳戶餘額欄</li></ol></td><td>顯示 0（核心貨幣餘額），不會因為其他幣別有餘額而誤顯示該幣別的金額</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-004 展開後排列順序：核心貨幣固定第一列，其餘依鏈上錢包管理幣種順序接續</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「展開後的排列順序 | 核心貨幣固定列於第一列，其餘已啟用幣種依鏈上錢包管理的幣種順序接續排列；每列顯示「幣種代碼＋金額」」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-008">008<br>v1</td><td>grounded</td><td>展開後核心貨幣固定列第一列，其餘依鏈上錢包管理幣種順序接續</td><td>以 Admin 登入後台</td><td><ol><li>展開一個已啟用三種幣別的會員餘額欄</li><li>檢視展開後的列表順序與每列內容</li></ol></td><td>核心貨幣列在第一列，其餘兩種依鏈上錢包管理設定的順序接續排列；每列皆顯示幣種代碼與金額</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-005 金額為 0 的幣別展開時仍列出並顯示 0.00</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「金額為 0 的幣別 | 仍列出並顯示 0.00，不因無餘額而隱藏」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-009">009<br>v1</td><td>grounded</td><td>金額為 0 的幣別展開時仍列出並顯示 0.00</td><td>以 Admin 登入後台</td><td><ol><li>會員某個已啟用幣別的餘額為 0</li><li>展開該會員的餘額欄</li></ol></td><td>該幣別仍列出並顯示 0.00，不因無餘額而隱藏</td><td>low<br>low</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-006 展開/收合狀態僅作用於當次瀏覽，換頁或重新進入頁面後回到收合預設</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「展開狀態的保留 | 逐欄各自獨立展開／收合，僅作用於當次瀏覽；換頁、重新查詢或重新進入頁面後回到收合預設」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-010">010<br>v1</td><td>grounded</td><td>展開/收合狀態僅作用於當次瀏覽，換頁或重新進入頁面後回到收合預設</td><td>以 Admin 登入後台</td><td><ol><li>將某會員的餘額欄展開，換頁或重新查詢後檢視該欄</li><li>將另一會員的餘額欄展開，離開頁面後重新進入，檢視該欄</li></ol></td><td>兩種情況皆回到收合預設狀態，不記得先前的展開狀態</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-007 篩選器帳戶餘額範圍與列表總計維持單一數值，不依幣別拆分</h2>
+<blockquote>spec：§一、多幣別錢包展開顯示　「不變更的範圍：2.1.2 篩選器的「帳戶餘額（主錢包）min ～ max」與列表底部「總計」列維持現行行為——皆以收合時的單一數值（核心貨幣錢包餘額）為準，不依幣別拆分，也不提供幣別選擇」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-011">011<br>v1</td><td>grounded</td><td>帳戶餘額篩選器僅提供單一 min~max 範圍，不依幣別拆分</td><td>以 Admin 登入後台</td><td><ol><li>站台已啟用多種幣別</li><li>檢視帳戶餘額篩選器</li></ol></td><td>僅提供單一 min～max 範圍輸入，不提供依幣別分別篩選的選項；篩選依核心貨幣餘額計算</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-012">012<br>v1</td><td>grounded</td><td>列表底部總計列以核心貨幣加總，不依幣別拆分顯示</td><td>以 Admin 登入後台</td><td><ol><li>站台已啟用多種幣別</li><li>檢視列表底部總計列</li></ol></td><td>總計以核心貨幣餘額加總計算，不依幣別拆分顯示，也不提供幣別選擇</td><td>medium<br>medium</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-008 人工入金／人工出金不計入存款/提款次數與金額欄位</h2>
+<blockquote>spec：§二、存款／提款累計欄位　「本功能說明：存款次數／存款金額／提款次數／提款金額四個欄位，僅計系統入金與系統出金，一律不含人工入金與人工出金。⚠️ 手冊原文曾寫「含人工入金／出金」，該敘述已作廢——人工存入與人工提出一律不計入這四個欄位」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-013">013<br>v1</td><td>grounded</td><td>人工入金完成後不計入存款次數與存款金額</td><td>以 Admin 登入後台</td><td><ol><li>記錄某會員當下的存款次數與存款金額</li><li>對該會員執行一筆人工入金操作</li><li>再次檢視其存款次數與存款金額</li></ol></td><td>兩者皆不變動，不計入此筆人工入金</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-014">014<br>v1</td><td>grounded</td><td>人工出金完成後不計入提款次數與提款金額</td><td>以 Admin 登入後台</td><td><ol><li>記錄某會員當下的提款次數與提款金額</li><li>對該會員執行一筆人工出金操作</li><li>再次檢視其提款次數與提款金額</li></ol></td><td>兩者皆不變動，不計入此筆人工出金</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-UPDATEPACK-009 注單查詢頁的場次編號欄位：線上帳號顯示橫線，機台帳號顯示所屬場次編號</h2>
+<blockquote>spec：§五、交易紀錄的兩項欄位規則　「場次編號欄位：與線上會員共用的頁面（交易紀錄查詢、注單查詢）的「場次編號」欄位，線上帳號的資料一律顯示「—」，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-015">015<br>v1</td><td>grounded</td><td>注單查詢頁查詢結果為線上會員注單時，場次編號欄顯示橫線</td><td>以 Admin 登入後台</td><td><ol><li>注單查詢頁的查詢結果包含一筆線上會員的注單</li><li>檢視其場次編號欄</li></ol></td><td>顯示「—」</td><td>medium<br>medium</td></tr>
+<tr class=""><td class=id title="TC-UPDATEPACK-016">016<br>v1</td><td>grounded</td><td>注單查詢頁查詢結果為機台帳號注單時，場次編號欄顯示所屬場次編號</td><td>以 Admin 登入後台</td><td><ol><li>注單查詢頁的查詢結果包含一筆機台帳號的注單</li><li>檢視其場次編號欄</li></ol></td><td>顯示該筆注單所屬的場次編號</td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0038 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0038 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0038 --decision reject --by &lt;you&gt; --rationale "..."</div>

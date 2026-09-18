@@ -1,0 +1,94 @@
+title: 站台核心貨幣對應的錢包幣別（TWD）已停用時，入金請求應被系統阻擋
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-004
+acceptance_criteria_ids:
+- AC-BONUSCCY-006
+spec_id: SPEC-BONUSCCY-001
+spec_version: '1.0'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- negative
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 站台切換選單切換至一個既有的機台（TWD核心貨幣）站台（建議使用測試專用場館，避免影響其他測試或正式資料）
+- 進入 帳務管理 > 鏈上錢包管理，切至「法幣 TWD」頁籤，找到 TWD 幣別列，確認其目前為啟用狀態，將其切換為停用（此為刻意保留的止損操作，依REQ-BONUSCCY-004規則本身應允許停用）
+- 確認鏈上錢包管理列表中 TWD 幣別狀態已顯示為停用
+- 取得該站台一台既有機台帳號可用的機台憑證（JWT），或使用測試環境提供的機台模擬工具/API client 代替實體機台呼叫平台API（此驗證方式的API格式依據SPEC-ARCADE-001附錄「機台系統對接規格」，非BONUSCCY-001本身定義範圍，僅作為測試執行環境依據；實際測試環境是否已具備此類模擬工具，需環境負責人確認）
+test_data: []
+steps:
+- n: 1
+  action: 記錄該機台帳號目前的分數（餘額）
+- n: 2
+  action: 以該機台帳號的憑證呼叫平台 req-cashin（第一階段請求） API，代入一筆正常測試金額，模擬機台送出入金請求
+- n: 3
+  action: 檢視 API 回覆內容，並至 各式報表 > 交易紀錄查詢 檢視該機台帳號是否新增對應交易紀錄
+- n: 4
+  action: 重新檢視該機台帳號的分數（餘額）
+- n: 5
+  action: 測試結束後，將 TWD 幣別重新啟用（帳務管理 > 鏈上錢包管理 > 法幣 TWD 頁籤，切換回啟用狀態），回復測試前狀態，避免影響後續測試或正式資料
+expected_result: 平台拒絕該筆入金請求（不論回覆的具體原因文案為何——依rejection_contract.description，spec未給定文案，僅驗證是否被阻擋）；該機台帳號的分數（餘額）維持不變，不因此筆請求而異動
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  location: spec.md §一句話（限制段落）——spec.md僅有此句；「停用後入金/出金/開分/洗分四項操作皆須阻擋」之澄清見 clarifications/ba-admin/BONUSCCY/CLR-BONUSCCY-002.md
+    §PM回覆（非spec.md原文，詳見design_rationale）
+  quote: 一個限制：站台的系統幣別必須是啟用中的錢包幣別之一（wallet_currency.enabled = 1），否則獎勵會發到玩家看不到的錢包
+assumptions:
+- text: 此TC的測試執行方式假設測試環境已具備可呼叫平台機台端API（req-cashin/req-cashout/req-keyin/req-keyout）的模擬工具或API client（因實體機台通常不便於一般測試/UAT環境直接取得，需以模擬方式呼叫API觸發入金/出金/開分/洗分請求）；此為測試執行環境的技術依賴，非spec.md定義範圍，實際測試環境是否已具備此類工具，需環境負責人確認。
+  requirement_id: REQ-BONUSCCY-004
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-040
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R3R6NYKMXM86QNY0MM5S23
+created_at: '2026-09-17T16:38:44Z'
+updated_at: '2026-09-17T17:14:12Z'
+history:
+- at: '2026-09-17T16:38:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R3DSWCD3H95921XKFGPXFK
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R3R6NYKMXM86QNY0MM5S23
+  run_id: RUN-20260918-002
+- at: '2026-09-17T16:38:44Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-002
+- at: '2026-09-17T17:14:12Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0116
+  run_id: RUN-20260918-002
+  note: rejected

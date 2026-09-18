@@ -1,0 +1,2356 @@
+artifact_id: ART-TCD-01M2ME3944YP3RRJ94T1RXVXTQ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-002
+task_id: T2
+iteration: 2
+created_by: agent-test-designer
+created_at: '2026-09-16T06:22:35Z'
+status: INVALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-001
+- entity_type: Requirement
+  id: REQ-CASHFLOW-002
+- entity_type: Requirement
+  id: REQ-CASHFLOW-003
+- entity_type: Requirement
+  id: REQ-CASHFLOW-004
+- entity_type: Requirement
+  id: REQ-CASHFLOW-005
+- entity_type: Requirement
+  id: REQ-CASHFLOW-006
+- entity_type: Requirement
+  id: REQ-CASHFLOW-007
+- entity_type: Requirement
+  id: REQ-CASHFLOW-008
+- entity_type: Requirement
+  id: REQ-CASHFLOW-009
+- entity_type: Requirement
+  id: REQ-CASHFLOW-010
+- entity_type: Requirement
+  id: REQ-CASHFLOW-011
+- entity_type: Requirement
+  id: REQ-CASHFLOW-012
+- entity_type: Requirement
+  id: REQ-CASHFLOW-013
+- entity_type: Requirement
+  id: REQ-CASHFLOW-014
+- entity_type: Requirement
+  id: REQ-CASHFLOW-015
+- entity_type: Requirement
+  id: REQ-CASHFLOW-016
+- entity_type: Requirement
+  id: REQ-CASHFLOW-017
+- entity_type: Requirement
+  id: REQ-CASHFLOW-018
+- entity_type: Requirement
+  id: REQ-CASHFLOW-019
+- entity_type: Requirement
+  id: REQ-CASHFLOW-020
+- entity_type: Requirement
+  id: REQ-CASHFLOW-021
+- entity_type: Requirement
+  id: REQ-CASHFLOW-022
+- entity_type: Requirement
+  id: REQ-CASHFLOW-023
+- entity_type: Requirement
+  id: REQ-CASHFLOW-024
+- entity_type: Requirement
+  id: REQ-CASHFLOW-025
+- entity_type: Requirement
+  id: REQ-CASHFLOW-026
+- entity_type: Requirement
+  id: REQ-CASHFLOW-027
+- entity_type: Requirement
+  id: REQ-CASHFLOW-028
+- entity_type: Requirement
+  id: REQ-CASHFLOW-029
+- entity_type: Requirement
+  id: REQ-CASHFLOW-030
+- entity_type: Requirement
+  id: REQ-CASHFLOW-031
+- entity_type: Requirement
+  id: REQ-CASHFLOW-032
+- entity_type: Requirement
+  id: REQ-CASHFLOW-033
+- entity_type: Requirement
+  id: REQ-CASHFLOW-034
+- entity_type: Requirement
+  id: REQ-CASHFLOW-035
+- entity_type: Requirement
+  id: REQ-CASHFLOW-036
+- entity_type: Requirement
+  id: REQ-CASHFLOW-037
+- entity_type: Requirement
+  id: REQ-CASHFLOW-038
+- entity_type: Requirement
+  id: REQ-CASHFLOW-039
+- entity_type: Requirement
+  id: REQ-CASHFLOW-040
+- entity_type: Requirement
+  id: REQ-CASHFLOW-041
+- entity_type: Requirement
+  id: REQ-CASHFLOW-042
+- entity_type: Requirement
+  id: REQ-CASHFLOW-043
+- entity_type: Requirement
+  id: REQ-CASHFLOW-044
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2MBHFR6D6R13GTVBE4BAPCJ
+    title: 稽核倍數維持預設 0 倍時，開分與入金正常寫入稽核明細且不產生洗分/出金門檻
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-001
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0011
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: &id001
+    - 已知一台已核發有效機台憑證（JWT，依 創建會員帳號_spec_v01.md 建立）的既有機台帳號（自行從測試環境選定），並取得可用於直接呼叫機台端 API 的 Bearer Token（本包無獨立 UI，四種金流與 PENDING
+      生命週期皆由機台廠商韌體呼叫 API 觸發，故以直接呼叫 API 模擬機台/前台行為進行驗證）
+    test_data: []
+    steps:
+    - n: 1
+      action: 先於 帳務管理 > 出金設定 > TWD 頁籤 確認該幣種稽核倍數為系統預設值 0
+    - n: 2
+      action: 呼叫 req-keyin 為機台帳號開分一筆金額 X（機台餘額由 0 增加為 X）
+    - n: 3
+      action: 至稽核明細查詢該筆，確認類型為「機台開分」
+    - n: 4
+      action: 呼叫 req-cashin 取得 PENDING 並以 end-cashin 完成入金一筆金額 Y
+    - n: 5
+      action: 至稽核明細查詢該筆，確認類型為「機台入金」
+    - n: 6
+      action: 緊接著（不等待、不做任何額外操作）以 throshold=0 呼叫 req-keyout 全洗，確認可立即洗出全部餘額 X+Y
+    expected_result: 兩筆稽核明細皆正常寫入（類型分別為「機台開分」「機台入金」）；因倍數為 0，緊接著的洗分不因稽核門檻被擋下（回 0-OK 洗出全額），僅一般餘額規則適用
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+      quote: 預設值 | 0 倍——即開分與入金不產生稽核門檻，玩家隨時可洗分與出金 ｜ 稽核明細 | 兩種交易照常寫入，類型顯示為「機台開分」「機台入金」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0011 描述的是預設值行為，直接依 spec 表格逐字驗證；用門檻 0 的洗分緊接在開分/入金之後，是為了排除洗分自身門檻機制的干擾，單純驗證稽核門檻是否存在。
+  - draft_id: TC-DRAFT-01M2MBHFR6VK7VQ6491GXPR5NK
+    title: 稽核倍數大於 0 且有未完成稽核金額時，洗分核可金額已扣除未完成稽核部分
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-002
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0021
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 稽核倍數
+      value: 1
+    - name: 機台餘額
+      value: 1000
+    - name: 未完成稽核部分
+      value: 400
+    steps:
+    - n: 1
+      action: 將該幣種稽核倍數調整為 1 倍（帳務管理 > 出金設定 > TWD 頁籤）
+    - n: 2
+      action: 透過開分或入金為機台帳號建立一筆餘額（例如 1000），並使其中一部分（例如 400）處於『尚未完成稽核』狀態（依既有稽核倍數機制佈置，見假設）
+    - n: 3
+      action: 以 throshold=0 呼叫 req-keyout 全洗，觀察回覆的核可金額 value
+    expected_result: 核可金額已扣除尚未完成稽核的部分（例如扣除 400 後，僅對剩餘 600 計算門檻捨去），而非以機台帳面全額 1000 計算
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核 + §業務規則與驗證/稽核倍數
+      quote: 倍數大於 0 時 | 洗分與出金的核可金額須扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足，機台畫面顯示餘額不足
+    assumptions:
+    - text: 稽核倍數機制沿用既有出金設定（依 §機台帳號的稽核：『機台的開分與入金比照既有的出金設定』），但『未完成稽核金額』的精確判定方式（例如以有效投注額對比存入金額的比例）並未在本 spec 中重新定義，屬既有機制的延伸；此處佈置『有未完成稽核金額』狀態的具體操作方式為依既有出金設定稽核邏輯的推測，需環境負責人／熟悉既有稽核機制的人員確認佈置方式是否正確
+      requirement_id: REQ-CASHFLOW-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此案例採 requirement_based，直接依 AC-CASHFLOW-0021 逐字驗證『核可金額須扣除未完成稽核部分』這條規則本身，不涉及邊界或例外分支，故不需 boundary_value
+      或 negative。test_data 選稽核倍數=1（最小的非 0 值，恰可開啟稽核門檻但不引入倍數本身如何影響金額的複雜度）、機台餘額=1000 與未完成稽核部分=400 皆為刻意選擇的整數，讓『扣除後剩 600』的計算結果一望即知、便於執行者核對，而非測試任何特定邊界值；佈置『有未完成稽核金額』狀態的具體操作方式因
+      spec 未重新定義稽核判定的精確依據（例如以有效投注額對比存入金額的比例），已誠實標記於 assumptions 並要求人工確認，避免佈置步驟隱含未經驗證的機制假設。
+  - draft_id: TC-DRAFT-01M2MBHFR6A6Y344W8M8RGB34Z
+    title: 稽核倍數大於 0，扣除未完成稽核部分後金額為 0 時視同餘額不足
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-002
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0022
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 稽核倍數
+      value: 1
+    - name: 機台餘額
+      value: 400
+    - name: 未完成稽核部分
+      value: 400
+    steps:
+    - n: 1
+      action: 將該幣種稽核倍數調整為 1 倍
+    - n: 2
+      action: 佈置機台帳號餘額，使其扣除未完成稽核部分後可洗金額恰為 0（例如機台餘額 400、未完成稽核部分亦為 400，見假設）
+    - n: 3
+      action: 呼叫 req-keyout（threshold 任意值）或 req-cashout 嘗試洗分/出金
+    expected_result: 回 1-NO CREDITS（機台畫面顯示餘額不足），視同一般餘額不足情形處理
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+      quote: 倍數大於 0 時 | 洗分與出金的核可金額須扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足，機台畫面顯示餘額不足
+    assumptions:
+    - text: 稽核倍數機制沿用既有出金設定（依 §機台帳號的稽核：『機台的開分與入金比照既有的出金設定』），但『未完成稽核金額』的精確判定方式（例如以有效投注額對比存入金額的比例）並未在本 spec 中重新定義，屬既有機制的延伸；此處佈置『有未完成稽核金額』狀態的具體操作方式為依既有出金設定稽核邏輯的推測，需環境負責人／熟悉既有稽核機制的人員確認佈置方式是否正確
+      requirement_id: REQ-CASHFLOW-002
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此案例選 boundary_value，因為驗證的核心是『扣除未完成稽核部分後金額恰為 0』這個邊界點（AC-CASHFLOW-0022 明確描述此邊界情境），故刻意讓 test_data 中機台餘額與未完成稽核部分相等（皆為
+      400），使扣除後精確落在 0 這個邊界，而非隨意挑一個不足額的數字；此手法與 AC-0021 的一般性驗證（TC-DRAFT-...VK7VQ6491GXPR5NK）互補——前者驗證扣除計算本身，本案例驗證扣除後為 0 時的邊界行為（視同餘額不足）。佈置『未完成稽核金額』狀態的具體操作方式同樣缺乏spec
+      明文定義，已標記於 assumptions 待環境負責人確認，避免佈置步驟隱含未經驗證的稽核判定機制假設。
+  - draft_id: TC-DRAFT-01M2MBHFR6BNDJ0KH6Q06T303M
+    title: 開分請求送達即立即生效，交易紀錄類型正確且當下直接累計存款次數與金額（不需核實）
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-003
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0031
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - state_transition
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢機台帳號於會員列表的目前「存款次數」「存款金額」作為基準值
+    - n: 2
+      action: 呼叫 req-keyin 送出開分請求，金額 X（模擬店員以鑰匙開啟機台選單為玩家開分）
+    - n: 3
+      action: 確認回覆立即生效，機台分數增加 X
+    - n: 4
+      action: 至機台交易紀錄查詢該筆（若查詢頁尚未部署，可改查詢後端資料紀錄核對），確認類型為「機台開分」、金額為正值 X
+    - n: 5
+      action: 立即（不進行任何額外的核實或審核操作）重新查詢會員列表的存款次數與存款金額
+    - n: 6
+      action: 嘗試尋找任何可撤銷／回滾這筆開分存款次數與金額累計的後台操作
+    expected_result: 分數立即增加 X；交易紀錄類型為「機台開分」、金額為正值；存款次數 +1、存款金額 +X，且是在交易完成當下就直接累計（不等待核實），累計後不存在任何撤銷或回滾入口
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/開分
+      quote: 交易紀錄的類型記為「機台開分」，金額為正值。交易完成（分數入帳）當下直接累計進該機台帳號於會員列表的「存款次數」「存款金額」（不需核實）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-0031 只斷言累計行為本身；額外加入『尋找撤銷入口』一步，是因為此需求為 high risk 且『不需核實即直接累計』本身隱含不可逆的風險，屬合理的 error_guessing 延伸，未超出
+      AC 的『直接累計』語意。
+  - draft_id: TC-DRAFT-01M2MBHFR6XP0FQFE63NXFH2BG
+    title: 開分加計後恰等於場館額度上限可成立，超過 1 單位則被拒絕（1-OVER LIMIT）
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-004
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0041
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入 站台列表，將該機台所屬場館的額度上限設為 A（一個便於計算的整數，例如現有全場館機台分數餘額合計＋已預留未入帳入金金額為 A-100）
+    - n: 2
+      action: 呼叫 req-keyin 開分金額恰為 100（使加計後全場館合計恰等於額度上限 A）
+    - n: 3
+      action: 確認開分成功（0-OK），分數增加、交易紀錄正常寫入
+    - n: 4
+      action: 再次呼叫 req-keyin 開分金額 1（此時加計後將超過額度上限 A）
+    - n: 5
+      action: 確認此筆的回覆與分數變化
+    expected_result: 第一筆恰等於上限：成立，回 0-OK，分數正常增加；第二筆使合計超過上限：平台回 1-OVER LIMIT，分數不變、不寫入任何帳務異動，但交易紀錄留有「未成立」紀錄（超過額度上限不屬於餘額不足的不寫入例外）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/開分 + §附錄-開分
+      quote: 判定與入帳於場館鎖內執行，與入金的預留共用同一把鎖而序列化，判定基準須含已預留未入帳的入金金額（v07 定案）；開分為單階段，判定即入帳。超過額度上限回 1-OVER LIMIT，不寫入任何帳務異動
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此案例採 boundary_value，直接測試 AC-CASHFLOW-0041 描述的『超過上限』邊界的相鄰兩點：加總『恰等於上限 A』（應成立）與『超過上限 1 單位』（應被拒絕），是驗證『超過…上限』這種比較邏輯最直接的邊界取值方式，而非任意選一個明顯超額的大數字。test_data
+      未寫死具體數字，改用相對量『現有合計為 A-100』搭配『開分 100』與『再開分 1』，讓執行者可依測試環境當下實際場館餘額推算出 A 與應佈置的差額，避免寫死可能不存在於環境中的絕對金額。expected_result 中『交易紀錄留有未成立紀錄』一句依
+      REQ-CASHFLOW-030（超過額度上限非餘額不足的例外情形，應留下未成立紀錄）補充說明，非 AC-CASHFLOW-0041 本身逐字斷言，但兩需求邏輯一致，一併驗證以提高本案例的驗證密度，不另拆一條 TC。
+  - draft_id: TC-DRAFT-01M2MBHFR629BDC9VGDJ2VV9D5
+    title: 額度上限內連續送出兩筆內容相同的開分請求，系統不偵測也不阻擋重複，兩筆皆入帳
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-005
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0051
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認場館額度上限充足，不受本次測試金額影響
+    - n: 2
+      action: 呼叫 req-keyin 開分金額 X（模擬現場店員操作）
+    - n: 3
+      action: 確認回 0-OK，分數增加 X
+    - n: 4
+      action: 在未查詢後台的情況下，直接以完全相同的參數再次呼叫 req-keyin（模擬店員誤判失敗後重按）
+    - n: 5
+      action: 確認第二筆的回覆與分數變化
+    expected_result: 兩筆請求皆判定通過、分別入帳，機台分數總共增加 2X——系統不會偵測或阻擋這種重複，此為 spec 明確承認的既定行為（現場 SOP 因應）而非缺陷
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/單階段交易防重複 + §附錄-開分
+      quote: 開分無任何自然防護——只要不超過額度上限，重按幾次就加幾次，是最高風險項
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此需求本質是驗證『沒有防護』這件事，design_technique 選 error_guessing 而非 negative，因為預期結果是兩次都成功（非拒絕），純粹是針對已知高風險情境（重按）做探測。
+  - draft_id: TC-DRAFT-01M2MBHFR62QDDARD522CKR67Z
+    title: req-cashin 每次皆建立新 PENDING 與唯一 TXID，不使既有 PENDING 失效；對其中一筆完成 end-cashin 不影響另一筆
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-006
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0061
+    - AC-CASHFLOW-0062
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 送出第一筆入金請求，記錄回覆的 TXID1（PENDING1 建立）
+    - n: 2
+      action: 再呼叫 req-cashin 送出第二筆入金請求（同一機台帳號），記錄回覆的 TXID2
+    - n: 3
+      action: 確認 TXID1 ≠ TXID2，且 PENDING1 未因 PENDING2 的建立而失效（兩者並存）
+    - n: 4
+      action: 以 TXID1 呼叫 end-cashin 完成該筆入帳
+    - n: 5
+      action: 確認 PENDING2（TXID2）仍維持待確認狀態、未受影響，可再獨立以 end-cashin(TXID2) 完成
+    expected_result: 每次 req-cashin 皆建立新 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號可同時存在多筆有效入金 PENDING，且對其中一筆完成或處理不會波及另一筆
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號可同時存在多筆有效入金 PENDING
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: design_technique 加入 error_guessing，是為了驗證『多筆並存』是否真的互不干擾（探測潛在的資料交叉污染風險），而非僅停留在建立階段的表面驗證。
+  - draft_id: TC-DRAFT-01M2MBHFR66GECM0VGRNFRGH61
+    title: 入金加計後恰等於額度上限可成立並預留，超過則 1-OVER LIMIT 且不建立 PENDING、不預留
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-007
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0071
+    - AC-CASHFLOW-0072
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入 站台列表，設定該場館額度上限為 A，並確認目前全場館機台分數餘額合計＋已預留未入帳入金金額為 A-100
+    - n: 2
+      action: 呼叫 req-cashin 送出金額恰為 100 的入金請求
+    - n: 3
+      action: 確認回覆建立 PENDING 並將 100 計入預留（此時全場館『餘額合計＋預留』恰為 A）
+    - n: 4
+      action: 再呼叫 req-cashin 送出金額 1 的入金請求（此時加計後將超過額度上限 A）
+    - n: 5
+      action: 確認此筆的回覆，並確認機台未收到分數變化、無新 PENDING 產生
+    expected_result: 第一筆恰等於上限：成立，建立 PENDING 並預留 100；第二筆超過上限：回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 先取得場館鎖…在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此案例與 REQ-CASHFLOW-004（開分超限）採相同的邊界值設計手法：以『加總後恰等於上限』與『再加 1 即超限』兩個相鄰邊界點驗證入金額度判定，因為 AC-CASHFLOW-0071/0072
+      描述的正是這條比較邏輯的邊界行為，而非一般性功能是否運作。刻意合併 AC-0071（成立並預留）與 AC-0072（超限拒絕）於同一條 TC，因兩者本質是同一次測試流程中連續發生的一組對照（先驗證恰好通過、緊接著驗證下一筆超額），拆成兩條
+      TC 需重複佈置相同的初始額度環境，效率較差且無法體現『這兩個結果是同一組邊界的兩側』這個設計意圖。test_data 同樣未寫死絕對金額，改以『現有合計為 A-100』的相對描述，避免依賴測試環境當下不確定的實際額度數字。
+  - draft_id: TC-DRAFT-01M2MBHFR6ZCT58YWSAWFGDKH0
+    title: 兩筆入金請求依場館鎖序列化處理，第二筆的判定基準已包含第一筆剛通過的預留金額
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-007
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0073
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - scenario
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 設場館額度上限為 A，目前全場館餘額合計＋已預留金額為 A-150
+    - n: 2
+      action: 呼叫 req-cashin 送出金額 100 的入金請求（單看未超限：A-150+100=A-50，未超過 A）
+    - n: 3
+      action: 確認此筆通過並建立 PENDING（預留轉入後，判定基準已含此筆的 100）
+    - n: 4
+      action: 接著（不等待前一筆入帳，模擬幾乎同時送達）呼叫 req-cashin 送出金額 100 的另一筆入金請求（若僅以原始 A-150 為基準計算不會超限，但加計前一筆已預留的 100 後將達 A+50，超限）
+    expected_result: 依場館鎖逐筆序列化處理：第一筆通過並將 100 計入預留後，第二筆的判定基準已包含第一筆的預留（A-150+100+100=A+50 超過上限），因而正確被擋下並回 1-OVER LIMIT，不會發生『兩筆各自判斷都通過、合計卻超額』的漏洞
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 先取得場館鎖…在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 無法在單機測試中製造真正的並行競態（同一毫秒送達），故以『不等待第一筆結果即連續送出第二筆』模擬序列化鎖的判定基準是否正確累加預留金額，這是本規則可被功能測試驗證的核心邏輯，而非依賴真正的高並發壓測工具。
+  - draft_id: TC-DRAFT-01M2MBHFR6BKYKP99P5GHBHQFH
+    title: end-cashin 成功入帳後，預留轉為實際分數餘額，該筆分數可正常被使用
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-008
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0081
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - state_transition
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 送出入金請求金額 X，取得 TXID，確認此時機台畫面分數尚未增加（僅平台端有預留）
+    - n: 2
+      action: 以該 TXID 呼叫 end-cashin
+    - n: 3
+      action: 確認機台分數立即增加 X
+    - n: 4
+      action: 以 throshold=0 呼叫 req-keyout 全洗，確認可正常洗出含這筆 X 在內的全部餘額
+    - n: 5
+      action: 再次以相同 TXID 呼叫 end-cashin（驗證預留轉正後是否仍具備冪等性）
+    expected_result: end-cashin 成功後預留立即轉為實際分數餘額（分數增加 X 且可被正常使用於洗分/出金），額度不再被此筆持續佔用；重複呼叫同一 TXID 的 end-cashin 回 0-OK 但不重複加值
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 預留額度的釋放（v07 定案）：入帳成功時預留轉為實際分數餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 依 AC-CASHFLOW-0081 設計：以 requirement_based 驗證 spec 明定的『入帳成功時預留轉為實際分數餘額』，並以 state_transition 驗證 PENDING(已預留)→已完成(轉實際餘額)
+      這個狀態轉換是否讓分數真正可用（不只是帳面數字改變，而是能被後續洗分/出金實際動用）；額外以 error_guessing 補測轉正後同一 TXID 再次呼叫 end-cashin 是否仍具備 REQ-CASHFLOW-011 定義的冪等性。本
+      TC 僅涵蓋 AC-CASHFLOW-0081。同需求下的 AC-CASHFLOW-0083（Admin/站長於交易紀錄手動取消入金 PENDING）因 statement 已於 2026-09-15 由 Oscar 確認更正（該操作路徑不存在於實際系統：交易紀錄查詢頁無手動取消功能，洗分出金核實頁的「作廢」僅適用已完成出金交易），本設計判斷該
+      AC 不再適用，已於 TestDesignReport.uncovered_with_reason 記載理由，不設計對應 TC。
+  - draft_id: TC-DRAFT-01M2MBHFR6D578YPFV41R9NWHN
+    title: 入金 PENDING 超過 24 小時未完成，自動轉為已逾時並釋放預留額度
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-008
+    - REQ-CASHFLOW-012
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0082
+    - AC-CASHFLOW-0122
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 建立一筆 PENDING（不呼叫 end-cashin，模擬紙鈔卡在機台內、平台已受理但未收到收鈔完成回報）
+    - n: 2
+      action: 等待（或由排程機制觸發）該筆 PENDING 建立時間超過 24 小時
+    - n: 3
+      action: 查詢該筆 PENDING 狀態
+    - n: 4
+      action: 查詢該場館的額度計算，確認此筆的預留金額是否仍被佔用
+    expected_result: 該 PENDING 自動轉為「已逾時」，其預留額度隨即釋放（不再計入『已預留未入帳的入金金額』），之後再收到該 TXID 的 end-cashin 依 REQ-CASHFLOW-012 回 1-NO RECORD
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-PENDING 保留期限
+      quote: PENDING 逾時（24 小時）由排程關閉時釋放；入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 end-cashin 一律回 1-NO RECORD，機台停止重送，流程收斂
+    assumptions:
+    - text: 入金 PENDING 的 24 小時保留期限為系統固定值，spec 未提供可縮短此值以利測試的設定項（不同於場次逾時時間或日結時間可由場館設定調整）；實際測試需與環境負責人確認是否有可加速時間判定的測試機制（例如調整系統時鐘或手動觸發逾時排程），否則需真實等待
+        24 小時執行
+      requirement_id: REQ-CASHFLOW-008
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 依 AC-CASHFLOW-0082 與 AC-CASHFLOW-0122 設計，以 state_transition 驗證 spec 明定的『PENDING(已預留)→已逾時(釋放)』狀態轉換，並確認預留額度確實自場館額度計算中釋放（而非僅狀態文字改變）。24
+      小時逾時的測試資料佈置方式為推測，已誠實標記於 assumptions 並要求環境負責人確認是否有可加速判定的測試機制。本 TC 僅涵蓋 AC-CASHFLOW-0082。同需求下的 AC-CASHFLOW-0083（Admin/站長於交易紀錄手動取消入金
+      PENDING）因 statement 已於 2026-09-15 由 Oscar 確認更正（該操作路徑不存在於實際系統：交易紀錄查詢頁無手動取消功能，洗分出金核實頁的「作廢」僅適用已完成出金交易），本設計判斷該 AC 不再適用，已於
+      TestDesignReport.uncovered_with_reason 記載理由，不設計對應 TC。
+  - draft_id: TC-DRAFT-01M2MBHFR6DJSNN5NG2KY6REYK
+    title: end-cashin 完成入帳時不再重新檢查額度上限，即使額度環境已於期間變化
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-009
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0091
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 設場館額度上限為 A，呼叫 req-cashin 送出入金金額 100 並通過（已於 req-cashin 階段判定並預留，此時全場館合計含此筆恰為 A）
+    - n: 2
+      action: 在呼叫 end-cashin 之前，以 Admin 將該場館額度上限調降至遠低於 A 的值（模擬若重新判定必定超限的環境變化）
+    - n: 3
+      action: 以該筆的 TXID 呼叫 end-cashin
+    expected_result: end-cashin 仍正常回 0-OK，關閉 PENDING、更新帳務、預留轉為實際餘額——即使此時的額度上限已被調低到理論上會超限，本階段依規則不再判定額度上限，不會因額度環境變化而失敗
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、把預留轉為實際餘額，回 0-OK。本階段不再判定額度上限
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此情境刻意製造『若系統錯誤地在 end-cashin 重新判定額度會失敗』的條件，是驗證『本階段不再判定額度上限』最直接也最容易在真實系統中踩雷的方式，屬 error_guessing。
+  - draft_id: TC-DRAFT-01M2MBHFR6YQ1QD64Q6R3K85C1
+    title: end-cashin 帶入查無對應 PENDING 或不符的 TXID 時，僅記錄 log 並回 1-NO RECORD，不變更任何資料
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-010
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0101
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 取得機台帳號目前的分數與帳務狀態作為基準
+    - n: 2
+      action: 以一個查無對應 PENDING 的 TXID（例如從未透過 req-cashin 建立過、或已被逾時關閉的 TXID）呼叫 end-cashin
+    expected_result: 回 1-NO RECORD，僅記錄 log 後丟棄，機台分數與任何帳務／PENDING 資料皆不變更
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD，不變更任何資料
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 negative 技術，直接對應 AC-CASHFLOW-0101 的『查無對應 PENDING 或 TXID 不符』這個明確拒絕分支；因 spec 對此分支的回應（僅記錄 log、回 1-NO
+      RECORD、不變更任何資料）已在 §附錄-入金 逐字定義，屬於已定義的拒絕契約，故直接以 requirement 層級的斷言驗證，不需標記為 exploratory。test_data 選擇『從未建立過的 TXID』而非『已逾時關閉的
+      TXID』作為主要驗證路徑，是因為前者最單純、最不受其他狀態轉換（如 REQ-CASHFLOW-012 的 24 小時逾時）干擾，能單獨隔離『查無 PENDING』這個條件本身的行為；若需驗證『已逾時後查無 PENDING』的組合情境，屬於
+      REQ-CASHFLOW-012 的驗證範圍（見 TC-DRAFT-...DCNCAB8P4Z88GE0E）。
+  - draft_id: TC-DRAFT-01M2MBHFR6PRPRFPHNWNVJK009
+    title: 同一 TXID 的 end-cashin 於成功處理後再次送達，回 0-OK 但不重複加值
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-011
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0111
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 取得 TXID，並以該 TXID 呼叫 end-cashin 完成一次入帳，記錄完成後的機台分數
+    - n: 2
+      action: 以相同 TXID 再次呼叫 end-cashin（模擬機台 15 秒未收到成功回覆而重送，或跨斷電續送）
+    - n: 3
+      action: 確認回覆與機台分數是否變化
+    expected_result: 第二次仍回 0-OK，但機台分數不再重複增加，維持第一次入帳後的值
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-入金
+      quote: 平台必須具備冪等性：相同 TXID 第二次以後收到時，若該 PENDING 已完成，直接回 0-OK 且不重複加值
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-CASHFLOW-011 的冪等性是本包防止重複入帳的關鍵防線（spec 明確標註『關鍵防線』），故除 requirement_based 直接驗證 AC-CASHFLOW-0111 定義的行為外，另加
+      error_guessing 標籤，因為步驟中特意模擬機台『15 秒未收到成功回覆即重送』與『跨斷電續送』這類真實會觸發的重送情境，而非僅呼叫兩次 API 的表面測試；這是針對已知高風險重放攻擊面的主動探測。test_data 未特別佈置金額，因為本案例驗證的是『重複呼叫是否加值兩次』這個布林性質的行為，任何非零金額皆可驗證，無需鎖定特定數值。
+  - draft_id: TC-DRAFT-01M2MBHFR6DCNCAB8P4Z88GE0E
+    title: 入金 PENDING 超過 24 小時自動轉已逾時，之後收到 end-cashin 一律回 1-NO RECORD
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-012
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0121
+    - AC-CASHFLOW-0122
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 建立一筆 PENDING，記錄 TXID（不呼叫 end-cashin）
+    - n: 2
+      action: 等待該筆 PENDING 建立時間超過 24 小時（或由排程機制觸發逾時判定）
+    - n: 3
+      action: 查詢該 PENDING 狀態，確認已轉為「已逾時」
+    - n: 4
+      action: 以相同 TXID 呼叫 end-cashin
+    expected_result: PENDING 於超過 24 小時後自動轉為「已逾時」，預留額度釋放；轉為已逾時之後才收到的 end-cashin 一律回 1-NO RECORD，不變更任何資料，機台端因此停止重送、流程收斂
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-PENDING 保留期限
+      quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 end-cashin 一律回 1-NO RECORD，機台停止重送，流程收斂
+    assumptions:
+    - text: 同 REQ-CASHFLOW-008：24 小時為系統固定逾時值，非場館可調整項，測試需與環境負責人確認是否有可加速判定的測試機制，否則需真實等待 24 小時執行
+      requirement_id: REQ-CASHFLOW-012
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證 spec 明定的 PENDING → 已逾時 這個狀態轉換，並合併 AC-CASHFLOW-0121（轉態本身）與 AC-CASHFLOW-0122（轉態後的後續行為）於同一條
+      TC，因為 0122 描述的正是『轉為已逾時之後』這個後續狀態下的行為，兩者在時間軸上是連續的同一個場景，拆開驗證需重複佈置相同的 24 小時等待條件，效率較差。24 小時等待為系統固定值而非可調參數，若無法加速判定，此 TC 的
+      execution_cost 與 stability 皆會受影響，此為誠實揭露於 assumptions 的環境限制而非本設計新增的假設。
+  - draft_id: TC-DRAFT-01M2MBHFR6NRXT46KMDY0BA2X1
+    title: 洗分核可金額 = 餘額以門檻為單位無條件捨去；全洗與指定金額洗出恰為核可金額時結果相同
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-013
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0131
+    - AC-CASHFLOW-0132
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 321
+    - name: throshold
+      value: 100
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為 321（人工入金不影響既有 PENDING、不計入稽核，見 REQ-CASHFLOW-028）
+    - n: 2
+      action: 呼叫 req-keyout，mode=all、throshold=100（全洗）
+    - n: 3
+      action: 確認回覆的核可金額 value
+    - n: 4
+      action: 以另一台（或同一台重新佈置至餘額 321）呼叫 req-keyout，mode=value、throshold=100、指定金額 300
+    - n: 5
+      action: 確認回覆的核可金額 value
+    expected_result: 全洗：核可金額為 300（321 以 100 為單位捨去）；指定金額洗 300：核可金額同樣為 300，與全洗結果相同
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 計算規則：核可金額 ＝ 餘額以門檻為單位無條件捨去。例：門檻 100、餘額 321 → 核可 300；門檻 0、餘額 321 → 核可 321（全額）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: test_data 直接沿用 spec 範例表格中的『機台餘額 321、門檻 100』組合（並非隨機挑選），因為這正是 spec 用來說明捨去規則的官方範例，核可金額 300 的正確性可直接對照 spec
+      驗證，降低測試設計本身出錯的風險。合併 AC-CASHFLOW-0131（全洗）與 AC-CASHFLOW-0132（指定金額洗）於同一 TC，是因為 AC-0132 的核心斷言正是『與全洗結果相同』——這是一個相對性斷言，必須在同一組餘額/門檻條件下比較兩種操作模式的結果才有意義，拆開成兩條獨立
+      TC 反而會割裂這個『兩者應相同』的比較邏輯。標記 boundary_value 是因為 321 相對於門檻 100 恰好落在『捨去後餘 21』這個非整除邊界，能同時驗證捨去計算的正確性。
+  - draft_id: TC-DRAFT-01M2MBHFR6BE24MJN4AECVH993
+    title: 門檻為 0 時洗出全部餘額、不做取整
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-013
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0133
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 321
+    - name: throshold
+      value: 0
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為 321
+    - n: 2
+      action: 呼叫 req-keyout，mode=all、throshold=0
+    expected_result: 核可金額為 321（全額），不因門檻捨去而減少，門檻 0 代表洗出全部餘額
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 計算規則：核可金額 ＝ 餘額以門檻為單位無條件捨去。例：門檻 100、餘額 321 → 核可 300；門檻 0、餘額 321 → 核可 321（全額）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 門檻 0 是 spec 明確定義的特例邊界（『門檻為 0 時表示洗出全部餘額、不做取整』），與 AC-CASHFLOW-0131/0132（門檻 100 的一般捨去情形，見另一條 TC）互為對照組：同樣的機台餘額
+      321，僅改變門檻是否為 0 這一個變數，藉此隔離驗證『門檻=0 是否真的完全跳過取整邏輯』而非受其他佈置差異干擾，因此標記 boundary_value（門檻值本身的邊界：0 vs 正值）。
+  - draft_id: TC-DRAFT-01M2MBHFR6T17X9W76XDMFJJ6Y
+    title: 洗分餘數留在機台帳號上不被清除；餘數單獨存在時無法再洗出（可洗金額為 0）
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-014
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0141
+    - AC-CASHFLOW-0142
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 321
+    - name: throshold
+      value: 100
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為 321
+    - n: 2
+      action: 呼叫 req-keyout，mode=all、throshold=100，確認洗出 300、機台餘額變為 21
+    - n: 3
+      action: 再次呼叫 req-keyout，mode=all、throshold=100（此時餘額僅剩 21，小於一個門檻單位）
+    expected_result: 第一次：洗出 300，餘數 21 留在機台帳號上，系統不另記交易、不清空餘額；第二次：核可金額為 0，回 1-NO CREDITS，無法洗出（可改按結算全額領回）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §業務規則-餘數保留
+      quote: 餘數保留 | 洗分（門檻大於 0 時）僅扣除核可金額，不足一個門檻單位的餘數留在機台帳號上；系統不另記交易、不清空餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 延續與 REQ-CASHFLOW-013 相同的測試資料（餘額 321、門檻 100），是刻意設計的承接關係：先驗證洗出 300 後餘數 21 確實保留在帳號上不被清除（AC-CASHFLOW-0141），緊接著在同一條
+      TC 的第二步驗證『餘數 21 單獨存在時無法再洗出』（AC-CASHFLOW-0142）——後者的佈置條件正是前者操作後自然產生的結果，兩個 AC 在邏輯上是一個操作的先後兩階段觀察，合併驗證比重新佈置一次餘額為 21 的獨立情境更能真實反映『餘數留存』這個規則的實際運作序列。標記
+      boundary_value 是因為驗證核心是『餘數（不足一個門檻單位）』這個邊界情形下可洗金額的計算結果。
+  - draft_id: TC-DRAFT-01M2MBHFR6W2SA9J8T04FP4Y5S
+    title: 洗分請求的 throshold 為負值、缺漏或非數值時，一律防禦性拒絕回 6-BAD DATA/FORMAT
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-015
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0151
+    - AC-CASHFLOW-0152
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-keyout，throshold 帶入負值（例如 -1）
+    - n: 2
+      action: 確認回覆與帳務是否變動
+    - n: 3
+      action: 呼叫 req-keyout，缺少 throshold 欄位
+    - n: 4
+      action: 確認回覆與帳務是否變動
+    - n: 5
+      action: 呼叫 req-keyout，throshold 帶入非數值（例如字串）
+    - n: 6
+      action: 確認回覆與帳務是否變動
+    expected_result: 三種規格外情形皆回 6-BAD DATA/FORMAT，不寫入任何帳務異動；三者以等價劃分（負值／缺漏／型別錯誤）分別代表一類規格外輸入，結果一致
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-洗分
+      quote: 規格外的值（負值、缺漏、非數值）屬廠商保證外情形，防禦性處理：拒絕該筆、回 6-BAD DATA/FORMAT，不寫入任何帳務異動
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 負值、缺漏、非數值三者皆屬 spec 定義的『規格外』等價類（廠商保證外情形），三者共享同一個防禦性處理結果（回 6-BAD DATA/FORMAT、不寫入帳務），故以 equivalence_partitioning
+      將三種輸入劃分為同一類異常輸入分別測試，而非逐一視為獨立情境；此設計目的是驗證『任何不符合廠商保證（正值或 0）的輸入』都收斂到同一個防禦分支，而非驗證某個特定數值的邊界（例如 threshold=-1 並非在測試『-1 與 0 的邊界』，僅是負值等價類中任取一個代表值）。
+  - draft_id: TC-DRAFT-01M2MBHFR64JFFPFVBD3Y80CK0
+    title: 洗分計算後可洗金額為 0 時回 1-NO CREDITS，不寫入任何帳務異動與交易紀錄
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-016
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0161
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 50
+    - name: throshold
+      value: 100
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為小於一個門檻單位（例如餘額 50、throshold 100）
+    - n: 2
+      action: 呼叫 req-keyout，mode=all、throshold=100
+    expected_result: 回 1-NO CREDITS，機台畫面顯示餘額不足，不寫入任何帳務異動，也不寫入交易紀錄（此為餘額不足的例外，與其他未成立原因不同）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 核可金額為 0 時回 1-NO CREDITS，不寫入任何帳務異動與交易紀錄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: test_data 選餘額 50、門檻 100（餘額小於一個門檻單位但非 0），是刻意避開『餘額恰為 0』這個更單純的情形，用以驗證『不足一個門檻單位即視為可洗金額 0』這個規則在餘額非零時依然成立，而不只是『沒錢自然洗不出來』的平凡情形；這是驗證計算邏輯（餘額<門檻
+      ⟹ 核可金額=0）而非單純驗證『無餘額不能操作』，故標記 boundary_value。
+  - draft_id: TC-DRAFT-01M2MBHFR61WZY318CERV7CY4J
+    title: 洗分回 0-OK 即代表分數已扣除且無回滾機制，完成當下立即結束當前場次並由新場次承接餘數
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-017
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0171
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號目前有一個進行中場次，餘額 321
+    - n: 2
+      action: 呼叫 req-keyout，mode=all、throshold=100，確認回 0-OK
+    - n: 3
+      action: 查詢場次資訊（會員詳細頁「機台資訊」區塊或依場次編號查詢），確認原場次是否已結束、期末餘額為多少
+    - n: 4
+      action: 確認是否已有新場次開始，期初餘額是否等於餘數 21
+    - n: 5
+      action: 嘗試尋找任何可撤銷或回滾這筆已完成洗分的 API 或後台操作
+    expected_result: 回 0-OK 當下分數已扣除為最終結果、無法回滾；原場次立即結束（期末餘額 21），餘數 21 立即由新場次承接（新場次期初餘額 21）；不存在任何可撤銷或回滾此筆洗分的機制
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分 + §附錄-洗分
+      quote: 單階段，回 0-OK 即已完成扣款，無回滾機制；完成當下當前場次即結束，餘數由新場次承接
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 『尋找回滾入口』一步是針對『無回滾機制』這句斷言本身的探測，因為正面流程無法直接證明『不存在』某個機制，需主動排查；此舉未超出 AC 的『無回滾機制』語意範圍。
+  - draft_id: TC-DRAFT-01M2MBHFR6896H6AZQMQQWBHAT
+    title: 指定金額洗分且洗完後餘額仍足夠再洗一次同額時，重按會造成重複扣款（已知風險非缺陷）
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-018
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0181
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 1000
+    - name: throshold
+      value: 100
+    - name: 指定洗分金額
+      value: 300
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為 1000，throshold=100
+    - n: 2
+      action: 呼叫 req-keyout，mode=value、throshold=100、指定金額 300，確認回 0-OK，餘額變為 700
+    - n: 3
+      action: 在未查後台確認的情況下，直接以完全相同參數再次呼叫 req-keyout（模擬機台顯示失敗後店員重按）
+    expected_result: 第二次同樣回 0-OK 並再扣款 300（餘額變為 400）——系統不會偵測或阻擋，此為 spec 明確點名的已知風險情境，需仰賴現場 SOP（先查後台機台交易紀錄再決定是否重做）因應，而非系統缺陷
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/洗分（機台顯示失敗時要怎麼辦）
+      quote: 指定金額洗分、且洗完後餘額仍足夠再洗一次同額時，第二次會成功…玩家就被扣了兩次卻只拿到一次現金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 此需求本質與 REQ-CASHFLOW-005（開分無防護）同構，皆是驗證『沒有防護』這件事本身，故同樣選 error_guessing 而非 negative——預期結果是重按後仍然成功（非拒絕）。test_data
+      刻意選『指定金額洗分且洗完後餘額仍足夠再洗一次同額』這個 spec 明確點名『第二次仍會成功』的特定組合（餘額 1000、洗 300、剩 700 仍夠再洗 300），而非隨機選一組數字；這是本規則唯一會實際造成重複扣款的組合（多數重複操作會被『餘額不足』自然擋下，見
+      spec §四種金流/洗分 機台顯示失敗時要怎麼辦），若佈置成餘額不足以再洗一次同額，則測試不到 spec 明確警告的風險情境。
+  - draft_id: TC-DRAFT-01M2MBHFR6MS79WC71E4CZVMM5
+    title: 已有效出金 PENDING 時再次送出 req-cashout，舊 PENDING 被標記失效並建立新 PENDING，全程只有一筆有效
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-019
+    - REQ-CASHFLOW-022
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0191
+    - AC-CASHFLOW-0221
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 建立第一筆出金 PENDING，記錄 TXID1（不呼叫 end-cashout）
+    - n: 2
+      action: 再次呼叫 req-cashout（模擬玩家再次按下結算鍵），記錄 TXID2
+    - n: 3
+      action: 確認 TXID1 是否已被標記失效
+    - n: 4
+      action: 以 TXID1 呼叫 end-cashout（驗證舊 PENDING 是否真的已失效）
+    expected_result: 第二次 req-cashout 建立新 PENDING（TXID2）前，先將既存的 TXID1 標記失效，全程同一時間只有一筆有效出金 PENDING；之後以已失效的 TXID1 呼叫 end-cashout，因查無有效對應
+      PENDING 而回 1-NO RECORD（依 REQ-CASHFLOW-022），不會誤將舊請求完成扣分
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時若已有既存 PENDING，必須先標記失效再建立新的｜收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄
+        log 後丟棄，回 1-NO RECORD
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證出金 PENDING 的『有效 → 已取消（被新請求取代）』轉換，並合併 REQ-CASHFLOW-022（end-cashout 查無對應 PENDING
+      回 1-NO RECORD）於同一 TC，因為驗證『舊 PENDING 真的已失效』最直接的方式就是嘗試對它呼叫 end-cashout、確認觸發 REQ-CASHFLOW-022 的查無對應分支——這兩個需求在此情境下是因果相連的同一組行為（一個是取代機制、一個是取代後舊請求的自然後果），拆開驗證反而無法證明『失效』是真的生效而非僅是狀態欄位文字改變。
+  - draft_id: TC-DRAFT-01M2MBHFR6DKCMSGEGYMHNEMNM
+    title: 出金核可金額為 req-cashout 當下全部餘額，不因門檻取整
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-020
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0201
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data:
+    - name: 機台餘額
+      value: 321
+    steps:
+    - n: 1
+      action: 透過人工入金將機台帳號分數佈置為 321（刻意選一個非任何常見門檻整數倍的值）
+    - n: 2
+      action: 呼叫 req-cashout
+    expected_result: 核可金額為 321（全額），不因洗分門檻機制而取整，出金請求本身也不帶 throshold 欄位
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 核可金額 ＝ req-cashout 當下的全部餘額（清空餘額、不套門檻）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 依獨立 Validator 意見修正：本案例驗證的是『出金完全不套用洗分門檻取整規則』這個功能性事實（AC-CASHFLOW-0201），並非任何數值邊界——刻意選 321 只是為了排除『餘額恰好是常見門檻整數倍』時無法區分『真的沒取整』與『取整後剛好結果相同』這兩種可能的歧義，屬於一般案例的選值考量，而非邊界值分析，故改標為
+      requirement_based 更精確反映實際判斷邏輯（原標 boundary_value 為誤用）。
+  - draft_id: TC-DRAFT-01M2MBHFR6NM5FDTJ6SZ7BCCXD
+    title: 出金時餘額為 0，回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-020
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0202
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號目前分數為 0（無進行中場次）
+    - n: 2
+      action: 呼叫 req-cashout
+    expected_result: 回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 核可金額為 0 時回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 AC-CASHFLOW-0201（同需求下的一般全額出金情境，見另一條 TC）互為對照組，同樣驗證『出金核可金額』計算規則，但取值刻意落在『餘額為 0』這個明確邊界（核可金額為 0 時的行為分支），故維持
+      boundary_value 標記——與前一條 TC 的技巧選擇差異（requirement_based vs boundary_value）是刻意的：前者驗證『不取整』這個功能性規則，本條驗證『金額為 0』這個計算結果的邊界分支，兩者驗證的性質不同，非隨意湊技巧多樣性。
+  - draft_id: TC-DRAFT-01M2MBHFR6DVP7ESQKHM4G00K5
+    title: end-cashout 扣分完成當下場次立即結束、餘額歸 0；對相同 TXID 具備冪等性
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-021
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0211
+    - AC-CASHFLOW-0212
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號有進行中場次，餘額 321，呼叫 req-cashout 取得 PENDING 與核可金額 321
+    - n: 2
+      action: 以該 TXID 呼叫 end-cashout
+    - n: 3
+      action: 確認機台餘額歸 0，且原場次立即結束（不承接餘數）
+    - n: 4
+      action: 以相同 TXID 再次呼叫 end-cashout
+    expected_result: end-cashout 完成當下餘額歸 0、場次立即結束（無餘數承接）；相同 TXID 再次送達回應成功但不重複扣分（分數已是 0，不會變負）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: end-cashout 扣分完成當下當前場次即結束，餘額歸 0、無餘數承接…同樣須對相同 TXID 的重複 end-cashout 具備冪等性
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證『進行中 → 已結束(出金)』這個場次狀態轉換是否伴隨『餘額歸 0』正確發生，並額外以 error_guessing 針對 REQ-CASHFLOW-021
+      明文要求的冪等性（同 TXID 重複呼叫 end-cashout）做主動探測，因為出金冪等性若失效會直接造成『分數被扣成負值』這種嚴重資料錯誤，屬於高風險組合行為，值得在同一條 TC 內連續驗證（先完成、再重放）而非分拆。
+  - draft_id: TC-DRAFT-01M2MBHFR6DWN957ZRBKQNHYGF
+    title: 列印尚未開始的印表機異常：分數不扣但留一筆待確認 PENDING；已送入列印佇列後才卡紙缺紙：分數照扣、收據待補印不可重做
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-023
+    - REQ-CASHFLOW-026
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0231
+    - AC-CASHFLOW-0232
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 取得核可金額與 PENDING（TXID_A），但不呼叫 end-cashout（模擬機台判定列印尚未開始即偵測到印表機異常，直接結束流程、不呼叫 end-cashout）
+    - n: 2
+      action: 確認機台分數未扣、仍保留在機台上；查詢平台端該筆 PENDING 狀態
+    - n: 3
+      action: 另佈置一次出金情境：呼叫 req-cashout 取得核可金額與 PENDING（TXID_B），並以 TXID_B 呼叫 end-cashout 完成（模擬收據已送入列印佇列後才卡紙缺紙，但平台端流程視角與『印表機正常完成列印佇列』一致）
+    - n: 4
+      action: 確認 TXID_B 完成後的分數是否已扣，是否存在任何『視為未出金而重做』的入口
+    expected_result: 情況一：分數不扣、保留在機台上，但平台因先前 req-cashout 已建立的 PENDING 仍留有一筆「待確認」的出金（現場其實什麼也沒發生，該 PENDING 依 REQ-CASHFLOW-026
+      之既有機制收斂）；情況二：分數已扣（出金已完成），不存在『視為未出金而重做一次』的操作
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金 + §四種金流/出金（過渡期）
+      quote: 列印還沒開始就偵測到異常（含按下結算時印表機即有異常）：機台直接結束流程、不通知平台，分數不扣、保留在機台上。平台這邊會留下一筆「待確認」的出金，現場其實什麼也沒發生｜已送入列印佇列後才實體故障（卡紙、缺紙）：如上所述，分數照扣，收據待狀況排除後自動印出
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 『印表機是否發生異常、發生於何時點』屬機台廠商韌體內部事件，平台 API 本身無法直接觀察或觸發、也無法區分『印表機故障未呼叫 end-cashout』與『其他原因未呼叫 end-cashout』；本
+      TC 僅能在平台可觀察的行為層面（是否呼叫 end-cashout、呼叫後分數是否已扣）驗證兩種情況對應的平台端結果，此為本包『無獨立 UI、機台端行為由廠商實作』的系統邊界限制，若需驗證機台實機對印表機異常的判斷邏輯本身，需搭配實機或廠商模擬環境，超出本包純後端測試範圍。
+      修正：原標記 decision_table，但本 TC 實際僅為『列印尚未開始就異常』與『已送入列印佇列後才故障』兩個等價類（故障發生於列印前 vs 列印後）各自對應單一結果的對照，並非多條件交叉組合出不同結果的決策矩陣，改標為 equivalence_partitioning
+      更能反映實際判斷邏輯，error_guessing 維持不變。
+  - draft_id: TC-DRAFT-01M2MBHFR6G0FXNJJESAVKGBW5
+    title: 按下結算機台連不上平台時分數不扣，重按後前一筆待確認出金自動被新的一筆取代
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-024
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0241
+    - AC-CASHFLOW-0242
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - scenario
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 取得 PENDING（TXID1）與核可金額，但不呼叫 end-cashout（模擬機台連不上平台、自行結束流程）
+    - n: 2
+      action: 確認機台分數未扣（一毛都沒扣）
+    - n: 3
+      action: 再次呼叫 req-cashout（模擬玩家或店員再按一次結算），記錄 TXID2
+    - n: 4
+      action: 確認 TXID1 是否自動被取代、新請求（TXID2）是否正常受理
+    expected_result: 第一次無回應時分數未扣；再按一次結算後，前一筆待確認出金（TXID1）自動被新的一筆（TXID2）取代，不需人工處理，新請求正常處理
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金
+      quote: 按了結算卻沒有任何反應…分數一毛都沒扣，請玩家或店員再按一次結算即可。就算平台端留有前一筆待確認的出金，也會被新的一筆自動取代，不需人工處理
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 scenario 技巧，因為本案例本質是模擬一段連續的現場操作序列（結算無反應 → 分數未扣 → 玩家再按一次 → 舊 PENDING 自動取代），需要依時間順序串連多個步驟觀察狀態變化，而非單一輸入對單一輸出的規則驗證，故不適合標為
+      requirement_based 或 boundary_value。合併 AC-CASHFLOW-0241 與 AC-CASHFLOW-0242 是因為兩者描述的正是同一個現場情境的前後兩步（先無反應不扣分、接著重按由新請求自動取代），拆開驗證會失去『這是使用者連續操作同一問題』的情境完整性。
+  - draft_id: TC-DRAFT-01M2MBHFR6TZW6B37XSBNJ32CV
+    title: 過渡期由前台依序呼叫 req-cashout 取得核可後立即回報 end-cashout，收到完成回覆當下才扣分並結束場次
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-025
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0251
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台暫無印表機（過渡期現況）
+    - n: 2
+      action: 模擬前台依序呼叫：先呼叫 req-cashout 取得核可金額
+    - n: 3
+      action: 取得核可後立即依回覆內容呼叫 end-cashout
+    - n: 4
+      action: 觀察扣分與場次結束的確切時間點
+    expected_result: 扣分時點與場次結束時點皆為前台回報完成（end-cashout 成功）、平台扣分成功的當下，而非以送入列印佇列為準（過渡期無印表機、無列印佇列的概念）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 扣分時點＝前台回報完成、平台扣分成功當下（不再以「送入列印佇列」為準）；場次亦於此時結束
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 直接依 AC-CASHFLOW-0251 逐字驗證過渡期（機台暫無印表機）的兩階段呼叫順序與扣分時點定義，採 requirement_based因為這是對明確定義流程的直接對照，不涉及邊界或例外分支。之所以未涵蓋
+      REQ-CASHFLOW-042（前台呼叫認證方式）與 REQ-CASHFLOW-043（end-cashout 失敗重送策略）這兩個同屬過渡期但明確標註『待確認』的開放問題，是因為兩者的具體行為尚無定案可測，已分別於 TestDesignReport.uncovered_with_reason
+      記載理由，不在本 TC 範圍內。
+  - draft_id: TC-DRAFT-01M2MBHFR69N6D59K767Q9DD2T
+    title: 出金請求已送出、尚未收到回報完成之間，系統不提供任何取消操作
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-025
+    - REQ-CASHFLOW-019
+    - REQ-CASHFLOW-027
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0252
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 取得核可與 PENDING，尚未呼叫 end-cashout
+    - n: 2
+      action: 嘗試尋找任何可在此時間窗口內『單純取消』此筆出金（不透過新的 req-cashout 取代、也不透過人工出金連動取消）的 API 或後台操作
+    expected_result: 不存在可於此區間單純取消該筆出金的操作路徑；結算畫面的「取消」鍵僅在送出請求前有效，送出後即不可逆，僅能靠新的 req-cashout 取代（REQ-CASHFLOW-019）或人工出金連動取消（REQ-CASHFLOW-027）收斂
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金（過渡期）
+      quote: 前台在請求出金到回報完成之間不提供取消
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 negative 技術驗證『不存在某功能』這個否定性斷言（AC-CASHFLOW-0252 明確定義『系統不提供取消』），需要主動排查是否有任何後台或 API 入口可達成單純取消，而非僅依賴正面流程無法觸發取消就直接下結論。requirement_ids
+      同時列出 REQ-CASHFLOW-019 與 REQ-CASHFLOW-027，是因為 expected_result 中明確引用這兩個需求作為『取消訴求應改由這兩條路徑收斂』的替代說明（新請求取代、人工出金連動取消），屬於同一情境下互補說明其為何『不能取消』並不代表『無法收斂』，並非這兩個需求本身的直接驗證對象，本
+      TC 覆蓋範圍仍以 AC-CASHFLOW-0252 為主。
+  - draft_id: TC-DRAFT-01M2MBHFR6HECM6WW8W7JPPVPY
+    title: req-cashout 已建立 PENDING 但機台 15 秒內未收到回覆而結束程序時，PENDING 不會自動收斂，須靠新請求取代或人工出金連動取消
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-026
+    - REQ-CASHFLOW-027
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0261
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - scenario
+    - error_guessing
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 建立 PENDING（TXID1），不呼叫 end-cashout（模擬機台 15 秒逾時直接結束程序、收據不印）
+    - n: 2
+      action: 靜置一段時間後查詢該 PENDING 狀態，確認未自動結束
+    - n: 3
+      action: 透過既有的『人工出金』功能對該機台帳號執行人工出金
+    - n: 4
+      action: 確認 TXID1 的 PENDING 是否因此被連動取消
+    expected_result: PENDING 持續停留在待確認，不會自動結束（也沒有隨時間推移的逾時機制，出金 PENDING 不設逾時）；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依
+      REQ-CASHFLOW-027 連動取消既有 PENDING）才能收斂
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 第一階段有 15 秒逾時…但平台此時已建立 PENDING，該筆將永遠等不到 end-cashout，須由新的 req-cashout 取代或 Admin 手動取消收斂
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 原 spec 附錄文字寫『Admin 手動取消收斂』，但依 2026-09-15 Oscar 對本需求的確認記錄（交易紀錄查詢頁不存在手動取消功能），本 TC 的期望結果採用該需求已修正後的敘述（僅靠新請求取代或人工出金連動取消），不再斷言存在
+      Admin 手動取消入口；此差異來自 RequirementModel 的既有修正記錄，非本次設計新增的假設。
+  - draft_id: TC-DRAFT-01M2MBHFR6FY005FGJYW5ZZKRM
+    title: 櫃檯對機台帳號人工出金時，系統同時取消該機台尚未完成的出金 PENDING
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-027
+    - REQ-CASHFLOW-022
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0271
+    - AC-CASHFLOW-0221
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashout 建立一筆尚未完成的出金 PENDING，記錄 TXID
+    - n: 2
+      action: 以 Admin／櫃檯身份登入後台，對該機台帳號執行既有的人工出金功能
+    - n: 3
+      action: 確認該筆出金 PENDING 是否被同時取消
+    - n: 4
+      action: 以原 TXID 呼叫 end-cashout（驗證是否已無法完成，避免同一筆錢被領兩次）
+    expected_result: 櫃檯執行人工出金的同時，系統同時取消該機台尚未完成的出金 PENDING；之後以原 TXID 呼叫 end-cashout 因查無有效對應 PENDING 而回 1-NO RECORD（依 REQ-CASHFLOW-022），避免同一筆錢被領兩次
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/出金 + §業務規則與驗證/人工出金連動
+      quote: 櫃檯對機台帳號人工出金時，必須同時取消該機台尚未完成的出金交易｜收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 requirement_based 直接驗證 AC-CASHFLOW-0271 定義的人工出金連動取消規則，並額外以 error_guessing 主動嘗試對已被取消的原 TXID 呼叫 end-cashout（模擬機台在人工處理完成前仍持續重送
+      end-cashout 的真實情境），驗證此時是否正確觸發 REQ-CASHFLOW-022 的『查無對應 PENDING』分支而非誤判完成扣分——這是驗證『連動取消』是否真正徹底生效（而非僅狀態欄位改變、底層仍可被完成）的關鍵路徑，屬於本規則『避免同一筆錢被領兩次』核心風險的直接探測。
+  - draft_id: TC-DRAFT-01M2MBHFR6XQB7BEF038786QTW
+    title: 櫃檯對機台帳號人工入金時，不使既有的入金 PENDING 失效，兩者可分別繼續走完流程
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-028
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0281
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 呼叫 req-cashin 建立一筆入金 PENDING，記錄 TXID（不呼叫 end-cashin）
+    - n: 2
+      action: 以 Admin／櫃檯身份登入後台，對該機台帳號執行既有的人工入金功能，補入一筆分數
+    - n: 3
+      action: 確認該筆入金 PENDING 是否仍為有效狀態
+    - n: 4
+      action: 以原 TXID 呼叫 end-cashin，確認是否仍可正常完成
+    expected_result: 既有的入金 PENDING 不受人工入金影響，仍可各自繼續走完流程（以原 TXID 呼叫 end-cashin 仍正常完成入帳）——與人工出金必須連動取消既有 PENDING 的規則相反，兩者刻意不對稱
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/人工入金
+      quote: 櫃檯對機台帳號人工入金時，不需處理尚未完成的入金
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接依 AC-CASHFLOW-0281 驗證『人工入金不需處理既有入金 PENDING』這條與人工出金相反的規則，採 requirement_based 因為是對明確定義行為的直接對照；設計時特別參照同一份草案中
+      REQ-CASHFLOW-027（人工出金必須連動取消既有 PENDING，見另一條 TC）的驗證手法，確保兩條 TC 對『後續是否仍可用原 TXID 完成』這一步的驗證方式一致（皆以原 TXID 呼叫對應的 end-API 驗證最終結果），使兩者『刻意不對稱』的規則差異能被同一種驗證邏輯清楚對照出來，而非採用不同的驗證深度掩蓋了這個易混淆點。
+  - draft_id: TC-DRAFT-01M2MBHFR7GAYKTSCJ7ZSNGAF1
+    title: 五種未成立原因分別對應正確的狀態碼
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-029
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0291
+    - AC-CASHFLOW-0292
+    - AC-CASHFLOW-0293
+    - AC-CASHFLOW-0294
+    - AC-CASHFLOW-0295
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 情境一：佈置全場館餘額合計＋預留＋本次金額將超過額度上限，呼叫 req-keyin 或 req-cashin
+    - n: 2
+      action: 情境二：以查無對應 PENDING 或不符的 TXID 呼叫 end-cashin 或 end-cashout
+    - n: 3
+      action: 情境三：先將該機台於後台設為停用，呼叫任一交易請求；另將所屬場館站台狀態改為非開通，呼叫任一交易請求
+    - n: 4
+      action: 情境四：以已被重置、失效的機台憑證呼叫任一交易請求
+    - n: 5
+      action: 情境五：呼叫任一交易請求，欄位缺漏、型別錯誤，或 currency 與主站台核心貨幣不符，或金額為負
+    expected_result: 情境一回 1-OVER LIMIT；情境二回 1-NO RECORD；情境三兩種子情境皆回 7-OUT OF SERVICE；情境四回 9-OTHER ERROR；情境五回 6-BAD DATA/FORMAT——五種未成立原因與狀態碼一一對應，不以
+      HTTP 狀態碼表達業務結果
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-狀態碼對照
+      quote: '| `1-OVER LIMIT` | 超過額度上限 | 本次金額加計後，全場館機台分數餘額合計將超過場館額度上限（額度為全場館共用） |
+
+        | `1-NO RECORD` | 查無對應交易 | 查無對應 PENDING，或 TXID 不符 |
+
+        | `7-OUT OF SERVICE` | 機台停用中 / 場館未開通 | 機台為停用狀態、場館站台非「開通」，或平台維護中 |
+
+        | `9-OTHER ERROR` | 憑證失效 / 系統錯誤 | Token 無效或已重置、機台帳號不存在，或其他未預期錯誤 |
+
+        | `6-BAD DATA/FORMAT` | 資料格式錯誤 | 欄位缺漏、型別錯誤、currency 與主站台核心貨幣不符、金額為負 |'
+    assumptions:
+    - text: 情境三『機台停用』的後台操作切換路徑，本 spec 未明確定義其所在頁面（機台帳號沿用既有會員資料機制，推測透過既有的帳號啟用/停用功能操作），實際切換入口需與環境負責人確認
+      requirement_id: REQ-CASHFLOW-029
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 依獨立 Validator 意見修正：本案例的 5 個步驟各自是『單一觸發條件 → 單一固定狀態碼』的一對一對照（例如『超過額度上限』恆對應 1-OVER LIMIT），並非多個條件交叉組合出不同結果的決策矩陣，故改標為
+      equivalence_partitioning，將五種未成立原因視為五個各自獨立的等價類分別驗證，與同份草案中其餘三條已修正的類似案例（REQ-023/026 印表機異常、REQ-030 餘額不足對照、REQ-041 停用/未開通）採一致的標籤判斷邏輯。情境三（機台停用/場館未開通）的後台操作切換路徑因
+      spec 未明確定義所在頁面，已標記於 assumptions 待環境負責人確認，避免佈置步驟隱含未經驗證的操作入口假設。
+  - draft_id: TC-DRAFT-01M2MBHFR73WF9S3D39DM64KQJ
+    title: 餘額不足（1-NO CREDITS）被拒絕時不寫入交易紀錄，其餘未成立原因才留下紀錄
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-030
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0301
+    - AC-CASHFLOW-0302
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 佈置洗分或出金因餘額不足而回 1-NO CREDITS 的情境並送出請求
+    - n: 2
+      action: 查詢機台交易紀錄，確認是否留下此次拒絕的紀錄
+    - n: 3
+      action: 另佈置一筆會因額度上限（或其他非餘額不足原因）被拒絕的請求並送出
+    - n: 4
+      action: 查詢機台交易紀錄，確認是否留下「未成立」紀錄
+    expected_result: 餘額不足被拒絕時：查無此次拒絕的紀錄，僅回覆 1-NO CREDITS；額度上限或其他原因被拒絕時：留有「未成立」交易紀錄，可查得拒絕原因——兩者行為不同，容易被誤以為所有拒絕都會留紀錄
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §四種金流/交易不成立的原因 + §附錄-狀態碼對照
+      quote: 餘額不足 | 洗分時可洗金額為 0…或出金時餘額為 0。屬正常情形。不寫入交易紀錄——平台僅回覆機台餘額不足；本表其餘原因才會留下「未成立」紀錄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證『餘額不足（1-NO CREDITS）』與『其餘未成立原因（如額度上限）』兩個等價類各自是否寫入交易紀錄的差異——這是二元對照而非多條件交叉組合出不同結果的決策矩陣，故標記為 equivalence_partitioning（原先誤標
+      decision_table）；此差異容易被誤以為『所有拒絕都會留紀錄』，是本規則的核心風險點，故仍以 high risk 對待。
+  - draft_id: TC-DRAFT-01M2MBHFR731GMAY97H62T6FNC
+    title: 無論機台帳號前台登入狀態為何，平台皆不因此回 2-OCCUPIED 或拒絕交易
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-031
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0311
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號目前前台為已登入狀態，呼叫任一交易請求（其餘條件皆合法）
+    - n: 2
+      action: 確認機台帳號前台為未登入狀態，重複呼叫同類型交易請求
+    expected_result: 兩種登入狀態下，平台皆不因前台登入狀態回 2-OCCUPIED 或拒絕交易，此狀態碼永遠不會被使用（機台帳號的前台登入僅供機台本身遊戲畫面使用，平台不將其當作交易阻擋條件）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-狀態碼對照
+      quote: 2-OCCUPIED | （不啟用）| 平台不回此碼…平台不把前台登入狀態當作機台交易的阻擋條件，不啟用此碼
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 negative 驗證『此狀態碼永遠不會被使用』這個否定性斷言，刻意對照『已登入』與『未登入』兩種前台登入狀態皆需驗證，因為若僅測其中一種，無法排除『平台恰好在另一種登入狀態下才會誤觸發 2-OCCUPIED』的可能性；此為
+      low risk 需求（廠商保留碼、非核心業務邏輯），故僅以單一 TC 涵蓋兩種登入狀態的等價驗證，不額外擴充更多情境。
+  - draft_id: TC-DRAFT-01M2MBHFR7578AW414F03BV0NB
+    title: 機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-032
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0321
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台所屬主站台核心貨幣為 TWD
+    - n: 2
+      action: 呼叫任一交易請求（如 req-keyin），currency 欄位帶入與核心貨幣不符的值（例如 USD）
+    expected_result: 平台拒絕，回 6-BAD DATA/FORMAT，記為資料格式錯誤
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/幣別一致性
+      quote: 機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為「資料格式錯誤」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 negative 直接驗證幣別不符時的拒絕規則，選以 req-keyin（開分）作為代表性 API 而非逐一測試四種金流 API 各自的幣別檢查，是因為 spec 將『幣別一致性』列為業務規則層級的通用驗證（§業務規則與驗證），適用於所有交易請求而非個別金流的特有邏輯，選單一
+      API 驗證足以代表此規則的正確性；若後續發現不同金流 API 對此檢查的實作有落差，應視為個別 API 的缺陷而非本規則設計遺漏。
+  - draft_id: TC-DRAFT-01M2MBHFR7FFFGAH13FXKK91BC
+    title: 無進行中場次時開分或入金轉正建立新場次；洗分結束留有餘數時立即建立新場次承接
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-033
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0331
+    - AC-CASHFLOW-0332
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - state_transition
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號目前無進行中場次（分數為 0）
+    - n: 2
+      action: 呼叫 req-keyin 開分金額 X，確認分數由 0 轉正
+    - n: 3
+      action: 查詢場次資訊，確認是否建立新場次，期初餘額是否為 0
+    - n: 4
+      action: 佈置一個進行中場次餘額 321，呼叫 req-keyout（throshold=100、mode=all）結束此場次並留有餘數 21
+    - n: 5
+      action: 查詢場次資訊，確認是否已立即建立新場次承接
+    - n: 6
+      action: 另驗證：機台分數為 0、無任何開分/入金發生的情況下，單純的注單/遊戲操作不應能建立新場次（因無資金流入觸發，屬理論情境，實際上分數為 0 時亦無法投注）
+    expected_result: 開分或入金完成使分數由 0 轉為有餘額時，建立新場次、期初餘額為 0；洗分結束留有餘數 21 時，立即建立新場次承接、期初餘額為 21；分數維持 0 時不會意外建立場次
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；或前一場次因洗分結束後留有餘數，立即建立新場次承接
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證『無場次 → 進行中』與『已結束(有餘數) → 進行中(新場次)』兩種場次開始路徑（分別對應 AC-CASHFLOW-0331 與 0332），合併於同一 TC
+      是因為兩者是 REQ-CASHFLOW-033 定義的同一條規則下的兩種觸發來源，理解上需相互對照。額外加入 negative 標籤的第 6 步（分數維持 0 時不應意外建立場次）是針對『場次開始』這個規則的反向探測——驗證的是觸發條件的『必要性』（沒有分數轉正就不該有新場次），這部分未在
+      AC 中逐字要求，但屬於狀態轉換規則常見的隱含反向約束，已於步驟中註明『屬理論情境』以誠實標示其驗證邊界，未過度延伸至無憑無據的斷言。
+  - draft_id: TC-DRAFT-01M2MBHFR7CMM7NG5Y0DG9VJ26
+    title: 場次進行中期間所有交易與注單皆歸屬於該場次，含結束此場次的洗分/出金交易本身
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-034
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0341
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 佈置一個進行中場次，期間發生一筆開分、一筆入金
+    - n: 2
+      action: 查詢這兩筆交易的場次編號
+    - n: 3
+      action: 以一筆洗分交易結束此場次
+    - n: 4
+      action: 查詢這筆洗分交易的場次編號
+    expected_result: 開分與入金皆歸屬於當前這個場次；結束此場次的洗分交易本身，也歸屬於被它結束的這個場次（而非新建立的場次）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 進行中期間所有的開分、入金、洗分、出金與注單，一律歸屬於這個場次；結束場次的那筆洗分／出金交易，歸屬於被它結束的場次
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接依 AC-CASHFLOW-0341 驗證交易歸屬規則，採 requirement_based；驗證『結束場次的那筆洗分交易本身，歸屬於被它結束的場次』這句話是本規則最容易被誤實作的細節（直覺上可能誤植入新場次），故步驟中特別在洗分結束當下立即查詢該筆洗分交易自身的場次編號，而非僅驗證其他一般交易的歸屬。
+  - draft_id: TC-DRAFT-01M2MBHFR7C48Q0C1GX7JD0CG2
+    title: 洗分或出金扣分成功當下場次立即結束（不等核實）；請求被拒絕或取消不觸發場次結束
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-035
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0351
+    - AC-CASHFLOW-0352
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 佈置一個進行中場次，餘額 321，throshold=100，呼叫 req-keyout 全洗，確認回 0-OK
+    - n: 2
+      action: 立即查詢場次狀態（不進行「洗分出金核實」頁的核實操作）
+    - n: 3
+      action: 另佈置一個進行中場次，觸發一筆會被拒絕的請求（例如餘額不足或額度超限）
+    - n: 4
+      action: 查詢場次狀態是否受影響
+    - n: 5
+      action: 另佈置一筆出金 PENDING 後，以新的 req-cashout 取代它（使其被標記失效）
+    - n: 6
+      action: 查詢原場次狀態是否因此結束
+    expected_result: 洗分回 0-OK 當下場次立即結束，不需等待「洗分出金核實」頁核實；請求被拒絕（未成立）或 PENDING 被取代/取消，皆不觸發場次結束，場次仍為進行中
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 任一筆洗分或出金交易完成（扣分成功）當下，場次即結束…核實僅是付現核銷
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證『進行中 → 已結束』與『進行中 → 進行中（不變）』兩種對照轉換，合併 AC-CASHFLOW-0351（成功交易觸發結束）與 AC-CASHFLOW-0352（被拒絕或取消不觸發）於同一
+      TC，因為這兩者是驗證『觸發場次結束的條件邊界』所必須的正反兩面對照——僅驗證成功案例無法排除『任何請求（含失敗的）都會結束場次』這種過度寬鬆實作的可能性，必須同時驗證失敗/取消案例確實不觸發才能證明系統正確辨識了觸發條件。步驟 5-6
+      額外驗證『PENDING 被新請求取代』這種特殊的失效路徑同樣不觸發結束，是因為這是 REQ-CASHFLOW-019 定義的取代機制與本規則交界處，容易被忽略的組合情境。
+  - draft_id: TC-DRAFT-01M2MBHFR7VPRRGBQSG7V7K2XA
+    title: 分數因投注輸完歸 0 時，場次結束並標記為歸零結束
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-036
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0361
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 佈置一個進行中場次，餘額為一個小額（例如 10）
+    - n: 2
+      action: 使玩家投注直到分數歸 0（依實際遊玩或由遊戲/投注系統模擬達成分數歸零，見假設）
+    - n: 3
+      action: 查詢場次狀態
+    expected_result: 分數歸 0 時場次結束，標記為「歸零結束」，期末餘額為 0
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 歸零結束 | 分數因投注輸完歸 0 時結束
+    assumptions:
+    - text: 『分數因投注輸完歸 0』的觸發機制屬於遊戲/投注引擎的範疇，不在本包（機台金流與場次，純後端）定義的四種金流 API 範圍內；本包僅定義『分數歸 0 時場次如何反應』，至於如何在測試環境中實際觸發分數歸 0（例如是否有可直接呼叫的測試用注單模擬介面），需與環境負責人或遊戲引擎測試團隊確認可行的觸發方式
+      requirement_id: REQ-CASHFLOW-036
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接依 AC-CASHFLOW-0361 驗證分數歸零結束場次的規則，採 requirement_based。因『分數因投注輸完歸 0』的觸發機制屬於遊戲/投注引擎範疇、不在本包（機台金流與場次純後端）定義的四種金流
+      API 範圍內，test_data 僅佈置一個小額餘額（例如 10）以縮短需要投注消耗的時間，具體如何在測試環境觸發分數歸零已誠實標記於 assumptions 待確認，避免佈置步驟隱含對投注引擎介面的未經驗證假設。
+  - draft_id: TC-DRAFT-01M2MBHFR7MQ9G300VBQDQQRM6
+    title: 場次超過逾時時間無交易與遊玩自動結束為逾時結束；期間任何交易或注單重新起算計時
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-037
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0371
+    - AC-CASHFLOW-0372
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - state_transition
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入 站台列表，將該場館的場次逾時時間調整為便於測試觀察的短值（例如 2 分鐘；實際可設定範圍依 站台列表_spec_v04.md 定義）
+    - n: 2
+      action: 佈置一個進行中場次，在逾時時間即將到達前呼叫一筆開分（重新觸發計時起算）
+    - n: 3
+      action: 確認場次未因此結束，逾時計時已重新起算
+    - n: 4
+      action: 之後不再產生任何交易或注單，等待重新起算後的逾時時間到達
+    - n: 5
+      action: 查詢場次狀態
+    expected_result: 逾時時間內若有任何交易或注單，計時重新起算、場次不因此結束；之後若確實無任何交易與遊玩超過逾時時間，場次自動結束並標記為「逾時結束」
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束 + §業務規則-場次逾時
+      quote: 超過場館設定的「場次逾時時間」沒有任何交易與遊玩紀錄時，自動結束並標記為「逾時結束」…期間內有任何交易或注單即重新起算
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證『進行中 → 逾時結束』的轉換，並以 boundary_value 驗證『逾時時間即將到達前發生一筆交易』這個時間邊界點是否正確觸發計時重新起算（AC-CASHFLOW-0372）而非誤判逾時，這是本規則最容易出錯的臨界點（若重新起算的判斷時機有誤差，可能在交易發生瞬間仍被判定逾時）。test_data
+      未寫死具體時間長度，改用『可設定的短值（例如 2 分鐘）』並註明依場館設定範圍調整，是因為場次逾時時間為場館可調整項（不同於入金 PENDING 的 24 小時系統固定值），可直接透過既有設定縮短驗證所需時間，不需標記為需人工確認的假設。
+  - draft_id: TC-DRAFT-01M2MBHFR75GM0TKM39J6P0T3R
+    title: 場館日結時間到達時，所有進行中場次一律結束並標記日結結算，剩餘分數轉為隔日新場次期初餘額
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-038
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0381
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入 站台列表，將該場館日結時間設定為便於測試觀察、即將到達的時刻
+    - n: 2
+      action: 確認該場館至少兩台機台皆有進行中場次，分別記錄其當下餘額
+    - n: 3
+      action: 等待日結時間到達
+    - n: 4
+      action: 查詢兩台機台的場次狀態與新場次期初餘額
+    expected_result: 日結時間到達時，兩台機台的進行中場次皆結束並標記為「日結結算」，各自的剩餘分數精確轉為隔日新場次的期初餘額（不多不少）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 日結結算 | 場館日結時間到達時，所有進行中的場次一律結束並標記為「日結結算」，剩餘分數轉為隔日新場次的期初餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 以 state_transition 驗證『進行中 → 已結束(日結結算)』的批次轉換，並以 boundary_value 驗證『日結時間到達』這個時間點觸發的精確性（步驟中設定日結時間為『即將到達的時刻』以縮短等待），同時佈置兩台機台驗證此為場館層級的批次結束（而非僅單一機台），確保『所有進行中場次』這個全稱量詞式斷言被實際驗證而非僅抽樣一台即視為通過。
+  - draft_id: TC-DRAFT-01M2MBHFR7BYY2H6BRBS3N5VRD
+    title: 一台機台同時間僅會有一個進行中場次，不會產生併發的第二個進行中場次
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-039
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0391
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 確認機台帳號目前無進行中場次
+    - n: 2
+      action: 以近乎同時的方式（例如平行送出，或由自動化工具連續快速送出）呼叫 req-keyin 與 req-cashin/end-cashin 各一筆，皆使分數轉正
+    - n: 3
+      action: 查詢該機台帳號當下的進行中場次數量
+    expected_result: 無論觸發時序多接近，該機台同時間只會存在一個進行中場次，不會因為多筆幾乎同時的分數轉正事件而產生兩個併發的進行中場次
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §場次/場次如何開始與結束
+      quote: 併發 | 一台機台同時間只會有一個進行中的場次
+    assumptions:
+    - text: 本 AC 標註為『理論情境』，真正的高並發競態通常需要能同時發送多筆請求的壓測/自動化工具才能可靠重現與驗證，一般手動或序列化的功能測試僅能模擬『幾乎同時』而非真正併發；是否有可用的並發測試工具/環境需與自動化或效能測試團隊確認
+      requirement_id: REQ-CASHFLOW-039
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 error_guessing 主動嘗試以近乎同時的方式觸發兩個場次開始條件（同一機台的開分與入金各一筆同時使分數轉正），探測併發情境下是否可能產生兩個進行中場次這個理論風險，而非僅驗證正常序列操作下的行為。因手動或一般序列化測試工具難以真正製造毫秒級並發，此限制已誠實標記於
+      assumptions，若需嚴謹驗證併發安全性需搭配專門的壓測工具，本 TC 僅能驗證『幾乎同時』情境下的表面結果。
+  - draft_id: TC-DRAFT-01M2MBHFR7XAPNHNGVR90YMB5H
+    title: 線上會員的交易紀錄或注單查詢頁面場次編號欄位一律顯示「—」
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-040
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0401
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入後台，取一個線上（非機台）會員帳號
+    - n: 2
+      action: 進入 交易紀錄查詢 或 注單查詢，查詢該會員的任一筆紀錄
+    - n: 3
+      action: 檢視該筆紀錄的場次編號欄位
+    expected_result: 場次編號欄位顯示「—」，因線上會員沒有場次概念
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/場次欄位於線上帳號
+      quote: 與線上會員共用的頁面…所帶的場次編號欄位，線上帳號沒有場次，一律顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接依 AC-CASHFLOW-0401 驗證線上會員頁面場次欄位顯示規則，採 requirement_based；此為 low risk 的單純 UI 顯示規則，故僅以單一情境（任一線上會員的任一筆紀錄）驗證，不額外擴充邊界或負向案例。
+  - draft_id: TC-DRAFT-01M2MBHFR7AN6YRP73P88CB402
+    title: 機台被設為停用，或所屬場館站台非開通狀態時，任一交易請求皆回 7-OUT OF SERVICE
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-041
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0411
+    - AC-CASHFLOW-0412
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: integration
+    test_types:
+    - negative
+    design_techniques:
+    - equivalence_partitioning
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 將該機台帳號設為停用狀態（機台帳號沿用既有會員帳號機制，透過既有的帳號啟用/停用功能操作，見假設）
+    - n: 2
+      action: 呼叫任一交易請求（開分/入金/洗分/出金）
+    - n: 3
+      action: 確認回覆，並確認機台既有餘額與尚未完成的交易是否受影響
+    - n: 4
+      action: 將該機台恢復為啟用狀態，改將所屬場館站台狀態改為非開通（例如暫停）
+    - n: 5
+      action: 呼叫任一交易請求
+    expected_result: 兩種情況下任一交易請求皆回 7-OUT OF SERVICE，該機台（或整個場館所有機台）無法運作；停用或站台非開通不影響既有餘額與尚未完成的交易
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/機台停用、場館站台狀態 + §附錄-狀態碼對照
+      quote: 機台停用 | 停用中的機台無法運作；不影響餘額與尚未完成的交易｜場館站台狀態 | 場館站台（含自行經營的機台主站台）不是「開通」狀態時，該場館所有機台一律無法運作
+    assumptions:
+    - text: 『機台停用』的後台切換操作路徑，本 spec 未明確定義其所在頁面（僅說明其效果），推測透過既有的會員帳號啟用/停用機制操作，實際入口需與環境負責人確認
+      requirement_id: REQ-CASHFLOW-041
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 驗證『機台停用』與『所屬場館站台非開通』兩個各自獨立的觸發條件，是否皆收斂為同一結果（7-OUT OF SERVICE）——這是兩個等價類分別映射至相同結果的對照，而非多條件交叉出不同結果的決策矩陣，故標記為
+      equivalence_partitioning（原先誤標 decision_table）。
+  - draft_id: TC-DRAFT-01M2MBHFR7ZRFCM13FB7T3G46T
+    title: 不存在『開分招待』功能，稽核倍數為幣種層級設定無法綁定單筆交易
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-044
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0441
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: low
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入 帳務管理 > 出金設定 > TWD 頁籤，檢視稽核倍數設定的完整欄位
+    - n: 2
+      action: 檢視開分相關的操作介面（機台選單為廠商實作，改為檢視平台側是否有任何與『開分招待』『送分』相關的設定或交易類型欄位）
+    expected_result: 稽核倍數僅為幣種層級的單一設定值，沒有任何可綁定至單筆交易或活動的欄位；平台亦不存在『開分招待』（開分即綁定流水門檻）或『送分』這類無現金流的交易類型，此為 v07 定案刻意不實作的範圍
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §機台帳號的稽核
+      quote: 客戶回覆（2026-08-21）機台目前不需要稽核（維持預設 0 倍），但實務上存在「開分招待」活動…此活動無法以本節的稽核倍數實現：倍數是幣種層級設定，一設就綁全場館所有開分與入金，而招待只綁特定一筆；且「送分」為無現金流的交易，四種金流中尚無此類型
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 採 negative 驗證『某功能不存在』這個否定性斷言，需主動檢視稽核倍數設定介面與開分相關操作是否存在任何可綁定至單筆交易的欄位或交易類型，而非僅因『沒看到』就直接判定不存在——這是本 spec
+      明確排除的範圍（v07 定案本次不實作），驗證重點是確認目前系統確實維持刻意排除的狀態，避免日後不小心誤實作進去卻未被察覺。

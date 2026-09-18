@@ -1,0 +1,90 @@
+artifact_id: ART-TCD-01M2MW59D79R0RQEF1GSK6PEKQ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-006
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-16T10:28:21Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-022
+- entity_type: TestCase
+  id: TC-CASHFLOW-026
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2MW59D6MMK43FY8AZYFTK9D
+    title: end-cashout 帶入已失效 TXID 時回 1-NO RECORD：涵蓋人工出金取消與新請求取代兩種真實觸發情境
+    product: ba-admin
+    functional_area: CASHFLOW
+    requirement_ids:
+    - REQ-CASHFLOW-022
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0221
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - scenario
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    test_data: []
+    steps:
+    - n: 1
+      action: 情境一（人工出金取消）：呼叫 req-cashout 建立一筆尚未完成的出金 PENDING，記錄 TXID_A
+    - n: 2
+      action: 以 Admin／櫃檯身份登入後台，對該機台帳號執行既有的人工出金功能
+    - n: 3
+      action: 確認該筆出金 PENDING（TXID_A）是否被同時取消
+    - n: 4
+      action: 以 TXID_A 呼叫 end-cashout
+    - n: 5
+      action: 情境二（新請求取代）：呼叫 req-cashout 建立第一筆出金 PENDING，記錄 TXID_B（不呼叫 end-cashout）
+    - n: 6
+      action: 再次呼叫 req-cashout（模擬玩家再次按下結算鍵），記錄 TXID_C，確認 TXID_B 已被標記失效
+    - n: 7
+      action: 以已失效的 TXID_B 呼叫 end-cashout
+    expected_result: 情境一：櫃檯執行人工出金的同時，系統同時取消該機台尚未完成的出金 PENDING（TXID_A）；之後以 TXID_A 呼叫 end-cashout 因查無有效對應 PENDING 而回 1-NO RECORD。情境二：第二次
+      req-cashout（TXID_C）建立前，先將既存的 TXID_B 標記失效；之後以已失效的 TXID_B 呼叫 end-cashout 同樣回 1-NO RECORD。兩種情境皆僅記錄 log 後丟棄、不變更任何資料，避免同一筆錢被領兩次或誤將舊請求完成扣分
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+      quote: 收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-026
+      version: 1
+    design_rationale: Phase2×3交叉比對整合（第三次迭代）：原版(v1)只有一個抽象步驟，直接假設「TXID對應的PENDING已被取代而不存在」這個前提狀態存在，並未真正操作出這個狀態。Phase3影子測試(RUN-20260916-002)對同一AC設計了兩個具體的真實觸發情境（櫃檯人工出金取消PENDING、新req-cashout取代舊PENDING），各自完整操作一遍才驗證end-cashout回1-NO
+      RECORD。第一次迭代(v2)誤判「新req-cashout取代」路徑已由TC-CASHFLOW-022涵蓋而只保留情境一，經獨立Validator查證TC-CASHFLOW-022（AC-CASHFLOW-0191）只測PENDING狀態轉換本身、未測end-cashout後半段，AC-CASHFLOW-0221自己given範例明講的情境因此被錯誤砍掉，v2已把兩個情境都補回。第二次迭代(本版，v3)修正v2的quote欄位錯誤：v2把僅屬於end-cashin條款的「不變更任何資料」誤植到end-cashout的quote上（且非逐字引用spec.md第336行原文），已改為逐字引用該行原文；並把priority從v2的medium改回v1原本的high（risk為high，無理由降低執行優先級）。
+history:
+- at: '2026-09-16T10:28:25Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-006

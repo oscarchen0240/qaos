@@ -1,0 +1,209 @@
+<title>APR-0017 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0017 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260914-004 · 狀態 PENDING · 提出 2026-09-13</div>
+<div class=summary>57 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 5 條 exploratory，approve 即確認其假設）</div>
+<p>共 57 條：grounded 52 條（預期結果有 spec 條文依據）、<b>exploratory 5 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-ACCOUNT-001 帳號類型定義</h2>
+<blockquote>spec：§功能說明　「會員紀錄新增「帳號類型」欄位區分兩種帳號，不另外建立一套帳號系統」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-001">001<br>v1</td><td>grounded</td><td>後台建立的帳號依類型正確標記為線上或機台</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立一個線上帳號，檢視其帳號類型欄位</li><li>建立一個機台帳號，檢視其帳號類型欄位</li></ol></td><td>前者帳號類型為線上；後者為機台，且兩者存於同一份會員資料（無獨立資料表）</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-002">002<br>v1</td><td>grounded</td><td>帳號類型欄位只能是線上或機台，無其他可選值</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟創建會員帳號 Modal</li><li>檢視帳號類型欄位的所有可選項</li></ol></td><td>僅有「線上」與「機台」兩個選項，沒有其他值可選</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-002 兩條建立途徑並行</h2>
+<blockquote>spec：§功能說明/帳號類型 + §業務規則-前台自行註冊　「前台維持開放以帳號密碼方式自行註冊新帳號…與後台「創建會員帳號」並行為兩條建立途徑」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-003">003<br>v1</td><td>grounded</td><td>前台自行註冊與後台創建皆可產生線上帳號</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以玩家身分於前台自行註冊一個帳號</li><li>以 Admin 於後台創建一個線上帳號</li></ol></td><td>兩者皆成功建立線上帳號，行為一致</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-004">004<br>v1</td><td>grounded</td><td>前台不提供建立機台帳號的途徑</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>檢視前台註冊頁面與流程</li></ol></td><td>前台註冊只會產生線上帳號，沒有任何選項可建立機台帳號</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-003 創建帳號的站台歸屬</h2>
+<blockquote>spec：§操作/創建會員帳號 + §業務規則-建立站台歸屬　「帳號一律建立於目前所在的站台底下…不提供跨站台指定…Modal 不設「所屬場館」欄位」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-005">005<br>v1</td><td>grounded</td><td>創建的帳號歸屬操作當下所在站台，Modal 不提供跨站台指定</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>站台切換選單切到站台 A</li><li>點擊創建會員帳號，檢視表單欄位</li><li>建立帳號並確認其所屬站台</li></ol></td><td>表單不存在「所屬場館／站台」欄位；新帳號歸屬站台 A</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-006">006<br>v1</td><td>grounded</td><td>直接呼叫建立帳號 API 夾帶其他站台 ID，仍建立於操作者當下所在站台</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以目前站台 A 的操作身分</li><li>直接呼叫建立帳號 API，並在請求中夾帶其他站台（B）的 ID</li></ol></td><td>系統不接受跨站台指定；新帳號仍建立於操作者當下所在的站台 A，與請求中夾帶的其他站台 ID 無關</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-004 帳號類型欄位規則</h2>
+<blockquote>spec：§操作/創建會員帳號　「預設值依目前站台的「站台類型」帶入——機台場館預設「機台」、線上站台預設「線上」。「機台」選項僅於目前站台為機台場館時可選」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-007">007<br>v1</td><td>grounded</td><td>帳號類型欄位的預設值與可選範圍依目前站台類型過濾</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>站台切換至一個機台場館，開啟創建會員帳號 Modal</li><li>站台切換至一個線上站台，開啟創建會員帳號 Modal</li></ol></td><td>前者：帳號類型預設「機台」，線上/機台皆可選；後者：預設「線上」，機台選項停用不可選</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-008">008<br>v1</td><td>grounded</td><td>線上站台無法透過 API 直接指定建立機台帳號</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>目前站台為線上站台</li><li>直接呼叫建立帳號 API，帳號類型欄位帶入「機台」</li></ol></td><td>系統拒絕，不得於非機台場館建立機台帳號</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-005 機台名稱欄位</h2>
+<blockquote>spec：§操作/創建會員帳號 + §業務規則　「即該會員帳號的「暱稱」欄位…後台建立／修改不經「暱稱禁用詞」檢查」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-009">009<br>v1</td><td>grounded</td><td>機台名稱即會員暱稱，且不經前台暱稱禁用詞檢查</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立機台帳號，機台名稱輸入「A 區 03 號」</li><li>機台名稱輸入包含前台暱稱禁用詞清單中字詞的值並送出</li></ol></td><td>第一步：建立後會員暱稱即為「A 區 03 號」，列表顯示於會員編號下方；第二步：系統不阻擋，正常建立</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-006 機台狀態預設啟用</h2>
+<blockquote>spec：§操作/創建會員帳號　「不顯示——預設建立為「啟用」」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-010">010<br>v1</td><td>grounded</td><td>新建機台預設狀態為啟用且創建表單不顯示此欄位</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立一個機台帳號，檢視創建表單是否有機台狀態欄位</li><li>建立完成後檢視機台資訊區塊的機台狀態</li></ol></td><td>創建表單全程未顯示機台狀態欄位；建立後機台狀態為「啟用」</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-007 線上帳號類型建立行為</h2>
+<blockquote>spec：§操作/創建會員帳號　「帳號類型選「線上」時不帶額外欄位…建立後的行為與前台註冊會員完全相同」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-011">011<br>v1</td><td>grounded</td><td>線上帳號類型不帶機台專屬欄位，且電子信箱電話留空</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>帳號類型選線上，檢視表單欄位</li><li>建立後檢視該帳號的電子信箱與電話</li></ol></td><td>表單不顯示機台名稱等機台專屬欄位；電子信箱與電話皆為空，可比照前台註冊會員後續補綁</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-008 建立成功的帳密顯示規則</h2>
+<blockquote>spec：§操作/創建會員帳號　「建立成功畫面完整顯示一次系統生成的登入帳號與密碼，並提供複製按鈕；關閉後不再完整顯示」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-012">012<br>v1</td><td>grounded</td><td>建立成功時完整顯示一次系統生成的帳密並提供複製</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>點擊建立</li><li>檢視建立成功畫面</li></ol></td><td>完整顯示系統生成的登入帳號與密碼，並有複製按鈕；新帳號餘額為 0</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-013">013<br>v1</td><td>grounded</td><td>關閉建立成功畫面後密碼不再完整顯示，且憑證不隨建立自動產生</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>關閉建立成功畫面</li><li>回到會員列表或該帳號的詳細頁再次查看</li><li>若為機台帳號，檢視其機台憑證區塊</li></ol></td><td>無法再完整查看密碼；機台憑證顯示「產生憑證」按鈕（尚未產生任何憑證）</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-009 機台帳號一對一綁定</h2>
+<blockquote>spec：§業務規則與驗證/帳號一對一　「一個機台帳號只能綁定一台機台；機台帳號與機台資料由「創建會員帳號」一併建立，不提供將既有帳號另行綁定機台」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-014">014<br>v1</td><td>grounded</td><td>機台帳號與機台資料由創建流程一併建立、恰好一對一</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立一個機台帳號</li><li>檢視其機台資料</li></ol></td><td>恰有一台機台與此帳號綁定，兩者同時建立完成</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-010 角色權限-創建會員帳號</h2>
+<blockquote>spec：§角色與權限 + 開發包⑦附註　「創建會員帳號（線上／機台）| 可操作 | 可操作（於管轄範圍內的站台操作…）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-015">015<br>v1</td><td>grounded</td><td>Admin 與站長皆可於權限範圍內建立會員帳號</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以 Admin 登入，任一站台建立會員帳號</li><li>以站長登入，於其管轄範圍內的站台建立會員帳號</li></ol></td><td>兩者皆能成功建立</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-ACCOUNT-016">016<br>v1</td><td>⚠ exploratory</td><td>操作員的會員列表不顯示創建會員帳號按鈕</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以操作員登入後台</li><li>進入會員列表，檢視是否有「創建會員帳號」按鈕</li></ol></td><td>不顯示創建會員帳號按鈕<div class=assume>⚠ 假設：Spec 只寫「操作員不可新增機台帳號」，未寫具體阻擋方式；PM 已於 CLR-ACCOUNT-001 確認為前端按鈕隱藏<br><span class=pm>✅ PM（CLR-ACCOUNT-001）：操作員權限在會員列表裡「創建會員帳號」按鈕隱藏（前端層級，非彈窗開啟後才擋）。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-011 角色權限-機台管理操作</h2>
+<blockquote>spec：§角色與權限　「編輯機台基本資料 | 可操作 | 可操作。發放／重置機台憑證 | 可操作 | 可操作（重置須二次確認）。機台停用／啟用 | 可操作 | 可操作」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-017">017<br>v1</td><td>grounded</td><td>Admin 與站長皆可管理機台，重置憑證皆需二次確認</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以 Admin 或站長登入，編輯機台基本資料並切換停用/啟用</li><li>以 Admin 或站長登入，點擊重置機台憑證</li></ol></td><td>前者兩種角色皆可正常操作；後者皆需二次確認才會執行</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-012 機台資訊區塊呈現</h2>
+<blockquote>spec：§機台資訊區塊（會員詳細頁）　「機台名稱…所屬場館…機台狀態…進行中場次…時間紀錄」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-018">018<br>v1</td><td>grounded</td><td>機台資訊區塊顯示完整的規定欄位</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟一個機台帳號的會員詳細頁</li><li>檢視機台資訊區塊</li></ol></td><td>顯示機台名稱、所屬場館（含站台代碼，可點擊回站台列表該層）、機台狀態 Badge、進行中場次、建立與修改時間（UTC+0）</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-013 進行中場次於開發包③上線前恆顯示</h2>
+<blockquote>spec：§機台資訊區塊（會員詳細頁）　「無進行中場次時顯示「—」——開發包③金流上線前恆為「—」」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-019">019<br>v1</td><td>grounded</td><td>開發包③上線前，進行中場次欄位恆顯示「—」</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表<br>開發包③（機台金流）尚未上線</td><td><ol><li>檢視任一機台帳號的機台資訊區塊</li><li>檢視進行中場次欄位</li></ol></td><td>顯示「—」</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-ACCOUNT-014 編輯機台欄位規則</h2>
+<blockquote>spec：§編輯機台　「所屬場館 | 不可 | 唯讀…機台名稱 | 可…機台狀態 | 可…點擊「儲存變更」後，修改時間自動更新」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-020">020<br>v1</td><td>grounded</td><td>編輯機台時所屬場館為唯讀</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>編輯一個機台帳號</li><li>檢視並嘗試修改所屬場館欄位</li></ol></td><td>唯讀，無法修改</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-021">021<br>v1</td><td>grounded</td><td>修改機台名稱同步更新暱稱，切換機台狀態並更新修改時間</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>編輯機台，修改機台名稱為新值並儲存</li><li>檢視該帳號的會員暱稱</li><li>再次編輯，切換機台狀態並儲存</li></ol></td><td>會員暱稱同步更新為新的機台名稱；狀態切換成功；兩次操作後修改時間皆自動更新為當次操作時刻</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-015 重設密碼規則</h2>
+<blockquote>spec：§重設密碼 + §業務規則-重設密碼　「所有會員帳號…二次確認後系統生成新密碼，連同登入帳號一併完整顯示一次…舊密碼立即失效」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-022">022<br>v1</td><td>grounded</td><td>重設密碼二次確認後生成新帳密並完整顯示一次</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>任一會員帳號的詳細頁，點擊重設密碼並二次確認</li></ol></td><td>系統生成新密碼，連同登入帳號一併完整顯示一次，並各附複製按鈕</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-023">023<br>v1</td><td>grounded</td><td>重設密碼後舊密碼立即失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>完成一次重設密碼</li><li>以重設前的舊密碼嘗試登入</li></ol></td><td>登入失敗，舊密碼已無法使用</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-024">024<br>v1</td><td>grounded</td><td>取消重設密碼的二次確認，密碼不變</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>點擊重設密碼開啟二次確認彈窗</li><li>點擊取消</li></ol></td><td>密碼不變，未執行任何重設</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-016 前台忘記密碼流程</h2>
+<blockquote>spec：§前台忘記密碼（線上會員）　「連結具時效（預設 1 小時），逾時失效須重新申請，重新申請會使先前尚未使用的連結失效」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-025">025<br>v1</td><td>grounded</td><td>帳號與綁定信箱相符時系統寄送重設連結</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>已綁定信箱的線上會員於前台輸入帳號與正確的綁定信箱</li><li>送出申請</li></ol></td><td>系統寄送具時效（預設 1 小時）的重設連結至該信箱</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-026">026<br>v1</td><td>grounded</td><td>重設連結超過時效後失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>取得一則重設連結</li><li>等待超過 1 小時後點擊該連結</li></ol></td><td>連結已失效，無法用於設定新密碼</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-027">027<br>v1</td><td>grounded</td><td>重新申請重設連結會使先前未使用的連結失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>申請一次重設連結（連結 A，尚未使用）</li><li>再次申請重設連結（取得連結 B）</li><li>點擊連結 A</li></ol></td><td>連結 A 已失效（因重新申請而作廢），需改用連結 B</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-028">028<br>v1</td><td>grounded</td><td>以有效連結完成重設後舊密碼立即失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>點擊有效的重設連結並設定新密碼</li><li>以舊密碼嘗試登入</li></ol></td><td>登入失敗（舊密碼已立即失效）</td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-ACCOUNT-029">029<br>v1</td><td>⚠ exploratory</td><td>已使用過的重設連結被再次點擊</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>使用某重設連結完成密碼設定</li><li>再次點擊同一條（已使用過的）連結</li></ol></td><td>前端顯示「連結已失效，請重新申請」<div class=assume>⚠ 假設：Spec 未定義已使用過的連結被再次點擊時的具體回應；PM 已於 CLR-ACCOUNT-002 確認前端顯示「連結已失效，請重新申請」<br><span class=pm>✅ PM（CLR-ACCOUNT-002）：前端顯示「連結已失效，請重新申請」。</span></div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-017 前台忘記密碼不透露帳號存在</h2>
+<blockquote>spec：§前台忘記密碼/不提示帳號存在　「查無帳號或信箱不符時，前台一律顯示「若資料相符，重設連結已寄出」，不提示帳號是否存在」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-030">030<br>v1</td><td>grounded</td><td>查無帳號或信箱不符時前台顯示相同的通用提示</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>輸入不存在的帳號並送出忘記密碼申請</li><li>輸入存在的帳號但信箱不符並送出申請</li></ol></td><td>兩種情況皆顯示「若資料相符，重設連結已寄出」，訊息完全相同，不透露帳號是否存在或信箱是否正確</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-018 前台忘記密碼不適用對象</h2>
+<blockquote>spec：§前台忘記密碼/機台帳號、未綁定信箱的帳號　「機台帳號 | 不適用——機台帳號沒有電子信箱…未綁定信箱的帳號 | 無法使用本機制，一律以後台「重設密碼」處理」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-ACCOUNT-031">031<br>v1</td><td>⚠ exploratory</td><td>機台帳號無法使用前台忘記密碼</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>嘗試以機台帳號的會員編號於前台忘記密碼頁申請</li></ol></td><td>無法完成申請流程（機台帳號並非以電子信箱登入註冊，前台忘記密碼機制對其不存在可用入口）<div class=assume>⚠ 假設：Spec 只說機台帳號沒有信箱、不適用忘記密碼，未定義實際申請時前端的提示；PM 已於 CLR-ACCOUNT-003 確認機台帳號無法以信箱登入註冊，故前台不存在此功能可用<br><span class=pm>✅ PM（CLR-ACCOUNT-003）：機台帳號無法使用信箱登入註冊，所以前台不存在「忘記密碼」這個功能可用（非送出後才被擋，而是機台帳號本身無法透過此入口操作，因為它不是以信箱註冊的帳號）。</span></div></td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-032">032<br>v1</td><td>grounded</td><td>未綁定信箱的後台建立帳號只能以後台重設密碼處理</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>取一個後台建立、尚未補綁電子信箱的線上帳號</li><li>嘗試於前台使用忘記密碼</li></ol></td><td>無法使用前台忘記密碼機制；該帳號密碼遺失需以後台「重設密碼」處理</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-019 機台憑證產生與重置</h2>
+<blockquote>spec：§機台憑證　「只在產生與重置時完整顯示一次…重置後只顯示前後各 4 碼，中間以遮罩呈現…點擊「重置憑證」須二次確認」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-033">033<br>v1</td><td>grounded</td><td>尚未產生憑證時顯示「產生憑證」按鈕</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟一個尚未產生憑證的機台帳號的機台憑證區塊</li></ol></td><td>顯示「產生憑證」按鈕</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-034">034<br>v1</td><td>grounded</td><td>產生憑證後完整顯示一次，之後只顯示前後 4 碼遮罩</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>點擊產生憑證</li><li>檢視當下顯示內容</li><li>離開後重新進入該區塊，再次檢視</li></ol></td><td>當下完整顯示憑證內容並提供複製按鈕；重新進入後只顯示前後各 4 碼，中間遮罩</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-035">035<br>v1</td><td>grounded</td><td>重置憑證需二次確認，確認後新憑證顯示一次且舊憑證立即失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>已有憑證的機台帳號，點擊重置憑證</li><li>在二次確認彈窗確認</li></ol></td><td>確認後系統生成新憑證並完整顯示一次，提供複製按鈕；舊憑證立即失效</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-020 機台憑證唯一性</h2>
+<blockquote>spec：§機台憑證 + §業務規則-憑證唯一性　「重置即失效由平台端保證：JWT 本身無法被收回，平台驗證憑證時除簽章外須比對該機台目前有效的憑證識別…舊憑證即使簽章仍有效亦一律拒絕」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-ACCOUNT-036">036<br>v1</td><td>⚠ exploratory</td><td>重置後舊憑證即使簽章仍有效也一律被拒絕</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表<br>⚠️ 本案例依賴驗證憑證的平台 API；該 API 屬開發包③範圍，正式對接前尚不存在，目前無法實際執行，僅供開發包③上線後執行</td><td><ol><li>機台使用憑證 A 正常呼叫平台 API</li><li>在後台重置該機台的憑證（產生憑證 B，A 應立即失效）</li><li>以憑證 A 再次呼叫平台 API</li></ol></td><td>第三步呼叫被拒絕——平台除驗證簽章外，另比對機台目前有效的憑證識別（如 jti／版本號），僅簽章有效不足以通過<div class=assume>⚠ 假設：規則本身 spec 已明確定義（非假設待確認），此處的 assumption 僅用於標記『目前無法執行、需等待開發包③』這個環境限制，供 Human 知悉並在 ACTIVATE 時決定是否先行核准、標記為延後執行</div></td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-021 機台憑證格式與有效期限</h2>
+<blockquote>spec：§機台憑證　「憑證格式為 JWT…憑證不設有效期限（v07 定案）…僅靠「重置憑證」使舊憑證失效」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-037">037<br>v1</td><td>grounded</td><td>憑證格式為 JWT，且不因時間經過而失效</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>產生或重置憑證，檢視其內容格式</li><li>檢視一個已產生很久（未被重置）的憑證是否仍標示為有效</li></ol></td><td>憑證為 JWT 字串（可換行完整顯示並複製）；不因時間經過而失效，僅重置才會使其失效</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-022 停用／啟用機台</h2>
+<blockquote>spec：§停用／啟用機台　「停用後該機台立即無法運作，玩家無法投鈔、遊玩或出金；再次啟用即恢復運作…停用不會影響機台帳號上的餘額」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-038">038<br>v1</td><td>grounded</td><td>停用機台後狀態變更且不影響帳號餘額</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表<br>「玩家無法投鈔、遊玩或出金」的實際限制需開發包③機台對接上線後才能驗證，本案僅驗證狀態切換與餘額不變</td><td><ol><li>記錄機台帳號目前餘額 X</li><li>將機台狀態切換為停用</li></ol></td><td>機台狀態變為停用；帳號餘額仍為 X，不受影響</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-039">039<br>v1</td><td>grounded</td><td>啟用停用中的機台可恢復</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>取一個狀態為停用的機台</li><li>將其狀態切換為啟用</li></ol></td><td>機台狀態變為啟用</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-023 機台不可刪除</h2>
+<blockquote>spec：§停用／啟用機台 + §業務規則-機台不可刪除　「機台不提供刪除操作，只能停用…機台資料與機台帳號都會保留，供歷史紀錄查詢」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-040">040<br>v1</td><td>grounded</td><td>會員列表與詳細頁皆不提供刪除機台或機台帳號的操作</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>檢視任一機台帳號於會員列表的可用操作</li><li>檢視其會員詳細頁與機台資訊區塊的可用操作</li></ol></td><td>兩處皆不存在刪除機台或刪除該帳號的功能，僅提供停用</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-024 機台帳號特性-識別與建立方式</h2>
+<blockquote>spec：§機台帳號的特性　「機台識別 | 機台不另設機台編號，一律以其機台帳號的會員編號識別…建立方式 | 由後台建立，不經前台註冊；沒有電子信箱、沒有電話號碼」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-041">041<br>v1</td><td>grounded</td><td>機台帳號沿用會員編號規則識別，無電子信箱與電話</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立一個機台帳號</li><li>檢視其會員編號、電子信箱、電話欄位</li></ol></td><td>會員編號依既有規則產生（無獨立機台編號）；電子信箱與電話皆為空</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-ACCOUNT-025 機台帳號登入用途</h2>
+<blockquote>spec：§機台帳號的特性 + 操作段落附註　「登入 | 可以系統生成的帳號密碼登入前台，僅供機台本身的前台遊戲畫面登入使用…不交付玩家」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-042">042<br>v1</td><td>grounded</td><td>機台帳號的帳密可登入機台前台遊戲畫面</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以機台帳號的系統生成帳密</li><li>登入機台的前台遊戲畫面</li></ol></td><td>可正常登入</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-ACCOUNT-026 機台帳號幣別</h2>
+<blockquote>spec：§機台帳號的特性/幣別　「幣別 | 取自所屬主站台的核心貨幣，不可修改」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-043">043<br>v1</td><td>grounded</td><td>機台帳號幣別取自主站台核心貨幣且建立後不可修改</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>所屬主站台核心貨幣為 TWD，建立一個機台帳號，檢視其幣別</li><li>嘗試尋找修改該帳號幣別的途徑</li></ol></td><td>帳號幣別為 TWD；系統不提供修改此欄位的途徑</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-027 會員列表新增帳號類型篩選</h2>
+<blockquote>spec：§會員列表的同步修訂/2.1.2 篩選器　「新增「帳號類型」篩選（全部／線上／機台），預設為「全部」」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-044">044<br>v1</td><td>grounded</td><td>會員列表帳號類型篩選預設為全部</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟會員列表</li><li>檢視帳號類型篩選器</li></ol></td><td>預設值為「全部」</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-045">045<br>v1</td><td>grounded</td><td>帳號類型篩選機台或線上時結果正確narrow</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>篩選帳號類型為「機台」並搜尋</li><li>篩選帳號類型為「線上」並搜尋</li></ol></td><td>前者結果只包含機台帳號；後者只包含線上帳號</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-028 會員列表機台帳號列示與存提款計算</h2>
+<blockquote>spec：§會員列表的同步修訂/2.1.3 會員列表　「存款次數／存款金額累計機台開分與機台入金（不需核實，交易完成當下直接累計）、提款次數／提款金額累計已核實的機台洗分與機台出金…金額一律以站台核心貨幣原值累計、不換算 USDT」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-046">046<br>v1</td><td>grounded</td><td>機台帳號照常列於會員列表不預設排除</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>不篩選帳號類型，檢視會員列表總筆數</li></ol></td><td>總筆數包含線上與機台帳號，機台帳號未被排除</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-047">047<br>v1</td><td>grounded</td><td>機台開分／入金完成當下直接累計存款次數與金額</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表<br>實際開分/入金交易需開發包③上線，本案例待該包上線後執行</td><td><ol><li>機台帳號當日開分 1000（TWD）</li><li>檢視其存款次數與存款金額</li></ol></td><td>存款次數 +1、存款金額 +1000，以 TWD 原值累計、不換算 USDT</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-048">048<br>v1</td><td>grounded</td><td>待核實的機台洗分不計入提款次數與金額</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表<br>實際洗分交易需開發包③⑤上線，本案例待該等包上線後執行</td><td><ol><li>機台帳號有一筆洗分尚待核實（未於洗分出金核實頁核實）</li><li>檢視其提款次數與提款金額</li></ol></td><td>該筆尚未計入；僅已核實的洗分/出金才累計</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-029 會員詳細頁機台帳號區塊規則</h2>
+<blockquote>spec：§會員列表的同步修訂/2.1.5 會員詳細資料頁　「機台帳號的詳細頁可開啟，但 KYC、等級、優惠、邀請鏈區塊隱藏；新增「機台資訊」與「機台憑證」兩個區塊」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-049">049<br>v1</td><td>grounded</td><td>機台帳號詳細頁隱藏 KYC/等級/優惠/邀請鏈，新增機台資訊與機台憑證區塊</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟機台帳號的會員詳細頁</li><li>檢視頁面區塊</li></ol></td><td>KYC、等級、優惠、邀請鏈區塊皆不顯示；顯示機台資訊與機台憑證兩個新區塊</td><td>high<br>medium</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-050">050<br>v1</td><td>grounded</td><td>所有會員帳號的詳細頁皆有重設密碼操作</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟一個線上帳號的詳細頁，檢視可用操作</li><li>開啟一個機台帳號的詳細頁，檢視可用操作</li></ol></td><td>兩者皆有「重設密碼」操作</td><td>high<br>medium</td></tr>
+</table>
+<h2>REQ-ACCOUNT-030 機台帳號多幣別錢包展開規則</h2>
+<blockquote>spec：§會員列表的同步修訂/2.1.6 多幣別錢包展開顯示　「機台帳號的餘額欄不顯示展開箭頭、維持單行呈現；收合值即該帳號的主錢包（TWD）餘額」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-051">051<br>v1</td><td>grounded</td><td>機台帳號的餘額欄不顯示展開箭頭、維持單行</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>檢視機台帳號的餘額欄（列表、簡易面板或詳細頁）</li><li>確認是否有可展開的箭頭圖示</li></ol></td><td>不顯示展開箭頭，單行呈現，數值即主錢包（TWD）餘額</td><td>high<br>low</td></tr>
+</table>
+<h2>REQ-ACCOUNT-031 既有功能排除規則-必須實作項</h2>
+<blockquote>spec：§既有功能對機台帳號的排除規則　「機台帳號不可成為加盟商、不計入任何加盟商的直推人數…會員等級固定為最低等級且不升降…KYC 五個階段一律「未申請」且無法申請」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-052">052<br>v1</td><td>grounded</td><td>機台帳號不可被設為加盟商</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>取一個機台帳號</li><li>嘗試於加盟列表將其設為加盟商</li></ol></td><td>系統不允許此操作</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-053">053<br>v1</td><td>grounded</td><td>機台帳號不計入任何人的直推人數</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>理論情境：機台帳號被視為由某會員推薦註冊（實際不會發生，見 REQ-032）</li><li>檢視該推薦人的直推人數統計</li></ol></td><td>機台帳號不計入任何人的直推人數</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-054">054<br>v1</td><td>grounded</td><td>機台帳號的會員等級固定為最低且不升降</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>檢視機台帳號的會員等級</li><li>即使該帳號有大量投注紀錄（假設情境），再次檢視其等級</li></ol></td><td>固定為最低等級，不因投注或其他行為升降</td><td>high<br>high</td></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-055">055<br>v1</td><td>grounded</td><td>機台帳號的 KYC 五個階段皆為未申請且無法申請</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>開啟機台帳號詳細頁的 KYC 區塊</li><li>嘗試對任一階段提交 KYC 申請</li></ol></td><td>五個階段皆顯示「未申請」；無法送出任何 KYC 申請</td><td>high<br>high</td></tr>
+</table>
+<h2>REQ-ACCOUNT-032 既有功能排除規則-天然不會發生</h2>
+<blockquote>spec：§既有功能對機台帳號的排除規則　「推薦註冊金（沒有邀請人）。優惠活動與簽到（帳密僅供機台本身登入使用，玩家無從參與）」　· 風險 low</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-ACCOUNT-056">056<br>v1</td><td>grounded</td><td>機台帳號建立時無邀請人，不觸發推薦註冊金</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>建立一個機台帳號（無邀請人）</li><li>檢視是否有任何推薦註冊金發放紀錄</li></ol></td><td>未觸發任何推薦註冊金</td><td>high<br>low</td></tr>
+<tr class="exp"><td class=id title="TC-ACCOUNT-057">057<br>v1</td><td>⚠ exploratory</td><td>機台前台沒有優惠活動與簽到頁面可供參與</td><td>以 Admin 登入後台<br>進入 會員與加盟商 &gt; 會員列表</td><td><ol><li>以機台帳號帳密登入機台前台遊戲畫面</li><li>尋找優惠活動或每日簽到入口</li></ol></td><td>機台前台不存在優惠活動或簽到頁面，玩家（機台）無從進入或參與<div class=assume>⚠ 假設：Spec 只說『帳密不交付玩家所以天然不會發生』，未明確要求系統主動阻擋；PM 已於 CLR-ACCOUNT-004 確認機台前台根本沒有優惠活動頁面，玩家介面上無法進入<br><span class=pm>✅ PM（CLR-ACCOUNT-004）：機台前台沒有優惠活動頁面，玩家（機台）介面上根本無法進入優惠活動或簽到頁面，因此無從參與，不需要後端額外阻擋邏輯。</span></div></td><td>high<br>low</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0017 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0017 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0017 --decision reject --by &lt;you&gt; --rationale "..."</div>

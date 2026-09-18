@@ -1,0 +1,82 @@
+title: 站長繞過前端直接呼叫建立站台 API 並帶入其他上層站台 ID
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-012
+acceptance_criteria_ids: []
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以站長身分登入 ba-admin 後台
+- 進入「站台列表」頁面（預設顯示自身管轄範圍）
+test_data: []
+steps:
+- n: 1
+  action: 以站長身分，直接呼叫建立站台 API，上層站台 ID 帶入非當前所在層的其他站台
+expected_result: 後端拒絕該請求，不會建立一個上層站台與站長當前所在層不同的站台
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §業務規則與驗證
+assumptions:
+- text: Spec 只定義前端行為（欄位唯讀），未定義繞過前端直接呼叫 API 時後端是否拒絕（REQ-SITELIST-012 的 rejection_contract.defined=false，且 requirement 本身註明此為已知風險區域）；PM
+    已於 CLR-SITELIST-005（2026-09-14）回覆『後端已拒絕，此前 RD 回報的可繞過風險已修復』，但此答覆未回寫進 RequirementModel，故以 exploratory 標記，需人工再次確認後端行為
+  requirement_id: REQ-SITELIST-012
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-221
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+created_at: '2026-09-17T15:21:06Z'
+updated_at: '2026-09-17T15:21:22Z'
+history:
+- at: '2026-09-17T15:21:06Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QYWCAGFEFA1KHKSYK3PK6M
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:06Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:06Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QZA1YC8MVG58JJZJHJH7XJ
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:07Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:21:22Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0113
+  run_id: RUN-20260916-007
+  note: rejected

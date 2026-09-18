@@ -1,0 +1,132 @@
+# QAOS 管理介面 — Pipeline 階段大綱（草稿，待確認）
+#
+# 用途：後端把三種資料來源對應到「階段」，前端只顯示階段／agent 層級，不顯示單次工具呼叫。
+#
+# 三種資料來源（皆唯讀）：
+#   runtime : runs/<run_id>/run.yaml            ← 事實來源。Runtime 已記錄 T1..T5 的狀態、時間、迭代次數、gate 結果
+#   events  : .warroom/events.jsonl              ← Claude Code hook 寫入的即時事件（哪個 subagent 正在跑、最後活動時間）
+#   outputs : testcases/final/                   ← 最終交付物（檔案系統輪詢 mtime；hook 抓不到用 Bash cp 產生的檔案）
+#
+# 對應規則說明：
+#   runtime.task        : run.yaml 裡 tasks[].task_id；status PENDING/READY/RUNNING/GATE_FAILED/DONE
+#   events.agent_type   : SubagentStart/SubagentStop payload 的 agent_type（已查證 Claude Code 2.1.x 有此欄位）
+#   events.path_prefix  : PostToolUse(Write|Edit) 的 tool_input.file_path 前綴
+#   signal              : strong = 可單獨判定階段；weak = 需搭配 runtime 才可靠
+
+version: 1
+
+pipeline:
+  id: spec-to-testcase
+  title: "SPEC → Test Case"
+  description: "Supervisor 建 Run → Spec Analyst → Test Designer ⇄ Test Validator（≤3 輪）→ 人工核准 → Phase2×3 交叉整合 → 匯出 final"
+
+session_filter:
+  # 見 PLAN.md「Session 過濾方案」；此處為預設值，UI 可覆蓋
+  mode: manual_with_suggest        # manual_with_suggest | env_tag_only | auto
+  env_tag: QAOS_TRACK              # hook 腳本若看到此環境變數會在事件加上 tag
+  suggest_when_agent_type: [qaos-test-designer]
+  ignore_session_ids: []           # 例如開發本管理介面的 session，由 UI 加入
+
+lanes: 3                           # 「即時」分頁同時呈現幾條 pipeline（並行 session）
+
+stall:
+  warn_after_seconds: 600          # 超過 10 分鐘無新事件 → 「可能卡住」
+  dead_after_seconds: 1800         # 超過 30 分鐘 → 「已停止」
+
+stages:
+  - id: intake
+    order: 0
+    title: 建立 Run
+    agent: agent-supervisor
+    signals:
+      - source: runtime
+        match: { run_created: true }
+        signal: strong
+
+  - id: spec-analysis
+    order: 1
+    title: Spec 分析
+    agent: agent-spec-analyst
+    gate: G-SPEC
+    signals:
+      - source: runtime
+        match: { task: T1 }
+        signal: strong
+    notes: "目前由主 session 以腳本扮演（tools/manual-runs/*_t1_spec_analyst.py），hook 無法辨識；skip_if RequirementModel 已存在則 T1 直接 DONE"
+
+  - id: test-design
+    order: 2
+    title: 測試設計
+    agent: agent-test-designer
+    gate: G-DESIGN
+    signals:
+      - source: runtime
+        match: { task: T2 }
+        signal: strong
+      - source: events
+        match: { hook: SubagentStart, agent_type: qaos-test-designer }
+        signal: strong
+    notes: "Phase 3 起由 .claude/agents/qaos-test-designer.md 子 agent 執行；同一 run 可迭代最多 3 次（iteration 欄位）"
+
+  - id: validation
+    order: 3
+    title: 獨立驗證
+    agent: agent-test-validator
+    gate: G-TVAL
+    signals:
+      - source: runtime
+        match: { task: T3 }
+        signal: strong
+      - source: events
+        match: { hook: SubagentStart, agent_type: general-purpose }
+        signal: weak
+    notes: "Validator 每輪都是全新的 general-purpose 子 agent（description 通常含「獨立審查」，但 hook payload 沒有 description）；單靠 events 只能推定，需搭配 runtime T3 狀態"
+
+  - id: approval
+    order: 4
+    title: 人工核准
+    agent: human
+    gate: G-APPROVAL
+    signals:
+      - source: runtime
+        match: { task: T4, run_status: WAITING_HUMAN }
+        signal: strong
+    notes: "approvals/APR-xxxx.yaml；ACTIVATE_TESTCASE / HUMAN_OVERRIDE / NEEDS_DECISION"
+
+  - id: integration
+    order: 5
+    title: 交叉整合
+    agent: agent-supervisor
+    signals:
+      - source: runtime
+        match: { workflow_id: testcase-revision }
+        signal: strong
+    notes: "Phase2（人工）× Phase3（agent）逐條交叉比對，透過 bin/qaos tc revise 修訂既有 TC；表現為一連串 testcase-revision run"
+
+  - id: final-export
+    order: 6
+    title: 匯出 final
+    agent: agent-supervisor
+    signals:
+      - source: outputs
+        match: { glob: "testcases/final/*-final*.{html,json}" }
+        signal: strong
+      - source: events
+        match: { hook: PostToolUse, tool_name: [Write, Edit], path_prefix: testcases/final/ }
+        signal: strong
+    notes: "既有 4 個檔案是用 Bash cp 從 /tmp 複製進來的，PostToolUse(Write|Edit) 抓不到；以檔案系統輪詢為主"
+
+  - id: summary
+    order: 7
+    title: 結案
+    agent: agent-supervisor
+    signals:
+      - source: runtime
+        match: { task: T5, run_status: COMPLETED }
+        signal: strong
+
+# 事件層級的「session 生命週期」對應（不屬於任何 pipeline 階段，用來算 elapsed / stall）
+session_events:
+  start: [SessionStart]
+  turn_end: [Stop]
+  end: [SessionEnd]

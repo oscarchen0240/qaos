@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1
 - 相關需求：REQ-DAILYREPORT-015
 - 提出者：oscarchen@blockaction.tech（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 REQ-015 major ambiguity；TC-DAILYREPORT-046 以假設「不受結算日期限制」處理

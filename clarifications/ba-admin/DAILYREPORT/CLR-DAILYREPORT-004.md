@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.1  §§列表欄位/結算期間 + §業務規則/日結時間
 - 相關需求：REQ-DAILYREPORT-007
 - 提出者：agent-spec-analyst（2026-09-13）
-- 狀態：ANSWERED
+- 狀態：APPLIED
 
 ## 背景
 「結算期間」欄按日顯示營業日（依場館設定的日結時間切分，UTC+0）；按週／按月／區間合計顯示該週期起訖日期。

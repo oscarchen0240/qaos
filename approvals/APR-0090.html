@@ -1,0 +1,29 @@
+<title>APR-0090 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0090 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-020 · 狀態 PENDING · 提出 2026-09-15</div>
+<div class=summary>1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 1 條 exploratory，approve 即確認其假設）</div>
+<p>共 1 條：grounded 0 條（預期結果有 spec 條文依據）、<b>exploratory 1 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-MEMBER-003 會員列表 KYC 狀態以五個圖示的顏色顯示各驗證階段狀態</h2>
+<blockquote>spec：§2.1.3 KYC驗證階段圖示說明　「🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用」　· 風險 medium</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-004">004<br>v2</td><td>⚠ exploratory</td><td>會員列表 KYC 狀態五圖示依各階段實際狀態正確顯示顏色與 Tooltip</td><td>一名會員的五個 KYC 階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明）分別處於不同狀態，至少涵蓋已核准/審核中/待補件/未申請其中三種以上。各狀態佈置方式（依spec §2.1.5會員詳細資料頁「KYC 狀態」區塊定義）：「已核准」＝後台對該階段執行審核結果「通過」；「待補件」＝後台執行「駁回」（並選取駁回原因）；「未申請」＝該階段尚未經會員端送出、保持未送審；「審核中」＝會員已透過會員端（前台/APP）送出該階段申請、後台尚未執行通過或駁回——這是會員端動作觸發的狀態，後台本身沒有可直接『執行』出審核中的操作，佈置時需請一名會員實際透過前台送出申請，或從測試環境既有資料中挑選已處於審核中的既有帳號<br>「已停用」狀態如何產生（是否有後台操作入口可主動停用某階段、或僅為系統/環境層級設定，spec §2.1.3全文未定義）；若需涵蓋此狀態，優先從測試環境既有資料中挑選已呈現「已停用」樣式的既有會員，若找不到既有帳號、且後台無明確的停用操作入口，如何佈置此狀態的測試資料需環境負責人/PM確認（見assumptions）</td><td><ol><li>於會員列表檢視該會員的 KYC 狀態欄五個圖示顏色</li><li>滑鼠移至任一圖示</li></ol></td><td>五個圖示顏色分別正確對應各自階段的實際狀態（綠=已核准/橘=審核中/紅=待補件/淺灰=未申請/深灰=已停用）；滑鼠移至圖示顯示 Tooltip 說明階段名稱與狀態<div class=assume>⚠ 假設：「已停用」狀態如何產生（是否有後台操作入口可主動停用某KYC階段、或僅為系統/環境層級設定）spec §2.1.3全文未定義，僅定義該狀態存在與對應顯示顏色；本TC優先假設測試環境存在已涵蓋此狀態的既有帳號，若環境中找不到、且後台確實無明確操作入口，實際佈置方式需環境負責人確認</div></td><td>medium<br>medium</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0090 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0090 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0090 --decision reject --by &lt;you&gt; --rationale "..."</div>

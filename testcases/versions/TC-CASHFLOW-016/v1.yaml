@@ -1,0 +1,98 @@
+title: 洗分核可金額依門檻無條件捨去；指定金額與全洗結果一致；門檻為 0 時洗出全額不取整
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-013
+acceptance_criteria_ids:
+- AC-CASHFLOW-0131
+- AC-CASHFLOW-0132
+- AC-CASHFLOW-0133
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+test_data: []
+steps:
+- n: 1
+  action: 機台餘額 321、門檻 100，送出全洗請求（req-keyout，mode=all），檢視核可金額
+- n: 2
+  action: 同餘額同門檻，改送指定金額 300 的洗分請求（req-keyout，mode=value），檢視核可金額
+- n: 3
+  action: 機台餘額 321、門檻改為 0，送出全洗請求（req-keyout，mode=all），檢視核可金額
+expected_result: 第一步核可金額 300；第二步核可金額同為 300，與全洗結果一致；第三步門檻為 0 時核可金額為 321（全額，不取整）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §四種金流/洗分
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-016
+version: 1
+supersedes: null
+status: SUPERSEDED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+created_at: '2026-09-13T22:50:49Z'
+updated_at: '2026-09-14T07:00:11Z'
+history:
+- at: '2026-09-13T22:50:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0018
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-005
+- at: '2026-09-14T07:00:11Z'
+  from_status: ACTIVE
+  to_status: SUPERSEDED
+  by: system
+  trigger: v2 ACTIVE
+  run_id: RUN-20260914-007
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0018

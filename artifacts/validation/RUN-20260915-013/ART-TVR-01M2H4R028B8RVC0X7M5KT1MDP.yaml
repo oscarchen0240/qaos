@@ -1,0 +1,107 @@
+artifact_id: ART-TVR-01M2H4R028B8RVC0X7M5KT1MDP
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-013
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-14T23:41:24Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2H4C89QGHXVTQPE7HM7Y5J1
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2H4C89QGHXVTQPE7HM7Y5J1
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2H4C89QGHXVTQPE7HM7Y5J1
+  validated_against:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+  issues:
+  - testcase_id: TC-DRAFT-01M2H4C89NYH1K292ZH33WY7EZ
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+    evidence: precondition寫「稽核倍數設為1，避免投注門檻干擾判斷」，但spec.md明確指出稽核（預設為1）會影響提領所需有效投注額，同一份draft裡REQ-MEMBER-011的TC自己就示範稽核=3時投注門檻增加300，證明稽核從來不是用來避免干擾的參數；即使稽核=1，存入金額仍須先完成等額流水才計入可提領餘額，不是存入後立即等於可提領餘額
+    explanation: 這個關鍵的系統行為假設完全沒有寫進assumptions欄位，導致這兩條critical_path/high risk的核心邊界值TC可執行性存疑——是第一輪「未標記假設藏在precondition」同類問題的重演，只是換了更隱蔽的位置
+    recommended_change: 把「稽核=1能否讓存入金額立即計入可提領餘額」這個假設明確標進assumptions，或找出真正能精確佈置可提領餘額到邊界值的方法
+  - testcase_id: TC-DRAFT-01M2H4C89NH4Z4G52MDA21XJFH
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+    evidence: 同上一條，TC8是TC7的對照組，同樣的問題
+    explanation: 同上
+    recommended_change: 同上
+  - testcase_id: TC-DRAFT-01M2H4C89NYH1K292ZH33WY7EZ
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-MEMBER-005
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4
+    evidence: TC7/TC8的結構化欄位仍宣告product:ba-admin、test_level:ui_e2e，但實際驗證步驟是在會員前台（另一產品）執行，assumptions只提到「前台環境是否可用」卻沒有在結構化欄位標記這是跨產品依賴
+    explanation: 容易在後續自動化分派或執行分工時卡關
+    recommended_change: 結構化欄位應反映跨產品依賴，而不只是文字說明
+  advisories:
+  - testcase_id: TC-DRAFT-01M2H4C89N9KEFX3HR6K1AR74Y
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: REQ-MEMBER-010
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+    evidence: decision_table只列3種組合（單缺前台備注/單缺後台備注/兩者皆填），少了「兩者皆留空」這格
+    explanation: 矩陣不完整，雖可能屬冗餘case
+    recommended_change: 可選：補上第4格
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: 全體
+    evidence: negative同時被用作test_types與design_techniques（4條TC），語意重疊
+    explanation: 不影響本輪判定
+    recommended_change: 可選：統一術語
+  coverage_summary:
+    requirements_total: 18
+    requirements_covered: 18
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-14T23:41:34Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-013

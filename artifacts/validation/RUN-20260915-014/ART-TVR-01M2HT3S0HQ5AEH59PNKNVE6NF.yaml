@@ -1,0 +1,74 @@
+artifact_id: ART-TVR-01M2HT3S0HQ5AEH59PNKNVE6NF
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-014
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-15T05:54:51Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2HSTB783MGWFQBGENC06R37
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2HSTB783MGWFQBGENC06R37
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2HSTB783MGWFQBGENC06R37
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2E9V0N2RH2EM6DXTZ4YFXE0
+  issues:
+  - testcase_id: TC-DRAFT-01M2HSTB77HZXHDH0WTK4DSA3P
+    issue_type: spec_mismatch
+    severity: blocker
+    violated_requirement: REQ-CASHFLOW-026
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: requirements.yaml AC-CASHFLOW-0261
+    evidence: REQ-CASHFLOW-026 的 statement 已修正（移除Admin手動取消，改為新請求取代/人工出金連動取消），但 acceptance_criteria[0].then（AC-CASHFLOW-0261）沒有同步修正，仍寫著「需靠新的req-cashout或Admin手動取消」，跟statement互相矛盾
+    explanation: 同一份需求文件內部沒改齊，TC引用的AC本身內容尚未同步
+    recommended_change: 同步修正AC-CASHFLOW-0261.then跟statement一致，再核准此TC
+  advisories:
+  - testcase_id: TC-DRAFT-01M2HSTB77HZXHDH0WTK4DSA3P
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-026
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §附錄-出金
+    evidence: expected_result_spec_reference.quote把修正註記直接混入本應為原文引用的quote欄位
+    explanation: 不影響判讀正確性，但建議quote保留spec原文，修正說明另外放
+    recommended_change: 統一寫法：quote保留spec原文，修正說明放在design_rationale或獨立備註
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: false
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase: []
+history:
+- at: '2026-09-15T05:54:54Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-014

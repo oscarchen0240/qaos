@@ -1,0 +1,84 @@
+title: 會員列表 KYC 狀態五圖示依各階段實際狀態正確顯示顏色與 Tooltip
+product: ba-admin
+functional_area: MEMBER
+requirement_ids:
+- REQ-MEMBER-003
+acceptance_criteria_ids:
+- AC-MEMBER-004
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 一名會員的五個 KYC 階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明）分別處於不同狀態，至少涵蓋已核准/審核中/待補件/未申請其中三種以上。各狀態佈置方式（依spec §2.1.5會員詳細資料頁「KYC 狀態」區塊定義）：「已核准」＝後台對該階段執行審核結果「通過」；「待補件」＝後台執行「駁回」（並選取駁回原因）；「未申請」＝該階段尚未經會員端送出、保持未送審；「審核中」＝會員已透過會員端（前台/APP）送出該階段申請、後台尚未執行通過或駁回——這是會員端動作觸發的狀態，後台本身沒有可直接『執行』出審核中的操作，佈置時需請一名會員實際透過前台送出申請，或從測試環境既有資料中挑選已處於審核中的既有帳號
+- 「已停用」狀態如何產生（是否有後台操作入口可主動停用某階段、或僅為系統/環境層級設定，spec §2.1.3全文未定義）；若需涵蓋此狀態，優先從測試環境既有資料中挑選已呈現「已停用」樣式的既有會員，若找不到既有帳號、且後台無明確的停用操作入口，如何佈置此狀態的測試資料需環境負責人/PM確認（見assumptions）
+test_data: []
+steps:
+- n: 1
+  action: 於會員列表檢視該會員的 KYC 狀態欄五個圖示顏色
+- n: 2
+  action: 滑鼠移至任一圖示
+expected_result: 五個圖示顏色分別正確對應各自階段的實際狀態（綠=已核准/橘=審核中/紅=待補件/淺灰=未申請/深灰=已停用）；滑鼠移至圖示顯示 Tooltip 說明階段名稱與狀態
+expected_result_spec_reference:
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  location: §2.1.3 KYC驗證階段圖示說明
+  quote: 🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用
+assumptions:
+- text: 「已停用」狀態如何產生（是否有後台操作入口可主動停用某KYC階段、或僅為系統/環境層級設定）spec §2.1.3全文未定義，僅定義該狀態存在與對應顯示顏色；本TC優先假設測試環境存在已涵蓋此狀態的既有帳號，若環境中找不到、且後台確實無明確操作入口，實際佈置方式需環境負責人確認
+  requirement_id: REQ-MEMBER-003
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: false
+source: change_workflow
+testcase_id: TC-MEMBER-004
+version: 2
+supersedes: 1
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2JDG6RS6NHKVJNJWJ47A5V8
+created_at: '2026-09-15T11:33:41Z'
+updated_at: '2026-09-15T12:22:36Z'
+history:
+- at: '2026-09-15T11:33:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2JD801WJVVZFRKEXEA9TCVH
+  run_id: RUN-20260915-020
+- at: '2026-09-15T11:33:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260915-020
+- at: '2026-09-15T11:33:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2JDG6RS6NHKVJNJWJ47A5V8
+  run_id: RUN-20260915-020
+- at: '2026-09-15T11:33:41Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260915-020
+- at: '2026-09-15T12:22:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0090
+  run_id: RUN-20260915-020
+  note: rejected

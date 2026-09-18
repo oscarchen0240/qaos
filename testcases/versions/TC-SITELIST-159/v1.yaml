@@ -1,0 +1,83 @@
+title: Admin 繞過前端直接呼叫編輯站台 API，帶入會形成循環的上層站台 ID
+product: ba-admin
+functional_area: SITELIST
+requirement_ids:
+- REQ-SITELIST-013
+acceptance_criteria_ids: []
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台
+- 進入「站台列表」頁面
+test_data: []
+steps:
+- n: 1
+  action: 取一個既有的、底下至少有一層子站台的站台 A
+- n: 2
+  action: 以 Admin 身分，直接呼叫編輯站台 A 的 API，上層站台 ID 帶入 A 自身或 A 的某個子站台
+expected_result: 預期後端拒絕該請求，避免形成循環的父子關係；此結果目前未經確認，執行時若發現後端接受了此請求（形成循環），應視為高風險缺陷立即上報，而非視為預期行為
+expected_result_spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  location: §業務規則與驗證/上層站台循環防護
+assumptions:
+- text: CLR-SITELIST-006 的 PM 回覆明確聲明『本次確認聚焦於站長權限，Admin 編輯時的循環防護是否也有對應後端驗證，未在本次回覆中明確涵蓋，若後續測試發現可繞過，需另案處理』；也就是說 Admin 這一側的後端防護目前完全沒有人力確認過，屬於比站長那一側更不確定的風險
+  requirement_id: REQ-SITELIST-013
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-SITELIST-159
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2QWM8CV91FT4P5BEJPDYX2R
+created_at: '2026-09-17T14:34:15Z'
+updated_at: '2026-09-17T15:03:53Z'
+history:
+- at: '2026-09-17T14:34:15Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2QW79PJTZS66RGF8N26Z2K0
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2QWM8CV91FT4P5BEJPDYX2R
+  run_id: RUN-20260916-007
+- at: '2026-09-17T14:34:15Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260916-007
+- at: '2026-09-17T15:03:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0111
+  run_id: RUN-20260916-007
+  note: rejected

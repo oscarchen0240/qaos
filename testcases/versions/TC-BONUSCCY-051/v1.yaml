@@ -1,0 +1,87 @@
+title: 已開啟「有效會員每月重置」的簽到活動，跨月後有效會員累積進度正確歸零重算，不誤讀上月已計入的舊資料
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-014
+acceptance_criteria_ids:
+- AC-BONUSCCY-021
+spec_id: SPEC-BONUSCCY-003
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 選定一個已開啟『有效會員每月重置』設定的簽到活動（自行從後台活動列表中確認此設定已開啟；若目前沒有任何活動開啟此設定，需請環境負責人協助開啟一個測試用活動）。
+- 選定一名既有會員，其上個月透過線上存款的累積金額已達到（或曾達到）該活動的有效會員門檻，且本月截至目前尚未有任何新的線上存款記錄（可從後台歷史存款記錄篩選出符合此時間條件的既有會員；若無法自然找到，需以可控制系統日期的測試環境配合建立此狀態——此佈置方式所需的環境能力需請環境負責人確認可行）。
+test_data: []
+steps:
+- n: 1
+  action: 於 ba-admin 後台查詢該會員在系統當前月份（跨月後）的有效會員累積判定金額與狀態。
+- n: 2
+  action: 以該會員身分登入會員前台，開啟一次簽到活動頁面，查看『有效會員』進度條顯示。
+- n: 3
+  action: 於 ba-admin 後台再次查詢該會員本月的有效會員判定結果與累積金額。
+expected_result: 無論後台判定或前台進度條，本月的累積金額皆從 0 重新開始計算，僅反映『本月』透過 deposit_log_v2 記錄的存款；不會把上個月已計入（歸零前）的存款金額延續帶入本月累積。本月尚無任何新存款，因此累積金額應為
+  0，不會僅因為上月已達門檻就維持或直接判定為有效會員。
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-003
+  spec_version: '1.0'
+  location: §這次能測什麼／T5
+  quote: 每月重置仍正常｜簽到活動若開了「有效會員每月重置」，跨月後進度應歸零重算
+assumptions:
+- text: spec 未定義如何在測試環境中人工製造『跨月』情境（例如是否有可調整系統日期的測試環境，或需要仰賴自然存在、真的橫跨月份邊界的既有會員資料）。此測試資料佈置方式是我方推測的可行做法，需要環境負責人確認實際可行的操作路徑。
+  requirement_id: REQ-BONUSCCY-014
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-051
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+created_at: '2026-09-17T17:33:08Z'
+updated_at: '2026-09-17T19:11:34Z'
+history:
+- at: '2026-09-17T17:33:08Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R6FS8KT5M4KGSTQT6ZZ9TZ
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R6VTF057BMXPDVA3V8WHFA
+  run_id: RUN-20260918-005
+- at: '2026-09-17T17:33:08Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-005
+- at: '2026-09-17T19:11:34Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0117
+  run_id: RUN-20260918-005
+  note: rejected

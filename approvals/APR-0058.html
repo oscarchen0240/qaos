@@ -1,0 +1,30 @@
+<title>APR-0058 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0058 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260915-016 · 狀態 PENDING · 提出 2026-09-15</div>
+<div class=summary>2 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 2 條 exploratory，approve 即確認其假設）</div>
+<p>共 2 條：grounded 0 條（預期結果有 spec 條文依據）、<b>exploratory 2 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-MEMBER-005 可提領餘額須大於 10 USDT 才可申請出金</h2>
+<blockquote>spec：§2.1.4 帳戶資訊　「可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-007">007<br>v2</td><td>⚠ exploratory</td><td>可提領餘額恰為 10 USDT 時不可於前台申請出金（邊界值，剛好不達門檻）</td><td>後台帳務資訊「可提領餘額」欄位只是唯讀顯示，spec 全文沒有描述後台有可點擊的「申請出金」入口；「申請出金」是會員在前台自行操作的功能，因此本規則實際生效與可驗證的入口是會員前台，不在 ba-admin 後台範圍內（見 assumptions）<br>spec 分別定義了帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、可提領餘額三個獨立欄位，也定義了人工存入/提出的「金額」與「稽核」設定（稽核＝設定本次異動金額所需完成的可提領投注倍數，會影響提款條件），但 spec 全文並未給出「可提領餘額」如何由前述欄位換算得出的公式，也未定義稽核=1時存入金額是否、以及何時會反映到可提領餘額（見 assumptions）。佈置方式：透過人工存入/人工提出反覆調整，每次調整後回到帳務資訊區塊查看實際顯示的可提領餘額數值，不依賴任何計算公式預先斷定應存入/提出多少金額<br>需要一名會員的「可提領餘額」恰為 10.00 USDT</td><td><ol><li>於後台帳務資訊區塊確認可提領餘額顯示為 10.00 USDT</li><li>以該會員身分登入會員前台，進入出金/提領申請功能</li><li>嘗試送出出金申請</li></ol></td><td>前台阻擋出金申請（規則為「須大於10 USDT」，剛好等於10不符合條件）：申請入口不可用，或送出後被系統拒絕而未成功送出<div class=assume>⚠ 假設：步驟中「以該會員身分登入前台並嘗試申請出金」需要會員前台的測試環境與登入方式；spec 未定義後台是否存在可直接驗證此門檻的入口，前台測試環境是否可用、以及人工提出是否適用同一道 &gt;10 USDT 門檻，需環境負責人 / PM 確認⚠ 假設：可提領餘額與帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、稽核倍數之間的精確換算公式，spec 全文未定義；本 TC 假設可透過人工存入/提出搭配後台實際讀數反覆調整至目標邊界值，但無法保證這是唯一或最有效率的方式，此換算機制需環境負責人 / PM 確認</div></td><td>high<br>high</td></tr>
+<tr class="exp"><td class=id title="TC-MEMBER-008">008<br>v2</td><td>⚠ exploratory</td><td>可提領餘額為 10.01 USDT 時可正常於前台申請出金（邊界值，略高於門檻）</td><td>後台帳務資訊「可提領餘額」欄位只是唯讀顯示，spec 全文沒有描述後台有可點擊的「申請出金」入口；「申請出金」是會員在前台自行操作的功能，因此本規則實際生效與可驗證的入口是會員前台，不在 ba-admin 後台範圍內（見 assumptions）<br>spec 分別定義了帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、可提領餘額三個獨立欄位，也定義了人工存入/提出的「金額」與「稽核」設定（稽核＝設定本次異動金額所需完成的可提領投注倍數，會影響提款條件），但 spec 全文並未給出「可提領餘額」如何由前述欄位換算得出的公式，也未定義稽核=1時存入金額是否、以及何時會反映到可提領餘額（見 assumptions）。佈置方式：透過人工存入/人工提出反覆調整，每次調整後回到帳務資訊區塊查看實際顯示的可提領餘額數值，不依賴任何計算公式預先斷定應存入/提出多少金額<br>需要一名會員的「可提領餘額」恰為 10.01 USDT</td><td><ol><li>於後台帳務資訊區塊確認可提領餘額顯示為 10.01 USDT</li><li>以該會員身分登入會員前台，進入出金/提領申請功能</li><li>送出出金申請</li></ol></td><td>前台允許正常申請出金，申請成功送出<div class=assume>⚠ 假設：步驟中「以該會員身分登入前台並嘗試申請出金」需要會員前台的測試環境與登入方式；spec 未定義後台是否存在可直接驗證此門檻的入口，前台測試環境是否可用、以及人工提出是否適用同一道 &gt;10 USDT 門檻，需環境負責人 / PM 確認⚠ 假設：可提領餘額與帳戶餘額（主錢包）、提領所需有效投注額（流水錢包）、稽核倍數之間的精確換算公式，spec 全文未定義；本 TC 假設可透過人工存入/提出搭配後台實際讀數反覆調整至目標邊界值，但無法保證這是唯一或最有效率的方式，此換算機制需環境負責人 / PM 確認</div></td><td>high<br>high</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0058 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0058 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0058 --decision reject --by &lt;you&gt; --rationale "..."</div>

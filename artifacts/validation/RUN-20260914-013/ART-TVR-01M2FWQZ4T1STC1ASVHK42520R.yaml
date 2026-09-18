@@ -1,0 +1,95 @@
+artifact_id: ART-TVR-01M2FWQZ4T1STC1ASVHK42520R
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260914-013
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T12:02:20Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2FW99D2HD4DKNQSRAECMPBE
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2FW99D2HD4DKNQSRAECMPBE
+- entity_type: Artifact
+  id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2FW99D2HD4DKNQSRAECMPBE
+  validated_against:
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+  issues:
+  - testcase_id: TC-DRAFT-01M2FW99D08RW6Z1ZRH50YE4QD
+    issue_type: missing_traceability
+    severity: major
+    violated_requirement: REQ-CASHOUT-018
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.1'
+      location: §操作/核實（洗分）
+    evidence: requirement_ids 含 REQ-018 但 acceptance_criteria_ids 未列出任何 REQ-018 的 AC。
+    explanation: 掛 Requirement 卻無對應 AC 造成追溯斷鏈。
+    recommended_change: 移除 REQ-018 的掛載，該需求已由其他 TC 完整覆蓋。
+  - testcase_id: TC-DRAFT-01M2FW99D08RW6Z1ZRH50YE4QD
+    issue_type: unreasonable_edge_case
+    severity: major
+    violated_requirement: REQ-CASHOUT-021
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.1'
+      location: §操作/核實（洗分）
+    evidence: 把 REQ-018 的金額定義重新包裝成 REQ-021 的 boundary，牽強附會。
+    explanation: 核實流程本身沒有因金額大小改變行為，這不是 REQ-021 的真實邊界。
+    recommended_change: 改為針對核實流程本身的真實邊界情境。
+  - testcase_id: TC-DRAFT-01M2FW99D06D6M9ZD0SBPJPNPG
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-CASHOUT-022
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.1'
+      location: §操作/核實（出金＝核銷收據）
+    evidence: step 1 宣稱訂單編號需精確比對，但 spec 未定義此規則，且沒有步驟真的驗證錯誤輸入的情況。
+    explanation: 未經驗證的假設，且只是為了掛 boundary 標籤。
+    recommended_change: 拆出獨立 negative TC 測試錯誤/不存在的訂單編號查詢，本 TC 保留純 happy path。
+  - testcase_id: TC-DRAFT-01M2FW99D0Y39XDMDXZAHEJXQ5
+    issue_type: missing_negative_coverage
+    severity: major
+    violated_requirement: REQ-CASHOUT-011
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.1'
+      location: §篩選器
+    evidence: high risk 需求僅有 happy path 案例，缺查無結果的負向案例。
+    explanation: 訂單編號查詢是收據核銷第一道關卡，缺乏負向覆蓋。
+    recommended_change: 新增 TC 測試輸入不存在/格式錯誤的訂單編號時查詢結果為空。
+  advisories: []
+  coverage_summary:
+    requirements_total: 31
+    requirements_covered: 31
+    ac_total: 45
+    ac_covered: 45
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+history:
+- at: '2026-09-14T12:02:26Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260914-013

@@ -1,0 +1,82 @@
+artifact_id: ART-TCD-01M2JH8NYK0PDPDNANRTGE0ZXB
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-021
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T12:39:28Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-008
+- entity_type: TestCase
+  id: TC-MEMBER-012
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JH8NYJRMDN538BYP2V59ZY
+    title: 會員等級可由後台人員編輯，後台備注選填、操作人員自動帶入當前登入帳號
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-008
+    acceptance_criteria_ids:
+    - AC-MEMBER-012
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，進入一名會員的詳細資料頁
+    test_data: []
+    steps:
+    - n: 1
+      action: 點擊會員等級旁的「編輯」按鈕，確認右側滑出「會員等級編輯」面板
+    - n: 2
+      action: 面板中選擇一個與目前不同的新會員等級
+    - n: 3
+      action: 後台備注欄位（選填）留空，不填寫
+    - n: 4
+      action: 點擊儲存
+    expected_result: 會員等級成功更新為新選擇的等級；後台備注為選填欄位，留空不影響儲存成功；操作人員欄位自動帶入當前登入帳號，不需手動填寫
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 等級資訊
+      quote: 會員等級｜可透過「編輯」按鈕手動調整；點擊後右側滑出「會員等級編輯」面板，填寫以下欄位後點擊「儲存」：會員編號（唯讀）、會員等級（下拉選單）、後台備注（選填）、操作人員（自動帶入當前登入帳號，唯讀）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-012
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-038（已退役），其步驟多了「後台備注欄位選填，可留空」；核對spec §2.1.5發現編輯面板確實定義了「後台備注（選填）」欄位，Phase
+      2原版precondition/steps/expected_result完全沒提到這個欄位存在，屬廣度缺口（若後台備注其實有隱藏的驗證規則，原TC完全測不到）。本輪已在steps中加入該欄位（驗證選填、留空可儲存），expected_result同步補充說明
+history:
+- at: '2026-09-15T12:39:42Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-021

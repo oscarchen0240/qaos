@@ -1,0 +1,86 @@
+title: 開分金額為最小單位 1 與恰使餘額達到上限前一單位時，皆立即生效並正確累計
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-003
+acceptance_criteria_ids: []
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+test_data: []
+steps:
+- n: 1
+  action: 送出開分請求（req-keyin）金額為 1
+- n: 2
+  action: 送出開分請求（req-keyin）金額使全場館餘額合計恰為額度上限減 1
+expected_result: 兩筆皆立即生效、正確入帳，且分數與累計次數/金額皆準確，不因金額趨近邊界而有誤差
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §四種金流/開分 + §附錄-開分
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-CASHFLOW-004
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+created_at: '2026-09-13T22:50:49Z'
+updated_at: '2026-09-13T23:16:37Z'
+history:
+- at: '2026-09-13T22:50:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0018
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0018

@@ -1,0 +1,83 @@
+title: 交易發生在日結時間當下時，計入當日營業日
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-007
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0072
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一個日結時間設定為 06:00 UTC+0 的既有場館
+- 確認該場館下有一筆交易或場次記錄的時間點恰為 2026-09-05 06:00:00 UTC+0（即日結時間當下）；若無現成案例，可改選其他已知恰落在對應場館日結時間點的既有交易記錄
+test_data: []
+steps:
+- n: 1
+  action: 進入場館日結報表，統計週期選『按日』，統計維度選『依場館彙總』或『依機台明細』，結算日期設為涵蓋 2026-09-04 與 2026-09-05 的範圍，查詢
+- n: 2
+  action: 檢視 2026-09-05 06:00 UTC+0 這筆交易被計入哪一個『結算期間』（營業日）列
+expected_result: 該筆 06:00 UTC+0 的交易被計入營業日 2026-09-05，而非 2026-09-04——日結時間點本身歸屬新的營業日
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §列表欄位/結算期間 + §業務規則/日結時間
+  quote: 按日顯示營業日（依場館日結時間切分）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-070
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+created_at: '2026-09-17T20:52:29Z'
+updated_at: '2026-09-17T20:53:10Z'
+history:
+- at: '2026-09-17T20:52:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RHAA71X6GXWT6DMERC3G60
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:52:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-007
+- at: '2026-09-17T20:53:10Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0123
+  run_id: RUN-20260918-007
+  note: rejected

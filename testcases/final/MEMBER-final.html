@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>MEMBER 測試案例集</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #fbfbf9;
+  --text: #1c1f26;
+  --text-muted: #626a76;
+  --text-faint: #8b93a0;
+  --border: #e4e6e9;
+  --border-strong: #d3d7dc;
+  --accent: #2f4bd6;
+  --accent-ink: #1f2f8f;
+  --accent-soft: #eaeeff;
+  --grounded: #1c7a52;
+  --grounded-soft: #e4f4ec;
+  --exploratory: #a3650f;
+  --exploratory-soft: #fbeed9;
+  --risk-high: #b23a2e;
+  --risk-high-soft: #fbe8e5;
+  --risk-medium: #92660c;
+  --risk-medium-soft: #f7ecd6;
+  --risk-low: #4a5568;
+  --risk-low-soft: #eceef1;
+  --font-ui: "IBM Plex Sans", "Noto Sans TC", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b;
+    --surface: #1b1e25;
+    --surface-2: #20232b;
+    --text: #e7e9ee;
+    --text-muted: #a0a7b4;
+    --text-faint: #6f7684;
+    --border: #2b2f38;
+    --border-strong: #363b46;
+    --accent: #7d90ff;
+    --accent-ink: #c2caff;
+    --accent-soft: #232a4a;
+    --grounded: #5fcf9c;
+    --grounded-soft: #1a3329;
+    --exploratory: #e0ab5c;
+    --exploratory-soft: #3a2e18;
+    --risk-high: #e7897c;
+    --risk-high-soft: #3a201d;
+    --risk-medium: #e0b262;
+    --risk-medium-soft: #362a15;
+    --risk-low: #a7afbc;
+    --risk-low-soft: #262a32;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b;
+  --surface: #1b1e25;
+  --surface-2: #20232b;
+  --text: #e7e9ee;
+  --text-muted: #a0a7b4;
+  --text-faint: #6f7684;
+  --border: #2b2f38;
+  --border-strong: #363b46;
+  --accent: #7d90ff;
+  --accent-ink: #c2caff;
+  --accent-soft: #232a4a;
+  --grounded: #5fcf9c;
+  --grounded-soft: #1a3329;
+  --exploratory: #e0ab5c;
+  --exploratory-soft: #3a2e18;
+  --risk-high: #e7897c;
+  --risk-high-soft: #3a201d;
+  --risk-medium: #e0b262;
+  --risk-medium-soft: #362a15;
+  --risk-low: #a7afbc;
+  --risk-low-soft: #262a32;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6;
+}
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--border); padding: 24px 18px; background: var(--surface-2);
+}
+.brand { margin-bottom: 4px; }
+.brand-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+.brand h1 { font-size: 19px; margin: 4px 0 2px; font-weight: 700; text-wrap: balance; }
+.brand-sub { color: var(--text-muted); font-size: 12.5px; margin-bottom: 20px; }
+.stat-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--text-muted); }
+.search-box {
+  width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text); font-family: var(--font-ui); font-size: 13px; margin-bottom: 10px;
+}
+.search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.filter-chips { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.chip {
+  font-size: 11.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-muted); cursor: pointer; font-family: var(--font-ui);
+}
+.chip.active[data-chip="grounded"] { background: var(--grounded-soft); color: var(--grounded); border-color: var(--grounded); }
+.chip.active[data-chip="exploratory"] { background: var(--exploratory-soft); color: var(--exploratory); border-color: var(--exploratory); }
+.chip.active[data-chip="all"] { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 8px; }
+.nav-link {
+  display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 7px; color: var(--text);
+  text-decoration: none; font-size: 12.5px; line-height: 1.4;
+}
+.nav-link:hover { background: var(--surface); }
+.nav-num { font-family: var(--font-mono); color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
+.main { padding: 36px 44px 80px; max-width: 980px; }
+.page-head { margin-bottom: 28px; }
+.page-head h1 { font-size: 26px; margin: 0 0 8px; text-wrap: balance; }
+.page-head p { color: var(--text-muted); max-width: 62ch; margin: 0 0 4px; }
+.integration-note {
+  margin-top: 16px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft);
+  border: 1px solid var(--accent); color: var(--accent-ink); font-size: 12.5px; line-height: 1.6;
+}
+.integration-note b { color: var(--text); }
+.req-group { margin-bottom: 40px; scroll-margin-top: 20px; }
+.req-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.req-id { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.req-head h2 { font-size: 15.5px; margin: 0; font-weight: 600; text-wrap: balance; }
+.tc-grid { display: flex; flex-direction: column; gap: 14px; }
+.tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.tc-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+.tc-ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+.p3-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.tc-title { font-size: 15.5px; margin: 0 0 10px; font-weight: 600; text-wrap: balance; }
+.tc-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.pill-neutral { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.pill-grounded { background: var(--grounded-soft); color: var(--grounded); }
+.pill-exploratory { background: var(--exploratory-soft); color: var(--exploratory); }
+.pill-risk-high { background: var(--risk-high-soft); color: var(--risk-high); }
+.pill-risk-medium { background: var(--risk-medium-soft); color: var(--risk-medium); }
+.pill-risk-low { background: var(--risk-low-soft); color: var(--risk-low); }
+.tc-body { display: flex; flex-direction: column; gap: 12px; }
+.tc-section { display: flex; flex-direction: column; gap: 4px; }
+.tc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+.tc-precon { margin: 0; padding-left: 18px; color: var(--text); }
+.tc-precon li { margin-bottom: 4px; }
+.tc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tc-steps li { display: flex; gap: 8px; }
+.step-n {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px; background: var(--surface-2);
+  color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; display: flex;
+  align-items: center; justify-content: center; font-weight: 600;
+}
+.tc-expected { margin: 0; color: var(--text); background: var(--surface-2); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--grounded); }
+.assumptions { background: var(--exploratory-soft); border-radius: 8px; padding: 10px 12px; border-left: 3px solid var(--exploratory); }
+.assumptions-label { font-size: 11px; font-weight: 700; color: var(--exploratory); margin-bottom: 4px; }
+.assumptions ul { margin: 0; padding-left: 18px; color: var(--text); }
+.assumptions li { margin-bottom: 4px; }
+.tc-spec { font-size: 12px; color: var(--text-faint); padding-top: 4px; border-top: 1px dashed var(--border); }
+.spec-loc { font-family: var(--font-mono); }
+.spec-quote { margin-left: 8px; font-style: italic; }
+[hidden] { display: none !important; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .main { padding: 24px 18px 60px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-eyebrow">QAOS · SPEC-MEMBER-001</div>
+      <h1>MEMBER 測試案例集</h1>
+    </div>
+    <div class="brand-sub">會員與加盟商後台 · 最終整合版</div>
+
+    <div class="stat-strip">
+      <div class="stat"><b>26</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>21</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>5</b><span>exploratory 待確認</span></div>
+      <div class="stat"><b>14</b><span>Phase 3 整合修訂</span></div>
+    </div>
+
+    <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
+    <div class="filter-chips">
+      <button class="chip active" data-chip="all">全部</button>
+      <button class="chip" data-chip="grounded">grounded</button>
+      <button class="chip" data-chip="exploratory">exploratory</button>
+    </div>
+
+    <div class="nav-title">依需求跳轉</div>
+    <nav><a href="#REQ-MEMBER-001" class="nav-link"><span class="nav-num">01</span>OTP 報表可查詢特定年月的 OTP 使用次數</a><a href="#REQ-MEMBER-002" class="nav-link"><span class="nav-num">02</span>篩選器 KYC 狀態須搭配 KYC 階段使用，不可單獨篩選</a><a href="#REQ-MEMBER-003" class="nav-link"><span class="nav-num">03</span>會員列表 KYC 狀態以五個圖示的顏色顯示各驗證階段狀態</a><a href="#REQ-MEMBER-004" class="nav-link"><span class="nav-num">04</span>側邊面板邀請鏈：非透過邀請鏈註冊的會員，上層顯示為站長</a><a href="#REQ-MEMBER-005" class="nav-link"><span class="nav-num">05</span>可提領餘額須大於 10 USDT 才可申請出金</a><a href="#REQ-MEMBER-006" class="nav-link"><span class="nav-num">06</span>會員詳細頁 KYC 審核：駁回須選原因，未開放階段不可操作</a><a href="#REQ-MEMBER-007" class="nav-link"><span class="nav-num">07</span>會員啟用狀態切換為停用後，該會員無法登入或進入平台</a><a href="#REQ-MEMBER-008" class="nav-link"><span class="nav-num">08</span>會員等級可由後台人員手動編輯，含後台備註與自動帶入的操作人員</a><a href="#REQ-MEMBER-009" class="nav-link"><span class="nav-num">09</span>人工存入/提出可一次對多筆會員編號批次執行</a><a href="#REQ-MEMBER-010" class="nav-link"><span class="nav-num">10</span>人工存入/提出的前台備注與後台備注皆為必填</a><a href="#REQ-MEMBER-011" class="nav-link"><span class="nav-num">11</span>人工存入/提出的稽核倍數會影響會員後續的提領所需有效投注額</a><a href="#REQ-MEMBER-012" class="nav-link"><span class="nav-num">12</span>加盟列表狀態 Toggle 可切換會員的加盟商啟用/停用身分</a><a href="#REQ-MEMBER-013" class="nav-link"><span class="nav-num">13</span>一般加盟商（全民加盟）以三種 Badge 樣式顯示 Partner 等級達成狀態</a><a href="#REQ-MEMBER-014" class="nav-link"><span class="nav-num">14</span>客製化加盟商（S Partner）可透過 Inline 編輯直接修改佣金相關欄位</a><a href="#REQ-MEMBER-015" class="nav-link"><span class="nav-num">15</span>從會員頁點擊最後登入 IP 可跳轉至登入網域查詢頁並自動帶入該 IP 篩選</a><a href="#REQ-MEMBER-016" class="nav-link"><span class="nav-num">16</span>推薦註冊金設定新增時會員編號為必填，不可為空</a><a href="#REQ-MEMBER-017" class="nav-link"><span class="nav-num">17</span>推薦註冊金設定刪除為不可復原操作，須二次確認</a><a href="#REQ-MEMBER-018" class="nav-link"><span class="nav-num">18</span>暱稱禁用詞設定分四個類別分頁，各自獨立管理</a></nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <h1>MEMBER 功能區 · 最終測試案例</h1>
+      <p>本頁彙整 SPEC-MEMBER-001 底下所有 ACTIVE 狀態的測試案例，共 26 條，涵蓋 18 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <div class="integration-note">
+        <b>Phase 2 × Phase 3 整合說明：</b> 其中 14 條（TC-MEMBER-004、TC-MEMBER-005、TC-MEMBER-007、TC-MEMBER-008、TC-MEMBER-012、TC-MEMBER-014、TC-MEMBER-015、TC-MEMBER-016、TC-MEMBER-018、TC-MEMBER-019、TC-MEMBER-020、TC-MEMBER-021、TC-MEMBER-022、TC-MEMBER-025）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則修訂的整合版本——採用兩邊之中更深入或更完整的處理方式，而非整批採用單一來源。
+      </div>
+    </div>
+
+    
+    <section class="req-group" id="REQ-MEMBER-001">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-001</span>
+        <h2>OTP 報表可查詢特定年月的 OTP 使用次數</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-001 otp 報表可查詢指定年月的使用次數 req-member-001 ac-member-001 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-001</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">OTP 報表可查詢指定年月的使用次數</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-001</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入會員列表頁面</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊頁面頂部「OTP報表」按鈕，開啟彈窗</span></li><li><span class='step-n'>2</span><span>輸入指定年份與月份</span></li><li><span class='step-n'>3</span><span>點擊「搜尋」</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示該月份的 OTP 使用次數查詢結果</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.1 頁面頂部功能</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-002">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-002</span>
+        <h2>篩選器 KYC 狀態須搭配 KYC 階段使用，不可單獨篩選</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-002 未選 kyc 階段時，kyc 狀態欄位不可單獨篩選 req-member-002 ac-member-002 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-002</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">未選 KYC 階段時，KYC 狀態欄位不可單獨篩選</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-002</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入會員列表頁面，未選擇 KYC 階段篩選條件</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>嘗試直接操作 KYC 狀態篩選欄位</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">KYC 狀態欄位不可篩選或無作用，須先選定 KYC 階段</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.2 篩選器</span>
+      <span class='spec-quote'>「KYC 階段：需先選擇 KYC 階段，才可篩選 KYC 狀態」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-003 已選 kyc 階段後，搭配 kyc 狀態可正確篩選 req-member-002 ac-member-003 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-003</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">已選 KYC 階段後，搭配 KYC 狀態可正確篩選</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-003</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入會員列表頁面</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>篩選器選擇 KYC 階段「身分證明文件驗證」</span></li><li><span class='step-n'>2</span><span>KYC 狀態選「審核中」</span></li><li><span class='step-n'>3</span><span>點擊搜尋</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">正確篩選出該階段狀態為審核中的所有會員</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.2 篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-003">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-003</span>
+        <h2>會員列表 KYC 狀態以五個圖示的顏色顯示各驗證階段狀態</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-004 會員列表 kyc 狀態五圖示依各階段實際狀態正確顯示顏色與 tooltip req-member-003 ac-member-004 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-004</span>
+      <span class="tc-ver">v3</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">會員列表 KYC 狀態五圖示依各階段實際狀態正確顯示顏色與 Tooltip</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-004</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員的五個 KYC 階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明）分別處於不同狀態，至少涵蓋已核准/審核中/待補件/未申請其中三種以上。各狀態佈置方式（依spec §2.1.5會員詳細資料頁「KYC 狀態」區塊定義）：「已核准」＝後台對該階段執行審核結果「通過」；「待補件」＝後台執行「駁回」（並選取駁回原因）；「未申請」＝該階段尚未經會員端送出、保持未送審；「審核中」＝會員已透過會員端（前台/APP）送出該階段申請、後台尚未執行通過或駁回——這是會員端動作觸發的狀態，後台本身沒有可直接『執行』出審核中的操作，佈置時需請一名會員實際透過前台送出申請，或從測試環境既有資料中挑選已處於審核中的既有帳號</li><li>「已停用」狀態的佈置方式（已由 Oscar 2026-09-15 確認）：於後台「系統管理 &gt; KYC設定」停用該驗證項目，該階段即對所有會員生效；停用後，會員列表 KYC 狀態欄該階段實際顯示為「--」，而非 spec §2.1.3 表格文字描述的深灰色圖示＋「已停用」Tooltip——spec文字與實際產品顯示不完全一致，本TC以實際產品行為（顯示「--」）為準，spec的用字落差建議另案確認/更新spec</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於會員列表檢視該會員的 KYC 狀態欄五個圖示顏色</span></li><li><span class='step-n'>2</span><span>滑鼠移至任一圖示</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">四個仍開放審核的階段圖示顏色分別正確對應各自階段的實際狀態（綠=已核准/橘=審核中/紅=待補件/淺灰=未申請），滑鼠移至圖示顯示 Tooltip 說明階段名稱與狀態；若涵蓋已停用的階段，該階段於會員列表 KYC 狀態欄實際顯示為「--」（已由 Oscar 2026-09-15 確認之實際產品行為，非 spec §2.1.3 表格文字描述的深灰色圖示＋『已停用』Tooltip——兩者用字有落差，以實際產品行為為準）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.3 KYC驗證階段圖示說明</span>
+      <span class='spec-quote'>「🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-004">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-004</span>
+        <h2>側邊面板邀請鏈：非透過邀請鏈註冊的會員，上層顯示為站長</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-005 加盟商會員透過邀請鏈註冊時，側邊面板正確顯示完整上下層邀請鏈 req-member-004 ac-member-005 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-005</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">加盟商會員透過邀請鏈註冊時，側邊面板正確顯示完整上下層邀請鏈</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-005</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入「會員與加盟商 &gt; 會員列表」頁面</li><li>取一名既有會員 X，須同時符合兩個各自獨立的條件：(a) X 目前已具加盟商身分——加盟商身分的取得見 REQ-MEMBER-013（達成升等門檻並透過前台申請，或被指定為客製化加盟商），與註冊方式無關；(b) X 當初是透過『另一名既有會員』的前台邀請連結完成註冊，成為該會員的下線——「完成註冊」這個動作本身只會建立 X 與邀請人之間的上下層關係，不會讓 X 自動取得加盟商身分；自行從環境中選定同時符合這兩個獨立條件的既有帳號，或分兩步驟分別達成：先讓 X 透過邀請連結註冊成為下線，再另外讓 X 依 REQ-MEMBER-013 的途徑取得加盟商身分</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於會員列表點擊該會員 X 的會員編號，開啟右側簡易資料面板</span></li><li><span class='step-n'>2</span><span>檢視面板頂部的邀請鏈顯示區塊</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">面板頂部顯示完整的上下層關係：上層會員編號 → 當前會員編號 → 會員N人（N為其下層會員數），且上層顯示的是實際邀請該會員 X 註冊的會員編號</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.4 側邊簡易資料面板</span>
+      <span class='spec-quote'>「若該會員為加盟商，則顯示其成為加盟商的時間與邀請鏈。邀請鏈顯示完整的上下層關係（如：上層會員編號 → 當前會員編號 → 會員 N 人）」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-006 非透過邀請鏈註冊的加盟商，側邊面板上層顯示為站長 req-member-004 ac-member-006 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-006</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">非透過邀請鏈註冊的加盟商，側邊面板上層顯示為站長</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-006</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名加盟商會員不是透過邀請鏈註冊——可由後台直接建立會員帳號並手動設為加盟商身分，或使用測試環境既有的此類測試帳號</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>檢視其側邊簡易資料面板的邀請鏈顯示區塊</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">上層顯示為「站長」，不是空白或錯誤資料</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.4 側邊簡易資料面板</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-005">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-005</span>
+        <h2>可提領餘額須大於 10 USDT 才可申請出金</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-007 提領申請金額為 9.99 usdt 時不可出金（邊界值，剛好不達門檻） req-member-005 ac-member-007 high high" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-007</span>
+      <span class="tc-ver">v5</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">提領申請金額為 9.99 USDT 時不可出金（邊界值，剛好不達門檻）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">integration</span>
+      <span class="pill pill-neutral">AC-MEMBER-007</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能。出金門檻判斷對象是「提領申請金額」本身（會員在前台送出申請時實際填寫的金額）是否大於等於 10 USDT，與可提領餘額的精確數值、出金手續費計算皆無關——只要可提領餘額足以支應本次申請金額即可（已由 Oscar 2026-09-16 確認；spec §2.1.4原文以「可提領餘額」為主詞、且用「大於」(不含10)，與此處確認的實際門檻對象與方向不同，屬spec原文與實際產品行為的落差，見assumptions，建議另案更新spec原文）。佈置方式：一名會員的可提領餘額至少有 15 USDT 以上（確保餘額本身不會成為限制因素；不足可用人工存入補足），無需精確調整可提領餘額至任何特定數值</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>確認該會員可提領餘額至少 15 USDT 以上，足以支應本次申請金額</span></li><li><span class='step-n'>2</span><span>以該會員身分登入會員前台，進入出金/提領申請功能</span></li><li><span class='step-n'>3</span><span>提領申請金額輸入 9.99 USDT，送出提領申請</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">不可出金——提領申請金額本身未達 10 USDT 門檻，申請入口不可用，或送出後被系統拒絕而未成功送出</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>出金門檻的判斷對象（提領申請金額本身，而非可提領餘額欄位）與方向（大於等於，含10）皆由 Oscar 於 2026-09-16 口頭確認，spec §2.1.4原文並未明確定義門檻判斷對象是提領申請金額還是可提領餘額本身，也寫成「大於」而非「大於等於」；此為spec原文尚未更新反映實際產品行為的已知落差</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.4 帳戶資訊</span>
+      <span class='spec-quote'>「可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-008 提領申請金額為 10.00 usdt 時可正常出金（邊界值，剛好達到門檻） req-member-005 ac-member-008 high high" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-008</span>
+      <span class="tc-ver">v5</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">提領申請金額為 10.00 USDT 時可正常出金（邊界值，剛好達到門檻）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">integration</span>
+      <span class="pill pill-neutral">AC-MEMBER-008</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>後台帳務資訊「可提領餘額」欄位只是唯讀顯示，「申請出金」是會員在前台自行操作的功能。出金門檻判斷對象是「提領申請金額」本身（會員在前台送出申請時實際填寫的金額）是否大於等於 10 USDT，與可提領餘額的精確數值、出金手續費計算皆無關——只要可提領餘額足以支應本次申請金額即可（已由 Oscar 2026-09-16 確認；spec §2.1.4原文以「可提領餘額」為主詞、且用「大於」(不含10)，與此處確認的實際門檻對象與方向不同，屬spec原文與實際產品行為的落差，見assumptions，建議另案更新spec原文）。佈置方式：一名會員的可提領餘額至少有 15 USDT 以上（確保餘額本身不會成為限制因素；不足可用人工存入補足），無需精確調整可提領餘額至任何特定數值</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>確認該會員可提領餘額至少 15 USDT 以上，足以支應本次申請金額</span></li><li><span class='step-n'>2</span><span>以該會員身分登入會員前台，進入出金/提領申請功能</span></li><li><span class='step-n'>3</span><span>提領申請金額輸入 10.00 USDT，送出提領申請</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">可正常出金，申請成功送出——提領申請金額本身剛好達到 10 USDT 門檻（含）</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>出金門檻的判斷對象（提領申請金額本身，而非可提領餘額欄位）與方向（大於等於，含10）皆由 Oscar 於 2026-09-16 口頭確認，spec §2.1.4原文並未明確定義門檻判斷對象是提領申請金額還是可提領餘額本身，也寫成「大於」而非「大於等於」；此為spec原文尚未更新反映實際產品行為的已知落差</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.4 帳戶資訊</span>
+      <span class='spec-quote'>「可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-006">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-006</span>
+        <h2>會員詳細頁 KYC 審核：駁回須選原因，未開放階段不可操作</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-009 kyc 審核駁回未選駁回原因時，系統阻擋儲存 req-member-006 ac-member-009 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-009</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">KYC 審核駁回未選駁回原因時，系統阻擋儲存</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-009</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名會員的詳細資料頁，該會員有一個已開放審核的 KYC 階段</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>對該階段選擇審核結果「駁回」，不選取駁回原因</span></li><li><span class='step-n'>2</span><span>點擊儲存</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統阻擋，要求先選取駁回原因</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 KYC狀態</span>
+      <span class='spec-quote'>「選擇駁回時，需從下拉選單選取駁回原因」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-010 未開放審核的 kyc 階段（顯示--）不可執行審核操作 req-member-006 ac-member-010 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-010</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">未開放審核的 KYC 階段（顯示--）不可執行審核操作</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-010</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員有一個 KYC 階段顯示為「--」（未開放審核）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>嘗試對該階段執行審核操作</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該階段不可操作，找不到可用的審核入口</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 KYC狀態</span>
+      <span class='spec-quote'>「未開放審核的階段（顯示--）不可操作」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-007">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-007</span>
+        <h2>會員啟用狀態切換為停用後，該會員無法登入或進入平台</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-011 會員帳號切換為停用後，該會員無法登入前台 req-member-007 ac-member-011 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-011</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">會員帳號切換為停用後，該會員無法登入前台</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-011</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，一名會員目前帳號狀態為啟用</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於會員詳細頁點擊鉛筆圖示，將該會員帳號狀態切換為停用</span></li><li><span class='step-n'>2</span><span>該會員嘗試登入前台</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該會員無法登入，系統拒絕</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 會員啟用狀態</span>
+      <span class='spec-quote'>「處於停用狀態的會員將無法登入或進入平台」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-008">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-008</span>
+        <h2>會員等級可由後台人員手動編輯，含後台備註與自動帶入的操作人員</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-012 會員等級可由後台人員編輯，後台備注選填、操作人員自動帶入當前登入帳號 req-member-008 ac-member-012 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-012</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">會員等級可由後台人員編輯，後台備注選填、操作人員自動帶入當前登入帳號</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-012</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名會員的詳細資料頁</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊會員等級旁的「編輯」按鈕，確認右側滑出「會員等級編輯」面板</span></li><li><span class='step-n'>2</span><span>面板中選擇一個與目前不同的新會員等級</span></li><li><span class='step-n'>3</span><span>後台備注欄位（選填）留空，不填寫</span></li><li><span class='step-n'>4</span><span>點擊儲存</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">會員等級成功更新為新選擇的等級；後台備注為選填欄位，留空不影響儲存成功；操作人員欄位自動帶入當前登入帳號，不需手動填寫</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 等級資訊</span>
+      <span class='spec-quote'>「會員等級｜可透過「編輯」按鈕手動調整；點擊後右側滑出「會員等級編輯」面板，填寫以下欄位後點擊「儲存」：會員編號（唯讀）、會員等級（下拉選單）、後台備注（選填）、操作人員（自動帶入當前登入帳號，唯讀）」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-009">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-009</span>
+        <h2>人工存入/提出可一次對多筆會員編號批次執行</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-013 人工存入可用「,」分隔一次對多筆會員編號批次執行 req-member-009 ac-member-013 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-013</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">人工存入可用「,」分隔一次對多筆會員編號批次執行</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-013</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名會員的詳細資料頁，開啟人工存入面板</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>會員編號欄預設帶入當前會員編號，額外以「,」分隔輸入另一個會員編號</span></li><li><span class='step-n'>2</span><span>填寫金額等其他欄位後點擊儲存</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統對輸入的所有會員編號各自執行一筆相同金額的人工存入操作</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 帳務資訊</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-010">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-010</span>
+        <h2>人工存入/提出的前台備注與後台備注皆為必填</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-014 人工存入前台備注與後台備注兩個必填欄位的組合驗證：任一或兩者留空即阻擋，皆填寫才允許送出 req-member-010 ac-member-014 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-014</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">人工存入前台備注與後台備注兩個必填欄位的組合驗證：任一或兩者留空即阻擋，皆填寫才允許送出</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-014</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名既有會員的詳細資料頁，開啟人工存入面板</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>情境一：金額等其他欄位填妥，前台備注留空、後台備注填寫，點擊儲存，觀察結果</span></li><li><span class='step-n'>2</span><span>情境二：金額等其他欄位填妥，前台備注填寫、後台備注留空，點擊儲存，觀察結果</span></li><li><span class='step-n'>3</span><span>情境三：金額等其他欄位填妥，前台備注與後台備注皆留空，點擊儲存，觀察結果</span></li><li><span class='step-n'>4</span><span>情境四：前台備注與後台備注皆填寫，點擊儲存，觀察結果</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">情境一、二、三皆被系統阻擋，不允許在缺少任一（或兩個）必填備注的情況下送出；情境四（兩者皆填寫）成功送出</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 帳務資訊</span>
+      <span class='spec-quote'>「前台備注｜必填；填寫後顯示於會員端，作為該筆金額異動的說明 ｜ 後台備注｜必填；僅後台人員可見，作為該筆操作紀錄的內部說明」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-011">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-011</span>
+        <h2>人工存入/提出的稽核倍數會影響會員後續的提領所需有效投注額</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-015 稽核倍數大於1時，提領所需有效投注額依倍數增加而非單純加回存入金額（具體數值驗證） req-member-011 ac-member-015 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-015</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">稽核倍數大於1時，提領所需有效投注額依倍數增加而非單純加回存入金額（具體數值驗證）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-015</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名既有會員的詳細資料頁</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄目前帳務資訊區塊「提領所需有效投注額（流水錢包）」數值（設為 X）</span></li><li><span class='step-n'>2</span><span>點擊「人工存入」，金額填寫 100 USDT、稽核填寫 3，填妥前後台備注後儲存</span></li><li><span class='step-n'>3</span><span>重新整理該會員詳細資料頁，檢視帳務資訊區塊的「提領所需有效投注額」</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">提領所需有效投注額變為 X + (100 × 3) = X + 300，而非單純的 X + 100（存入金額本身），確認稽核倍數確實套用於流水計算</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 帳務資訊</span>
+      <span class='spec-quote'>「稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-016 稽核欄位輸入 0 為合法值；輸入負數時前端阻擋且後端回400 common_non_negative；留空時前端顯示必填提示 req-member-011 ac-member-015 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-016</span>
+      <span class="tc-ver">v4</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">稽核欄位輸入 0 為合法值；輸入負數時前端阻擋且後端回400 COMMON_NON_NEGATIVE；留空時前端顯示必填提示</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-015</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，開啟一名會員的人工存入面板</li><li>具備使用瀏覽器開發者工具或 API 測試工具（如 Postman）直接呼叫後台 API 的環境與權限，用於步驟3繞過前端驗證後端行為</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>稽核欄位輸入 0，其餘欄位填妥後點擊儲存</span></li><li><span class='step-n'>2</span><span>稽核欄位輸入一個負數（例如 -1），其餘欄位填妥後點擊儲存，觀察前端顯示</span></li><li><span class='step-n'>3</span><span>另外使用瀏覽器開發者工具或 API 測試工具（如 Postman），帶入登入後的有效憑證，繞過前端頁面直接呼叫人工存入/提出 API，request body 中稽核帶入一個負數，確認回應的 HTTP 狀態碼與錯誤代碼</span></li><li><span class='step-n'>4</span><span>稽核欄位留空，其餘欄位填妥後點擊儲存，確認前端顯示的提示訊息</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">步驟1：系統接受輸入 0，正常完成人工存入/提出（稽核=0已由 Oscar 2026-09-15 實測確認為合法輸入）；步驟2：前端顯示驗證失敗訊息並阻擋送出；步驟3：後端回應 HTTP 400、錯誤代碼 COMMON_NON_NEGATIVE（已由 Oscar 2026-09-15 確認，此步驟不依賴前端是否阻擋，主動繞過前端直接驗證後端行為）；步驟4：前端顯示 toast 提示「此欄必填」，阻擋送出（已由 Oscar 2026-09-15 確認）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.1.5 帳務資訊</span>
+      <span class='spec-quote'>「稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-012">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-012</span>
+        <h2>加盟列表狀態 Toggle 可切換會員的加盟商啟用/停用身分</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-017 加盟列表狀態 toggle 可切換會員加盟商啟用/停用身分 req-member-012 ac-member-016 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-017</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">加盟列表狀態 Toggle 可切換會員加盟商啟用/停用身分</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-016</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員目前是啟用中的加盟商</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於加盟列表點擊其狀態 Toggle</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">該會員的加盟商狀態切換為停用，篩選器選停用時可查到該筆</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.2 加盟列表</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-013">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-013</span>
+        <h2>一般加盟商（全民加盟）以三種 Badge 樣式顯示 Partner 等級達成狀態</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-018 已達成升等門檻且已申請的會員，一般加盟商 badge 顯示白底「已申請」 req-member-013 ac-member-017 medium medium" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-018</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">已達成升等門檻且已申請的會員，一般加盟商 Badge 顯示白底「已申請」</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-017</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員已達成 Partner 升等門檻，且已實際透過前台完成加盟商申請——「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成狀態，改為從環境既有資料中挑選出已呈現「已申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於加盟列表既有資料中，找出一名已呈現「已申請」樣式的既有會員</span></li><li><span class='step-n'>2</span><span>於後台確認該帳號的升等門檻達成狀態與申請紀錄，作為交叉核對</span></li><li><span class='step-n'>3</span><span>於加盟列表檢視該會員的一般加盟商 Badge</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示白底「已申請」樣式</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成狀態，改為從環境既有資料中挑選出已呈現「已申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.2 加盟等級</span>
+      <span class='spec-quote'>「（1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-019 已達成升等門檻但未申請的會員，一般加盟商 badge 顯示深灰底「達成未申請」 req-member-013 ac-member-018 medium medium" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-019</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">已達成升等門檻但未申請的會員，一般加盟商 Badge 顯示深灰底「達成未申請」</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-018</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員已達成升等門檻，但尚未透過前台申請（未執行申請操作）——「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成未申請狀態，改為從環境既有資料中挑選出已呈現「達成未申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於加盟列表既有資料中，找出一名已呈現「達成未申請」樣式的既有會員</span></li><li><span class='step-n'>2</span><span>於後台確認該帳號的升等門檻達成狀態、且確認無申請紀錄，作為交叉核對</span></li><li><span class='step-n'>3</span><span>於加盟列表檢視該會員的一般加盟商 Badge</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示深灰底「達成未申請」樣式</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造達成未申請狀態，改為從環境既有資料中挑選出已呈現「達成未申請」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.2 加盟等級</span>
+      <span class='spec-quote'>「（1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-020 尚未達成升等門檻的會員，一般加盟商 badge 顯示黑底「未達成」 req-member-013 ac-member-019 medium medium" data-class="exploratory">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-020</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">尚未達成升等門檻的會員，一般加盟商 Badge 顯示黑底「未達成」</h3>
+    <div class="tc-pills">
+      <span class='pill pill-exploratory'>exploratory · 含待確認假設</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-019</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>一名會員尚未達成升等門檻（挑選一般新註冊、各項可觀察指標皆為0/無記錄的既有會員）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於後台確認該帳號為一般新註冊、各項可觀察指標（業績、推薦人數、儲值等）皆為0/無記錄的既有會員</span></li><li><span class='step-n'>2</span><span>於加盟列表檢視該會員的一般加盟商 Badge</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">顯示黑底「未達成」樣式</p>
+    </div>
+    <div class='assumptions'><div class='assumptions-label'>⚠ 假設 / 待確認</div><ul><li>「升等門檻」的具體達成算法（依據哪些指標、門檻數值為何）spec §2.2.2全文未定義；本TC不透過人工調整指標去製造未達成狀態，改為從環境既有資料中挑選出已呈現「未達成」樣式的既有會員，若環境中找不到符合條件的既有帳號，如何人工佈置此狀態的測試資料需環境負責人/PM確認；「業績/推薦人數等指標」是否確實為升等門檻演算法的必要或充分條件，本身同樣未經spec證實，故不主張此case風險比TC-018/019低，僅以「新註冊、各項可觀察指標皆為0」作為挑選依據以降低（而非消除）不確定性</li></ul></div>
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.2 加盟等級</span>
+      <span class='spec-quote'>「（1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-014">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-014</span>
+        <h2>客製化加盟商（S Partner）可透過 Inline 編輯直接修改佣金相關欄位</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-021 客製化加盟商 inline 編輯修改欄位數值後點擊確認，成功儲存且重新整理後仍維持新值 req-member-014 ac-member-020 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-021</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">客製化加盟商 Inline 編輯修改欄位數值後點擊確認，成功儲存且重新整理後仍維持新值</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-020</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊「超級加盟商」按鈕，確認該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核欄位進入 Inline 編輯模式</span></li><li><span class='step-n'>2</span><span>修改佣金比例%與行政費為新數值</span></li><li><span class='step-n'>3</span><span>點擊列尾 ✓ 確認</span></li><li><span class='step-n'>4</span><span>重新整理列表，檢視該列數值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">數值成功更新並儲存為修改後的新值；重新整理列表後該列仍顯示新值（確認資料已持久化存入後端，非僅前端暫存狀態）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.3 客製化加盟商設定</span>
+      <span class='spec-quote'>「點擊列尾的 ✓ 確認儲存；或點擊 ✕ 取消並還原原始值」</span>
+    </div>
+  </div>
+</article>
+
+<article class="tc-card" data-search="tc-member-022 客製化加盟商 inline 編輯修改數值後點擊取消，還原為原始值且不儲存 req-member-014 ac-member-021 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-022</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">客製化加盟商 Inline 編輯修改數值後點擊取消，還原為原始值且不儲存</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-021</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入加盟列表，取一名已設定客製化加盟商（S Partner）身分的會員</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>記錄該列目前的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核原始數值</span></li><li><span class='step-n'>2</span><span>點擊「超級加盟商」按鈕進入 Inline 編輯模式，將上述欄位修改為與原始值不同的新數值</span></li><li><span class='step-n'>3</span><span>點擊列尾 ✕ 取消</span></li><li><span class='step-n'>4</span><span>檢視該列數值；重新整理列表，再次檢視該列數值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">點擊取消後立即還原為修改前的原始值，先前輸入的變更未被儲存；重新整理列表後仍維持原始值（畫面顯示狀態與後端實際儲存狀態一致，取消操作未造成資料被覆寫）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.2.3 客製化加盟商設定</span>
+      <span class='spec-quote'>「點擊列尾的 ✓ 確認儲存；或點擊 ✕ 取消並還原原始值」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-015">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-015</span>
+        <h2>從會員頁點擊最後登入 IP 可跳轉至登入網域查詢頁並自動帶入該 IP 篩選</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-023 點擊最後登入ip跳轉至登入網域查詢頁並自動帶入該ip篩選 req-member-015 ac-member-022 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-023</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">點擊最後登入IP跳轉至登入網域查詢頁並自動帶入該IP篩選</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-022</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入一名會員的詳細資料頁</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊「最後登入IP」欄位值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">自動跳轉至登入網域查詢頁，並帶入該 IP 值作為篩選條件，查詢結果為曾使用該 IP 登入的所有會員及登入時間</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.3.1 篩選器</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-016">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-016</span>
+        <h2>推薦註冊金設定新增時會員編號為必填，不可為空</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-024 推薦註冊金設定新增時，會員編號留空應被系統阻擋 req-member-016 ac-member-023 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-024</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">推薦註冊金設定新增時，會員編號留空應被系統阻擋</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-023</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>以 Admin 登入後台，進入推薦註冊金設定頁，開啟新增方案面板</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>會員編號欄位留空，填寫其他欄位</span></li><li><span class='step-n'>2</span><span>點擊新增送出</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">系統阻擋，提示會員編號為必填</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.4.2 新增設定</span>
+      <span class='spec-quote'>「會員編號為必填（必填），不可為空」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-017">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-017</span>
+        <h2>推薦註冊金設定刪除為不可復原操作，須二次確認</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-025 刪除推薦註冊金設定須二次確認，確認後永久刪除、清單中不再出現、且無任何復原入口 req-member-017 ac-member-024 medium medium" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-025</span>
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
+    </div>
+    <h3 class="tc-title">刪除推薦註冊金設定須二次確認，確認後永久刪除、清單中不再出現、且無任何復原入口</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-medium'>風險 medium</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-024</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>推薦註冊金設定列表存在至少一筆既有設定</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>點擊該筆設定旁的刪除圖示，確認彈出確認視窗</span></li><li><span class='step-n'>2</span><span>於確認視窗點擊確認</span></li><li><span class='step-n'>3</span><span>重新整理列表，確認該筆設定已從清單移除</span></li><li><span class='step-n'>4</span><span>於推薦註冊金設定列表頁確認該列（含整頁）無任何「復原」/「還原」/「取消刪除」按鈕、連結或選單項；依spec.md全文（無任何回收桶/垃圾桶頁面或操作歷程復原功能的定義），本頁面之檢查已涵蓋spec所定義的驗證範圍——若日後系統新增回收桶或操作紀錄等功能，需回頭補測本案例</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">彈出確認視窗；確認後該筆設定被永久刪除，重新整理後清單中不再出現該筆記錄；推薦註冊金設定列表頁不存在任何復原此操作的按鈕或入口（spec全文未定義回收桶或操作歷程復原功能，本案例之驗證範圍以此頁面為準）</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.4.3 列表欄位</span>
+      <span class='spec-quote'>「點擊旁側刪除圖示後，彈出確認視窗，確認後刪除該筆設定，操作不可復原」</span>
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+    <section class="req-group" id="REQ-MEMBER-018">
+      <div class="req-head">
+        <span class="req-id">REQ-MEMBER-018</span>
+        <h2>暱稱禁用詞設定分四個類別分頁，各自獨立管理</h2>
+      </div>
+      <div class="tc-grid">
+<article class="tc-card" data-search="tc-member-026 暱稱禁用詞四分頁設定互相獨立 req-member-018 ac-member-025 low low" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-MEMBER-026</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">暱稱禁用詞四分頁設定互相獨立</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 low</span>
+      <span class='pill pill-risk-low'>風險 low</span>
+      <span class="pill pill-neutral">ui_e2e</span>
+      <span class="pill pill-neutral">AC-MEMBER-025</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>暱稱禁用詞設定頁，Violence 與 Other 分頁目前皆為空</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>於 Violence 分頁新增一個禁用詞</span></li><li><span class='step-n'>2</span><span>切換至 Other 分頁檢視禁用詞清單</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">Other 分頁的清單不包含剛才在 Violence 分頁新增的那個詞，兩個分頁的設定互相獨立</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§2.5.1 分頁說明</span>
+      
+    </div>
+  </div>
+</article>
+</div>
+    </section>
+    
+  </main>
+</div>
+
+<script>
+const search = document.getElementById('search');
+const cards = Array.from(document.querySelectorAll('.tc-card'));
+const chips = Array.from(document.querySelectorAll('.chip'));
+let activeChip = 'all';
+
+function applyFilter() {
+  const q = search.value.trim().toLowerCase();
+  cards.forEach(c => {
+    const matchesText = !q || c.dataset.search.includes(q);
+    const matchesChip = activeChip === 'all' || c.dataset.class === activeChip;
+    c.hidden = !(matchesText && matchesChip);
+  });
+  document.querySelectorAll('.req-group').forEach(g => {
+    const visible = g.querySelectorAll('.tc-card:not([hidden])').length > 0;
+    g.hidden = !visible;
+  });
+}
+
+search.addEventListener('input', applyFilter);
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeChip = chip.dataset.chip;
+  applyFilter();
+}));
+</script>
+</body>
+</html>

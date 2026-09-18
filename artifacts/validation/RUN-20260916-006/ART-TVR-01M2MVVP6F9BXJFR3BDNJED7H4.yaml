@@ -1,0 +1,71 @@
+artifact_id: ART-TVR-01M2MVVP6F9BXJFR3BDNJED7H4
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260916-006
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-16T10:23:06Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2MV7YZBM3XGXNQMDZ13DSHA
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2MV7YZBM3XGXNQMDZ13DSHA
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2MV7YZBM3XGXNQMDZ13DSHA
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+  issues:
+  - testcase_id: TC-DRAFT-01M2MV7YZA621A7797VFN3GWJA
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-CASHFLOW-022
+    spec_reference: null
+    evidence: design_rationale宣稱「新req-cashout取代」路徑已由TC-CASHFLOW-022涵蓋而不重複建立，但查證TC-CASHFLOW-022（AC-CASHFLOW-0191）內容後發現該TC只有2個步驟，只測PENDING狀態轉換本身（既存PENDING被標記失效、建立新PENDING），完全沒有測「用舊TXID呼叫end-cashout確認回1-NO
+      RECORD」這個後半段。
+    explanation: AC-CASHFLOW-0221自己的given範例明講「TXID查無對應PENDING（例如已被新請求取代）」這個情境，本次修訂未經查證就把它從TC中砍掉，導致這個真實觸發路徑在整個已知測試集裡完全沒有被驗證到。
+    recommended_change: 把「新請求取代」情境以完整步驟形式加回本TC，形成兩個具體情境（人工出金取消+新請求取代）各自完整操作一遍。
+  advisories:
+  - testcase_id: TC-DRAFT-01M2MV7YZA621A7797VFN3GWJA
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: expected_result_spec_reference.location「§四種金流/出金」應為「§附錄-出金」；舊版原本正確標示，新版又是一次倒退。
+    explanation: 不影響斷言正確性。
+    recommended_change: location改回「§附錄-出金」。
+  coverage_summary:
+    requirements_total: 44
+    requirements_covered: 42
+    ac_total: 69
+    ac_covered: 66
+    uncovered_accepted:
+    - AC-CASHFLOW-0421
+    - AC-CASHFLOW-0431
+    - AC-CASHFLOW-0083
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-16T10:23:06Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260916-006

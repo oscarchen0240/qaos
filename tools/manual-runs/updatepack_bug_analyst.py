@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""RUN-20260915-001 T1：Bug Analyst 依 Oscar 提供的實機截圖與 API response，
+針對「帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生」提出 BugDraft。"""
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+from tools.qaos import store, ids
+RUN = sys.argv[1]; ITER = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+SID, SV, A = "SPEC-UPDATEPACK-001", "0.1", "agent-bug-analyst"
+def sr(loc): return {"spec_id": SID, "spec_version": SV, "location": loc}
+ENV = {"name": "stage", "account": "ZZAA00261（管理員）"}
+
+payload = {
+    "draft_id": f"BUG-DRAFT-{ids.ulid()}",
+    "title": "[前端/後端][多幣別錢包展開] 帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生，出現不存在/未啟用幣別、漏列已啟用幣別",
+    "product": "ba-admin", "functional_area": "UPDATEPACK",
+    "severity_proposed": "major", "priority_proposed": "high",
+    "severity_rationale": "使用者會誤判帳戶實際持有的幣別與餘額（看到不存在的幣別、看不到真正有餘額的幣別），影響客服/對帳判斷；非資料遺失或崩潰，故不到 critical",
+    "environment": ENV, "spec_id": SID, "spec_version": SV, "requirement_id": "REQ-UPDATEPACK-001",
+    "acceptance_criteria_ids": ["AC-UPDATEPACK-0011"],
+    "preconditions": [
+        "站台 Arcade（機台類型）的鏈上錢包管理 Machine 頁籤僅設定 TWD（New Taiwan Dollar），無 USDT 或任何其他幣別選項",
+        "站台 SpringKyle（線上類型）的鏈上錢包管理 BEP-20 頁籤已啟用 TestToken(TTK) 與 Tether(USDT)，且完全沒有法幣/TWD 頁籤這個選項",
+        "以下重現步驟與金額皆以評測用帳號為例：Arcade 側示例帳號展開後為 TWD $0.00／USDT $1,000.00；SpringKyle 側示例帳號展開後為 USDT $1,033.00／TWD $0.00，其他帳號的實際金額可能不同，但清單內容錯誤的模式應一致重現",
+    ],
+    "reproduction_steps": [
+        "以管理員 ZZAA00261 登入後台，站台切換選單切至 Arcade（機台）",
+        "至會員與加盟商 > 會員列表，開啟任一機台帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開",
+        "站台切換選單切至 SpringKyle（線上）",
+        "開啟任一會員帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開",
+    ],
+    "expected_result": "Arcade 帳號的展開清單應只列出鏈上錢包管理實際啟用的幣別（本例應只有 TWD），且因僅 1 種啟用幣別，餘額欄不應顯示展開箭頭、應維持單行呈現；SpringKyle 帳號的展開清單應列出實際啟用的 TTK、USDT，不應出現 TWD（該站台的鏈上錢包管理沒有這個選項）",
+    "expected_result_spec_reference": sr("§一、多幣別錢包展開顯示／幣別清單來源 + 機台場館的情形"),
+    "actual_result": "Arcade 帳號的展開清單多出一列不存在的 USDT $1,000.00，且該帳號僅 1 種啟用幣別（TWD）卻仍顯示可展開箭頭（違反 REQ-UPDATEPACK-002：僅啟用一種幣別時不應顯示展開箭頭、應維持單行呈現，spec 並明文警告『實作不得把單一幣別寫死』）；SpringKyle 帳號的展開清單多出一列不存在的 TWD $0.00，且完全漏列已啟用的 TTK，只顯示 USDT $1,033.00",
+    "actual_result_evidence_map": [
+        {"claim": "Arcade 帳號展開清單顯示 TWD $0.00、USDT $1,000.00，且欄位帶有展開箭頭（僅 1 種啟用幣別下不應出現）", "evidence_id": "EVD-0048"},
+        {"claim": "Arcade 鏈上錢包管理 Machine 頁籤只有 TWD，無 USDT 選項", "evidence_id": "EVD-0049"},
+        {"claim": "SpringKyle 鏈上錢包管理 BEP-20 頁籤 TTK、USDT 皆啟用，無 TWD 頁籤", "evidence_id": "EVD-0051"},
+        {"claim": "SpringKyle 帳號展開清單顯示 USDT $1,033.00、TWD $0.00，未列出 TTK", "evidence_id": "EVD-0052"},
+    ],
+    "evidence_ids": ["EVD-0048", "EVD-0049", "EVD-0051", "EVD-0052"],
+    "impact": "使用者（含站長/操作員/客服）可能誤判帳戶實際持有的幣別與餘額；同時違反 REQ-UPDATEPACK-001（幣別清單來源）與 REQ-UPDATEPACK-002（展開箭頭顯示條件）兩條需求，且牽涉 spec 明文警告的『不得寫死』條款，機台與線上站台皆受影響，影響面較單一清單內容錯誤更廣",
+    "suspected_area": "帳戶餘額展開清單元件（前端或其串接的後端查詢）疑似寫死固定顯示 TWD＋USDT 兩種幣別、且展開箭頭的顯示條件也未依實際啟用幣種數量判斷，未實際依當前站台的鏈上錢包管理啟用狀態動態產生",
+    "ambiguity_suspected": False, "duplicate_candidates": [],
+}
+aid = ids.artifact_id("BugDraft")
+art = {"artifact_id": aid, "artifact_type": "BugDraft", "schema_version": "1.0", "version": 1, "run_id": RUN, "task_id": "T1", "iteration": ITER,
+       "created_by": A, "created_at": store.now(), "status": "DRAFT",
+       "source": {"type": "Evidence", "ids": payload["evidence_ids"]},
+       "references": [{"entity_type": "Requirement", "id": "REQ-UPDATEPACK-001"}, {"entity_type": "Requirement", "id": "REQ-UPDATEPACK-002"}] + [{"entity_type": "Evidence", "id": e} for e in payload["evidence_ids"]],
+       "requires_approval": None, "payload": payload}
+p = store.ROOT / "artifacts" / "bug-analysis" / RUN / f"{aid}.yaml"; store.save(p, art)
+print(p.relative_to(store.ROOT))

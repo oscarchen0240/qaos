@@ -1,0 +1,93 @@
+title: 開分後使「全場館餘額＋已預留未入帳入金金額」超過額度上限時，平台拒絕且不寫入任何帳務異動
+product: ba-admin
+functional_area: CASHFLOW
+requirement_ids:
+- REQ-CASHFLOW-004
+acceptance_criteria_ids:
+- AC-CASHFLOW-0041
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+test_data: []
+steps:
+- n: 1
+  action: 調整場館額度上限為一已知值，另建構一筆已預留未入帳的入金 PENDING
+- n: 2
+  action: 送出開分請求（req-keyin），金額使加計後「全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額」超過該上限
+expected_result: 平台回 1-OVER LIMIT；機台畫面顯示失敗；分數不變、不寫入任何帳務異動（判定含已預留未入帳的入金金額，與入金共用同一把場館鎖）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: §附錄-開分
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-CASHFLOW-005
+version: 1
+supersedes: null
+status: SUPERSEDED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+created_at: '2026-09-13T22:50:49Z'
+updated_at: '2026-09-16T10:33:56Z'
+history:
+- at: '2026-09-13T22:50:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2EF4PVHRE5MXX8HXV6N266T
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2EFEG961V4DT4XPQ07DZB3D
+  run_id: RUN-20260914-005
+- at: '2026-09-13T22:50:49Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0018
+  run_id: RUN-20260914-005
+- at: '2026-09-13T23:16:37Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260914-005
+- at: '2026-09-16T10:33:56Z'
+  from_status: ACTIVE
+  to_status: SUPERSEDED
+  by: system
+  trigger: v2 ACTIVE
+  run_id: RUN-20260916-003
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0018

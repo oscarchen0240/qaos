@@ -1,0 +1,89 @@
+artifact_id: ART-TVR-01M2GP1XA7GEPBV2QMGQ7M4NKH
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-14T19:24:41Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GNQA9S7H91TWVGNXTJD9T7
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GNQA9S7H91TWVGNXTJD9T7
+- entity_type: Artifact
+  id: ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GNQA9S7H91TWVGNXTJD9T7
+  validated_against:
+    spec_id: SPEC-BONUSCCY-003
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GNGD6KPHVY7XPD85D9SQZH
+  advisories: []
+  issues:
+  - testcase_id: TC-DRAFT-01M2GNQA9RN6NMRHZVV6166SZP
+    issue_type: unreasonable_edge_case
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-011
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／①存款金額拆成兩個
+    evidence: spec.md明講『現在所有存款的幣別本來就等於站台記帳幣別，兩個數字今天是一模一樣的』；此TC同時宣稱驗證『取整』與『欄位接錯』兩件事，但兩欄位數值永遠相同時，黑箱觀察無法區分『接對』與『接錯』
+    explanation: REQ-011是spec自己點名本次最重要的回歸點，這是它唯一的boundary案例，覆蓋率虛高
+    recommended_change: 拆成兩個獨立驗證目標；欄位接錯的部分改列uncovered_with_reason誠實標註
+  - testcase_id: TC-DRAFT-01M2GNQA9SPYKQFF399TJPZR14
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-BONUSCCY-013
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-003
+      spec_version: '1.0'
+      location: §改了什麼／②簽到活動的「有效會員」改讀正確的表
+    evidence: spec明講『前台每次開頁就重算並直接寫入，後台要等玩家再存一筆才會重算』，但TC沒有明確驗證開頁前後台仍未達標、開頁後不觸發新存款、後台已同步這個不對稱機制
+    explanation: 只驗『兩邊最終會一致』是較弱的陳述，沒有精確打中spec強調的這個核心機制
+    recommended_change: steps補上開頁前後台狀態確認、開頁後不觸發新存款直接核對後台
+  - testcase_id: TC-DRAFT-01M2GNQA9RN6NMRHZVV6166SZP
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: self_check.negative_considered=true但6條TC沒有任何negative技巧
+    explanation: 報告誠實度問題
+    recommended_change: 說明理由或調整
+  - testcase_id: TC-DRAFT-01M2GNQA9SPYKQFF399TJPZR14
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TC4/TC5測前台簽到頁，preconditions卻只有『以Admin登入後台』
+    explanation: 沒有納入玩家登入前台這個實際操作所需前提
+    recommended_change: 補上玩家端登入前提
+  coverage_summary:
+    requirements_total: 4
+    requirements_covered: 4
+    ac_total: 5
+    ac_covered: 5
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: false
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: false
+history:
+- at: '2026-09-14T19:24:41Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-007

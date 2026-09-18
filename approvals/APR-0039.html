@@ -1,0 +1,32 @@
+<title>APR-0039 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0039 · OPEN_BUG</h1>
+<div class=meta>Run RUN-20260915-001 · 狀態 PENDING · 提出 2026-09-14</div>
+<div class=summary>[major/high] [前端/後端][多幣別錢包展開] 帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生，出現不存在/未啟用幣別、漏列已啟用幣別 — 是否成為正式 Bug（OPEN）？</div>
+<h2>內容</h2>
+<blockquote>ba-admin / UPDATEPACK　· Spec：SPEC-UPDATEPACK-001@0.1　· 需求：REQ-UPDATEPACK-001　· 環境：stage　· 測試帳號：ZZAA00261（管理員）</blockquote>
+<p><b>前置條件</b></p><ol><li>站台 Arcade（機台類型）的鏈上錢包管理 Machine 頁籤僅設定 TWD（New Taiwan Dollar），無 USDT 或任何其他幣別選項</li><li>站台 SpringKyle（線上類型）的鏈上錢包管理 BEP-20 頁籤已啟用 TestToken(TTK) 與 Tether(USDT)，且完全沒有法幣/TWD 頁籤這個選項</li><li>以下重現步驟與金額皆以評測用帳號為例：Arcade 側示例帳號展開後為 TWD $0.00／USDT $1,000.00；SpringKyle 側示例帳號展開後為 USDT $1,033.00／TWD $0.00，其他帳號的實際金額可能不同，但清單內容錯誤的模式應一致重現</li></ol>
+<p><b>重現步驟</b></p><ol><li>以管理員 ZZAA00261 登入後台，站台切換選單切至 Arcade（機台）</li><li>至會員與加盟商 &gt; 會員列表，開啟任一機台帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開</li><li>站台切換選單切至 SpringKyle（線上）</li><li>開啟任一會員帳號的會員詳細資料頁，於帳務資訊區塊檢視帳戶餘額(主錢包)欄位並展開</li></ol>
+<p><b>預期結果</b>：Arcade 帳號的展開清單應只列出鏈上錢包管理實際啟用的幣別（本例應只有 TWD），且因僅 1 種啟用幣別，餘額欄不應顯示展開箭頭、應維持單行呈現；SpringKyle 帳號的展開清單應列出實際啟用的 TTK、USDT，不應出現 TWD（該站台的鏈上錢包管理沒有這個選項）</p>
+<p><b>實際結果</b>：Arcade 帳號的展開清單多出一列不存在的 USDT $1,000.00，且該帳號僅 1 種啟用幣別（TWD）卻仍顯示可展開箭頭（違反 REQ-UPDATEPACK-002：僅啟用一種幣別時不應顯示展開箭頭、應維持單行呈現，spec 並明文警告『實作不得把單一幣別寫死』）；SpringKyle 帳號的展開清單多出一列不存在的 TWD $0.00，且完全漏列已啟用的 TTK，只顯示 USDT $1,033.00</p>
+<p><b>證據對照</b></p><ul><li>Arcade 帳號展開清單顯示 TWD $0.00、USDT $1,000.00，且欄位帶有展開箭頭（僅 1 種啟用幣別下不應出現）（EVD-0048）</li><li>Arcade 鏈上錢包管理 Machine 頁籤只有 TWD，無 USDT 選項（EVD-0049）</li><li>SpringKyle 鏈上錢包管理 BEP-20 頁籤 TTK、USDT 皆啟用，無 TWD 頁籤（EVD-0051）</li><li>SpringKyle 帳號展開清單顯示 USDT $1,033.00、TWD $0.00，未列出 TTK（EVD-0052）</li></ul>
+<p><b>影響</b>：使用者（含站長/操作員/客服）可能誤判帳戶實際持有的幣別與餘額；同時違反 REQ-UPDATEPACK-001（幣別清單來源）與 REQ-UPDATEPACK-002（展開箭頭顯示條件）兩條需求，且牽涉 spec 明文警告的『不得寫死』條款，機台與線上站台皆受影響，影響面較單一清單內容錯誤更廣</p>
+<p><b>懷疑方向</b>：帳戶餘額展開清單元件（前端或其串接的後端查詢）疑似寫死固定顯示 TWD＋USDT 兩種幣別、且展開箭頭的顯示條件也未依實際啟用幣種數量判斷，未實際依當前站台的鏈上錢包管理啟用狀態動態產生</p>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0039 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0039 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0039 --decision reject --by &lt;you&gt; --rationale "..."</div>

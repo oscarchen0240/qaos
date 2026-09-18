@@ -1,0 +1,1947 @@
+artifact_id: ART-TCD-01M2R29PNQKKA7V3GWN6PHYTPW
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260918-001
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-17T16:13:20Z'
+status: SUPERSEDED
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+references:
+- entity_type: Requirement
+  id: REQ-TXLOG-001
+- entity_type: Requirement
+  id: REQ-TXLOG-002
+- entity_type: Requirement
+  id: REQ-TXLOG-003
+- entity_type: Requirement
+  id: REQ-TXLOG-004
+- entity_type: Requirement
+  id: REQ-TXLOG-005
+- entity_type: Requirement
+  id: REQ-TXLOG-006
+- entity_type: Requirement
+  id: REQ-TXLOG-007
+- entity_type: Requirement
+  id: REQ-TXLOG-008
+- entity_type: Requirement
+  id: REQ-TXLOG-009
+- entity_type: Requirement
+  id: REQ-TXLOG-010
+- entity_type: Requirement
+  id: REQ-TXLOG-011
+- entity_type: Requirement
+  id: REQ-TXLOG-012
+- entity_type: Requirement
+  id: REQ-TXLOG-013
+- entity_type: Requirement
+  id: REQ-TXLOG-014
+- entity_type: Requirement
+  id: REQ-TXLOG-015
+- entity_type: Requirement
+  id: REQ-TXLOG-016
+- entity_type: Requirement
+  id: REQ-TXLOG-017
+- entity_type: Requirement
+  id: REQ-TXLOG-018
+- entity_type: Requirement
+  id: REQ-TXLOG-019
+- entity_type: Requirement
+  id: REQ-TXLOG-020
+- entity_type: Requirement
+  id: REQ-TXLOG-021
+- entity_type: Requirement
+  id: REQ-TXLOG-022
+- entity_type: Requirement
+  id: REQ-TXLOG-023
+- entity_type: Requirement
+  id: REQ-TXLOG-024
+- entity_type: Requirement
+  id: REQ-TXLOG-025
+- entity_type: Requirement
+  id: REQ-TXLOG-026
+- entity_type: Requirement
+  id: REQ-TXLOG-027
+- entity_type: Requirement
+  id: REQ-TXLOG-028
+- entity_type: Requirement
+  id: REQ-TXLOG-029
+- entity_type: Requirement
+  id: REQ-TXLOG-030
+- entity_type: Artifact
+  id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M2R29PNM8KWHZP7XBWF6VENP
+    title: 查詢範圍含機台交易時，待確認／已取消／已逾時／未成立四種非最終狀態的交易與已完成交易一併列出
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-001
+    acceptance_criteria_ids:
+    - AC-TXLOG-0011
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: &id001
+    - 以 Admin 身分登入 ba-admin 後台
+    - 頁面標題下方的站台切換選單已選定一個機台場館站台
+    - 已進入 各式報表 > 交易紀錄查詢 頁面（機台交易紀錄為此頁面的機台視角擴充，不另設獨立頁面）
+    test_data: []
+    steps:
+    - n: 1
+      action: 於本頁分別安排（或於既有交易紀錄中尋得）一筆待確認、一筆已取消、一筆已逾時、一筆未成立與一筆已完成的機台交易（各筆狀態的產生機制屬開發包③既有交易資料模型，本測試僅借用其已知穩定行為，不重新驗證狀態判定邏輯本身）
+    - n: 2
+      action: 清除所有篩選條件，僅保留站台切換範圍，點擊搜尋
+    expected_result: 五種狀態的交易皆出現在查詢結果中，不因狀態非「已完成」而被排除
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明
+      quote: 既有的 4.1 只顯示已經生效的錢包異動；併入後，查詢範圍含機台交易時另外顯示尚未完成、被取消與被拒絕的交易
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接依 AC-TXLOG-0011 的五種狀態枚舉逐一確認皆會出現，為本需求最核心的正向斷言，逐一枚舉優於單一情境測試。
+  - draft_id: TC-DRAFT-01M2R29PNMBDFE88X1S1KBMAXB
+    title: 待確認的機台交易在本包擴充後仍會被列出，不再套用既有 4.1『僅顯示已生效』的排除規則
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-001
+    acceptance_criteria_ids:
+    - AC-TXLOG-0011
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆機台交易，確保其目前狀態為待確認（尚未收到機台完成回報，分數尚未異動）
+    - n: 2
+      action: 以此交易編號或其機台帳號查詢
+    expected_result: 該筆待確認交易正常出現在結果中；若沿用既有 4.1 的排除規則（僅顯示已生效者）則此交易應被排除，本測試即在驗證這條舊排除規則已不再套用於機台交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明
+      quote: 既有的 4.1 只顯示已經生效的錢包異動；併入後...另外顯示尚未完成、被取消與被拒絕的交易
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是 high risk 需求，設計為 negative 手法：明確驗證『既有排除待確認交易』這條舊規則已被移除，而非單純重複正向枚舉，比 TC1 更聚焦在風險點本身（新舊行為的交界）。
+  - draft_id: TC-DRAFT-01M2R29PNMAKNDPADVMWNQ6C3K
+    title: 線上會員交易不因本包機台擴充而被納入『尚未完成也顯示』的範圍，維持既有 4.1 僅顯示已生效異動的行為
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-002
+    acceptance_criteria_ids:
+    - AC-TXLOG-0021
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 找出（或安排）一筆線上會員、狀態非已生效（例如仍在處理中）的錢包異動
+    - n: 2
+      action: 於本頁查詢，篩選條件不限制交易類型
+    expected_result: 該筆線上會員的非生效異動不會被列出——本包的『尚未完成也顯示』擴充範圍僅限機台交易，不擴及線上會員交易，線上部分維持既有 4.1 僅顯示已生效異動的行為
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明
+      quote: 非機台交易的既有行為不變
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC 的斷言是『既有行為不變』，若只驗證外觀欄位不足以證明行為真的沒變；選擇驗證『擴充範圍是否誤及線上交易』這個最容易被本包影響到的邊界，用 negative 技巧直接測試範圍邊界比對照欄位樣式更貼近
+      AC 的實質意圖。
+  - draft_id: TC-DRAFT-01M2R29PNM1PXRXTV6T2K54N32
+    title: 頁面資料範圍完全跟隨站台切換選單，篩選器不提供獨立的『場館』欄位
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-003
+    acceptance_criteria_ids:
+    - AC-TXLOG-0031
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 以 Admin 登入後台，進入 交易紀錄查詢 頁面
+    - n: 2
+      action: 檢視篩選器所有欄位名稱
+    - n: 3
+      action: 將頁面標題下方的站台切換選單切至機台場館站台 A，不做任何其他篩選，點擊搜尋
+    - n: 4
+      action: 記錄結果筆數與站台 A 範圍；再將站台切換選單切至另一機台場館站台 B，重新搜尋，比較兩次結果
+    expected_result: 篩選器欄位中不存在『場館』這個獨立篩選項；切至站台 A 時的查詢結果僅含站台 A 範圍內的交易，切至站台 B 後結果隨之改變為僅含站台 B 範圍，證明資料範圍完全由站台切換選單決定
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（後台各頁皆有，一次僅顯示所選站台），不另設「場館」篩選欄位
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC 有兩個斷言（無場館欄位、範圍隨站台切換），透過『切換兩個不同站台比較結果集不同』直接證明資料範圍確實跟隨選單而非另有隱藏場館邏輯，比單純檢視欄位存在與否更完整。
+  - draft_id: TC-DRAFT-01M2R29PNM0YB0JXJAEW3NGHG8
+    title: 機台帳號篩選以「,」分隔輸入兩個會員編號，可一次查得兩者的交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-004
+    acceptance_criteria_ids:
+    - AC-TXLOG-0041
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台帳號篩選欄輸入「會員編號A,會員編號B」（兩個既有機台會員的會員編號，自行從環境中選定，需為兩個不同的既有會員）
+    - n: 2
+      action: 點擊搜尋
+    expected_result: 查詢結果同時包含這兩個機台帳號各自的交易，且不包含其他未輸入的機台帳號的交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 機台帳號 | 文字輸入 | 輸入會員編號查詢；支援多筆，以「,」分隔
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC 只要求『同時包含這兩個機台帳號的交易』，未定義逗號旁空白、重複輸入等邊界情況，故不额外聲稱這些邊界规則，僅驗證 AC 明文的雙帳號情境。
+  - draft_id: TC-DRAFT-01M2R29PNMPCSQXNXGZ7PYH0Q2
+    title: 交易編號篩選可精確查得單一已知交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-005
+    acceptance_criteria_ids:
+    - AC-TXLOG-0051
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 於交易編號篩選欄輸入一筆已知交易編號（自行從既有交易紀錄中選定）
+    - n: 2
+      action: 點擊搜尋
+    expected_result: 查詢結果僅顯示該筆交易，不含其他交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 交易編號 | 文字輸入 | 查詢特定一筆交易
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 低風險、單一情境即可完整覆蓋 AC，不需額外案例。
+  - draft_id: TC-DRAFT-01M2R29PNMFQ7KKAH77HJ8YAV7
+    title: 以文字輸入場次編號可查出同一場次內的所有交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-006
+    acceptance_criteria_ids:
+    - AC-TXLOG-0061
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 選定一個已知場次編號，該場次內含多筆交易（若無現成場次，可於同一機台同一場次內連續操作數筆開分／洗分／出金以產生，佈置細節屬開發包③既有場次機制範疇）
+    - n: 2
+      action: 於場次編號篩選欄輸入該場次編號，點擊搜尋
+    expected_result: 查詢結果為該場次內的所有交易，且不含其他場次的交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 場次編號 | 文字輸入 | 查詢某個場次內的所有交易
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 文字輸入與下方 TC（點擊列表值）是兩條不同的操作路徑，即使斷言相同也各自對應 AC-0061／AC-0062 兩條不同的 given，分開設計以保留各自的可追溯性。
+  - draft_id: TC-DRAFT-01M2R29PNMJSVPC4TKD63AF9R2
+    title: 在列表中點擊某筆機台交易的場次編號值，自動篩出同場次所有交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-006
+    acceptance_criteria_ids:
+    - AC-TXLOG-0062
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選一筆場次編號非「—」的機台交易
+    - n: 2
+      action: 點擊該筆交易的場次編號欄位值
+    expected_result: 頁面自動套用該場次編號為篩選條件並重新查詢，結果為同一場次內的所有交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器 + §列表欄位
+      quote: 場次編號 | 該筆交易所屬的場次；可點擊篩出同場次的所有交易
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此為列表欄位可點擊互動的入口，與文字輸入篩選是不同 UI 操作路徑，對應 AC-TXLOG-0062，故獨立成案例。
+  - draft_id: TC-DRAFT-01M2R29PNM8CN3MX077T26X37T
+    title: 線上會員交易的場次編號欄一律顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-006
+    acceptance_criteria_ids:
+    - AC-TXLOG-0063
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果包含線上會員的既有交易
+    - n: 2
+      action: 檢視其場次編號欄
+    expected_result: 線上會員交易的場次編號欄顯示「—」，因線上帳號無場次概念
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 線上帳號的交易無場次，統一顯示「—」（2026-09-03 定案）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與機台交易的場次篩選是同一欄位的兩種資料來源（有場次／無場次），分開驗證確保線上分支不會被遺漏，且此規則已由 2026-09-03 定案明文而非推測。
+  - draft_id: TC-DRAFT-01M2R29PNMEC04YN45G1VRE3YQ
+    title: 訂單編號篩選查得指定的機台出金交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-007
+    acceptance_criteria_ids:
+    - AC-TXLOG-0071
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 選定一筆已知機台出金交易的訂單編號（收據上印製的編號，自行從既有交易紀錄中選定）
+    - n: 2
+      action: 於訂單編號篩選欄輸入該編號，點擊搜尋
+    expected_result: 查詢結果顯示該筆出金交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 訂單編號 | 文字輸入 | 出金專用，即收據上印製的編號
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 先驗證篩選本身可用，訂單編號欄對其餘交易類型的顯示規則另立一條，避免單條案例斷言過多不同層面的事。
+  - draft_id: TC-DRAFT-01M2R29PNMZEEK89HHZ6D0GAK5
+    title: 非出金交易類型（開分／洗分／入金）的訂單編號欄一律顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-007
+    acceptance_criteria_ids:
+    - AC-TXLOG-0071
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選開分、洗分、入金各一筆交易
+    - n: 2
+      action: 分別檢視其訂單編號欄
+    expected_result: 三筆交易的訂單編號欄皆顯示「—」，僅出金交易類型才有實際訂單編號值
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 訂單編號 | 出金交易顯示收據上的編號，其餘顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 同一 AC 陳述兩件事（出金有值、其餘無值），分成兩條以確保『其餘皆無值』被逐一驗證而非僅推論。
+  - draft_id: TC-DRAFT-01M2R29PNMTT2QB6NMB5ATBT65
+    title: 交易類型篩選為多選 chip，可選項目為開分／入鈔／出鈔／洗分四項且可複選
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-008
+    acceptance_criteria_ids:
+    - AC-TXLOG-0081
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 開啟交易類型篩選
+    - n: 2
+      action: 檢視可選項目的標籤文字
+    - n: 3
+      action: 同時勾選其中兩個項目（例如「開分」與「出鈔」）
+    expected_result: 可選項目恰為「開分」「入鈔」「出鈔」「洗分」四項（不含「機台」字首）；兩個項目可同時維持勾選狀態，非單選互斥
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 交易類型 | 下拉選單 | 全部 / 機台開分 / 機台洗分 / 機台入金 / 機台出金（＊實際為多選 chip，標籤不含「機台」字首）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 依 RequirementModel 已由實際畫面截圖確認的標籤與互動方式設計，quote 引用 spec.md 原文僅為對照，expected_result 以已確認的實際畫面為準，兩者不一致處已在
+      statement 中說明。
+  - draft_id: TC-DRAFT-01M2R29PNMWXF5EBADAPA28EJ0
+    title: 勾選「出鈔」與「洗分」兩個交易類型並搜尋，結果同時包含這兩種類型
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-008
+    acceptance_criteria_ids:
+    - AC-TXLOG-0082
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 開啟交易類型篩選，勾選「出鈔」與「洗分」（僅此兩項）
+    - n: 2
+      action: 點擊搜尋
+    expected_result: 查詢結果同時包含出鈔與洗分兩種類型的交易，不含開分與入鈔類型的交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 交易類型 | 下拉選單 | 全部 / 機台開分 / 機台洗分 / 機台入金 / 機台出金（＊實際為多選 chip）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證複選的聯集查詢語意（選中的都要出現、未選中的不能混入），這是多選 chip 相對單選下拉最需要驗證的行為差異。
+  - draft_id: TC-DRAFT-01M2R29PNMT7344YT19FCDXD15
+    title: 交易狀態篩選的可選項目依交易類型分組而不同：開分/入鈔為 7 項技術值，出鈔/洗分為 6 項技術值
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-009
+    acceptance_criteria_ids:
+    - AC-TXLOG-0091
+    - AC-TXLOG-0092
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - decision_table
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 交易類型篩選勾選「開分」或「入鈔」，開啟交易狀態篩選，記錄可選項目
+    - n: 2
+      action: 改為交易類型篩選僅勾選「出鈔」或「洗分」，重新開啟交易狀態篩選，記錄可選項目
+    expected_result: 開分/入鈔分組下，交易狀態可選項目為「已逾時、錯誤、無、成功、等待中、已取消、無效」共 7 項；出鈔/洗分分組下，可選項目為「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項（含 2026-09-14
+      補上的「已處理」）；兩組項目不相同
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 交易狀態 | 下拉選單 | 全部 / 待確認 / 已完成 / 已取消 / 已逾時 / 未成立（＊實際依交易類型分兩組技術值）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是真正的決策表案例：輸入條件（交易類型分組：開分/入鈔 vs 出鈔/洗分）決定另一個篩選器的可選項目集合這個輸出，兩個分組互相依賴且各自產生不同結果，符合 decision_table 技巧的定義，不是單一情境的
+      requirement_based。「無」這個技術值的語意對應目前未定案（RequirementModel 標為 minor ambiguity），本案例僅驗證其『存在於清單中』，不對其代表的概念分類做斷言。
+  - draft_id: TC-DRAFT-01M2R29PNMJ7K4K1NCNQ577JAS
+    title: 核實狀態篩選僅有三個可選值，不含「不適用」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-010
+    acceptance_criteria_ids:
+    - AC-TXLOG-0101
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 開啟核實狀態篩選
+    - n: 2
+      action: 檢視可選項目
+    expected_result: 可選項目恰為「待核實」「已核實」「已作廢」三項，不含「不適用」（「不適用」僅為列表欄位的顯示值，非篩選器選項）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 核實狀態 | 下拉選單 | 全部 / 待核實 / 已核實 / 已作廢 / 不適用（＊實際篩選器無「不適用」選項）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 直接驗證 RequirementModel 已依實際畫面截圖確認的選項清單，這是與 spec.md 原文有落差、風險較高需要親自核對畫面的一項。
+  - draft_id: TC-DRAFT-01M2R29PNMWV6P3P0C27AFTCP3
+    title: 篩選核實狀態為待核實並搜尋，僅顯示待核實的機台洗分或機台出金交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-010
+    acceptance_criteria_ids:
+    - AC-TXLOG-0102
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 核實狀態篩選選擇「待核實」，交易類型不設限，點擊搜尋
+    expected_result: 結果僅包含核實狀態為待核實的機台洗分或機台出金交易；開分、入金等不適用核實狀態概念的交易類型不會出現在結果中
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 核實狀態 | ...；僅對「機台洗分」與「機台出金」有意義
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 驗證此篩選器對『不適用核實概念』的交易類型有隱含排除效果，這是 AC-TXLOG-0102 明確要求的行為，不只是選項清單正確而已。
+  - draft_id: TC-DRAFT-01M2R29PNM2RBH2M3JB6QYNZ86
+    title: 交易時間範圍篩選僅顯示交易發生時間落在範圍內的交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-011
+    acceptance_criteria_ids:
+    - AC-TXLOG-0111
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 找出（或安排）兩筆已知交易時間相隔明顯的交易，一筆落在欲設定的日期範圍內、一筆在範圍外
+    - n: 2
+      action: 設定交易時間範圍涵蓋前者、排除後者，點擊搜尋
+    expected_result: 結果包含範圍內的交易，不包含範圍外的交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 交易時間 | 日期範圍 | 依交易發生時間篩選
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 以『範圍內外各一筆』的最小對照組驗證篩選確實依交易時間生效，而非僅檢視 UI 元件存在。
+  - draft_id: TC-DRAFT-01M2R29PNMDJCQ1M577MZZ78YQ
+    title: 金額範圍篩選（min～max）在邊界值上為inclusive：金額恰等於 min 或 max 的交易皆會被包含，緊鄰邊界之外的交易被排除
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-011
+    acceptance_criteria_ids:
+    - AC-TXLOG-0112
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 找出或安排四筆金額分別為 99、100、500、501（幣別一致）的交易，將金額篩選設為 min=100、max=500，點擊搜尋
+    expected_result: 金額 100 與 500 的交易皆包含在結果中（邊界值本身納入範圍）；金額 99 與 501 的交易皆不在結果中
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 金額 | 範圍輸入（min ～ max） | —
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: spec 僅說『範圍輸入 min～max』未明文 inclusive/exclusive，但這是 boundary_value 技巧的典型應用場景：min/max 本身是否被納入是最容易出錯、也最值得驗證的邊界，用四個數值（邊界外-1、邊界、邊界、邊界外+1）做完整邊界分析，這是本設計唯一有意義的數值邊界案例。
+  - draft_id: TC-DRAFT-01M2R29PNM09N7KRKWS3BEDVH0
+    title: 設定多個篩選條件後點擊清除，所有條件重置為預設值且結果回到未篩選狀態
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-012
+    acceptance_criteria_ids:
+    - AC-TXLOG-0121
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 設定多個篩選條件（例如機台帳號、交易類型 chip、交易狀態、金額範圍）並搜尋
+    - n: 2
+      action: 點擊「清除」按鈕
+    expected_result: 所有已設定的篩選條件（文字輸入清空、chip 取消勾選、下拉/範圍回到預設）皆重置；查詢結果回到未篩選狀態（僅受站台切換範圍限制）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 設定後點擊「搜尋」執行，點擊「清除」重置所有條件
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 「清除」需要驗證的是『所有』條件都被重置，因此先設定多種不同型態的篩選器（文字/chip/範圍）再一次清除，比只設定單一欄位更能驗證清除邏輯的完整性。
+  - draft_id: TC-DRAFT-01M2R29PNMQ0PYT3YMX24CQQG6
+    title: 待確認狀態的交易，會員分數尚未異動
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-013
+    acceptance_criteria_ids:
+    - AC-TXLOG-0131
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 透過該機台帳號所屬會員的會員詳細資料頁，記錄操作前的分數／餘額基準值
+    - n: 2
+      action: 安排一筆該機台帳號的交易，並確保其目前處於待確認狀態（已受理但尚未收到機台完成回報，狀態產生機制屬開發包③既有交易模型，此處僅借用其已知行為佈置測試資料）
+    - n: 3
+      action: 重新檢視該會員詳細資料頁的分數／餘額
+    expected_result: 分數／餘額與操作前的基準值相同，待確認狀態不造成任何異動
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 待確認 | 交易已受理，但尚未收到機台的完成回報；分數尚未異動
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 分數本身不在交易紀錄查詢頁顯示，須透過機台帳號欄可點擊進入的會員詳細資料頁核對（REQ-TXLOG-019），故 steps 採用前後基準值比對而非直接讀本頁欄位。
+  - draft_id: TC-DRAFT-01M2R29PNMJG3R8MD0A2RYCCN9
+    title: 已完成狀態的交易，會員分數已異動
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-014
+    acceptance_criteria_ids:
+    - AC-TXLOG-0141
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 透過會員詳細資料頁記錄操作前的分數／餘額基準值
+    - n: 2
+      action: 安排一筆該機台帳號的交易並使其完成（收到機台完成回報）
+    - n: 3
+      action: 重新檢視該會員詳細資料頁的分數／餘額
+    expected_result: 分數／餘額相較基準值已有對應異動，與待確認狀態（REQ-TXLOG-013）形成對照
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已完成 | 交易完成，分數已異動
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 REQ-013 的待確認案例互為對照組，共用相同的前後基準值比對手法，確保兩者對『分數是否異動』的驗證方式一致，不會出現判斷標準不一致的問題。
+  - draft_id: TC-DRAFT-01M2R29PNM3BAAES73K2VQA1RH
+    title: 出金交易被新的出金請求取代後，狀態顯示已取消，分數未異動
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-014
+    acceptance_criteria_ids:
+    - AC-TXLOG-0142
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆出金交易並使其停留在待確認狀態
+    - n: 2
+      action: 對同一機台帳號再發起一筆新的出金請求（或執行櫃檯人工出金）取代前者
+    - n: 3
+      action: 檢視前一筆出金交易的狀態；透過會員詳細資料頁確認分數未因此筆被取代的交易而異動
+    expected_result: 被取代的出金交易狀態顯示為已取消，分數未異動（僅新出金請求若完成才可能造成異動，不在本案例斷言範圍內）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已取消 | 出金交易被新的出金請求或櫃檯人工出金取代而作廢；分數未異動
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 這是一個明確定義觸發條件的狀態轉換（待確認 → 已取消，觸發者為新出金請求或人工出金取代），符合 state_transition 技巧的定義，與單純顯示規則的 requirement_based 案例區分開來。
+  - draft_id: TC-DRAFT-01M2R29PNM1YZ8X2PKFXRXCKC1
+    title: 入金交易超過 24 小時未收到機台回報，自動轉為已逾時，分數未異動
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-015
+    acceptance_criteria_ids:
+    - AC-TXLOG-0151
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆入金交易並確保其停留在待確認狀態
+    - n: 2
+      action: 等待（或透過測試環境提供的時間加速機制）滿 24 小時後，重新查詢該筆交易
+    - n: 3
+      action: 檢視其交易狀態與（透過會員詳細資料頁核對的）分數
+    expected_result: 交易狀態自動轉為已逾時；分數未異動
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已逾時 | 僅入金會出現：超過 24 小時仍未收到機台回報而自動關閉；分數未異動
+    assumptions:
+    - text: 驗證『超過 24 小時自動轉已逾時』需要測試環境具備時間加速能力，或存在一筆已知建立時間已超過 24 小時前、仍處於待確認狀態的既有入金交易；spec 未定義 QA 應如何取得此類測試條件，實際做法待環境負責人確認
+      requirement_id: REQ-TXLOG-015
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此案例直接對應 RequirementModel 的 states 定義（待確認 → 已逾時），是本需求唯一的真實狀態轉換案例，故標記 state_transition。實際等待 24 小時不可行，測試需要環境提供時間加速能力或一筆已知建立時間超過
+      24 小時前的既有待確認入金交易，此部分不是 spec 定義的規則，是測試執行手段，故以 assumption 標記待環境負責人確認可行做法。
+  - draft_id: TC-DRAFT-01M2R29PNM72DCT0D718Y3CRNZ
+    title: 已逾時狀態篩選結果不會出現任何出金（出鈔／洗分）類型的交易
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-015
+    acceptance_criteria_ids:
+    - AC-TXLOG-0152
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 交易狀態篩選選擇「已逾時」（此值僅存在於開分/入鈔分組，依 REQ-TXLOG-009 已確認的技術值分組），交易類型不設限，點擊搜尋
+    expected_result: 結果不包含任何機台出金或機台洗分類型的交易——出鈔/洗分分組的交易狀態技術值本身不含「已逾時」這個值（依 REQ-TXLOG-009），故此類交易永遠不會以已逾時狀態出現
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已逾時 | 僅入金會出現...出金不設逾時，見下方說明
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 刻意不透過『實際等待 24 小時讓出金逾時』的方式驗證『出金不設逾時』，改用 REQ-TXLOG-009 已確認的技術值分組事實（出鈔/洗分分組選項不含已逾時）做結構性驗證，兩者邏輯等價但不需要長時間等待，也不需要額外假設，是本案例特意選擇的較嚴謹驗證路徑。
+  - draft_id: TC-DRAFT-01M2R29PNMCYCTRK8G7MCCJN1N
+    title: 交易被平台拒絕（例如額度上限）時狀態顯示未成立，分數未異動，未成立原因欄可查得拒絕原因
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-016
+    acceptance_criteria_ids:
+    - AC-TXLOG-0161
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆會被平台拒絕的機台交易請求（例如超過場館額度上限，判定邏輯屬開發包③既有規則，本測試不重新驗證判定本身，僅借用其已知會產生拒絕結果的情境）
+    - n: 2
+      action: 查詢該筆交易，檢視其狀態、分數（透過會員詳細資料頁）與未成立原因欄
+    expected_result: 交易狀態顯示未成立；分數未異動；未成立原因欄顯示對應的拒絕原因文字（內容依 SPEC-CASHFLOW-001 定義的對照表）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 未成立 | 平台拒絕了這筆請求；分數未異動，原因見「未成立原因」欄
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: behavior_kind=rejection 的需求，設計為 negative 案例以符合『拒絕類需求需有 negative 覆蓋』的要求；具體觸發拒絕的判定規則屬 CASHFLOW 既有邏輯，此處只借用其結果狀態驗證
+      TXLOG 頁面呈現是否正確，不重新驗證判定本身。
+  - draft_id: TC-DRAFT-01M2R29PNM6W9HX6XB9N5D1SGV
+    title: 因餘額不足被拒絕的洗分或出金請求完全不寫入交易紀錄，不會以未成立狀態出現
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-016
+    acceptance_criteria_ids:
+    - AC-TXLOG-0162
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆機台洗分或出金請求，且其請求金額明確超過會員當下可用餘額（觸發餘額不足拒絕）
+    - n: 2
+      action: 嘗試以該筆請求相關的線索（時間區間、機台帳號）查詢交易紀錄
+    expected_result: 查無此筆請求對應的交易紀錄——餘額不足被拒絕的請求不會被寫入紀錄，因此也不會以未成立狀態出現在列表中，這與 REQ-TXLOG-016/TC1（其他原因被拒絕、確實會被記錄為未成立）形成明確對照
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 未成立 | ...（餘額不足不寫入紀錄，故本狀態不含餘額不足）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 這是負面事實驗證（查無此筆），需要乾淨的比對基準：以『同樣是被拒絕，但原因是餘額不足』與 TC1『被拒絕但原因是額度上限、確實有紀錄』兩案例互為對照組，避免只驗證『查無』卻沒有排除『本來就沒安排這筆交易』的疑慮——此案例明確安排了一次會被拒絕的請求作為對照起點。
+  - draft_id: TC-DRAFT-01M2R29PNMXV0DH63DKNF2ZMM6
+    title: 出金交易長期停留待確認狀態不會被自動收斂為已逾時，只會透過機台補回報、新出金取代、人工出金連動取消或轉介核實頁處理
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-017
+    acceptance_criteria_ids:
+    - AC-TXLOG-0171
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆出金交易並確保其停留在待確認狀態，機台未補送完成回報
+    - n: 2
+      action: 在未觸發任何收斂動作（機台回報、新出金取代、人工出金連動取消、核實頁人工處理）的情況下持續查詢該筆交易
+    - n: 3
+      action: 另行確認：交易狀態篩選器中「已逾時」這個值僅存在於開分/入鈔分組（依 REQ-TXLOG-009），出鈔/洗分分組本身不含此技術值
+    expected_result: 該筆出金交易在未觸發任何收斂動作前持續維持待確認狀態，不會自動轉為已逾時或任何其他狀態；出鈔/洗分分組的技術值集合本身即不包含已逾時，結構上保證了此差異
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §相關業務規則
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁人工處理
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 刻意不透過『等待超過 24 小時觀察是否仍為待確認』來驗證『不會自動轉已逾時』，因為那只是延長觀察時間、邏輯上並不比結構性驗證更有力，且會需要與 REQ-015/TC1 相同的時間假設；改用 REQ-TXLOG-009
+      已確認的技術值分組作為結構性證據（出鈔/洗分狀態集合裡根本沒有已逾時這個值），這是本需求作為 high risk 覆蓋所需的 non-happy 案例，且不需額外引入未經驗證的假設。
+  - draft_id: TC-DRAFT-01M2R29PNMMG5YAEZFQ40DW9RT
+    title: 列表底部依交易類型分列顯示金額總計，且與該類型交易的金額加總一致
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-018
+    acceptance_criteria_ids:
+    - AC-TXLOG-0181
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 篩選出一批包含至少兩種交易類型（例如開分與出金）的查詢結果
+    - n: 2
+      action: 人工加總結果中各交易類型的金額（依實際金額欄，或依 spec 定義的金額口徑）
+    - n: 3
+      action: 檢視列表底部的分類總計
+    expected_result: 列表底部顯示依交易類型分列的金額總計，且每個類型的總計數字與人工加總該類型所有交易金額的結果一致
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 列表底部顯示當前篩選結果的金額總計（依交易類型分列）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC 要求『總計與加總一致』，因此驗證方式選擇實際人工加總比對，而非只確認總計欄位存在數字。
+  - draft_id: TC-DRAFT-01M2R29PNM15REKGPE2F9G54T8
+    title: 點擊機台帳號欄位值導向該機台帳號的會員詳細資料頁
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-019
+    acceptance_criteria_ids:
+    - AC-TXLOG-0191
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選一筆機台交易
+    - n: 2
+      action: 點擊其機台帳號欄位值
+    expected_result: 頁面導向該機台帳號對應的會員詳細資料頁
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 機台帳號（來源機台） | 會員編號，可點擊進入會員詳細資料頁；非機台交易顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此欄位可點擊導頁是本頁與會員詳細資料頁串接的唯一入口，也是其他多條 TC（REQ-013/014）驗證分數異動時實際會用到的路徑，需獨立驗證其可用性。
+  - draft_id: TC-DRAFT-01M2R29PNMFD9E2QGRWAM8DBGJ
+    title: 線上會員交易的機台帳號欄顯示「—」，且列表中任一欄位皆不顯示場館名稱
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-019
+    acceptance_criteria_ids:
+    - AC-TXLOG-0192
+    - AC-TXLOG-0193
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果包含線上會員的既有交易，檢視其機台帳號欄
+    - n: 2
+      action: 逐一檢視列表的所有欄位標題與內容，確認是否存在場館／場館名稱相關欄位
+    expected_result: 線上會員交易的機台帳號欄顯示「—」；列表中不存在任何場館名稱欄位或場館名稱顯示（場館範圍已由頁面標題下方的站台切換選單限定，每列皆相同、屬冗餘資訊，故不重複顯示）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 機台帳號（來源機台） | ...非機台交易顯示「—」。場館名稱不顯示——場館已由頁面標題下方的站台切換限定
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC-TXLOG-0192（線上帳號顯示—）與 AC-TXLOG-0193（不顯示場館名稱）在同一次列表檢視中可以一併確認完成，兩者都是『這個資訊不該在此欄位出現』的斷言，合併驗證不影響各自可追溯性（仍各自列出
+      AC id）。
+  - draft_id: TC-DRAFT-01M2R29PNNR3NM25XR3JNSBEV5
+    title: 洗分交易因門檻計算，實際金額小於機台請求的金額時，請求金額與實際金額分別顯示各自的值
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-020
+    acceptance_criteria_ids:
+    - AC-TXLOG-0201
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆洗分交易，且其門檻計算結果小於機台請求的金額（門檻採機台隨請求送上的值，屬開發包③既有洗分流程決定，此情境可能已存在於既有交易紀錄中，亦可能需依既有洗分流程操作產生，具體出現條件由機台端計算決定，非本測試斷言範圍）
+    - n: 2
+      action: 檢視該筆交易的請求金額欄與實際金額欄
+    expected_result: 請求金額顯示機台送出的原始請求值；實際金額顯示門檻計算後的較小值，兩者不相等
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 請求金額 | 機台送出的金額...｜ 實際金額 | 實際異動的金額；洗分因門檻計算可能小於請求金額（門檻採機台隨請求送上的值，2026-09-01 定案）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此規則直接關係現場核帳正確性（RequirementModel 標為 high risk），但門檻具體數值由機台端決定非 spec 定義的固定規則，故 precondition 刻意不聲稱任何具體門檻計算方式，只描述『安排一筆門檻小於請求金額的洗分交易』這個已由
+      spec 承認會發生的情境，避免對未定義的計算細節做出斷言。
+  - draft_id: TC-DRAFT-01M2R29PNN3SF1K2N6VDDCKT4G
+    title: 出金交易的請求金額與實際金額皆為當下全部餘額（全額清空）
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-020
+    acceptance_criteria_ids:
+    - AC-TXLOG-0202
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 透過會員詳細資料頁記錄該機台帳號出金前的餘額
+    - n: 2
+      action: 對該機台帳號發起一筆出金交易並使其完成
+    - n: 3
+      action: 檢視該筆交易的請求金額欄與實際金額欄
+    expected_result: 請求金額與實際金額兩者皆等於出金前的餘額（全額清空），且兩者彼此相等
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 請求金額 | ...出金則為平台核算的可出金額 ｜ 實際金額 | ...出金一律為全額清空餘額
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 以出金前的實際餘額作為對照基準，直接驗證『全額清空』而非僅比較請求金額與實際金額兩者是否相等（兩者相等但都算錯的情況無法被排除），故額外引入獨立的餘額基準值。
+  - draft_id: TC-DRAFT-01M2R29PNNF9P5WQSKGZ6K0DKT
+    title: 尚未完成（待確認）的交易，實際金額欄顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-020
+    acceptance_criteria_ids:
+    - AC-TXLOG-0203
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆機台交易並確保其停留在待確認狀態
+    - n: 2
+      action: 檢視該筆交易的實際金額欄
+    expected_result: 實際金額欄顯示「—」，因交易尚未完成、無實際異動金額可顯示
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 實際金額 | ...尚未完成者顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 REQ-013 的待確認狀態案例可共用同一筆測試交易，但驗證的欄位與斷言不同（此處聚焦實際金額欄本身，REQ-013 聚焦分數是否異動），故仍獨立設計。
+  - draft_id: TC-DRAFT-01M2R29PNNMD1CP43TEHYADHH3
+    title: 洗分門檻恰好等於請求金額的邊界情況，實際金額應等於請求金額，不因洗分規則而被人為調小
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-020
+    acceptance_criteria_ids:
+    - AC-TXLOG-0201
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: critical
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆洗分交易，使其門檻計算結果恰好等於機台請求的金額（例如請求金額與門檻皆為同一數值）
+    - n: 2
+      action: 檢視該筆交易的請求金額欄與實際金額欄
+    expected_result: 實際金額等於請求金額，不因『洗分因門檻計算可能小於請求金額』這條規則而被錯誤地調小——該規則只在門檻小於請求金額時才生效，門檻等於請求金額是這條規則『是否生效』的邊界
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 實際金額 | ...洗分因門檻計算可能小於請求金額...
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 『門檻是否小於請求金額』本身就是決定是否觸發『實際金額被調小』這條規則的邊界，門檻恰好等於請求金額是這個邊界的臨界點，屬於真正的 boundary_value 分析對象，而非泛用輸入值，與 TC1（門檻明確小於請求金額的一般案例）互為邊界內/邊界上的對照。
+  - draft_id: TC-DRAFT-01M2R29PNNHSXAGDA5WKG8P57Z
+    title: 非洗分／出金類型（例如機台開分）的核實狀態欄顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-021
+    acceptance_criteria_ids:
+    - AC-TXLOG-0211
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選一筆機台開分交易
+    - n: 2
+      action: 檢視其核實狀態欄
+    expected_result: 核實狀態欄顯示「—」，因開分交易不適用核實狀態概念
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實狀態 | 洗分與出金顯示「待核實／已核實／已作廢」，其餘交易類型顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 核實狀態欄的四條 AC 分別對應不同交易類型/狀態組合下的呈現規則，逐一設計確保每種組合都被驗證到而非只驗證常見的洗分/出金分支。
+  - draft_id: TC-DRAFT-01M2R29PNN0VPGANQW4SNJV9E9
+    title: 待核實的機台洗分交易，核實狀態欄以醒目色標提示
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-021
+    acceptance_criteria_ids:
+    - AC-TXLOG-0212
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中找到（或安排）一筆核實狀態為待核實的機台洗分交易
+    - n: 2
+      action: 檢視其核實狀態欄的呈現方式
+    expected_result: 核實狀態欄以醒目色標（與其他狀態值視覺上明顯不同的提示樣式）呈現，用以提醒站務人員尚有待核實的洗分交易
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實狀態 | ...待核實的洗分以醒目色標提示（待核實的出金屬正常，不提示）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與下一條『待核實出金正常顯示不提示』是對稱情境，但因為兩者是 spec 明文定義的『不同呈現規則』而非測試技巧上的對稱，兩條皆採 requirement_based，不因為想製造技巧多樣性而刻意標成不同技巧。
+  - draft_id: TC-DRAFT-01M2R29PNNY30QY2486R3M94M5
+    title: 待核實的機台出金交易，核實狀態欄正常顯示，不特別提示
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-021
+    acceptance_criteria_ids:
+    - AC-TXLOG-0213
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中找到（或安排）一筆核實狀態為待核實的機台出金交易
+    - n: 2
+      action: 檢視其核實狀態欄的呈現方式，並與待核實洗分交易的呈現方式比較
+    expected_result: 核實狀態欄正常顯示「待核實」文字，不套用醒目色標提示；與待核實洗分交易的提示樣式明顯不同
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實狀態 | ...（待核實的出金屬正常，不提示）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 REQ-021/TC2 併同檢視，直接比較兩者的視覺差異，確保『洗分提示、出金不提示』這條區分規則被實際對照驗證，而非分別在不同 session 各自確認。
+  - draft_id: TC-DRAFT-01M2R29PNN3892WTTS6GQW1CYC
+    title: 核實人員／時間欄：已核實交易顯示核實帳號與 UTC+0 時間，待核實交易顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-022
+    acceptance_criteria_ids:
+    - AC-TXLOG-0221
+    - AC-TXLOG-0222
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中找到一筆已於「洗分出金核實」頁被核實過的交易，檢視其核實人員／時間欄
+    - n: 2
+      action: 另找一筆仍待核實的機台洗分或出金交易，檢視其核實人員／時間欄
+    expected_result: 已核實交易顯示執行核實的後台帳號與核實時間（UTC+0）；待核實交易的此欄顯示「—」
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實人員／時間 | 於「洗分出金核實」頁執行核實的後台帳號與時間（UTC+0）；待核實顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 兩個 AC 是同一欄位在不同核實狀態下的互補呈現規則（有值 vs 無值），合併於一條 TC 中依序檢視兩種情境，不需要各自獨立成案例，低風險且驗證手法相同。
+  - draft_id: TC-DRAFT-01M2R29PNN5Q4NTX6Q2QBBHF74
+    title: 未成立原因欄僅在交易狀態為未成立時顯示內容，其餘狀態不顯示
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-023
+    acceptance_criteria_ids:
+    - AC-TXLOG-0231
+    - AC-TXLOG-0232
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中找到一筆未成立狀態的交易，檢視其未成立原因欄
+    - n: 2
+      action: 另找一筆已完成狀態的交易，檢視其未成立原因欄
+    expected_result: 未成立狀態的交易，未成立原因欄顯示對應的拒絕原因文字（內容依 SPEC-CASHFLOW-001 定義的對照表）；已完成狀態的交易，此欄不顯示內容（或顯示「—」）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 未成立原因 | 僅「未成立」狀態顯示，內容見「交易不成立的原因」對照表（定義於開發包③／正本）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 具體的拒絕原因文字對照表定義於 CASHFLOW，本案例不重新驗證該對照表內容是否正確，只驗證 TXLOG 頁面『僅未成立狀態顯示、其餘不顯示』這條呈現規則本身。
+  - draft_id: TC-DRAFT-01M2R29PNN15S8MAKMY4EGWB25
+    title: 完成時間欄：已完成交易顯示 UTC+0 完成時間，尚未完成交易顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-024
+    acceptance_criteria_ids:
+    - AC-TXLOG-0241
+    - AC-TXLOG-0242
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中找到一筆已完成交易，檢視其完成時間欄
+    - n: 2
+      action: 另找一筆待確認狀態的交易，檢視其完成時間欄
+    expected_result: 已完成交易的完成時間欄顯示以 UTC+0 表示的完成時間；待確認交易的完成時間欄顯示「—」
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 完成時間 | 交易完成時間（UTC+0）；尚未完成者顯示「—」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 與 REQ-022 相同的『有值/無值互補呈現』模式，同樣合併為一條 TC 內的兩個檢視步驟，維持低風險項目的案例精簡。
+  - draft_id: TC-DRAFT-01M2R29PNNN5AWV8V9E1WAYV7M
+    title: 從未被機台重複回報的交易，重送次數欄固定顯示「—」
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-025
+    acceptance_criteria_ids:
+    - AC-TXLOG-0252
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選一筆從未被重複回報過的交易
+    - n: 2
+      action: 檢視其重送次數欄
+    expected_result: 重送次數欄顯示「—」
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位（此節「重送次數」描述已由 Oscar／PM／RD 於 2026-09-14 確認為現行產品尚未實作，非目前行為）
+      quote: 重送次數 | ...（＊目前不論次數多少，欄位一律固定顯示「—」，見 Oscar 2026-09-14 與 PM/RD 確認）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此為一般情境的基準案例，確認『未被重複回報』時顯示「—」符合預期，作為下一條『曾被重複回報仍顯示「—」』案例的對照組。
+  - draft_id: TC-DRAFT-01M2R29PNNNJVGCK4WKW4H08K4
+    title: 即使交易曾被機台重複回報完成，重送次數欄仍固定顯示「—」，不會顯示實際重複次數；分數本身仍只異動一次
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-025
+    acceptance_criteria_ids:
+    - AC-TXLOG-0251
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 安排一筆交易，並透過測試環境的方式使機台對同一筆交易編號重複送出一次完成回報（重複回報的模擬機制屬測試工具/環境能力，spec 未定義 QA 應如何觸發，需仰賴既有重複回報冪等處理機制，見 §相關業務規則）
+    - n: 2
+      action: 檢視該筆交易的重送次數欄
+    - n: 3
+      action: 透過會員詳細資料頁確認分數僅異動一次，未因重複回報而重複增減
+    expected_result: 重送次數欄仍固定顯示「—」，不顯示實際的重複次數 2；分數僅異動一次，未因重複回報而重複增減
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §相關業務規則
+      quote: 機台重複回報同一筆交易時，分數只異動一次，不會重複加減（入金與出金以交易編號辨識）
+    assumptions:
+    - text: 驗證『重複回報』情境需要測試環境具備讓機台針對同一交易編號重複送出完成回報的能力（例如重播請求或測試工具模擬）；spec 未定義此測試手段，實際做法待環境負責人確認
+      requirement_id: REQ-TXLOG-025
+      needs_human_confirmation: true
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此為 high risk 需求所需的 non-happy 案例：專門測試『看起來理所當然應該要顯示次數，但實際上刻意不顯示』這個反直覺規則，用意在於防止未來有人誤以為欄位應該要顯示真實次數而『修正』出錯誤實作。觸發機台重複回報需要測試環境的重播/模擬能力，spec
+      本身未定義 QA 應如何操作，故以 assumption 誠實標註，需環境負責人確認可行做法。
+  - draft_id: TC-DRAFT-01M2R29PNNMKE352G88CR2GNB6
+    title: 來源欄一律固定顯示「—」，不論交易實際發生位置為何
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-026
+    acceptance_criteria_ids:
+    - AC-TXLOG-0261
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: low
+    risk: low
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選任一筆交易
+    - n: 2
+      action: 檢視其來源欄
+    expected_result: 來源欄顯示「—」，不顯示「大廳」或任何實際位置值
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位（此節「來源」描述已由 Oscar／PM／RD 於 2026-09-14 確認為現行產品尚未實作，非目前行為）
+      quote: 來源 | ...（＊目前一律固定顯示「—」，見 Oscar 2026-09-14 與 PM/RD 確認）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: 此規則對所有交易一視同仁（不分類型或狀態），故單一情境即可完整覆蓋 AC，不需像重送次數欄那樣額外設計『反直覺對照』案例——來源欄沒有『看似會有值』的特殊觸發情境需要排除。
+  - draft_id: TC-DRAFT-01M2R29PNNFS3YM7FV5MRTTV1K
+    title: 點擊列表任一列開啟右側明細面板，區分摘要區塊與技術欄位區塊
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-027
+    acceptance_criteria_ids:
+    - AC-TXLOG-0271
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 查詢結果中任選一筆交易
+    - n: 2
+      action: 點擊該筆交易所在列
+    - n: 3
+      action: 檢視開啟的右側面板結構
+    expected_result: 右側面板開啟並顯示該筆交易的完整往來紀錄；面板上半部為摘要區塊、下半部為技術欄位區塊，兩者在視覺上可明確區分（例如分區標題或視覺分隔）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作
+      quote: 查看明細：點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄。⚠️ 面板下半部為技術欄位，供開發團隊排查用，站務人員以上半部的摘要為準即可
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    source: spec_workflow
+    design_rationale: AC 只要求『區分上半部摘要與下半部技術欄位』，不對摘要與技術欄位各自應包含哪些具體欄位做斷言（spec 未逐一列舉），故 expected_result 僅斷言區塊區分本身，不臆測欄位清單內容。
+  - draft_id: TC-DRAFT-01M2R29PNN1VG0CEAY95Z3WWXY
+    title: 本頁僅提供查看明細操作，不提供手動取消、不提供核實相關操作，核實狀態欄位純顯示無法編輯
+    product: ba-admin
+    functional_area: TXLOG
+    requirement_ids:
+    - REQ-TXLOG-028
+    - REQ-TXLOG-021
+    - REQ-TXLOG-030
+    acceptance_criteria_ids:
+    - AC-TXLOG-0281
+    - AC-TXLOG-0214
+    - AC-TXLOG-0301
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: critical
+    risk: medium
+    execution_mode: manual
+    preconditions: *id001
+    test_data: []
+    steps:
+    - n: 1
+      action: 檢視本頁（交易紀錄查詢）任一筆待確認狀態的交易，逐一檢查該列可見的所有按鈕／操作入口
+    - n: 2
+      action: 嘗試在列表或前一步開啟的右側明細面板中尋找任何可修改核實狀態的欄位或按鈕
+    - n: 3
+      action: 嘗試尋找任何標示為「手動取消」的按鈕或操作入口，並確認整頁範圍內（含各交易狀態的列）皆不存在
+    expected_result: 本頁唯一可執行的操作只有「查看明細」；不存在任何手動取消的按鈕或入口（spec.md 原文描述的『Admin 可手動取消待確認交易』已由 PM 於 2026-09-14／CLR-TXLOG-001 確認為錯誤敘述，非現行產品行為）；核實狀態欄純顯示文字，無任何輸入框、下拉或按鈕可供修改——凡待確認／待核實交易需要的人工處理，一律於「洗分出金核實」頁（SPEC-CASHOUT-001）進行，不在本頁
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作
+      quote: 手動取消：僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動（＊此操作不存在於現行產品，見 Oscar 2026-09-14 確認）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: spec_workflow
+    design_rationale: REQ-TXLOG-021 的 AC4（核實狀態不可編輯）、REQ-TXLOG-028（無手動取消操作）、REQ-TXLOG-030（本頁僅供查帳無核實操作）三者本質上是同一次『盤點本頁全部可用操作』的稽核行為所能一併驗證的斷言，合併為一條
+      TC 可避免三次幾乎相同的操作稽核步驟重複出現、彼此又容易因為分開驗證而遺漏死角；這條 TC 直接對應已由 CLR-TXLOG-001 正式確認的 PM 澄清，是本設計中最重要的『糾正 spec.md 錯誤敘述』案例之一。
+history:
+- at: '2026-09-17T16:13:30Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260918-001
+- at: '2026-09-17T16:22:41Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M2R2TGR3MX82W3CN8B23CKRM
+  run_id: RUN-20260918-001

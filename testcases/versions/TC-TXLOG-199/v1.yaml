@@ -1,0 +1,89 @@
+title: 洗分門檻恰好等於請求金額的邊界情況，實際金額應等於請求金額，不因洗分規則而被人為調小
+product: ba-admin
+functional_area: TXLOG
+requirement_ids:
+- REQ-TXLOG-020
+acceptance_criteria_ids:
+- AC-TXLOG-0201
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- boundary
+design_techniques:
+- boundary_value
+priority: critical
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 身分登入 ba-admin 後台
+- 頁面標題下方的站台切換選單已選定一個機台場館站台
+- 已進入 各式報表 > 交易紀錄查詢 頁面（機台交易紀錄為此頁面的機台視角擴充，不另設獨立頁面）
+test_data: []
+steps:
+- n: 1
+  action: 安排一筆洗分交易，使其門檻計算結果恰好等於機台請求的金額（例如請求金額與門檻皆為同一數值）
+- n: 2
+  action: 檢視該筆交易的請求金額欄與實際金額欄
+expected_result: 實際金額等於請求金額，不因『洗分因門檻計算可能小於請求金額』這條規則而被錯誤地調小——該規則只在門檻小於請求金額時才生效，門檻等於請求金額是這條規則『是否生效』的邊界
+expected_result_spec_reference:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  location: §列表欄位
+  quote: 實際金額 | ...洗分因門檻計算可能小於請求金額...
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-TXLOG-199
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2R39N5CPDQ65A2X596M2NFD
+created_at: '2026-09-17T16:30:48Z'
+updated_at: '2026-09-17T17:14:05Z'
+history:
+- at: '2026-09-17T16:30:48Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2R2TGR3MX82W3CN8B23CKRM
+  run_id: RUN-20260918-001
+- at: '2026-09-17T16:30:48Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-001
+- at: '2026-09-17T16:30:48Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2R39N5CPDQ65A2X596M2NFD
+  run_id: RUN-20260918-001
+- at: '2026-09-17T16:30:48Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-001
+- at: '2026-09-17T17:14:05Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0114
+  run_id: RUN-20260918-001
+- at: '2026-09-17T17:14:05Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260918-001
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0114

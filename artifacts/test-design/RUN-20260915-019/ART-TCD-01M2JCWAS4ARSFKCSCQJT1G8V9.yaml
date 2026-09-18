@@ -1,0 +1,82 @@
+artifact_id: ART-TCD-01M2JCWAS4ARSFKCSCQJT1G8V9
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-019
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-15T11:22:50Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-MEMBER-010
+- entity_type: TestCase
+  id: TC-MEMBER-014
+- entity_type: Artifact
+  id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M2JCWAS3F6S7F4GG4KRZXBW0
+    title: 人工存入前台備注與後台備注兩個必填欄位的組合驗證：任一或兩者留空即阻擋，皆填寫才允許送出
+    product: ba-admin
+    functional_area: MEMBER
+    requirement_ids:
+    - REQ-MEMBER-010
+    acceptance_criteria_ids:
+    - AC-MEMBER-014
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - decision_table
+    priority: medium
+    risk: medium
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，進入一名既有會員的詳細資料頁，開啟人工存入面板
+    test_data: []
+    steps:
+    - n: 1
+      action: 情境一：金額等其他欄位填妥，前台備注留空、後台備注填寫，點擊儲存，觀察結果
+    - n: 2
+      action: 情境二：金額等其他欄位填妥，前台備注填寫、後台備注留空，點擊儲存，觀察結果
+    - n: 3
+      action: 情境三：金額等其他欄位填妥，前台備注與後台備注皆留空，點擊儲存，觀察結果
+    - n: 4
+      action: 情境四：前台備注與後台備注皆填寫，點擊儲存，觀察結果
+    expected_result: 情境一、二、三皆被系統阻擋，不允許在缺少任一（或兩個）必填備注的情況下送出；情境四（兩者皆填寫）成功送出
+    expected_result_spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5 帳務資訊
+      quote: 前台備注｜必填；填寫後顯示於會員端，作為該筆金額異動的說明 ｜ 後台備注｜必填；僅後台人員可見，作為該筆操作紀錄的內部說明
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-MEMBER-014
+      version: 1
+    design_rationale: 已比對Phase 3影子測試(qaos-test-designer agent)產出的TC-MEMBER-040（已退役），Phase 2原版只測「前台備注留空、後台備注填寫」這1種組合，AC-MEMBER-014本身雖只明確定義「其中一項留空→阻擋」，但完整的2x2決策表(4種組合)能同時驗證「兩者皆留空」與「兩者皆填寫」這兩個AC未明確提及、但屬於同一條規則自然延伸的組合，避免只測1/4組合就宣稱規則成立。依整合原則(廣度覆蓋不能留白)採用Phase
+      3的決策表設計技術，design_techniques由requirement_based改為decision_table
+history:
+- at: '2026-09-15T11:22:57Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-019

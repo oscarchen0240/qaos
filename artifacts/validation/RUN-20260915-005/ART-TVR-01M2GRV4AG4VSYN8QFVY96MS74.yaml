@@ -1,0 +1,104 @@
+artifact_id: ART-TVR-01M2GRV4AG4VSYN8QFVY96MS74
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-005
+task_id: T2
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-09-14T20:13:24Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M2GRH93PGDHZ0H8WA3W9CXWV
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M2GRH93PGDHZ0H8WA3W9CXWV
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M2GRH93PGDHZ0H8WA3W9CXWV
+  validated_against:
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    requirement_model_artifact_id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+  issues:
+  - testcase_id: TC-DRAFT-01M2GRH93N3WA1A7HNGXEA13SJ
+    issue_type: non_executable_steps
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: spec.md 全文搜尋「出金」僅出現在表格第6項「人工出入金」（後台功能，非前台路徑）；TC 的 steps 只寫「對核心貨幣已停用的站台帳號嘗試執行出金」，未指出實際操作入口（機台版前台 vs 後台人工出金）
+    explanation: 測試員無法從目前的 steps 判斷要去哪個介面執行出金操作，導致無法可靠重現
+    recommended_change: steps 需明確指出操作入口，例如「於機台版前台嘗試出金」或「後台執行人工出金」，二擇一或都列（依實際系統設計而定）
+  - testcase_id: TC-DRAFT-01M2GRH93NS34669ZRS0T7GXQD
+    issue_type: non_executable_steps
+    severity: blocker
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: spec.md 全文搜尋「洗分」完全沒有出現，requirement.yaml 與 testcase_draft.yaml 也都沒有定義「洗分」對應的系統操作入口
+    explanation: 「洗分」是否為機台前台的一個明確功能點，目前沒有任何文件依據，測試員無法執行
+    recommended_change: steps 需明確指出「洗分」的操作入口（例如機台版前台的哪個功能），若無法在 spec 中找到依據，需在 design_rationale 或 assumptions 中註明依據來源（例如業務口頭確認）
+  - testcase_id: TC-DRAFT-01M2GRH93NAAM045F2GJKCXJ2E
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-BONUSCCY-004
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §兩種站台差很多
+    evidence: precondition 用「例如機台站台核心貨幣 TWD 已停用」，但「例如」是非強制措辭；spec.md 顯示「開分」是機台站台特有功能，線上站台沒有此功能入口，若測試員誤選線上站台，開分/洗分類 TC 會因功能不存在而無法操作，導致測試結果無效
+    explanation: 四條 TC 的 precondition 都統一寫「以 Admin 登入後台」，但實際操作角色（例如開分/洗分/入金/出金的執行者）未必是後台 Admin，且未強制規定必須使用機台站台
+    recommended_change: precondition 應明確規定「必須使用機台站台」（而非用「例如」弱化），並區分「停用核心貨幣」的操作角色（後台 Admin）與「執行入金/出金/開分/洗分」的操作角色（機台版前台）
+  advisories:
+  - testcase_id: TC-DRAFT-01M2GRH93NAAM045F2GJKCXJ2E
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落）
+    evidence: test_design_report.yaml 的 uncovered_with_reason 為空陣列
+    explanation: 「核心貨幣停用後重新啟用，操作是否恢復正常」屬於本次 REQ 範圍外的正向場景，若明確記錄排除理由會更完整，但不影響本次 PASS/FAIL 判定
+    recommended_change: 可選：於 uncovered_with_reason 註明此排除理由
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 4
+    ac_covered: 4
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M2GRH93NAAM045F2GJKCXJ2E
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GRH93N3WA1A7HNGXEA13SJ
+    verdict: issue
+  - draft_id: TC-DRAFT-01M2GRH93NSDG96PAPP2NXSMAK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M2GRH93NS34669ZRS0T7GXQD
+    verdict: issue
+history:
+- at: '2026-09-14T20:13:28Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-005

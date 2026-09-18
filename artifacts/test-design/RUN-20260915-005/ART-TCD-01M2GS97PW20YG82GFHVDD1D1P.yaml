@@ -1,0 +1,215 @@
+artifact_id: ART-TCD-01M2GS97PW20YG82GFHVDD1D1P
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260915-005
+task_id: T1
+iteration: 2
+created_by: agent-test-designer
+created_at: '2026-09-14T20:21:06Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids: []
+references:
+- entity_type: Requirement
+  id: REQ-BONUSCCY-004
+- entity_type: TestCase
+  id: TC-BONUSCCY-008
+- entity_type: Artifact
+  id: ART-RM-01M2GFSZG8TQV1J1V8FW8PW9YH
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-BONUSCCY-001
+  spec_version: '1.0'
+  testcases:
+  - draft_id: TC-DRAFT-01M2GS97PVMQHG83XVGNTWK86P
+    title: 核心貨幣對應幣別已停用時，入金操作應被阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-006
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用
+    - 必須使用機台站台（非線上站台）——入金為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台版前台投紙鈔，觸發 req-cashin（建立入金 PENDING）
+    - n: 2
+      action: 接著觸發 end-cashin（確認入金）
+    - n: 3
+      action: 觀察兩階段的回應（是否仍回 0-OK 並完成入帳）
+    expected_result: req-cashin 或 end-cashin 任一階段應被阻擋（不應兩階段皆回 0-OK 並完成入帳）；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落，2026-09-15 PM 補充確認）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    design_rationale: PM 2026-09-15 明確確認：核心貨幣可停用（止損用途，本身不應被阻擋），但停用後入金應被系統阻擋。這條驗證的是「停用後」的下游效果，不是停用動作本身。操作步驟依 SPEC-CASHFLOW-001
+      §出入金/開洗分流程定義的 API（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout），並經 Oscar 2026-09-15 實機截圖確認
+    supersedes_testcase:
+      testcase_id: TC-BONUSCCY-008
+      version: 1
+  - draft_id: TC-DRAFT-01M2GS97PV2HDC5NARKXR416HY
+    title: 核心貨幣對應幣別已停用時，出金操作應被阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-022
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用
+    - 必須使用機台站台（非線上站台）——出金為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台版前台按 CASHOUT 鍵，觸發 req-cashout（建立出金 PENDING，核可金額為全部餘額）
+    - n: 2
+      action: 接著觸發 end-cashout（確認出金，帶入 TXID）
+    - n: 3
+      action: 觀察兩階段的回應（是否仍回 0-OK 並完成扣分）
+    expected_result: req-cashout 或 end-cashout 任一階段應被阻擋（不應兩階段皆回 0-OK 並完成扣分）；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落，2026-09-15 PM 補充確認）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    design_rationale: PM 2026-09-15 明確確認：核心貨幣可停用（止損用途，本身不應被阻擋），但停用後出金應被系統阻擋。這條驗證的是「停用後」的下游效果，不是停用動作本身。操作步驟依 SPEC-CASHFLOW-001
+      §出入金/開洗分流程定義的 API（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout），並經 Oscar 2026-09-15 實機截圖確認
+    source_ref: new_required:pm_confirmation_CLR-BONUSCCY-002_2026-09-15
+  - draft_id: TC-DRAFT-01M2GS97PVJB1728AKMV7F9VNX
+    title: 核心貨幣對應幣別已停用時，開分操作應被阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-023
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用
+    - 必須使用機台站台（非線上站台）——開分為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台版前台（店員操作）輸入金額 value（必須 > 0），觸發 req-keyin（開分，單階段立即加分）
+    - n: 2
+      action: 觀察回應（是否回 0-OK 並完成加分）
+    expected_result: req-keyin 應被阻擋，不應回 0-OK 並完成加分；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落，2026-09-15 PM 補充確認）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    design_rationale: PM 2026-09-15 明確確認：核心貨幣可停用（止損用途，本身不應被阻擋），但停用後開分應被系統阻擋。這條驗證的是「停用後」的下游效果，不是停用動作本身。操作步驟依 SPEC-CASHFLOW-001
+      §出入金/開洗分流程定義的 API（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout），並經 Oscar 2026-09-15 實機截圖確認
+    source_ref: new_required:pm_confirmation_CLR-BONUSCCY-002_2026-09-15
+  - draft_id: TC-DRAFT-01M2GS97PV49Y2VEKWAT0Q2CV2
+    title: 核心貨幣對應幣別已停用時，洗分操作應被阻擋
+    product: ba-admin
+    functional_area: BONUSCCY
+    requirement_ids:
+    - REQ-BONUSCCY-004
+    acceptance_criteria_ids:
+    - AC-BONUSCCY-024
+    spec_id: SPEC-BONUSCCY-001
+    spec_version: '1.0'
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以 Admin 登入後台，至該機台站台的鏈上錢包管理，將核心貨幣本身對應的錢包幣別（例如 TWD）停用
+    - 必須使用機台站台（非線上站台）——洗分為機台版前台功能，線上站台無此入口，Oscar 2026-09-15 確認入金/出金/開分/洗分四項操作皆於機台版前台進行，對應 SPEC-CASHFLOW-001 §兩階段/單階段對照表的 API
+    test_data: []
+    steps:
+    - n: 1
+      action: 於機台版前台選擇「全洗 all」或輸入指定金額 value，觸發 req-keyout（洗分，單階段立即結束當前場次並扣分）
+    - n: 2
+      action: 觀察回應（是否回 0-OK 並完成扣分）
+    expected_result: req-keyout 應被阻擋，不應回 0-OK 並完成扣分；若實際錯誤訊息/狀態碼文案不同，不視為違反本條，僅測是否被阻擋
+    expected_result_spec_reference:
+      spec_id: SPEC-BONUSCCY-001
+      spec_version: '1.0'
+      location: §一句話（限制段落，2026-09-15 PM 補充確認）
+      quote: ''
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    design_rationale: PM 2026-09-15 明確確認：核心貨幣可停用（止損用途，本身不應被阻擋），但停用後洗分應被系統阻擋。這條驗證的是「停用後」的下游效果，不是停用動作本身。操作步驟依 SPEC-CASHFLOW-001
+      §出入金/開洗分流程定義的 API（req-cashin/end-cashin、req-cashout/end-cashout、req-keyin、req-keyout），並經 Oscar 2026-09-15 實機截圖確認
+    source_ref: new_required:pm_confirmation_CLR-BONUSCCY-002_2026-09-15
+history:
+- at: '2026-09-14T20:21:14Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260915-005

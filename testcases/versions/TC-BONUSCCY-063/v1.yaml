@@ -1,0 +1,100 @@
+title: 簽到活動的金錢類獎勵發站台系統幣別，道具類獎勵不進錢包、沒有幣別
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-006
+acceptance_criteria_ids:
+- AC-BONUSCCY-008
+spec_id: SPEC-BONUSCCY-002
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 本TC需要能以該會員身分存取線上站台前台簽到頁，非純後台操作
+- 站台已啟用系統幣別以外的至少一種幣別（例如站台系統幣別 USDT，另啟用 TTK）
+- 後台『優惠活動管理』（或對應的簽到活動設定）當下存在至少一個金錢類獎勵的簽到活動（獎勵設定為固定金額，而非實體道具/會員卡優惠券等非現金獎勵）與至少一個道具類獎勵的簽到活動，若當下沒有道具類獎勵的簽到活動可用，此半部分需標記為待執行
+- 選定一名符合簽到條件的既有會員
+test_data: []
+steps:
+- n: 1
+  action: 於後台會員詳細資料頁展開該會員的多幣別餘額檢視，記錄目前系統幣別（USDT）與 TTK 錢包的餘額
+- n: 2
+  action: 以該會員身分於前台完成一次金錢類獎勵的簽到，確認獎勵已發放
+- n: 3
+  action: 重新查看後台多幣別餘額檢視，比對系統幣別與 TTK 錢包的變動
+- n: 4
+  action: 若環境當下有道具類獎勵的簽到活動可測：以另一符合條件的會員完成一次道具類獎勵的簽到，查看其多幣別餘額檢視與『我的道具／背包』（或對應道具持有清單）是否有變動
+expected_result: 金錢類簽到獎勵發放進系統幣別（USDT）錢包，TTK 錢包不因這筆簽到獎勵而變動；道具類簽到獎勵不會反映在任一幣別錢包餘額變動上（因為道具獎勵本質不是錢，不進錢包、沒有幣別），執行時若環境當下的道具最終顯示位置與本TC
+  precondition假設不同，以錢包餘額未變動這個核心斷言為準，不強求道具本身出現在特定頁面
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  location: §每一種紅利發什麼幣別
+  quote: 每日簽到、累積簽到｜站台系統幣別｜⚠️ 簽到的道具獎勵不是錢，不進錢包、沒有幣別
+assumptions:
+- text: 簽到活動的金錢類/道具類獎勵區分與後台設定方式，目前可讀的spec.md僅在本規則盤點表中提及『道具獎勵不是錢』這個結論，未定義活動建立時如何設定/區分兩種獎勵類型的後台欄位，執行時需依測試環境當下實際的簽到活動設定判斷，若無法確認某活動屬於哪一類，以PM或後台開發確認為準
+  requirement_id: REQ-BONUSCCY-006
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0121
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: spec_workflow
+testcase_id: TC-BONUSCCY-063
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+created_at: '2026-09-17T19:22:41Z'
+updated_at: '2026-09-17T19:24:36Z'
+history:
+- at: '2026-09-17T19:22:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RCWEF5XHS0ZFPKVREVXRPF
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:42Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0121
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260918-004
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0121

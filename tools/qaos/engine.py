@@ -153,7 +153,9 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     art["status"] = "SUBMITTED"; state.apply("artifact", art, "VALID", SYSTEM, "structural gate", run_id)
     store.save(p, art)
     for old in task["output_artifact_ids"]:
-        op = store.find_artifact(old); o = store.load(op)
+        op = store.find_artifact(old)
+        if op is None: continue   # artifact 檔案已不存在（例如人工清理過），沒有東西可標 SUPERSEDED，略過而非崩潰
+        o = store.load(op)
         if o["artifact_type"] == art["artifact_type"] and o["status"] == "VALID":
             state.apply("artifact", o, "SUPERSEDED", SYSTEM, f"replaced by {art['artifact_id']}", run_id); store.save(op, o)
     task["output_artifact_ids"].append(art["artifact_id"])
@@ -187,7 +189,9 @@ def _mark_invalid(run, task, art, p, problems):
 def _valid_outputs(task) -> dict:
     out = {}
     for aid in task["output_artifact_ids"]:
-        a = store.load(store.find_artifact(aid))
+        p = store.find_artifact(aid)
+        if p is None: continue   # artifact 檔案已不存在，略過而非崩潰
+        a = store.load(p)
         if a["status"] == "VALID": out[a["artifact_type"]] = a
     return out
 
@@ -479,7 +483,8 @@ def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False):
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
             if t["task_id"] != task["task_id"] and t["status"] in ("DONE",) and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"):
                 t["status"] = "PENDING"; t["output_artifact_ids"] = []
-        task["status"] = "PENDING"
+            if t["type"] == "approval": t["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到本輪 reject 前的殘留資料
+        task["status"] = "PENDING"; task["input_entity_refs"] = []
         run["current_task_id"] = gen["task_id"]
     _save_run(run)
 
@@ -608,6 +613,7 @@ def _after_override(run, task, apr, decision, by):
         for later in run["tasks"][ids_.index(reopen) + 1:]:   # 下游已 DONE 的 task 重設，讓 Validator 可再跑
             if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"):
                 later["status"] = "PENDING"; later["output_artifact_ids"] = []; later.pop("history", None)
+            if later["type"] == "approval": later["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到殘留資料
         _save_run(run); return
     state.apply("workflow_run", run, "CANCELLED", by, apr["approval_id"], run["run_id"]); _save_run(run)
 

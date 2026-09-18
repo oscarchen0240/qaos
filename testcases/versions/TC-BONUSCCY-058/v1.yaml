@@ -1,0 +1,86 @@
+title: 人工存款不觸發首存／次存活動，玩家不因此被算作首儲或配到任何存款活動
+product: ba-admin
+functional_area: BONUSCCY
+requirement_ids:
+- REQ-BONUSCCY-010
+acceptance_criteria_ids:
+- AC-BONUSCCY-012
+spec_id: SPEC-BONUSCCY-002
+spec_version: '1.0'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以 Admin 登入後台
+- 選定一名既有會員，其原本未達首存活動門檻（自行從環境中選定一個從未在該站台完成過系統存款、或尚未達次存門檻的既有會員），確認該會員在本次操作前沒有其他系統存款同時進行中，避免干擾判斷
+- 人工存入操作方式依 SPEC-MEMBER-001 v0.2 §2.1.5：會員詳細資料頁帳務資訊區塊的『人工存入』按鈕，右側滑出面板填寫金額／稽核倍數／前台備注／後台備注後點擊『儲存』
+test_data: []
+steps:
+- n: 1
+  action: 於後台『優惠活動管理』（或對應的存款活動列表）記錄該首存／次存活動目前的門檻金額，以及該會員目前是否已被列為『已達首儲／次儲』
+- n: 2
+  action: 記錄該會員此刻的帳戶餘額（主錢包）
+- n: 3
+  action: 於該會員詳細資料頁使用『人工存入』功能，填入一筆金額（足以達到首存活動門檻），稽核倍數維持預設 1，前台/後台備注依需求填寫，點擊儲存
+- n: 4
+  action: 重新查看該會員的帳戶餘額（主錢包），並回『優惠活動管理』確認該首存／次存活動的參與/發放名單中是否出現這筆存款
+expected_result: 首存／次存活動不觸發：該會員不會被算作首儲，也不會配到任何存款活動——帳戶餘額（主錢包）僅增加本次人工存入的金額，沒有額外的活動獎勵金額一併入帳；『優惠活動管理』中該活動的參與/發放紀錄查無這筆人工存款對應的觸發紀錄
+expected_result_spec_reference:
+  spec_id: SPEC-BONUSCCY-002
+  spec_version: '1.0'
+  location: §人工存款
+  quote: 人工存款不會進任何活動與累積統計。首存／次存活動❌不觸發，不算首儲、也不會配到任何存款活動
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: spec_workflow
+testcase_id: TC-BONUSCCY-058
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+created_at: '2026-09-17T19:22:41Z'
+updated_at: '2026-09-17T19:24:36Z'
+history:
+- at: '2026-09-17T19:22:41Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M2RCWEF5XHS0ZFPKVREVXRPF
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M2RD49FMAK2TZGC0RRFKZVKN
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:22:41Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260918-004
+- at: '2026-09-17T19:24:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0121
+  run_id: RUN-20260918-004
+  note: rejected
