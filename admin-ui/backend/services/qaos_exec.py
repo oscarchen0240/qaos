@@ -178,8 +178,12 @@ def execute(ticket_id: str) -> dict:
     handoff_id = None
     if res["exit_code"] == 0:
         handoff_id = uuid.uuid4().hex[:12]
+        # 交接分類：run 還有 READY 的 agent task 要接 → resume_agent（relay 會 block 讓 QA session 接續）；
+        # 其他（run 結案／又在等人／釐清、Bug 動作）→ notify_only（relay 只在 UserPromptSubmit 顯示，不擋、不吞）
+        resume = bool(kind == "approval" and run_after and run_after["status"] == "RUNNING" and cur and cur.get("status") == "READY")
         _append_handoff({
             "kind": "handoff", "id": handoff_id, "ts": ended, "ticket_id": ticket_id, "ticket_kind": kind, "action": action,
+            "handoff_kind": "resume_agent" if resume else "notify_only",
             "command": cmd_out["command"], "exit_code": res["exit_code"], "run_id": run_id,
             "run_status_after": run_after["status"] if run_after else None, "next_task": next_task,
             "next_agent": (cur.get("agent_id") if (kind == "approval" and run_after and cur) else None),

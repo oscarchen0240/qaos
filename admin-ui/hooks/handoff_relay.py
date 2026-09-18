@@ -1,9 +1,10 @@
 """Claude Code hook（Stop / UserPromptSubmit）：把平台的交接紀錄接回 QA session。
 
 讀 .warroom/handoff.jsonl（只有 admin-ui 後端會寫），找「給這個 session、尚未消費」的紀錄：
-- Stop：若 run.yaml 確認該 run 仍 RUNNING 且 current task 為 READY，輸出 {"decision":"block","reason":...}
-        讓 Claude 接續執行；同時 append 一筆 consumed，避免下回合再擋。stop_hook_active 為真時不再擋（防迴圈）。
-- UserPromptSubmit：把待處理的交接摘要印到 stdout（會成為本回合的額外上下文），不擋、不改指令。
+- Stop：若 run.yaml 確認該 run 仍 RUNNING 且 current task 為 READY（resume_agent），輸出 {"decision":"block","reason":...}
+        讓 Claude 接續執行；只 append 這一筆 consumed(resumed)。其餘 pending 原封不動——run 已 COMPLETED／又在等人的
+        notify_only 交接不可被 no-op 吞掉（PROMPT-test-automation-coverage-audit A6 #5）。stop_hook_active 為真時不擋（防迴圈）。
+- UserPromptSubmit：把待處理的交接摘要印到 stdout（成為本回合上下文），不擋、不改指令；notify_only 顯示過即標 consumed(notified)。
 
 保證：不打網路、只讀 handoff.jsonl / run.yaml、只 append handoff.jsonl；任何錯誤靜默 exit 0。
 只認 session_id 相符的紀錄，所以開發 admin-ui 的 session 不會被影響。
@@ -78,29 +79,37 @@ def main():
     if not pending:
         return
 
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+    def _resumable(r):
+        """真的有 agent task 在等：run RUNNING 且 current task READY（以 run.yaml 當下狀態為準，不信 handoff 寫入時的快照）。"""
+        st = _run_state(project, r.get("run_id") or "") if r.get("run_id") else None
+        return (r, st) if (st and st["status"] == "RUNNING" and st["task_status"] == "READY") else None
+
     if ev == "UserPromptSubmit":
+        # 顯示所有待接續；notify_only（沒有 task 要接）顯示過就算送達，標 notified；resume_agent 留給 Stop 去 block
         lines = ["[QAOS 指揮台交接] 以下單據已由平台執行，尚未由本 session 接續："]
+        notified = []
         for r in pending[-5:]:
             lines.append(f"- {r.get('ts')} {r.get('ticket_id')} {r.get('action')} → run {r.get('run_id')} {r.get('run_status_after')}，current_task={r.get('next_task')}。{r.get('hint','')}")
+        for r in pending:
+            if _resumable(r) is None:
+                notified.append(r["id"])
+        if notified:
+            with open(hpath, "a", encoding="utf-8") as f:
+                for hid in notified:
+                    f.write(json.dumps({"kind": "consumed", "handoff_id": hid, "ts": ts, "by": "relay", "note": "notified"}, ensure_ascii=False) + "\n")
         print("\n".join(lines))
         return
 
-    # Stop：只接「run 真的在等 agent 動」的那一筆；其他的直接標消費
+    # Stop：只接「run 真的在等 agent 動」的第一筆，也只 consume 這一筆；其餘 pending 原封不動（不可 no-op 吞單）
     if p.get("stop_hook_active"):
         return
-    todo = None
-    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    with open(hpath, "a", encoding="utf-8") as f:
-        for r in pending:
-            st = _run_state(project, r.get("run_id") or "") if r.get("run_id") else None
-            if todo is None and st and st["status"] == "RUNNING" and st["task_status"] == "READY":
-                todo = (r, st)
-                continue
-            f.write(json.dumps({"kind": "consumed", "handoff_id": r["id"], "ts": ts, "by": "relay", "note": "no-op"}, ensure_ascii=False) + "\n")
-        if todo:
-            f.write(json.dumps({"kind": "consumed", "handoff_id": todo[0]["id"], "ts": ts, "by": "relay", "note": "resumed"}, ensure_ascii=False) + "\n")
+    todo = next((x for x in (_resumable(r) for r in pending) if x), None)
     if not todo:
         return
+    with open(hpath, "a", encoding="utf-8") as f:
+        f.write(json.dumps({"kind": "consumed", "handoff_id": todo[0]["id"], "ts": ts, "by": "relay", "note": "resumed"}, ensure_ascii=False) + "\n")
     r, st = todo
     reason = (f"QAOS 指揮台已對 {r.get('ticket_id')} 執行「{r.get('action')}」（{r.get('by')}）。"
               f"run {r.get('run_id')} 現在 {st['status']}，current_task_id={st['current_task_id']}（{st.get('agent_id') or ''}，狀態 READY）。"
