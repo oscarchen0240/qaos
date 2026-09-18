@@ -35,19 +35,38 @@ def qaos_root(tmp_path: pathlib.Path) -> pathlib.Path:
 
 @pytest.fixture
 def write_run(qaos_root: pathlib.Path):
-    """寫一個最小 run.yaml。tasks: [(task_id, status, agent_id)]。"""
-    def _write(run_id: str, status: str, current: str | None, tasks: list[tuple[str, str, str | None]], **extra) -> pathlib.Path:
+    """寫一個最小 run.yaml。tasks: [(task_id, status, agent_id)] 或 [(task_id, status, agent_id, extra_dict)]，
+    extra_dict 可放 approval_id／history／gate_results／iteration／type。
+    created_at／updated_at 未指定時依呼叫順序遞增（同一測試內多次呼叫自然保序，不必手動改日期）。"""
+    counter = {"n": 0}
+
+    def _write(run_id: str, status: str, current: str | None, tasks: list[tuple], **extra) -> pathlib.Path:
+        counter["n"] += 1
+        created = extra.pop("created_at", None) or f"2026-09-{min(10 + counter['n'], 28):02d}T00:00:00Z"
+        updated = extra.pop("updated_at", None) or created
+        task_docs = []
+        for t in tasks:
+            task_id, tstatus = t[0], t[1]
+            agent = t[2] if len(t) > 2 else None
+            te = dict(t[3]) if len(t) > 3 else {}
+            task_docs.append({
+                "task_id": task_id, "type": te.pop("type", None) or ("approval" if task_id == "T4" else "agent"),
+                "agent_id": agent, "status": tstatus, "iteration": te.pop("iteration", 0),
+                "history": te.pop("history", []), "gate_results": te.pop("gate_results", []),
+                **te,
+            })
         d = qaos_root / "runs" / run_id
         d.mkdir(parents=True, exist_ok=True)
         doc = {
             "run_id": run_id, "workflow_id": extra.get("workflow_id", "spec-to-testcase"), "status": status,
-            "input": {"spec_id": extra.get("spec_id", "SPEC-TEST-001"), "spec_version": "0.1", "initiated_by": "tester@example.com"},
-            "initiated_by": "tester@example.com", "created_at": "2026-09-18T00:00:00Z", "updated_at": "2026-09-18T00:10:00Z",
-            "current_task_id": current, "tasks": [{"task_id": t, "type": "agent", "agent_id": a, "status": s, "iteration": 0, "history": []} for t, s, a in tasks],
-            "history": [],
+            "input": {"spec_id": extra.get("spec_id", "SPEC-TEST-001"), "spec_version": extra.get("spec_version", "0.1"), "initiated_by": "tester@example.com"},
+            "initiated_by": "tester@example.com", "created_at": created, "updated_at": updated,
+            "current_task_id": current, "tasks": task_docs, "history": [],
         }
         if extra.get("waiting_on_approval_id"):
             doc["waiting_on_approval_id"] = extra["waiting_on_approval_id"]
+        if extra.get("testcase_id"):
+            doc["input"]["testcase_id"] = extra["testcase_id"]
         (d / "run.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False), encoding="utf-8")
         return d / "run.yaml"
     return _write
@@ -139,6 +158,69 @@ def sandbox(qaos_root: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     box = Box()
     box.db, box.runs, box.tickets, box.qaos_exec, box.root = db, runs, tickets, qaos_exec, qaos_root
     return box
+
+
+@pytest.fixture
+def full_sandbox(sandbox, monkeypatch: pytest.MonkeyPatch):
+    """稽核 Top 10–15：把 specflow／autoreports／outputs／registry／durations／pipeline 也指到假根。
+    這些模組在 import 當下把目錄算成模組層常數（不像 db/runs/tickets 走 env override），
+    所以每個都要單獨 monkeypatch 自己的常數，而不是只改 config。"""
+    from backend.services import autoreports, durations, outputs, pipeline, registry, specflow
+
+    root = sandbox.root
+    (root / "testcases" / "final").mkdir(parents=True, exist_ok=True)
+    (root / "testcases" / "registry").mkdir(parents=True, exist_ok=True)
+    (root / "testcases" / "versions").mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "phase3-shadow-test").mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(outputs, "FINAL_DIR", root / "testcases" / "final")
+    monkeypatch.setattr(outputs, "PROJECT_ROOT", root)
+    monkeypatch.setattr(registry, "REG_DIR", root / "testcases" / "registry")
+    monkeypatch.setattr(registry, "VER_DIR", root / "testcases" / "versions")
+    monkeypatch.setattr(registry, "_ptr_cache", {})
+    monkeypatch.setattr(registry, "_ver_cache", {})
+    monkeypatch.setattr(specflow, "PROJECT_ROOT", root)
+    monkeypatch.setattr(specflow, "SHADOW_DIR", root / "docs" / "phase3-shadow-test")
+    monkeypatch.setattr(specflow, "_cache", None)
+    monkeypatch.setattr(autoreports, "PROJECT_ROOT", root)
+    monkeypatch.setattr(sandbox.tickets, "VER_DIR", root / "testcases" / "versions")
+
+    sandbox.specflow = specflow
+    sandbox.autoreports = autoreports
+    sandbox.outputs = outputs
+    sandbox.registry = registry
+    sandbox.durations = durations
+    sandbox.pipeline = pipeline
+    return sandbox
+
+
+@pytest.fixture
+def write_shadow_doc(qaos_root: pathlib.Path):
+    """寫一份 docs/phase3-shadow-test/<date>-<slug>-shadow-test.md，可指定內文（含 run id、最終處置指令等）。"""
+    def _write(slug: str, run_ids: list[str], body: str, date: str = "2026-09-18") -> pathlib.Path:
+        d = qaos_root / "docs" / "phase3-shadow-test"
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / f"{date}-{slug}-shadow-test.md"
+        text = f"# Phase 3 影子測試紀錄\n\n- **Run**：{'、'.join(run_ids)}\n\n{body}\n"
+        p.write_text(text, encoding="utf-8")
+        return p
+    return _write
+
+
+@pytest.fixture
+def write_registry_tc(qaos_root: pathlib.Path):
+    """寫一條 ACTIVE 的 registry pointer + 對應版本檔。"""
+    def _write(tc_id: str, version: int, spec_id: str, spec_version: str = "0.1", requirement_ids: list[str] | None = None, title: str = "test tc") -> None:
+        reg = qaos_root / "testcases" / "registry" / f"{tc_id}.yaml"
+        reg.write_text(yaml.safe_dump({"testcase_id": tc_id, "active_version": version, "status": "ACTIVE",
+                                        "versions": [{"version": version, "status": "ACTIVE"}]}, allow_unicode=True), encoding="utf-8")
+        ver_dir = qaos_root / "testcases" / "versions" / tc_id
+        ver_dir.mkdir(parents=True, exist_ok=True)
+        (ver_dir / f"v{version}.yaml").write_text(yaml.safe_dump({
+            "testcase_id": tc_id, "version": version, "spec_id": spec_id, "spec_version": spec_version, "title": title,
+            "requirement_ids": requirement_ids or [], "updated_at": "2026-09-18T00:00:00Z",
+        }, allow_unicode=True), encoding="utf-8")
+    return _write
 
 
 @pytest.fixture
