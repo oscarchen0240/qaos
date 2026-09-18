@@ -143,7 +143,8 @@ def build() -> dict:
         p3_terminal = bool(p3 and p3["status"] in ("COMPLETED", "CANCELLED", "FAILED"))
         # 同 spec 又有新的 spec-to-testcase run 在跑（例如 Phase 3 重做）→ 整合要等新 run 完成，不算進行中
         redo_active = any(r["status"] in ("RUNNING", "WAITING_HUMAN", "CREATED") for r in others)
-        integ_status = "done" if dod["shadow_doc"] and not revs_open else ("active" if (p3_terminal and p3["status"] != "FAILED" and not redo_active and (revs_open or not doc)) else "pending")
+        # 同 spec 又有 run 在跑（重做）→ 一律 pending，不沿用舊的整合證據（即使舊的 shadow 文件與修訂都已結束）
+        integ_status = "pending" if redo_active else ("done" if dod["shadow_doc"] and not revs_open else ("active" if (p3_terminal and p3["status"] != "FAILED") else "pending"))
         final_status = "done" if dod["final"] else ("stale" if (grp and drift_stale) else "pending")
         integ_elapsed = (integ_end - p3_end) if (integ_end and p3_end and integ_status == "done") else ((now - p3_end) if (p3_end and integ_status == "active") else None)
         final_elapsed = (final_mtime - integ_end) if (final_mtime and integ_end and final_status == "done") else None

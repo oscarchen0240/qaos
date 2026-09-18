@@ -32,6 +32,20 @@ def test_shadow_doc_pins_phase3_run_even_if_not_latest(full_sandbox, write_run, 
     assert data["run_phase"]["RUN-20260915-001"] == "phase3"
 
 
+def test_integration_pending_while_new_phase3_attempt_is_running(full_sandbox, write_run, write_shadow_doc):
+    """已有一條 Phase 3 run 且整合完成，但同 spec 又開了新的 spec-to-testcase run（重做）在跑
+    → 整合狀態要退回 pending（不能沿用舊證據）。"""
+    write_run("RUN-20260913-001", "COMPLETED", "T5", [("T5", "DONE", None)], spec_id="SPEC-AREA-003")
+    write_run("RUN-20260915-001", "COMPLETED", "T5", [("T4", "DONE", None, {"approval_id": "APR-1"}), ("T5", "DONE", None)], spec_id="SPEC-AREA-003")
+    write_shadow_doc("area-003", ["RUN-20260915-001"], "整合完成，保留全部。")
+    spec = _spec(full_sandbox, "AREA-003")
+    assert spec["integration"]["status"] == "done"
+    # 現在開一條新的 run（同 spec，還在跑）
+    write_run("RUN-20260918-009", "RUNNING", "T2", [("T2", "READY", "agent-test-designer")], spec_id="SPEC-AREA-003")
+    spec2 = _spec(full_sandbox, "AREA-003")
+    assert spec2["integration"]["status"] == "pending"
+
+
 def test_cancelled_phase3_run_with_doc_still_counts_as_integrated(full_sandbox, write_run, write_shadow_doc):
     """Phase 3 run 在整合完成後被 run cancel（shadow 文件會註明）→ 仍算整合完成（不是失敗）。"""
     write_run("RUN-20260913-001", "COMPLETED", "T5", [("T5", "DONE", None)], spec_id="SPEC-AREA-004")
