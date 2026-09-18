@@ -80,7 +80,11 @@ admin-ui/
   - **執行畫面**：上方甜甜圈（純 SVG）＋圖例＋進度條；左邊 TC 清單可依結果篩選、搜尋；右邊結果面板：Pass / Fail / Blocked / Skipped / Untested、實際結果、備註、證據上傳（類型對齊 QAOS evidence schema：screenshot / video / log / network / db_query / api_response / other，單檔 25MB，存 `admin-ui/data/evidence/<run>/`）。快捷鍵 P / F / B / S / U 標結果，J / K 上下一條；Pass 後自動跳下一條未測，Fail 停在原地讓你填實際結果與證據。
   - **結束回合**：確認後鎖定結果，自動產一份報告（`reports.kind=automation`，介面標「測試執行」，`source_key=run id`）：結果表、通過率、NG 清單（實際結果、證據、bug run）、逐條結果表；你補結論。刪除回合會連報告與證據檔一起刪。
   - API：`/api/testruns`（list / create / get / patch / delete）、`/{id}/results/{rid}`（PATCH 結果）、`/{id}/results/{rid}/evidence`（POST multipart、DELETE）、`/{id}/evidence/{eid}`（下載）、`/{id}/finish`、`/meta`。資料表 `test_runs` / `test_results`（M4 stub 建的舊表由 `_migrate_testruns` 補欄位）。
-  - **NG 送 QAOS 開 bug（M7b，待做）**：對 Fail 的 TC 依 spec-to-bug 必填（spec、TC、實際行為、至少一份證據、環境／build）依序執行 `bin/qaos evidence add` → `execution import --result fail` → `run new spec-to-bug`，之後 Bug Analyst／Validator 在 QA session 跑，OPEN_BUG 核准單出現在「單據 › 核准」。回合設定 `import_all` 預留「Pass 也匯進 QAOS executions」。
+  - **NG 送 QAOS 開 bug（M7b，2026-09-18 Oscar 確認路徑後啟用）**：Fail 的結果面板有「送 QAOS 開 bug」，前提是實際結果已填、至少一份證據。按下先預覽（`GET …/bug-plan`）：三條 QAOS 指令與會寫的路徑，確認後執行（`POST …/file-bug`，`backend/services/qaos_bug.py`）：
+    1. `bin/qaos evidence add --type … --file <平台證據檔> --owner testrun-<回合>` 每份證據一次 → `evidence/testrun-<id>/EVD-*.{ext,yaml}`
+    2. `bin/qaos execution import --testcase-id … --result fail --environment … --evidence EVD…` → `executions/YYYY-MM/EXE-*.yaml`
+    3. `bin/qaos run new spec-to-bug --input spec_id/spec_version/testcase_id/testcase_version/execution_id/evidence_ids` → 新 `runs/RUN-*/`；RequirementModel 已存在時 T0 直接跳過，T1（Bug Analyst）READY
+    每步都動 `testcases/registry/_counters.yaml` 與 `runs/_audit.log`。spec 版本從 `testcases/versions/<TC>/v<N>.yaml` 讀（唯讀）。EVD／EXE／RUN 編號寫回該筆結果（重送不會重複登記證據）。成功後寫 `.warroom/handoff.jsonl`（resume_agent，交給 pipeline 目前 focus 的 QA session），relay 讓 QA session 接手 Bug Analyst／Validator；走到 OPEN_BUG 核准單時出現在「單據 › 核准」，核准後正式 bug 才進 `bugs/`。證據類型＝QAOS `evidence.schema.json` 的 enum。回合 `import_all` 開著時，結束回合會把 Pass／Blocked／Skipped 也匯進 executions（只匯，不開 bug）。回合結束後仍可對 Fail 送 bug。回合頁上方「回合設定」可就地補環境（送 QAOS 必填）、build、全部匯入開關；缺環境時開 bug 按鈕停用並指引。
 - 自動化測試（M4 stub，API 契約仍在 `/api/automation/*`）：頁面可開，顯示預留的資料表（`test_runs` / `test_results`）與 API 契約；`GET /api/automation/runs` 回空清單，其餘寫入類端點回 501。契約與 M7 流程寫在 `backend/routers/automation.py` 開頭註解。
 - API：`curl http://127.0.0.1:8780/api/health`；完整文件 http://127.0.0.1:8780/api/docs
 

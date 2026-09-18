@@ -5,10 +5,10 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/Confirm";
 import { refreshNav } from "@/lib/nav";
 import { clickable } from "@/lib/a11y";
-import { api, type Evidence, type RunCounts, type TestResult, type TestResultKind, type TestRun, type TestRunMeta } from "@/lib/api";
+import { api, type BugFileResult, type BugPlan, type Evidence, type RunCounts, type TestResult, type TestResultKind, type TestRun, type TestRunMeta } from "@/lib/api";
 import { fmtBytes, fmtDate } from "@/lib/format";
 import { Donut, Legend, ProgressBar, RESULT_COLOR, RESULT_LABEL } from "./Donut";
-import { ArrowLeft, ArrowRight, Paperclip, Trash, FlagCheckered, FileText } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Paperclip, Trash, FlagCheckered, FileText, Bug, PaperPlaneRight } from "@phosphor-icons/react";
 
 const ST_LABEL: Record<string, string> = { planned: "未開始", running: "進行中", done: "已完成", aborted: "已中止" };
 const RESULT_KEYS: TestResultKind[] = ["pass", "fail", "blocked", "skipped", "untested"];
@@ -82,7 +82,8 @@ export function TestRunPage() {
               <div className="row" style={{ justifyContent: "space-between" }}><span className="faint" style={{ fontSize: 12 }}>進度</span><span className="mono">{run.counts.done} / {run.counts.total}（{run.counts.progress}%）</span></div>
               <ProgressBar counts={run.counts} />
               <div className="faint" style={{ fontSize: 12 }}>快捷鍵：P Pass · F Fail · B Blocked · S Skipped · U 未測 · J / K 上下一條</div>
-              {locked && <div className="tag ok" style={{ alignSelf: "flex-start" }}>結果已鎖定</div>}
+              {locked && <div className="tag ok" style={{ alignSelf: "flex-start" }} title="結束後結果不能改，但 Fail 仍可送 QAOS 開 bug">結果已鎖定</div>}
+              <RunSettings run={run} onSaved={(r) => setRun((cur) => cur ? { ...cur, ...r, results: cur.results } : r)} />
             </div>
           </div>
         </div>
@@ -108,7 +109,7 @@ export function TestRunPage() {
           </aside>
           <section className="run-detail">
             {!current ? <div className="faint">左邊選一條 TC</div> : (
-              <ResultPanel key={current.id} r={current} locked={locked} meta={meta} runId={runId} onMark={mark} onSave={(f) => setResult(current.id, f)} onNext={goNext} onEvidenceChanged={load} />
+              <ResultPanel key={current.id} r={current} locked={locked} meta={meta} runId={runId} envOk={!!(run.environment || "").trim()} onMark={mark} onSave={(f) => setResult(current.id, f)} onNext={goNext} onEvidenceChanged={load} />
             )}
           </section>
         </div>
@@ -117,7 +118,7 @@ export function TestRunPage() {
   );
 }
 
-function ResultPanel({ r, locked, meta, runId, onMark, onSave, onNext, onEvidenceChanged }: { r: TestResult; locked: boolean; meta: TestRunMeta | null; runId: number; onMark: (k: TestResultKind) => void; onSave: (f: Partial<Pick<TestResult, "actual_result" | "notes">>) => Promise<boolean>; onNext: () => void; onEvidenceChanged: () => void }) {
+function ResultPanel({ r, locked, meta, runId, envOk, onMark, onSave, onNext, onEvidenceChanged }: { r: TestResult; locked: boolean; meta: TestRunMeta | null; runId: number; envOk: boolean; onMark: (k: TestResultKind) => void; onSave: (f: Partial<Pick<TestResult, "actual_result" | "notes">>) => Promise<boolean>; onNext: () => void; onEvidenceChanged: () => void }) {
   const [actual, setActual] = useState(r.actual_result);
   const [notes, setNotes] = useState(r.notes);
   const [evType, setEvType] = useState("screenshot");
@@ -203,9 +204,121 @@ function ResultPanel({ r, locked, meta, runId, onMark, onSave, onNext, onEvidenc
         )}
       </div>
 
+      {r.result === "fail" && <FileBugBox r={r} runId={runId} envOk={envOk} onChanged={onEvidenceChanged} />}
+      {r.result !== "fail" && r.qaos_execution_id && <div className="notice">已匯入 QAOS executions：<span className="mono">{r.qaos_execution_id}</span></div>}
+
       <div className="row" style={{ justifyContent: "flex-end" }}>
         <button className="btn ghost" onClick={onNext}>下一條<ArrowRight className="ic sm" aria-hidden="true" /></button>
       </div>
+    </div>
+  );
+}
+
+/** Fail → 送 QAOS 開 bug：預覽三條 bin/qaos 指令與寫入路徑 → 確認 → 執行 → 顯示 EVD／EXE／RUN 編號與交接提示 */
+function FileBugBox({ r, runId, envOk, onChanged }: { r: TestResult; runId: number; envOk: boolean; onChanged: () => void }) {
+  const [plan, setPlan] = useState<BugPlan | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<BugFileResult | null>(null);
+  const { toast } = useToast();
+  const confirm = useConfirm();
+  const ready = !!(r.actual_result || "").trim() && r.evidence.length > 0 && !r.bug_run_id && !!envOk;
+  useEffect(() => { setPlan(null); setLast(null); }, [r.id, r.actual_result, r.evidence.length, r.bug_run_id]);
+
+  const send = async () => {
+    setBusy(true);
+    try {
+      const p = await api.get<BugPlan>(`/api/testruns/${runId}/results/${r.id}/bug-plan`);
+      setPlan(p);
+      if (p.warnings.length) { toast(p.warnings[0], "danger"); return; }
+      const ok = await confirm({
+        title: `送 QAOS 開 bug：${r.testcase_id}`,
+        message: (
+          <div className="stack" style={{ gap: 8 }}>
+            <div className="faint" style={{ fontSize: 12 }}>平台會依序執行 {p.steps.length} 條 QAOS 指令（執行者 {p.operator}）：</div>
+            <ol className="tc-steps" style={{ fontSize: 12 }}>{p.steps.map((s, i) => <li key={i}><div>{s.label}</div><pre className="cmd-pre" style={{ margin: "4px 0 0", fontSize: 11 }}>{s.command}</pre></li>)}</ol>
+            <div className="faint" style={{ fontSize: 12 }}>QAOS 會寫入：</div>
+            <ul className="tc-list" style={{ fontSize: 12 }}>{p.writes.map((w, i) => <li key={i} className="mono">{w}</li>)}</ul>
+            <div className="faint" style={{ fontSize: 12 }}>spec {p.meta.spec_id}@{p.meta.spec_version} · TC v{p.meta.version}。之後 Bug Analyst／Validator 由 QA session 跑，OPEN_BUG 核准單會出現在「單據 › 核准」。</div>
+          </div>
+        ),
+        confirmText: "執行並開 bug",
+        danger: true,
+      });
+      if (!ok) return;
+      const res = await api.post<BugFileResult>(`/api/testruns/${runId}/results/${r.id}/file-bug`);
+      setLast(res);
+      toast(res.bug_run_id ? `已開 ${res.bug_run_id}` : "已送出", "ok");
+      onChanged();
+    } catch (e) { toast(`失敗：${(e as Error).message}`, "danger"); }
+    finally { setBusy(false); }
+  };
+
+  if (r.bug_run_id) {
+    return (
+      <div className="notice" style={{ borderColor: "rgba(60,200,140,0.4)" }}>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+          <Bug className="ic sm" aria-hidden="true" />
+          <span>已送 QAOS 開 bug：<span className="mono">{r.bug_run_id}</span></span>
+          {r.qaos_execution_id && <span className="faint mono" style={{ fontSize: 12 }}>{r.qaos_execution_id}</span>}
+          {r.qaos_evidence_ids.length > 0 && <span className="faint mono" style={{ fontSize: 12 }}>{r.qaos_evidence_ids.join(" ")}</span>}
+        </div>
+        {last?.hint && <div style={{ fontSize: 12.5, marginTop: 6 }}>{last.hint}</div>}
+      </div>
+    );
+  }
+  return (
+    <div className="cmd-box">
+      <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div className="section-title" style={{ margin: 0 }}>送 QAOS 開 bug</div>
+          <div className="faint" style={{ fontSize: 12 }}>{ready ? "會登記證據、匯入執行紀錄、開一條 spec-to-bug run；按下去會先給你看指令與寫入路徑。" : !envOk ? "回合還沒填「環境」：到上方「回合設定」補上（QAOS 的 execution import 必填）。" : "需要：實際結果已填、至少一份證據。"}</div>
+        </div>
+        <button className="btn primary" disabled={!ready || busy} onClick={send}><PaperPlaneRight className="ic sm" aria-hidden="true" />{busy ? "執行中…" : "送 QAOS 開 bug"}</button>
+      </div>
+      {plan && plan.warnings.length > 0 && <div className="stack" style={{ gap: 2 }}>{plan.warnings.map((w, i) => <div key={i} style={{ color: "var(--warn)", fontSize: 12 }}>{w}</div>)}</div>}
+      {last && !last.ok && <pre className="cmd-pre" style={{ color: "var(--danger)" }}>{last.log.map((l) => `[${l.what}] exit ${l.exit_code}\n${l.stderr || l.stdout}`).join("\n")}</pre>}
+    </div>
+  );
+}
+
+/** 回合設定就地編輯：環境（送 QAOS 必填）、build、全部匯入開關。結束後也能改（只影響之後的匯入／開 bug）。 */
+function RunSettings({ run, onSaved }: { run: TestRun; onSaved: (r: TestRun) => void }) {
+  const [open, setOpen] = useState(!(run.environment || "").trim());
+  const [env, setEnv] = useState(run.environment);
+  const [build, setBuild] = useState(run.build);
+  const [importAll, setImportAll] = useState(run.import_all);
+  const [busy, setBusy] = useState(false);
+  const { toast } = useToast();
+  useEffect(() => { setEnv(run.environment); setBuild(run.build); setImportAll(run.import_all); }, [run.id, run.environment, run.build, run.import_all]);
+  const dirty = env !== run.environment || build !== run.build || importAll !== run.import_all;
+  const save = async () => {
+    setBusy(true);
+    try { const r = await api.patch<TestRun>(`/api/testruns/${run.id}`, { environment: env, build, import_all: importAll }); onSaved(r); toast("回合設定已儲存", "ok"); if ((r.environment || "").trim()) setOpen(false); }
+    catch (e) { toast(`儲存失敗：${(e as Error).message}`, "danger"); }
+    finally { setBusy(false); }
+  };
+  if (!open) {
+    return (
+      <div className="row" style={{ gap: 8, fontSize: 12 }}>
+        <span className="faint">回合設定</span>
+        <span className="mono">{run.environment || "—"}</span><span className="faint">·</span><span className="mono">{run.build || "—"}</span>
+        {run.import_all && <span className="tag">Pass 也匯入 QAOS</span>}
+        <button className="link-btn" style={{ fontSize: 12 }} onClick={() => setOpen(true)}>編輯</button>
+      </div>
+    );
+  }
+  return (
+    <div className="run-settings">
+      <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div className="field" style={{ minWidth: 180 }}><label>環境<span className="req">*</span><span className="faint">（送 QAOS 必填）</span></label><input className="input" value={env} onChange={(e) => setEnv(e.target.value)} placeholder="stage / uat / prod" autoFocus={!run.environment} /></div>
+        <div className="field" style={{ minWidth: 160 }}><label>Build</label><input className="input" value={build} onChange={(e) => setBuild(e.target.value)} placeholder="版本或 commit" /></div>
+        <label className="check-row" style={{ flexDirection: "row", paddingBottom: 8 }}><input type="checkbox" checked={importAll} onChange={(e) => setImportAll(e.target.checked)} />結束回合時 Pass／Blocked／Skipped 也匯進 QAOS executions</label>
+        <div className="row" style={{ paddingBottom: 2 }}>
+          <button className="btn sm ghost" onClick={() => { setOpen(false); setEnv(run.environment); setBuild(run.build); setImportAll(run.import_all); }}>取消</button>
+          <button className="btn sm primary" disabled={busy || !dirty || !env.trim()} onClick={save}>儲存</button>
+        </div>
+      </div>
+      {!env.trim() && <div style={{ color: "var(--warn)", fontSize: 12, marginTop: 4 }}>沒有環境就不能送 QAOS 開 bug（execution import 的 --environment 必填）。</div>}
     </div>
   );
 }

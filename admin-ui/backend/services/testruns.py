@@ -18,7 +18,7 @@ from . import outputs as out_svc
 EVIDENCE_DIR = DATA_DIR / "evidence"
 RESULTS = ("untested", "pass", "fail", "blocked", "skipped")
 RUN_STATUS = ("planned", "running", "done", "aborted")
-EVIDENCE_TYPES = ("screenshot", "video", "log", "network", "db_query", "api_response", "other")  # 對齊 QAOS execution/evidence.schema 的 type
+EVIDENCE_TYPES = ("screenshot", "recording", "api_request", "api_response", "log", "console", "db_observation", "execution_result", "other")  # = QAOS schemas/execution/evidence.schema.json 的 type enum
 MAX_EVIDENCE_BYTES = 25 * 1024 * 1024
 
 

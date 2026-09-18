@@ -276,3 +276,8 @@ export interface TestRunMeta { results: TestResultKind[]; evidence_types: string
 export interface CiJob { name: string; status: "pass" | "fail" | "running" | "skipped"; tests: number; failures: number; errors: number; duration_s: number; log: string }
 export interface CiStatus { status: "pass" | "fail" | "running"; sha: string; branch: string; updated_at: string; web_url: string; source: "local" | "gitlab"; jobs: CiJob[] }
 export interface CiStatusResp { available: boolean; file: string; example?: string; error?: string; web_url?: string; remote?: string; status: CiStatus | null }
+
+// ---- M7b：NG 送 QAOS 開 bug ----
+export interface BugPlanStep { kind: "evidence" | "execution" | "run"; label: string; command: string }
+export interface BugPlan { mode: "bug" | "execution"; steps: BugPlanStep[]; warnings: string[]; writes: string[]; meta: { spec_id?: string | null; spec_version?: string | null; version?: number | null }; operator: string; result: { id: number; testcase_id: string; result: string; bug_run_id: string | null; qaos_execution_id: string | null } }
+export interface BugFileResult { ok: boolean; evidence_ids: string[]; execution_id: string | null; bug_run_id: string | null; hint: string; log: { what: string; command: string; exit_code: number; stdout: string; stderr: string }[] }

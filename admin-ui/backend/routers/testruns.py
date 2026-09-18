@@ -3,6 +3,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from ..services import qaos_bug
 from ..services import testruns as svc
 from ..services import tickets as ticket_svc
 
@@ -125,6 +126,28 @@ def get_evidence(run_id: int, eid: str):
 @router.post("/{run_id}/finish")
 def finish(run_id: int, body: FinishIn):
     try:
-        return svc.finish(run_id, body.status)
+        r = svc.finish(run_id, body.status)
     except svc.TestRunError as e:
         _err(e)
+    # import_all：Pass／Blocked／Skipped 也匯進 QAOS executions（不開 bug）
+    r["import_result"] = qaos_bug.import_passes(run_id) if r.get("import_all") else None
+    return r
+
+
+# ---- M7b：NG 送 QAOS 開 bug ----
+@router.get("/{run_id}/results/{result_id}/bug-plan")
+def bug_plan(run_id: int, result_id: int, mode: str = "bug"):
+    """預覽會跑的 bin/qaos 指令、預檢警告與寫入路徑；不執行。"""
+    try:
+        return qaos_bug.plan(run_id, result_id, mode)
+    except qaos_bug.BugFileError as e:
+        raise HTTPException(e.status, str(e))
+
+
+@router.post("/{run_id}/results/{result_id}/file-bug")
+def file_bug(run_id: int, result_id: int, mode: str = "bug"):
+    """執行：evidence add → execution import → run new spec-to-bug；成功後寫 handoff 交給 QA session。"""
+    try:
+        return qaos_bug.execute(run_id, result_id, mode)
+    except qaos_bug.BugFileError as e:
+        raise HTTPException(e.status, str(e))
