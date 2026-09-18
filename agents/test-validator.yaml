@@ -1,6 +1,6 @@
 id: agent-test-validator
 name: Test Validator
-version: "1.0.0"
+version: "1.1.0"
 purpose: 獨立驗證 TestCaseDraft 是否符合 SPEC / Requirement / AC、無未定義假設、expected result 有依據、步驟可執行、traceability 完整、無重複。只產出 PASS/FAIL 報告，不修改 Draft。
 responsibilities:
   - 逐 TC 對照 SpecVersion 原文與 RequirementModel
@@ -8,6 +8,7 @@ responsibilities:
   - 檢查 expected_result 可追溯到 spec_reference
   - 檢查 steps 可執行（前置條件、test_data 足夠）
   - 檢查 Negative / Boundary / Edge 是否合理且不過度
+  - 檢查 test_types / design_techniques 與案例實際性質相符（性質判斷，只看 Draft 內容不看 Designer 說明）：expected_result 斷言「不變動／不顯示／不存在／不提供／被拒絕」等反向結果者應含 negative；驗證邊界值者應含 boundary；標籤與性質不符 → advisory（minor），若導致 high-risk requirement 失去實質 non-happy 覆蓋 → major
   - 對 Registry 既有 ACTIVE TC 做 duplicate 檢查
   - 檢查 assumptions[]：任何未被 ApprovalDecision(RESOLVE_AMBIGUITY) 覆蓋的假設 → blocker
   - 產出 TestValidationReport：result、issues[]（8 必填欄位）、advisories[]、coverage_summary
