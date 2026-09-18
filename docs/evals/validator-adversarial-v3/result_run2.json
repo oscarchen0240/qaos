@@ -1,0 +1,42 @@
+{
+  "result": "FAIL",
+  "issues": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ", "issue_type": "expected_result_contradicts_spec", "severity": "blocker",
+     "evidence": "expected『等於各已啟用幣別金額的加總』；自己引用的 quote『不做匯率換算，也不是各幣別的加總』（spec.md 第60行、AC-0031）",
+     "explanation": "與 spec、AC、自己的 quote 完全相反；與同 AC 的 CY4JFY 給出相反驗收標準", "recommended_change": "改為等於核心貨幣列原始餘額並實際比對"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JJTRZZAW45GT55KVR", "issue_type": "expected_result_contradicts_spec", "severity": "blocker",
+     "evidence": "expected『存款金額則增加』；title 與 AC-0081『兩者皆不變動』；quote『一律不含人工入金與人工出金』",
+     "explanation": "把 spec 明文『已作廢』的錯誤認知寫成正確答案；與同 AC 組的 692S4G（正確斷言完全不變）矛盾；本次風險最高", "recommended_change": "改為皆不變動，比照 692S4G 寫法"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JR00Q32C4BASR5Y6J", "issue_type": "fabricated_quote", "severity": "blocker",
+     "evidence": "quote『不列出，僅顯示有餘額的幣別』；spec.md 第62行原文『仍列出並顯示 0.00，不因無餘額而隱藏』",
+     "explanation": "quote 不存在且語意相反；expected 本身正確", "recommended_change": "quote 改回原文"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J5TP7GV8Z2W6WNBVZ", "issue_type": "precondition_wrong_entity", "severity": "blocker",
+     "evidence": "precondition『選定一名既有線上會員（非機台帳號）』；title／AC-0092／expected 都是機台帳號",
+     "explanation": "選錯帳號類型；照此執行實際驗的是 AC-0091，AC-0092 實質未被任何 TC 正確驗證", "recommended_change": "precondition／steps 改為機台帳號"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JN5P1P8H1E5YKAH1N", "issue_type": "undisclosed_spec_undefined_mechanism", "severity": "major",
+     "evidence": "precondition 第3項『系統管理 > 幣別顯示設定』頁；assumptions []；spec 只提到依鏈上錢包管理的幣種順序",
+     "explanation": "編造 spec 未定義的畫面卻未揭露，可能無法執行或誤導設定入口", "recommended_change": "改用鏈上錢包管理，或 assumptions + needs_human_confirmation"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J2J3WPKZZ3PCN7R3V", "issue_type": "steps_do_not_match_ac_substantively", "severity": "major",
+     "evidence": "AC-0062 when『離開後重新進入該頁面』；steps 是分頁切換再切回，與 88Q5V4（AC-0061）幾乎相同",
+     "explanation": "spec 把換頁／重新查詢／重新進入列為三種情境；本 TC 名義覆蓋 0062 實際重複 TC9", "recommended_change": "改為導覽離開再重新進入"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JA6P8XKKGM0SHW7C4", "issue_type": "shallow_coverage_and_type_mismatch", "severity": "major",
+     "evidence": "AC-0072 then『不依幣別拆分顯示，也不提供幣別選擇』；steps 只確認總計列存在，expected 只『有數值』；test_types 標 negative 但無否定性斷言",
+     "explanation": "形式掛 AC 未驗核心規則（項目6）；標籤與內容不符（項目7）", "recommended_change": "補核對無幣別選擇、手動加總比對，expected 明確斷言三項規則"}
+  ],
+  "advisories": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JRP933H3H8Q692S4G", "issue_type": "test_type_label_mismatch", "severity": "minor",
+     "evidence": "AC-0082 斷言『兩者皆不變動』，屬反向／不變動結果，但 test_types 僅 [functional]、design_techniques 僅 [requirement_based]，未標 negative",
+     "explanation": "依審查標準，斷言『不變動』的案例宜含 negative；不影響 REQ-008 的 gates.py non-happy 覆蓋（同 AC 組 TC13 已標 negative），故 minor 而非 major",
+     "recommended_change": "test_types 補 negative"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JV3KC6S160HS839EP", "issue_type": "partial_verification", "severity": "minor",
+     "evidence": "AC-0071 then 含『篩選依核心貨幣餘額計算』，steps 只檢查 UI 無幣別選項，未實際送出查詢核對", "explanation": "覆蓋略薄弱", "recommended_change": "可加一步實際查詢"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JQVXNJ74BV2SV1JAD", "issue_type": "boundary_design_weak", "severity": "minor",
+     "evidence": "用兩個站台分別代表 1 種／2 種以上幣別，而非同站台切換", "explanation": "仍可驗證門檻規則，已用 assumptions 揭露，不影響判定", "recommended_change": "若環境允許改為同站台切換"}
+  ],
+  "coverage_summary": {"requirements_total": 9, "acceptance_criteria_total": 15, "requirements_structurally_covered": 9, "acceptance_criteria_structurally_covered": 15,
+    "high_risk_requirements": {"REQ-UPDATEPACK-003": "結構有 non-happy，但 TC5 與 spec 矛盾", "REQ-UPDATEPACK-008": "結構有 non-happy，但 TC13 方向錯誤"},
+    "coverage_matrix_vs_draft_consistency": "一致", "out_of_scope_check": "全部在 REQ-001~009 範圍"},
+  "checks": {"quote_authenticity": "fail — SR5Y6J 捏造", "expected_result_spec_grounded": "fail — 1HJXYJ、T55KVR", "steps_ac_alignment": "fail — CN7R3V、6WNBVZ",
+    "assumptions_disclosure": "fail — YKAH1N", "gates_py_structural_alignment": "pass", "coverage_substantiveness": "fail — SHW7C4、CN7R3V",
+    "test_type_technique_fidelity": "partial — SHW7C4 標 negative 無否定斷言；692S4G 斷言不變動卻未標 negative（minor）", "duplicate_and_executability": "partial"}
+}

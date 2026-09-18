@@ -1,0 +1,39 @@
+{
+  "result": "FAIL",
+  "issues": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ", "issue_type": "expected_result_contradicts_spec", "severity": "blocker",
+     "evidence": "quote 逐字引用『不做匯率換算，也不是各幣別的加總』；expected 卻寫『等於各已啟用幣別金額的加總』；AC-0031 then『僅為核心貨幣錢包的原始餘額』；同 AC 姊妹 CY4JFY 正確斷言不等於加總",
+     "explanation": "與自身 quote、AC、姊妹 TC 全部相反；REQ-003 high risk，照此驗收錯誤實作反被判 PASS", "recommended_change": "expected 改為等於核心貨幣列原始餘額，steps 補記錄其他幣別金額"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JJTRZZAW45GT55KVR", "issue_type": "expected_result_contradicts_spec", "severity": "blocker",
+     "evidence": "title『皆不變動』、AC-0081 then『兩者皆不變動』、quote『一律不含人工入金與人工出金』；expected 卻寫『存款金額則增加』；姊妹 692S4G（提出版）正確斷言完全相同",
+     "explanation": "與 spec『手冊原文曾寫含人工入金，已作廢』的勘誤意圖完全相反；REQ-008 正是本次最重要的勘誤點", "recommended_change": "expected 改為兩者皆不變動"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JR00Q32C4BASR5Y6J", "issue_type": "fabricated_quote", "severity": "blocker",
+     "evidence": "quote『不列出，僅顯示有餘額的幣別』；spec.md 第 62 行原文『仍列出並顯示 0.00，不因無餘額而隱藏』，quote 不存在於 spec 任何位置",
+     "explanation": "title/expected 正確但 quote 被改寫成相反規則，可追溯性錯誤", "recommended_change": "quote 改回原文逐字"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J5TP7GV8Z2W6WNBVZ", "issue_type": "precondition_ac_mismatch", "severity": "blocker",
+     "evidence": "title/expected/AC-0092 都是機台帳號；precondition 卻『選定一名既有線上會員（非機台帳號）』",
+     "explanation": "照 precondition 執行測到的是線上會員（應顯示「—」），無法驗證 AC-0092；疑似從 CCJ199 複製時忘改", "recommended_change": "precondition／steps 改為機台帳號"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JN5P1P8H1E5YKAH1N", "issue_type": "undisclosed_assumption_precondition", "severity": "major",
+     "evidence": "precondition『系統管理 > 幣別顯示設定』頁；spec 對排序的唯一定義是『依鏈上錢包管理的幣種順序』，全份 spec／RM 未提及此頁",
+     "explanation": "依賴 spec 未定義且與 spec 排序依據不同來源的機制，未以 assumptions 揭露", "recommended_change": "改用鏈上錢包管理設定順序，或以 assumptions + needs_human_confirmation 揭露"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J2J3WPKZZ3PCN7R3V", "issue_type": "non_substantive_ac_coverage", "severity": "major",
+     "evidence": "title 對應 AC-0062『離開後重新進入』；steps 卻是分頁切換再切回，與 88Q5V4（AC-0061）操作幾乎相同",
+     "explanation": "AC-0061 與 0062 是兩個不同情境；名義覆蓋 0062 實際重複 0061，未真正離開頁面", "recommended_change": "steps 改為導覽到其他選單頁再重新進入"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JA6P8XKKGM0SHW7C4", "issue_type": "non_substantive_ac_coverage", "severity": "major",
+     "evidence": "AC-0072 then『不依幣別拆分顯示，也不提供幣別選擇』；expected 僅『總計列有數值』，steps 僅確認總計列存在；另 test_types 標 negative 但內容無任何反向斷言",
+     "explanation": "只驗證形式存在性，未驗證 AC 核心守門規則；標籤與案例性質不符", "recommended_change": "expected 改為單一數值、無分幣別小計、無幣別選擇元素，並補檢查步驟"}
+  ],
+  "advisories": [
+    {"testcase_id": "*", "issue_type": "self_check_scope_ambiguous", "severity": "minor",
+     "evidence": "self_check.duplicate_detection_completed: true 但 duplicate_check.against_registry: false", "explanation": "措辭有過度宣稱的觀感，內容本身誠實", "recommended_change": "註明僅完成 Draft 內部比對"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JV3KC6S160HS839EP", "issue_type": "label_technique_minor_mismatch", "severity": "minor",
+     "evidence": "expected 斷言『不存在依幣別篩選的選項，也不提供幣別選擇下拉選單』屬反向斷言，test_types 已含 negative，但 design_techniques 僅 requirement_based",
+     "explanation": "test_types 已如實標記，不影響 gate；僅 design_techniques 可更精確", "recommended_change": "可選擇性補 negative"}
+  ],
+  "coverage_summary": {"requirements_total": 9, "acceptance_criteria_total": 15, "testcases_total": 16,
+    "high_risk_requirements": {"REQ-UPDATEPACK-003": "structural 有 non-happy，但同 AC 正向案例 1HJXYJ 方向相反", "REQ-UPDATEPACK-008": "唯一 non-happy 是 T55KVR，斷言方向相反，形同沒有有效驗證"},
+    "acceptance_criteria_with_non_substantive_coverage": ["AC-UPDATEPACK-0062", "AC-UPDATEPACK-0072"]},
+  "checks": {"quote_fidelity": "14/16 逐字一致；SR5Y6J 捏造；1HJXYJ expected 與正確 quote 相反", "expected_result_has_spec_basis": "1HJXYJ、T55KVR 違反所依據的 spec 規則",
+    "steps_ac_alignment": "6WNBVZ precondition 選錯帳號類型；CN7R3V 未對應 AC-0062", "assumptions_disclosure": "YKAH1N 未揭露", "gates_py_alignment": "全部一致，structural PASS",
+    "coverage_substantiveness": "13/15 實質；AC-0062、0072 形式化", "test_types_design_techniques_consistency": "整體大致相符；SHW7C4 標 negative 但無反向斷言（併入 major）", "duplicate_and_executability": "無完全重複；其餘可執行"}
+}
