@@ -110,6 +110,27 @@ def test_55_g_design_rejects_draft_with_no_non_happy_case_at_all(gate_model):
     assert any("整份 Draft 沒有任何 negative / boundary / error_guessing 案例" in i for i in issues)
 
 
+def test_58_g_design_rejects_ac_not_owned_by_tc_requirements(gate_model):
+    """AC 歸屬：TC 引用的 AC 必須屬於其 requirement_ids 之一。
+    Validator 對抗性 eval v1 的 E6 揭示：舊規則只驗 AC 存在於全域集合，掛錯 requirement 仍 structural PASS，
+    只能靠 LLM Validator 兜底——這是能寫成 deterministic 規則的事。"""
+    # 掛 REQ-GATE-OK 卻引用屬於 REQ-GATE-REJ 的 AC → 擋，訊息帶實際 owner
+    wrong = [_gtc("TC-DRAFT-01GATE0000000000000000000I", "REQ-GATE-OK", "AC-GATE-REJ", ["negative"], ["negative"])]
+    issues = gates.g_design(None, None, _arts(wrong))
+    assert any("AC-GATE-REJ" in i and "屬於 REQ-GATE-REJ" in i and "不在本 TC 的 requirement_ids 內" in i for i in issues)
+    # 對照 1：正確配對 → 不擋
+    ok = [_gtc("TC-DRAFT-01GATE0000000000000000000J", "REQ-GATE-OK", "AC-GATE-OK", ["negative"], ["negative"])]
+    assert not any("不在本 TC 的 requirement_ids 內" in i for i in gates.g_design(None, None, _arts(ok)))
+    # 對照 2：合法的跨 requirement TC（掛兩個 req、引用各自的 AC）→ 不擋
+    multi = [_gtc("TC-DRAFT-01GATE0000000000000000000K", "REQ-GATE-OK", "AC-GATE-OK", ["negative"], ["negative"],
+                  requirement_ids=["REQ-GATE-OK", "REQ-GATE-REJ"], acceptance_criteria_ids=["AC-GATE-OK", "AC-GATE-REJ"])]
+    assert not any("不在本 TC 的 requirement_ids 內" in i for i in gates.g_design(None, None, _arts(multi)))
+    # 對照 3：AC 根本不存在 → 走原本的「不存在」訊息，不誤報歸屬、不 KeyError
+    missing = [_gtc("TC-DRAFT-01GATE0000000000000000000L", "REQ-GATE-OK", "AC-GATE-NONE", ["negative"], ["negative"])]
+    issues = gates.g_design(None, None, _arts(missing))
+    assert any("引用不存在的 AC AC-GATE-NONE" in i for i in issues) and not any("不在本 TC 的 requirement_ids 內" in i for i in issues)
+
+
 def test_56_g_tval_rejects_pass_report_that_still_contains_blocker_or_major():
     """L134：Validator 宣稱 PASS，issues 卻含 blocker/major → 自相矛盾，擋。"""
     tcs, ids_ = H.draft_set(prefix="01GATETVAL000000000000000")

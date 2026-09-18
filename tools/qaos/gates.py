@@ -50,7 +50,10 @@ def g_design(run, task, arts) -> list[str]:
     p = _payload(tcd); rep = _payload(tdr)
     reqs = _active_requirements(p["spec_id"], p["spec_version"])
     if reqs is None: return [f"RequirementModel {p['spec_id']}@{p['spec_version']} 尚未持久化"]
-    ac_ids = {ac["ac_id"] for r in reqs.values() for ac in r.get("acceptance_criteria", [])}
+    ac_owner = {}   # ac_id → 所屬 requirement_id 集合（AC 嵌在 requirement 底下，正常只有一個）
+    for rid, r in reqs.items():
+        for ac in r.get("acceptance_criteria", []): ac_owner.setdefault(ac["ac_id"], set()).add(rid)
+    ac_ids = set(ac_owner)
     seen = {}; draft_ids = set(); by_req = {}; tech_count = {}
     for tc in p["testcases"]:
         did = tc["draft_id"]; draft_ids.add(did)
@@ -64,6 +67,8 @@ def g_design(run, task, arts) -> list[str]:
                 issues.append(f"{did} 為 critical ambiguity 的 {rid} 設計 TC")
         for aid in tc.get("acceptance_criteria_ids", []):
             if aid not in ac_ids: issues.append(f"{did} 引用不存在的 AC {aid}")
+            elif not (ac_owner[aid] & set(tc["requirement_ids"])):
+                issues.append(f"{did} 引用的 AC {aid} 屬於 {'/'.join(sorted(ac_owner[aid]))}，不在本 TC 的 requirement_ids 內")
         if not tc["expected_result"].strip(): issues.append(f"{did} expected_result 為空")
         if not tc["design_techniques"]: issues.append(f"{did} 無 design_techniques")
         for a in tc.get("assumptions", []):
