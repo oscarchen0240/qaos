@@ -1,0 +1,31 @@
+{
+  "result": "FAIL",
+  "issues": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ", "issue_type": "expected_result與quote斷言方向相反", "severity": "blocker",
+     "evidence": "expected『等於各幣別加總』；quote『不做匯率換算，也不是各幣別的加總』；title 自相矛盾；同 AC 另一條 TC 給出互斥結論", "explanation": "spec 明文禁止的行為", "recommended_change": "改為等於核心貨幣原始金額"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JR00Q32C4BASR5Y6J", "issue_type": "quote捏造，不存在於spec.md且與spec相反", "severity": "blocker",
+     "evidence": "quote『不列出』；spec 原文『仍列出並顯示 0.00』；expected 本身正確但與 quote 矛盾", "explanation": "違反 quote 真實性", "recommended_change": "quote 改回原文"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JJTRZZAW45GT55KVR", "issue_type": "expected_result與quote/title/AC斷言方向相反", "severity": "blocker",
+     "evidence": "expected『存款金額則增加』；spec『一律不含人工入金』；與 AC-0082 那條（正確）相反", "explanation": "REQ-008 high risk、critical_path，影響最嚴重", "recommended_change": "皆不變動"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J5TP7GV8Z2W6WNBVZ", "issue_type": "precondition選錯測試母體，steps無法驗證所掛AC", "severity": "blocker",
+     "evidence": "title／expected 驗證機台帳號；precondition／steps 挑的是線上會員；AC-0092 given 明確是機台帳號",
+     "explanation": "照此執行只會驗到 AC-0091（線上顯示「—」），實質無法驗證 AC-0092", "recommended_change": "precondition 改為機台帳號"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JN5P1P8H1E5YKAH1N", "issue_type": "precondition依賴spec未定義機制且未以assumptions揭露", "severity": "major",
+     "evidence": "『系統管理 > 幣別顯示設定』頁；spec 七章查無；順序唯一依據是鏈上錢包管理；precondition 第 2、3 項互相衝突", "explanation": "未揭露且可能不可執行", "recommended_change": "移除第 3 項"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JA6P8XKKGM0SHW7C4", "issue_type": "coverage僅形式掛AC，未實質驗證AC核心條件", "severity": "major",
+     "evidence": "只確認總計列存在且有數值；AC-0072 要求核心貨幣加總、不拆分、無幣別選擇", "explanation": "最弱的形式覆蓋", "recommended_change": "加總比對＋檢查無拆分 UI"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J2J3WPKZZ3PCN7R3V", "issue_type": "steps與所掛AC情境不符，近似重複另一條TC", "severity": "major",
+     "evidence": "steps 是分頁切換，與 AC-0061 的 TC9 幾乎一致；AC-0062『離開後重新進入』未被真正驗證", "explanation": "獨立情境未覆蓋", "recommended_change": "改為真正離開頁面再進入"}
+  ],
+  "advisories": [
+    {"testcase_id": "TC-DRAFT-01M2RK006J0HK4QPSJXHRYK1T8", "issue_type": "測試案例間執行順序相依", "severity": "minor",
+     "evidence": "precondition『承上一條 TC 的站台設定』", "explanation": "獨立性瑕疵", "recommended_change": "自行敘明所需狀態"},
+    {"testcase_id": "*", "issue_type": "design_techniques與test_types標籤未完全對齊", "severity": "minor",
+     "evidence": "TC11（S839EP）與 TC12（SHW7C4）test_types 含 negative 但 design_techniques 只有 requirement_based", "explanation": "標籤一致性略弱", "recommended_change": "統一"},
+    {"testcase_id": "*", "issue_type": "高風險requirement的非happy-path覆蓋案例本身即為blocker案例", "severity": "minor",
+     "evidence": "REQ-008 唯一 non-happy 是 TC13（blocker）；REQ-003 主案例 TC5（blocker）", "explanation": "結構通過但實質缺乏方向正確的組合", "recommended_change": "修正後重新確認"}
+  ],
+  "coverage_summary": {"requirements_total": 9, "acceptance_criteria_total": 15, "testcases_total": 16, "structural_g_design_would_pass": true},
+  "checks": {"quote_fidelity": "FAIL", "expected_result_spec_grounded": "FAIL", "steps_ac_alignment": "FAIL", "assumptions_disclosure": "FAIL",
+    "gates_py_cross_check": "PASS at structural level", "coverage_substantiveness": "FAIL", "design_technique_labeling": "PASS with minor notes", "duplicates_and_executability": "PASS with minor notes"}
+}
