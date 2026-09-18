@@ -65,12 +65,18 @@ mark("E5", "T55KVR", "self_contradiction",
      "expected 前半句『次數不變』正確，後半句『金額增加』違反 spec『人工入金一律不計入』，兩句互相矛盾",
      "expected_result 內部自相矛盾；後半句違反 spec")
 
-# E6 錯誤 requirement 掛載（#15 線上會員場次「—」→ 掛到 REQ-008）
-t = tcs["CCJ199"]
-t["requirement_ids"] = ["REQ-UPDATEPACK-008"]
-mark("E6", "CCJ199", "wrong_requirement_binding",
-     "requirement_ids 從 REQ-009 改成存在但無關的 REQ-008（存款／提款累計），acceptance_criteria_ids 仍是 AC-0091；report 的 coverage_matrix 同步改掛",
-     "TC 內容／AC 與所掛 requirement 不對應；REQ-009 的 AC-0091 實質失去覆蓋")
+# E6 AC 的 given 條件被偷換（#16 機台帳號注單顯示場次編號 → 測試對象偷換成線上會員）
+# v1.1 變更：原 E6「錯誤 requirement 掛載」自 gates.g_design 補「AC 必須屬於所掛 requirement」規則後改由 structural 攔截，
+#            不再是純語意錯誤，故替換為本類型。v1 的 answer_key.json / validator_result.json 反映的是舊 E6。
+t = tcs["6WNBVZ"]
+t["preconditions"] = ["以 Admin 登入後台",
+                      "選定一名既有線上會員（非機台帳號），其至少有一筆注單記錄已知所屬的場次編號（可先於『各式報表 > 交易紀錄查詢』核對）"]
+t["steps"] = [{"n": 1, "action": "進入『各式報表 > 注單查詢』，篩選出該線上會員的注單記錄，查詢"},
+              {"n": 2, "action": "檢視該筆注單列的『場次編號』欄位，與前置作業核對的場次編號比對"}]
+mark("E6", "6WNBVZ", "ac_given_condition_swapped",
+     "AC-0092 的 given 是『機台帳號的注單』，precondition／steps 的測試對象偷換成『線上會員』；title 與 expected（顯示所屬場次編號）不動。"
+     "requirement_ids／acceptance_criteria_ids 皆正確，structural 不擋",
+     "測試對象與 AC given 不符；且依 spec 線上會員的場次編號欄應顯示「—」，expected 卻斷言顯示場次編號，與 AC-0091 矛盾")
 
 # E7 覆蓋宣稱不實（#12 總計列以核心貨幣加總、不拆分）
 t = tcs["SHW7C4"]
@@ -93,14 +99,8 @@ key["C1"] = {"draft_id": tcs["SV1JAD"]["draft_id"], "suffix": "SV1JAD", "type": 
              "expected_detection": "Validator 不應對此條報出 blocker/major"}
 
 # --- 同步 Report，保持 structural 一致（只留語意錯誤） ---
+# v1.1：coverage_matrix 不再需要改動（舊 E6 的 requirement 改掛已移除）；只同步 technique_summary（E8 改了標籤）
 rep = tdr["payload"]
-for row in rep["coverage_matrix"]:
-    if row["requirement_id"] == "REQ-UPDATEPACK-009":
-        row["draft_ids"] = [d for d in row["draft_ids"] if d != tcs["CCJ199"]["draft_id"]]
-        row["acceptance_criteria"] = [ac for ac in row["acceptance_criteria"] if ac["ac_id"] != "AC-UPDATEPACK-0091"]
-    if row["requirement_id"] == "REQ-UPDATEPACK-008":
-        row["draft_ids"].append(tcs["CCJ199"]["draft_id"])
-        row["acceptance_criteria"].append({"ac_id": "AC-UPDATEPACK-0091", "draft_ids": [tcs["CCJ199"]["draft_id"]]})
 cnt = collections.Counter(x for t in tcd["payload"]["testcases"] for x in t["design_techniques"])
 rep["technique_summary"] = [{"technique": k, "count": v} for k, v in cnt.items()]
 rep.pop("revision_of_issues", None)   # 去掉修訂歷程，避免洩漏「這份曾被審過」

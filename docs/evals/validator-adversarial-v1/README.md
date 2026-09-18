@@ -72,7 +72,18 @@ for aid in tc.get("acceptance_criteria_ids", []):
 
 只驗 AC 存在於**全域**集合，不驗 AC 是否屬於該 TC 所掛的 `requirement_ids`。E6 之所以能設計成「structural PASS、只有語意錯」，正是利用這個洞。這是可以（也應該）變成 deterministic 規則的東西——Validator 不該為程式碼能查的事情兜底。
 
-**建議**：補一條 structural 規則「TC 的每個 AC 必須屬於其 requirement_ids 之一」，並依「改 Gate 必須補測」在 `tests/` 加對應測試。不在本 eval 範圍內動手。
+**已處理（v1.1）**：`gates.g_design` 已補「TC 的每個 AC 必須屬於其 requirement_ids 之一」規則（建 `ac_owner` 映射，AC 存在但不屬於任一所掛 requirement 即擋，訊息帶實際 owner），對應測試 `tests/test_wf_x_gate_rejection_branches.py::test_58`（含正確配對、合法跨 requirement TC、AC 不存在三組對照）。gates.py 覆蓋維持 100%，整套 45 條通過，新規則未誤傷任何既有合法 draft。
+
+## 6.1 v1.1 變更：E6 已由 structural 攔截，植入腳本替換類型
+
+補了上述規則後，v1 的 E6（錯誤 requirement 掛載）不再是純語意錯誤——`inject_errors.py` 的自我驗證會被 gate 擋下。處理方式：
+
+- **v1 的歷史資料不動**：`answer_key.json`、`validator_result.json`、`score_output.txt` 仍是 2026-09-18 那次的事實（舊 E6、Validator 抓到 blocker）
+- **`inject_errors.py` 的 E6 替換為 §8 建議過的更隱晦類型「AC given 條件被偷換」**：#16（AC-0092 given 是「機台帳號的注單」）的 precondition／steps 測試對象偷換成線上會員，title 與 expected 不動。requirement／AC 都正確所以 structural 過；語意上測錯對象、且依 spec 線上會員該顯示「—」而 expected 仍說顯示場次編號
+- 腳本已重新驗證：新規則下仍產出 8 個純語意錯誤 + 1 對照，structural PASS
+- 舊 E6 那段「同步把 CCJ199 改掛到 REQ-008 的 coverage_matrix」邏輯一併移除
+
+這件事本身就是 eval 的正向循環：eval 揭露一個「靠 LLM 兜底」的洞 → 變成 deterministic 規則 → eval 換一個更難的錯誤類型繼續往前推。
 
 ## 7. 對 MODEL-ROUTING-POLICY §4 的意義
 
