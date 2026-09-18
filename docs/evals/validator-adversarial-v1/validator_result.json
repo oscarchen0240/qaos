@@ -1,0 +1,42 @@
+{
+  "result": "FAIL",
+  "issues": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ", "issue_type": "expected_result_contradicts_spec_and_self", "severity": "blocker",
+     "evidence": "expected_result 斷言『等於各幣別加總』；title／quote／design_rationale／AC-0031／spec 原文全部相反",
+     "explanation": "REQ-003 high risk、critical_path，正面案例斷言了錯誤答案", "recommended_change": "expected 改為等於核心貨幣列金額、非加總、無換算"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JJTRZZAW45GT55KVR", "issue_type": "expected_result_contradicts_spec_and_self", "severity": "blocker",
+     "evidence": "expected『次數不變；金額則增加本次人工存入』，正是 spec 明文作廢的敘述，與 title／AC-0081／quote 矛盾",
+     "explanation": "REQ-008 high risk、critical_path，error_guessing 案例本身寫成了已知錯誤答案", "recommended_change": "次數與金額皆不變"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JR00Q32C4BASR5Y6J", "issue_type": "quote_fabricated_or_inverted", "severity": "blocker",
+     "evidence": "quote『不列出，僅顯示有餘額的幣別』；spec.md 第 62 行原文『仍列出並顯示 0.00，不因無餘額而隱藏』",
+     "explanation": "quote 逐字不存在且方向相反，expected 本身正確；追溯鏈證據造假等級", "recommended_change": "quote 改回原文逐字"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J1HN347SR6VCCJ199", "issue_type": "requirement_id_mismatch", "severity": "blocker",
+     "evidence": "requirement_ids=[REQ-008] 但 AC-0091 屬 REQ-009；risk:low 與 REQ-008 的 high 不符；coverage_matrix 複製了此錯誤",
+     "explanation": "gates.py 只驗 AC 存在於全域集合，未驗 AC 是否屬於所掛 requirement，structural 未攔；REQ-009 的 AC-0091 失去正確歸戶",
+     "recommended_change": "改回 REQ-009 並同步 coverage_matrix"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JN5P1P8H1E5YKAH1N", "issue_type": "precondition_relies_on_undefined_mechanism", "severity": "major",
+     "evidence": "precondition『系統管理 > 幣別顯示設定』頁；spec 全文查無，且順序來源 spec 明載為鏈上錢包管理；assumptions 空",
+     "explanation": "依賴 spec 未定義且與明載來源不同的機制，未揭露", "recommended_change": "改為鏈上錢包管理，或以 assumptions 揭露並 needs_human_confirmation"},
+    {"testcase_id": "TC-DRAFT-01M2RK006J2J3WPKZZ3PCN7R3V", "issue_type": "steps_do_not_match_ac_scenario", "severity": "major",
+     "evidence": "title『離開頁面重新進入』但 steps 是『分頁切換再切回』，與 AC-0061 的 TC9 幾乎一致",
+     "explanation": "AC-0062 的『重新進入頁面』情境實質未被獨立驗證，僅是 TC9 近似重複", "recommended_change": "steps 改為真正離開頁面再重新進入"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JA6P8XKKGM0SHW7C4", "issue_type": "coverage_not_substantive", "severity": "major",
+     "evidence": "expected 只斷言『總計列存在且有數值』；AC-0072 要求『以核心貨幣加總、不依幣別拆分、不提供幣別選擇』",
+     "explanation": "形式掛載 AC-0072 但未驗證核心條件", "recommended_change": "明確斷言單一數值、無拆分、無幣別選擇"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JRP933H3H8Q692S4G", "issue_type": "design_rationale_inconsistent_with_declared_fields", "severity": "minor",
+     "evidence": "design_rationale 寫『採 error_guessing 技巧』，但 test_types=[functional]、design_techniques=[requirement_based]",
+     "explanation": "文件內部矛盾；不影響 technique_summary 結構檢查", "recommended_change": "加回 error_guessing 或修正 rationale"}
+  ],
+  "advisories": [
+    {"testcase_id": "TC-DRAFT-01M2RK006JF1DM4C00TW07EZBK", "issue_type": "unrevered_environment_mutation",
+     "explanation": "precondition『若不足三種則先啟用至三種』會永久改動站台設定，未附復原步驟或 assumptions", "recommended_change": "加復原步驟或揭露"},
+    {"testcase_id": "*", "issue_type": "empty_design_rationale", "explanation": "多條 TC 的 design_rationale 為空，完整度不一致", "recommended_change": "非必要"},
+    {"testcase_id": "TC-DRAFT-01M2RK006JN4JFHS6Z0C1HJXYJ", "issue_type": "high_risk_requirement_lacks_valid_happy_path_coverage",
+     "explanation": "TC5 錯誤後 REQ-003 實質無正確的 happy-path 覆蓋", "recommended_change": "TC5 修正後自然解除"}
+  ],
+  "coverage_summary": {"total_requirements": 9, "total_acceptance_criteria": 15, "total_testcases": 16,
+    "acceptance_criteria_with_substantively_broken_coverage": ["AC-0031", "AC-0081", "AC-0072", "AC-0062", "AC-0091"]},
+  "checks": {"quote_authenticity": "FAIL", "expected_result_has_spec_basis": "FAIL", "steps_ac_alignment": "FAIL",
+    "assumptions_disclosure_honesty": "部分FAIL", "coverage_matrix_requirement_ac_alignment": "FAIL（gates.py 未檢查此項）",
+    "coverage_substantiveness": "FAIL", "design_techniques_test_types_labeling": "大致PASS，TC14 minor"}
+}
