@@ -1,0 +1,62 @@
+# QAOS 工程 CI（GitLab）。原則見 docs/decisions/PROMPT-test-automation-coverage-audit.md A3：
+# 輕量、只測「程式有沒有壞」，不做 CD／deploy。遠端是公司 GitLab，不用 GitHub Actions。
+# 觸發：merge_request 與 push 到 main。兩個 job 都失敗不准 skip；機密不進庫。
+# 這裡測的是工程品質（tools/qaos、admin-ui 程式），不是產品 TC 的執行結果（那在控制台「測試執行」）。
+
+image: python:3.11
+
+stages:
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+cache:
+  key: pip-py311
+  paths:
+    - .cache/pip
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+.python-base:
+  stage: test
+  before_script:
+    - python --version
+    - pip install --upgrade pip
+
+# Runtime：既有 tests/（iteration 上限、clarification、bug 狀態機…）必跑，不能弄丟
+runtime-pytest:
+  extends: .python-base
+  script:
+    - pip install pyyaml jsonschema referencing pytest
+    - pytest tests/ -q --junitxml=reports/runtime-junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: reports/runtime-junit.xml
+    paths:
+      - reports/
+    expire_in: 2 weeks
+
+# admin-ui 後端與交握（qaos_exec 預檢、handoff_relay、guard_qaos、Pipeline 主狀態）
+admin-ui-pytest:
+  extends: .python-base
+  script:
+    - pip install -r admin-ui/backend/requirements.txt
+    - pytest admin-ui/backend/tests/ -q --junitxml=reports/admin-ui-junit.xml
+    # 產出控制台可讀的狀態檔（artifact；本機用 admin-ui/scripts/write_ci_status.py）
+    - python admin-ui/scripts/write_ci_status.py --from-junit reports/runtime-junit.xml=runtime-pytest reports/admin-ui-junit.xml=admin-ui-pytest --out reports/ci-status.json || true
+  needs:
+    - job: runtime-pytest
+      artifacts: true
+  artifacts:
+    when: always
+    reports:
+      junit: reports/admin-ui-junit.xml
+    paths:
+      - reports/
+    expire_in: 2 weeks
