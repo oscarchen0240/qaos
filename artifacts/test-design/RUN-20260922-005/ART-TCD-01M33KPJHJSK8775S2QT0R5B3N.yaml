@@ -1,0 +1,84 @@
+artifact_id: ART-TCD-01M33KPJHJSK8775S2QT0R5B3N
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260922-005
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-22T03:49:06Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-DAILYREPORT-053@v1
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-017
+- entity_type: TestCase
+  id: TC-DAILYREPORT-053
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids: []
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: high
+    execution_mode: manual
+    test_data: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    draft_id: TC-DRAFT-01M33KPJHHNSG9WG6Y9CRTZBJR
+    title: 已結束場次不可再變回進行中
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館已設定日結時間 06:00 UTC+0
+    - 測試場館下有機台 A（會員編號已知），可開啟其會員詳細頁「機台資訊」區塊
+    - 各式報表 > 場館日結報表 可用（依場次明細只列已結束／逾時結束／日結結算的場次，依 CLR-DAILYREPORT-012）
+    steps:
+    - n: 1
+      action: 依場次明細取得機台 A 一個「已結束」場次，記錄其場次編號
+    - n: 2
+      action: 對機台 A 再產生開分或投注
+    - n: 3
+      action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+    - n: 4
+      action: 依場次明細重新查詢
+    expected_result: 步驟 3：機台資訊區塊顯示一個進行中場次，其場次編號不同於步驟 1；步驟 4：步驟 1 的場次仍為「已結束」，狀態未變回進行中
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊（場次定義：從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次）+ §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）
+    assumptions: []
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-DAILYREPORT-053
+      version: 1
+    design_rationale: CLR-DAILYREPORT-012 PM 定案 B（2026-09-22）：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中不列。原版以依場次明細驗證新建立的（進行中）場次，B
+      之後該列不存在。spec §背景：場次資訊／呈現位置明寫「會員詳細頁『機台資訊』區塊：顯示該機台目前進行中的場次摘要」，故進行中場次的場次編號／期初餘額改於該區塊驗證；已結束／日結結算的列仍於依場次明細驗。ADR-008 影響掃描判定需修訂。
+history:
+- at: '2026-09-22T03:49:06Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260922-005

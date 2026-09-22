@@ -1,0 +1,29 @@
+<title>APR-0164 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0164 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260922-006 · 狀態 PENDING · 提出 2026-09-22</div>
+<div class=summary>1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 1 條 exploratory，approve 即確認其假設）</div>
+<p>共 1 條：grounded 0 條（預期結果有 spec 條文依據）、<b>exploratory 1 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-DAILYREPORT-017 場次日結強制結束</h2>
+<blockquote>spec：§業務規則/場次日結 + §場次資訊/場次狀態、期初餘額　「日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class="exp"><td class=id title="TC-DAILYREPORT-054">054<br>v2</td><td>⚠ exploratory</td><td>場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩</td><td>機台 A 有分數餘額且場次進行中<br>場館設定的場次逾時時間已知（預設 1 小時；測試可調短）<br>已登入後台，可查看場館日結報表（依場次明細）與機台 A 的會員詳細頁「機台資訊」區塊</td><td><ol><li>讓機台 A 在有餘額狀態下超過場館逾時時間無任何交易與遊玩</li><li>在後台場館日結報表（依場次明細）確認該場次狀態為「逾時結束」</li><li>以剩餘分數在機台前台嘗試進入遊戲／下注</li><li>直接呼叫遊玩／下注 API</li><li>對機台 A 進行入金（或開分）</li><li>開啟機台 A 的會員詳細頁「機台資訊」區塊</li><li>再次嘗試遊玩</li></ol></td><td>步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 6：機台資訊區塊顯示新的進行中場次編號（不同於步驟 2 的逾時結束場次）；步驟 7：可正常遊玩<div class=assume>⚠ 假設：「逾時結束後、餘額仍在時前台與後端拒絕遊玩」與「再有交易即建立新場次」為 QA 實測觀察（MAN-20260914-001），SPEC-DAILYREPORT-001 未明寫；規則出處為機台金流與場次_spec_v01 §場次狀態</div></td><td>high<br>high</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0164 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0164 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0164 --decision reject --by &lt;you&gt; --rationale "..."</div>

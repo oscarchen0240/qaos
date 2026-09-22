@@ -1,0 +1,92 @@
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids: []
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+design_techniques:
+- state_transition
+priority: medium
+risk: high
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+title: 已結束場次不可再變回進行中
+preconditions:
+- 已登入後台並切換至機台場館站台（Arcade）
+- 測試場館已設定日結時間 06:00 UTC+0
+- 測試場館下有機台 A（會員編號已知），可開啟其會員詳細頁「機台資訊」區塊
+- 各式報表 > 場館日結報表 可用（依場次明細只列已結束／逾時結束／日結結算的場次，依 CLR-DAILYREPORT-012）
+steps:
+- n: 1
+  action: 依場次明細取得機台 A 一個「已結束」場次，記錄其場次編號
+- n: 2
+  action: 對機台 A 再產生開分或投注
+- n: 3
+  action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+- n: 4
+  action: 依場次明細重新查詢
+expected_result: 步驟 3：機台資訊區塊顯示一個進行中場次，其場次編號不同於步驟 1；步驟 4：步驟 1 的場次仍為「已結束」，狀態未變回進行中
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §背景：場次資訊（場次定義：從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次）+ §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）
+assumptions: []
+source: change_workflow
+testcase_id: TC-DAILYREPORT-053
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M33M7DYW8SEP75AJSM27RW37
+created_at: '2026-09-22T03:58:19Z'
+updated_at: '2026-09-22T05:06:46Z'
+history:
+- at: '2026-09-22T03:58:19Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M33KPJHJSK8775S2QT0R5B3N
+  run_id: RUN-20260922-005
+- at: '2026-09-22T03:58:19Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260922-005
+- at: '2026-09-22T03:58:19Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M33M7DYW8SEP75AJSM27RW37
+  run_id: RUN-20260922-005
+- at: '2026-09-22T03:58:19Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260922-005
+- at: '2026-09-22T05:06:46Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0163
+  run_id: RUN-20260922-005
+- at: '2026-09-22T05:06:46Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260922-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0163
