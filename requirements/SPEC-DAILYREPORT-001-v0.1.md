@@ -16,7 +16,7 @@
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-001）：操作員無權限切換到非自身的場館，前端已擋（站台切換選單不提供其他場館）。註：未回答直接呼叫 API 帶其他站台參數的後端行為，TC-DAILYREPORT-004 的假設仍待確認。
 【2026-09-14 補充】後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕。→ TC-DAILYREPORT-004 的假設已解。
-- 對應 TC：TC-DAILYREPORT-004 v1, TC-DAILYREPORT-002 v1, TC-DAILYREPORT-003 v1, TC-DAILYREPORT-001 v1
+- 對應 TC：TC-DAILYREPORT-004 v1, TC-DAILYREPORT-002 v1, TC-DAILYREPORT-055 v1, TC-DAILYREPORT-003 v1, TC-DAILYREPORT-057 v1, TC-DAILYREPORT-001 v1, TC-DAILYREPORT-056 v1
 
 ## REQ-DAILYREPORT-002 場館範圍跟隨站台切換
 
@@ -27,7 +27,7 @@
 - 驗收條件：
   - 0021：給定 使用者在場館日結報表；當 切換站台下拉選單；則 列表只顯示所選站台的場館資料，且頁面上不存在場館篩選欄位
 - 不符合時系統怎麼做：spec 有寫——不存在場館篩選欄位即為規則本身
-- 對應 TC：TC-DAILYREPORT-005 v1
+- 對應 TC：TC-DAILYREPORT-005 v1, TC-DAILYREPORT-058 v1
 
 ## REQ-DAILYREPORT-003 機台帳號篩選
 
@@ -41,7 +41,7 @@
 - 輸入：machine_account（string，{'note': '會員編號格式未在本包定義'}）
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-002）：輸入不存在或非本場館的機台帳號：找不到用戶即可，API 回 rows: []（空列表，不報錯）。
-- 對應 TC：TC-DAILYREPORT-008 v1, TC-DAILYREPORT-006 v1, TC-DAILYREPORT-007 v1
+- 對應 TC：TC-DAILYREPORT-008 v1, TC-DAILYREPORT-059 v1, TC-DAILYREPORT-060 v1, TC-DAILYREPORT-006 v1, TC-DAILYREPORT-007 v1
 
 ## REQ-DAILYREPORT-004 結算日期必填
 
@@ -56,7 +56,7 @@
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-003）：結算日期異常（起日晚於迄日等）：找不到資料即可，API 回 rows: []。註：與 Spec「必填」的關係——未填時是否也回空列表而非阻擋，建議 spec v0.2 明寫。
 【2026-09-14 補充】未填結算日期時，前端 popup 警示「失敗：結算日期為必填」（截圖）；不送出查詢。→ TC-DAILYREPORT-009 的假設已解（阻擋方式＝popup）。
-- 對應 TC：TC-DAILYREPORT-012 v1, TC-DAILYREPORT-009 v1, TC-DAILYREPORT-010 v1, TC-DAILYREPORT-011 v1
+- 對應 TC：TC-DAILYREPORT-012 v1, TC-DAILYREPORT-009 v1, TC-DAILYREPORT-062 v1, TC-DAILYREPORT-061 v1, TC-DAILYREPORT-010 v1, TC-DAILYREPORT-011 v1
 
 ## REQ-DAILYREPORT-005 統計週期
 
@@ -69,9 +69,9 @@
   - 0052：給定 結算日期涵蓋 2026-09-02(三)～2026-09-10(四)；當 統計週期選「按週」並搜尋；則 列出兩列：週起為 2026-08-31(一) 與 2026-09-07(一) 的兩週，金額為各週內營業日合計
   - 0053：給定 結算日期涵蓋多個營業日；當 統計週期選「區間合計」；則 只有一列，各欄為區間內所有營業日合計
 - 輸入：period（enum，必填，{'enum': ['按日', '按週', '按月', '區間合計']}）
-- 不符合時系統怎麼做：spec 有寫——下拉選單只能選四種之一，無非法值
+- 不符合時系統怎麼做：spec 有寫——不完整週：照結算日期範圍實際起迄顯示（不強制補滿整週），只要「完整」的週仍以週一為週起；範圍外的營業日不計入該列合計。依CLR-DAILYREPORT-008確認（含具體算例：結算日期09-03起、按週→列出「2026-09-07~2026-09-13」與「2026-09-03~2026-09-06」兩列，08-31~09-02不計入第一列合計）
 - ✅ PM 回答（CLR-DAILYREPORT-008）：不完整週照實際範圍顯示（截圖：結算日期 09-03 起、按週 → 列出「2026-09-07 ~ 2026-09-13」與「2026-09-03 ~ 2026-09-06」兩列），只要完整週以週一為週起即可；範圍外的營業日（08-31～09-02）不計入第一列合計。→ TC-014 的兩條假設已確認（顯示格式＝實際起迄；只計結算日期範圍內）。
-- 對應 TC：TC-DAILYREPORT-013 v1, TC-DAILYREPORT-014 v1, TC-DAILYREPORT-015 v1, TC-DAILYREPORT-016 v1
+- 對應 TC：TC-DAILYREPORT-065 v1, TC-DAILYREPORT-064 v1, TC-DAILYREPORT-013 v1, TC-DAILYREPORT-063 v1, TC-DAILYREPORT-014 v1, TC-DAILYREPORT-015 v1, TC-DAILYREPORT-016 v1
 
 ## REQ-DAILYREPORT-006 統計維度
 
@@ -85,7 +85,7 @@
   - 0063：給定 同上，統計週期選「區間合計」；當 維度選「依場次明細」；則 10 列逐場次列出，不因週期而彙總
 - 輸入：dimension（enum，必填，{'enum': ['依場館彙總', '依機台明細', '依場次明細']}）
 - 不符合時系統怎麼做：spec 有寫——下拉選單三選一
-- 對應 TC：TC-DAILYREPORT-018 v1, TC-DAILYREPORT-019 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-017 v1
+- 對應 TC：TC-DAILYREPORT-068 v1, TC-DAILYREPORT-018 v1, TC-DAILYREPORT-019 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-017 v1, TC-DAILYREPORT-067 v1, TC-DAILYREPORT-066 v1
 
 ## REQ-DAILYREPORT-007 結算期間欄位與營業日切分
 
@@ -100,7 +100,7 @@
 - 輸入：settle_time（datetime，必填，{'format': 'HH:mm UTC+0', 'note': '場館設定欄位，切分營業日的邊界'}）
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-004）：日結時間為場館設定欄位（每日結算的截止時刻，UTC+0），畫面截圖顯示欄位有預設值「上午 12:00」（即 00:00 UTC+0）。→ 未設定時以 00:00 UTC+0 切分營業日。
-- 對應 TC：TC-DAILYREPORT-024 v1, TC-DAILYREPORT-022 v1, TC-DAILYREPORT-023 v1, TC-DAILYREPORT-021 v1
+- 對應 TC：TC-DAILYREPORT-069 v1, TC-DAILYREPORT-024 v1, TC-DAILYREPORT-022 v1, TC-DAILYREPORT-023 v1, TC-DAILYREPORT-021 v1, TC-DAILYREPORT-071 v1, TC-DAILYREPORT-070 v1
 
 ## REQ-DAILYREPORT-008 場次編號欄（依場次明細）
 
@@ -113,11 +113,12 @@
   - 0082：給定 維度為依場館彙總或依機台明細；當 查看列表；則 不顯示場次編號欄
   - 0083：給定 有一場次仍進行中；當 查看該列；則 結束時間顯示「—」，場次時長為開始至查詢當下的累計
 - 不符合時系統怎麼做：spec 有寫——非場次明細維度不顯示該欄
-- 對應 TC：TC-DAILYREPORT-025 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-026 v1, TC-DAILYREPORT-027 v1
+- ✅ PM 回答（CLR-DAILYREPORT-012）：B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明細不列進行中）符合。→ AC-DAILYREPORT-0083 作廢、TC-DAILYREPORT-027 retire；REQ-008 statement 移除「進行中場次結束時間顯示「—」、時長為累計至查詢當下」。附帶題「會員詳細頁機台資訊區塊的進行中場次摘要是否顯示即時時長」本次未決，留待 ACCOUNT／ARCADE 處理。
+- 對應 TC：TC-DAILYREPORT-073 v1, TC-DAILYREPORT-072 v1, TC-DAILYREPORT-025 v1, TC-DAILYREPORT-074 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-026 v1, TC-DAILYREPORT-027 v1
 
 ## REQ-DAILYREPORT-009 場次數
 
-**需求**：「場次數」於「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：依機台明細＝該機台帳號當日場次數；依場館彙總＝該場館底下所有機台帳號當日場次數的加總。
+**需求**：「場次數」於「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：依機台明細＝該機台帳號當日場次數；依場館彙總＝該場館底下所有機台帳號當日場次數的加總。「當日結束」包含「已結束」與「日結結算」兩種狀態（依CLR-DAILYREPORT-007確認：逾時結束的時間必然超過日結時間，而日結時間到達時會強制結束所有進行中場次，故當日內場次只會以「已結束」或「日結結算」收尾，兩者皆計入當日場次數）；僅「進行中」狀態不計入。
 
 - 類型 functional · 行為 success · 風險 high · 狀態 ACTIVE
 - spec 位置：§列表欄位/場次數（2026-09-03 定案）　引句：「依場館彙總＝該場館底下所有機台帳號當日場次數的加總」
@@ -125,10 +126,10 @@
   - 0091：給定 機台 A 當日結束 3 場、機台 B 當日結束 2 場；當 維度依機台明細；則 A 列場次數 3、B 列場次數 2
   - 0092：給定 同上；當 維度依場館彙總；則 場次數 5
   - 0093：給定 機台 A 有 1 場進行中；當 維度依機台明細；則 進行中場次不計入場次數
-- 不符合時系統怎麼做：spec 有寫——進行中場次不計（『當日結束的場次筆數』）
+- 不符合時系統怎麼做：spec 有寫——進行中場次不計（『當日結束的場次筆數』）；已結束與日結結算兩種狀態皆計入，此點已由CLR-DAILYREPORT-007正式確認
 - ✅ PM 回答（CLR-DAILYREPORT-007）：逾時結束的時間會超過日結時間；而 Spec 規定日結時間到達時強制結束所有進行中的場次，因此當日內場次只會以「已結束」或「日結結算」收尾，兩者都計入當日場次數（場次數計算在今日）。→ TC-DAILYREPORT-031 的假設「含所有非進行中狀態、日結結算歸屬開始的營業日」已確認。
 - ⚠ 歧義（major）：「當日結束的場次」是否包含狀態為「逾時結束」與「日結結算」的場次，Spec 未明示　可能解讀：包含所有非進行中狀態（已結束、逾時結束、日結結算） / 僅包含「已結束」
-- 對應 TC：TC-DAILYREPORT-028 v1, TC-DAILYREPORT-029 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-030 v1, TC-DAILYREPORT-031 v1
+- 對應 TC：TC-DAILYREPORT-028 v1, TC-DAILYREPORT-029 v1, TC-DAILYREPORT-075 v1, TC-DAILYREPORT-077 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-076 v1, TC-DAILYREPORT-030 v1, TC-DAILYREPORT-031 v1
 
 ## REQ-DAILYREPORT-010 現金收支金額欄定義
 
@@ -140,7 +141,7 @@
   - 0101：給定 當日機台 A 開分 1000、洗分 300、入金 500、出金 200；當 查看依機台明細；則 開分 1000、洗分 300、進鈔 500、收據 200
   - 0102：給定 過渡期機台無印表機、當日出金 200；當 查看收據金額；則 顯示 200（取結算結果畫面出金金額）
 - 不符合時系統怎麼做：spec 有寫——純統計，無拒絕行為
-- 對應 TC：TC-DAILYREPORT-032 v1, TC-DAILYREPORT-033 v1
+- 對應 TC：TC-DAILYREPORT-032 v1, TC-DAILYREPORT-033 v1, TC-DAILYREPORT-079 v1, TC-DAILYREPORT-078 v1
 
 ## REQ-DAILYREPORT-011 核實狀態連動欄位
 
@@ -156,7 +157,7 @@
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-005）：提醒標示的呈現方式如截圖：交易列表中待核實的機台洗分列顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」；已核實者為綠色「已核實」。報表的待核實洗分提醒沿用同款黃色警示標籤。
 - ⚠ 歧義（minor）：「標示提醒」的具體呈現方式未定義　可能解讀：紅字 / 圖示 / 文字標籤
-- 對應 TC：TC-DAILYREPORT-034 v1, TC-DAILYREPORT-035 v1, TC-DAILYREPORT-036 v1, TC-DAILYREPORT-037 v1
+- 對應 TC：TC-DAILYREPORT-034 v1, TC-DAILYREPORT-080 v1, TC-DAILYREPORT-081 v1, TC-DAILYREPORT-035 v1, TC-DAILYREPORT-036 v1, TC-DAILYREPORT-082 v1, TC-DAILYREPORT-083 v1, TC-DAILYREPORT-037 v1
 
 ## REQ-DAILYREPORT-012 現金淨收計算
 
@@ -168,7 +169,7 @@
   - 0121：給定 開分 1000、進鈔 500、已核實洗分 200、待核實洗分 100、已兌現 150；當 查看現金淨收；則 1150（=1000+500-200-150，不扣 100）
   - 0122：給定 開分 0、進鈔 0、已核實洗分 300、已兌現 0；當 查看現金淨收；則 -300（允許負值）
 - 不符合時系統怎麼做：spec 有寫——純計算
-- 對應 TC：TC-DAILYREPORT-038 v1, TC-DAILYREPORT-039 v1
+- 對應 TC：TC-DAILYREPORT-038 v1, TC-DAILYREPORT-039 v1, TC-DAILYREPORT-084 v1, TC-DAILYREPORT-085 v1
 
 ## REQ-DAILYREPORT-013 有效投注額與損益以核心貨幣計算
 
@@ -181,7 +182,7 @@
   - 0132：給定 當日損益為正；當 查看損益欄；則 綠色
   - 0133：給定 當日損益為負；當 查看損益欄；則 紅色
 - 不符合時系統怎麼做：spec 有寫——純顯示
-- 對應 TC：TC-DAILYREPORT-041 v1, TC-DAILYREPORT-040 v1
+- 對應 TC：TC-DAILYREPORT-086 v1, TC-DAILYREPORT-087 v1, TC-DAILYREPORT-041 v1, TC-DAILYREPORT-040 v1
 
 ## REQ-DAILYREPORT-014 期末餘額
 
@@ -193,11 +194,11 @@
   - 0141：給定 按日、場館有 A(期末 50)、B(期末 30)；當 依場館彙總；則 期末餘額 80
   - 0142：給定 按週，週內最後營業日期末合計 80、前一日 120；當 依場館彙總；則 期末餘額 80（非 200）
 - 不符合時系統怎麼做：spec 有寫——純統計
-- 對應 TC：TC-DAILYREPORT-043 v1, TC-DAILYREPORT-042 v1
+- 對應 TC：TC-DAILYREPORT-043 v1, TC-DAILYREPORT-042 v1, TC-DAILYREPORT-088 v1, TC-DAILYREPORT-089 v1
 
 ## REQ-DAILYREPORT-015 非按日週期的彙總規則
 
-**需求**：統計週期非按日時：各金額與筆數欄為該週期內各營業日的合計；期末餘額取最後營業日；未兌現金額不受週期影響，一律為截至查詢當下的累計。
+**需求**：統計週期非按日時：各金額與筆數欄為該週期內各營業日的合計；期末餘額取最後營業日；未兌現金額不受統計週期切分方式影響，一律為截至查詢當下的累計，但仍受結算日期範圍這個篩選條件限制（依CLR-DAILYREPORT-009確認：範圍外的未兌現收據不計入；「不受週期影響」指的是不會因為切成週/月而被打散或重複計算，不是不受結算日期範圍本身限制）。
 
 - 類型 functional · 行為 constraint · 風險 high · 狀態 ACTIVE
 - spec 位置：§列表欄位附註　引句：「「未兌現金額」不受週期影響、一律為截至查詢當下的累計」
@@ -207,7 +208,7 @@
 - 不符合時系統怎麼做：spec 有寫——純統計
 - ✅ PM 回答（CLR-DAILYREPORT-009）：受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200；(a) 結算 09-03～09-09 按週 → 09-07～09-09 列未兌現 1000、09-03～09-06 列 0；(b) 結算 09-03～09-10 → 09-07～09-10 列 1200、09-03～09-06 列 0。→ **TC-DAILYREPORT-046 的假設（不受結算日期限制）是錯的**，該案 expected 需改為「不包含範圍外的 200」；建議 APR-0003 逐項 reject TC-046，待 spec v0.2 走 WF-C 重寫。
 - ⚠ 歧義（major）：「未兌現金額不受週期影響」與「結算日期」篩選的關係未明：是否也不受結算日期範圍限制？　可能解讀：不受結算日期限制（全期累計） / 受結算日期限制、只不受統計週期切分影響
-- 對應 TC：TC-DAILYREPORT-045 v1, TC-DAILYREPORT-044 v1, TC-DAILYREPORT-046 v1
+- 對應 TC：TC-DAILYREPORT-045 v1, TC-DAILYREPORT-090 v1, TC-DAILYREPORT-091 v1, TC-DAILYREPORT-044 v1, TC-DAILYREPORT-092 v1, TC-DAILYREPORT-046 v1, TC-DAILYREPORT-046 v2
 
 ## REQ-DAILYREPORT-016 列表總計與匯出 CSV
 
@@ -221,7 +222,7 @@
   - 0163：給定 任何角色；當 檢視頁面；則 無新增／編輯／刪除／審核按鈕
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-006）：無資料時列表仍列出，日期正常顯示、各欄位顯示 0。欄位清單（PM 提供）：場館、場次數、開分金額、洗分金額、已核實洗分、待核實洗分、進鈔金額、收據金額、已兌現金額、未兌現金額、現金淨收、注單數、有效投注額、損益、期末餘額。註：此清單含「注單數」，Spec v0.1 列表欄位無此欄 → spec 需補；匯出 CSV 無資料時的行為未明說，推定同列表（一列 0）。
-- 對應 TC：TC-DAILYREPORT-049 v1, TC-DAILYREPORT-048 v1, TC-DAILYREPORT-047 v1, TC-DAILYREPORT-050 v1
+- 對應 TC：TC-DAILYREPORT-049 v1, TC-DAILYREPORT-048 v1, TC-DAILYREPORT-094 v1, TC-DAILYREPORT-095 v1, TC-DAILYREPORT-047 v1, TC-DAILYREPORT-050 v1, TC-DAILYREPORT-093 v1
 
 ## REQ-DAILYREPORT-017 場次日結強制結束
 
@@ -234,5 +235,5 @@
   - 0172：給定 機台 A 無進行中場次；當 日結時間到達；則 不產生新場次
 - 狀態轉換：進行中→日結結算（日結時間到達）；進行中→已結束（洗分／出金／分數歸 0）；進行中→逾時結束（逾時（定義於開發包③））；已結束→進行中（不可逆，不允許）
 - 不符合時系統怎麼做：spec 有寫——狀態轉換規則明確
-- 對應 TC：TC-DAILYREPORT-053 v1, TC-DAILYREPORT-052 v1, TC-DAILYREPORT-054 v1, TC-DAILYREPORT-051 v1
+- 對應 TC：TC-DAILYREPORT-053 v1, TC-DAILYREPORT-052 v1, TC-DAILYREPORT-096 v1, TC-DAILYREPORT-097 v1, TC-DAILYREPORT-054 v1, TC-DAILYREPORT-051 v1
 

@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-09-21
+- 更新：2026-09-22
 
 ## ba-admin / ACCOUNT
 
@@ -49,6 +49,7 @@
 | [CLR-DAILYREPORT-009](ba-admin/DAILYREPORT/CLR-DAILYREPORT-009.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「未兌現金額不受週期影響、累計至查詢當下」是否也不受結算日期範圍限制？ | 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200； |
 | [CLR-DAILYREPORT-010](ba-admin/DAILYREPORT/CLR-DAILYREPORT-010.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 「已兌現金額」以收據日還是兌現日歸屬？（同一筆出金跨日兌現時，記在出收據那天還是付現那天） |  |
 | [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ |  |
+| [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
 
 ## ba-admin / PLATFORMRULE
 

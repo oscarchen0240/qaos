@@ -389,7 +389,7 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 場次編號欄（依場次明細）
-  statement: 「場次編號」欄僅在「依場次明細」維度顯示，並附開始／結束時間與場次時長；進行中場次結束時間顯示「—」、時長為累計至查詢當下。
+  statement: 「場次編號」欄僅在「依場次明細」維度顯示，並附開始／結束時間與場次時長。依場次明細只列出已結束／逾時結束／日結結算的場次，進行中場次不列（依 CLR-DAILYREPORT-012 PM 定案 B，2026-09-22）；場次資訊表「進行中的場次結束時間顯示「—」、時長累計至查詢當下」一句不適用本報表。
   acceptance_criteria:
   - ac_id: AC-DAILYREPORT-0081
     given: 維度為依場次明細
@@ -399,10 +399,6 @@ requirements:
     given: 維度為依場館彙總或依機台明細
     when: 查看列表
     then: 不顯示場次編號欄
-  - ac_id: AC-DAILYREPORT-0083
-    given: 有一場次仍進行中
-    when: 查看該列
-    then: 結束時間顯示「—」，場次時長為開始至查詢當下的累計
   spec_reference:
     spec_id: SPEC-DAILYREPORT-001
     spec_version: '0.1'
@@ -433,6 +429,12 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-22T03:01:51Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-012：依場次明細不列進行中場次；AC-DAILYREPORT-0083 作廢移除（原 given「有一場次仍進行中」then「結束時間「—」、時長累計至查詢當下」）；TC-DAILYREPORT-027
+      已 retire
 - requirement_id: REQ-DAILYREPORT-009
   version: 1
   spec_id: SPEC-DAILYREPORT-001
