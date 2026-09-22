@@ -1,0 +1,31 @@
+clarification_id: CLR-DAILYREPORT-011
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+question: 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？
+context: CASHOUT spec 定義核實三態（待核實／已核實／已作廢），作廢不可復原、分數不退回機台。DAILYREPORT 只定義收據金額（當日出金總額）、已兌現（已核實）、未兌現（仍為待核實）三欄，未提及已作廢。依定義推導：作廢後該筆從未兌現消失、不進已兌現、收據金額仍含（出金交易狀態不變）→
+  收據金額 ≠ 已兌現＋未兌現，差額即已作廢，但報表無此欄，對帳人員不知殘差代表什麼（洗分那組「洗分＝已核實＋待核實」是自洽的，會被拿來對照）。現金淨收、未兌現（負債）、損益不受影響。RM 目前無任何 AC 涵蓋已作廢，450 條 ACTIVE
+  TC 亦無。
+options:
+- A. 不另顯示：收據金額仍含已作廢，殘差＝已作廢，靠回推；需在欄位說明註明
+- B. 新增「已作廢金額」欄，讓 收據＝已兌現＋未兌現＋已作廢 可直接勾稽
+- C. 收據金額扣除已作廢，維持 收據＝已兌現＋未兌現
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-21T20:53:43Z'
+status: ASKED
+history:
+- at: '2026-09-21T20:53:43Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-21T20:58:27Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked PM
+requirement_id: REQ-DAILYREPORT-011
+impact_if_unanswered: 已作廢對報表的影響無 AC 可掛，Test Designer 無法設計作廢後回查報表的案例
+asked_to: PM
+asked_at: '2026-09-21T20:58:26Z'
