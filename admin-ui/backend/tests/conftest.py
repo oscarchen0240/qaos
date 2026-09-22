@@ -53,6 +53,7 @@ def write_run(qaos_root: pathlib.Path):
                 "task_id": task_id, "type": te.pop("type", None) or ("approval" if task_id == "T4" else "agent"),
                 "agent_id": agent, "status": tstatus, "iteration": te.pop("iteration", 0),
                 "history": te.pop("history", []), "gate_results": te.pop("gate_results", []),
+                "started_at": te.pop("started_at", None), "ended_at": te.pop("ended_at", None), "gate": te.pop("gate", None),
                 **te,
             })
         d = qaos_root / "runs" / run_id

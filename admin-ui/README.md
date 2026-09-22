@@ -25,7 +25,7 @@ admin-ui/
 ├─ dev.sh              一鍵啟動
 ├─ backend/            FastAPI（routers/ 路由、services/ 讀檔邏輯（tickets.py 讀單據＋組 bin/qaos 指令）、db.py SQLite schema）
 ├─ frontend/           React + Vite + TypeScript
-├─ config/stages.yaml  pipeline 階段大綱：events / run.yaml / final 檔如何對應到階段、stall 門檻
+├─ config/stages.yaml  每個 workflow_id 各自的 pipeline 階段大綱：events / run.yaml / final 檔如何對應到階段、stall 門檻
 ├─ design-system/      ui-ux-pro-max 產生的設計系統（MASTER.md 下半「採用版」為準：slate 基底、藍色互動色、語意色只給狀態、JetBrains Mono、最小 12px、Phosphor 圖示）
 ├─ hooks/              Claude Code hook 腳本：log_event（記錄事件）、handoff_relay（交接回 QA session）、guard_qaos（守門）、PROPOSED-settings.local.json（待確認的設定）
 ├─ scripts/            write_ci_status.py（工程 CI 結果 → data/ci-status.json）
@@ -46,9 +46,11 @@ admin-ui/
   - **自動化測試（預留）**：M4 的 runner 完成後呼叫 `autoreports.upsert_auto(kind="automation", …)` 就會出現在同一頁。
   - 列表可搜尋（標題／摘要／模組／run）、每頁 20 筆分頁、欄位排序。側欄徽章：報告總數；有尚未寫結論的自動報告時徽章變亮。匯出 MD / HTML 會包含系統段落＋你的結論。
 - Pipeline：`run.yaml` 為事實來源、hook 事件補即時 agent 活動；SSE 推送（連不上退回 5 秒輪詢）。
+  - **階段大綱依 workflow 分開**（`admin-ui/config/stages.yaml`，2026-09-22 改版）：QAOS 有 6 種 workflow（spec-to-testcase、spec-to-bug、testcase-revision、manual-test-to-regression、regression-generation、spec-change-impact），各自的 task 圖完全不同，即使 task_id 剛好都叫 `T1`/`T2`……語意也不一樣（spec-to-bug 的 T1 是 Bug Analyst，不是 Spec Analyst）。過去只有一套依 spec-to-testcase 寫死的 8 階段大綱，其他 workflow 的 run 會被硬套進去，顯示錯誤或純屬巧合的狀態（例如 bug run 的「獨立驗證」進行中只是因為 Bug Validator 的子 agent 描述也含「獨立審查」四個字，「匯出 final」顯示完成只是因為同功能區另一條 spec-to-testcase run 早就匯出過）。現在 `stages.yaml` 是 `pipelines: [...]`，每個 workflow_id 對應自己的階段大綱，`backend/services/stages.py` 依 run 的 `workflow_id` 選對應的 pipeline，找不到定義的 workflow 回一個最小 fallback（只有建立 Run／結案兩個節點）。車道標題與 API 回傳都會帶 `pipeline_id`／`pipeline_title`（例如「SPEC → Bug」），不再只顯示 workflow_id 的原始字串。
+  - **迭代迴圈與獨立審查不再寫死 stage id**：階段定義可標 `loop_partner: true`（Designer⇄Validator 這類會重跑的節點對，前端畫迴圈圖示、顯示「第 n/max 輪」）與 `independent_review: true`（`_classify_agent` 遇到 general-purpose＋描述含「獨立審查」的子 agent 時歸類到這個節點，取代舊版寫死的 `stage_by_id(cfg, "validation")`）。6 種 workflow 各自的 loop／獨立審查節點都不同（例如 spec-to-bug 是 bug-analysis⇄bug-validation）。
   - **主狀態**（車道標題）由後端合成：`run.status` 優先（已取消／失敗／已完成／等你決定／執行中），其次目前階段，session 健康度只當淡色副標（例如「session 仍連線」）。run 終止後「已執行」時鐘凍結，改顯示「跑了多久後結束」。
   - **下一步**一行：請核准 APR / 請回 CLR / 可能卡住 / Validator FAIL 第 n/max 輪 / Run 已停可忽略 / 產出已可審 / 進行中：階段；一次只顯示第一個命中的。
-  - 階段條：gate 完整顯示；run 取消／失敗時，實際開始過的階段標「已取消／失敗」，從未開始的標「未執行」；Designer⇄Validator 迭代顯示「第 n / 3 輪」，達上限用警告色；已決定的核准單淡色「曾開單」。
+  - 階段條：gate 完整顯示；run 取消／失敗時，實際開始過的階段標「已取消／失敗」，從未開始的標「未執行」；迭代迴圈節點顯示「第 n / 3 輪」，達上限用警告色；已決定的核准單淡色「曾開單」。
   - Agent 活動：以 `run.yaml` 的 task history／gate 結果為主，hook 的 SubagentStart/Stop 疊加。
   - final 產出：掃描 `testcases/final/` 對應功能區的檔案（Bash cp 也抓得到），hook Write/Edit 只是輔助。
   - 「即時」一個活著的 run（RUNNING / WAITING_HUMAN）一條車道——同 session 並行的 run 各自一條；手選／追蹤中的 session 額外保留一條。不畫空車道；已取消／完成的請看「歷史 Session」。

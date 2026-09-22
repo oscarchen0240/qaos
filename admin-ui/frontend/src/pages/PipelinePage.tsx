@@ -184,7 +184,7 @@ function LiveView({ s, index, total, drift, onOpenRun, onOpenSession, onIgnore, 
         {s.tracked && <span className="tag accent">追蹤中</span>}
         {s.tag && <span className="tag violet">tag {s.tag}</span>}
         <div className="grow" />
-        {s.workflow_id && <span className="mono faint">{s.workflow_id}</span>}
+        {s.workflow_id && <span className="mono faint" title={s.workflow_id}>{s.pipeline_title || s.workflow_id}</span>}
         {activeRun && <button className="btn ghost sm mono" onClick={() => onOpenRun(activeRun.run_id)}>{activeRun.run_id}</button>}
         <span className="mono faint" title={s.session_id}>session {s.short_id}</span>
         <button className="btn ghost sm" onClick={() => onOpenSession(s.session_id)}>詳細</button>

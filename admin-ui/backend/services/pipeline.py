@@ -36,15 +36,18 @@ def _subagent_meta(transcript_path: str, session_id: str, agent_id: str) -> dict
     return meta
 
 
-def _classify_agent(cfg: dict, a: dict, s: dict) -> dict:
-    """回傳 {stage_id, stage_title, signal, description, role}"""
-    st, sig = st_svc.stage_for_agent_type(cfg, a["agent_type"])
+def _classify_agent(pipeline: dict, a: dict, s: dict) -> dict:
+    """回傳 {stage_id, stage_title, signal, description, role}。pipeline 是這個 agent 所屬 run 的階段大綱
+    （由呼叫端依 active_run.workflow_id 解出），不是全域設定——不同 workflow 的 stage id／agent 不共用。"""
+    st, sig = st_svc.stage_for_agent_type(pipeline, a["agent_type"])
     meta = _subagent_meta(s.get("transcript_path", ""), s["session_id"], a["agent_id"])
     desc = (meta or {}).get("description") or ""
     role = a["subagent_name"] or a["agent_type"]
     if a["agent_type"] == "general-purpose":
         if desc and any(k in desc for k in ("獨立審查", "審查", "驗證", "Validator", "validator", "review")):
-            st = st_svc.stage_by_id(cfg, "validation"); sig = "strong"; role = "Test Validator（獨立審查）"
+            iv = st_svc.independent_review_stage(pipeline)
+            if iv:
+                st = iv; sig = "strong"; role = f"{iv['title']}（獨立審查）"
         elif desc:
             role = f"general-purpose：{desc}"
     return {"stage_id": st["id"] if st else None, "stage_title": st["title"] if st else None, "signal": sig, "description": desc, "role": role}
@@ -102,19 +105,20 @@ TERMINAL = ("CANCELLED", "FAILED", "COMPLETED")
 TASK_LABEL = {"T1": "Spec 分析", "T2": "測試設計", "T3": "獨立驗證", "T4": "人工核准", "T5": "結案"}
 
 
-def _run_stage_status(cfg: dict, run: dict) -> dict[str, dict]:
-    """由 run.yaml 的 task 狀態推每個 stage 的 runtime 狀態。
+def _run_stage_status(cfg: dict, run: dict, pipeline: dict | None = None) -> dict[str, dict]:
+    """由 run.yaml 的 task 狀態推每個 stage 的 runtime 狀態，依 run 的 workflow_id 選對應的 pipeline 大綱
+    （不再有「所有 workflow 共用 spec-to-testcase 的 T1..T5 大綱」這件事——task id 相同不代表語意相同）。
 
     run 已終止（CANCELLED/FAILED）時：實際開始過的階段標 cancelled/failed，從未開始的標 skipped。
     """
     out: dict[str, dict] = {}
     if not run:
         return out
-    wf_stage = st_svc.stage_for_workflow(cfg, run.get("workflow_id") or "")
+    pipeline = pipeline or st_svc.pipeline_for_workflow(cfg, run.get("workflow_id"))
     out["intake"] = {"status": "done", "at": run.get("created_at")}
     max_iter = run.get("max_iterations") or 3
     for t in run["tasks"]:
-        st = st_svc.stage_for_task(cfg, t["task_id"]) if run.get("workflow_id") == "spec-to-testcase" else None
+        st = st_svc.stage_for_task(pipeline, t["task_id"])
         if not st:
             continue
         status = t["status"]
@@ -128,11 +132,10 @@ def _run_stage_status(cfg: dict, run: dict) -> dict[str, dict]:
                          "task_id": t["task_id"], "started": started, "awaiting": mapped == "waiting_human",
                          "elapsed_seconds": dd["elapsed"], "work_seconds": dd["work"], "human_seconds": dd["human"], "elapsed_running": dd["running"]}
     if run.get("workflow_id") == "spec-to-testcase":
-        # 整合／匯出不是 run 的 task：用 shadow-test 文件、修訂 run、final 檔當證據（specflow）
+        # 整合／匯出不是 run 的 task，只有 spec-to-testcase 有這兩個合成階段：
+        # 用 shadow-test 文件、修訂 run、final 檔當證據（specflow）
         for sid, ev in sf_svc.stage_evidence(run).items():
             out[sid] = ev
-    if wf_stage and run.get("workflow_id") != "spec-to-testcase":
-        out[wf_stage["id"]] = {"status": "done" if run["status"] == "COMPLETED" else "active" if run["status"] in ACTIVE_RUN_STATUSES else "pending", "run_status": run["status"], "started": True}
     if run["status"] == "COMPLETED":
         out["summary"] = {"status": "done", "at": run.get("updated_at"), "started": True}
     elif run["status"] in ("FAILED", "CANCELLED"):
@@ -304,15 +307,17 @@ def _next_action(run: dict | None, stages: list[dict], health: dict, s: dict, cl
 def session_view(cfg: dict, s: dict, rows: dict[str, dict], runs: list[dict], now: float, with_timeline: bool = False, run: dict | None = None) -> dict:
     """一個 session（可指定要看的 run）的完整視圖。run=None 時自動挑活著的／最相關的 run。"""
     row = rows.get(s["session_id"], {})
+    related = _related_runs(s, runs)
+    active_run = run or next((r for r in related if r["status"] in ACTIVE_RUN_STATUSES), None) or (related[0] if related else None)
+    # 這個 session／run 的階段大綱：每個 workflow_id 各自一套（不是全域共用 spec-to-testcase 的大綱）
+    pipeline = st_svc.pipeline_for_workflow(cfg, active_run["workflow_id"] if active_run else None)
     agents = []
     for a in s["agents"]:
-        c = _classify_agent(cfg, a, s)
+        c = _classify_agent(pipeline, a, s)
         end = a["_end"] if a["_end"] else (now if not s["ended_at"] else s["_last"])
         agents.append({**{k: v for k, v in a.items() if not k.startswith("_")}, **c,
                        "elapsed_seconds": int(max(0, end - a["_start"])), "running": a["ended_at"] is None and not s["ended_at"]})
     current = next((a for a in reversed(agents) if a["running"]), None)
-    related = _related_runs(s, runs)
-    active_run = run or next((r for r in related if r["status"] in ACTIVE_RUN_STATUSES), None) or (related[0] if related else None)
     health = _health(cfg, s, now)
     suggested = any(t in (cfg["session_filter"].get("suggest_when_agent_type") or []) for t in s["agent_types"])
     run_terminal = bool(active_run and active_run["status"] in TERMINAL)
@@ -322,10 +327,10 @@ def session_view(cfg: dict, s: dict, rows: dict[str, dict], runs: list[dict], no
     ambiguous = bool(active_run) and len(concurrent) > 1
     running_agents = [a for a in agents if a["running"]]
 
-    # 階段合成：runtime 為主、events 補充
-    rt = _run_stage_status(cfg, active_run) if active_run else {}
+    # 階段合成：runtime 為主、events 補充。用「這個 run 的 workflow」對應的 pipeline 大綱，不是全域固定的清單。
+    rt = _run_stage_status(cfg, active_run, pipeline) if active_run else {}
     stages = []
-    for st in cfg["stages"]:
+    for st in pipeline["stages"]:
         r = rt.get(st["id"], {})
         ev_hits = [a for a in agents if a["stage_id"] == st["id"]] if not ambiguous else []
         live = any(a["running"] for a in ev_hits)
@@ -342,7 +347,7 @@ def session_view(cfg: dict, s: dict, rows: dict[str, dict], runs: list[dict], no
         stages.append({
             "id": st["id"], "title": st["title"], "agent": st.get("agent"), "gate": st.get("gate"), "order": st.get("order", 0),
             "status": status, "runtime": r or None, "event_agents": len(ev_hits), "live": live, "last_at": last,
-            "notes": st.get("notes"),
+            "notes": st.get("notes"), "loop_partner": bool(st.get("loop_partner")), "independent_review": bool(st.get("independent_review")),
         })
     if run_terminal:
         started_ids = [x["id"] for x in stages if x["status"] in ("cancelled", "failed")]
@@ -374,6 +379,7 @@ def session_view(cfg: dict, s: dict, rows: dict[str, dict], runs: list[dict], no
         "lane_key": f"{s['session_id']}:{active_run['run_id'] if active_run else '-'}",
         "session_id": s["session_id"], "short_id": s["session_id"][:8], "label": row.get("label") or "",
         "spec": spec, "spec_short": spec_short, "workflow_id": active_run["workflow_id"] if active_run else None, "run_status": active_run["status"] if active_run else None,
+        "pipeline_id": pipeline["id"], "pipeline_title": pipeline["title"],
         **primary, "next_action": next_action, "sibling_completed": sibling, "sibling_runs": siblings[:3], "open_clarifications": clrs,
         "tracked": bool(row.get("tracked")), "ignored": bool(row.get("ignored")), "suggested": suggested, "tag": s["tag"],
         "cwd": s["cwd"], "started_at": s["started_at"] or s["first_seen"], "ended_at": s["ended_at"], "end_reason": s["end_reason"],
@@ -465,7 +471,10 @@ def snapshot(session_id: str | None = None) -> dict:
         "stall": cfg["stall"],
         "max_lanes": max_lanes,
         "lanes": lanes,
-        "stages": [{"id": s["id"], "title": s["title"], "agent": s.get("agent"), "gate": s.get("gate"), "order": s.get("order", 0), "notes": s.get("notes")} for s in cfg["stages"]],
+        # 舊欄位：spec-to-testcase 的階段大綱（相容用；各 lane/session 自己的 stages 才是實際顯示的，見 session_view）
+        "stages": [{"id": s["id"], "title": s["title"], "agent": s.get("agent"), "gate": s.get("gate"), "order": s.get("order", 0), "notes": s.get("notes")}
+                   for s in st_svc.pipeline_for_workflow(cfg, "spec-to-testcase")["stages"]],
+        "pipelines": [{"id": p["id"], "title": p["title"], "description": p.get("description"), "workflow_ids": p.get("workflow_ids") or []} for p in st_svc.all_pipelines(cfg)],
         "focus": focus,
         "sessions": views,
         "live_count": sum(1 for v in visible if v["health"]["state"] in ("live", "stalled") and v["run_status"] in ACTIVE_RUN_STATUSES),

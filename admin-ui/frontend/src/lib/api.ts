@@ -143,7 +143,7 @@ export interface ReportPage { items: ReportLite[]; total: number; page: number; 
 export type StageStatus = "pending" | "active" | "done" | "failed" | "waiting_human" | "cancelled" | "skipped";
 export type HealthState = "live" | "stalled" | "dead" | "ended";
 
-export interface StageDef { id: string; title: string; agent: string | null; gate: string | null; order: number; notes: string | null }
+export interface StageDef { id: string; title: string; agent: string | null; gate: string | null; order: number; notes: string | null; loop_partner?: boolean; independent_review?: boolean }
 
 export interface StageView extends StageDef {
   status: StageStatus;
@@ -187,6 +187,7 @@ export interface SessionView {
   related_runs: RunLite[];
   active_run_id: string | null;
   phase?: "phase2" | "phase3" | "revision" | null;
+  pipeline_id: string; pipeline_title: string;
   agents?: AgentSpan[];
   events?: { ts: string; event: string; agent_id?: string; agent_type?: string; subagent_name?: string; tool_name?: string; file_path?: string; reason?: string }[];
 }
@@ -195,6 +196,7 @@ export interface PipelineSnapshot {
   generated_at: string;
   stall: { warn_after_seconds: number; dead_after_seconds: number };
   stages: StageDef[];
+  pipelines: { id: string; title: string; description: string | null; workflow_ids: string[] }[];
   focus: SessionView | null;
   max_lanes: number;
   lanes: SessionView[];

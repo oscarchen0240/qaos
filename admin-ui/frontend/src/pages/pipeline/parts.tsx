@@ -53,13 +53,15 @@ export function StageRail({ stages, currentId, drift, runTerminal, showDur }: { 
         const iter = r?.iteration ?? 0;
         const maxIter = r?.max_iterations ?? 3;
         const overIter = iter >= maxIter;
-        const loopPartner = st.id === "test-design" || st.id === "validation";
+        // 迭代迴圈（Designer ⇄ Validator）由後端依 pipeline 大綱標 loop_partner，不同 workflow 的迴圈節點名稱不同，不寫死 id
+        const loopPartner = !!st.loop_partner;
+        const isFirstLoopNode = loopPartner && !stages.slice(0, i).some((s) => s.loop_partner);
         return (
           <li key={st.id} className={`rail-item ${st.status} ${isCur ? "current" : ""}`}>
             <div className="rail-node">
               <span className="rail-idx">{i + 1}</span>
               {(st.live || (isCur && running)) && <span className="pulse" />}
-              {st.id === "test-design" && <span className="rail-loop" title="Designer ⇄ Validator 迭代迴圈" aria-label="與獨立驗證形成迭代迴圈"><ArrowsClockwise className="ic sm" aria-hidden="true" /></span>}
+              {isFirstLoopNode && <span className="rail-loop" title="Designer ⇄ Validator 迭代迴圈" aria-label="與獨立驗證形成迭代迴圈"><ArrowsClockwise className="ic sm" aria-hidden="true" /></span>}
             </div>
             <div className="rail-body">
               <div className="rail-title">{st.title}</div>
@@ -68,7 +70,7 @@ export function StageRail({ stages, currentId, drift, runTerminal, showDur }: { 
               <div className="rail-status">
                 <span className={`tag ${STAGE_TAG[st.status] ?? ""}`}>{STAGE_LABEL[st.status] ?? st.status}</span>
                 {loopPartner && iter > 0 && (
-                  <span className={`tag ${overIter ? "danger" : ""}`} title={`Designer ⇄ Validator 第 ${iter} 輪（上限 ${maxIter}）`}>
+                  <span className={`tag ${overIter ? "danger" : ""}`} title={`迭代第 ${iter} 輪（上限 ${maxIter}）`}>
                     第 {iter} / {maxIter} 輪{overIter ? " · 超限" : ""}
                   </span>
                 )}

@@ -1,9 +1,9 @@
-# QAOS 管理介面 — Pipeline 階段大綱（草稿，待確認）
+# QAOS 管理介面 — Pipeline 階段大綱（多 workflow 版，2026-09-22）
 #
 # 用途：後端把三種資料來源對應到「階段」，前端只顯示階段／agent 層級，不顯示單次工具呼叫。
 #
 # 三種資料來源（皆唯讀）：
-#   runtime : runs/<run_id>/run.yaml            ← 事實來源。Runtime 已記錄 T1..T5 的狀態、時間、迭代次數、gate 結果
+#   runtime : runs/<run_id>/run.yaml            ← 事實來源。Runtime 已記錄各 task 的狀態、時間、迭代次數、gate 結果
 #   events  : .warroom/events.jsonl              ← Claude Code hook 寫入的即時事件（哪個 subagent 正在跑、最後活動時間）
 #   outputs : testcases/final/                   ← 最終交付物（檔案系統輪詢 mtime；hook 抓不到用 Bash cp 產生的檔案）
 #
@@ -12,13 +12,20 @@
 #   events.agent_type   : SubagentStart/SubagentStop payload 的 agent_type（已查證 Claude Code 2.1.x 有此欄位）
 #   events.path_prefix  : PostToolUse(Write|Edit) 的 tool_input.file_path 前綴
 #   signal              : strong = 可單獨判定階段；weak = 需搭配 runtime 才可靠
+#
+# 2026-09-22 改版原因：原本只有一套 8 階段大綱（依 spec-to-testcase 的 T1..T5 寫死），
+# 其他 workflow（spec-to-bug、testcase-revision…）的 run 會被硬套進這套大綱——task id 剛好都叫 T1/T2/T3，
+# 但語意完全不同（spec-to-bug 的 T1 是 Bug Analyst，不是 Spec Analyst），畫面因此顯示錯誤或純屬巧合的狀態
+# （例如「匯出 final」顯示完成，只是因為同功能區「另一個」spec-to-testcase run 早就匯出過 final 檔）。
+# 改成每個 workflow_id 各自一套 pipeline 大綱，忠實對應 workflows/<id>.yaml 的真實 task 圖。
+#
+# 每個 stage 可選欄位：
+#   independent_review : true → _classify_agent 遇到 general-purpose + 描述含「獨立審查/驗證」的子 agent 時，
+#                        歸類到這個 stage（取代舊版寫死的 stage id "validation"）。
+#   loop_partner        : true → 這個 stage 與同一個 pipeline 內另一個 loop_partner stage 形成
+#                        Designer ⇄ Validator 的重跑迴圈（前端畫迴圈圖示、顯示「第 n/max 輪」）。
 
-version: 1
-
-pipeline:
-  id: spec-to-testcase
-  title: "SPEC → Test Case"
-  description: "Supervisor 建 Run → Spec Analyst → Test Designer ⇄ Test Validator（≤3 輪）→ 人工核准 → Phase2×3 交叉整合 → 匯出 final"
+version: 2
 
 session_filter:
   # 見 PLAN.md「Session 過濾方案」；此處為預設值，UI 可覆蓋
@@ -33,100 +40,454 @@ stall:
   warn_after_seconds: 600          # 超過 10 分鐘無新事件 → 「可能卡住」
   dead_after_seconds: 1800         # 超過 30 分鐘 → 「已停止」
 
-stages:
-  - id: intake
-    order: 0
-    title: 建立 Run
-    agent: agent-supervisor
-    signals:
-      - source: runtime
-        match: { run_created: true }
-        signal: strong
-
-  - id: spec-analysis
-    order: 1
-    title: Spec 分析
-    agent: agent-spec-analyst
-    gate: G-SPEC
-    signals:
-      - source: runtime
-        match: { task: T1 }
-        signal: strong
-    notes: "目前由主 session 以腳本扮演（tools/manual-runs/*_t1_spec_analyst.py），hook 無法辨識；skip_if RequirementModel 已存在則 T1 直接 DONE"
-
-  - id: test-design
-    order: 2
-    title: 測試設計
-    agent: agent-test-designer
-    gate: G-DESIGN
-    signals:
-      - source: runtime
-        match: { task: T2 }
-        signal: strong
-      - source: events
-        match: { hook: SubagentStart, agent_type: qaos-test-designer }
-        signal: strong
-    notes: "Phase 3 起由 .claude/agents/qaos-test-designer.md 子 agent 執行；同一 run 可迭代最多 3 次（iteration 欄位）"
-
-  - id: validation
-    order: 3
-    title: 獨立驗證
-    agent: agent-test-validator
-    gate: G-TVAL
-    signals:
-      - source: runtime
-        match: { task: T3 }
-        signal: strong
-      - source: events
-        match: { hook: SubagentStart, agent_type: general-purpose }
-        signal: weak
-    notes: "Validator 每輪都是全新的 general-purpose 子 agent（description 通常含「獨立審查」，但 hook payload 沒有 description）；單靠 events 只能推定，需搭配 runtime T3 狀態"
-
-  - id: approval
-    order: 4
-    title: 人工核准
-    agent: human
-    gate: G-APPROVAL
-    signals:
-      - source: runtime
-        match: { task: T4, run_status: WAITING_HUMAN }
-        signal: strong
-    notes: "approvals/APR-xxxx.yaml；ACTIVATE_TESTCASE / HUMAN_OVERRIDE / NEEDS_DECISION"
-
-  - id: integration
-    order: 5
-    title: 交叉整合
-    agent: agent-supervisor
-    signals:
-      - source: runtime
-        match: { workflow_id: testcase-revision }
-        signal: strong
-    notes: "Phase2（人工）× Phase3（agent）逐條交叉比對，透過 bin/qaos tc revise 修訂既有 TC；表現為一連串 testcase-revision run"
-
-  - id: final-export
-    order: 6
-    title: 匯出 final
-    agent: agent-supervisor
-    signals:
-      - source: outputs
-        match: { glob: "testcases/final/*-final*.{html,json}" }
-        signal: strong
-      - source: events
-        match: { hook: PostToolUse, tool_name: [Write, Edit], path_prefix: testcases/final/ }
-        signal: strong
-    notes: "既有 4 個檔案是用 Bash cp 從 /tmp 複製進來的，PostToolUse(Write|Edit) 抓不到；以檔案系統輪詢為主"
-
-  - id: summary
-    order: 7
-    title: 結案
-    agent: agent-supervisor
-    signals:
-      - source: runtime
-        match: { task: T5, run_status: COMPLETED }
-        signal: strong
-
 # 事件層級的「session 生命週期」對應（不屬於任何 pipeline 階段，用來算 elapsed / stall）
 session_events:
   start: [SessionStart]
   turn_end: [Stop]
   end: [SessionEnd]
+
+pipelines:
+
+  # ---------------------------------------------------------------- spec-to-testcase
+  - id: spec-to-testcase
+    workflow_ids: [spec-to-testcase]
+    title: "SPEC → Test Case"
+    description: "Supervisor 建 Run → Spec Analyst → Test Designer ⇄ Test Validator（≤3 輪）→ 人工核准 → Phase2×3 交叉整合 → 匯出 final"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: spec-analysis
+        order: 1
+        title: Spec 分析
+        agent: agent-spec-analyst
+        gate: G-SPEC
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "目前由主 session 以腳本扮演（tools/manual-runs/*_t1_spec_analyst.py），hook 無法辨識；skip_if RequirementModel 已存在則 T1 直接 DONE"
+
+      - id: test-design
+        order: 2
+        title: 測試設計
+        agent: agent-test-designer
+        gate: G-DESIGN
+        loop_partner: true
+        signals:
+          - source: runtime
+            match: { task: T2 }
+            signal: strong
+          - source: events
+            match: { hook: SubagentStart, agent_type: qaos-test-designer }
+            signal: strong
+        notes: "Phase 3 起由 .claude/agents/qaos-test-designer.md 子 agent 執行；同一 run 可迭代最多 3 次（iteration 欄位）"
+
+      - id: validation
+        order: 3
+        title: 獨立驗證
+        agent: agent-test-validator
+        gate: G-TVAL
+        loop_partner: true
+        independent_review: true
+        signals:
+          - source: runtime
+            match: { task: T3 }
+            signal: strong
+        notes: "Validator 每輪都是全新的 general-purpose 子 agent（description 通常含「獨立審查」，但 hook payload 沒有 description）；單靠 events 只能推定，需搭配 runtime T3 狀態"
+
+      - id: approval
+        order: 4
+        title: 人工核准
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T4, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "approvals/APR-xxxx.yaml；ACTIVATE_TESTCASE / HUMAN_OVERRIDE / NEEDS_DECISION"
+
+      - id: integration
+        order: 5
+        title: 交叉整合
+        agent: agent-supervisor
+        signals: []
+        notes: "不是 run 的 task；由 specflow.py 依 shadow-test 文件／testcase-revision run 推定，見 pipeline._run_stage_status"
+
+      - id: final-export
+        order: 6
+        title: 匯出 final
+        agent: agent-supervisor
+        signals:
+          - source: outputs
+            match: { glob: "testcases/final/*-final*.{html,json}" }
+            signal: strong
+          - source: events
+            match: { hook: PostToolUse, tool_name: [Write, Edit], path_prefix: testcases/final/ }
+            signal: strong
+        notes: "既有 4 個檔案是用 Bash cp 從 /tmp 複製進來的，PostToolUse(Write|Edit) 抓不到；以檔案系統輪詢為主"
+
+      - id: summary
+        order: 7
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T5, run_status: COMPLETED }
+            signal: strong
+
+  # ---------------------------------------------------------------- spec-to-bug
+  - id: spec-to-bug
+    workflow_ids: [spec-to-bug]
+    title: "SPEC → Bug"
+    description: "Actual Behavior + Evidence → Bug Analyst ⇄ Bug Validator → 人工核准（OPEN_BUG）→ Bug Repository"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: spec-check
+        order: 1
+        title: 確認 Spec 覆蓋
+        agent: agent-spec-analyst
+        gate: G-SPEC
+        signals:
+          - source: runtime
+            match: { task: T0 }
+            signal: strong
+        notes: "run_if RequirementModel for spec_id@spec_version NOT exists；通常已存在，T0 直接 SKIP"
+
+      - id: bug-analysis
+        order: 2
+        title: Bug 分析
+        agent: agent-bug-analyst
+        gate: "G-BVAL.structural"
+        loop_partner: true
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "依 RequirementModel + Evidence + Execution 產出 BugDraft；No Evidence, No Formal Bug"
+
+      - id: bug-validation
+        order: 3
+        title: 獨立驗證
+        agent: agent-bug-validator
+        gate: G-BVAL
+        loop_partner: true
+        independent_review: true
+        signals:
+          - source: runtime
+            match: { task: T2 }
+            signal: strong
+        notes: "PASS｜FAIL（回 T1）｜DUPLICATE（CONFIRM_DUPLICATE 人工確認）｜AMBIGUITY（RESOLVE_AMBIGUITY 人工決定）"
+
+      - id: approval
+        order: 4
+        title: 人工核准
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T3, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "approvals/APR-xxxx.yaml；OPEN_BUG（核准後才 COMMIT_BUG 正式進 bugs/）"
+
+      - id: summary
+        order: 5
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T4, run_status: COMPLETED }
+            signal: strong
+
+  # ---------------------------------------------------------------- testcase-revision
+  - id: testcase-revision
+    workflow_ids: [testcase-revision]
+    title: "TC 修訂"
+    description: "Human 對正式 TC 提出修訂 → Designer ⇄ Validator → 人工核准（ACTIVATE_TESTCASE）→ 新版 ACTIVE、舊版 SUPERSEDED"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: design
+        order: 1
+        title: 修訂設計
+        agent: agent-test-designer
+        gate: G-DESIGN
+        loop_partner: true
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "mode=change；supersedes_testcase 指向現行 ACTIVE 版本"
+
+      - id: validation
+        order: 2
+        title: 獨立驗證
+        agent: agent-test-validator
+        gate: G-TVAL
+        loop_partner: true
+        independent_review: true
+        signals:
+          - source: runtime
+            match: { task: T2 }
+            signal: strong
+
+      - id: approval
+        order: 3
+        title: 人工核准
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T3, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "ACTIVATE_TESTCASE；核准後新版 ACTIVE、舊版 SUPERSEDED"
+
+      - id: summary
+        order: 4
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T4, run_status: COMPLETED }
+            signal: strong
+
+  # ---------------------------------------------------------------- manual-test-to-regression
+  - id: manual-test-to-regression
+    workflow_ids: [manual-test-to-regression]
+    title: "人工紀錄 → 回歸"
+    description: "Manual Test Record → Designer(manual) ⇄ Validator → 人工(ACTIVATE) → Regression Curator → 人工(SUITE) → 回歸套件"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: design
+        order: 1
+        title: 對照設計
+        agent: agent-test-designer
+        gate: G-DESIGN
+        loop_partner: true
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "mode=manual；把人工紀錄對照回 RequirementModel／既有 ACTIVE TC；對不上會開 NEEDS_DECISION"
+
+      - id: validation
+        order: 2
+        title: 獨立驗證
+        agent: agent-test-validator
+        gate: G-TVAL
+        loop_partner: true
+        independent_review: true
+        signals:
+          - source: runtime
+            match: { task: T2 }
+            signal: strong
+        notes: "PASS｜FAIL｜DUPLICATE（NEEDS_DECISION 人工決定 merge 或 discard）"
+
+      - id: approval-activate
+        order: 3
+        title: 核准啟用
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T3, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "ACTIVATE_TESTCASE"
+
+      - id: regression
+        order: 4
+        title: 回歸提案
+        agent: agent-regression-curator
+        gate: G-REG
+        signals:
+          - source: runtime
+            match: { task: T4 }
+            signal: strong
+        notes: "full_regression 必評；ci_regression 只在高價值高風險穩定且可自動化時建議"
+
+      - id: approval-suite
+        order: 5
+        title: 核准套件成員
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T5, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "UPDATE_SUITE_MEMBERSHIP"
+
+      - id: summary
+        order: 6
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T6, run_status: COMPLETED }
+            signal: strong
+
+  # ---------------------------------------------------------------- regression-generation
+  - id: regression-generation
+    workflow_ids: [regression-generation]
+    title: "回歸套件產生"
+    description: "Registry → 風險／變更分析 → RegressionProposal → 人工核准（依 target suite）→ Full／CI／Hotfix／Smoke 套件"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: propose
+        order: 1
+        title: 套件提案
+        agent: agent-regression-curator
+        gate: G-REG
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "依 target_suites／scope 選規則產生每個套件的 RegressionProposal"
+
+      - id: approval
+        order: 2
+        title: 核准套件成員
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T2, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "UPDATE_SUITE_MEMBERSHIP，每個 target suite 各一張"
+
+      - id: summary
+        order: 3
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T3, run_status: COMPLETED }
+            signal: strong
+
+  # ---------------------------------------------------------------- spec-change-impact
+  - id: spec-change-impact
+    workflow_ids: [spec-change-impact]
+    title: "Spec 改版影響"
+    description: "SPEC vN→vN+1 → Change Impact → Designer(change) ⇄ Validator → Compare → 人工核准（APPLY_CHANGE）→ Registry 更新"
+    stages:
+      - id: intake
+        order: 0
+        title: 建立 Run
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { run_created: true }
+            signal: strong
+
+      - id: spec-check
+        order: 1
+        title: 確認新版 Spec
+        agent: agent-spec-analyst
+        gate: G-SPEC
+        signals:
+          - source: runtime
+            match: { task: T0 }
+            signal: strong
+        notes: "run_if RequirementModel for spec_id@to_version NOT exists"
+
+      - id: impact
+        order: 2
+        title: 影響分析
+        agent: agent-change-impact-analyst
+        gate: G-IMPACT
+        signals:
+          - source: runtime
+            match: { task: T1 }
+            signal: strong
+        notes: "無影響則直接跳結案；有影響才進設計階段"
+
+      - id: design
+        order: 3
+        title: 修訂設計
+        agent: agent-test-designer
+        gate: G-DESIGN
+        loop_partner: true
+        signals:
+          - source: runtime
+            match: { task: T2 }
+            signal: strong
+        notes: "只處理 affected／new_required；unaffected 不重產"
+
+      - id: validation
+        order: 4
+        title: 獨立驗證
+        agent: agent-test-validator
+        gate: G-TVAL
+        loop_partner: true
+        independent_review: true
+        signals:
+          - source: runtime
+            match: { task: T3 }
+            signal: strong
+
+      - id: compare
+        order: 5
+        title: 版本比對
+        agent: agent-change-impact-analyst
+        gate: G-COMPARE
+        signals:
+          - source: runtime
+            match: { task: T4 }
+            signal: strong
+        notes: "VersionComparisonReport：新舊版本差異、退役建議"
+
+      - id: approval
+        order: 6
+        title: 人工核准
+        agent: human
+        gate: G-APPROVAL
+        signals:
+          - source: runtime
+            match: { task: T5, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "APPLY_CHANGE；核准後 COMMIT_TO_REGISTRY + SUPERSEDE + 視情況 RETIRE"
+
+      - id: summary
+        order: 7
+        title: 結案
+        agent: agent-supervisor
+        signals:
+          - source: runtime
+            match: { task: T6, run_status: COMPLETED }
+            signal: strong

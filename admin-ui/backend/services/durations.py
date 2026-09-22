@@ -67,13 +67,14 @@ def _task_durations(t: dict, now: float, run_terminal: bool) -> dict:
 def run_durations(run: dict, now: float | None = None) -> dict:
     now = now or dt.datetime.now(dt.timezone.utc).timestamp()
     cfg = st_svc.load()
+    pipeline = st_svc.pipeline_for_workflow(cfg, run.get("workflow_id"))
     terminal = run["status"] in TERMINAL
     created = _ts(run.get("created_at"))
     updated = _ts(run.get("updated_at"))
     total = ((updated if terminal else now) - created) if created else None
     stages: dict[str, dict] = {}
     for t in run["tasks"]:
-        st = st_svc.stage_for_task(cfg, t["task_id"])
+        st = st_svc.stage_for_task(pipeline, t["task_id"])
         if not st:
             continue
         d = _task_durations(t, now, terminal)
@@ -110,7 +111,6 @@ def _stat(vals: list[float], how: str) -> float | None:
 
 
 def analysis(scope: str = "completed", workflow: str | None = "spec-to-testcase", limit: int = 100) -> dict:
-    cfg = st_svc.load()
     now = dt.datetime.now(dt.timezone.utc).timestamp()
     runs = run_svc.all_runs()
     if workflow: runs = [r for r in runs if r.get("workflow_id") == workflow]
@@ -118,7 +118,16 @@ def analysis(scope: str = "completed", workflow: str | None = "spec-to-testcase"
     elif scope == "terminal": runs = [r for r in runs if r["status"] in TERMINAL]
     runs = sorted(runs, key=lambda r: -(r.get("_created") or 0))[:limit]
     per_run = [run_durations(r, now) for r in runs]
-    order = [{"id": s["id"], "title": s["title"], "agent": s.get("agent")} for s in cfg["stages"]]
+    if workflow:
+        cfg = st_svc.load()
+        order = [{"id": s["id"], "title": s["title"], "agent": s.get("agent")} for s in st_svc.pipeline_for_workflow(cfg, workflow)["stages"]]
+    else:
+        # 沒指定單一 workflow（跨 workflow 混算）：大綱用實際出現過的階段，依第一次出現的順序去重
+        seen: dict[str, dict] = {}
+        for pr in per_run:
+            for sid, sd in pr["stages"].items():
+                seen.setdefault(sid, {"id": sid, "title": sd["title"], "agent": None})
+        order = list(seen.values())
     agg = []
     for s in order:
         rows = [pr["stages"].get(s["id"]) for pr in per_run]
