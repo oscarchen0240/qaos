@@ -547,7 +547,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 核實狀態連動欄位
-  statement: 已核實洗分＝當日洗分中已於「洗分出金核實」頁核實的金額合計；待核實洗分＝仍待核實的合計，不為 0 時標示提醒；已兌現＝已核實的收據金額合計；未兌現＝截至查詢當下仍待核實的收據金額合計。
+  statement: 已核實洗分＝當日洗分中已於「洗分出金核實」頁核實的金額合計；待核實洗分＝仍待核實的合計，不為 0 時標示提醒；已兌現＝已核實的收據金額合計；未兌現＝截至查詢當下仍待核實的收據金額合計。已兌現／未兌現皆以「收據日」歸屬：已兌現＝當日出金的收據中已核實（核銷）者的金額合計，不論實際付現是哪一天（CLR-DAILYREPORT-010
+    PM 定案 A，2026-09-22）；因此單列內 收據金額＝已兌現＋未兌現（＋已作廢，呈現方式見 CLR-DAILYREPORT-011）。
   acceptance_criteria:
   - ac_id: AC-DAILYREPORT-0111
     given: 當日洗分 300，其中 200 已核實
@@ -565,6 +566,10 @@ requirements:
     given: 在洗分出金核實頁將一筆待核實洗分核實後
     when: 重新搜尋報表
     then: 已核實／待核實數字對應變動
+  - ac_id: AC-DAILYREPORT-0115
+    given: 9/10 出金收據 1000，9/12 於洗分出金核實頁核銷（付現）
+    when: 分別查看 9/10 與 9/12 的列
+    then: 9/10 列：收據 1000、已兌現 1000、未兌現 0；9/12 列：收據 0、已兌現 0（已兌現歸收據日，不歸兌現日）
   spec_reference:
     spec_id: SPEC-DAILYREPORT-001
     spec_version: '0.1'
@@ -601,13 +606,18 @@ requirements:
     to_status: ACTIVE
     by: oscarchen@blockaction.tech
     trigger: clarification_applied_CLR-DAILYREPORT-005
+  - at: '2026-09-22T04:45:31Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-010：已兌現以收據日歸屬；新增 AC-0115 跨日兌現案例
 - requirement_id: REQ-DAILYREPORT-012
   version: 1
   spec_id: SPEC-DAILYREPORT-001
   spec_version: '0.1'
   type: functional
   title: 現金淨收計算
-  statement: 現金淨收＝開分＋進鈔－已核實洗分－已兌現；不扣待核實洗分。
+  statement: 現金淨收＝開分＋進鈔－已核實洗分－已兌現；不扣待核實洗分。註：已兌現以收據日歸屬（CLR-DAILYREPORT-010 A），故現金淨收含未來才付現的收據金額，為推算值、非當日實際現金增減（spec 註解「代表場館端當日現金應該增減多少」應依此理解）。
   acceptance_criteria:
   - ac_id: AC-DAILYREPORT-0121
     given: 開分 1000、進鈔 500、已核實洗分 200、待核實洗分 100、已兌現 150
@@ -647,6 +657,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260913-001
+  - at: '2026-09-22T04:45:31Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-010：現金淨收語意註記
 - requirement_id: REQ-DAILYREPORT-013
   version: 1
   spec_id: SPEC-DAILYREPORT-001

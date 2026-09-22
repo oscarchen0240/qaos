@@ -12,7 +12,7 @@
 - 驗收條件：
   - 0011：給定 一筆機台出金交易完成；當 檢視出金審核頁面；則 查無該筆機台出金的審核項目，本頁僅列出線上會員的出金審核
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-001 v1
+- 對應 TC：TC-PLATFORMRULE-033 v1, TC-PLATFORMRULE-001 v1
 
 ## REQ-PLATFORMRULE-002 機台開分與入金的稽核明細照常寫入
 
@@ -23,7 +23,7 @@
 - 驗收條件：
   - 0021：給定 一筆機台開分或機台入金交易完成；當 至稽核明細頁面查詢；則 該筆交易正常出現在稽核明細頁面，類型標示為機台開分或機台入金
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義；稽核倍數規則本身已由 SPEC-CASHFLOW-001 驗證，本條只測稽核明細頁面的顯示
-- 對應 TC：TC-PLATFORMRULE-002 v1
+- 對應 TC：TC-PLATFORMRULE-002 v1, TC-PLATFORMRULE-034 v1
 
 ## REQ-PLATFORMRULE-003 Free Spin 為排除規則的既有例外，機台帳號可被指定加入
 
@@ -35,7 +35,7 @@
   - 0031：給定 於 Free Spin 管理選擇會員時；當 嘗試指定一個機台帳號；則 系統允許選擇機台帳號加入活動，不因帳號類型為機台而被排除
   - 0032：給定 後台對機台帳號派發一筆 Free Spin；當 檢視該機台帳號；則 免費旋轉直接到帳，不需要玩家額外操作領取
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，且是排除規則政策層的刻意例外
-- 對應 TC：TC-PLATFORMRULE-003 v1, TC-PLATFORMRULE-004 v1
+- 對應 TC：TC-PLATFORMRULE-035 v1, TC-PLATFORMRULE-003 v1, TC-PLATFORMRULE-004 v1, TC-PLATFORMRULE-036 v1
 
 ## REQ-PLATFORMRULE-004 站台切換至機台場館時，後台選單依規則隱藏不適用頁面；切回線上站台恢復完整選單
 
@@ -47,7 +47,7 @@
   - 0041：給定 站台切換選單切至一個機台場館站台；當 檢視後台選單整體結構；則 選單依隱藏規則調整，不適用頁面消失
   - 0042：給定 再將站台切換選單切回線上站台；當 檢視後台選單；則 選單恢復完整，先前隱藏的頁面全部重新出現
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-005 v1, TC-PLATFORMRULE-007 v1, TC-PLATFORMRULE-006 v1
+- 對應 TC：TC-PLATFORMRULE-038 v1, TC-PLATFORMRULE-005 v1, TC-PLATFORMRULE-007 v1, TC-PLATFORMRULE-006 v1, TC-PLATFORMRULE-037 v1
 
 ## REQ-PLATFORMRULE-005 機台場館選單：資訊看板分類整個隱藏
 
@@ -58,7 +58,7 @@
 - 驗收條件：
   - 0051：給定 站台切換至機台場館；當 檢視左側選單分類；則 不存在「資訊看板」這個分類
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-008 v1
+- 對應 TC：TC-PLATFORMRULE-039 v1, TC-PLATFORMRULE-008 v1
 
 ## REQ-PLATFORMRULE-006 機台場館選單：會員與加盟商分類僅顯示會員列表
 
@@ -69,7 +69,7 @@
 - 驗收條件：
   - 0061：給定 站台切換至機台場館，展開會員與加盟商分類；當 檢視可見項目；則 僅顯示會員列表；加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定皆不顯示
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-009 v1
+- 對應 TC：TC-PLATFORMRULE-009 v1, TC-PLATFORMRULE-040 v1
 
 ## REQ-PLATFORMRULE-007 機台場館選單：帳務管理分類顯示鏈上錢包管理（僅TWD頁籤）與洗分出金核實
 
@@ -81,7 +81,7 @@
   - 0071：給定 站台切換至機台場館，展開帳務管理分類；當 檢視可見項目；則 顯示鏈上錢包管理與洗分出金核實；不顯示出金審核與優惠彩金審核
   - 0072：給定 開啟鏈上錢包管理頁面；當 檢視頁籤；則 僅顯示法幣 TWD 頁籤，區塊鏈幣別頁籤隱藏
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-011 v1, TC-PLATFORMRULE-010 v1
+- 對應 TC：TC-PLATFORMRULE-042 v1, TC-PLATFORMRULE-011 v1, TC-PLATFORMRULE-010 v1, TC-PLATFORMRULE-041 v1
 
 ## REQ-PLATFORMRULE-008 機台場館選單：各式報表分類顯示交易紀錄查詢等四項
 
@@ -92,7 +92,7 @@
 - 驗收條件：
   - 0081：給定 站台切換至機台場館，展開各式報表分類；當 檢視可見項目；則 顯示交易紀錄查詢、注單查詢、稽核明細、場館日結報表；不顯示返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-012 v1
+- 對應 TC：TC-PLATFORMRULE-043 v1, TC-PLATFORMRULE-012 v1
 
 ## REQ-PLATFORMRULE-009 機台場館選單：系統管理分類顯示公告等四項，隱藏KYC等六項
 
@@ -103,7 +103,7 @@
 - 驗收條件：
   - 0091：給定 站台切換至機台場館，展開系統管理分類；當 檢視可見項目；則 顯示公告設定、Free Spin 管理、橫幅管理、消稽核設定；不顯示 KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-013 v1
+- 對應 TC：TC-PLATFORMRULE-044 v1, TC-PLATFORMRULE-013 v1
 
 ## REQ-PLATFORMRULE-010 機台場館選單：遊戲商管理與後台管理員系統分類全部顯示
 
@@ -114,7 +114,7 @@
 - 驗收條件：
   - 0101：給定 站台切換至機台場館，展開遊戲商管理與後台管理員系統分類；當 檢視可見項目；則 兩個分類的所有項目皆顯示，沒有任何一項被隱藏
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-014 v1
+- 對應 TC：TC-PLATFORMRULE-014 v1, TC-PLATFORMRULE-045 v1
 
 ## REQ-PLATFORMRULE-011 選單隱藏跟著排除規則走，排除解除時對應頁面隨之恢復顯示
 
@@ -137,7 +137,7 @@
 - 驗收條件：
   - 0121：給定 後台新增使用者時檢視角色選項；當 確認是否包含操作員；則 角色選項包含操作員，可指派給後台帳號並指定所屬場館
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-015 v1
+- 對應 TC：TC-PLATFORMRULE-015 v1, TC-PLATFORMRULE-046 v1
 
 ## REQ-PLATFORMRULE-013 操作員可見場館範圍僅自身所屬場館
 
@@ -148,7 +148,7 @@
 - 驗收條件：
   - 0131：給定 以操作員身分登入後台；當 檢視可操作/可見的場館範圍（跨頁通用規則）；則 僅能見到自身所屬的單一場館，看不到其他場館的資料
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，是本包角色模型的核心規則
-- 對應 TC：TC-PLATFORMRULE-017 v1, TC-PLATFORMRULE-016 v1
+- 對應 TC：TC-PLATFORMRULE-048 v1, TC-PLATFORMRULE-047 v1, TC-PLATFORMRULE-017 v1, TC-PLATFORMRULE-016 v1
 
 ## REQ-PLATFORMRULE-014 操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改
 
@@ -159,7 +159,8 @@
 - 驗收條件：
   - 0141：給定 以操作員身分登入後台，站台切換選單已選定自身所屬的機台場館；當 檢視後台左側選單；則 選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（SPEC-PLATFORMRULE-001原文欄位）、場次逾時時間（SPEC-ARCADE-001正本定義的欄位，本spec原文未提及）皆無從檢視或修改；會員列表、洗分出金核實、交易紀錄查詢、場館日結報表等操作員可操作項目正常存在於選單中
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，直接影響金流風控
-- 對應 TC：TC-PLATFORMRULE-018 v1
+- ✅ PM 回答（CLR-PLATFORMRULE-003）：新需求：操作員有權限進入「注單查詢」與「稽核明細」（可見範圍比照其他報表頁限自身場館）。→ 權限表須補兩列（操作員：自身場館）；現行實機操作員選單無此兩頁，屬未實作／須補。REQ-PLATFORMRULE-014 statement 所記「操作員選單僅含四頁」的實機描述已過時，須更新。
+- 對應 TC：TC-PLATFORMRULE-018 v1, TC-PLATFORMRULE-018 v2, TC-PLATFORMRULE-049 v1
 
 ## REQ-PLATFORMRULE-015 機台交易紀錄查詢的可見範圍依角色不同：Admin全部、站長管轄範圍、操作員自身場館
 
@@ -170,7 +171,7 @@
 - 驗收條件：
   - 0151：給定 以操作員身分登入，於機台交易紀錄查詢頁嘗試查詢自身場館以外的交易；當 檢視查詢結果；則 查無其他場館的交易紀錄，僅能查得自身所屬場館範圍內的交易
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-019 v1
+- 對應 TC：TC-PLATFORMRULE-019 v1, TC-PLATFORMRULE-050 v1, TC-PLATFORMRULE-051 v1
 
 ## REQ-PLATFORMRULE-016 場館現場的人工入金／出金操作，Admin、站長、操作員皆可執行
 
@@ -181,7 +182,7 @@
 - 驗收條件：
   - 0161：給定 以操作員身分登入後台；當 嘗試對一個機台帳號執行人工入金或人工出金；則 系統允許執行，操作員具備此權限
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-020 v1
+- 對應 TC：TC-PLATFORMRULE-052 v1, TC-PLATFORMRULE-020 v1
 
 ## REQ-PLATFORMRULE-017 重設密碼操作站長需二次確認，操作員不可執行
 
@@ -193,7 +194,7 @@
   - 0171：給定 以站長身分執行重設密碼操作；當 檢視流程；則 須經過二次確認才會生效
   - 0172：給定 以操作員身分嘗試執行重設密碼操作；當 觀察系統反應；則 操作員不具備此權限，無法執行
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-015 未涵蓋的角色維度
-- 對應 TC：TC-PLATFORMRULE-022 v1, TC-PLATFORMRULE-021 v1
+- 對應 TC：TC-PLATFORMRULE-054 v1, TC-PLATFORMRULE-022 v1, TC-PLATFORMRULE-053 v1, TC-PLATFORMRULE-021 v1
 
 ## REQ-PLATFORMRULE-018 編輯機台基本資料操作員僅唯讀，發放/重置機台憑證操作員不可執行
 
@@ -205,7 +206,7 @@
   - 0181：給定 以操作員身分檢視機台基本資料編輯畫面；當 嘗試修改內容；則 欄位僅供檢視，無法儲存修改
   - 0182：給定 以操作員身分嘗試發放或重置機台憑證；當 觀察系統反應；則 操作員不具備此權限，無法執行
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-011 未涵蓋的操作員權限
-- 對應 TC：TC-PLATFORMRULE-023 v1, TC-PLATFORMRULE-024 v1
+- 對應 TC：TC-PLATFORMRULE-023 v1, TC-PLATFORMRULE-055 v1, TC-PLATFORMRULE-024 v1, TC-PLATFORMRULE-056 v1
 
 ## REQ-PLATFORMRULE-019 新增機台操作員不可執行
 
@@ -216,7 +217,7 @@
 - 驗收條件：
   - 0191：給定 以操作員身分登入後台，尋找或嘗試執行新增機台操作；當 觀察系統反應；則 操作員不具備此權限，無法執行
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-010 未涵蓋的完整權限對照
-- 對應 TC：TC-PLATFORMRULE-025 v1
+- 對應 TC：TC-PLATFORMRULE-025 v1, TC-PLATFORMRULE-057 v1
 
 ## REQ-PLATFORMRULE-020 機台停用/啟用三種角色皆可操作
 
@@ -227,7 +228,7 @@
 - 驗收條件：
   - 0201：給定 以操作員身分登入後台；當 對一台機台執行停用或啟用操作；則 系統允許執行，操作員具備此權限
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-026 v1
+- 對應 TC：TC-PLATFORMRULE-058 v1, TC-PLATFORMRULE-026 v1
 
 ## REQ-PLATFORMRULE-021 平台新增或更新遊戲後，機台場館一律預設停用（含更新前已啟用者）
 
@@ -239,7 +240,7 @@
   - 0211：給定 一款遊戲原已在某機台場館啟用；當 平台對該遊戲發佈更新；則 更新後，該遊戲在此機台場館被重新設為停用，需重新手動開啟
   - 0212：給定 平台新增一款全新遊戲；當 檢視該遊戲於各機台場館的預設狀態；則 所有機台場館皆預設停用
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，直接關係法規合規
-- 對應 TC：TC-PLATFORMRULE-028 v1, TC-PLATFORMRULE-027 v1
+- 對應 TC：TC-PLATFORMRULE-059 v1, TC-PLATFORMRULE-028 v1, TC-PLATFORMRULE-027 v1, TC-PLATFORMRULE-060 v1
 
 ## REQ-PLATFORMRULE-022 遊戲新增或更新僅由站長於遊戲商管理開啟，操作員不可操作，平台不代為開啟
 
@@ -252,7 +253,7 @@
   - 0222：給定 以操作員身分嘗試開啟一款被停用的遊戲；當 觀察系統反應；則 操作員不具備此權限，無法執行
   - 0223：給定 遊戲被平台新增或更新後；當 檢視是否有任何自動開啟機制；則 平台不會主動代為開啟，需人工由站長執行
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-029 v1, TC-PLATFORMRULE-031 v1, TC-PLATFORMRULE-030 v1
+- 對應 TC：TC-PLATFORMRULE-062 v1, TC-PLATFORMRULE-063 v1, TC-PLATFORMRULE-029 v1, TC-PLATFORMRULE-031 v1, TC-PLATFORMRULE-030 v1, TC-PLATFORMRULE-061 v1
 
 ## REQ-PLATFORMRULE-023 遊戲更新預設停用規則僅適用機台類型場館，線上站台不受影響
 
@@ -263,5 +264,5 @@
 - 驗收條件：
   - 0231：給定 平台對一款遊戲發佈更新，此遊戲原已在一個線上站台啟用；當 檢視該遊戲於此線上站台的狀態；則 維持啟用狀態不變，不受機台場館的預設停用規則影響
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-PLATFORMRULE-032 v1
+- 對應 TC：TC-PLATFORMRULE-064 v1, TC-PLATFORMRULE-032 v1
 

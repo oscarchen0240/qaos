@@ -562,15 +562,13 @@ requirements:
   spec_version: '0.1'
   type: security
   title: 操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改
-  statement: 操作員角色的後台選單完全沒有「站台列表」這個項目（已由 Oscar 2026-09-15 提供操作員登入後台的實際選單截圖確認：選單僅含會員與加盟商>會員列表、帳務管理>洗分出金核實、各式報表>交易紀錄查詢/場館日結報表），因此無法進入場館設定頁面。此頁面內的「額度上限」為
-    SPEC-PLATFORMRULE-001 原文明訂欄位（經 Oscar 確認整頁無法進入，非原文字面的可檢視唯讀）；「場次逾時時間」則是 SPEC-ARCADE-001（實體機台正本）§場館設定 定義的欄位，SPEC-PLATFORMRULE-001
-    原文本身未提及此欄位名稱，其無法進入的推論依據是「同一個場館設定頁面、同受站台列表選單消失影響」，而非本 spec 原文直接定義。「編輯機台基本資料」「機台停用/啟用」「人工入出金」等其他唯讀或可操作項目，依 SPEC-ARCADE-001
-    正本說法「機台不設獨立管理頁，機台管理位於會員詳細頁的機台資訊區塊」推論應是透過會員列表進入、不受本條限制——但此推論尚未經 Oscar 逐項確認實際頁面路徑，僅為合理推論，非已確認事實
+  statement: 操作員角色的後台選單完全沒有「站台列表」這個項目，因此無法進入場館設定頁面，額度上限等欄位無從檢視或修改。（2026-09-15 實機截圖確認操作員選單含：會員與加盟商>會員列表、帳務管理>洗分出金核實、各式報表>交易紀錄查詢/場館日結報表；依
+    CLR-PLATFORMRULE-003 PM 回覆 2026-09-22，各式報表另須含注單查詢與稽核明細，見 REQ-PLATFORMRULE-024）
   acceptance_criteria:
   - ac_id: AC-PLATFORMRULE-0141
     given: 以操作員身分登入後台，站台切換選單已選定自身所屬的機台場館
     when: 檢視後台左側選單
-    then: 選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（SPEC-PLATFORMRULE-001原文欄位）、場次逾時時間（SPEC-ARCADE-001正本定義的欄位，本spec原文未提及）皆無從檢視或修改；會員列表、洗分出金核實、交易紀錄查詢、場館日結報表等操作員可操作項目正常存在於選單中
+    then: 選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（SPEC-PLATFORMRULE-001原文欄位）、場次逾時時間（SPEC-ARCADE-001正本定義的欄位，本spec原文未提及）皆無從檢視或修改；會員列表、洗分出金核實、交易紀錄查詢、注單查詢、稽核明細、場館日結報表等操作員可操作項目正常存在於選單中
   spec_reference:
     spec_id: SPEC-PLATFORMRULE-001
     spec_version: '0.1'
@@ -617,6 +615,16 @@ requirements:
     to_status: ACTIVE
     by: oscarchen@blockaction.tech
     trigger: round2_fix_明確標註場次逾時時間出處為SPEC-ARCADE-001非本spec原文_並將機台管理走會員列表路徑標為未經確認的推論
+  - at: '2026-09-22T04:45:11Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-PLATFORMRULE-003：statement 移除「選單僅含四頁」的過時實機描述，改引 REQ-024
+  - at: '2026-09-22T04:54:22Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-PLATFORMRULE-003：AC-0141 then 的操作員可用頁面列舉補注單查詢／稽核明細（Validator RUN-20260922-007 advisory）
 - requirement_id: REQ-PLATFORMRULE-015
   version: 1
   spec_id: SPEC-PLATFORMRULE-001
@@ -1015,3 +1023,43 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-014
+- requirement_id: REQ-PLATFORMRULE-024
+  version: 1
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  type: security
+  title: 操作員可進入注單查詢與稽核明細，可見範圍限自身場館
+  statement: 操作員角色的後台選單含「各式報表 > 注單查詢」與「各式報表 > 稽核明細」，可進入並查詢；資料範圍依 REQ-PLATFORMRULE-013 限自身所屬場館。（CLR-PLATFORMRULE-003 PM 回覆
+    2026-09-22：新需求；spec 權限表尚未補列，現行實機操作員選單無此兩頁，屬未實作）
+  acceptance_criteria:
+  - ac_id: AC-PLATFORMRULE-0241
+    given: 以操作員身分登入後台，站台切換選單已選定自身所屬的機台場館
+    when: 展開各式報表分類
+    then: 選單含「注單查詢」與「稽核明細」，可進入並執行查詢
+  - ac_id: AC-PLATFORMRULE-0242
+    given: 以操作員身分於注單查詢或稽核明細頁查詢
+    when: 檢視查詢結果（含嘗試指定自身場館以外的範圍）
+    then: 僅能查得自身所屬場館範圍內的資料
+  spec_reference:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    location: §角色與權限（權限表未列「注單查詢」「稽核明細」；依 CLR-PLATFORMRULE-003 PM 回覆 2026-09-22 新增）
+    quote: 可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 可見範圍規則由 REQ-013 定義（僅自身所屬場館）；頁面存取權由 CLR-PLATFORMRULE-003 定案
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: §角色與權限
+      quote: ''
+  history:
+  - at: '2026-09-22T04:45:11Z'
+    from_status: null
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-PLATFORMRULE-003：PM 新需求，操作員可進入注單查詢與稽核明細

@@ -1,12 +1,18 @@
-title: 已兌現／未兌現收據金額拆分
 product: ba-admin
 functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 已兌現／未兌現收據金額拆分（皆以收據日歸屬）
 requirement_ids:
 - REQ-DAILYREPORT-011
 acceptance_criteria_ids:
 - AC-DAILYREPORT-0113
-spec_id: SPEC-DAILYREPORT-001
-spec_version: '0.1'
 test_level: ui_e2e
 test_types:
 - functional
@@ -14,7 +20,6 @@ design_techniques:
 - requirement_based
 priority: high
 risk: high
-execution_mode: manual
 preconditions:
 - 已登入後台並切換至機台場館站台（Arcade）
 - 進入 各式報表 > 場館日結報表
@@ -25,73 +30,62 @@ preconditions:
 test_data: []
 steps:
 - n: 1
-  action: 當日收據 200，其中 150 已核銷
+  action: 當日出金收據合計 200（可為多張），其中 150 於當日或之後任一日在洗分出金核實頁核銷
 - n: 2
-  action: 搜尋
-expected_result: 已兌現 150、未兌現 50
+  action: 以結算日期＝該日搜尋
+expected_result: 該日列：已兌現 150、未兌現 50（歸屬依收據日，不受核銷是哪一天影響）
 expected_result_spec_reference:
   spec_id: SPEC-DAILYREPORT-001
   spec_version: '0.1'
-  location: §列表欄位/已兌現金額、未兌現金額
+  location: §列表欄位/已兌現金額、未兌現金額（歸屬基準依 CLR-DAILYREPORT-010 A，見 RM REQ-011）
 assumptions: []
-automation_status: not_automated
-ci_eligible: false
-hotfix_eligible: true
-execution_cost: medium
-stability: unknown
 critical_path: false
-source: spec_workflow
+source: change_workflow
 testcase_id: TC-DAILYREPORT-036
-version: 1
-supersedes: null
-status: SUPERSEDED
+version: 2
+supersedes: 1
+status: ACTIVE
 created_by: agent-test-designer
 validated_by: agent-test-validator
-validation_report_id: ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR
-created_at: '2026-09-13T14:18:22Z'
+validation_report_id: ART-TVR-01M33QDQVHD2SC7Q91310Y9YMV
+created_at: '2026-09-22T04:54:11Z'
 updated_at: '2026-09-22T05:06:46Z'
 history:
-- at: '2026-09-13T14:18:22Z'
+- at: '2026-09-22T04:54:11Z'
   from_status: null
   to_status: DRAFT
   by: system
-  trigger: ART-TCD-01M2DHZ414N1W916083PN5Z45J
-  run_id: RUN-20260913-001
-- at: '2026-09-13T14:18:22Z'
+  trigger: ART-TCD-01M33Q19Y9HWC8ZFKJH2929FY8
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
   from_status: DRAFT
   to_status: VALIDATING
   by: system
   trigger: dispatch validator
-  run_id: RUN-20260913-001
-- at: '2026-09-13T14:18:22Z'
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
   from_status: VALIDATING
   to_status: VALIDATED
   by: system
-  trigger: ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR
-  run_id: RUN-20260913-001
-- at: '2026-09-13T14:18:22Z'
+  trigger: ART-TVR-01M33QDQVHD2SC7Q91310Y9YMV
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
   from_status: VALIDATED
   to_status: PENDING_APPROVAL
   by: system
   trigger: approval requested
-  run_id: RUN-20260913-001
-- at: '2026-09-13T18:07:19Z'
+  run_id: RUN-20260922-008
+- at: '2026-09-22T05:06:46Z'
   from_status: PENDING_APPROVAL
   to_status: APPROVED
   by: oscarchen@blockaction.tech
-  trigger: APR-0003
-  run_id: RUN-20260913-001
-- at: '2026-09-13T18:07:19Z'
+  trigger: APR-0166
+  run_id: RUN-20260922-008
+- at: '2026-09-22T05:06:46Z'
   from_status: APPROVED
   to_status: ACTIVE
   by: system
   trigger: COMMIT_TO_REGISTRY
-  run_id: RUN-20260913-001
-- at: '2026-09-22T05:06:46Z'
-  from_status: ACTIVE
-  to_status: SUPERSEDED
-  by: system
-  trigger: v2 ACTIVE
   run_id: RUN-20260922-008
 approved_by: oscarchen@blockaction.tech
-approval_id: APR-0003
+approval_id: APR-0166

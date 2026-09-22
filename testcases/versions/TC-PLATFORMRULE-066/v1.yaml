@@ -1,0 +1,93 @@
+product: ba-admin
+functional_area: PLATFORMRULE
+spec_id: SPEC-PLATFORMRULE-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 操作員於注單查詢與稽核明細僅能查得自身所屬場館的資料
+requirement_ids:
+- REQ-PLATFORMRULE-024
+- REQ-PLATFORMRULE-013
+acceptance_criteria_ids:
+- AC-PLATFORMRULE-0242
+- AC-PLATFORMRULE-0131
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+preconditions:
+- 以操作員身分登入後台，其所屬場館為 A
+- 另一機台場館 B 有已知的注單與機台交易（會員編號已知）
+test_data: []
+steps:
+- n: 1
+  action: 於注單查詢以場館 B 的會員編號查詢；若頁面提供站台／場館切換入口則嘗試切至 B
+- n: 2
+  action: 於稽核明細以涵蓋場館 B 交易的日期範圍查詢；同上嘗試切換
+- n: 3
+  action: 檢視兩頁查詢結果
+expected_result: 兩頁皆查無場館 B 的資料，僅能查得場館 A 範圍內的注單與稽核明細；若切換入口存在且可選 B，選擇後應查無資料或被系統阻擋（Spec 只定義資料層可見範圍，切換入口是否隱藏屬實作細節）
+expected_result_spec_reference:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  location: §角色與權限
+  quote: 可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館
+assumptions: []
+critical_path: true
+source: change_workflow
+source_ref: new_required:CLR-PLATFORMRULE-003_2026-09-22
+testcase_id: TC-PLATFORMRULE-066
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M33QDQFHHT40EDE0NXTWZC9C
+created_at: '2026-09-22T04:54:11Z'
+updated_at: '2026-09-22T05:06:46Z'
+history:
+- at: '2026-09-22T04:54:11Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M33Q191PKXB6CR6A95FA67KJ
+  run_id: RUN-20260922-007
+- at: '2026-09-22T04:54:11Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260922-007
+- at: '2026-09-22T04:54:11Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M33QDQFHHT40EDE0NXTWZC9C
+  run_id: RUN-20260922-007
+- at: '2026-09-22T04:54:11Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260922-007
+- at: '2026-09-22T05:06:46Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0165
+  run_id: RUN-20260922-007
+- at: '2026-09-22T05:06:46Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260922-007
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0165

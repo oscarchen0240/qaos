@@ -1,0 +1,93 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 跨日兌現的收據歸屬收據日，不歸兌現日
+requirement_ids:
+- REQ-DAILYREPORT-011
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0115
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+preconditions:
+- 已登入後台並切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館已設定日結時間 06:00 UTC+0
+- 測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料
+- 場館於 9/10 與 9/12 皆無其他出金收據
+test_data: []
+steps:
+- n: 1
+  action: 9/10 機台 A 出金，印出收據 1000（當日不核銷）
+- n: 2
+  action: 9/12 於洗分出金核實頁將該收據核銷（付現）
+- n: 3
+  action: 以結算日期 9/10～9/12 按日搜尋
+expected_result: 9/10 列：收據 1000、已兌現 1000、未兌現 0；9/12 列：收據 0、已兌現 0、未兌現 0（已兌現歸收據日 9/10，不出現在兌現日 9/12）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §列表欄位/已兌現金額（CLR-DAILYREPORT-010 A：已兌現＝當日出金的收據中已核實者，不論付現日；RM AC-0115）
+assumptions: []
+critical_path: false
+source: change_workflow
+source_ref: new_required:CLR-DAILYREPORT-010_2026-09-22
+testcase_id: TC-DAILYREPORT-098
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M33QDQVHD2SC7Q91310Y9YMV
+created_at: '2026-09-22T04:54:11Z'
+updated_at: '2026-09-22T05:06:46Z'
+history:
+- at: '2026-09-22T04:54:11Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M33Q19Y9HWC8ZFKJH2929FY8
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M33QDQVHD2SC7Q91310Y9YMV
+  run_id: RUN-20260922-008
+- at: '2026-09-22T04:54:11Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260922-008
+- at: '2026-09-22T05:06:46Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0166
+  run_id: RUN-20260922-008
+- at: '2026-09-22T05:06:46Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260922-008
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0166

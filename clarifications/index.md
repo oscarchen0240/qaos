@@ -47,9 +47,9 @@
 | [CLR-DAILYREPORT-007](ba-admin/DAILYREPORT/CLR-DAILYREPORT-007.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「當日結束的場次筆數」是否包含狀態為「逾時結束」與「日結結算」的場次？ | 逾時結束的時間會超過日結時間；而 Spec 規定日結時間到達時強制結束所有進行中的場次，因此當日內場次只會以「已結束」或 |
 | [CLR-DAILYREPORT-008](ba-admin/DAILYREPORT/CLR-DAILYREPORT-008.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 按週統計時，結算日期範圍內的不完整週如何顯示與計算？ | 不完整週照實際範圍顯示（截圖：結算日期 09-03 起、按週 → 列出「2026-09-07 ~ 2026-09-13」 |
 | [CLR-DAILYREPORT-009](ba-admin/DAILYREPORT/CLR-DAILYREPORT-009.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「未兌現金額不受週期影響、累計至查詢當下」是否也不受結算日期範圍限制？ | 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200； |
-| [CLR-DAILYREPORT-010](ba-admin/DAILYREPORT/CLR-DAILYREPORT-010.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 「已兌現金額」以收據日還是兌現日歸屬？（同一筆出金跨日兌現時，記在出收據那天還是付現那天） |  |
+| [CLR-DAILYREPORT-010](ba-admin/DAILYREPORT/CLR-DAILYREPORT-010.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「已兌現金額」以收據日還是兌現日歸屬？（同一筆出金跨日兌現時，記在出收據那天還是付現那天） | A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 |
 | [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ |  |
-| [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
+| [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
 
 ## ba-admin / PLATFORMRULE
 
@@ -57,7 +57,7 @@
 |---|---|---|---|---|
 | [CLR-PLATFORMRULE-001](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-001.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 「站長＝最高權限」的定義是否仍有效？三份 spec 的權限層級互相矛盾 | 以功能 spec 三層模型為準：管理員（最高）＞站長＞操作員。原則：可見範圍由所屬站台決定、權限層級由角色決定，兩者分開 |
 | [CLR-PLATFORMRULE-002](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-002.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | REQ-PLATFORMRULE-011 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 此為架構層要求（選單顯示規則需與排除規則同一來源，不得各自寫死），非使用者可觀察行為，且目前無任何排除項目被實際解除、無 |
-| [CLR-PLATFORMRULE-003](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-003.md) | ASKED | SPEC-PLATFORMRULE-001 v0.1 | 操作員角色是否可見「注單查詢」與「稽核明細」頁面？權限表未列此兩項，請補列定案 |  |
+| [CLR-PLATFORMRULE-003](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-003.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 操作員角色是否可見「注單查詢」與「稽核明細」頁面？權限表未列此兩項，請補列定案 | 新需求：操作員有權限進入「注單查詢」與「稽核明細」（可見範圍比照其他報表頁限自身場館）。→ 權限表須補兩列（操作員：自身 |
 
 ## ba-admin / SCREENMGMT
 

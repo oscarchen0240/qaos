@@ -1,0 +1,68 @@
+artifact_id: ART-TVR-01M33QDQFHHT40EDE0NXTWZC9C
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260922-007
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-22T04:54:11Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M33Q191PKXB6CR6A95FA67KJ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M33Q191PKXB6CR6A95FA67KJ
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+requires_approval: null
+payload:
+  testcase_draft_artifact_id: ART-TCD-01M33Q191PKXB6CR6A95FA67KJ
+  result: PASS
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M33Q191MXASB1AQJTGR8MJND
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-024
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.1'
+      location: RM REQ-PLATFORMRULE-024 / AC-PLATFORMRULE-0241（本 TC 僅掛 REQ-014/AC-0141，未同時掛此需求）
+    evidence: TC1 expected_result 新增「...交易紀錄查詢、注單查詢、稽核明細、場館日結報表等操作員可操作項目正常存在於選單中...」，但 TC1 的 requirement_ids 只有 [REQ-PLATFORMRULE-014]、acceptance_criteria_ids
+      只有 [AC-PLATFORMRULE-0141]；RM 中 AC-PLATFORMRULE-0141 的 then 子句本身也只列「會員列表、洗分出金核實、交易紀錄查詢、場館日結報表」四項，未包含注單查詢／稽核明細——這兩項存在性的依據其實是
+      REQ-PLATFORMRULE-024/AC-PLATFORMRULE-0241（CLR-PLATFORMRULE-003 定案）。
+    explanation: TC1 對「注單查詢、稽核明細正常存在於選單」這個斷言，其唯一可追溯依據（REQ-024/AC-0241）未被列在此 TC 自身的 requirement_ids/acceptance_criteria_ids
+      中，僅存在於 draft 層級的 references。日後若 REQ-024 的頁面範圍變動（例如稽核明細改為需要更高權限），自動化影響掃描若只依 TC 自身欄位做需求→TC 反查，可能漏掉 TC1 而未觸發重新驗證，形成追溯缺口。此為文件完整性問題，不影響本次斷言的事實正確性（已與
+      REQ-024/CLR-003 核對一致），故不構成 blocker/major。
+    recommended_change: 建議在 TC1 的 requirement_ids 補上 REQ-PLATFORMRULE-024、acceptance_criteria_ids 補上 AC-PLATFORMRULE-0241，使該筆
+      TC 的正式追溯欄位涵蓋其斷言所依據的全部需求；或考慮將「注單查詢／稽核明細存在性」的驗證完全交由已正確掛勾 REQ-024/AC-0241 的 TC2 承擔，TC1 的選單列舉維持原本四項即可，避免同一斷言分散在追溯關係不完整的
+      TC 中。
+  coverage_summary:
+    requirements_total: 3
+    requirements_covered: 3
+    ac_total: 4
+    ac_covered: 4
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-22T04:54:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260922-007

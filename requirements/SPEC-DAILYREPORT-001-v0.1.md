@@ -104,14 +104,13 @@
 
 ## REQ-DAILYREPORT-008 場次編號欄（依場次明細）
 
-**需求**：「場次編號」欄僅在「依場次明細」維度顯示，並附開始／結束時間與場次時長；進行中場次結束時間顯示「—」、時長為累計至查詢當下。
+**需求**：「場次編號」欄僅在「依場次明細」維度顯示，並附開始／結束時間與場次時長。依場次明細只列出已結束／逾時結束／日結結算的場次，進行中場次不列（依 CLR-DAILYREPORT-012 PM 定案 B，2026-09-22）；場次資訊表「進行中的場次結束時間顯示「—」、時長累計至查詢當下」一句不適用本報表。
 
 - 類型 functional · 行為 success · 風險 high · 狀態 ACTIVE
 - spec 位置：§列表欄位/場次編號 + §背景:場次資訊　引句：「僅「依場次明細」維度顯示；另附開始／結束時間與場次時長」
 - 驗收條件：
   - 0081：給定 維度為依場次明細；當 查看列表；則 每列有場次編號、開始時間、結束時間（UTC+0）、場次時長
   - 0082：給定 維度為依場館彙總或依機台明細；當 查看列表；則 不顯示場次編號欄
-  - 0083：給定 有一場次仍進行中；當 查看該列；則 結束時間顯示「—」，場次時長為開始至查詢當下的累計
 - 不符合時系統怎麼做：spec 有寫——非場次明細維度不顯示該欄
 - ✅ PM 回答（CLR-DAILYREPORT-012）：B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明細不列進行中）符合。→ AC-DAILYREPORT-0083 作廢、TC-DAILYREPORT-027 retire；REQ-008 statement 移除「進行中場次結束時間顯示「—」、時長為累計至查詢當下」。附帶題「會員詳細頁機台資訊區塊的進行中場次摘要是否顯示即時時長」本次未決，留待 ACCOUNT／ARCADE 處理。
 - 對應 TC：TC-DAILYREPORT-073 v1, TC-DAILYREPORT-072 v1, TC-DAILYREPORT-025 v1, TC-DAILYREPORT-074 v1, TC-DAILYREPORT-020 v1, TC-DAILYREPORT-026 v1, TC-DAILYREPORT-027 v1
@@ -156,6 +155,7 @@
   - 0114：給定 在洗分出金核實頁將一筆待核實洗分核實後；當 重新搜尋報表；則 已核實／待核實數字對應變動
 - 不符合時系統怎麼做：spec v0.1 沒寫 → **PM 已回答**（見下）
 - ✅ PM 回答（CLR-DAILYREPORT-005）：提醒標示的呈現方式如截圖：交易列表中待核實的機台洗分列顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」；已核實者為綠色「已核實」。報表的待核實洗分提醒沿用同款黃色警示標籤。
+- ✅ PM 回答（CLR-DAILYREPORT-010）：A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 AC-DAILYREPORT-0113）。因此單列內 收據金額＝已兌現＋未兌現＋已作廢 成立；現金淨收（開分＋進鈔－已核實洗分－已兌現）含未來才付現的收據金額，不是當日實際現金增減。作廢在報表的呈現另見 CLR-DAILYREPORT-011（待回）。
 - ⚠ 歧義（minor）：「標示提醒」的具體呈現方式未定義　可能解讀：紅字 / 圖示 / 文字標籤
 - 對應 TC：TC-DAILYREPORT-034 v1, TC-DAILYREPORT-080 v1, TC-DAILYREPORT-081 v1, TC-DAILYREPORT-035 v1, TC-DAILYREPORT-036 v1, TC-DAILYREPORT-082 v1, TC-DAILYREPORT-083 v1, TC-DAILYREPORT-037 v1
 
@@ -235,5 +235,5 @@
   - 0172：給定 機台 A 無進行中場次；當 日結時間到達；則 不產生新場次
 - 狀態轉換：進行中→日結結算（日結時間到達）；進行中→已結束（洗分／出金／分數歸 0）；進行中→逾時結束（逾時（定義於開發包③））；已結束→進行中（不可逆，不允許）
 - 不符合時系統怎麼做：spec 有寫——狀態轉換規則明確
-- 對應 TC：TC-DAILYREPORT-053 v1, TC-DAILYREPORT-052 v1, TC-DAILYREPORT-096 v1, TC-DAILYREPORT-097 v1, TC-DAILYREPORT-054 v1, TC-DAILYREPORT-051 v1
+- 對應 TC：TC-DAILYREPORT-053 v1, TC-DAILYREPORT-053 v2, TC-DAILYREPORT-052 v1, TC-DAILYREPORT-052 v2, TC-DAILYREPORT-096 v1, TC-DAILYREPORT-097 v1, TC-DAILYREPORT-054 v1, TC-DAILYREPORT-054 v2, TC-DAILYREPORT-051 v1, TC-DAILYREPORT-051 v2
 
