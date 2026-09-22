@@ -1,0 +1,84 @@
+artifact_id: ART-BVR-01M33982FA6F8C24R3CF8JSY4D
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260922-002
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-22T00:46:25Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M338YS6GB2KFE8Q7PST5MCQF
+references:
+- entity_type: Artifact
+  id: ART-BD-01M338YS6GB2KFE8Q7PST5MCQF
+- entity_type: Evidence
+  id: EVD-0064
+- entity_type: Evidence
+  id: EVD-0065
+- entity_type: Evidence
+  id: EVD-0066
+- entity_type: Evidence
+  id: EVD-0067
+requires_approval: null
+payload:
+  result: FAIL
+  bug_draft_artifact_id: ART-BD-01M338YS6GB2KFE8Q7PST5MCQF
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: false
+    priority_reasonable: false
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-012
+    issue_type: other
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-004
+    spec_reference: null
+    evidence: draft severity_proposed=minor、priority_proposed=medium；actual 為 API 對無效區間靜默回傳 13 筆真實財務數字（開分總計 $16,922、現金淨收 $30,992.20），無任何錯誤提示
+    explanation: 違反已定案（CLR-DAILYREPORT-003，APPLIED）的拒絕契約，且錯誤結果外觀正常、可能被用於對帳；同功能 BUG-DAILYREPORT-001／002 皆 major/high，本案隱蔽性更高
+    recommended_change: severity 改 major、priority 改 high，severity_rationale 補上「靜默回傳看似正常的財務數字」與同功能既有 bug 的分級對照
+  evidence_verification:
+  - evidence_id: EVD-0064
+    hash_verified: true
+    supports_claim: true
+    note: sha256 一致；選擇器 Start 2027-02-13 00:00:00、End 2026-09-01 23:59:59，統計周期按日，與 claim 相符
+  - evidence_id: EVD-0065
+    hash_verified: true
+    supports_claim: true
+    note: sha256 一致；總筆數 13、1/2 頁，結算期間 2026-09-08～09-21，總計開分 $16,922.00、現金淨收 $30,992.20；區間確實落在 endDate 之後、startDate 之前
+  - evidence_id: EVD-0066
+    hash_verified: true
+    supports_claim: true
+    note: sha256 一致；酬載 startDate=2027-02-12T16:00:00.000Z、endDate=2026-09-01T15:59:59.000Z，+8 時區換算與選擇器一致
+  - evidence_id: EVD-0067
+    hash_verified: true
+    supports_claim: true
+    note: txt 與 yaml inline_content 一致、sha256 相符；settlePeriod 2026-09-21、sessionCount 3、creditInAmount 300 與 EVD-0065 首列吻合
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: false
+    rationale: Draft 提 minor/medium（無計算錯誤、無資料遺失、僅無效輸入）有理，但低估風險：(1) 此為 CLR-DAILYREPORT-003（APPLIED）定案並寫入 REQ-004 rejection_contract
+      的具體契約，非 spec 模糊；(2) 違規表現為靜默回傳看似正常的真實財務數字（開分／洗分／現金淨收），無任何錯誤提示，使用者極可能誤信並用於對帳，屬實質財務對帳風險；(3) 同功能已結案的 BUG-DAILYREPORT-001／002（欄位缺失、畫面顯示
+      --，異常明顯）皆判 major/high，本案「看似正常實則錯誤」更難被發現。建議 major/high，由人裁定。另：REQ-004 rejection_contract.defined 仍為 false 但 description
+      已載 CLR 結論，屬 RM 欄位一致性小缺口，不影響判定。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: BUG-DAILYREPORT-001（缺場次數欄，REQ-009）、002（缺開始時間／場次時長，REQ-008）皆屬回應欄位缺失，與本案區間篩選未回空（REQ-004）不重疊，非重複
+  ambiguity: null
+history:
+- at: '2026-09-22T00:46:25Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260922-002

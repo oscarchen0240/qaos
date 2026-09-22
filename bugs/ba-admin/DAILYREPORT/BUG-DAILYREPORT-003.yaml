@@ -1,0 +1,101 @@
+title: '[後台][Arcade][後端][場館日結報表] 結算日期起日晚於迄日時 API 仍回傳資料，未依定案回空列表'
+product: ba-admin
+functional_area: DAILYREPORT
+severity_rationale: 'Spec 本文只寫結算日期「必填；不設區間上限」，起日晚於迄日的行為由 CLR-DAILYREPORT-003 PM 定案（APPLIED）：「結算日期異常（起日晚於迄日等）：找不到資料即可，API 回
+  rows: []」，並已寫入 REQ-DAILYREPORT-004 rejection_contract。實際 API 在 startDate > endDate 時回傳 13 筆，且回傳的 settlePeriod（2026-09-08～09-21）既晚於
+  endDate 也早於 startDate，代表後端對此輸入不是回空、而是對調或忽略了區間。定為 major/high 的理由：(1) 違反已定案的拒絕契約，非 spec 模糊；(2) 錯誤結果是靜默回傳外觀正常的真實財務數字（開分／洗分／現金淨收等對帳欄位），無任何錯誤提示，使用者可能誤信並用於對帳，比明顯缺欄位更難被發現；(3)
+  同功能已結案的 BUG-DAILYREPORT-001／002（欄位缺失、畫面顯示 --）皆 major/high，本案隱蔽性不低於前兩者。無資料遺失、無金額計算錯誤，故不到 critical。（iter 1：依 Bug Validator
+  意見自 minor/medium 上修）'
+environment:
+  name: stage
+  site: Arcade（機台場館）
+  account: 後台管理員（Oscar 測試帳號）
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+requirement_id: REQ-DAILYREPORT-004
+acceptance_criteria_ids: []
+testcase_id: TC-DAILYREPORT-012
+testcase_version: 1
+api:
+  url: https://stage-admin-srv.alphapod.cc/api/v2/machine/query-venue-daily-report
+  method: POST
+  request_evidence_id: EVD-0066
+  response_evidence_id: EVD-0067
+preconditions:
+- stage 環境後台，站台切換下拉選單已選定 Arcade（機台類型站台）
+- Arcade 場館在 2026-09-08～2026-09-21 之間已有日結資料（本例共 13 個營業日）
+reproduction_steps:
+- 進入 各式報表 > 場館日結報表，統計周期選「按日」
+- 結算日期選擇器 Start Time 選 2027-02-13 00:00:00、End Time 選 2026-09-01 23:59:59（起日晚於迄日），確定
+- 搜尋；於瀏覽器 Network 檢視 query-venue-daily-report 的要求酬載與回應
+expected_result: 'API 回傳空列表（rows: []），列表顯示無資料、總計為 0（依 CLR-DAILYREPORT-003 定案：結算日期異常「找不到資料即可」）'
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: '§篩選器/結算日期（「必填；不設區間上限」）；起日晚於迄日之行為依 CLR-DAILYREPORT-003 PM 回覆（2026-09-13，APPLIED）：「結算日期異常（起日晚於迄日等）：找不到資料即可，API
+    回 rows: []」，已落入 REQ-DAILYREPORT-004 rejection_contract'
+actual_result: 要求酬載 settleTime.startDate=2027-02-12T16:00:00.000Z、endDate=2026-09-01T15:59:59.000Z（起日晚於迄日），API 仍回傳 13 筆（總筆數
+  13、1/2 頁），settlePeriod 為 2026-09-08～2026-09-21，各金額欄與底部總計皆有值（開分總計 $16,922、現金淨收總計 $30,992.20 等）。回傳的日期全部落在 endDate 之後、startDate
+  之前，即後端未依指定區間篩選
+actual_result_evidence_map:
+- claim: 結算日期選擇器 Start 2027-02-13 00:00:00 晚於 End 2026-09-01 23:59:59，統計周期按日
+  evidence_id: EVD-0064
+- claim: 搜尋後列表回傳 13 筆（2026-09-08～09-21），底部總計有值
+  evidence_id: EVD-0065
+- claim: 要求酬載 startDate=2027-02-12T16:00:00.000Z > endDate=2026-09-01T15:59:59.000Z
+  evidence_id: EVD-0066
+- claim: API 回應含 settlePeriod 2026-09-21 的完整日結資料列（sessionCount 3、creditInAmount 300…）
+  evidence_id: EVD-0067
+evidence_ids:
+- EVD-0064
+- EVD-0065
+- EVD-0066
+- EVD-0067
+impact: 使用者以無效區間查詢時得到非其指定條件、但外觀正常的財務數字，可能誤信並用於場館對帳；同時代表後端 settleTime 篩選在異常輸入下會被對調或忽略，正常區間的邊界處理是否嚴格亦需一併確認。TC-DAILYREPORT-012
+  判 fail
+suspected_area: 後端：query-venue-daily-report 對 settleTime.startDate > endDate 未做檢核，疑似自動對調（min/max）或忽略該條件後查詢；前端日期選擇器允許起日晚於迄日送出，依定案可接受（不阻擋、由後端回空），非本單修正範圍
+ambiguity_suspected: false
+bug_id: BUG-DAILYREPORT-003
+version: 1
+severity: major
+priority: high
+duplicate_of: null
+status: OPEN
+created_by: agent-bug-analyst
+validated_by: agent-bug-validator
+validation_report_id: ART-BVR-01M33999WBBAXBWD9RTPCJQ065
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0159
+created_at: '2026-09-22T00:50:34Z'
+updated_at: '2026-09-22T00:50:34Z'
+history:
+- at: '2026-09-22T00:46:51Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-BD-01M3398V5VEZP0GQZ6VCNK2HFF
+  run_id: RUN-20260922-002
+- at: '2026-09-22T00:46:51Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260922-002
+- at: '2026-09-22T00:47:06Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-BVR-01M33999WBBAXBWD9RTPCJQ065
+  run_id: RUN-20260922-002
+- at: '2026-09-22T00:47:06Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260922-002
+- at: '2026-09-22T00:50:34Z'
+  from_status: PENDING_APPROVAL
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: APR-0159
+  run_id: RUN-20260922-002

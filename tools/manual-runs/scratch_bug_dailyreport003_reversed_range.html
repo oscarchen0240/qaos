@@ -1,0 +1,180 @@
+<title>日結報表反向區間</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Major / High</span>
+    <span class="badge scope">後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後台][Arcade] 場館日結報表：結算日期起日晚於迄日時 API 仍回傳資料，未依定案回空列表</h1>
+  <div class="subtitle">BUG-DAILYREPORT-003 · SPEC-DAILYREPORT-001 v0.1 · REQ-DAILYREPORT-004 · CLR-DAILYREPORT-003 · TC-DAILYREPORT-012 · RUN-20260922-002</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>—（後台報表，不涉遊戲商）</dd>
+      <dt>遊戲名稱</dt><dd>—</dd>
+      <dt>測試環境</dt><dd>stage · 站台 Arcade（機台場館）</dd>
+      <dt>測試帳號</dt><dd>後台管理員</dd>
+      <dt>測試時間</dt><dd>2026-09-22</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">後端：<code class="inline">query-venue-daily-report</code> 對 <code class="inline">settleTime.startDate &gt; endDate</code> 未做檢核，疑似自動對調（min/max）或忽略該條件後查詢。前端日期選擇器允許起日晚於迄日送出，依 PM 定案（不阻擋、由後端回空）可接受，非本單修正範圍。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">場館日結報表的結算日期選 Start 2027-02-13 00:00:00、End 2026-09-01 23:59:59（起日晚於迄日）後搜尋，API 仍回傳 13 筆（結算期間 2026-09-08～09-21，1/2 頁），各金額欄與底部總計皆有值。回傳的日期<b>全部落在 endDate 之後、startDate 之前</b>，即後端未依指定區間篩選，而是對調或忽略了區間。</p>
+    <div class="specquote">
+      <b>SPEC-DAILYREPORT-001 v0.1 §篩選器／結算日期</b><br>
+      日期範圍 · 必填；不設區間上限，與手冊其他報表一致
+    </div>
+    <div class="specquote">
+      <b>CLR-DAILYREPORT-003 · PM 回覆（2026-09-13，已落入 REQ-DAILYREPORT-004 拒絕契約）</b><br>
+      結算日期異常（起日晚於迄日等）：找不到資料即可，API 回 rows: []。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　API 回傳空列表（rows: []），列表顯示無資料、總計為 0。</div>
+    <div class="actual"><b>實際</b>　API 回傳 13 筆（2026-09-08～09-21），總筆數 13、開分總計 $16,922.00、現金淨收總計 $30,992.20，看起來是一份正常的報表。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0064</span>選擇器 Start 2027-02-13 00:00:00 晚於 End 2026-09-01 23:59:59，統計周期按日</li>
+      <li><span class="tag">EVD-0065</span>搜尋後列表 13 筆（09-08～09-21），底部總計有值</li>
+      <li><span class="tag">EVD-0066</span>要求酬載 startDate=2027-02-12T16:00:00.000Z、endDate=2026-09-01T15:59:59.000Z</li>
+      <li><span class="tag">EVD-0067</span>回應第一筆 settlePeriod 2026-09-21 完整日結資料（見下方）</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>登入 stage 後台，站台切換下拉選單切至 <b>Arcade</b>（機台類型站台）</li>
+      <li>進入「各式報表 › 場館日結報表」，統計周期選「按日」</li>
+      <li>結算日期選擇器 Start Time 選 <b>2027-02-13 00:00:00</b>、End Time 選 <b>2026-09-01 23:59:59</b>，確定</li>
+      <li>搜尋；於瀏覽器 Network 檢視 <code class="inline">query-venue-daily-report</code> 的要求酬載與回應</li>
+    </ol>
+    <p class="notice">前置：Arcade 場館在 2026-09-08～09-21 之間已有日結資料（本例 13 個營業日）。</p>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text"><code class="inline">POST https://stage-admin-srv.alphapod.cc/api/v2/machine/query-venue-daily-report</code></p>
+    <h2 style="margin-top:18px">Request</h2>
+    <div class="mono-block">{
+  "query": {
+    "settleTime": {
+      "startDate": "2027-02-12T16:00:00.000Z",
+      "endDate":   "2026-09-01T15:59:59.000Z"
+    }
+  },
+  "pagination": { "current": 0, "pageSize": 10 },
+  "sorter": { "field": "endTime", "order": "desc" }
+}</div>
+    <h2 style="margin-top:18px">Response（第一筆）</h2>
+    <div class="mono-block">{
+  "settlePeriod": "2026-09-21",
+  "startTime": "2026-09-21T19:59:37Z",
+  "endTime": "2026-09-21T21:20:00Z",
+  "durationSeconds": 4823,
+  "machineName": null, "userNo": null, "sessionCode": null,
+  "sessionCount": 3,
+  "creditInAmount": 300, "creditOutAmount": 100,
+  "verifiedCreditOutAmount": 0, "unverifiedCreditOutAmount": 100,
+  "cashInAmount": 2000, "cashOutAmount": 1900,
+  "cashedAmount": 0, "uncashedAmount": 0,
+  "netCashIncome": 2300,
+  "betCount": 1, "validBetAmount": 100, "profitLoss": 100,
+  "openingBalance": 0, "closingBalance": 400
+}</div>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure><img src="img/EVD-0064.png" alt="結算日期選擇器，起日 2027-02-13 晚於迄日 2026-09-01"><figcaption>EVD-0064 · 結算日期選擇器（起日晚於迄日）</figcaption></figure>
+      <figure><img src="img/EVD-0066.png" alt="Network 要求酬載，startDate 晚於 endDate"><figcaption>EVD-0066 · 要求酬載</figcaption></figure>
+    </div>
+    <figure style="margin-top:14px"><img src="img/EVD-0065.png" alt="搜尋結果仍回傳 13 筆日結資料"><figcaption>EVD-0065 · 搜尋結果 13 筆（2026-09-08～09-21）</figcaption></figure>
+  </section>
+
+  <div class="footer">
+    <span>QAOS · RUN-20260922-002 · BugDraft ART-BD-01M3398V5VEZP0GQZ6VCNK2HFF · Validator PASS · APR-0159 approved · <b>BUG-DAILYREPORT-003</b> OPEN</span>
+    <span>2026-09-22 · oscarchen@blockaction.tech</span>
+  </div>
+</div>
