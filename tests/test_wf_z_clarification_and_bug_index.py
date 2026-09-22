@@ -16,8 +16,36 @@ def test_20_manual_clarification_lifecycle(capsys):
     clr.ask(cid, "pm@example.com", "oscar@example.com"); assert clr.load(cid)["status"] == "ASKED"
     clr.answer(cid, "以 Unicode code point 計", "pm@example.com", "requirement_clarified", "oscar@example.com")
     c = clr.load(cid); assert c["status"] == "ANSWERED" and "PM 回覆" in (store.ROOT / "clarifications/demo/AUTH" / f"{cid}.md").read_text()
-    clr.apply_(cid, "oscar@example.com"); assert clr.load(cid)["status"] == "APPLIED"
+    with pytest.raises(ValueError, match="impact-reviewed"): clr.apply_(cid, "oscar@example.com")   # ADR-008：未做影響掃描判定不得 apply
+    clr.apply_(cid, "oscar@example.com", impact_reviewed="無 ACTIVE TC 受影響"); assert clr.load(cid)["status"] == "APPLIED"
+    assert "impact-scan[" in clr.load(cid)["history"][-1]["note"] and "reviewed: 無 ACTIVE TC 受影響" in clr.load(cid)["history"][-1]["note"]
     cli(["clarification", "list", "--all"]); assert cid in capsys.readouterr().out and (store.ROOT / "clarifications/index.md").exists()
+
+def _fake_active_tc(tc_id, area, req, title, steps, expected, product="demo"):
+    """直接寫 registry pointer + version（impact 掃描只讀這兩個檔）。"""
+    store.save(store.tc_pointer_path(tc_id), {"testcase_id": tc_id, "active_version": 1, "status": "ACTIVE", "versions": [{"version": 1, "status": "ACTIVE"}]})
+    store.save(store.tc_version_path(tc_id, 1), {"testcase_id": tc_id, "version": 1, "status": "ACTIVE", "product": product, "functional_area": area, "title": title,
+                                                  "requirement_ids": [req], "preconditions": [], "steps": [{"n": i + 1, "action": a} for i, a in enumerate(steps)], "expected_result": expected})
+
+def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys):
+    """ADR-008：impact 掃同 product/area 的 ACTIVE TC——掛同 requirement 者、步驟／expected 命中關鍵詞者；其他 area、非 ACTIVE、無命中者不列。"""
+    _fake_active_tc("TC-IMP-001", "IMP", "REQ-IMP-001", "掛同一需求", ["做 A"], "看到 A")
+    _fake_active_tc("TC-IMP-002", "IMP", "REQ-IMP-002", "步驟提到進行中", ["讓機台有進行中場次"], "看到列")
+    _fake_active_tc("TC-IMP-003", "IMP", "REQ-IMP-002", "expected 提到新場次", ["做 B"], "系統建立新場次")
+    _fake_active_tc("TC-IMP-004", "IMP", "REQ-IMP-002", "不相干", ["做 C"], "看到 C")
+    _fake_active_tc("TC-IMP-005", "OTHER", "REQ-IMP-001", "別的 area 掛同需求", ["做 D"], "看到 D")
+    ptr = store.load(store.tc_pointer_path("TC-IMP-004")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; store.save(store.tc_pointer_path("TC-IMP-004"), ptr)
+    _fake_active_tc("TC-IMP-006", "IMP", "REQ-IMP-002", "已退役但提到進行中", ["進行中"], "x")
+    ptr = store.load(store.tc_pointer_path("TC-IMP-006")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; store.save(store.tc_pointer_path("TC-IMP-006"), ptr)
+    c = clr.new("demo", "IMP", "SPEC-IMP-001", "1.0", "明細是否列進行中？", "oscar@example.com", requirement_id="REQ-IMP-001")
+    cands = {x["testcase_id"]: x["reasons"] for x in clr.impact(c["clarification_id"], ["進行中", "新場次"])}
+    assert cands == {"TC-IMP-001": ["requirement"], "TC-IMP-002": ["keyword:進行中"], "TC-IMP-003": ["keyword:新場次"]}
+    cli(["clarification", "impact", c["clarification_id"], "--keyword", "進行中"]); out = capsys.readouterr().out
+    assert "TC-IMP-002" in out and "TC-IMP-001" in out and "TC-IMP-005" not in out and "TC-IMP-006" not in out
+    clr.ask(c["clarification_id"], "pm@example.com", "oscar@example.com"); clr.answer(c["clarification_id"], "不列", "pm@example.com", "requirement_clarified", "oscar@example.com")
+    clr.apply_(c["clarification_id"], "oscar@example.com", impact_reviewed="001 不受影響；002 需修訂；003 需修訂", keywords=["進行中", "新場次"])
+    note = clr.load(c["clarification_id"])["history"][-1]["note"]
+    assert "impact-scan[3]" in note and "TC-IMP-002(keyword:進行中)" in note and "reviewed: 001 不受影響" in note
 
 def test_21_critical_ambiguity_opens_clarification_and_blocks_approve(fixtures):
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-PAY-001", "--version", "1.0", "--product", "demo", "--area", "PAY", "--by", "oscar@example.com"])

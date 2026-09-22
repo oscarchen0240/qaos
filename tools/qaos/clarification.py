@@ -68,8 +68,36 @@ def _resync_human_docs(c):
     except Exception as e:
         store.audit(c.get("run_id"), "system", "RESYNC_DOCS_FAILED", str(e)[:200])
 
-def apply_(clr_id, by, note=""):
-    c = load(clr_id); state.apply("clarification", c, "APPLIED", by, "applied", c.get("run_id"), note=note); save(c); return c
+def impact(clr_id, keywords=None) -> list[dict]:
+    """ADR-008：apply 前必掃——列出同 product/area 的 ACTIVE TC 中，掛同一 requirement 或步驟／expected 文字命中關鍵詞的候選。
+    回傳 [{testcase_id, version, title, reasons:[...]}]；reasons 為 'requirement' 或 'keyword:<詞>'。"""
+    c = load(clr_id); req = c.get("requirement_id"); kws = [k for k in (keywords or []) if k]
+    out = []
+    for ptr_p in sorted((store.ROOT / "testcases" / "registry").glob("TC-*.yaml")):
+        ptr = store.load(ptr_p)
+        if ptr.get("status") != "ACTIVE": continue
+        tc = store.load(store.tc_version_path(ptr_p.stem, ptr["active_version"]))
+        if tc.get("product") != c["product"] or tc.get("functional_area") != c["functional_area"]: continue
+        reasons = []
+        if req and req in tc.get("requirement_ids", []): reasons.append("requirement")
+        blob = " ".join([tc.get("title", ""), *tc.get("preconditions", []), *(s.get("action", "") for s in tc.get("steps", [])), tc.get("expected_result", "")])
+        reasons += [f"keyword:{k}" for k in kws if k in blob]
+        if reasons: out.append({"testcase_id": ptr_p.stem, "version": ptr["active_version"], "title": tc.get("title", ""), "reasons": reasons})
+    return out
+
+def apply_(clr_id, by, note="", impact_reviewed=None, keywords=None):
+    """落地 Clarification。ADR-008：必須先做影響掃描並逐條判定——impact_reviewed 為人／agent 對候選 TC 的結論（不受影響／需修訂／需 retire），
+    未提供即拒絕；掃描候選清單與結論一併寫入 history note，供日後追溯。"""
+    c = load(clr_id)
+    if c["status"] != "ANSWERED": state.apply("clarification", c, "APPLIED", by, "applied", c.get("run_id"))   # 非法轉換先於 ADR-008 檢查報錯
+    if not impact_reviewed:
+        raise ValueError(f"{clr_id} apply 需 --impact-reviewed：先跑 `qaos clarification impact {clr_id} [--keyword ...]` 掃同 area ACTIVE TC，逐條判定後把結論寫進 --impact-reviewed（ADR-008）")
+    cands = impact(clr_id, keywords)
+    scan = "；".join(f"{x['testcase_id']}({','.join(x['reasons'])})" for x in cands) or "無候選"
+    full = f"{note + '；' if note else ''}impact-scan[{len(cands)}]: {scan}；reviewed: {impact_reviewed}"
+    state.apply("clarification", c, "APPLIED", by, "applied", c.get("run_id"), note=full); save(c)
+    store.audit(c.get("run_id"), by, "APPLY_CLARIFICATION", f"{clr_id} impact-scan {len(cands)} candidates")
+    return c
 
 def withdraw(clr_id, by, note=""):
     c = load(clr_id); state.apply("clarification", c, "WITHDRAWN", by, "withdrawn", note=note); save(c); return c

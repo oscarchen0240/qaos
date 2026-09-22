@@ -582,7 +582,7 @@ def _after_ambiguity(run, task, apr, decision, by):
     for ref in apr.get("impact", []):
         if ref["entity_type"] == "Clarification":
             c = clr.load(ref["id"])
-            if decision in ("approve", "override") and c["status"] == "ANSWERED": clr.apply_(ref["id"], by, note=apr["approval_id"])
+            if decision in ("approve", "override") and c["status"] == "ANSWERED": clr.apply_(ref["id"], by, note=apr["approval_id"], impact_reviewed=f"由 {apr['approval_id']}（RESOLVE_AMBIGUITY）核准者於 run 內判定；候選清單見本 note，run 外 TC 若受影響需另行修訂")
     if run["workflow_id"] == "spec-to-bug":
         if decision == "reject":
             _bug_entity_transition(run, "REJECTED", apr["approval_id"], by=by)

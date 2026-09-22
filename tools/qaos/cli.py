@@ -124,7 +124,11 @@ def cmd_clr_new(a):
     print(f"{c['clarification_id']} → clarifications/{a.product}/{a.area}/{c['clarification_id']}.md")
 def cmd_clr_ask(a): c = clr.ask(a.id, a.to, a.by); print(f"{c['clarification_id']} ASKED → {a.to}")
 def cmd_clr_answer(a): c = clr.answer(a.id, a.answer, a.answered_by, a.resolution, a.by, a.spec_version); print(f"{c['clarification_id']} ANSWERED ({a.resolution})")
-def cmd_clr_apply(a): clr.apply_(a.id, a.by, a.note or ""); print(f"{a.id} APPLIED")
+def cmd_clr_impact(a):
+    cands = clr.impact(a.id, a.keyword or [])
+    for x in cands: print(f"{x['testcase_id']} v{x['version']} [{', '.join(x['reasons'])}] {x['title']}")
+    print(f"({len(cands)} 條候選；逐條判定後以 --impact-reviewed 寫入 apply)")
+def cmd_clr_apply(a): clr.apply_(a.id, a.by, a.note or "", impact_reviewed=a.impact_reviewed, keywords=a.keyword or []); print(f"{a.id} APPLIED")
 def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.note or ""); print(f"{a.id} WITHDRAWN")
 def cmd_clr_list(a):
     for c in clr.list_(open_only=not a.all): print(f"{c['clarification_id']} [{c['status']}] {c['product']}/{c['functional_area']} {c['spec_id']}@{c['spec_version']} — {c['question']}")
@@ -180,7 +184,8 @@ def main(argv=None):
     p.add_argument("--question", required=True); p.add_argument("--context"); p.add_argument("--option", action="append"); p.add_argument("--requirement-id"); p.add_argument("--impact"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_new)
     p = cs.add_parser("ask"); p.add_argument("id"); p.add_argument("--to", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_ask)
     p = cs.add_parser("answer"); p.add_argument("id"); p.add_argument("--answer", required=True); p.add_argument("--answered-by", required=True); p.add_argument("--resolution", required=True, choices=["spec_updated", "requirement_clarified", "no_change", "out_of_scope"]); p.add_argument("--spec-version"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_answer)
-    p = cs.add_parser("apply"); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.set_defaults(f=cmd_clr_apply)
+    p = cs.add_parser("impact", help="ADR-008：apply 前的影響掃描"); p.add_argument("id"); p.add_argument("--keyword", action="append"); p.set_defaults(f=cmd_clr_impact)
+    p = cs.add_parser("apply"); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.add_argument("--impact-reviewed", help="ADR-008：對 impact 候選 TC 的逐條結論（必填）"); p.add_argument("--keyword", action="append"); p.set_defaults(f=cmd_clr_apply)
     p = cs.add_parser("withdraw"); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.set_defaults(f=cmd_clr_withdraw)
     p = cs.add_parser("list"); p.add_argument("--all", action="store_true"); p.set_defaults(f=cmd_clr_list)
     a = ap.parse_args(argv)
