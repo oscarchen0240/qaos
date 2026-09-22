@@ -72,7 +72,9 @@ def g_design(run, task, arts) -> list[str]:
         if not tc["expected_result"].strip(): issues.append(f"{did} expected_result 為空")
         if not tc["design_techniques"]: issues.append(f"{did} 無 design_techniques")
         for a in tc.get("assumptions", []):
-            if a.get("needs_human_confirmation") is not True: issues.append(f"{did} 的 assumption 未標 needs_human_confirmation: true（exploratory 案例的假設必須外顯）")
+            # 已由核准解決的假設（resolved_by_approval，常見於 change 模式沿用現行版）不必再標需人工確認；否則必須外顯
+            if a.get("needs_human_confirmation") is not True and not a.get("resolved_by_approval"):
+                issues.append(f"{did} 的 assumption 未標 needs_human_confirmation: true（exploratory 案例的假設必須外顯；已核准者請填 resolved_by_approval）")
             if a["requirement_id"] not in tc["requirement_ids"]: issues.append(f"{did} 的 assumption 指向非本 TC 的 requirement {a['requirement_id']}")
         if p["mode"] == "change" and not tc.get("supersedes_testcase") and not tc.get("source_ref", "").startswith("new_required"):
             issues.append(f"{did} mode=change 但無 supersedes_testcase（新 TC 需 source_ref 以 new_required 開頭）")

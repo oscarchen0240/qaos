@@ -1,6 +1,6 @@
 """qaos CLI。用法：python3 -m tools.qaos <command> ...  （或 bin/qaos）"""
 import argparse, json, sys, pathlib, shutil
-from . import store, schema, ids, engine, trace, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops
+from . import store, schema, ids, engine, trace, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export
 from .engine import EngineError
 from .state import TransitionError
 
@@ -58,6 +58,7 @@ def cmd_manual_new(a):
     print(f"{rid} → testcases/manual/{rid}.yaml；下一步：bin/qaos run new manual-test-to-regression --input manual_record_id={rid}" + (f" --input spec_id={a.spec_id} --input spec_version={a.spec_version}" if a.spec_id else "") + f" --by {a.by}")
 
 def cmd_tc_export(a): print(tc_export.export(a.area))
+def cmd_tc_final(a): n, g = final_export.export(a.area); print(f"testcases/final/{a.area}-final.html + -final-active.json（{n} 條 ACTIVE、{g} 項需求）")
 
 def cmd_approvals(a):
     for p in sorted((store.ROOT / "approvals").glob("APR-*.yaml")):
@@ -153,6 +154,7 @@ def main(argv=None):
     p = sp.add_parser("approvals"); p.add_argument("--all", action="store_true"); p.set_defaults(f=cmd_approvals)
     p = sp.add_parser("approval"); p.add_argument("approval_id"); p.set_defaults(f=cmd_approval_show)
     p = sp.add_parser("tc-export"); p.add_argument("area"); p.set_defaults(f=cmd_tc_export)
+    p = sp.add_parser("tc-final", help="重匯 testcases/final/<AREA>-final.html／json（DoD）"); p.add_argument("area"); p.set_defaults(f=cmd_tc_final)
     t = sp.add_parser("tc", help="正式 Test Case 的 Human 操作"); ts = t.add_subparsers(dest="sub", required=True)
     p = ts.add_parser("retire", help="退役一條 ACTIVE TC"); p.add_argument("tc_id"); p.add_argument("--rationale", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_tc_retire)
     p = ts.add_parser("revise", help="對 ACTIVE TC 發起修訂（產新版本，舊版保留）"); p.add_argument("tc_id"); p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_tc_revise)

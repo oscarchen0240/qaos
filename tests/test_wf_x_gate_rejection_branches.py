@@ -131,6 +131,18 @@ def test_58_g_design_rejects_ac_not_owned_by_tc_requirements(gate_model):
     assert any("引用不存在的 AC AC-GATE-NONE" in i for i in issues) and not any("不在本 TC 的 requirement_ids 內" in i for i in issues)
 
 
+def test_59_resolved_assumption_need_not_flag_human_confirmation(gate_model):
+    """L75：assumption 未標 needs_human_confirmation: true 會擋；但已由核准解決（resolved_by_approval）者豁免——
+    change 模式沿用現行 ACTIVE 版的已核准假設時，不該被迫翻成「需人工確認」造成與 resolved_by_approval 自相矛盾（CLR-012 修訂 TC-054 踩到）。"""
+    def mk(did, assumptions): return _gtc(did, "REQ-GATE-OK", "AC-GATE-OK", ["negative"], ["negative"], assumptions=assumptions)
+    flagged = mk("TC-DRAFT-01GATE59AAAAAAAAAAAAAAAAAA", [{"text": "a", "requirement_id": "REQ-GATE-OK", "needs_human_confirmation": False}])
+    resolved = mk("TC-DRAFT-01GATE59BBBBBBBBBBBBBBBBBB", [{"text": "a", "requirement_id": "REQ-GATE-OK", "needs_human_confirmation": False, "resolved_by_approval": "APR-0007"}])
+    explicit = mk("TC-DRAFT-01GATE59CCCCCCCCCCCCCCCCCC", [{"text": "a", "requirement_id": "REQ-GATE-OK", "needs_human_confirmation": True}])
+    issues = gates.g_design(None, None, _arts([flagged, resolved, explicit]))
+    hits = [i for i in issues if "needs_human_confirmation" in i]
+    assert len(hits) == 1 and "01GATE59AAAA" in hits[0], issues
+
+
 def test_56_g_tval_rejects_pass_report_that_still_contains_blocker_or_major():
     """L134：Validator 宣稱 PASS，issues 卻含 blocker/major → 自相矛盾，擋。"""
     tcs, ids_ = H.draft_set(prefix="01GATETVAL000000000000000")
