@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""RUN-20260922-001 T1：Bug Analyst 依 Oscar 提供的 stage arcade 站台注單查詢截圖（EVD-0062/0063），
+針對「注單查詢列表缺少場次編號欄位」提出 BugDraft。"""
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+from tools.qaos import store, ids
+RUN = sys.argv[1]; ITER = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+SID, SV, A = "SPEC-UPDATEPACK-001", "0.1", "agent-bug-analyst"
+def sr(loc): return {"spec_id": SID, "spec_version": SV, "location": loc}
+ENV = {"name": "stage", "url": "https://stage-arcade-violet-admin.springkyle.online/", "site": "arcade（機台場館）", "account": "ACAA00392（機台帳號，注單所屬會員）"}
+EVD = ["EVD-0062", "EVD-0063"]
+
+payload = {
+    "draft_id": f"BUG-DRAFT-{ids.ulid()}",
+    "title": "[後台][arcade][前端/後端][注單查詢] 注單查詢列表缺少「場次編號」欄位，機台帳號注單無法顯示所屬場次編號",
+    "product": "ba-admin", "functional_area": "UPDATEPACK",
+    "severity_proposed": "major", "priority_proposed": "high",
+    "severity_rationale": "spec 明訂的列表欄位整欄未實作（正本 ARCADE v0.7 對既有章節的影響 4.2.2「機台帳號的注單須帶入所屬場次編號；非機台注單顯示「—」」，UPDATEPACK §五同）。場次的首要設計目的是共用帳號換人後的注單隔離與追溯（正本 v03 定案），後台無法從注單反查場次即失去追溯路徑；同時 REQ-UPDATEPACK-009 兩條 AC 對應的 4 條 ACTIVE TC（TC-UPDATEPACK-015/016/031/032）全部無法執行。無資料遺失、無金流錯誤，故不到 critical。附註：場次編號欄為 2026-09-03 正本 v06 定案，若本 build 交付範圍未含該定案，本單應改列「未交付」而非 bug，請 RD 確認",
+    "environment": ENV, "spec_id": SID, "spec_version": SV, "requirement_id": "REQ-UPDATEPACK-009",
+    "acceptance_criteria_ids": ["AC-UPDATEPACK-0092", "AC-UPDATEPACK-0091"],
+    "testcase_id": "TC-UPDATEPACK-016", "testcase_version": 1,
+    "preconditions": [
+        "stage 環境後台，站台切換下拉選單已選定 arcade（機台類型站台）",
+        "機台帳號 ACAA00392 已有至少一筆注單（本例：GALAXY-A 真人大廳，投注時間 2026-09-22 04:00:44，派彩時間 04:01:16，注單狀態派彩成功）",
+    ],
+    "reproduction_steps": [
+        "登入 stage 後台 https://stage-arcade-violet-admin.springkyle.online/，站台切換選單切至 arcade",
+        "進入 各式報表 > 注單查詢，以會員編號 ACAA00392（或涵蓋 2026-09-22 的日期範圍）查詢",
+        "檢視查詢結果列表的全部欄位（左右捲動至底）",
+    ],
+    "expected_result": "列表應有「場次編號」欄位；機台帳號 ACAA00392 的注單列於該欄顯示該筆注單所屬的場次編號；線上帳號的注單列於該欄顯示「—」（不留空白、不顯示 0 或 null）",
+    "expected_result_spec_reference": sr("§五、交易紀錄的兩項欄位規則／場次編號欄位：「與線上會員共用的頁面（交易紀錄查詢、注單查詢）的『場次編號』欄位，線上帳號的資料一律顯示「—」……機台帳號顯示該筆交易所屬的場次編號」；正本 SPEC-ARCADE-001 v0.7 對既有章節的影響 4.2.2 列表欄位"),
+    "actual_result": "注單查詢列表欄位為：流水號、注單單號、（詳細）、會員編號、投注額、有效投注額、貢獻系數、有效流水貢獻、派彩、遊戲類型、遊戲名稱、注單狀態、派彩時間、遊戲廠商、投注時間——整個「場次編號」欄位不存在。機台帳號 ACAA00392 的注單無任何場次編號可見；線上帳號注單亦無欄位可顯示「—」",
+    "actual_result_evidence_map": [
+        {"claim": "列表左半欄位（流水號～有效流水貢獻）無場次編號欄，該列會員編號為 ACAA00392", "evidence_id": "EVD-0062"},
+        {"claim": "列表右半欄位（派彩～投注時間）無場次編號欄，投注時間 2026-09-22 04:00:44、遊戲廠商 GALAXY-A", "evidence_id": "EVD-0063"},
+    ],
+    "evidence_ids": EVD,
+    "impact": "機台場館全部注單受影響：後台無法從注單反查所屬場次（場次隔離／爭議追溯失效）；場館日結報表「依場次明細」維度與注單查詢無法互相對照；REQ-UPDATEPACK-009 的 4 條 ACTIVE TC 全部 blocked。線上站台注單亦缺「—」的呈現（次要）",
+    "suspected_area": "前端：注單查詢列表元件未新增「場次編號」欄；後端：注單查詢 API 回應疑似未帶注單所屬場次 id（需 RD 確認注單資料是否已寫入場次歸屬）。前端與後端皆須處理",
+    "ambiguity_suspected": False,
+    "duplicate_candidates": [],
+}
+aid = ids.artifact_id("BugDraft")
+art = {"artifact_id": aid, "artifact_type": "BugDraft", "schema_version": "1.0", "version": 1, "run_id": RUN, "task_id": "T1", "iteration": ITER,
+       "created_by": A, "created_at": store.now(), "status": "DRAFT",
+       "source": {"type": "Evidence", "ids": EVD},
+       "references": [{"entity_type": "Requirement", "id": "REQ-UPDATEPACK-009"}, {"entity_type": "TestCase", "id": "TC-UPDATEPACK-016"}] + [{"entity_type": "Evidence", "id": e} for e in EVD],
+       "requires_approval": None, "payload": payload}
+p = store.ROOT / "artifacts" / "bug-analysis" / RUN / f"{aid}.yaml"; store.save(p, art)
+print(p.relative_to(store.ROOT))

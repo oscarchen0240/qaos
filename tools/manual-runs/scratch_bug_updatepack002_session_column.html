@@ -1,0 +1,154 @@
+<title>注單查詢缺場次欄</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Major / High</span>
+    <span class="badge scope">前端 ＋ 後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後台][arcade] 注單查詢列表缺少「場次編號」欄位，機台帳號注單無法顯示所屬場次編號</h1>
+  <div class="subtitle">BUG-UPDATEPACK-002 · SPEC-UPDATEPACK-001 v0.1 · REQ-UPDATEPACK-009 · AC-0092 / AC-0091 · TC-UPDATEPACK-016 · RUN-20260922-001</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>GALAXY-A</dd>
+      <dt>遊戲名稱</dt><dd>真人大廳（真人）</dd>
+      <dt>測試環境</dt><dd>stage · 站台 arcade（機台場館）</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ACAA00392</code>（機台帳號，注單所屬會員）</dd>
+      <dt>測試時間</dt><dd>2026-09-22 04:00:44 投注 · 04:01:16 派彩（注單流水號 6744958）</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell active">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">前端：注單查詢列表元件未新增「場次編號」欄。後端：注單查詢 API 回應疑似未帶注單所屬場次 id，請 RD 確認注單資料是否已寫入場次歸屬。兩端皆須處理。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">後台「各式報表 › 注單查詢」的查詢結果列表，欄位為：流水號、注單單號、（詳細）、會員編號、投注額、有效投注額、貢獻系數、有效流水貢獻、派彩、遊戲類型、遊戲名稱、注單狀態、派彩時間、遊戲廠商、投注時間——<b>整個「場次編號」欄位不存在</b>。機台帳號 ACAA00392 的注單沒有任何場次編號可見；線上帳號的注單同樣沒有欄位可顯示「—」（此句依欄位整欄不存在推論，未另行截圖）。</p>
+    <div class="specquote">
+      <b>SPEC-UPDATEPACK-001 v0.1 §五、交易紀錄的兩項欄位規則／場次編號欄位</b><br>
+      與線上會員共用的頁面（交易紀錄查詢、注單查詢）的「場次編號」欄位，線上帳號的資料一律顯示「—」，不留空白、不顯示 0 或 null。機台帳號顯示該筆交易所屬的場次編號。
+    </div>
+    <div class="specquote">
+      <b>正本 SPEC-ARCADE-001 v0.7 對既有章節的影響 › 4.2.2 列表欄位</b><br>
+      機台帳號的注單須帶入所屬場次編號；非機台注單顯示「—」
+    </div>
+    <p class="notice">場次編號欄為 2026-09-03 正本 v06 定案。若本 build 的交付範圍尚未包含該定案，本單應改列「未交付」而非缺陷，請 RD 確認。</p>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　列表有「場次編號」欄位；機台帳號 ACAA00392 的注單列於該欄顯示該筆注單所屬的場次編號；線上帳號的注單列顯示「—」（不留空白、不顯示 0 或 null）。</div>
+    <div class="actual"><b>實際</b>　列表沒有「場次編號」欄位；機台注單無場次編號可見，線上注單亦無欄位可顯示「—」。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0062</span>列表左半（流水號～有效流水貢獻）無場次編號欄，該列會員編號 ACAA00392</li>
+      <li><span class="tag">EVD-0063</span>列表右半（派彩～投注時間）無場次編號欄，投注時間 2026-09-22 04:00:44、遊戲廠商 GALAXY-A</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>登入 stage 後台，站台切換下拉選單切至 <b>arcade</b>（機台類型站台）</li>
+      <li>進入「各式報表 › 注單查詢」，以會員編號 <code class="inline">ACAA00392</code>（或涵蓋 2026-09-22 的日期範圍）查詢</li>
+      <li>檢視查詢結果列表的全部欄位（左右捲動至底）</li>
+    </ol>
+    <p class="notice">前置：機台帳號 ACAA00392 已有至少一筆注單（本例 GALAXY-A 真人大廳，2026-09-22 04:00:44）。</p>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text">未擷取（本次以畫面欄位缺失判定）。請 RD 一併確認注單查詢 API 回應是否已包含場次 id。</p>
+    <dl class="fields" style="margin-top:12px">
+      <dt>Request</dt><dd>—</dd>
+      <dt>Response</dt><dd>—</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure><img src="img/EVD-0062.png" alt="注單查詢列表左半欄位，無場次編號欄"><figcaption>EVD-0062 · 列表左半：流水號～有效流水貢獻</figcaption></figure>
+      <figure><img src="img/EVD-0063.png" alt="注單查詢列表右半欄位，無場次編號欄"><figcaption>EVD-0063 · 列表右半：派彩～投注時間</figcaption></figure>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>QAOS · RUN-20260922-001 · BugDraft ART-BD-01M336V62SAWT013319FJY0Y0Y · Validator PASS · APR-0158 approved · <b>BUG-UPDATEPACK-002</b> OPEN</span>
+    <span>2026-09-22 · oscarchen@blockaction.tech</span>
+  </div>
+</div>

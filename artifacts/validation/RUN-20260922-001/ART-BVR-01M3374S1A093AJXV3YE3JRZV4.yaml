@@ -1,0 +1,78 @@
+artifact_id: ART-BVR-01M3374S1A093AJXV3YE3JRZV4
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260922-001
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-22T00:09:40Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M336V62SAWT013319FJY0Y0Y
+references:
+- entity_type: Artifact
+  id: ART-BD-01M336V62SAWT013319FJY0Y0Y
+- entity_type: Evidence
+  id: EVD-0062
+- entity_type: Evidence
+  id: EVD-0063
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M336V62SAWT013319FJY0Y0Y
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-UPDATEPACK-016
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: actual_result 末句「線上帳號注單亦無欄位可顯示「—」」；evidence_map 僅有機台帳號 ACAA00392 的兩張截圖，無線上帳號注單畫面佐證。
+    explanation: 可由「整欄不存在」合理推論，但未附證，與本單其餘欄位逐一附證的嚴謹度不一致。
+    recommended_change: 補線上帳號注單查詢截圖，或明確標註為推論。（Analyst 已於核准前標註為推論）
+  - testcase_id: TC-UPDATEPACK-016
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-UPDATEPACK-009
+    spec_reference: null
+    evidence: severity_rationale：「4 條 ACTIVE TC（TC-UPDATEPACK-015/016/031/032）全部無法執行」；本次僅取得 TC-016 文件。
+    explanation: TC-015/031/032 的存在與狀態無法以現有素材核實，屬未經證據支撐的規模性主張。
+    recommended_change: 附 TC 登錄狀態佐證或改為僅陳述已核實者。（Analyst 已核實：031/032 為 NO_ACTIVE_VERSION，ACTIVE 僅 015/016，draft 已改為「2 條」）
+  evidence_verification:
+  - evidence_id: EVD-0062
+    hash_verified: true
+    supports_claim: true
+    note: sha256 與 yaml 一致；左半欄位（流水號～有效流水貢獻）無場次編號欄，會員編號 ACAA00392、流水號 6744958 相符。
+  - evidence_id: EVD-0063
+    hash_verified: true
+    supports_claim: true
+    note: sha256 與 yaml 一致；右半欄位（派彩～投注時間）無場次編號欄，投注時間 2026-09-22 04:00:44、派彩 04:01:16、GALAXY-A、派彩成功相符；總筆數 1/1。
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: spec 明文要求的欄位整欄缺失，屬完整規格違反，影響全機台場館所有注單、阻斷場次追溯路徑，並使 REQ-UPDATEPACK-009 的 ACTIVE TC 無法執行；無資料遺失或金流錯誤，不到 critical。severity_rationale
+      末段「若 build 未含 2026-09-03 定案交付範圍則改列未交付」屬 release scope 揭露性備註，非 spec 語意不清，不構成 AMBIGUITY；REQ-009 與 TC-016 均已 ACTIVE，需求已進入可測試範圍，交付範圍留給
+      RD 於單上確認。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 已比對 bugs index 3 筆與 BUG-UPDATEPACK-001 全文：該單為多幣別錢包展開（REQ-001，會員詳細頁），BUG-DAILYREPORT-001/002 為日結報表 API 欄位缺失，皆與本單注單查詢頁場次編號欄（REQ-009）不同，非重複。
+history:
+- at: '2026-09-22T00:09:40Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260922-001
