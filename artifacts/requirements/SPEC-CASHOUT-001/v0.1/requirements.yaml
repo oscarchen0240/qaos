@@ -137,12 +137,14 @@ requirements:
   title: 本頁只會有已完成交易產生的核實狀態紀錄，未完成交易不會有核實狀態
   statement: 本頁本身沒有「交易狀態」欄位或篩選器，只有「核實狀態」；只有交易狀態已達「已完成」的機台洗分與機台出金，系統才會為其建立核實狀態紀錄並出現在本頁。待確認、已取消、已逾時、未成立的交易因為根本沒有核實狀態，不會出現在本頁（已由
     Oscar 2026-09-14 補充澄清：判斷依據是核實狀態紀錄是否存在，而非本頁顯示或篩選交易狀態）。補充（CLR-CASHOUT-002 回覆 A，2026-09-23）：機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待中」（＝待確認）——畫面篩選器上那兩個技術值係與「出鈔」共用同一組的結果，對洗分不適用；洗分的未完成路徑僅有「已拒絕／錯誤」（＝未成立）。因此「未完成交易不會出現在本頁」的待確認情境須以出金（兩階段）驗證，AC-CASHOUT-0041
-    的 given 已據此自洗分改為出金
+    的 given 已據此自洗分改為出金。【2026-09-23 補充】RD 確認後端無法製造「待確認」狀態，AC-CASHOUT-0041 無法黑箱驗證、對應案例已退役並標為零覆蓋；AC-CASHOUT-0042（未成立的出金）仍由 TC-CASHOUT-045
+    覆蓋，本 requirement 未完全失去覆蓋
   acceptance_criteria:
   - ac_id: AC-CASHOUT-0041
     given: 一筆機台出金交易狀態為待確認（req-cashout 已核可但 end-cashout 完成回報未送達，尚未完成）
     when: 查詢本頁
-    then: 查無此筆紀錄（因為該筆交易尚未完成，本頁不會有它的核實狀態紀錄）；需至機台交易紀錄查明狀態，不可憑本頁無紀錄直接判斷已完成或未完成以外的狀態
+    then: 查無此筆紀錄（因為該筆交易尚未完成，本頁不會有它的核實狀態紀錄）；需至機台交易紀錄查明狀態，不可憑本頁無紀錄直接判斷已完成或未完成以外的狀態。⚠️ 驗證能力缺口（RD 2026-09-23 確認）：出金與洗分一送出都直接完成並進入待核實，後端無法攔截
+      end-cashout 完成回報，「待確認」狀態無法在測試環境製造，本 AC 目前無法以黑箱測試驗證；原對應案例 TC-CASHOUT-044 已退役（APR-0171），本 AC 現為零覆蓋。規則本身仍然有效，未來若具備故障注入／攔截能力應重新建立案例
   - ac_id: AC-CASHOUT-0042
     given: 一筆機台出金交易狀態為未成立
     when: 查詢本頁
@@ -182,6 +184,11 @@ requirements:
     to_status: ACTIVE
     by: oscarchen@blockaction.tech
     trigger: clarification_applied_CLR-CASHOUT-002：洗分無待確認路徑；AC-CASHOUT-0041 given 自洗分改為出金，statement 補述洗分未完成路徑僅有未成立
+  - at: '2026-09-23T04:48:18Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: AC-CASHOUT-0041 標註驗證能力缺口（RD 2026-09-23 確認無法製造待確認狀態，方案 B）；TC-CASHOUT-044 退役 APR-0171，本 AC 零覆蓋
 - requirement_id: REQ-CASHOUT-005
   version: 1
   spec_id: SPEC-CASHOUT-001
