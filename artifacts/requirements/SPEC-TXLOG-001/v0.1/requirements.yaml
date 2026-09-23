@@ -9,12 +9,12 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 交易紀錄查詢擴充機台視角，含未完成/取消/未成立交易
-  statement: 併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成、被取消與未成立的交易（既有 4.1 只顯示已生效的錢包異動）
+  statement: 併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成（待確認）、被取消、已逾時的交易；「未成立」的交易因不寫入紀錄，查詢結果不會出現（CLR-CASHFLOW-006，2026-09-23）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0011
     given: 查詢範圍包含機台交易
     when: 檢視查詢結果
-    then: 除已完成（已生效）的交易外，也列出待確認、已取消、已逾時、未成立的機台交易
+    then: 除已完成（已生效）的交易外，也列出待確認、已取消、已逾時的機台交易；未成立的交易不會出現
   spec_reference:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
@@ -45,6 +45,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-010
+  - at: '2026-09-23T15:52:49Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-006：AC-TXLOG-0011 移除「未成立」，改為明確排除
 - requirement_id: REQ-TXLOG-002
   version: 1
   spec_id: SPEC-TXLOG-001
@@ -237,8 +242,7 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §篩選器 + §列表欄位
-    quote: 場次編號 | 文字輸入 | 查詢某個場次內的所有交易 ｜ 場次編號 | 該筆交易所屬的場次；可點擊篩出同場次的所有交易。線上帳號的交易無場次，統一顯示「—」（2026-09-03
-      定案）
+    quote: 場次編號 | 文字輸入 | 查詢某個場次內的所有交易 ｜ 場次編號 | 該筆交易所屬的場次；可點擊篩出同場次的所有交易。線上帳號的交易無場次，統一顯示「—」（2026-09-03 定案）
   ambiguity: null
   risk: medium
   status: ACTIVE
@@ -312,8 +316,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 交易類型篩選為多選 chip，實際標籤為開分/入鈔/出鈔/洗分
-  statement: 交易類型篩選實際為多選 chip 選擇器（可同時勾選多種類型，非單選下拉），未勾選時預設顯示全部類型；可選項目的實際標籤為「開分」「入鈔」「出鈔」「洗分」，不含
-    spec.md 原文的「機台」字首（已由 Oscar 2026-09-14 依實際畫面截圖確認）
+  statement: 交易類型篩選實際為多選 chip 選擇器（可同時勾選多種類型，非單選下拉），未勾選時預設顯示全部類型；可選項目的實際標籤為「開分」「入鈔」「出鈔」「洗分」，不含 spec.md 原文的「機台」字首（已由 Oscar 2026-09-14
+    依實際畫面截圖確認）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0081
     given: 開啟交易類型篩選
@@ -360,8 +364,8 @@ requirements:
   type: functional
   title: 交易狀態篩選依交易類型分兩組，選項為後端技術值
   statement: 交易狀態篩選實際為多選 chip 選擇器，且可選項目依交易類型篩選而分為兩組技術值（非 spec.md 描述的單一 5 種分類文字）：交易類型為「開分」或「入鈔」時，可選「已逾時、錯誤、無、成功、等待中、已取消、無效」共
-    7 項；交易類型為「出鈔」或「洗分」時，可選「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項（已由 Oscar 2026-09-14 確認並補上原先遺漏的「已處理」）。這些技術值對應
-    spec.md 定義的 5 種概念分類（待確認/已完成/已取消/已逾時/未成立），大致對應關係（已由 Oscar 2026-09-14 依實際畫面截圖確認）：開分/入鈔＝等待中→待確認、成功→已完成、已取消→已取消、已逾時→已逾時、錯誤→未成立、無效→未成立（「無」的語意尚未確認）；出鈔/洗分＝待處理→待確認、等待中→待確認、已拒絕→未成立、失效→已取消、錯誤→未成立、已處理→已完成
+    7 項；交易類型為「出鈔」或「洗分」時，可選「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項（已由 Oscar 2026-09-14 確認並補上原先遺漏的「已處理」）。這些技術值對應 spec.md 定義的 5 種概念分類（待確認/已完成/已取消/已逾時/未成立），大致對應關係（已由
+    Oscar 2026-09-14 依實際畫面截圖確認）：開分/入鈔＝等待中→待確認、成功→已完成、已取消→已取消、已逾時→已逾時、錯誤→未成立、無效→未成立（「無」的語意尚未確認）；出鈔/洗分＝待處理→待確認、等待中→待確認、已拒絕→未成立、失效→已取消、錯誤→未成立、已處理→已完成
   acceptance_criteria:
   - ac_id: AC-TXLOG-0091
     given: 交易類型篩選勾選「開分」或「入鈔」
@@ -413,8 +417,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 核實狀態篩選僅對機台洗分與機台出金有意義
-  statement: 核實狀態篩選實際只有 3 個可選值：「待核實」「已核實」「已作廢」，不含 spec.md 原文的「不適用」（「不適用」僅為列表欄位的顯示值，非篩選器的可選項目）；此篩選僅對機台洗分與機台出金兩種交易類型有意義（已由
-    Oscar 2026-09-14 依實際畫面截圖確認）
+  statement: 核實狀態篩選實際只有 3 個可選值：「待核實」「已核實」「已作廢」，不含 spec.md 原文的「不適用」（「不適用」僅為列表欄位的顯示值，非篩選器的可選項目）；此篩選僅對機台洗分與機台出金兩種交易類型有意義（已由 Oscar
+    2026-09-14 依實際畫面截圖確認）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0101
     given: 開啟核實狀態篩選
@@ -685,13 +689,13 @@ requirements:
   spec_id: SPEC-TXLOG-001
   spec_version: '0.1'
   type: functional
-  title: 交易狀態「未成立」不含餘額不足
-  statement: 未成立狀態代表平台拒絕了這筆請求，分數未異動；因餘額不足被拒絕的交易不寫入紀錄，故未成立狀態不含餘額不足的情形
+  title: 交易狀態「未成立」不會有任何紀錄可查（不只餘額不足）
+  statement: 未成立狀態代表平台拒絕了這筆請求，分數未異動；所有未成立原因（含額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效、餘額不足）皆不寫入交易紀錄，故「未成立」狀態實質上不會出現在交易紀錄查詢中（CLR-CASHFLOW-006，2026-09-23，擴大原僅排除餘額不足的規則）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0161
-    given: 一筆交易因額度上限等原因被平台拒絕
+    given: 一筆交易因額度上限等任一未成立原因被平台拒絕
     when: 檢視其狀態
-    then: 顯示未成立，分數未異動，未成立原因欄可查得拒絕原因
+    then: 查無此筆交易，不會以未成立狀態出現在列表中（與 AC-TXLOG-0162 餘額不足同一待遇）
   - ac_id: AC-TXLOG-0162
     given: 一筆洗分或出金因餘額不足被拒絕
     when: 檢視交易紀錄
@@ -726,14 +730,19 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-010
+  - at: '2026-09-23T15:52:49Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-006：AC-TXLOG-0161 反轉，與 AC-TXLOG-0162 待遇一致
 - requirement_id: REQ-TXLOG-017
   version: 1
   spec_id: SPEC-TXLOG-001
   spec_version: '0.1'
   type: functional
   title: 入金與出金的待確認收斂機制不同
-  statement: 入金的待確認超過 24 小時自動轉為已逾時；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁（SPEC-CASHOUT-001）由人工處理為止（原
-    spec.md 提及的「或由 Admin 手動取消為止」已由 Oscar 2026-09-14 確認為錯誤敘述，交易紀錄查詢頁不提供手動取消操作，見 REQ-TXLOG-028）
+  statement: 入金的待確認超過 24 小時自動轉為已逾時；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁（SPEC-CASHOUT-001）由人工處理為止（原 spec.md
+    提及的「或由 Admin 手動取消為止」已由 Oscar 2026-09-14 確認為錯誤敘述，交易紀錄查詢頁不提供手動取消操作，見 REQ-TXLOG-028）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0171
     given: 一筆出金交易長期處於待確認狀態，機台從未補送完成回報
@@ -743,8 +752,8 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §交易狀態 + §相關業務規則
-    quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁人工處理（原文「或由 Admin
-      手動取消為止」已由 Oscar 2026-09-14 確認為錯誤敘述，見 REQ-TXLOG-028）
+    quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁人工處理（原文「或由 Admin 手動取消為止」已由 Oscar 2026-09-14 確認為錯誤敘述，見
+      REQ-TXLOG-028）
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -886,8 +895,7 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §列表欄位
-    quote: 請求金額 | 機台送出的金額；出金則為平台核算的可出金額 ｜ 實際金額 | 實際異動的金額；洗分因門檻計算可能小於請求金額（門檻採機台隨請求送上的值，2026-09-01
-      定案），尚未完成者顯示「—」；出金一律為全額清空餘額
+    quote: 請求金額 | 機台送出的金額；出金則為平台核算的可出金額 ｜ 實際金額 | 實際異動的金額；洗分因門檻計算可能小於請求金額（門檻採機台隨請求送上的值，2026-09-01 定案），尚未完成者顯示「—」；出金一律為全額清空餘額
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -1019,7 +1027,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 未成立原因欄位僅未成立狀態顯示
-  statement: 未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表
+  statement: 未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表。【2026-09-23 補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證。【2026-09-23
+    補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證
   acceptance_criteria:
   - ac_id: AC-TXLOG-0231
     given: 一筆交易狀態為未成立
@@ -1059,6 +1068,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-010
+  - at: '2026-09-23T15:52:49Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-006：補充 AC-TXLOG-0231 驗證能力缺口說明
 - requirement_id: REQ-TXLOG-024
   version: 1
   spec_id: SPEC-TXLOG-001
@@ -1111,9 +1125,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 重送次數欄位目前固定顯示橫線，不顯示實際次數
-  statement: spec.md v0.1 描述「重送次數欄記錄機台重複回報同一筆交易的次數」為現行產品尚未實作的敘述：目前此欄位不論是否曾被重複回報，一律固定顯示「—」，不會顯示實際次數（已由
-    Oscar 與 PM／RD 於 2026-09-14 共同確認）。機台重複回報同一筆交易時分數只異動一次、不會重複加減，此底層冪等性規則仍然成立且已由 SPEC-CASHFLOW-001
-    驗證，僅本欄位的「顯示次數」呈現尚未實作
+  statement: spec.md v0.1 描述「重送次數欄記錄機台重複回報同一筆交易的次數」為現行產品尚未實作的敘述：目前此欄位不論是否曾被重複回報，一律固定顯示「—」，不會顯示實際次數（已由 Oscar 與 PM／RD 於 2026-09-14
+    共同確認）。機台重複回報同一筆交易時分數只異動一次、不會重複加減，此底層冪等性規則仍然成立且已由 SPEC-CASHFLOW-001 驗證，僅本欄位的「顯示次數」呈現尚未實作
   acceptance_criteria:
   - ac_id: AC-TXLOG-0251
     given: 一筆交易曾被機台重複回報完成
@@ -1127,8 +1140,7 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §列表欄位（此節「重送次數」描述已由 Oscar／PM／RD 於 2026-09-14 確認為現行產品尚未實作，非目前行為）
-    quote: 重送次數 | 機台重複回報同一筆交易的次數；為 0 時顯示「—」（＊目前不論次數多少，欄位一律固定顯示「—」，見 Oscar 2026-09-14
-      與 PM/RD 確認）
+    quote: 重送次數 | 機台重複回報同一筆交易的次數；為 0 時顯示「—」（＊目前不論次數多少，欄位一律固定顯示「—」，見 Oscar 2026-09-14 與 PM/RD 確認）
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -1160,8 +1172,8 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 來源欄位目前固定顯示橫線，不顯示實際位置
-  statement: spec.md v0.1 描述「來源欄記錄交易發生的位置，空值時顯示大廳」為現行產品尚未實作的敘述：目前此欄位一律固定顯示「—」，不論交易實際發生位置為何、也不會顯示「大廳」（已由
-    Oscar 與 PM／RD 於 2026-09-14 共同確認）
+  statement: spec.md v0.1 描述「來源欄記錄交易發生的位置，空值時顯示大廳」為現行產品尚未實作的敘述：目前此欄位一律固定顯示「—」，不論交易實際發生位置為何、也不會顯示「大廳」（已由 Oscar 與 PM／RD 於 2026-09-14
+    共同確認）
   acceptance_criteria:
   - ac_id: AC-TXLOG-0261
     given: 檢視任一筆交易
@@ -1245,8 +1257,7 @@ requirements:
   spec_version: '0.1'
   type: constraint
   title: 本頁不提供手動取消操作
-  statement: spec.md v0.1 §操作 描述的「手動取消：僅 Admin 可對待確認狀態的交易執行」為錯誤敘述，非現行產品行為（已由 Oscar
-    於 2026-09-14 確認）：交易紀錄查詢頁（本包）實際上不提供手動取消操作，查無可手動取消的交易。凡待確認／待核實交易需要的人工處理，一律於「洗分出金核實」頁（SPEC-CASHOUT-001）進行，不在本頁
+  statement: spec.md v0.1 §操作 描述的「手動取消：僅 Admin 可對待確認狀態的交易執行」為錯誤敘述，非現行產品行為（已由 Oscar 於 2026-09-14 確認）：交易紀錄查詢頁（本包）實際上不提供手動取消操作，查無可手動取消的交易。凡待確認／待核實交易需要的人工處理，一律於「洗分出金核實」頁（SPEC-CASHOUT-001）進行，不在本頁
   acceptance_criteria:
   - ac_id: AC-TXLOG-0281
     given: 檢視本頁（交易紀錄查詢）任一筆待確認狀態的交易
@@ -1256,8 +1267,7 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §操作（此節「手動取消」描述已由 Oscar 確認為錯誤敘述，非現行產品行為）
-    quote: 手動取消：僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動（＊此操作不存在於現行產品，見 Oscar 2026-09-14
-      確認）
+    quote: 手動取消：僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動（＊此操作不存在於現行產品，見 Oscar 2026-09-14 確認）
   ambiguity: null
   risk: medium
   status: ACTIVE
@@ -1348,8 +1358,8 @@ requirements:
     spec_id: SPEC-TXLOG-001
     spec_version: '0.1'
     location: §操作
-    quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 >「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳（與 REQ-TXLOG-028
-      對照：本頁不提供核實操作，也不提供手動取消操作，兩者皆一律於其他頁面／SPEC-CASHOUT-001 進行）
+    quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 >「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳（與 REQ-TXLOG-028 對照：本頁不提供核實操作，也不提供手動取消操作，兩者皆一律於其他頁面／SPEC-CASHOUT-001
+      進行）
   ambiguity: null
   risk: low
   status: ACTIVE

@@ -1,0 +1,100 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+execution_mode: manual
+test_data:
+- name: 第一筆開分金額
+  value: 100（使加計後恰等於上限 A）
+- name: 第二筆開分金額
+  value: 1（使加計後超過上限 A）
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: true
+priority: high
+risk: high
+title: 開分加計後恰等於場館額度上限可成立；超過 1 單位則被拒絕，不寫入帳務異動、也不寫入交易紀錄
+requirement_ids:
+- REQ-CASHFLOW-004
+- REQ-CASHFLOW-030
+acceptance_criteria_ids:
+- AC-CASHFLOW-0041
+- AC-CASHFLOW-0301
+- AC-CASHFLOW-0302
+test_level: api
+test_types:
+- functional
+- negative
+design_techniques:
+- decision_table
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+- 調整場館額度上限為一已知值 A，另建構一筆已預留未入帳的入金 PENDING，使目前「全場館機台分數餘額合計＋已預留未入帳入金金額」恰為 A-100
+steps:
+- n: 1
+  action: 送出開分請求（req-keyin），金額 100，使「全場館機台分數餘額合計＋已預留未入帳入金金額＋本筆金額」恰等於額度上限 A
+- n: 2
+  action: 確認回覆為 0-OK，分數正常增加，交易紀錄正常寫入
+- n: 3
+  action: 再送出開分請求（req-keyin），金額 1，使加計後超過額度上限 A
+- n: 4
+  action: 確認此筆的回覆、分數變化，並查詢交易紀錄（不篩選狀態）確認查無此筆
+expected_result: 第一筆恰等於上限：成立，回 0-OK，分數正常增加，交易紀錄正常寫入；第二筆使合計超過上限：平台回 1-OVER LIMIT，機台畫面顯示失敗，分數不變、不寫入任何帳務異動，且查無此次拒絕的交易紀錄（CLR-CASHFLOW-006：額度上限不再屬於「其他未成立原因會留紀錄」，與餘額不足同一待遇）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）
+assumptions: []
+source: change_workflow
+testcase_id: TC-CASHFLOW-005
+version: 3
+supersedes: 2
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M37GB97YA0VDCAR1JSQ61TTR
+created_at: '2026-09-23T16:07:29Z'
+updated_at: '2026-09-23T16:34:16Z'
+history:
+- at: '2026-09-23T16:07:29Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M37G8YCVGFKGWJTD73TK9XK1
+  run_id: RUN-20260924-001
+- at: '2026-09-23T16:07:29Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260924-001
+- at: '2026-09-23T16:07:29Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M37GB97YA0VDCAR1JSQ61TTR
+  run_id: RUN-20260924-001
+- at: '2026-09-23T16:07:29Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260924-001
+- at: '2026-09-23T16:34:16Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0180
+  run_id: RUN-20260924-001
+- at: '2026-09-23T16:34:16Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260924-001
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0180

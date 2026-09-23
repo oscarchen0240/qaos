@@ -1,0 +1,95 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+priority: high
+risk: medium
+title: 所有未成立原因（餘額不足、額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效）一律不寫入交易紀錄
+requirement_ids:
+- REQ-CASHFLOW-030
+acceptance_criteria_ids:
+- AC-CASHFLOW-0301
+- AC-CASHFLOW-0302
+test_level: api
+test_types:
+- negative
+design_techniques:
+- decision_table
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+steps:
+- n: 1
+  action: 洗分或出金因餘額不足被拒絕，查詢機台交易紀錄
+- n: 2
+  action: 開分或入金因額度上限被拒絕，查詢機台交易紀錄
+- n: 3
+  action: 交易請求 currency 與主站台核心貨幣不符（資料格式錯誤），查詢機台交易紀錄
+- n: 4
+  action: Admin 於站台列表頁將該機台切換為停用狀態，送出任一交易請求，查詢機台交易紀錄
+- n: 5
+  action: Admin 對該機台會員詳細頁的機台憑證執行重置，機台仍以舊 token 送出任一交易請求，查詢機台交易紀錄
+expected_result: 五種未成立原因，查詢機台交易紀錄皆查無此次拒絕的紀錄，僅收到對應狀態碼（依序 1-NO CREDITS／1-OVER LIMIT／6-BAD DATA/FORMAT／7-OUT OF SERVICE／9-OTHER
+  ERROR）；分數皆未異動；「未成立」狀態不會出現在交易紀錄查詢中，五種原因待遇一致（CLR-CASHFLOW-006）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）
+assumptions: []
+source: change_workflow
+testcase_id: TC-CASHFLOW-035
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M37GAX59QKC3WXBENH016X7M
+created_at: '2026-09-23T16:07:16Z'
+updated_at: '2026-09-23T16:34:16Z'
+history:
+- at: '2026-09-23T16:07:16Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M37FQZ3HY7S4VE9B9089GAXP
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:07:16Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:07:16Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M37GAX59QKC3WXBENH016X7M
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:07:16Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:34:16Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0176
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:34:16Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260923-009
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0176

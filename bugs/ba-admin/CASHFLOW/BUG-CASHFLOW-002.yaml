@@ -30,14 +30,21 @@ reproduction_steps:
 - 以同一 TXID 送出 end-cashin（確認入金）
 - 檢視 end-cashin 回應：本次回 1-OVER LIMIT（超過場館額度上限）
 - 進入 各式報表 > 交易紀錄查詢，以機台帳號 ACAA00417 查詢（不設其他篩選），檢視搜尋結果
-expected_result: ①額度上限應於 req-cashin（第一階段）判定，超額時 req-cashin 本身即回 1-OVER LIMIT、不建立 PENDING、紙鈔不進錢箱（SPEC-ARCADE-001 v0.7 v07 定案）；②不論判定發生在哪一階段，只要交易因額度上限被拒絕，都應在交易紀錄查詢留下一筆「未成立」紀錄，可查得未成立原因為超過額度上限（AC-CASHFLOW-0302）
+expected_result: 【2026-09-24 已確認：以下兩項預期皆已被 RD 推翻，非缺陷，詳見下方 actual_result 說明】①額度上限應於 req-cashin（第一階段）判定，超額時 req-cashin 本身即回
+  1-OVER LIMIT、不建立 PENDING、紙鈔不進錢箱（SPEC-ARCADE-001 v0.7 v07 定案）；②不論判定發生在哪一階段，只要交易因額度上限被拒絕，都應在交易紀錄查詢留下一筆「未成立」紀錄，可查得未成立原因為超過額度上限（AC-CASHFLOW-0302）
 expected_result_spec_reference:
   spec_id: SPEC-CASHFLOW-001
   spec_version: '0.1'
   location: SPEC-ARCADE-001 v0.7 §入金（req-cashin→end-cashin）＋ changelog v07（2026-09-04）：「入金額度上限的判定與預留移至 req-cashin……end-cashin
     不再判定額度，超額因此在紙鈔捲入錢箱前就被擋下，原『入帳階段超限處置待定案』一條移除」；SPEC-CASHFLOW-001 v0.1 §四種金流/交易不成立的原因 AC-CASHFLOW-0302「交易因額度上限或其他原因被拒絕，有留下「未成立」的交易紀錄，可查得拒絕原因」
-actual_result: req-cashin 回 0-OK、建立 PENDING、取得 TXID（紙鈔已進錢箱）；end-cashin 才回 1-OVER LIMIT——判定時機與 v07 定案相反，等同執行已被明文廢除的 v06 舊邏輯。且以觸發此筆超額的機台帳號查詢交易紀錄，總筆數
-  0、查無任何紀錄（含 PENDING 曾建立過的痕跡），不僅未成立紀錄未留下，連該筆入金本身在系統中完全找不到
+actual_result: 'req-cashin 回 0-OK、建立 PENDING、取得 TXID（紙鈔已進錢箱）；end-cashin 才回 1-OVER LIMIT——判定時機與 v07 定案相反，等同執行已被明文廢除的 v06 舊邏輯。且以觸發此筆超額的機台帳號查詢交易紀錄，總筆數
+  0、查無任何紀錄（含 PENDING 曾建立過的痕跡），不僅未成立紀錄未留下，連該筆入金本身在系統中完全找不到。
+
+  【2026-09-23／24 已確認為既定設計，非缺陷】①判定時機：RD 2026-09-23 確認 req-cashin 階段入鈔機尚未完成實體清點，客戶端回報的金額不可信；若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字（如 1000000000000）造成整台機台卡在等待中的
+  DoS。額度上限改於 end-cashin（依入鈔機實際清點金額）判定，是防禦性設計，spec v07 文字本身應正式作廢（見 CLR-CASHFLOW-005，已 APPLIED，RM REQ-CASHFLOW-007／009 已回寫反轉）。②未寫入紀錄：Oscar
+  2026-09-23 確認，若每次 end-cashin 判定超限都寫入「未成立」紀錄，同樣構成攻擊面——攻擊者可狂送鉅額入金請求把資料庫灌爆無用的未成立紀錄；範圍並經 2026-09-24 確認擴大至所有未成立原因（不只額度上限），一律不寫入紀錄（見
+  CLR-CASHFLOW-006，已 APPLIED，RM REQ-CASHFLOW-030／REQ-TXLOG-001／016／023 已回寫，TC-CASHFLOW-005／008／009／011／035、TC-TXLOG-125／146／158
+  等 8 條 TC 已依新規則修訂並核准 ACTIVE）。RD 已處理完畢（口頭確認，非程式碼修復）。本單原始截圖（EVD-0073～0075）呈現的行為即為現行正確設計，非本單結案後需要再改動的目標'
 actual_result_evidence_map:
 - claim: 洗分因餘額不足回 1-NO CREDITS（對照組，spec 明文允許此例外不留紀錄，行為正確）
   evidence_id: EVD-0073
@@ -49,8 +56,12 @@ evidence_ids:
 - EVD-0073
 - EVD-0074
 - EVD-0075
-impact: 任何導致全場館分數餘額合計超過額度上限的入金，紙鈔會先被機台收下（req-cashin 成功建 PENDING），到 end-cashin 才拒絕；該筆交易從頭到尾不會出現在交易紀錄查詢，場館端無法對帳、無法查核是否已忠實退鈔，玩家亦無憑據申訴。TC-CASHFLOW-035
-  判 fail；連動影響同樣依賴『未成立會留紀錄』前提的 TC-TXLOG-125/141/146/147/148/154/158/159/164/165、TC-CASHFLOW-005/042、TC-CASHOUT-045 等案例的有效性，待本單釐清後一併檢視
+impact: '【結案後現況】無影響——兩項預期皆已確認為既定防禦設計，非缺陷。連動的 TC-CASHFLOW-005／008／009／011／035、TC-TXLOG-125／146／158 已依 CLR-CASHFLOW-005／006
+  修訂並核准 ACTIVE；TC-TXLOG-141/147/148/154/159/164/165、TC-CASHFLOW-042、TC-CASHOUT-045 經檢視不受影響（詳見 CLR-CASHFLOW-006 impact-reviewed
+  紀錄）。
+
+  【原始描述，已推翻，保留供歷史對照】任何導致全場館分數餘額合計超過額度上限的入金，紙鈔會先被機台收下（req-cashin 成功建 PENDING），到 end-cashin 才拒絕；該筆交易從頭到尾不會出現在交易紀錄查詢，場館端無法對帳、無法查核是否已忠實退鈔，玩家亦無憑據申訴。TC-CASHFLOW-035
+  判 fail；連動影響同樣依賴『未成立會留紀錄』前提的 TC-TXLOG-125/141/146/147/148/154/158/159/164/165、TC-CASHFLOW-005/042、TC-CASHOUT-045 等案例的有效性，待本單釐清後一併檢視'
 suspected_area: 後端額度上限判定邏輯：疑似仍執行 v06（判定於 end-cashin）而非 v07（判定於 req-cashin）的版本；以及未成立交易的紀錄寫入邏輯，疑似完全未實作或僅實作餘額不足以外原因中的特定分支。兩者需
   RD 分別確認是否為同一段程式碼的問題
 ambiguity_suspected: false
@@ -59,14 +70,14 @@ version: 1
 severity: critical
 priority: high
 duplicate_of: null
-status: OPEN
+status: CLOSED
 created_by: agent-bug-analyst
 validated_by: agent-bug-validator
 validation_report_id: ART-BVR-01M36PSBN6EZ7YXECB5VWYS6GC
 approved_by: oscarchen@blockaction.tech
 approval_id: APR-0172
 created_at: '2026-09-23T08:52:24Z'
-updated_at: '2026-09-23T08:52:24Z'
+updated_at: '2026-09-23T16:56:47Z'
 history:
 - at: '2026-09-23T08:36:16Z'
   from_status: null
@@ -98,3 +109,33 @@ history:
   by: oscarchen@blockaction.tech
   trigger: APR-0172
   run_id: RUN-20260923-004
+- at: '2026-09-23T16:56:37Z'
+  from_status: OPEN
+  to_status: IN_PROGRESS
+  by: oscarchen@blockaction.tech
+  trigger: CLR-CASHFLOW-005,CLR-CASHFLOW-006
+  note: RD 修復中（依共用表單）
+- at: '2026-09-23T16:56:37Z'
+  from_status: IN_PROGRESS
+  to_status: RESOLVED
+  by: oscarchen@blockaction.tech
+  trigger: CLR-CASHFLOW-005,CLR-CASHFLOW-006
+  note: RD（口頭確認）：兩項預期皆已確認為既定防禦設計，非缺陷：①判定時機（req-cashin 不判額度、end-cashin 才依實際清點金額判定，防止客戶端謊報鉅額造成 DoS，CLR-CASHFLOW-005）；②所有未成立原因（含額度上限）一律不寫入交易紀錄，防止攻擊者高頻觸發把資料庫灌爆（CLR-CASHFLOW-006）。RM
+    與 8 條相關 TC 已依此修訂並核准 ACTIVE。非程式碼修復，為 QA 對現行系統行為的重新確認
+- at: '2026-09-23T16:56:47Z'
+  from_status: RESOLVED
+  to_status: VERIFIED
+  by: oscarchen@blockaction.tech
+  trigger: QA 確認（無需複測執行）
+  note: 此單非程式碼修復，無變更可複測；VERIFIED 代表 QA 確認 resolution_note 所述兩項既定設計判斷成立（依 CLR-CASHFLOW-005／006 及對應 TC 修訂結果），非常規 TestExecution(pass)
+    複測路徑
+- at: '2026-09-23T16:56:47Z'
+  from_status: VERIFIED
+  to_status: CLOSED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0181
+  note: done
+external_ref: CLR-CASHFLOW-005,CLR-CASHFLOW-006
+resolution_note: 兩項預期皆已確認為既定防禦設計，非缺陷：①判定時機（req-cashin 不判額度、end-cashin 才依實際清點金額判定，防止客戶端謊報鉅額造成 DoS，CLR-CASHFLOW-005）；②所有未成立原因（含額度上限）一律不寫入交易紀錄，防止攻擊者高頻觸發把資料庫灌爆（CLR-CASHFLOW-006）。RM
+  與 8 條相關 TC 已依此修訂並核准 ACTIVE。非程式碼修復，為 QA 對現行系統行為的重新確認
+resolved_at: '2026-09-23T16:56:37Z'

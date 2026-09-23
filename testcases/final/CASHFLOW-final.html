@@ -182,39 +182,34 @@ body {
       <h1>CASHFLOW 測試案例集</h1>
     </div>
     <div class="brand-sub">實體機台金流與場次 · 最終整合版</div>
-
     <div class="stat-strip">
       <div class="stat"><b>60</b><span>ACTIVE 案例</span></div>
       <div class="stat"><b>58</b><span>grounded 已確認</span></div>
       <div class="stat"><b>2</b><span>exploratory 待確認</span></div>
-      <div class="stat"><b>9</b><span>Phase 3 整合修訂</span></div>
+      <div class="stat"><b>20</b><span>Phase 3 整合修訂</span></div>
     </div>
-
     <input class="search-box" id="search" type="text" placeholder="搜尋 TC ID / 標題 / 需求...">
     <div class="filter-chips">
       <button class="chip active" data-chip="all">全部</button>
       <button class="chip" data-chip="grounded">grounded</button>
       <button class="chip" data-chip="exploratory">exploratory</button>
     </div>
-
     <div class="nav-title">依需求跳轉</div>
-    <nav><a href="#REQ-CASHFLOW-001" class="nav-link"><span class="nav-num">01</span>機台開分與入金依出金設定的幣種稽核倍數計算，計入的交易為機台開分與機台入金，稽核明細照常寫入；預設值為 0 倍，即不產生</a><a href="#REQ-CASHFLOW-002" class="nav-link"><span class="nav-num">02</span>稽核倍數大於 0 時，洗分與出金的核可金額須先扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足</a><a href="#REQ-CASHFLOW-003" class="nav-link"><span class="nav-num">03</span>開分向平台請求後立即生效，交易紀錄類型記為機台開分、金額為正值；交易完成當下直接累計存款次數與存款金額（不需核實）</a><a href="#REQ-CASHFLOW-004" class="nav-link"><span class="nav-num">04</span>若加計本次開分金額後，「全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額」將超過場館額度上限，平台拒絕，機台畫面</a><a href="#REQ-CASHFLOW-005" class="nav-link"><span class="nav-num">05</span>開分請求不帶唯一識別碼，機台不會自動重送，平台把每一筆開分請求一律當作新交易處理；重複交易只可能來自現場人員重新操作，系</a><a href="#REQ-CASHFLOW-006" class="nav-link"><span class="nav-num">06</span>收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號</a><a href="#REQ-CASHFLOW-007" class="nav-link"><span class="nav-num">07</span>額度上限於 req-cashin 階段以場館鎖內「當下全場館餘額合計＋已預留未入帳的入金金額＋本筆金額」判定；未超限才建</a><a href="#REQ-CASHFLOW-008" class="nav-link"><span class="nav-num">08</span>入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋放。（2026-09-15 已由 Osc</a><a href="#REQ-CASHFLOW-009" class="nav-link"><span class="nav-num">09</span>收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、預留轉為實際餘額，回 0-OK；本階段</a><a href="#REQ-CASHFLOW-010" class="nav-link"><span class="nav-num">10</span>收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECO</a><a href="#REQ-CASHFLOW-011" class="nav-link"><span class="nav-num">11</span>機台可能重複送出 end-cashin（15 秒未收到成功回覆即重送，跨斷電續送）；平台對相同 TXID 第二次以後收到</a><a href="#REQ-CASHFLOW-012" class="nav-link"><span class="nav-num">12</span>入金 PENDING 保留 24 小時，逾期自動轉為已逾時；之後再收到 end-cashin 一律回 1-NO RECO</a><a href="#REQ-CASHFLOW-013" class="nav-link"><span class="nav-num">13</span>洗分核可金額＝餘額以機台送來的門檻（throshold）為單位無條件捨去；門檻為 0 時表示洗出全部餘額、不做取整</a><a href="#REQ-CASHFLOW-014" class="nav-link"><span class="nav-num">14</span>門檻大於 0 時，不足一個門檻單位的餘數不付現，繼續留在機台帳號上，不會被清除，系統不另記交易；餘數單獨存在時可洗金額為</a><a href="#REQ-CASHFLOW-015" class="nav-link"><span class="nav-num">15</span>門檻值若為負值、缺漏或非數值（規格外情形），平台防禦性拒絕，回 6-BAD DATA/FORMAT，不寫入任何帳務異動</a><a href="#REQ-CASHFLOW-016" class="nav-link"><span class="nav-num">16</span>計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足（1-NO CREDITS），不寫入任何帳務異動與交易紀錄</a><a href="#REQ-CASHFLOW-017" class="nav-link"><span class="nav-num">17</span>洗分回 0-OK 即代表分數已扣除、無回滾機制；完成當下當前場次即結束，餘數由新場次承接</a><a href="#REQ-CASHFLOW-018" class="nav-link"><span class="nav-num">18</span>洗分請求不帶唯一識別碼、機台不會自動重送，平台把每筆請求當新交易受理；多數重複操作會被「餘額不足」擋下，但指定金額洗分且</a><a href="#REQ-CASHFLOW-019" class="nav-link"><span class="nav-num">19</span>同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時若已有既存 PENDING，必須先標記失</a><a href="#REQ-CASHFLOW-020" class="nav-link"><span class="nav-num">20</span>核可金額＝req-cashout 當下的全部餘額，不套門檻取整、無餘數；核可金額為 0 時回 1-NO CREDITS，</a><a href="#REQ-CASHFLOW-021" class="nav-link"><span class="nav-num">21</span>end-cashout 扣分完成當下，餘額歸 0（無餘數承接）、當前場次立即結束；同樣須對相同 TXID 具備冪等性</a><a href="#REQ-CASHFLOW-022" class="nav-link"><span class="nav-num">22</span>收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO REC</a><a href="#REQ-CASHFLOW-023" class="nav-link"><span class="nav-num">23</span>此規則為印表機到位後的正式流程（過渡期見 REQ-CASHFLOW-025，不適用本規則）：列印還沒開始就偵測到異常時，</a><a href="#REQ-CASHFLOW-024" class="nav-link"><span class="nav-num">24</span>按了結算卻沒有任何反應（機台連不上平台）時，機台自行結束流程，分數一毛都沒扣；可再按一次結算，前一筆待確認的出金會被新的</a><a href="#REQ-CASHFLOW-025" class="nav-link"><span class="nav-num">25</span>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout 與 end-cashout；扣分時點與場次結束時點皆為</a><a href="#REQ-CASHFLOW-026" class="nav-link"><span class="nav-num">26</span>機台送出 req-cashout 後 15 秒未收到回覆即直接結束程序（收據不印），但平台此時已建立 PENDING，該</a><a href="#REQ-CASHFLOW-027" class="nav-link"><span class="nav-num">27</span>櫃檯對機台帳號人工出金時，系統必須同時取消該機台尚未完成的出金交易，避免同一筆錢被領兩次</a><a href="#REQ-CASHFLOW-028" class="nav-link"><span class="nav-num">28</span>櫃檯對機台帳號人工入金時，不需使既有的入金 PENDING 失效（與人工出金的連動取消規則不同）</a><a href="#REQ-CASHFLOW-029" class="nav-link"><span class="nav-num">29</span>機台請求被拒絕時依原因回對應狀態碼：超過額度上限(1-OVER LIMIT)、查無對應交易(1-NO RECORD)、機</a><a href="#REQ-CASHFLOW-030" class="nav-link"><span class="nav-num">30</span>洗分或出金因餘額不足（1-NO CREDITS）被拒絕時，不寫入交易紀錄，僅回覆該狀態碼；本表其餘未成立原因才會留下交易</a><a href="#REQ-CASHFLOW-031" class="nav-link"><span class="nav-num">31</span>廠商文件保留的 2-OCCUPIED 狀態碼（情境為被網頁玩家占用）平台不使用，因機台帳號的前台登入僅供機台本身遊戲畫面</a><a href="#REQ-CASHFLOW-032" class="nav-link"><span class="nav-num">32</span>機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤（6-BAD DATA/FORMAT）</a><a href="#REQ-CASHFLOW-033" class="nav-link"><span class="nav-num">33</span>無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；前一場次因洗分結束後留有餘數時，立即建立新場次承接（</a><a href="#REQ-CASHFLOW-034" class="nav-link"><span class="nav-num">34</span>場次進行中期間所有的開分、入金、洗分、出金與注單一律歸屬於這個場次；結束場次的那筆洗分／出金交易，歸屬於被它結束的場次</a><a href="#REQ-CASHFLOW-035" class="nav-link"><span class="nav-num">35</span>任一筆洗分或出金交易完成（扣分成功）當下，場次即結束——不分全洗或指定金額、不論是否留有餘數；交易被取消或未成立不觸發；</a><a href="#REQ-CASHFLOW-036" class="nav-link"><span class="nav-num">36</span>分數因投注輸完歸 0 時，場次結束（歸零結束），期末餘額為 0</a><a href="#REQ-CASHFLOW-037" class="nav-link"><span class="nav-num">37</span>分數還有餘額但超過場館設定的場次逾時時間（預設 1 小時）沒有任何交易與遊玩紀錄時，自動結束並標記為逾時結束；期間內有任</a><a href="#REQ-CASHFLOW-038" class="nav-link"><span class="nav-num">38</span>場館日結時間到達時，所有進行中的場次一律結束並標記為日結結算，剩餘分數轉為隔日新場次的期初餘額</a><a href="#REQ-CASHFLOW-039" class="nav-link"><span class="nav-num">39</span>併發限制：一台機台同時間只會有一個進行中的場次</a><a href="#REQ-CASHFLOW-040" class="nav-link"><span class="nav-num">40</span>線上會員沒有場次，與線上帳號共用的頁面（交易紀錄查詢、注單查詢等）所帶的場次編號欄位一律顯示「—」</a><a href="#REQ-CASHFLOW-041" class="nav-link"><span class="nav-num">41</span>機台為停用狀態，或所屬場館站台非開通狀態時，任何交易請求皆被拒絕（回 7-OUT OF SERVICE），該機台無法運作</a><a href="#REQ-CASHFLOW-042" class="nav-link"><span class="nav-num">42</span>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cashout；前台呼叫時使用的認證方式（是否</a><a href="#REQ-CASHFLOW-043" class="nav-link"><span class="nav-num">43</span>req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的重送策略 spec 明確標註待確認；前台</a><a href="#REQ-CASHFLOW-044" class="nav-link"><span class="nav-num">44</span>客戶回覆機台目前不需要稽核（維持預設 0 倍），「開分招待」活動本次不實作；現行稽核倍數機制無法實現此活動（倍數為幣種層</a></nav>
+    <nav><a href="#REQ-CASHFLOW-001" class="nav-link"><span class="nav-num">01</span>機台開分與入金依出金設定的幣種稽核倍數計算，計入的交易為機台開分與機台入金，稽核...</a><a href="#REQ-CASHFLOW-002" class="nav-link"><span class="nav-num">02</span>稽核倍數大於 0 時，洗分與出金的核可金額須先扣除尚未完成稽核的部分；扣除後為 ...</a><a href="#REQ-CASHFLOW-003" class="nav-link"><span class="nav-num">03</span>開分向平台請求後立即生效，交易紀錄類型記為機台開分、金額為正值；交易完成當下直接...</a><a href="#REQ-CASHFLOW-004" class="nav-link"><span class="nav-num">04</span>若加計本次開分金額後，「全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額...</a><a href="#REQ-CASHFLOW-005" class="nav-link"><span class="nav-num">05</span>開分請求不帶唯一識別碼，機台不會自動重送，平台把每一筆開分請求一律當作新交易處理...</a><a href="#REQ-CASHFLOW-006" class="nav-link"><span class="nav-num">06</span>收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，...</a><a href="#REQ-CASHFLOW-007" class="nav-link"><span class="nav-num">07</span>req-cashin 階段建立 PENDING、取得 TXID，**不**於此階...</a><a href="#REQ-CASHFLOW-008" class="nav-link"><span class="nav-num">08</span>入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋...</a><a href="#REQ-CASHFLOW-009" class="nav-link"><span class="nav-num">09</span>收到 end-cashin 且 TXID 相符時，**本階段判定額度上限**（依...</a><a href="#REQ-CASHFLOW-010" class="nav-link"><span class="nav-num">10</span>收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄...</a><a href="#REQ-CASHFLOW-011" class="nav-link"><span class="nav-num">11</span>機台可能重複送出 end-cashin（15 秒未收到成功回覆即重送，跨斷電續送...</a><a href="#REQ-CASHFLOW-012" class="nav-link"><span class="nav-num">12</span>入金 PENDING 保留 24 小時，逾期自動轉為已逾時；之後再收到 end-...</a><a href="#REQ-CASHFLOW-013" class="nav-link"><span class="nav-num">13</span>洗分核可金額＝餘額以機台送來的門檻（throshold）為單位無條件捨去；門檻為...</a><a href="#REQ-CASHFLOW-014" class="nav-link"><span class="nav-num">14</span>門檻大於 0 時，不足一個門檻單位的餘數不付現，繼續留在機台帳號上，不會被清除，...</a><a href="#REQ-CASHFLOW-015" class="nav-link"><span class="nav-num">15</span>門檻值若為負值、缺漏或非數值（規格外情形），平台防禦性拒絕，回 6-BAD DA...</a><a href="#REQ-CASHFLOW-016" class="nav-link"><span class="nav-num">16</span>計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足（1-NO CREDIT...</a><a href="#REQ-CASHFLOW-017" class="nav-link"><span class="nav-num">17</span>洗分回 0-OK 即代表分數已扣除、無回滾機制；完成當下當前場次即結束，餘數由新...</a><a href="#REQ-CASHFLOW-018" class="nav-link"><span class="nav-num">18</span>洗分請求不帶唯一識別碼、機台不會自動重送，平台把每筆請求當新交易受理；多數重複操...</a><a href="#REQ-CASHFLOW-019" class="nav-link"><span class="nav-num">19</span>同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時...</a><a href="#REQ-CASHFLOW-020" class="nav-link"><span class="nav-num">20</span>核可金額＝req-cashout 當下的全部餘額，不套門檻取整、無餘數；核可金額...</a><a href="#REQ-CASHFLOW-021" class="nav-link"><span class="nav-num">21</span>end-cashout 扣分完成當下，餘額歸 0（無餘數承接）、當前場次立即結束...</a><a href="#REQ-CASHFLOW-022" class="nav-link"><span class="nav-num">22</span>收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記...</a><a href="#REQ-CASHFLOW-023" class="nav-link"><span class="nav-num">23</span>此規則為印表機到位後的正式流程（過渡期見 REQ-CASHFLOW-025，不適...</a><a href="#REQ-CASHFLOW-024" class="nav-link"><span class="nav-num">24</span>按了結算卻沒有任何反應（機台連不上平台）時，機台自行結束流程，分數一毛都沒扣；可...</a><a href="#REQ-CASHFLOW-025" class="nav-link"><span class="nav-num">25</span>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout 與 end-c...</a><a href="#REQ-CASHFLOW-026" class="nav-link"><span class="nav-num">26</span>機台送出 req-cashout 後 15 秒未收到回覆即直接結束程序（收據不印...</a><a href="#REQ-CASHFLOW-027" class="nav-link"><span class="nav-num">27</span>櫃檯對機台帳號人工出金時，系統必須同時取消該機台尚未完成的出金交易，避免同一筆錢...</a><a href="#REQ-CASHFLOW-028" class="nav-link"><span class="nav-num">28</span>櫃檯對機台帳號人工入金時，不需使既有的入金 PENDING 失效（與人工出金的連...</a><a href="#REQ-CASHFLOW-029" class="nav-link"><span class="nav-num">29</span>機台請求被拒絕時依原因回對應狀態碼：超過額度上限(1-OVER LIMIT)、查...</a><a href="#REQ-CASHFLOW-030" class="nav-link"><span class="nav-num">30</span>任何交易被判定為未成立（不論原因為額度上限、資料格式錯誤、機台停用/場館未開通、...</a><a href="#REQ-CASHFLOW-031" class="nav-link"><span class="nav-num">31</span>廠商文件保留的 2-OCCUPIED 狀態碼（情境為被網頁玩家占用）平台不使用，...</a><a href="#REQ-CASHFLOW-032" class="nav-link"><span class="nav-num">32</span>機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤（6-BAD D...</a><a href="#REQ-CASHFLOW-033" class="nav-link"><span class="nav-num">33</span>無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；前一場次因洗...</a><a href="#REQ-CASHFLOW-034" class="nav-link"><span class="nav-num">34</span>場次進行中期間所有的開分、入金、洗分、出金與注單一律歸屬於這個場次；結束場次的那...</a><a href="#REQ-CASHFLOW-035" class="nav-link"><span class="nav-num">35</span>任一筆洗分或出金交易完成（扣分成功）當下，場次即結束——不分全洗或指定金額、不論...</a><a href="#REQ-CASHFLOW-036" class="nav-link"><span class="nav-num">36</span>分數因投注輸完歸 0 時，場次結束（歸零結束），期末餘額為 0</a><a href="#REQ-CASHFLOW-037" class="nav-link"><span class="nav-num">37</span>分數還有餘額但超過場館設定的場次逾時時間（預設 1 小時）沒有任何交易與遊玩紀錄...</a><a href="#REQ-CASHFLOW-038" class="nav-link"><span class="nav-num">38</span>場館日結時間到達時，所有進行中的場次一律結束並標記為日結結算，剩餘分數轉為隔日新...</a><a href="#REQ-CASHFLOW-039" class="nav-link"><span class="nav-num">39</span>併發限制：一台機台同時間只會有一個進行中的場次</a><a href="#REQ-CASHFLOW-040" class="nav-link"><span class="nav-num">40</span>線上會員沒有場次，與線上帳號共用的頁面（交易紀錄查詢、注單查詢等）所帶的場次編號...</a><a href="#REQ-CASHFLOW-041" class="nav-link"><span class="nav-num">41</span>機台為停用狀態，或所屬場館站台非開通狀態時，任何交易請求皆被拒絕（回 7-OUT...</a><a href="#REQ-CASHFLOW-042" class="nav-link"><span class="nav-num">42</span>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cas...</a><a href="#REQ-CASHFLOW-043" class="nav-link"><span class="nav-num">43</span>req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的...</a><a href="#REQ-CASHFLOW-044" class="nav-link"><span class="nav-num">44</span>客戶回覆機台目前不需要稽核（維持預設 0 倍），「開分招待」活動本次不實作；現行...</a></nav>
   </aside>
-
   <main class="main">
     <div class="page-head">
       <h1>CASHFLOW 功能區 · 最終測試案例</h1>
-      <p>本頁彙整 SPEC-CASHFLOW-001 底下所有 ACTIVE 狀態的測試案例，共 60 條，涵蓋 44 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。</p>
+      <p>本頁彙整 SPEC-CASHFLOW-001 底下所有 ACTIVE 狀態的測試案例，共 60 條，涵蓋 44 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。更新：2026-09-23。</p>
       <div class="integration-note">
-        <b>Phase 2 × Phase 3 整合說明：</b> 其中 9 條（TC-CASHFLOW-005、TC-CASHFLOW-008、TC-CASHFLOW-010、TC-CASHFLOW-016、TC-CASHFLOW-018、TC-CASHFLOW-026、TC-CASHFLOW-027、TC-CASHFLOW-031、TC-CASHFLOW-034）是在人工設計版本（Phase 2）與 agent 獨立設計版本（Phase 3 影子測試）交叉比對後，依「深度底線 &gt; 廣度覆蓋 &gt; 深度精進」原則修訂的整合版本——採用兩邊之中更深入或更完整的處理方式，而非整批採用單一來源。另有 2 條（AC-CASHFLOW-0421/0431 對應的 TC-CASHFLOW-050/051）因 spec 原文明確標「待確認」（CLR-CASHFLOW-001/002 尚未回覆）維持為 exploratory 案例，1 條驗收條件（AC-CASHFLOW-0083）因 RequirementModel 本身的資料落差，兩版本皆判定不適用而未建立對應案例。
+        <b>Phase 2 × Phase 3 整合／修訂說明：</b> 其中 20 條（TC-CASHFLOW-005, TC-CASHFLOW-008, TC-CASHFLOW-009, TC-CASHFLOW-010, TC-CASHFLOW-011, TC-CASHFLOW-016, TC-CASHFLOW-018, TC-CASHFLOW-026, TC-CASHFLOW-027, TC-CASHFLOW-031, TC-CASHFLOW-034, TC-CASHFLOW-035, TC-CASHFLOW-053, TC-CASHFLOW-055, TC-CASHFLOW-056, TC-CASHFLOW-057, TC-CASHFLOW-058, TC-CASHFLOW-059, TC-CASHFLOW-060, TC-CASHFLOW-061）為交叉比對後納入的整合版本、新增案例，或依 PM 澄清（CLR）修訂後的版本；修訂歷程見各 TC 的 history 與對應 run。
       </div>
     </div>
 
-    
     <section class="req-group" id="REQ-CASHFLOW-001">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-001</span>
-        <h2>機台開分與入金依出金設定的幣種稽核倍數計算，計入的交易為機台開分與機台入金，稽核明細照常寫入；預設值為 0 倍，即不產生</h2>
+        <h2>機台開分與入金依出金設定的幣種稽核倍數計算，計入的交易為機台開分與機台入金，稽核...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-001 場館未設定稽核倍數時，開分與入金正常記入稽核明細但不產生門檻 req-cashflow-001 ac-cashflow-0011 high medium" data-class="grounded">
@@ -254,13 +249,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-002">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-002</span>
-        <h2>稽核倍數大於 0 時，洗分與出金的核可金額須先扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足</h2>
+        <h2>稽核倍數大於 0 時，洗分與出金的核可金額須先扣除尚未完成稽核的部分；扣除後為 ...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-002 稽核倍數大於 0 時，洗分／出金核可金額先扣除未完成稽核部分，扣至 0 視同餘額不足 req-cashflow-002 ac-cashflow-0021 ac-cashflow-0022 high medium" data-class="grounded">
@@ -276,7 +270,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-medium'>風險 medium</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0021；AC-CASHFLOW-0022</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0021</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0022</span>
     </div>
   </header>
 
@@ -300,13 +295,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-003">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-003</span>
-        <h2>開分向平台請求後立即生效，交易紀錄類型記為機台開分、金額為正值；交易完成當下直接累計存款次數與存款金額（不需核實）</h2>
+        <h2>開分向平台請求後立即生效，交易紀錄類型記為機台開分、金額為正值；交易完成當下直接...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-003 開分立即生效，交易紀錄類型與金額正值，且當下累計存款次數與金額 req-cashflow-003 ac-cashflow-0031 high high" data-class="grounded">
@@ -346,8 +340,7 @@ body {
     </div>
   </div>
 </article>
-
-<article class="tc-card" data-search="tc-cashflow-004 開分金額為最小單位 1 與恰使餘額達到上限前一單位時，皆立即生效並正確累計 req-cashflow-003  high high" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-004 開分金額為最小單位 1 與恰使餘額達到上限前一單位時，皆立即生效並正確累計 req-cashflow-003 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-004</span>
@@ -360,7 +353,6 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral"></span>
     </div>
   </header>
 
@@ -384,29 +376,30 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-004">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-004</span>
-        <h2>若加計本次開分金額後，「全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額」將超過場館額度上限，平台拒絕，機台畫面</h2>
+        <h2>若加計本次開分金額後，「全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額...</h2>
       </div>
       <div class="tc-grid">
-<article class="tc-card" data-search="tc-cashflow-005 開分加計後恰等於場館額度上限可成立，超過 1 單位則被拒絕且不寫入帳務異動但留交易紀錄 req-cashflow-004 ac-cashflow-0041 high high" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-005 開分加計後恰等於場館額度上限可成立；超過 1 單位則被拒絕，不寫入帳務異動、也不寫入交易紀錄 req-cashflow-004 req-cashflow-030 ac-cashflow-0041 ac-cashflow-0301 ac-cashflow-0302 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-005</span>
-      <span class="tc-ver">v2</span>
+      <span class="tc-ver">v3</span>
       <span class="p3-badge">Phase 3 整合</span>
     </div>
-    <h3 class="tc-title">開分加計後恰等於場館額度上限可成立，超過 1 單位則被拒絕且不寫入帳務異動但留交易紀錄</h3>
+    <h3 class="tc-title">開分加計後恰等於場館額度上限可成立；超過 1 單位則被拒絕，不寫入帳務異動、也不寫入交易紀錄</h3>
     <div class="tc-pills">
       <span class='pill pill-grounded'>grounded · 已確認</span>
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
       <span class="pill pill-neutral">AC-CASHFLOW-0041</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0301</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0302</span>
     </div>
   </header>
 
@@ -417,26 +410,25 @@ body {
     </div>
     <div class="tc-section">
       <div class="tc-label">步驟</div>
-      <ol class="tc-steps"><li><span class='step-n'>1</span><span>送出開分請求（req-keyin），金額 100，使「全場館機台分數餘額合計＋已預留未入帳入金金額＋本筆金額」恰等於額度上限 A</span></li><li><span class='step-n'>2</span><span>確認回覆為 0-OK，分數正常增加，交易紀錄正常寫入</span></li><li><span class='step-n'>3</span><span>再送出開分請求（req-keyin），金額 1，使加計後超過額度上限 A</span></li><li><span class='step-n'>4</span><span>確認此筆的回覆、分數變化，並查詢交易紀錄</span></li></ol>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>送出開分請求（req-keyin），金額 100，使「全場館機台分數餘額合計＋已預留未入帳入金金額＋本筆金額」恰等於額度上限 A</span></li><li><span class='step-n'>2</span><span>確認回覆為 0-OK，分數正常增加，交易紀錄正常寫入</span></li><li><span class='step-n'>3</span><span>再送出開分請求（req-keyin），金額 1，使加計後超過額度上限 A</span></li><li><span class='step-n'>4</span><span>確認此筆的回覆、分數變化，並查詢交易紀錄（不篩選狀態）確認查無此筆</span></li></ol>
     </div>
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
-      <p class="tc-expected">第一筆恰等於上限：成立，回 0-OK，分數正常增加；第二筆使合計超過上限：平台回 1-OVER LIMIT，機台畫面顯示失敗，分數不變、不寫入任何帳務異動（判定含已預留未入帳的入金金額，與入金共用同一把場館鎖），但交易紀錄留有「未成立」紀錄可查得拒絕原因（超過額度上限不屬於餘額不足的不寫入交易紀錄例外）</p>
+      <p class="tc-expected">第一筆恰等於上限：成立，回 0-OK，分數正常增加，交易紀錄正常寫入；第二筆使合計超過上限：平台回 1-OVER LIMIT，機台畫面顯示失敗，分數不變、不寫入任何帳務異動，且查無此次拒絕的交易紀錄（CLR-CASHFLOW-006：額度上限不再屬於「其他未成立原因會留紀錄」，與餘額不足同一待遇）</p>
     </div>
     
     <div class="tc-spec">
-      <span class="spec-loc">§四種金流/開分</span>
-      <span class='spec-quote'>「全場館機台分數餘額合計＋已預留未入帳的入金金額，加計本筆金額後不可超過場館額度上限，超過則回 1-OVER LIMIT」</span>
+      <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）</span>
+      
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-005">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-005</span>
-        <h2>開分請求不帶唯一識別碼，機台不會自動重送，平台把每一筆開分請求一律當作新交易處理；重複交易只可能來自現場人員重新操作，系</h2>
+        <h2>開分請求不帶唯一識別碼，機台不會自動重送，平台把每一筆開分請求一律當作新交易處理...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-006 在額度上限內連續送出兩筆內容相同的開分請求，兩筆皆分別入帳（無天然防重複機制） req-cashflow-005 ac-cashflow-0051 high high" data-class="grounded">
@@ -476,13 +468,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-006">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-006</span>
-        <h2>收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，不使既有 PENDING 失效；同一帳號</h2>
+        <h2>收到 req-cashin 一律建立新的 PENDING 並產生唯一 TXID，...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-007 req-cashin 一律建立新 pending 並產生唯一 txid，不使既有 pending 失效，可同時並存多筆 req-cashflow-006 ac-cashflow-0061 ac-cashflow-0062 high high" data-class="grounded">
@@ -498,7 +489,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0061；AC-CASHFLOW-0062</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0061</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0062</span>
     </div>
   </header>
 
@@ -522,61 +514,60 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-007">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-007</span>
-        <h2>額度上限於 req-cashin 階段以場館鎖內「當下全場館餘額合計＋已預留未入帳的入金金額＋本筆金額」判定；未超限才建</h2>
+        <h2>req-cashin 階段建立 PENDING、取得 TXID，**不**於此階...</h2>
       </div>
       <div class="tc-grid">
-<article class="tc-card" data-search="tc-cashflow-008 入金加計後恰等於額度上限可成立並預留，超過 1 單位則 1-over limit 且不建立 pending、不預留 req-cashflow-007 ac-cashflow-0071 ac-cashflow-0072 high high" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-008 req-cashin 不判額度（含鉅額防禦）；end-cashin 依實際清點金額判定，恰等於上限成立、超過 1 單位則 1-over limit 退鈔 req-cashflow-007 ac-cashflow-0071 ac-cashflow-0072 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-008</span>
-      <span class="tc-ver">v2</span>
+      <span class="tc-ver">v3</span>
       <span class="p3-badge">Phase 3 整合</span>
     </div>
-    <h3 class="tc-title">入金加計後恰等於額度上限可成立並預留，超過 1 單位則 1-OVER LIMIT 且不建立 PENDING、不預留</h3>
+    <h3 class="tc-title">req-cashin 不判額度（含鉅額防禦）；end-cashin 依實際清點金額判定，恰等於上限成立、超過 1 單位則 1-OVER LIMIT 退鈔</h3>
     <div class="tc-pills">
       <span class='pill pill-grounded'>grounded · 已確認</span>
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0071；AC-CASHFLOW-0072</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0071</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0072</span>
     </div>
   </header>
 
   <div class="tc-body">
     <div class="tc-section">
       <div class="tc-label">前置條件</div>
-      <ul class="tc-precon"><li>機台已透過憑證通過認證</li><li>機台所屬場館為開通狀態，機台為啟用狀態</li><li>設定該場館額度上限為 A，並確認目前「全場館機台分數餘額合計＋已預留未入帳入金金額」恰為 A-100</li></ul>
+      <ul class="tc-precon"><li>機台已透過憑證通過認證</li><li>機台所屬場館為開通狀態，機台為啟用狀態</li><li>設定該場館額度上限為 A，並確認目前「全場館機台分數餘額合計（已入帳）」恰為 A-100</li></ul>
     </div>
     <div class="tc-section">
       <div class="tc-label">步驟</div>
-      <ol class="tc-steps"><li><span class='step-n'>1</span><span>送出 req-cashin，金額 100，使「全場館餘額合計＋已預留未入帳金額＋本筆金額」恰等於額度上限 A</span></li><li><span class='step-n'>2</span><span>確認回覆建立 PENDING 並將 100 計入預留（此時全場館「餘額合計＋預留」恰為 A）</span></li><li><span class='step-n'>3</span><span>再送出 req-cashin，金額 1，使加計後超過額度上限 A</span></li><li><span class='step-n'>4</span><span>確認此筆的回覆，並確認機台未收到分數變化、無新 PENDING 產生，機台直接退鈔</span></li></ol>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>送出 req-cashin，金額為遠超額度上限數個量級的鉅額數值（例如 A 的 1000 倍），確認仍回 0-OK、建立 PENDING 並取得 TXID——驗證 req-cashin 本階段不依客戶端聲稱金額判定額度，不會因巨額數字被拒或卡住（CLR-CASHFLOW-005 防 DoS 的核心行為）</span></li><li><span class='step-n'>2</span><span>送出該筆 end-cashin，實際清點金額改為 100（模擬入鈔機清點結果與聲稱金額不同），確認回覆與分數變化</span></li><li><span class='step-n'>3</span><span>另送出 req-cashin，金額 1，確認同樣建立 PENDING</span></li><li><span class='step-n'>4</span><span>送出其 end-cashin（實際清點金額 1），使「全場館機台分數餘額合計（已入帳）＋本筆實際清點金額」恰等於額度上限 A</span></li><li><span class='step-n'>5</span><span>確認回覆 0-OK、分數正常增加</span></li><li><span class='step-n'>6</span><span>再送出 req-cashin（金額 1，同樣建立 PENDING），送出其 end-cashin（實際清點金額 1），使加計後超過額度上限 A</span></li><li><span class='step-n'>7</span><span>確認此筆 end-cashin 的回覆與分數變化；若為純 API 直連環境（無實體機台），以回覆碼 1-OVER LIMIT 且帳務未異動為判定依據；有實體機台時另確認機台退鈔</span></li></ol>
     </div>
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
-      <p class="tc-expected">第一筆恰等於上限：成立，建立 PENDING 並將本筆金額計入預留；第二筆超過上限：回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔</p>
+      <p class="tc-expected">第一筆：req-cashin 送鉅額數字仍成功建立 PENDING（不判額度、不卡住），end-cashin 以實際清點金額 100 入帳、回 0-OK；第二筆：req-cashin 建立 PENDING，end-cashin 實際金額 1 使加計恰等於上限，回 0-OK 並正常入帳；第三筆：req-cashin 建立 PENDING，end-cashin 實際金額 1 使加計超過上限，回 1-OVER LIMIT，不更新帳務（純 API 環境以此為準，實體機台另確認退鈔）</p>
     </div>
     
     <div class="tc-spec">
-      <span class="spec-loc">§四種金流/入金</span>
-      <span class='spec-quote'>「req-cashin 於場館鎖內以「全場館餘額＋已預留＋本筆金額」判定額度，未超限才建立 PENDING 並預留」</span>
+      <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）</span>
+      
     </div>
   </div>
 </article>
-
-<article class="tc-card" data-search="tc-cashflow-009 兩筆入金請求幾乎同時送達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆 req-cashflow-007 ac-cashflow-0073 high high" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-009 兩筆入金的 end-cashin 幾乎同時到達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆 req-cashflow-007 ac-cashflow-0073 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-009</span>
-      <span class="tc-ver">v1</span>
-      
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
-    <h3 class="tc-title">兩筆入金請求幾乎同時送達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆</h3>
+    <h3 class="tc-title">兩筆入金的 end-cashin 幾乎同時到達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆</h3>
     <div class="tc-pills">
       <span class='pill pill-grounded'>grounded · 已確認</span>
       <span class='pill pill-neutral'>優先 high</span>
@@ -593,26 +584,25 @@ body {
     </div>
     <div class="tc-section">
       <div class="tc-label">步驟</div>
-      <ol class="tc-steps"><li><span class='step-n'>1</span><span>建構場館餘額合計已接近額度上限的情境（例如尚餘額度剛好等於單筆入金金額）</span></li><li><span class='step-n'>2</span><span>以測試工具對同一場館的兩台不同機台併發送出兩個 req-cashin HTTP 請求（同一時間發出，不依序等待回應），金額皆等於尚餘額度，各自單看皆不超限，但兩筆合計會超限</span></li><li><span class='step-n'>3</span><span>檢視兩筆請求的回應與是否建立 PENDING</span></li></ol>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>建構場館餘額合計已接近額度上限的情境（例如尚餘額度剛好等於單筆入金金額）</span></li><li><span class='step-n'>2</span><span>兩台不同機台各自完成 req-cashin，取得各自 TXID（本階段皆會成功建立 PENDING，不判定額度）</span></li><li><span class='step-n'>3</span><span>以測試工具對同一場館的兩台機台併發送出兩個 end-cashin HTTP 請求（同一時間發出，不依序等待回應），實際清點金額皆等於尚餘額度，各自單看皆不超限，但兩筆合計會超限</span></li><li><span class='step-n'>4</span><span>檢視兩筆 end-cashin 的回應與帳務是否更新</span></li></ol>
     </div>
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
-      <p class="tc-expected">依場館鎖逐筆序列化處理：先取得鎖的一筆通過並建立預留後，另一筆的判定基準已包含前者的預留，因而正確被擋下回 1-OVER LIMIT、不建立 PENDING；不會兩筆皆通過而使全場館餘額超過額度上限</p>
+      <p class="tc-expected">依場館鎖逐筆序列化處理：先取得鎖的一筆 end-cashin 通過並完成入帳，另一筆的判定基準已包含前者剛入帳的金額，因而正確被擋下回 1-OVER LIMIT、不更新帳務、機台退鈔；不會兩筆皆通過而使全場館餘額超過額度上限。與 TC-CASHFLOW-011（單純狀態前置下的超限拒絕）的差異：本案驗證的是場館鎖序列化下的併發正確性，非單一狀態判定</p>
     </div>
     
     <div class="tc-spec">
-      <span class="spec-loc">§附錄-入金</span>
+      <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）</span>
       
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-008">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-008</span>
-        <h2>入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋放。（2026-09-15 已由 Osc</h2>
+        <h2>入帳成功時預留轉為實際分數餘額；PENDING 逾時（24 小時）由排程關閉時釋...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-010 入帳成功時，pending 的預留額度轉為實際分數餘額 req-cashflow-008 ac-cashflow-0081 high high" data-class="grounded">
@@ -652,13 +642,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-053 pending 超過 24 小時未完成，預留額度隨排程自動釋放 req-cashflow-008 ac-cashflow-0082 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-053</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">PENDING 超過 24 小時未完成，預留額度隨排程自動釋放</h3>
     <div class="tc-pills">
@@ -690,23 +679,22 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-009">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-009</span>
-        <h2>收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、預留轉為實際餘額，回 0-OK；本階段</h2>
+        <h2>收到 end-cashin 且 TXID 相符時，**本階段判定額度上限**（依...</h2>
       </div>
       <div class="tc-grid">
-<article class="tc-card" data-search="tc-cashflow-011 即使全場館餘額已達額度上限，已建立 pending 的 end-cashin 仍正常完成入帳且不再檢查額度 req-cashflow-009 ac-cashflow-0091 high high" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-011 即使 req-cashin 已成功建立 pending，end-cashin 時全場館餘額已達額度上限，仍會被擋下並退鈔 req-cashflow-009 ac-cashflow-0091 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-011</span>
-      <span class="tc-ver">v1</span>
-      
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
-    <h3 class="tc-title">即使全場館餘額已達額度上限，已建立 PENDING 的 end-cashin 仍正常完成入帳且不再檢查額度</h3>
+    <h3 class="tc-title">即使 req-cashin 已成功建立 PENDING，end-cashin 時全場館餘額已達額度上限，仍會被擋下並退鈔</h3>
     <div class="tc-pills">
       <span class='pill pill-grounded'>grounded · 已確認</span>
       <span class='pill pill-neutral'>優先 high</span>
@@ -723,26 +711,25 @@ body {
     </div>
     <div class="tc-section">
       <div class="tc-label">步驟</div>
-      <ol class="tc-steps"><li><span class='step-n'>1</span><span>PENDING 已建立（req-cashin 階段的額度判定已通過並完成預留）</span></li><li><span class='step-n'>2</span><span>在收到 end-cashin 前，令全場館餘額合計因其他交易已達到額度上限</span></li><li><span class='step-n'>3</span><span>機台送出 end-cashin，TXID 相符</span></li></ol>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>req-cashin 已送出並成功建立 PENDING、取得 TXID（本階段未判定額度、未預留）</span></li><li><span class='step-n'>2</span><span>在收到 end-cashin 前，令全場館餘額合計因其他交易已達到額度上限</span></li><li><span class='step-n'>3</span><span>機台送出 end-cashin，TXID 相符，帶入實際清點金額</span></li></ol>
     </div>
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
-      <p class="tc-expected">平台關閉 PENDING、更新帳務、預留轉為實際餘額，回 0-OK；本階段不再重新檢查額度上限，不因當下已達上限而拒絕</p>
+      <p class="tc-expected">平台於 end-cashin 判定額度上限：因加計後將超過上限，回 1-OVER LIMIT，不更新帳務、不關閉 PENDING 為已完成（純 API 環境以回覆碼與帳務未異動為判定依據，實體機台另確認退鈔）——與 req-cashin 階段是否已建立 PENDING 無關，該 PENDING 本身不代表額度已通過。與 TC-CASHFLOW-009（併發序列化下的超限拒絕）的差異：本案驗證的是單一交易在單純狀態前置下的超限拒絕，非併發序列化</p>
     </div>
     
     <div class="tc-spec">
-      <span class="spec-loc">§附錄-入金</span>
+      <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）</span>
       
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-010">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-010</span>
-        <h2>收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECO</h2>
+        <h2>收到 end-cashin 但查無 PENDING 或 TXID 不符時，僅記錄...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-012 end-cashin 查無對應 pending 或 txid 不符時僅記錄 log 並回 1-no record，不變更任何資料 req-cashflow-010 ac-cashflow-0101 high medium" data-class="grounded">
@@ -782,13 +769,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-011">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-011</span>
-        <h2>機台可能重複送出 end-cashin（15 秒未收到成功回覆即重送，跨斷電續送）；平台對相同 TXID 第二次以後收到</h2>
+        <h2>機台可能重複送出 end-cashin（15 秒未收到成功回覆即重送，跨斷電續送...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-013 同一 txid 的 end-cashin 重複送達時，平台具備冪等性、不重複加值 req-cashflow-011 ac-cashflow-0111 high high" data-class="grounded">
@@ -828,13 +814,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-012">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-012</span>
-        <h2>入金 PENDING 保留 24 小時，逾期自動轉為已逾時；之後再收到 end-cashin 一律回 1-NO RECO</h2>
+        <h2>入金 PENDING 保留 24 小時，逾期自動轉為已逾時；之後再收到 end-...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-014 入金 pending 保留 24 小時，逾期自動轉為已逾時並釋放預留額度 req-cashflow-012 ac-cashflow-0121 high medium" data-class="grounded">
@@ -874,7 +859,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-015 pending 已轉為已逾時後才收到的 end-cashin 一律回 1-no record req-cashflow-012 ac-cashflow-0122 high medium" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -912,13 +896,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-013">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-013</span>
-        <h2>洗分核可金額＝餘額以機台送來的門檻（throshold）為單位無條件捨去；門檻為 0 時表示洗出全部餘額、不做取整</h2>
+        <h2>洗分核可金額＝餘額以機台送來的門檻（throshold）為單位無條件捨去；門檻為...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-016 全洗時核可金額依門檻無條件捨去 req-cashflow-013 ac-cashflow-0131 high high" data-class="grounded">
@@ -958,13 +941,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-055 指定金額洗分時核可金額與全洗結果一致 req-cashflow-013 ac-cashflow-0132 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-055</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">指定金額洗分時核可金額與全洗結果一致</h3>
     <div class="tc-pills">
@@ -996,13 +978,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-056 門檻為 0 時洗出全部餘額、不做取整 req-cashflow-013 ac-cashflow-0133 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-056</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">門檻為 0 時洗出全部餘額、不做取整</h3>
     <div class="tc-pills">
@@ -1034,13 +1015,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-014">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-014</span>
-        <h2>門檻大於 0 時，不足一個門檻單位的餘數不付現，繼續留在機台帳號上，不會被清除，系統不另記交易；餘數單獨存在時可洗金額為</h2>
+        <h2>門檻大於 0 時，不足一個門檻單位的餘數不付現，繼續留在機台帳號上，不會被清除，...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-017 洗分餘數留在機台帳號上不被清除；餘數單獨存在時無法再洗出 req-cashflow-014 ac-cashflow-0141 ac-cashflow-0142 high medium" data-class="grounded">
@@ -1056,7 +1036,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-medium'>風險 medium</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0141；AC-CASHFLOW-0142</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0141</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0142</span>
     </div>
   </header>
 
@@ -1080,13 +1061,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-015">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-015</span>
-        <h2>門檻值若為負值、缺漏或非數值（規格外情形），平台防禦性拒絕，回 6-BAD DATA/FORMAT，不寫入任何帳務異動</h2>
+        <h2>門檻值若為負值、缺漏或非數值（規格外情形），平台防禦性拒絕，回 6-BAD DA...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-018 洗分請求的 throshold 為負值、缺漏或非數值時，三種等價類別各自防禦性拒絕回 6-bad data/format req-cashflow-015 ac-cashflow-0151 ac-cashflow-0152 high high" data-class="grounded">
@@ -1102,7 +1082,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0151；AC-CASHFLOW-0152</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0151</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0152</span>
     </div>
   </header>
 
@@ -1122,17 +1103,16 @@ body {
     
     <div class="tc-spec">
       <span class="spec-loc">§四種金流/洗分</span>
-      <span class='spec-quote'>「throshold 為負值、缺漏或非數值時，平台防禦性拒絕並回 6-BAD DATA/FORMAT」</span>
+      <span class="spec-quote">throshold 為負值、缺漏或非數值時，平台防禦性拒絕並回 6-BAD DATA/FORMAT</span>
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-016">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-016</span>
-        <h2>計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足（1-NO CREDITS），不寫入任何帳務異動與交易紀錄</h2>
+        <h2>計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足（1-NO CREDIT...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-019 洗分核可金額為 0 時回餘額不足，不寫入任何帳務異動與交易紀錄 req-cashflow-016 ac-cashflow-0161 high medium" data-class="grounded">
@@ -1172,13 +1152,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-017">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-017</span>
-        <h2>洗分回 0-OK 即代表分數已扣除、無回滾機制；完成當下當前場次即結束，餘數由新場次承接</h2>
+        <h2>洗分回 0-OK 即代表分數已扣除、無回滾機制；完成當下當前場次即結束，餘數由新...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-020 洗分回 0-ok 即完成扣款無回滾，且當前場次立即結束、餘數由新場次承接 req-cashflow-017 ac-cashflow-0171 high high" data-class="grounded">
@@ -1218,13 +1197,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-018">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-018</span>
-        <h2>洗分請求不帶唯一識別碼、機台不會自動重送，平台把每筆請求當新交易受理；多數重複操作會被「餘額不足」擋下，但指定金額洗分且</h2>
+        <h2>洗分請求不帶唯一識別碼、機台不會自動重送，平台把每筆請求當新交易受理；多數重複操...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-021 指定金額洗分且洗完後餘額仍足夠再洗一次同額時，重複送出會造成重複扣款 req-cashflow-018 ac-cashflow-0181 high high" data-class="grounded">
@@ -1264,13 +1242,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-019">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-019</span>
-        <h2>同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時若已有既存 PENDING，必須先標記失</h2>
+        <h2>同一帳號同時只允許一筆有效出金 PENDING；收到 req-cashout 時...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-022 同一帳號同時只允許一筆有效出金 pending，新 req-cashout 使既存 pending 失效 req-cashflow-019 ac-cashflow-0191 high high" data-class="grounded">
@@ -1310,13 +1287,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-020">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-020</span>
-        <h2>核可金額＝req-cashout 當下的全部餘額，不套門檻取整、無餘數；核可金額為 0 時回 1-NO CREDITS，</h2>
+        <h2>核可金額＝req-cashout 當下的全部餘額，不套門檻取整、無餘數；核可金額...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-023 出金核可金額為當下全部餘額不套門檻取整；核可金額為 0 時回餘額不足 req-cashflow-020 ac-cashflow-0201 ac-cashflow-0202 high high" data-class="grounded">
@@ -1332,7 +1308,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0201；AC-CASHFLOW-0202</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0201</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0202</span>
     </div>
   </header>
 
@@ -1356,13 +1333,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-021">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-021</span>
-        <h2>end-cashout 扣分完成當下，餘額歸 0（無餘數承接）、當前場次立即結束；同樣須對相同 TXID 具備冪等性</h2>
+        <h2>end-cashout 扣分完成當下，餘額歸 0（無餘數承接）、當前場次立即結束...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-024 end-cashout 扣分完成當下餘額歸 0、當前場次立即結束 req-cashflow-021 ac-cashflow-0211 high high" data-class="grounded">
@@ -1402,7 +1378,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-025 同一 txid 的 end-cashout 重複送達時具備冪等性，不重複扣分 req-cashflow-021 ac-cashflow-0212 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -1440,13 +1415,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-022">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-022</span>
-        <h2>收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO REC</h2>
+        <h2>收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-026 end-cashout 帶入已失效 txid 時回 1-no record：涵蓋人工出金取消與新請求取代兩種真實觸發情境 req-cashflow-022 ac-cashflow-0221 high high" data-class="grounded">
@@ -1482,17 +1456,16 @@ body {
     
     <div class="tc-spec">
       <span class="spec-loc">§附錄-出金</span>
-      <span class='spec-quote'>「收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD」</span>
+      <span class="spec-quote">收到 end-cashout 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 1-NO RECORD</span>
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-023">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-023</span>
-        <h2>此規則為印表機到位後的正式流程（過渡期見 REQ-CASHFLOW-025，不適用本規則）：列印還沒開始就偵測到異常時，</h2>
+        <h2>此規則為印表機到位後的正式流程（過渡期見 REQ-CASHFLOW-025，不適...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-027 印表機到位後：列印未開始前偵測異常，機台不呼叫 end-cashout 但平台仍留待確認 pending req-cashflow-023 ac-cashflow-0231 high high" data-class="grounded">
@@ -1532,13 +1505,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-061 印表機到位後：已送入列印佇列後才實體故障，分數照扣、收據待排除後自動印出 req-cashflow-023 ac-cashflow-0232 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-061</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">印表機到位後：已送入列印佇列後才實體故障，分數照扣、收據待排除後自動印出</h3>
     <div class="tc-pills">
@@ -1570,13 +1542,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-024">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-024</span>
-        <h2>按了結算卻沒有任何反應（機台連不上平台）時，機台自行結束流程，分數一毛都沒扣；可再按一次結算，前一筆待確認的出金會被新的</h2>
+        <h2>按了結算卻沒有任何反應（機台連不上平台）時，機台自行結束流程，分數一毛都沒扣；可...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-028 結算無反應時不扣分，再次結算會自動取代前一筆待確認出金 req-cashflow-024 ac-cashflow-0241 ac-cashflow-0242 high medium" data-class="grounded">
@@ -1592,7 +1563,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-medium'>風險 medium</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0241；AC-CASHFLOW-0242</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0241</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0242</span>
     </div>
   </header>
 
@@ -1616,13 +1588,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-025">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-025</span>
-        <h2>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout 與 end-cashout；扣分時點與場次結束時點皆為</h2>
+        <h2>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout 與 end-c...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-029 過渡期由前台依序呼叫 req-cashout 與 end-cashout，扣分與場次結束皆以前台回報完成為準 req-cashflow-025 ac-cashflow-0251 high high" data-class="grounded">
@@ -1662,7 +1633,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-030 過渡期出金請求已送出、尚未收到回報完成前，系統不提供取消 req-cashflow-025 ac-cashflow-0252 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -1700,13 +1670,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-026">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-026</span>
-        <h2>機台送出 req-cashout 後 15 秒未收到回覆即直接結束程序（收據不印），但平台此時已建立 PENDING，該</h2>
+        <h2>機台送出 req-cashout 後 15 秒未收到回覆即直接結束程序（收據不印...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-031 req-cashout 已建立 pending 後機台 15 秒逾時結束程序，該 pending 不會自動結束，需新請求取代或人工出金連動取消 req-cashflow-026 ac-cashflow-0261 high medium" data-class="grounded">
@@ -1742,17 +1711,16 @@ body {
     
     <div class="tc-spec">
       <span class="spec-loc">§附錄-出金</span>
-      <span class='spec-quote'>「須由新的 req-cashout 取代或 Admin 手動取消收斂（spec.md原文，2026-09-15已由Oscar確認「Admin手動取消」此路徑不存在於現行產品，見REQ-CASHFLOW-026 statement/CLR-CASHFLOW-004）」</span>
+      <span class="spec-quote">須由新的 req-cashout 取代或 Admin 手動取消收斂（spec.md原文，2026-09-15已由Oscar確認「Admin手動取消」此路徑不存在於現行產品，見REQ-CASHFLOW-026 statement/CLR-CASHFLOW-004）</span>
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-027">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-027</span>
-        <h2>櫃檯對機台帳號人工出金時，系統必須同時取消該機台尚未完成的出金交易，避免同一筆錢被領兩次</h2>
+        <h2>櫃檯對機台帳號人工出金時，系統必須同時取消該機台尚未完成的出金交易，避免同一筆錢...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-032 櫃檯對機台帳號人工出金時，同時取消該機台尚未完成的出金 pending req-cashflow-027 ac-cashflow-0271 high high" data-class="grounded">
@@ -1792,13 +1760,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-028">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-028</span>
-        <h2>櫃檯對機台帳號人工入金時，不需使既有的入金 PENDING 失效（與人工出金的連動取消規則不同）</h2>
+        <h2>櫃檯對機台帳號人工入金時，不需使既有的入金 PENDING 失效（與人工出金的連...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-033 櫃檯對機台帳號人工入金時，既有的入金 pending 不受影響 req-cashflow-028 ac-cashflow-0281 high medium" data-class="grounded">
@@ -1838,13 +1805,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-029">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-029</span>
-        <h2>機台請求被拒絕時依原因回對應狀態碼：超過額度上限(1-OVER LIMIT)、查無對應交易(1-NO RECORD)、機</h2>
+        <h2>機台請求被拒絕時依原因回對應狀態碼：超過額度上限(1-OVER LIMIT)、查...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-034 加計後將超過場館額度上限時回 1-over limit req-cashflow-029 ac-cashflow-0291 high high" data-class="grounded">
@@ -1884,13 +1850,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-057 查無對應 pending 或 txid 不符時回 1-no record req-cashflow-029 ac-cashflow-0292 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-057</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">查無對應 PENDING 或 TXID 不符時回 1-NO RECORD</h3>
     <div class="tc-pills">
@@ -1922,13 +1887,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-058 機台停用或場館未開通時回 7-out of service req-cashflow-029 ac-cashflow-0293 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-058</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">機台停用或場館未開通時回 7-OUT OF SERVICE</h3>
     <div class="tc-pills">
@@ -1960,13 +1924,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-059 機台憑證已失效（被重置）時回 9-other error req-cashflow-029 ac-cashflow-0294 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-059</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">機台憑證已失效（被重置）時回 9-OTHER ERROR</h3>
     <div class="tc-pills">
@@ -1998,13 +1961,12 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-060 請求欄位缺漏/型別錯誤或幣別不符或金額為負時回 6-bad data/format req-cashflow-029 ac-cashflow-0295 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-060</span>
       <span class="tc-ver">v1</span>
-      
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
     <h3 class="tc-title">請求欄位缺漏/型別錯誤或幣別不符或金額為負時回 6-BAD DATA/FORMAT</h3>
     <div class="tc-pills">
@@ -2036,29 +1998,29 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-030">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-030</span>
-        <h2>洗分或出金因餘額不足（1-NO CREDITS）被拒絕時，不寫入交易紀錄，僅回覆該狀態碼；本表其餘未成立原因才會留下交易</h2>
+        <h2>任何交易被判定為未成立（不論原因為額度上限、資料格式錯誤、機台停用/場館未開通、...</h2>
       </div>
       <div class="tc-grid">
-<article class="tc-card" data-search="tc-cashflow-035 餘額不足被拒絕不留交易紀錄；其他未成立原因會留下交易紀錄 req-cashflow-030 ac-cashflow-0301 ac-cashflow-0302 high medium" data-class="grounded">
+<article class="tc-card" data-search="tc-cashflow-035 所有未成立原因（餘額不足、額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效）一律不寫入交易紀錄 req-cashflow-030 ac-cashflow-0301 ac-cashflow-0302 high medium" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
       <span class="tc-id">TC-CASHFLOW-035</span>
-      <span class="tc-ver">v1</span>
-      
+      <span class="tc-ver">v2</span>
+      <span class="p3-badge">Phase 3 整合</span>
     </div>
-    <h3 class="tc-title">餘額不足被拒絕不留交易紀錄；其他未成立原因會留下交易紀錄</h3>
+    <h3 class="tc-title">所有未成立原因（餘額不足、額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效）一律不寫入交易紀錄</h3>
     <div class="tc-pills">
       <span class='pill pill-grounded'>grounded · 已確認</span>
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-medium'>風險 medium</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0301；AC-CASHFLOW-0302</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0301</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0302</span>
     </div>
   </header>
 
@@ -2069,26 +2031,25 @@ body {
     </div>
     <div class="tc-section">
       <div class="tc-label">步驟</div>
-      <ol class="tc-steps"><li><span class='step-n'>1</span><span>洗分或出金因餘額不足被拒絕，檢視機台交易紀錄</span></li><li><span class='step-n'>2</span><span>另一筆交易因額度上限被拒絕，檢視機台交易紀錄</span></li></ol>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>洗分或出金因餘額不足被拒絕，查詢機台交易紀錄</span></li><li><span class='step-n'>2</span><span>開分或入金因額度上限被拒絕，查詢機台交易紀錄</span></li><li><span class='step-n'>3</span><span>交易請求 currency 與主站台核心貨幣不符（資料格式錯誤），查詢機台交易紀錄</span></li><li><span class='step-n'>4</span><span>Admin 於站台列表頁將該機台切換為停用狀態，送出任一交易請求，查詢機台交易紀錄</span></li><li><span class='step-n'>5</span><span>Admin 對該機台會員詳細頁的機台憑證執行重置，機台仍以舊 token 送出任一交易請求，查詢機台交易紀錄</span></li></ol>
     </div>
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
-      <p class="tc-expected">第一步查無此次拒絕的紀錄，僅回覆 1-NO CREDITS；第二步有留下「未成立」的交易紀錄，可查得拒絕原因</p>
+      <p class="tc-expected">五種未成立原因，查詢機台交易紀錄皆查無此次拒絕的紀錄，僅收到對應狀態碼（依序 1-NO CREDITS／1-OVER LIMIT／6-BAD DATA/FORMAT／7-OUT OF SERVICE／9-OTHER ERROR）；分數皆未異動；「未成立」狀態不會出現在交易紀錄查詢中，五種原因待遇一致（CLR-CASHFLOW-006）</p>
     </div>
     
     <div class="tc-spec">
-      <span class="spec-loc">§四種金流/交易不成立的原因</span>
+      <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）</span>
       
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-031">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-031</span>
-        <h2>廠商文件保留的 2-OCCUPIED 狀態碼（情境為被網頁玩家占用）平台不使用，因機台帳號的前台登入僅供機台本身遊戲畫面</h2>
+        <h2>廠商文件保留的 2-OCCUPIED 狀態碼（情境為被網頁玩家占用）平台不使用，...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-036 平台不因前台登入狀態回 2-occupied 或拒絕交易，此碼永不啟用 req-cashflow-031 ac-cashflow-0311 high low" data-class="grounded">
@@ -2128,13 +2089,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-032">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-032</span>
-        <h2>機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤（6-BAD DATA/FORMAT）</h2>
+        <h2>機台送來的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤（6-BAD D...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-037 機台送出的幣別與主站台核心貨幣不符時，拒絕交易並記為資料格式錯誤 req-cashflow-032 ac-cashflow-0321 high medium" data-class="grounded">
@@ -2174,13 +2134,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-033">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-033</span>
-        <h2>無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；前一場次因洗分結束後留有餘數時，立即建立新場次承接（</h2>
+        <h2>無進行中場次時，開分或入金完成使分數由 0 轉為有餘額，建立新場次；前一場次因洗...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-038 無進行中場次時，開分或入金完成使分數轉正即建立新場次 req-cashflow-033 ac-cashflow-0331 high high" data-class="grounded">
@@ -2220,7 +2179,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-039 前一場次因洗分結束留有餘數時，立即建立新場次承接期初餘額 req-cashflow-033 ac-cashflow-0332 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -2258,13 +2216,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-034">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-034</span>
-        <h2>場次進行中期間所有的開分、入金、洗分、出金與注單一律歸屬於這個場次；結束場次的那筆洗分／出金交易，歸屬於被它結束的場次</h2>
+        <h2>場次進行中期間所有的開分、入金、洗分、出金與注單一律歸屬於這個場次；結束場次的那...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-040 場次進行中期間所有交易與注單皆歸屬於當前場次，含結束該場次的那筆交易 req-cashflow-034 ac-cashflow-0341 high medium" data-class="grounded">
@@ -2304,13 +2261,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-035">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-035</span>
-        <h2>任一筆洗分或出金交易完成（扣分成功）當下，場次即結束——不分全洗或指定金額、不論是否留有餘數；交易被取消或未成立不觸發；</h2>
+        <h2>任一筆洗分或出金交易完成（扣分成功）當下，場次即結束——不分全洗或指定金額、不論...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-041 任一筆洗分或出金交易完成（扣分成功）當下場次即結束，不需等待核實 req-cashflow-035 ac-cashflow-0351 high high" data-class="grounded">
@@ -2350,7 +2306,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-042 洗分或出金請求被拒絕或取消時，場次不受影響 req-cashflow-035 ac-cashflow-0352 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -2388,9 +2343,8 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-036">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-036</span>
@@ -2434,13 +2388,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-037">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-037</span>
-        <h2>分數還有餘額但超過場館設定的場次逾時時間（預設 1 小時）沒有任何交易與遊玩紀錄時，自動結束並標記為逾時結束；期間內有任</h2>
+        <h2>分數還有餘額但超過場館設定的場次逾時時間（預設 1 小時）沒有任何交易與遊玩紀錄...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-044 場次超過逾時時間無任何交易與遊玩紀錄時，自動結束並標記為逾時結束 req-cashflow-037 ac-cashflow-0371 high high" data-class="grounded">
@@ -2480,7 +2433,6 @@ body {
     </div>
   </div>
 </article>
-
 <article class="tc-card" data-search="tc-cashflow-045 逾時前發生任一交易或注單即重新起算逾時計時，場次不因此結束 req-cashflow-037 ac-cashflow-0372 high high" data-class="grounded">
   <header class="tc-head">
     <div class="tc-id-row">
@@ -2518,13 +2470,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-038">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-038</span>
-        <h2>場館日結時間到達時，所有進行中的場次一律結束並標記為日結結算，剩餘分數轉為隔日新場次的期初餘額</h2>
+        <h2>場館日結時間到達時，所有進行中的場次一律結束並標記為日結結算，剩餘分數轉為隔日新...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-046 場館日結時間到達時，所有進行中場次一律結束並標記為日結結算 req-cashflow-038 ac-cashflow-0381 high high" data-class="grounded">
@@ -2564,9 +2515,8 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-039">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-039</span>
@@ -2610,13 +2560,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-040">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-040</span>
-        <h2>線上會員沒有場次，與線上帳號共用的頁面（交易紀錄查詢、注單查詢等）所帶的場次編號欄位一律顯示「—」</h2>
+        <h2>線上會員沒有場次，與線上帳號共用的頁面（交易紀錄查詢、注單查詢等）所帶的場次編號...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-048 線上會員的交易紀錄與注單查詢頁的場次編號欄位一律顯示橫線 req-cashflow-040 ac-cashflow-0401 high low" data-class="grounded">
@@ -2656,13 +2605,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-041">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-041</span>
-        <h2>機台為停用狀態，或所屬場館站台非開通狀態時，任何交易請求皆被拒絕（回 7-OUT OF SERVICE），該機台無法運作</h2>
+        <h2>機台為停用狀態，或所屬場館站台非開通狀態時，任何交易請求皆被拒絕（回 7-OUT...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-049 機台停用或所屬場館站台非開通狀態時，任何交易請求皆回 7-out of service req-cashflow-041 ac-cashflow-0411 ac-cashflow-0412 high high" data-class="grounded">
@@ -2678,7 +2626,8 @@ body {
       <span class='pill pill-neutral'>優先 high</span>
       <span class='pill pill-risk-high'>風險 high</span>
       <span class="pill pill-neutral">api</span>
-      <span class="pill pill-neutral">AC-CASHFLOW-0411；AC-CASHFLOW-0412</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0411</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0412</span>
     </div>
   </header>
 
@@ -2702,13 +2651,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-042">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-042</span>
-        <h2>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cashout；前台呼叫時使用的認證方式（是否</h2>
+        <h2>機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cas...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-050 過渡期前台呼叫 req-cashout／end-cashout 應使用與正式定案一致的認證方式（暫依假設） req-cashflow-042 ac-cashflow-0421 high medium" data-class="exploratory">
@@ -2748,13 +2696,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-043">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-043</span>
-        <h2>req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的重送策略 spec 明確標註待確認；前台</h2>
+        <h2>req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-051 req-cashout 成功後 end-cashout 失敗時，前台依假設策略重送；無法補送則交易停在 pending 並走人工出金連動取消 req-cashflow-043 ac-cashflow-0431 high medium" data-class="exploratory">
@@ -2794,13 +2741,12 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
     <section class="req-group" id="REQ-CASHFLOW-044">
       <div class="req-head">
         <span class="req-id">REQ-CASHFLOW-044</span>
-        <h2>客戶回覆機台目前不需要稽核（維持預設 0 倍），「開分招待」活動本次不實作；現行稽核倍數機制無法實現此活動（倍數為幣種層</h2>
+        <h2>客戶回覆機台目前不需要稽核（維持預設 0 倍），「開分招待」活動本次不實作；現行...</h2>
       </div>
       <div class="tc-grid">
 <article class="tc-card" data-search="tc-cashflow-052 系統不存在開分招待（綁定流水門檻的活動）功能，稽核倍數為幣種層級設定無法綁定單筆交易 req-cashflow-044 ac-cashflow-0441 high low" data-class="grounded">
@@ -2840,18 +2786,15 @@ body {
     </div>
   </div>
 </article>
-</div>
+      </div>
     </section>
-    
   </main>
 </div>
-
 <script>
 const search = document.getElementById('search');
 const cards = Array.from(document.querySelectorAll('.tc-card'));
 const chips = Array.from(document.querySelectorAll('.chip'));
 let activeChip = 'all';
-
 function applyFilter() {
   const q = search.value.trim().toLowerCase();
   cards.forEach(c => {
@@ -2864,7 +2807,6 @@ function applyFilter() {
     g.hidden = !visible;
   });
 }
-
 search.addEventListener('input', applyFilter);
 chips.forEach(chip => chip.addEventListener('click', () => {
   chips.forEach(c => c.classList.remove('active'));

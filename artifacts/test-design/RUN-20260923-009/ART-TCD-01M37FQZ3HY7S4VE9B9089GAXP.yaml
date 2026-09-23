@@ -1,0 +1,94 @@
+artifact_id: ART-TCD-01M37FQZ3HY7S4VE9B9089GAXP
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-009
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-23T15:56:55Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-035@v1
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-030
+- entity_type: TestCase
+  id: TC-CASHFLOW-035
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    execution_mode: manual
+    test_data: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    priority: high
+    risk: medium
+    draft_id: TC-DRAFT-01M37FQZ23SVCB3YKW8VQM1VNQ
+    title: 所有未成立原因（餘額不足、額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效）一律不寫入交易紀錄
+    requirement_ids:
+    - REQ-CASHFLOW-030
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0301
+    - AC-CASHFLOW-0302
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - decision_table
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    steps:
+    - n: 1
+      action: 洗分或出金因餘額不足被拒絕，查詢機台交易紀錄
+    - n: 2
+      action: 開分或入金因額度上限被拒絕，查詢機台交易紀錄
+    - n: 3
+      action: 交易請求 currency 與主站台核心貨幣不符（資料格式錯誤），查詢機台交易紀錄
+    - n: 4
+      action: Admin 於站台列表頁將該機台切換為停用狀態，送出任一交易請求，查詢機台交易紀錄
+    - n: 5
+      action: Admin 對該機台會員詳細頁的機台憑證執行重置，機台仍以舊 token 送出任一交易請求，查詢機台交易紀錄
+    expected_result: 五種未成立原因，查詢機台交易紀錄皆查無此次拒絕的紀錄，僅收到對應狀態碼（依序 1-NO CREDITS／1-OVER LIMIT／6-BAD DATA/FORMAT／7-OUT OF SERVICE／9-OTHER
+      ERROR）；分數皆未異動；「未成立」狀態不會出現在交易紀錄查詢中，五種原因待遇一致（CLR-CASHFLOW-006）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）
+    assumptions: []
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-035
+      version: 1
+    design_rationale: CLR-CASHFLOW-006 回覆 B（2026-09-23）：所有未成立原因（額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效、餘額不足）一律不寫入交易紀錄，理由與 CLR-CASHFLOW-005
+      一致——避免客戶端可輕易觸發的拒絕情境把資料庫灌爆。RM 已回寫，本 TC 依新規則修訂。ADR-008 影響掃描判定。
+history:
+- at: '2026-09-23T15:56:56Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-009
+- at: '2026-09-23T16:06:27Z'
+  from_status: VALID
+  to_status: VALID
+  by: agent-test-designer
+  trigger: pre-approval strengthening per TestValidator advisory
+  run_id: RUN-20260923-009
+  note: 補機台停用（Admin 站台列表切換）與憑證失效（Admin 重置憑證、機台仍用舊 token）的具體重現操作

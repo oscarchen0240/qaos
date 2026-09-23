@@ -1393,22 +1393,24 @@ requirements:
   spec_id: SPEC-CASHFLOW-001
   spec_version: '0.1'
   type: functional
-  title: 餘額不足不寫入交易紀錄
-  statement: 洗分或出金因餘額不足（1-NO CREDITS）被拒絕時，不寫入交易紀錄，僅回覆該狀態碼；本表其餘未成立原因才會留下交易紀錄
+  title: 所有未成立原因一律不寫入交易紀錄
+  statement: 任何交易被判定為未成立（不論原因為額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效或餘額不足），平台一律不寫入交易紀錄，僅回覆對應狀態碼；交易紀錄查詢／機台交易紀錄不會出現任何「未成立」狀態的紀錄。【2026-09-23
+    CLR-CASHFLOW-006 回覆 B】所有未成立原因（額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效等）一律不寫入交易紀錄，理由與 CLR-CASHFLOW-005 一致：客戶端未經驗證的輸入若被拒絕仍留紀錄，攻擊者可高頻觸發使資料庫被大量無用紀錄灌爆。spec.md
+    正本相關文字（未成立原因、附錄狀態碼對照）待更新。
   acceptance_criteria:
   - ac_id: AC-CASHFLOW-0301
     given: 洗分或出金因餘額不足被拒絕
     when: 檢視機台交易紀錄
     then: 查無此次拒絕的紀錄，僅收到 1-NO CREDITS 回覆
   - ac_id: AC-CASHFLOW-0302
-    given: 交易因額度上限或其他原因被拒絕
+    given: 交易因額度上限、資料格式錯誤、機台停用/場館未開通或憑證失效等任一未成立原因被拒絕
     when: 檢視機台交易紀錄
-    then: 有留下「未成立」的交易紀錄，可查得拒絕原因
+    then: 查無此次拒絕的紀錄，僅收到對應狀態碼；不會以「未成立」狀態出現在交易紀錄查詢中
   spec_reference:
     spec_id: SPEC-CASHFLOW-001
     spec_version: '0.1'
     location: §四種金流/交易不成立的原因 + §附錄-狀態碼對照
-    quote: 餘額不足 | 洗分時可洗金額為 0…或出金時餘額為 0。屬正常情形。不寫入交易紀錄——平台僅回覆機台餘額不足；本表其餘原因才會留下「未成立」紀錄
+    quote: （v0.1 原文僅載明餘額不足不寫入；本規則已由 CLR-CASHFLOW-006 擴大至全部未成立原因，spec.md 待更新）
   ambiguity: null
   risk: medium
   status: ACTIVE
@@ -1434,6 +1436,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-005
+  - at: '2026-09-23T17:15:25Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-006：AC-CASHFLOW-0302 反轉，所有未成立原因皆不寫入紀錄
 - requirement_id: REQ-CASHFLOW-031
   version: 1
   spec_id: SPEC-CASHFLOW-001
