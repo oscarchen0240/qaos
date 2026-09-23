@@ -1,0 +1,185 @@
+<title>日結注單拆帳</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}}
+</style>
+<style>
+table.calc { width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; font-variant-numeric: tabular-nums; }
+table.calc th, table.calc td { border-bottom:1px solid var(--border); padding:7px 10px; text-align:right; }
+table.calc th:first-child, table.calc td:first-child { text-align:left; }
+table.calc th { color:var(--text-faint); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+table.calc tr.total td { border-bottom:none; border-top:2px solid var(--border); font-weight:700; }
+table.calc td.bad { color:var(--accent); font-weight:600; }
+table.calc td.ok { color:var(--ok); font-weight:600; }
+.mech { background:var(--surface-2); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; padding:12px 14px; margin-top:14px; font-size:13.5px; }
+.mech b { color:var(--accent); }
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Critical / High</span>
+    <span class="badge scope">後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後台][Arcade] 跨場次切換點的注單被拆成投注與派彩兩半，分記不同場次／營業日；日結結算場次歸到結束日</h1>
+  <div class="subtitle">BUG-DAILYREPORT-004 · SPEC-DAILYREPORT-001 v0.1 · REQ-DAILYREPORT-009 · TC-DAILYREPORT-031 · RUN-20260923-001</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>GALAXY-A（真人大廳）</dd>
+      <dt>測試環境</dt><dd>stage · 站台 Arcade（機台場館，<b>日結時間 00:00 UTC+0</b>）</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ACAA00414</code>（機台帳號）；查詢者 ZZAA00411／ACAA00412（站長）</dd>
+      <dt>測試時間</dt><dd>2026-09-22 23:32 ～ 2026-09-23 00:21</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">後端 <code class="inline">query-venue-daily-report</code>／場次彙總邏輯。前端未發現問題。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">機台 ACAA00414 的 6 筆注單全部在場次 <code class="inline">ACAA00414_20260922_0005</code>（09-22 23:32～09-23 00:00）內投注，其中流水號 <b>6745026</b> 投注於 09-22 23:59:57、<b>派彩於 09-23 00:00:24</b>——派彩跨過了日結時刻。結果這一筆被拆成兩半：<b>投注額記在 0005 場次、派彩記在下一個場次 0001</b>。</p>
+
+    <div class="mech">
+      <b>機制（可零參數重現兩個數字）：</b>損益 ＝ 該場次<b>毛派彩</b> − 該場次<b>投注額</b>，而兩者各依自己的發生時點歸屬場次。<br>
+      0005：毛派彩 980 − 投注額 1000 ＝ <b>−20</b>　｜　0001：毛派彩 392 − 投注額 0 ＝ <b>+392</b>
+    </div>
+
+    <table class="calc">
+      <thead><tr><th>場次</th><th>時間</th><th>注單數</th><th>有效投注額</th><th>損益</th><th>期末餘額</th></tr></thead>
+      <tbody>
+        <tr><td>..._20260922_0005</td><td>09-22 23:32 ～ 09-23 00:00</td><td class="bad">6</td><td class="bad">800</td><td class="bad">−20</td><td>2,380</td></tr>
+        <tr><td>..._20260923_0001</td><td>09-23 00:00 ～ 00:21</td><td class="bad">0</td><td class="bad">200</td><td class="bad">+392</td><td>2,772</td></tr>
+        <tr class="total"><td>總計</td><td>—</td><td class="ok">6 ✓</td><td class="ok">1,000 ✓</td><td class="ok">372 ✓</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="notice">總數全部正確（與注單查詢相符），<b>錯的是分配</b>——因此總計列的檢查看不出問題。注意 0001 場次出現「注單數 0 卻有有效投注額 200」的自相矛盾。</p>
+
+    <p class="body-text" style="margin-top:18px">同時，兩個 09-22 開始、被日結強制結束的場次（<code class="inline">ACAA00414_20260922_0005</code>、<code class="inline">ACAA00314_20260922_0005</code>）的<b>結算期間都顯示 2026-09-23</b>，應為開始的營業日 09-22。連帶使依機台明細的 09-22 列注單相關欄全為 0（該日實際有 6 筆注單）。</p>
+
+    <div class="specquote">
+      <b>SPEC-ARCADE-001 v0.7 §場次如何開始與結束</b><br>
+      進行中 | 期間所有的開分、入金、洗分、出金與注單，<b>一律歸屬於這個場次</b>
+    </div>
+    <div class="specquote">
+      <b>CLR-DAILYREPORT-007 · PM 回覆（APPLIED）＋ TC-DAILYREPORT-031（假設經 APR-0003 核准）</b><br>
+      日結結算場次<b>歸屬開始的營業日</b>（已於 2026-09-23 回寫入 RM REQ-DAILYREPORT-009 statement）
+    </div>
+    <p class="notice"><b>這不是規格未定義造成的歧義。</b>spec 未明示注單歸屬採投注時間或派彩時間，但兩種基準算出來都不是現況：統一用投注時間應為 0005＝1000／+372／6 筆、0001＝0；統一用派彩時間應為 0005＝800／+180／5 筆、0001＝200／+192／1 筆。實際顯示的 800／−20／6 與 200／+392／0 兩者皆非。</p>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　① 一筆注單的投注與派彩歸屬同一場次／營業日（採單一基準，不得拆半）；② 同列的注單數與有效投注額採同一基準；③ 損益為該場次全部注單的損益合計；④ 日結結算場次歸屬其<b>開始</b>的營業日。</div>
+    <div class="actual"><b>實際</b>　6745026 的投注額與派彩分記兩個場次；注單數依投注時間、有效投注額依派彩時間；損益＝毛派彩−投注額（各依自己時點）得 −20／+392；09-22 開始的日結結算場次列在 09-23。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0068</span>注單查詢：6 筆投注 09-22 23:55:50～23:59:57，6745026 派彩 09-23 00:00:24；投注額合計 1000</li>
+      <li><span class="tag">EVD-0069</span>依機台明細：09-23 列 6／800／−20／期末 2380；09-22 列 注單相關欄全 0</li>
+      <li><span class="tag">EVD-0070</span>依場次明細：0005 場次 09-22 23:32～09-23 00:00，結算期間卻是 09-23</li>
+      <li><span class="tag">EVD-0071</span>機台前台實際餘額 2,772，與報表 09-23 列期末 2,380 差 392</li>
+      <li><span class="tag">EVD-0072</span>依場次明細三列並陳：0005 與 0001 的拆分，總計 6／1000／372</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>Arcade 站台，讓某機台在日結時刻（00:00 UTC+0）前數十秒下注，使其<b>派彩時間落在日結時刻之後</b></li>
+      <li>進入「各式報表 › 場館日結報表」，統計維度「依場次明細」，結算日期設為日結後那一天，搜尋</li>
+      <li>比對該機台跨日結的場次與其後續新場次的 注單數／有效投注額／損益／期初期末餘額，以及底部總計列</li>
+      <li>統計維度改「依機台明細」，結算日期涵蓋前後兩日，比對兩列</li>
+      <li>以「各式報表 › 注單查詢」核對該批注單的投注時間、派彩時間、投注額與派彩</li>
+      <li>開啟機台前台畫面，記錄實際餘額與報表期末餘額比對</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text"><code class="inline">POST /api/v2/machine/query-venue-daily-report</code>（依場次明細／依機台明細兩種維度皆重現）。本次以畫面數字判定，未另擷取酬載。</p>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <figure><img src="img/EVD-0072.webp" alt="依場次明細三列，顯示拆分結果與總計"><figcaption>EVD-0072 · 依場次明細：0005 與 0001 的拆分，總計 6／1000／372</figcaption></figure>
+    <div class="gallery" style="margin-top:14px">
+      <figure><img src="img/EVD-0068.webp" alt="注單查詢 6 筆"><figcaption>EVD-0068 · 注單查詢</figcaption></figure>
+      <figure><img src="img/EVD-0069.webp" alt="依機台明細兩列"><figcaption>EVD-0069 · 依機台明細</figcaption></figure>
+    </div>
+    <figure style="margin-top:14px"><img src="img/EVD-0070.webp" alt="依場次明細場次時間與結算期間"><figcaption>EVD-0070 · 場次 09-22 23:32～09-23 00:00，結算期間顯示 09-23</figcaption></figure>
+  </section>
+
+  <div class="footer">
+    <span>QAOS · RUN-20260923-001 · Validator PASS（iter 1）· APR-0168 approved · <b>BUG-DAILYREPORT-004</b> OPEN</span>
+    <span>2026-09-23 · oscarchen@blockaction.tech</span>
+  </div>
+</div>

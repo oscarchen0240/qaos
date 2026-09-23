@@ -1,0 +1,116 @@
+artifact_id: ART-BVR-01M35TEJ8AGQGDT8DJP7D5YVWF
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-001
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-23T00:25:33Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M35SY1972DCM6YMMRP1664PZ
+references:
+- entity_type: Artifact
+  id: ART-BD-01M35SY1972DCM6YMMRP1664PZ
+- entity_type: Evidence
+  id: EVD-0068
+- entity_type: Evidence
+  id: EVD-0069
+- entity_type: Evidence
+  id: EVD-0070
+- entity_type: Evidence
+  id: EVD-0071
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M35SY1972DCM6YMMRP1664PZ
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-031
+    issue_type: other
+    severity: major
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/損益、期末餘額
+      quote: 損益：當日投注損益...期末餘額：該日結算時點各機台的分數合計
+    evidence: actual_result 與 severity_rationale 將 (a) 場次歸屬錯日、(b) 注單數／有效投注額基準不一致、(c) 損益 -20 與期末餘額 2380（應 2772）三症狀以『連帶』一詞包裝成單一因果鏈；但
+      draft 自己在 suspected_area 承認『−20 無法由本批注單的任何組合推導』。經覆核：6 筆派彩（站方視角）−96/+100/+200/−192/−192/−192，其總和 −372；排除跨日結時刻的 6745026（−192）後其餘
+      5 筆總和為 −180；皆非 −20。即 (c) 無法用『日結結算場次歸屬到結束日、注單被跨日切分』這個機制推導出來，其成因很可能與 (a)(b) 不同（另一條計算路徑的獨立缺陷）。
+    explanation: (a)(b) 兩症狀有共同、可驗證的觸發條件與機制（同一筆跨日結時刻的場次／注單，日期標籤與時間基準不一致），適合視為同源。但 (c) 損益值目前沒有任何已知計算路徑能解釋，若 RD 排查後發現是不相關的獨立缺陷（例如損益欄位讀到錯誤來源、快取或另一段彙總邏輯），目前『連帶』的因果敘述會誤導
+      RD 只修一處就視為全部修復，也會讓複測時漏測其一。
+    recommended_change: 在 title／expected_result／impact 中，將 (c) 損益與期末餘額錯誤改為『與 (a)(b) 同時觀察到、疑似獨立成因，待 RD 確認是否同源』的敘述，不要用『連帶』暗示已證實的因果關係；若
+      RD 複測後確認 (c) 成因與 (a)(b) 不同，應拆成獨立 bug 各自追蹤與驗證。【Analyst 已於核准前處理】title／severity_rationale／impact／suspected_area 已改為「同時觀察到、疑似獨立成因，待
+      RD 確認是否同源；若不同源應拆單」的敘述。
+  - testcase_id: TC-DAILYREPORT-031
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數（2026-09-03 定案）
+    evidence: draft expected_result_spec_reference 註記：『RM REQ-DAILYREPORT-009 statement 目前僅載入 CLR-007 的第一層（日結結算計入場次數），「歸屬開始的營業日」一句尚未回寫，已同步補上』。但本次收到的
+      requirements_009_017.yaml 中 REQ-DAILYREPORT-009 的 statement 與 history 仍只到『clarification_applied_CLR-DAILYREPORT-007：當日結束場次數計算範圍（已結束+日結結算皆計入）正式套用』，完全沒有『歸屬開始的營業日』字樣，也沒有對應
+      history 條目。
+    explanation: draft 宣稱已完成的 RM 回寫動作在提供的 artifact 快照中無法驗證、且與快照內容矛盾，第三方（RD／PM）核對規格依據時會產生『RM 沒寫、draft 卻說已經寫了』的混淆，削弱 traceability
+      的可信度。這不影響本 bug 的事實成立（CLR-007 APPLIED＋TC-031 assumption 經 APR-0003 核准已足以構成有效依據），但屬文件誠實度／一致性問題。
+    recommended_change: expected_result_spec_reference 改為如實描述現況，例如：『Spec 本文未明示；依據 CLR-DAILYREPORT-007（APPLIED）與 TC-DAILYREPORT-031
+      已核准假設（APR-0003）確認歸屬開始的營業日；RM REQ-DAILYREPORT-009 statement 尚未回寫此句，待補』，不要宣稱『已同步補上』這個在目前 artifact 中查無實據的動作。【Analyst 已於核准前處理】RM
+      REQ-DAILYREPORT-009 statement 已於 2026-09-23 補入「日結結算場次歸屬開始的營業日」（req_dailyreport009_clr007_attribution_backfill.py），spec_reference
+      亦改為如實敘述。
+  evidence_verification:
+  - evidence_id: EVD-0068
+    hash_verified: true
+    supports_claim: true
+    note: sha256 核對相符。截圖（注單查詢）逐列核對：6 筆注單流水號 6745021~6745026，投注時間 2026-09-22 23:55:50~23:59:57，派彩時間 2026-09-22 23:56:11~2026-09-23
+      00:00:24（僅 6745026 一筆的派彩時間跨越 00:00）；投注額 200/200/200/200/100/100 合計 1000；派彩（站方視角）依流水號由舊到新為 -96/+100/+200/-192/-192/-192，加總
+      -372，與 draft 引用數字完全一致。
+  - evidence_id: EVD-0069
+    hash_verified: true
+    supports_claim: true
+    note: sha256 核對相符。截圖（依機台明細）09-23 列：場次數1／開分1000／注單數6／有效投注額800／損益-20／期初1400／期末2380；09-22 列：場次數4／開分1100／洗分1300／注單數0／有效投注額0／損益0／期末1400。與
+      draft actual_result 逐項相符。
+  - evidence_id: EVD-0070
+    hash_verified: true
+    supports_claim: true
+    note: sha256 核對相符。截圖（依場次明細）場次 ACAA00414_20260922_0005，場次時間 2026-09-22 23:32~2026-09-23 00:00（時長27分），但結算期間顯示 2026-09-23；該場次列開分1000／注單數6／有效投注額800，與機台明細
+      09-23 列一致（可排除同日其他場次干擾，乾淨對應本案唯一爭議場次）。
+  - evidence_id: EVD-0071
+    hash_verified: true
+    supports_claim: true
+    note: sha256 核對相符。前台顯示餘額 2772.00，與報表期末 2380.00 差 392。覆算：期初1400＋開分1000＋玩家淨贏372＝2772（與前台相符）；報表 1400＋1000＋(−20)＝2380；差額 392＝372−(−20)，與
+      draft『392＝372＋20』的推論一致。
+  severity_assessment:
+    severity_recommended: critical
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 本報表用途為場館端點鈔對帳與平台分潤依據（spec §功能說明）。本案已用機台前台實際餘額（EVD-0071）證偽報表期末餘額，屬可驗證的金額計算錯誤，且畫面外觀正常、無任何提示，使用者無從察覺，符合 critical
+      的『資料/金額錯誤且不可見』特徵。可與同功能既有 BUG-DAILYREPORT-003（起訖日對調仍靜默回傳資料）對照：該案 severity_rationale 明確寫『無資料遺失、無金額計算錯誤，故不到 critical』而評為
+      major；本案恰好具備 BUG-003 所缺的『金額計算錯誤且已證偽』要素，故評為 critical 高於 BUG-003 的 major 有合理區隔依據，不是無節制拉高。priority=high：觸發條件明確（任何跨越日結時刻仍進行中的場次，即場館每日固定會發生的常態情境），非邊緣案例，但影響範圍限於當日結算與相鄰日彙總、非全站中斷，high
+      與現有同類 bug（001/002/003）的 priority 慣例一致，合理。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 查核 bugs_index.md 及 BUG-DAILYREPORT-001/002/003.yaml：001（依場館彙總/依機台明細 API 缺場次數欄位）、002（依場次明細 API 缺開始時間/時長欄位）皆為欄位缺失類、已
+      CLOSED，與本案『欄位有值但歸屬日與計算錯誤』性質不同。003（結算日期起訖日對調時 API 仍回傳資料，未回空）為篩選器邊界處理缺陷，與本案場次日期歸屬／金額計算邏輯不同一層。三者 requirement_id、suspected_area
+      均不重疊，無重複。
+history:
+- at: '2026-09-23T00:25:33Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-001

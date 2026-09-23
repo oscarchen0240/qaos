@@ -1,0 +1,106 @@
+artifact_id: ART-BVR-01M35VKQAE0GWMVZ3QK18Q75BA
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-001
+task_id: T2
+iteration: 1
+created_by: agent-bug-validator
+created_at: '2026-09-23T00:45:50Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M35V5QT4859Y78G06CWSQXWG
+references:
+- entity_type: Artifact
+  id: ART-BD-01M35V5QT4859Y78G06CWSQXWG
+- entity_type: Evidence
+  id: EVD-0068
+- entity_type: Evidence
+  id: EVD-0069
+- entity_type: Evidence
+  id: EVD-0070
+- entity_type: Evidence
+  id: EVD-0071
+- entity_type: Evidence
+  id: EVD-0072
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M35V5QT4859Y78G06CWSQXWG
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-031
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: impact 欄：『任何注單只要投注與派彩跨越場次切換點（洗分／出金結束場次、分數歸零、逾時結束，以及每日必然發生的日結時刻），其投注額與派彩就會被拆記到兩個場次／兩個營業日……』——五張證據（EVD-0068~0072）全部只涵蓋『日結結算』這一種場次切換點，沒有任何一筆針對洗分結束、出金結束、歸零結束或逾時結束場次的注單做過同樣的跨場次核對。
+    explanation: 『同一注單的扣分與派彩分別以不同時間基準歸屬場次』若真是後端彙總邏輯的通用缺陷（而非僅日結時刻的特例），邏輯上確實應該對任何場次切換點都成立，這是合理的推論方向；但目前只用日結這一種邊界證實過，把『洗分／出金結束、歸零結束、逾時結束』並列成同一句已驗證的事實陳述，會讓
+      RD／PM 誤以為這些情境也已個案驗證過。這不影響本案『日結時刻』本身已證實的部分，僅是 impact 涵蓋範圍的用詞嚴謹度問題，不足以否定 PASS。
+    recommended_change: 將該句改為『……推測同一機制在其他場次切換點（洗分／出金結束、歸零結束、逾時結束）也會發生，惟本次證據僅涵蓋日結結算這一種邊界，其餘情境待 RD 確認或另補注單查詢核對』，把『已知會發生』與『推測待驗證』分開陳述。【Analyst
+      已於核准前處理】impact 已改為「本次證據僅涵蓋日結時刻；其他切換點屬推測待 RD 確認」。
+  evidence_verification:
+  - evidence_id: EVD-0068
+    hash_verified: true
+    supports_claim: true
+    note: sha256 (432c9b6f...4bfbec) 與 EVD-0068.yaml 記錄相符；截圖逐列核對：6 筆注單流水號 6745021~6745026，投注時間 2026-09-22 23:55:50~23:59:57，派彩時間
+      23:56:11~2026-09-23 00:00:24（僅 6745026 一筆派彩時間跨過 00:00）；投注額 100/100/200/200/200/200 合計 1000；派彩（站方視角，由舊到新）-96/+100/+200/-192/-192/-192，總和
+      -372，與 draft 完全一致。獨立驗算：前 5 筆（派彩時間仍在 0005 內）站方視角總和 = -96+100+200-192-192 = -180，即玩家淨贏 180，與 draft『前5筆玩家淨贏180』相符；6745026
+      站方視角 -192，玩家淨贏 192，與 draft『淨贏192』相符——方向正確（派彩負值＝玩家贏，已還原為玩家視角敘述）。
+  - evidence_id: EVD-0069
+    hash_verified: true
+    supports_claim: true
+    note: sha256 (d0e55517...9162fc) 相符。依機台明細 09-23 列：場次數1／開分1000／注單數6／有效投注額800／損益-20／期初1400／期末2380；09-22 列全為 0（除期末承接1400）。與
+      draft actual_result 逐項相符，且與 EVD-0072 依場次明細之 0005 列數字一致（可交叉印證同一份資料）。
+  - evidence_id: EVD-0070
+    hash_verified: true
+    supports_claim: true
+    note: sha256 (0d9c0f0c...7ee8ef) 相符。依場次明細 場次 ACAA00414_20260922_0005，場次時間 2026-09-22 23:32~2026-09-23 00:00（時長27分），但結算期間顯示
+      2026-09-23；開分1000／注單數6／有效投注額800，與機台明細 09-23 列一致。
+  - evidence_id: EVD-0071
+    hash_verified: true
+    supports_claim: true
+    note: sha256 (6cd4d2ef...8be32a) 相符。前台顯示餘額 2772.00，與報表期末 2380.00 差 392。覆算：期初1400＋開分1000＋玩家淨贏372＝2772（與前台相符）；報表 1400＋1000＋(−20)＝2380；差額
+      392＝372−(−20)。
+  - evidence_id: EVD-0072
+    hash_verified: true
+    supports_claim: true
+    note: sha256 (0df5826e...23d326) 相符。依場次明細（全場館，結算日期2026-09-23）3列：ACAA00414_20260922_0005（09-22 23:32~09-23 00:00）注單數6／有效投注額800／損益-20／期末2380；ACAA00414_20260923_0001（09-23
+      00:00~00:21）注單數0／有效投注額200／損益+392／期末2772；ACAA00314_20260922_0005 同樣列於結算期間2026-09-23（開分/注單/損益皆0，不干擾本案）；總計 注單數6／有效投注額1000／損益372。皆與
+      draft 逐項相符。**獨立重算同源性（本輪重點）**：以 EVD-0068 的每筆投注時間/派彩時間為基礎，令『扣分（投注額）依投注時間歸屬場次，派彩（含本金，即『投注額+玩家淨贏』的毛額）依派彩時間歸屬場次』這一單一機制（與
+      draft suspected_area①②所述完全一致）：0005 應收之毛派彩 = 前5筆(196+0+0+392+392=980，其中196=100+96、392=200+192、輸的兩筆毛派彩=0)；0005 之扣分(投注額，依投注時間，6筆全部)=1000；0005
+      損益 = 980-1000 = **-20**（與報表完全相符）。0001 應收之毛派彩 = 6745026 之 200+192=392；0001 之扣分(依投注時間，0筆)=0；0001 損益 = 392-0 = **+392**（與報表完全相符）。此單一機制在零自由參數下同時精確重現
+      -20 與 +392 兩個數字（且兩者之和372與注單查詢總額相符），不是『180-200』式的巧合湊數，而是與『注單數用投注時間、有效投注額用派彩時間』同一套基準不一致機制的直接推論結果，故三症狀（注單數/有效投注額基準不一致、損益錯誤、期末餘額錯誤）同源的結論成立，可推翻
+      iter0 對『-20 疑似獨立成因』的保留意見。
+  severity_assessment:
+    severity_recommended: critical
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 本報表用途為場館端點鈔對帳與平台分潤依據（spec §功能說明）。本案已用機台前台實際餘額（EVD-0071）證偽報表期末餘額（2380 vs 2772，差392），且本輪透過 EVD-0072 與獨立重算證實此差額與『注單數/有效投注額基準不一致』『損益計算錯誤』為同一機制所致（見
+      EVD-0072 note），非零散問題，對帳影響面更明確。畫面外觀正常、總計列數字仍然正確（6/1000/372），使用者與對帳人員無法從總計察覺分帳錯誤，符合 critical 的『資料/金額錯誤且不可見』特徵。與同功能既有 BUG-DAILYREPORT-003
+      對照：該案 severity_rationale 載明『無資料遺失、無金額計算錯誤，故不到 critical』而評 major；本案具備其所缺的『金額計算錯誤且已用真實餘額證偽』要素，evd 核對後該引用準確，critical 高於
+      BUG-003 的 major 有合理區隔，非無節制拉高。priority=high：觸發條件為『注單投注與派彩跨越場次切換點』，其中日結時刻每日必然發生（非邊緣情境），且已確認場館內另一機台 ACAA00314 的 0005 場次同樣受結算期間歸屬問題影響，非單一機台個案；影響範圍限於當日與相鄰日彙總、非全站中斷，high
+      與同類 bug（001/002/003）priority 慣例一致。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 查核 bugs_index.md 及 BUG-DAILYREPORT-001/002/003.yaml：001（依場館彙總/依機台明細 API 缺『場次數』欄位，CLOSED）、002（依場次明細 API 缺『開始時間/場次時長』欄位，CLOSED）皆為欄位缺失類，與本案『欄位有值但歸屬與計算錯誤』性質不同。003（結算日期起訖日對調時
+      API 仍回傳資料，未回空，OPEN/major）為篩選器邊界處理缺陷，與本案『注單被拆分歸屬場次/營業日、損益計算錯誤』屬不同一層邏輯（不同 requirement_id：004 vs 009，suspected_area 不重疊）。iter1
+      新增之 EVD-0072（跨機台/跨場次的依場次明細清單）亦未出現與既有三筆 bug 相同的徵狀，維持無重複之結論。
+history:
+- at: '2026-09-23T00:45:50Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-001
