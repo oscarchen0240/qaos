@@ -1,0 +1,90 @@
+artifact_id: ART-TCD-01M36TGT5MD4YBKC2KNG77Y650
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-007
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-09-23T09:46:01Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-CASHFLOW-011@v1
+references:
+- entity_type: Requirement
+  id: REQ-CASHFLOW-009
+- entity_type: TestCase
+  id: TC-CASHFLOW-011
+- entity_type: Artifact
+  id: ART-RM-01M2EDG1DVY0CSSEK0GR537KAA
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    test_data: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: false
+    draft_id: TC-DRAFT-01M36TGT47C4QA5AFXXRK639BM
+    title: 即使 req-cashin 已成功建立 PENDING，end-cashin 時全場館餘額已達額度上限，仍會被擋下並退鈔
+    requirement_ids:
+    - REQ-CASHFLOW-009
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0091
+    preconditions:
+    - 機台已透過憑證通過認證
+    - 機台所屬場館為開通狀態，機台為啟用狀態
+    steps:
+    - n: 1
+      action: req-cashin 已送出並成功建立 PENDING、取得 TXID（本階段未判定額度、未預留）
+    - n: 2
+      action: 在收到 end-cashin 前，令全場館餘額合計因其他交易已達到額度上限
+    - n: 3
+      action: 機台送出 end-cashin，TXID 相符，帶入實際清點金額
+    expected_result: 平台於 end-cashin 判定額度上限：因加計後將超過上限，回 1-OVER LIMIT，不更新帳務、不關閉 PENDING 為已完成（純 API 環境以回覆碼與帳務未異動為判定依據，實體機台另確認退鈔）——與
+      req-cashin 階段是否已建立 PENDING 無關，該 PENDING 本身不代表額度已通過。與 TC-CASHFLOW-009（併發序列化下的超限拒絕）的差異：本案驗證的是單一交易在單純狀態前置下的超限拒絕，非併發序列化
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）
+    assumptions: []
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-CASHFLOW-011
+      version: 1
+    design_rationale: CLR-CASHFLOW-005 RD 回覆 A（2026-09-23）：req-cashin 階段入鈔機尚未完成實體清點，客戶端回報金額不可信，若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字造成機台卡在等待中的
+      DoS；額度上限改於 end-cashin（依入鈔機實際清點金額）判定，超限則退鈔。RM REQ-CASHFLOW-007／009 已反轉，本 TC 依新規則重寫斷言方向。ADR-008 影響掃描判定需修訂。
+history:
+- at: '2026-09-23T09:46:01Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-007
+- at: '2026-09-23T09:56:02Z'
+  from_status: VALID
+  to_status: VALID
+  by: agent-test-designer
+  trigger: pre-approval strengthening per TestValidator advisories
+  run_id: RUN-20260923-007
+  note: ①補純 API 環境退鈔降級判定說明；②與 TC-CASHFLOW-009 互相標註差異，避免日後被誤判重複；③記錄 AC-CASHFLOW-0091 成功分支覆蓋缺口待追蹤

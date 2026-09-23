@@ -272,26 +272,28 @@ requirements:
   spec_id: SPEC-CASHFLOW-001
   spec_version: '0.1'
   type: functional
-  title: 入金額度於 req-cashin 階段判定並預留
-  statement: 額度上限於 req-cashin 階段以場館鎖內「當下全場館餘額合計＋已預留未入帳的入金金額＋本筆金額」判定；未超限才建立 PENDING 並預留，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+  title: 入金額度上限於 end-cashin 階段依實際清點金額判定
+  statement: req-cashin 階段建立 PENDING、取得 TXID，**不**於此階段判定額度上限（客戶端回報金額未經入鈔機清點確認、不可信）；額度上限於 **end-cashin** 階段以場館鎖內「當下全場館機台分數餘額合計（已入帳）＋本筆實際清點金額」判定，未超限才更新帳務、回
+    0-OK，超限則回 1-OVER LIMIT、機台退鈔、不更新帳務。【2026-09-23 CLR-CASHFLOW-005 RD 回覆 A，推翻 spec v07「額度上限判定與預留移至 req-cashin」定案】req-cashin
+    階段入鈔機尚未完成實體清點，客戶端回報的金額不可信；若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字造成整台機台卡在等待中的 DoS。額度上限實際於 end-cashin（入鈔機清點確認完成後）依實際金額判定，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。
   acceptance_criteria:
   - ac_id: AC-CASHFLOW-0071
-    given: 全場館餘額合計＋已預留金額＋本筆金額 未超過額度上限
+    given: req-cashin 送出（不論金額，本階段不判定額度）
     when: 送出 req-cashin
-    then: 建立 PENDING 並將本筆金額計入預留
+    then: 建立 PENDING 並取得 TXID，尚未判定額度上限、尚未預留
   - ac_id: AC-CASHFLOW-0072
-    given: 全場館餘額合計＋已預留金額＋本筆金額 將超過額度上限
-    when: 送出 req-cashin
-    then: 回 1-OVER LIMIT，不建立 PENDING、不預留，機台直接退鈔
+    given: end-cashin 確認時（實際清點金額），全場館機台分數餘額合計（已入帳）＋本筆實際清點金額 將超過額度上限
+    when: 送出 end-cashin
+    then: 回 1-OVER LIMIT，不更新帳務、不關閉為已完成，機台退鈔
   - ac_id: AC-CASHFLOW-0073
-    given: 兩筆入金請求幾乎同時送達，各自單看都不超限但合計會超限
+    given: 兩筆入金的 end-cashin 幾乎同時到達，各自單看不超限但合計會超限
     when: 依場館鎖逐筆序列化處理
-    then: 第一筆通過並預留後，第二筆的判定基準已包含第一筆的預留，因而正確被擋下
+    then: 場館鎖內逐筆序列化判定：先處理的一筆通過並入帳，第二筆的判定基準已包含第一筆的實際入帳金額，因而正確被擋下回 1-OVER LIMIT
   spec_reference:
     spec_id: SPEC-CASHFLOW-001
     spec_version: '0.1'
     location: §附錄-入金
-    quote: 先取得場館鎖…在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER LIMIT、不建立 PENDING、不預留
+    quote: （v07 定案已作廢，見 CLR-CASHFLOW-005；本欄不再逐字引用 spec.md，待正本更新）
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -317,6 +319,21 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-005
+  - at: '2026-09-23T09:40:27Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-005：額度上限判定時機由 req-cashin 改為 end-cashin，AC-0071/0072/0073 given/then 對應反轉
+  - at: '2026-09-23T09:53:50Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: 修正 REQ-CASHFLOW-007 statement 殘留 v07 舊邏輯用語「已預留未入帳的入金金額」（Validator RUN-20260923-005 major issue 指出）
+  - at: '2026-09-23T09:54:02Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: 修正 AC-CASHFLOW-0072 given/when 殘留舊邏輯用語與階段錯誤（Validator RUN-20260923-005 advisory 指出）
 - requirement_id: REQ-CASHFLOW-008
   version: 1
   spec_id: SPEC-CASHFLOW-001
@@ -387,18 +404,20 @@ requirements:
   spec_id: SPEC-CASHFLOW-001
   spec_version: '0.1'
   type: functional
-  title: end-cashin 完成入帳且不再判定額度
-  statement: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、預留轉為實際餘額，回 0-OK；本階段不再判定額度上限
+  title: end-cashin 依實際清點金額判定額度上限並完成入帳
+  statement: 收到 end-cashin 且 TXID 相符時，**本階段判定額度上限**（依入鈔機實際清點金額）；未超限則更新帳務、預留概念不再區分（req-cashin 未預留），回 0-OK；超限則回 1-OVER LIMIT、機台退鈔、不更新帳務。【2026-09-23
+    CLR-CASHFLOW-005 RD 回覆 A，推翻 spec v07「額度上限判定與預留移至 req-cashin」定案】req-cashin 階段入鈔機尚未完成實體清點，客戶端回報的金額不可信；若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字造成整台機台卡在等待中的
+    DoS。額度上限實際於 end-cashin（入鈔機清點確認完成後）依實際金額判定，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。
   acceptance_criteria:
   - ac_id: AC-CASHFLOW-0091
-    given: PENDING 存在且 TXID 相符
+    given: PENDING 存在且 TXID 相符，end-cashin 帶入入鈔機實際清點金額
     when: 收到 end-cashin
-    then: 關閉 PENDING、更新帳務、預留轉實際餘額，回 0-OK，且不再重新檢查額度上限
+    then: 本階段判定額度上限：未超限則更新帳務、關閉 PENDING，回 0-OK；超限則回 1-OVER LIMIT、機台退鈔
   spec_reference:
     spec_id: SPEC-CASHFLOW-001
     spec_version: '0.1'
     location: §附錄-入金
-    quote: 收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、把預留轉為實際餘額，回 0-OK。本階段不再判定額度上限
+    quote: （v07 定案已作廢，見 CLR-CASHFLOW-005；本欄不再逐字引用 spec.md，待正本更新）
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -424,6 +443,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-005
+  - at: '2026-09-23T09:40:27Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHFLOW-005：end-cashin 改為額度上限判定階段（原「不再判定」整條反轉）
 - requirement_id: REQ-CASHFLOW-010
   version: 1
   spec_id: SPEC-CASHFLOW-001

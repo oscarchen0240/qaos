@@ -1,0 +1,106 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+test_data:
+- name: 第一筆入金金額
+  value: 100（使加計後恰等於上限 A）
+- name: 第二筆入金金額
+  value: 1（使加計後超過上限 A）
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: true
+title: req-cashin 不判額度（含鉅額防禦）；end-cashin 依實際清點金額判定，恰等於上限成立、超過 1 單位則 1-OVER LIMIT 退鈔
+requirement_ids:
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0071
+- AC-CASHFLOW-0072
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+- 設定該場館額度上限為 A，並確認目前「全場館機台分數餘額合計（已入帳）」恰為 A-100
+steps:
+- n: 1
+  action: 送出 req-cashin，金額為遠超額度上限數個量級的鉅額數值（例如 A 的 1000 倍），確認仍回 0-OK、建立 PENDING 並取得 TXID——驗證 req-cashin 本階段不依客戶端聲稱金額判定額度，不會因巨額數字被拒或卡住（CLR-CASHFLOW-005
+    防 DoS 的核心行為）
+- n: 2
+  action: 送出該筆 end-cashin，實際清點金額改為 100（模擬入鈔機清點結果與聲稱金額不同），確認回覆與分數變化
+- n: 3
+  action: 另送出 req-cashin，金額 1，確認同樣建立 PENDING
+- n: 4
+  action: 送出其 end-cashin（實際清點金額 1），使「全場館機台分數餘額合計（已入帳）＋本筆實際清點金額」恰等於額度上限 A
+- n: 5
+  action: 確認回覆 0-OK、分數正常增加
+- n: 6
+  action: 再送出 req-cashin（金額 1，同樣建立 PENDING），送出其 end-cashin（實際清點金額 1），使加計後超過額度上限 A
+- n: 7
+  action: 確認此筆 end-cashin 的回覆與分數變化；若為純 API 直連環境（無實體機台），以回覆碼 1-OVER LIMIT 且帳務未異動為判定依據；有實體機台時另確認機台退鈔
+expected_result: 第一筆：req-cashin 送鉅額數字仍成功建立 PENDING（不判額度、不卡住），end-cashin 以實際清點金額 100 入帳、回 0-OK；第二筆：req-cashin 建立 PENDING，end-cashin
+  實際金額 1 使加計恰等於上限，回 0-OK 並正常入帳；第三筆：req-cashin 建立 PENDING，end-cashin 實際金額 1 使加計超過上限，回 1-OVER LIMIT，不更新帳務（純 API 環境以此為準，實體機台另確認退鈔）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）
+assumptions: []
+source: change_workflow
+testcase_id: TC-CASHFLOW-008
+version: 3
+supersedes: 2
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M36V4FQC8XFTD7J5CHXADQSH
+created_at: '2026-09-23T09:56:46Z'
+updated_at: '2026-09-23T17:13:30Z'
+history:
+- at: '2026-09-23T09:56:46Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M36V0V7YQ64J8BNFZHE24EYY
+  run_id: RUN-20260923-005
+- at: '2026-09-23T09:56:46Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260923-005
+- at: '2026-09-23T09:56:46Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M36V4FQC8XFTD7J5CHXADQSH
+  run_id: RUN-20260923-005
+- at: '2026-09-23T09:56:46Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260923-005
+- at: '2026-09-23T17:13:30Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0175
+  run_id: RUN-20260923-005
+- at: '2026-09-23T17:13:30Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260923-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0175

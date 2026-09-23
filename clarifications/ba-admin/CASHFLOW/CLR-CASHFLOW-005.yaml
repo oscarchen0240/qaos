@@ -1,0 +1,75 @@
+clarification_id: CLR-CASHFLOW-005
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+question: 入金額度上限的判定時機：req-cashin 階段判定（spec v07 定案文字）還是 end-cashin 階段判定（RD 2026-09-23 確認的實際開發流程）？
+context: '【spec 原文一：SPEC-ARCADE-001 v0.7 §入金（req-cashin→end-cashin）】
+
+  「額度上限於本階段判定並預留（v07 定案）：先取得場館鎖（額度為全場館共用），在鎖內以「當下全場館機台分數餘額合計 ＋ 已預留未入帳的入金金額 ＋ 本筆金額」判定；未超限才建立 PENDING、把本筆金額計入預留、釋放鎖，超限則回 1-OVER
+  LIMIT、不建立 PENDING、不預留，紙鈔不會在超額的情況下被收」
+
+  「收到 end-cashin 且 TXID 相符時，關閉 PENDING、更新帳務、把預留轉為實際餘額，回 0-OK。本階段不再判定額度上限——額度已於 req-cashin 判定並預留」
+
+
+  【spec 原文二：v06→v07 changelog（2026-09-04）】
+
+  v06（2026-09-03）：「入金額度上限最終判定移至入帳階段（end-cashin）並以場館鎖逐筆序列化，req-cashin 僅預檢……入帳階段超限處置待定案，定案前回 1-OVER LIMIT、記為未成立、現場退現」
+
+  v07（2026-09-04）：「入金額度上限的判定與預留移至 req-cashin（原 v06 為「最終判定於 end-cashin」）：請求階段取場館鎖……通過才建 PENDING 並預留額度；end-cashin 不再判定額度，超額因此在紙鈔捲入錢箱前就被擋下，原「入帳階段超限處置待定案」一條移除」
+
+
+  【RM 現況】REQ-CASHFLOW-007／009（ACTIVE）逐字承接 v07 定案，TC-CASHFLOW-008／009／011（ACTIVE）皆依此設計。
+
+
+  【2026-09-23 實測與 RD 確認】stage 環境實測：req-cashin 送出遠超額度上限的金額，回 0-OK 並建立 PENDING（紙鈔已進錢箱）；end-cashin 確認同一 TXID 才回 1-OVER LIMIT。RD
+  在群組確認：這是目前確認的開發流程，理由——「cashin 入鈔機還在判斷，所以這個金額不是真的是入金金額，裁是入鈔機檢查確認是一千，然後才會入金一千，一開始就擋，沒有辦法正確判斷他真正金額是多少，不然一開始就擋還比較省事」「入鈔機還沒確定的情況之下，根本不知道面額是多少，所以如果一個攻擊者需要下攻擊狀態，他可以直接在入金就打
+  1000000000000，導致整個機台都不能入金，都在等待中」。即：req-cashin 階段送來的金額未經入鈔機實體清點確認，不可信；若此時依此數字判斷額度上限，等同讓客戶端宣稱的數字直接觸發拒絕，構成 DoS 攻擊面。開分（req-keyin，純數字輸入非實體入鈔）則確認「就直接擋了」，不受影響。'
+options:
+- A. 以 RD 確認為準：額度上限實際於 end-cashin 判定，spec v07「移至 req-cashin」定案應正式作廢／改回 end-cashin 判定（連動：紙鈔會先進錢箱，超限時機台需退鈔，需另訂退鈔流程）；req-cashin
+  僅做預檢或不做額度判斷
+- B. spec v07 定案維持不變，實際系統需修正為 req-cashin 判定（需 RD 評估如何在入鈔機清點完成前取得可信金額，或改為分級判定：粗略上限預檢於 req-cashin，精確判定於 end-cashin）
+- C. 兩階段各判一次：req-cashin 用聲稱金額做粗略防禦性擋（例如設定單筆上限，不用於場館額度累計判斷），end-cashin 用實際清點金額做正式額度上限判定
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-23T09:38:57Z'
+status: APPLIED
+history:
+- at: '2026-09-23T09:38:57Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-23T09:39:24Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked RD
+- at: '2026-09-23T09:39:24Z'
+  from_status: ASKED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by RD（2026-09-23，經 Oscar 轉達群組對話）
+- at: '2026-09-23T09:45:18Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 'RD 回覆 A：額度上限判定時機由 req-cashin 改為 end-cashin。RM：REQ-CASHFLOW-007／009 statement／AC 整條反轉（req_cashflow007_009_clr005_apply.py）；impact-scan[24]:
+    TC-CASHFLOW-004(keyword:額度上限)；TC-CASHFLOW-005(keyword:額度上限,keyword:1-OVER LIMIT,keyword:PENDING)；TC-CASHFLOW-006(keyword:額度上限)；TC-CASHFLOW-007(keyword:req-cashin,keyword:PENDING)；TC-CASHFLOW-008(requirement,keyword:req-cashin,keyword:額度上限,keyword:1-OVER
+    LIMIT,keyword:PENDING)；TC-CASHFLOW-009(requirement,keyword:req-cashin,keyword:額度上限,keyword:1-OVER LIMIT,keyword:PENDING)；TC-CASHFLOW-010(keyword:PENDING)；TC-CASHFLOW-011(keyword:req-cashin,keyword:額度上限,keyword:PENDING)；TC-CASHFLOW-012(keyword:PENDING)；TC-CASHFLOW-014(keyword:PENDING)；TC-CASHFLOW-015(keyword:PENDING)；TC-CASHFLOW-022(keyword:PENDING)；TC-CASHFLOW-023(keyword:PENDING)；TC-CASHFLOW-024(keyword:PENDING)；TC-CASHFLOW-026(keyword:PENDING)；TC-CASHFLOW-027(keyword:PENDING)；TC-CASHFLOW-031(keyword:PENDING)；TC-CASHFLOW-032(keyword:PENDING)；TC-CASHFLOW-033(keyword:PENDING)；TC-CASHFLOW-034(keyword:額度上限,keyword:1-OVER
+    LIMIT)；TC-CASHFLOW-035(keyword:額度上限)；TC-CASHFLOW-051(keyword:PENDING)；TC-CASHFLOW-053(keyword:PENDING)；TC-CASHFLOW-057(keyword:PENDING)；reviewed:
+    24 條候選中 3 條需修訂：TC-CASHFLOW-008（掛 AC-0071/0072，斷言方向相反）、TC-CASHFLOW-009（掛 AC-0073，場館鎖序列化改在 end-cashin 做）、TC-CASHFLOW-011（掛
+    AC-0091，斷言『end-cashin 不再檢查額度』與新規則完全相反，需重寫為相反斷言）；TC-CASHFLOW-004/005/006/034（開分 req-keyin，RD 確認不受影響）與 TC-CASHFLOW-035（未成立留紀錄的規則本身未被推翻）不受影響；TC-CASHFLOW-007/010（PENDING
+    建立與轉實際餘額的基本機制敘述中性，不特別斷言判定時機，不受影響）；TC-CASHFLOW-012/014/015/022~033/051/057 為出金 PENDING 或逾時/TXID 不符情境，與入金額度判定時機無關，關鍵詞誤中，不受影響'
+requirement_id: REQ-CASHFLOW-007
+impact_if_unanswered: REQ-CASHFLOW-007／009 statement 與 AC 皆需回寫；TC-CASHFLOW-008／009／011 皆依現行 spec 假設設計，需修訂；BUG-CASHFLOW-002
+  判定時機部分的認定需重新檢視（紀錄消失部分不受影響，仍為缺陷）
+asked_to: RD
+asked_at: '2026-09-23T09:39:24Z'
+answer: A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-cashin 階段客戶端回報的金額未經實體清點確認、不可信，若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字（如
+  1000000000000）讓機台卡在等待中造成整台機台無法入金的 DoS。spec v07「額度上限判定與預留移至 req-cashin」一條應正式作廢，改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin
+  才依入鈔機實際清點金額判定額度上限，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。REQ-CASHFLOW-007／009 statement 需依此回寫；TC-CASHFLOW-008／009／011
+  需修訂。BUG-CASHFLOW-002 的判定時機部分（症狀①）依此不再成立，紀錄消失部分（症狀②）維持有效，Oscar 決定如何處理該 bug。
+answered_by: RD（2026-09-23，經 Oscar 轉達群組對話）
+answered_at: '2026-09-23T09:39:24Z'
+resolution: requirement_clarified

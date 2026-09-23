@@ -1,0 +1,93 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+test_level: api
+test_types:
+- negative
+- boundary
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+title: 兩筆入金的 end-cashin 幾乎同時到達且各自單看不超限但合計會超限時，場館鎖序列化正確擋下第二筆
+requirement_ids:
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0073
+preconditions:
+- 機台已透過憑證通過認證
+- 機台所屬場館為開通狀態，機台為啟用狀態
+steps:
+- n: 1
+  action: 建構場館餘額合計已接近額度上限的情境（例如尚餘額度剛好等於單筆入金金額）
+- n: 2
+  action: 兩台不同機台各自完成 req-cashin，取得各自 TXID（本階段皆會成功建立 PENDING，不判定額度）
+- n: 3
+  action: 以測試工具對同一場館的兩台機台併發送出兩個 end-cashin HTTP 請求（同一時間發出，不依序等待回應），實際清點金額皆等於尚餘額度，各自單看皆不超限，但兩筆合計會超限
+- n: 4
+  action: 檢視兩筆 end-cashin 的回應與帳務是否更新
+expected_result: 依場館鎖逐筆序列化處理：先取得鎖的一筆 end-cashin 通過並完成入帳，另一筆的判定基準已包含前者剛入帳的金額，因而正確被擋下回 1-OVER LIMIT、不更新帳務、機台退鈔；不會兩筆皆通過而使全場館餘額超過額度上限。與
+  TC-CASHFLOW-011（單純狀態前置下的超限拒絕）的差異：本案驗證的是場館鎖序列化下的併發正確性，非單一狀態判定
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  location: SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）
+assumptions: []
+source: change_workflow
+testcase_id: TC-CASHFLOW-009
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M36V4362676VHSJ17M15CJA4
+created_at: '2026-09-23T09:56:33Z'
+updated_at: '2026-09-23T17:13:29Z'
+history:
+- at: '2026-09-23T09:56:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M36TGSC0K31KHVJC2QSAY1ED
+  run_id: RUN-20260923-006
+- at: '2026-09-23T09:56:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260923-006
+- at: '2026-09-23T09:56:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M36V4362676VHSJ17M15CJA4
+  run_id: RUN-20260923-006
+- at: '2026-09-23T09:56:33Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260923-006
+- at: '2026-09-23T17:13:29Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0173
+  run_id: RUN-20260923-006
+- at: '2026-09-23T17:13:29Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260923-006
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0173

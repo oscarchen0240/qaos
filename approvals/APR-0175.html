@@ -1,0 +1,29 @@
+<title>APR-0175 審批</title>
+<style>
+:root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
+:root[data-theme=dark]{--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}
+body{margin:0;padding:28px 32px 80px;background:var(--bg);color:var(--ink);font:14px/1.55 "IBM Plex Sans","PingFang TC","Noto Sans TC",system-ui,sans-serif}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+.meta{color:var(--muted);margin-bottom:4px}.summary{margin:10px 0 18px;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head)}
+blockquote{margin:0 0 8px;color:var(--muted);font-size:13px}
+table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--line);padding:7px 8px;vertical-align:top;text-align:left;word-break:break-word}
+th{background:var(--head);font-weight:600;font-size:12.5px}
+col.c-id{width:5.5%}col.c-cls{width:6%}col.c-title{width:15%}col.c-pre{width:17%}col.c-steps{width:24%}col.c-exp{width:26%}col.c-pr{width:6.5%}
+tr.exp td{background:var(--exp)}.id{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:12.5px}.pm{color:var(--acc)}
+.cmd{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--head);padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+</style>
+<h1>APR-0175 · ACTIVATE_TESTCASE</h1>
+<div class=meta>Run RUN-20260923-005 · 狀態 PENDING · 提出 2026-09-23</div>
+<div class=summary>1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？</div>
+<p>共 1 條：grounded 1 條（預期結果有 spec 條文依據）、<b>exploratory 0 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>
+<h2>REQ-CASHFLOW-007 入金額度上限於 end-cashin 階段依實際清點金額判定</h2>
+<blockquote>spec：§附錄-入金　「（v07 定案已作廢，見 CLR-CASHFLOW-005；本欄不再逐字引用 spec.md，待正本更新）」　· 風險 high</blockquote>
+<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>
+<tr class=""><td class=id title="TC-CASHFLOW-008">008<br>v3</td><td>grounded</td><td>req-cashin 不判額度（含鉅額防禦）；end-cashin 依實際清點金額判定，恰等於上限成立、超過 1 單位則 1-OVER LIMIT 退鈔</td><td>機台已透過憑證通過認證<br>機台所屬場館為開通狀態，機台為啟用狀態<br>設定該場館額度上限為 A，並確認目前「全場館機台分數餘額合計（已入帳）」恰為 A-100</td><td><ol><li>送出 req-cashin，金額為遠超額度上限數個量級的鉅額數值（例如 A 的 1000 倍），確認仍回 0-OK、建立 PENDING 並取得 TXID——驗證 req-cashin 本階段不依客戶端聲稱金額判定額度，不會因巨額數字被拒或卡住（CLR-CASHFLOW-005 防 DoS 的核心行為）</li><li>送出該筆 end-cashin，實際清點金額改為 100（模擬入鈔機清點結果與聲稱金額不同），確認回覆與分數變化</li><li>另送出 req-cashin，金額 1，確認同樣建立 PENDING</li><li>送出其 end-cashin（實際清點金額 1），使「全場館機台分數餘額合計（已入帳）＋本筆實際清點金額」恰等於額度上限 A</li><li>確認回覆 0-OK、分數正常增加</li><li>再送出 req-cashin（金額 1，同樣建立 PENDING），送出其 end-cashin（實際清點金額 1），使加計後超過額度上限 A</li><li>確認此筆 end-cashin 的回覆與分數變化；若為純 API 直連環境（無實體機台），以回覆碼 1-OVER LIMIT 且帳務未異動為判定依據；有實體機台時另確認機台退鈔</li></ol></td><td>第一筆：req-cashin 送鉅額數字仍成功建立 PENDING（不判額度、不卡住），end-cashin 以實際清點金額 100 入帳、回 0-OK；第二筆：req-cashin 建立 PENDING，end-cashin 實際金額 1 使加計恰等於上限，回 0-OK 並正常入帳；第三筆：req-cashin 建立 PENDING，end-cashin 實際金額 1 使加計超過上限，回 1-OVER LIMIT，不更新帳務（純 API 環境以此為準，實體機台另確認退鈔）</td><td>high<br>high</td></tr>
+</table>
+<h2>決定</h2><div class=cmd>bin/qaos approve APR-0175 --decision approve --by &lt;you&gt;
+bin/qaos approve APR-0175 --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject
+bin/qaos approve APR-0175 --decision reject --by &lt;you&gt; --rationale "..."</div>
