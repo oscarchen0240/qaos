@@ -1,0 +1,86 @@
+artifact_id: ART-BVR-01M36PSBN6EZ7YXECB5VWYS6GC
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-004
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-09-23T08:40:47Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M36PH2T86FXABP5VJ3C50S4X
+references:
+- entity_type: Artifact
+  id: ART-BD-01M36PH2T86FXABP5VJ3C50S4X
+- entity_type: Evidence
+  id: EVD-0073
+- entity_type: Evidence
+  id: EVD-0074
+- entity_type: Evidence
+  id: EVD-0075
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M36PH2T86FXABP5VJ3C50S4X
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-CASHFLOW-035
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-030
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: SPEC-ARCADE-001 v0.7 §入金（req-cashin→end-cashin）；SPEC-CASHFLOW-001 v0.1 AC-CASHFLOW-0302
+    evidence: draft 的 severity_rationale 與 suspected_area 自陳這是『兩個獨立問題疊加』：①判定時機違反 SPEC-ARCADE-001 v07；②未成立紀錄缺失違反 AC-CASHFLOW-0302。
+    explanation: 即使 RD 把額度判定挪回 req-cashin（修①），並不保證 end-cashin 拒絕路徑會補寫『未成立』紀錄（修②）；反之亦然。兩者分屬不同 spec、不同 acceptance criteria，且可各自獨立重現與驗證，不是同一段程式碼必然同時修好的單一症狀。合併成一張單在本次提交尚可接受（同一次重現、共用證據），但會讓後續修復驗證與狀態追蹤變得不精確（RD
+      可能只修好其中一項就宣稱單已解決）。
+    recommended_change: 建議考慮拆成兩張獨立 bug：一張對 SPEC-ARCADE-001 v0.7（入金額度判定時機應在 req-cashin），另一張對 AC-CASHFLOW-0302（額度上限拒絕未寫入『未成立』紀錄），各自附對應
+      evidence 子集，以利分別指派 RD 與分別驗收。此為建議，不影響本次 PASS 判定。
+  evidence_verification:
+  - evidence_id: EVD-0073
+    hash_verified: true
+    supports_claim: true
+    note: sha256 與 EVD-0073.yaml 記錄一致。截圖顯示洗分 req-keyout 金額1000、無門檻，回應 1-NO CREDITS，作為『餘額不足不寫紀錄』的對照組，行為與 AC-CASHFLOW-0301／TXLOG
+      節錄一致，非本案違規點，僅佐證機制運作正常、增加報告可信度。
+  - evidence_id: EVD-0074
+    hash_verified: true
+    supports_claim: true
+    note: sha256 與 EVD-0074.yaml 記錄一致。截圖依序顯示：①送出極大金額 req-cashin，回應 0-OK（成功）並帶出 TXID 1af58cd7-7170-4ee5-a9b0-ad3ef6bb3910；②以同一
+      TXID 送出 end-cashin（②確認入金），回應 1-OVER LIMIT。時序清楚為『第一階段先通過並建立 PENDING，第二階段才判定超限』，與 v07 定案（判定應在 req-cashin，且 end-cashin
+      不再判定）相反，claim 成立。畫面頂部紅框為開發工具內建的流程說明文字，非本次判定依據，僅與下方實際回應吻合。
+  - evidence_id: EVD-0075
+    hash_verified: true
+    supports_claim: true
+    note: sha256 與 EVD-0075.yaml 記錄一致。截圖逐欄核對：僅「会员编号」填 ACAA00417，交易号／场次编号／订单编号／交易时间／变动金额(min~max) 皆為空白，交易类型／交易状态／核实状态皆顯示未選擇的
+      placeholder（请选择/全部），並未誤設任何限縮條件；总笔数：0，列表顯示『目前暂无搜寻结果』。確認總筆數 0 為真，非操作誤會。
+  severity_assessment:
+    severity_recommended: critical
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 對照 BUG-DAILYREPORT-004 的 critical 判準（資金/金額相關且錯誤不可見、總數雖對但個別歸屬錯導致對帳人員無從察覺）：本案更嚴重——玩家投入的紙鈔已實際進入機台錢箱（req-cashin
+      成功建立 PENDING），但後台交易紀錄查詢完全查無此筆（含 PENDING 曾建立過的痕跡），場館端無從對帳、無法查核機台是否已忠實退鈔，玩家亦無憑據申訴，屬資金軌跡完整缺失（不是『歸類錯誤』而是『完全消失』），critical
+      合理。priority high：額度上限是每場館的日常防護機制，任何使全場館分數餘額合計超限的入金皆會觸發，條件明確、非邊緣情境，與既有 high priority bug 一致。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 比對 7 份既有 bug：BUG-CASHFLOW-001 雖同 functional_area（CASHFLOW），但根因為『站台核心貨幣對應錢包幣別停用後，出金/洗分仍可成功執行、未被阻擋』，與本案『入金額度上限判定時機錯誤＋未成立交易紀錄缺失』屬完全不同的觸發條件與程式路徑，非重複。BUG-DAILYREPORT-001/002/003/004
+      與 BUG-UPDATEPACK-001/002 主題（場館日結報表欄位缺失、多幣別錢包展開、注單查詢欄位缺失）皆與本案無關。
+history:
+- at: '2026-09-23T08:40:47Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-004

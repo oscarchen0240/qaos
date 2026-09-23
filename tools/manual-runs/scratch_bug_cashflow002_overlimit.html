@@ -1,0 +1,175 @@
+<title>額度上限判定與紀錄</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}}
+</style>
+<style>
+.mech { background:var(--surface-2); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; padding:12px 14px; margin-top:14px; font-size:13.5px; }
+.mech b { color:var(--accent); }
+.twopart { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+.twopart .box { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+.twopart .box h3 { margin:0 0 8px; font-size:13px; color:var(--accent); }
+@media (max-width:560px){.twopart{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Critical / High</span>
+    <span class="badge scope">後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後端][Arcade] 入金額度上限判定發生在 end-cashin 而非 req-cashin，且超額交易完全未留下交易紀錄</h1>
+  <div class="subtitle">BUG-CASHFLOW-002 · SPEC-CASHFLOW-001 v0.1 · REQ-CASHFLOW-030 · TC-CASHFLOW-035 · RUN-20260923-004</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>—（後端金流，不涉遊戲商）</dd>
+      <dt>測試環境</dt><dd>stage · 站台 Arcade（機台場館）</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ACAA00417</code>（機台帳號）；查詢者 ZZAA00415（站長）</dd>
+      <dt>測試時間</dt><dd>2026-09-23</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">後端 <code class="inline">req-cashin</code> / <code class="inline">end-cashin</code> 的額度上限判定邏輯；以及未成立交易的紀錄寫入邏輯。前端未發現問題。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">對機台送出遠超場館額度上限的入金：<code class="inline">req-cashin</code> 回 <b>0-OK</b>、建立 PENDING、拿到 TXID——紙鈔已進錢箱；到 <code class="inline">end-cashin</code> 確認時才回 <b>1-OVER LIMIT</b>。查詢該機台帳號的交易紀錄，<b>總筆數 0</b>，這筆交易（含 PENDING 曾建立過的痕跡）完全找不到。</p>
+
+    <div class="twopart">
+      <div class="box">
+        <h3>① 判定時機錯</h3>
+        <p style="margin:0;font-size:13px">依現行 v07 定案（2026-09-04），額度上限應在 <b>req-cashin</b>（第一階段）判定並預留，超額時<b>不建立 PENDING、紙鈔不進錢箱</b>。實際是 end-cashin 才判定——等同執行已被 v07 明文廢除的 v06 舊邏輯。</p>
+      </div>
+      <div class="box">
+        <h3>② 紀錄完全消失</h3>
+        <p style="margin:0;font-size:13px">不論判定發生在哪個階段，被額度上限拒絕的交易都該留下「未成立」紀錄。實際上這筆交易在系統裡<b>完全找不到</b>——不是歸類錯誤，是資金軌跡缺失：紙鈔已進錢箱，後台卻毫無紀錄可查。</p>
+      </div>
+    </div>
+
+    <div class="specquote">
+      <b>SPEC-ARCADE-001 v0.7 changelog v07（2026-09-04，最終定案）</b><br>
+      入金額度上限的判定與預留移至 req-cashin（原 v06 為「最終判定於 end-cashin」）：請求階段取場館鎖……通過才建 PENDING 並預留額度；end-cashin 不再判定額度，超額因此在紙鈔捲入錢箱前就被擋下，原「入帳階段超限處置待定案」一條移除
+    </div>
+    <div class="specquote">
+      <b>SPEC-CASHFLOW-001 v0.1 · AC-CASHFLOW-0302</b><br>
+      交易因額度上限或其他原因被拒絕，<b>有留下「未成立」的交易紀錄</b>，可查得拒絕原因
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　① req-cashin 即擋下超額入金、不建 PENDING；② 不論哪個階段拒絕，都應留下「未成立」交易紀錄、可查拒絕原因。</div>
+    <div class="actual"><b>實際</b>　req-cashin 成功建 PENDING（紙鈔已收）；end-cashin 才拒絕；交易紀錄總筆數 0，查無此筆。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0073</span>對照組：洗分餘額不足回 1-NO CREDITS（spec 明文允許的例外，行為正確）</li>
+      <li><span class="tag">EVD-0074</span>req-cashin 0-OK 建 PENDING（TXID 1af58cd7-7170-4ee5-a9b0-ad3ef6bb3910），end-cashin 才回 1-OVER LIMIT</li>
+      <li><span class="tag">EVD-0075</span>交易紀錄查詢機台帳號 ACAA00417，其餘欄位全空白，總筆數 0</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>對 Arcade 場館某機台以開發工具送出 <code class="inline">req-cashin</code>，金額為足以使全場館分數餘額合計超過額度上限的極大值</li>
+      <li>檢視 req-cashin 回應（預期應直接 1-OVER LIMIT；實際回 0-OK 並取得 TXID）</li>
+      <li>以同一 TXID 送出 <code class="inline">end-cashin</code>，檢視回應（實際為 1-OVER LIMIT）</li>
+      <li>進入「各式報表 › 交易紀錄查詢」，以該機台帳號查詢（不設其他篩選）</li>
+      <li>檢視搜尋結果總筆數</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text"><code class="inline">req-cashin</code> / <code class="inline">end-cashin</code>（開發工具直連，未經前台）</p>
+    <dl class="fields" style="margin-top:12px">
+      <dt>Request</dt><dd>req-cashin：極大金額；end-cashin：TXID 1af58cd7-7170-4ee5-a9b0-ad3ef6bb3910</dd>
+      <dt>Response</dt><dd>req-cashin → 0-OK；end-cashin → 1-OVER LIMIT</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure><img src="img/EVD-0074.png" alt="req-cashin 成功、end-cashin 才拒絕"><figcaption>EVD-0074 · req-cashin 0-OK → end-cashin 1-OVER LIMIT</figcaption></figure>
+      <figure><img src="img/EVD-0075.webp" alt="交易紀錄查詢總筆數 0"><figcaption>EVD-0075 · 交易紀錄查詢，總筆數 0</figcaption></figure>
+    </div>
+    <figure style="margin-top:14px"><img src="img/EVD-0073.png" alt="對照組：洗分餘額不足"><figcaption>EVD-0073 · 對照組：洗分餘額不足回 1-NO CREDITS（正確行為）</figcaption></figure>
+  </section>
+
+  <div class="footer">
+    <span>QAOS · RUN-20260923-004 · Validator PASS · APR-0172 approved · <b>BUG-CASHFLOW-002</b> OPEN</span>
+    <span>2026-09-23 · oscarchen@blockaction.tech</span>
+  </div>
+</div>
