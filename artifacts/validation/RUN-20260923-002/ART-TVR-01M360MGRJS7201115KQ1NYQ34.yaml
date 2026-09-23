@@ -1,0 +1,91 @@
+artifact_id: ART-TVR-01M360MGRJS7201115KQ1NYQ34
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20260923-002
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-09-23T02:13:39Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M35Y3VSQFQSR0N270MTBFASQ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M35Y3VSQFQSR0N270MTBFASQ
+- entity_type: Artifact
+  id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+requires_approval: null
+payload:
+  testcase_draft_artifact_id: ART-TCD-01M35Y3VSQFQSR0N270MTBFASQ
+  result: PASS
+  validated_against:
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M35Y3VRSPQ978VJ8FP3M4YX5
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-004
+    spec_reference: null
+    evidence: expected_result 末尾括號「（機台洗分不適用本案：洗分為單階段交易…見 CLR-CASHOUT-002）」
+    explanation: 本案 given/when 僅涉出金，該段為設計取捨理由而非要觀察的行為，置於 expected_result 易誤導執行者一併核對洗分
+    recommended_change: 移至 design_rationale／assumptions。【Designer 已於核准前處理】已移至 design_rationale。
+  - testcase_id: TC-DRAFT-01M35Y3VRSPQ978VJ8FP3M4YX5
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: REQ-CASHOUT-004
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §出金
+    evidence: 本次提供的 spec_cashflow 節錄檔中查無「§出金」章節標題
+    explanation: 經核對 SPEC-CASHFLOW-001 v0.1 第 147 行確有「#### 出金」標題，節錄檔未含標題行所致，引文與 location 皆正確
+    recommended_change: 無須修改；location 維持「§出金」。
+  - testcase_id: TC-DRAFT-01M35Y3VRSPQ978VJ8FP3M4YX5
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHOUT-004
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      location: §出金
+      quote: 請求成功但完成回報未送達時，交易停在「待確認」
+    evidence: precondition／step 1 未說明如何在測試環境製造待確認的出金
+    explanation: 待確認出金源於 req-cashout 成功但 end-cashout 回報未送達的時序競態，非後台 UI 可直接觸發；寫法與既有已核准的 TC-CASHOUT-045 一致，不擋本次修訂
+    recommended_change: 後續與 RD 協調延遲／攔截 end-cashout 回報以穩定製造，或標為 exploratory。保留為待辦，不在本次修訂範圍。
+  - testcase_id: TC-DRAFT-01M35Y3VRSPQ978VJ8FP3M4YX5
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 修訂後與 TC-CASHOUT-085 的 precondition／expected_result 幾乎相同（皆為出金待確認→查無此筆）
+    explanation: 兩者為同題的 Phase 2／Phase 3 版本，改用出金後 085 無實質新增價值，且其多掛的 AC-CASHOUT-0011（given 為交易已完成）與「尚未完成」語意互斥、實際驗不到
+    recommended_change: 退役 TC-CASHOUT-085，以本案作為 AC-CASHOUT-0041 待確認情境的唯一案例。【已處理】Oscar 2026-09-23 決定採納：RUN-20260923-003 已 CANCELLED、TC-CASHOUT-085
+      已 RETIRED（APR-0169）；AC-CASHOUT-0011 另由 TC-CASHOUT-041、TC-CASHOUT-084 覆蓋，無覆蓋缺口。
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+history:
+- at: '2026-09-23T02:13:39Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20260923-002

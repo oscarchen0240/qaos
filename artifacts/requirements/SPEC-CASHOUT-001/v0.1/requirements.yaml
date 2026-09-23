@@ -136,10 +136,11 @@ requirements:
   type: functional
   title: 本頁只會有已完成交易產生的核實狀態紀錄，未完成交易不會有核實狀態
   statement: 本頁本身沒有「交易狀態」欄位或篩選器，只有「核實狀態」；只有交易狀態已達「已完成」的機台洗分與機台出金，系統才會為其建立核實狀態紀錄並出現在本頁。待確認、已取消、已逾時、未成立的交易因為根本沒有核實狀態，不會出現在本頁（已由
-    Oscar 2026-09-14 補充澄清：判斷依據是核實狀態紀錄是否存在，而非本頁顯示或篩選交易狀態）
+    Oscar 2026-09-14 補充澄清：判斷依據是核實狀態紀錄是否存在，而非本頁顯示或篩選交易狀態）。補充（CLR-CASHOUT-002 回覆 A，2026-09-23）：機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待中」（＝待確認）——畫面篩選器上那兩個技術值係與「出鈔」共用同一組的結果，對洗分不適用；洗分的未完成路徑僅有「已拒絕／錯誤」（＝未成立）。因此「未完成交易不會出現在本頁」的待確認情境須以出金（兩階段）驗證，AC-CASHOUT-0041
+    的 given 已據此自洗分改為出金
   acceptance_criteria:
   - ac_id: AC-CASHOUT-0041
-    given: 一筆機台洗分交易狀態為待確認（尚未完成）
+    given: 一筆機台出金交易狀態為待確認（req-cashout 已核可但 end-cashout 完成回報未送達，尚未完成）
     when: 查詢本頁
     then: 查無此筆紀錄（因為該筆交易尚未完成，本頁不會有它的核實狀態紀錄）；需至機台交易紀錄查明狀態，不可憑本頁無紀錄直接判斷已完成或未完成以外的狀態
   - ac_id: AC-CASHOUT-0042
@@ -176,6 +177,11 @@ requirements:
     by: system
     trigger: G-SPEC PASS
     run_id: RUN-20260914-013
+  - at: '2026-09-23T01:29:04Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-CASHOUT-002：洗分無待確認路徑；AC-CASHOUT-0041 given 自洗分改為出金，statement 補述洗分未完成路徑僅有未成立
 - requirement_id: REQ-CASHOUT-005
   version: 1
   spec_id: SPEC-CASHOUT-001
@@ -442,8 +448,7 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 訂單編號篩選為櫃檯兌現時的主要查詢方式
-  statement: 訂單編號篩選欄為文字輸入出金收據上印製的編號，是櫃檯兌現時查詢該筆待核實紀錄的主要方式；查無結果時前端會顯示失敗提示（已由 Oscar 2026-09-14
-    依實際畫面截圖確認）
+  statement: 訂單編號篩選欄為文字輸入出金收據上印製的編號，是櫃檯兌現時查詢該筆待核實紀錄的主要方式；查無結果時前端會顯示失敗提示（已由 Oscar 2026-09-14 依實際畫面截圖確認）
   acceptance_criteria:
   - ac_id: AC-CASHOUT-0111
     given: 輸入一筆出金收據上的訂單編號
@@ -897,8 +902,7 @@ requirements:
     spec_id: SPEC-CASHOUT-001
     spec_version: '0.1'
     location: §操作/核實（洗分）
-    quote: 1. 依機台帳號（會員編號）或交易時間找到該筆待核實洗分，點擊「核實」 2. 確認彈窗顯示機台帳號、實際金額與交易時間，核對無誤後點擊確認 3.
-      系統標記為「已核實」，並記錄核實人員與時間
+    quote: 1. 依機台帳號（會員編號）或交易時間找到該筆待核實洗分，點擊「核實」 2. 確認彈窗顯示機台帳號、實際金額與交易時間，核對無誤後點擊確認 3. 系統標記為「已核實」，並記錄核實人員與時間
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -944,8 +948,7 @@ requirements:
     spec_id: SPEC-CASHOUT-001
     spec_version: '0.1'
     location: §操作/核實（出金＝核銷收據）
-    quote: 1. 於頁面上方輸入收據上的訂單編號查詢...或直接在列表點擊「核實」 2. 確認彈窗顯示訂單編號、機台帳號、金額與收據印出時間，核對無誤後點擊確認
-      3. 系統標記為「已核實」，並記錄核實人員與時間 4. 櫃檯付現金給玩家
+    quote: 1. 於頁面上方輸入收據上的訂單編號查詢...或直接在列表點擊「核實」 2. 確認彈窗顯示訂單編號、機台帳號、金額與收據印出時間，核對無誤後點擊確認 3. 系統標記為「已核實」，並記錄核實人員與時間 4. 櫃檯付現金給玩家
   ambiguity: null
   risk: high
   status: ACTIVE
@@ -1069,9 +1072,8 @@ requirements:
   spec_version: '0.1'
   type: security
   title: 操作員無切換站台的權限，前後端皆已拒絕，非核實動作本身才被擋
-  statement: 核實操作 Admin、站長、操作員皆可執行；但操作員本身完全不具備切換站台（頁面標題下方的站台切換選單）的權限，前端不提供切換入口、後端
-    API 也拒絕操作員指定非自身場館的請求——也就是說操作員從一開始就無法看到或操作其他場館的紀錄，而不是「核實動作本身」對非自身場館被個別攔截（已由 Oscar
-    2026-09-14 確認）
+  statement: 核實操作 Admin、站長、操作員皆可執行；但操作員本身完全不具備切換站台（頁面標題下方的站台切換選單）的權限，前端不提供切換入口、後端 API 也拒絕操作員指定非自身場館的請求——也就是說操作員從一開始就無法看到或操作其他場館的紀錄，而不是「核實動作本身」對非自身場館被個別攔截（已由
+    Oscar 2026-09-14 確認）
   acceptance_criteria:
   - ac_id: AC-CASHOUT-0251
     given: 以操作員身分登入後台
@@ -1331,8 +1333,7 @@ requirements:
   spec_version: '0.1'
   type: functional
   title: 現金淨收計算需已核實才計入，適用洗分與出金兩者
-  statement: 場館現金淨收計算只計入已核實的洗分與已核實的出金，待核實的洗分或出金皆不計入（spec.md 原文只提到洗分，已由 Oscar 2026-09-14
-    確認出金比照辦理，非遺漏或例外）
+  statement: 場館現金淨收計算只計入已核實的洗分與已核實的出金，待核實的洗分或出金皆不計入（spec.md 原文只提到洗分，已由 Oscar 2026-09-14 確認出金比照辦理，非遺漏或例外）
   acceptance_criteria:
   - ac_id: AC-CASHOUT-0311
     given: 一筆洗分或出金交易處於待核實狀態

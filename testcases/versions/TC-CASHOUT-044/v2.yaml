@@ -1,0 +1,89 @@
+product: ba-admin
+functional_area: CASHOUT
+requirement_ids:
+- REQ-CASHOUT-004
+acceptance_criteria_ids:
+- AC-CASHOUT-0041
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+title: 尚未完成的出金交易本身沒有核實狀態，不會出現在本頁
+preconditions:
+- 以 Admin 登入後台
+- 進入 帳務管理 > 洗分出金核實，站台切換選單已選定一個機台場館站台
+- 已取得一筆機台出金交易，其於機台交易紀錄的交易狀態為「待確認」（技術值待處理／等待中；即 req-cashout 已核可、end-cashout 完成回報未送達，分數尚未扣除）
+steps:
+- n: 1
+  action: 於機台交易紀錄確認該筆出金的交易狀態為待確認（尚未完成），記下其機台帳號與交易時間
+- n: 2
+  action: 回到本頁，以該機台帳號查詢（本頁沒有交易狀態欄位或篩選器，只有核實狀態）
+expected_result: 查無此筆紀錄，因為該筆交易尚未完成、系統根本不會為它建立核實狀態紀錄；不可憑本頁無紀錄直接判斷交易已完成，須至機台交易紀錄查明實際的交易狀態。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.1'
+  location: §紀錄產生規則（「僅交易狀態為「已完成」的機台洗分與機台出金會出現在本頁；待確認、已取消、已逾時、未成立的交易不會出現」）；待確認情境改以出金驗證之依據為 CLR-CASHOUT-002 回覆 A 與 SPEC-CASHFLOW-001
+    §出金（「請求成功但完成回報未送達時，交易停在「待確認」」）
+assumptions: []
+source: change_workflow
+testcase_id: TC-CASHOUT-044
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M360MGRJS7201115KQ1NYQ34
+created_at: '2026-09-23T02:13:40Z'
+updated_at: '2026-09-23T02:28:08Z'
+history:
+- at: '2026-09-23T02:13:40Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M35Y3VSQFQSR0N270MTBFASQ
+  run_id: RUN-20260923-002
+- at: '2026-09-23T02:13:40Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20260923-002
+- at: '2026-09-23T02:13:40Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M360MGRJS7201115KQ1NYQ34
+  run_id: RUN-20260923-002
+- at: '2026-09-23T02:13:40Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20260923-002
+- at: '2026-09-23T02:28:08Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0170
+  run_id: RUN-20260923-002
+- at: '2026-09-23T02:28:08Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20260923-002
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0170
