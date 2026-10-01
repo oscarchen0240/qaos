@@ -140,7 +140,9 @@ def test_76_change_impact_reject_returns_to_designer_and_resets_risk_task(monkey
     for t in run["tasks"]:
         if t["task_id"] in ("T0", "T1", "T2", "T3", "T3RR", "T4"): t["status"] = "DONE"
     apr_task = next(t for t in run["tasks"] if t["task_id"] == "T5"); apr_task["status"] = "RUNNING"
-    engine._finish_approval_task(run, apr_task, ok=False, back_to_generator=True)
+    # 走 TC 核准單實際的 reject 路徑（_commit_testcases → to_agent=Designer）；用 ACTIVATE 型別是因為這裡沒有 change-impact entity，
+    # 兩種型別呼叫 _finish_approval_task 的方式相同
+    engine._commit_testcases(run, apr_task, {"type": "ACTIVATE_TESTCASE", "approval_id": "APR-9999", "batch_items": [], "decision": {}}, "reject", "oscar@example.com")
     run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
     assert run["current_task_id"] == "T2" and st["T2"] == "READY" and st["T1"] == "DONE"
     assert st["T3"] == st["T3RR"] == st["T4"] == st["T5"] == "PENDING"
@@ -175,3 +177,17 @@ def test_78_risk_reviewer_input_schema_binds_validation_report():
         for key in ("input_schema", "output_schema"):
             for s in ([a[key]] if isinstance(a[key], str) else a[key]):
                 assert (REPO / s).exists(), f"{c.name} {key} 指向不存在的 {s}"
+
+def test_79_suite_membership_reject_still_returns_to_curator():
+    """回歸：退回 Designer 只限 TC 核准單。manual-test-to-regression 的 T5 suite 成員核准被 reject，必須退回 T4 curator，不可退到 T1 Designer。"""
+    from tools.qaos import tc_ops
+    rec = tc_ops.manual_new("suite 退回測試", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com")
+    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com"); rid = run["run_id"]
+    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5", "T6"]   # NEG 非高風險，不插 RR
+    for t in run["tasks"]:
+        if t["task_id"] in ("T1", "T2", "T3", "T4"): t["status"] = "DONE"
+    t5 = next(t for t in run["tasks"] if t["task_id"] == "T5"); t5["status"] = "RUNNING"
+    engine._commit_suite(run, t5, {"type": "UPDATE_SUITE_MEMBERSHIP", "artifact_ids": []}, "reject", "oscar@example.com")
+    run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
+    assert run["current_task_id"] == "T4" and st["T4"] == "READY" and st["T1"] == st["T2"] == st["T3"] == "DONE"
+    engine.cancel(rid, "oscar@example.com")

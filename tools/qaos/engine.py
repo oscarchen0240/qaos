@@ -497,7 +497,7 @@ def _preflight_approval(apr, decision):
                 if c["status"] in ("OPEN", "ASKED"):
                     raise EngineError(f"{ref['id']} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
 
-def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False):
+def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, to_agent: str | None = None):
     if task["type"] == "approval":
         state.apply("task", task, "DONE", SYSTEM, "decided")
     if ok:
@@ -505,9 +505,10 @@ def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False):
     if back_to_generator:
         ids_ = [t["task_id"] for t in run["tasks"]]; i = ids_.index(task["task_id"])
         before = run["tasks"][:i]
-        # 有 Test Designer 就退回 Designer（產出 TC 的人）：spec-change-impact 的 T4 CIA compare 排在核准前，
-        # 只找「最近一個非 validator agent」會誤退回 compare，Designer／Validator／RR 都不會重跑（ADR-009 review 修正）
-        gen = next((t for t in reversed(before) if t.get("agent_id") == "agent-test-designer"), None) or \
+        # to_agent：呼叫端明確指定退回對象。ACTIVATE_TESTCASE／APPLY_CHANGE 一律退回 Test Designer——spec-change-impact
+        # 的 T4 CIA compare 排在核准前，只找「最近一個非 validator agent」會誤退回 compare（ADR-009 review 修正）。
+        # 其餘核准（suite 成員、bug 等）維持「最近一個產出者」，例如 UPDATE_SUITE_MEMBERSHIP 退回 regression curator。
+        gen = (next((t for t in reversed(before) if t.get("agent_id") == to_agent), None) if to_agent else None) or \
               next(t for t in reversed(before) if t["type"] == "agent" and t.get("agent_id") not in ("agent-supervisor", "agent-test-validator", "agent-bug-validator", "agent-tc-risk-reviewer"))
         gen["iteration"] += 1; gen["status"] = "READY"; gen["output_artifact_ids"] = []
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
@@ -562,7 +563,7 @@ def _commit_testcases(run, task, apr, decision, by):
             state.apply("change_impact", ci, "TEST_UPDATE_REQUIRED", by, apr["approval_id"], run["run_id"])
         store.save(ci_path, ci)
     store.audit(run["run_id"], SYSTEM, "COMMIT_TO_REGISTRY", ", ".join(activated) or "(none)")
-    _finish_approval_task(run, task, ok=decision in ("approve", "override") or bool(activated), back_to_generator=decision == "reject")
+    _finish_approval_task(run, task, ok=decision in ("approve", "override") or bool(activated), back_to_generator=decision == "reject", to_agent="agent-test-designer")
 
 def _commit_bug(run, task, apr, decision, by):
     b = store.load(_bug_path(run))
