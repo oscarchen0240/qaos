@@ -1,6 +1,7 @@
 # Model Routing Policy — 預設 Sonnet，升級是例外
 
-> **狀態：現行政策（2026-09-14）**。給 Claude Code / 實作者直接遵守。  
+> **狀態：部分取代（2026-10-01）**——各 agent 的模型分配改依 [ADR-009](ADR-009-agent-model-assignment.md)（判斷用 Opus、產出用 Sonnet，新增 tc-risk-reviewer）；本檔 §0 第 1～2 點、§1 對照表中的模型結論、§5 預設模型表**不再適用**。§2.4（不得用升模型補 spec 缺口、假設不得默默變成 expected）與 §3 Phase 5「Opus 不進 CI 熱路徑」**仍有效**。原文保留供追溯。  
+> 原狀態：現行政策（2026-09-14）。給 Claude Code / 實作者直接遵守。  
 > **不是**新模組、不是 Phase 2/3 開發項目、不改 Master Architecture 的五層。  
 > 來源：GPT 的 QAOS 模型路由建議 × 依本專案現況收斂後的採用版。
 
