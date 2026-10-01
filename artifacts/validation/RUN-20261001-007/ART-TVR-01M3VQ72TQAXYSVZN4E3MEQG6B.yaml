@@ -1,0 +1,392 @@
+artifact_id: ART-TVR-01M3VQ72TQAXYSVZN4E3MEQG6B
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-01T12:34:25Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VPTHECFKJY2ATRDJ2XEPQX
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VPTHECFKJY2ATRDJ2XEPQX
+- entity_type: Artifact
+  id: ART-RM-01M3VN55VDAAYSNV31Y9EJA2PC
+- entity_type: Artifact
+  id: ART-CIR-01M3VNQQ2Q073T4VH6R8C6JHEN
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M3VPTHECFKJY2ATRDJ2XEPQX
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M3VN55VDAAYSNV31Y9EJA2PC
+  issues:
+  - testcase_id: TC-DRAFT-01M3VPTHD0AK595T6RZCQNK24V
+    issue_type: unsupported_assumption
+    severity: blocker
+    violated_requirement: REQ-DAILYREPORT-020
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期初餘額比照辦理（2026-09-17）
+      quote: 含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）
+    evidence: 'preconditions：「D2 當日 A 沒有任何場次與交易，D2 結算時點仍留存 400」；steps 1：「統計維度選「依機台明細」…機台帳號填機台 A、結算日期選 D1～D3」；expected：「D2
+      期末餘額 400＝D3 期初餘額 400（D2 無場次的期間仍沿用留存分數、列存在，前後相接，不中斷或歸 0）」；assumptions: []。RM REQ-DAILYREPORT-016 ambiguity（major）：「當期無任何場次與交易、但機台留有分數時，期初／期末餘額應顯示留存分數還是
+      0，兩者衝突，不自行裁定」（CLR-DAILYREPORT-006：無資料時列表仍列出、各欄位顯示 0）。'
+    explanation: '依機台明細並篩選機台 A 時，D2 列對 A 而言正好是「當期無任何場次與交易、但留有分數」的無資料列。這一列的期初／期末該顯示 400（依 v0.2）還是 0（依 CLR-006），RM 標為 major
+      ambiguity，PM 尚未回覆。本 TC 的 expected 直接斷言 D2 列存在且期初／期末為 400，等於默認了未裁定的選項一，卻沒有用 needs_human_confirmation: true 的 assumption
+      揭露。同批 TC-047／048 修訂、AC-0164、分頁等案例都刻意選「每日皆有資料」來避開同一情境，處理方式不一致。AC-0203 的字面雖是這個預期，但它能不能成立取決於 REQ-016 的裁定。（AC-0144 的 TC-DRAFT-01M3VPTHD0YK6ZWJS6GV32P74Y
+      不受影響：該列有機台 B 的資料，不是無資料列。）'
+    recommended_change: '新增 assumption（requirement_id: REQ-DAILYREPORT-016，needs_human_confirmation: true），寫明本 TC 依 v0.2「含當期無場次但仍有留存分數者」預期
+      D2 列期初／期末為 400；若 PM 依 CLR-DAILYREPORT-006 裁定無資料列餘額顯示 0，本 TC 的 expected 要跟著改。另建議在 RM 註記 AC-DAILYREPORT-0203 依賴 REQ-016
+      ambiguity 的裁定。'
+  advisories:
+  - testcase_id: TC-DRAFT-01M3VPTHD0CRV16D8RHHPM8698
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-013
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/損益
+      quote: 以機台（會員）端計算——正值代表玩家淨贏、機台分數增加
+    evidence: 'test_types: [functional]；expected：「L＝P − B…正負號依機台（會員）端…不是 B − P」；expected_result_spec_reference.quote 為有效投注額欄原文「當日該場館／機台的投注總額，以主站台核心貨幣計算（機台場館為
+      TWD；2026-09-03 定案）」；test_level: api，但三個步驟都是後台畫面操作與人工加總（沿用 v1）。'
+    explanation: expected 斷言「不是 B − P」屬反向結果，卻沒標 negative。quote 只支撐 TWD 這一點，沒支撐本次修訂的重點（機台端符號）。test_level 與步驟性質不符。REQ-013 的實質
+      non-happy 覆蓋另由 TC-DRAFT-01M3VPTHD0G4T00SX3XAD53TGN 提供，因此只列 minor。
+    recommended_change: test_types 補 negative；quote 改用或補上 §列表欄位/損益「以機台（會員）端計算——正值代表玩家淨贏、機台分數增加」；test_level 改為 ui_e2e（或補上 API
+      層的步驟）。
+  - testcase_id: TC-DRAFT-01M3VPTHD0AWSSN88T6M49XJ0Q
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §篩選器/統計週期
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    evidence: steps 1：「2026-09-03(三)～2026-09-13(日)」；preconditions：「起日為週三、迄日為其後第二個週日」。2026-09-07 為週一，所以 2026-09-03 是週四。expected
+      步驟 2 斷言第二列「範圍外的 08-31～09-02 不計入該列合計」，但 steps 只比對第一列（09-07～09-13）的合計。
+    explanation: 星期標註錯誤不影響案例結構（起日仍非週一），但替代區間的指引「起日為週三」跟範例對不上。第二列不計範圍外營業日（CLR-DAILYREPORT-008 已定案）寫在 expected 裡，卻沒有步驟去驗。
+    recommended_change: 改成「2026-09-03(四)」，替代指引改為「起日非週一」；補一個步驟：加總按日 09-03～09-06 各列，與第二列比對（或把該句從 expected 移除）。
+  - testcase_id: TC-DRAFT-01M3VPTHD0QW05NV93D1TCKBGH
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-015
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註
+      quote: 「未兌現金額」不受週期影響、一律為截至查詢當下的累計
+    evidence: 'preconditions：「營業日 d1（AC 範例 2026-09-08，週三）」；2026-09-08 是週二（09-07 為週一）。test_level: api，但步驟都是後台畫面操作（沿用 v1）。'
+    explanation: 星期標註錯誤不影響預期（d1 仍落在 09-07～09-10 列），但會誤導造數。test_level 與步驟性質不符。
+    recommended_change: 改成「週二」；test_level 改為 ui_e2e。
+  - testcase_id: TC-DRAFT-01M3VPTHD0WME4A64SQKTNAFAF
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位末段
+      quote: 「期初餘額」與「期末餘額」不加總
+    evidence: 'test_types: [functional]；expected：「（不是僅第 1 頁 10 列的合計）」「總計列的期初餘額、期末餘額都不等於各列逐列相加的值」。'
+    explanation: expected 以反向斷言為主要判準（不是當頁合計、不是逐列相加），但沒標 negative。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD0Q88CJH1VFZMTM4TQ
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位末段
+      quote: 頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制
+    evidence: 'test_types: [functional]；expected：「CSV 含全部 23 列資料（不是僅目前第 2 頁的 10 列）」「（時點值，非各列逐列相加）」。'
+    explanation: expected 含反向斷言，但沒標 negative。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD04Y2F1H3Y6ZENWSJQ
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §操作
+      quote: 本頁為統計檢視，不提供新增／編輯／刪除／審核操作
+    evidence: expected：「三種角色皆無新增／編輯／刪除／審核按鈕；核實操作只能在洗分出金核實頁。」steps 只有三個角色各自檢視本頁（沿用 v1）。
+    explanation: 後半句「核實操作只能在洗分出金核實頁」沒有對應步驟，執行者無從判定。
+    recommended_change: 刪除後半句，或補一個步驟：確認本頁沒有任何核實入口。
+  - testcase_id: TC-DRAFT-01M3VPTHD0E247BTDMY7FQ64W3
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/場次數
+      quote: 依場館彙總＝該場館底下所有機台帳號當日場次數的加總
+    evidence: acceptance_criteria_ids：[AC-DAILYREPORT-0091, AC-DAILYREPORT-0092]；steps 2 只查「依機台明細」、機台帳號填機台 A，沒有依場館彙總的步驟（沿用
+      v1 的 AC 對應）。
+    explanation: AC-0092（依場館彙總＝各機台加總）沒有在本 TC 驗證，對應關係誇大（AC-0092 實際由 ACTIVE TC-DAILYREPORT-029 覆蓋，整體覆蓋不受影響）。
+    recommended_change: 從 acceptance_criteria_ids 移除 AC-DAILYREPORT-0092，或補一個依場館彙總的步驟與預期。
+  - testcase_id: TC-DRAFT-01M3VPTHD052D7HP2NGSA16CRA
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期初餘額比照辦理（2026-09-17）
+      quote: 餘額涵蓋篩選條件內的所有機台
+    evidence: 'test_types: [functional]；expected：「E_A＝200（僅含機台 A，不含 B 的 150）」。'
+    explanation: expected 斷言「不含 B」屬反向結果，但沒標 negative。REQ-014 的 non-happy 覆蓋另有 YK6ZWJS6GV32P74Y、FT7A8CPNNHG0CVR3，所以只列 minor。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD08S9A6ZVJ1DKFXMT0
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-015
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註
+      quote: 「期初餘額」取該週期第一個營業日之前結算時點的值
+    evidence: 'test_types: [functional]；expected：「該週列期初餘額＝700…不等於週一 Wm 當日的期末餘額」「期末餘額不等於 700」。'
+    explanation: expected 以「不等於當日期末」作為區分判準（反向斷言），但沒標 negative。REQ-015 另有 boundary 案例（TC-045 修訂），所以只列 minor。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD01N37RYCQKFY4K97A
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-018
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §背景：場次資訊/期初餘額
+      quote: 出金一律清空餘額、無餘數承接
+    evidence: 'test_types: [functional]；acceptance_criteria_ids 含 AC-0184；expected：「機台 B：S2'' 期初餘額＝0（出金清空、無餘數承接）」。'
+    explanation: AC-0184 驗的是「不承接」這個反向結果，但沒標 negative。REQ-018 另有 boundary 案例（WCERQN7T78D8FT62），所以只列 minor。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD0PHEEQ962WW4PPZXE
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-019
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期末餘額不加總
+      quote: 總計列一律各機台取其查詢範圍內時間最後一個場次／最後一個營業日結算時點的期末餘額，再跨機台相加
+    evidence: 'test_types: [functional]；expected：「＝350（AC 範例），不是全部列期末相加」。'
+    explanation: expected 含「不是逐列相加」的反向斷言，但沒標 negative；同需求的其他案例（09ZYD4AQE813JFK3P 等）有標。
+    recommended_change: test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M3VPTHD0KQ0PZ33R35CF14AK
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-022
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/可排序欄位
+      quote: 所有欄位皆可排序，欄位標題右側顯示排序指示（未排序 ⇅、遞增 ▲、遞減 ▼）
+    evidence: expected：「列依該欄遞增排列（文字欄依字串順序、數值欄依數值大小、場次編號與場館／機台欄亦然）」。
+    explanation: spec 只規定所有欄位可排序、會顯示指示，沒定義文字欄／時間欄（結算期間、場次編號、開始／結束時間、進行中的「—」）的排序語意。「依字串順序」是 spec 以外的判準，碰到 ACAA00250 與 ACAA0099
+      這類值時可能和實作不同而誤判。
+    recommended_change: 把判準限縮為「標題顯示 ▲，且列順序依該欄單調遞增（文字與時間欄的實際規則只記錄、不作為判準）」，或把字串順序列成 needs_human_confirmation 的 assumption。
+  - testcase_id: TC-DRAFT-01M3VPTHD1G0SW44V3JA4X0SMF
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-026
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §維度鑽取與麵包屑/向下鑽取
+      quote: 於「依場館彙總」列點場館名 → 切至「依機台明細」，並將結算日期收斂為該列的結算期間
+    evidence: steps 3：「統計週期改選「按週」，結算日期維持 R，統計維度為「依場館彙總」，搜尋」；但步驟 1 鑽取後統計維度已是依機台明細，結算日期已收斂為單日（9/10～9/10）。
+    explanation: 「維持 R」與「為依場館彙總」跟步驟 1 之後的實際狀態不符，執行者可能直接沿用收斂後的單日去查。
+    recommended_change: 改寫為「點麵包屑第一層或手動把統計維度改回依場館彙總、結算日期重設為 R，統計週期改選按週，搜尋」。
+  - testcase_id: TC-DRAFT-01M3VPTHD1B71Z3XNQHWCHX6RZ
+    issue_type: unreasonable_edge_case
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-024
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/狀態保留
+      quote: 變更篩選、統計週期、統計維度、排序或鑽取層級時一律回到第 1 頁
+    evidence: steps 2：R23 改成「按週」（約 4 列）；steps 5：在第 3 頁點場館名鑽取，變成單一營業日的依機台明細。兩者變更後的結果都可能只有 1 頁。
+    explanation: 結果只有 1 頁時，「回到第 1 頁」本來就成立，對「統計週期」與「鑽取層級」這兩種變更沒有區分力（實作保留在第 3 頁的話，可能只是顯示空頁）。
+    recommended_change: 在前置條件確保變更後仍超過 10 列（例如鑽取的營業日有 11 台以上機台有資料，或統計週期改成仍會多頁的組合）；做不到時，補一個判準：「列表不為空、區間從第 1 筆起」。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-007
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §業務規則/日結時間
+      quote: 為場館設定欄位：每日結算的截止時刻（UTC+0），用於場館日結報表分日
+    evidence: 本 Draft 多數 TC（含 TC-014／040／045／047／048／099／100／101 的修訂）前置條件寫成事實陳述：「測試場館 Arcade 的日結時間為 00:00 UTC+0」。但 ACTIVE
+      TC-DAILYREPORT-051 v3、TC-031、TC-021／022 v1 都以 Arcade「已設定日結時間 06:00 UTC+0」為前提；TC-102 則用通用的 H。
+    explanation: 同一個測試場館，在不同 TC 的日結時間前提互相矛盾。執行者若沒先確認或調整場館設定，營業日切分、「今日（UTC）營業日」的定位與「不得跨越 00:00」的時間限制都可能錯。
+    recommended_change: 把前置條件改成可執行的設定步驟，例如「確認 Arcade 日結時間為 00:00 UTC+0；若不是，先在場館設定改為 00:00（執行後視需要還原）」，或改用通用 H 換算；也要通知 ACTIVE
+      TC 的執行者兩邊的前提不同。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: '以下 9 條 TC 帶有 needs_human_confirmation: true 的 assumption：TC-DRAFT-01M3VPTHCZFJEMKHBJZYW70Z6V（管轄範圍定義）、TC-DRAFT-01M3VPTHD0WME4A64SQKTNAFAF／Q88CJH1VFZMTM4TQ／E6D34XP45A80FVQY（REQ-016
+      無資料列餘額，以選資料避開）、TC-DRAFT-01M3VPTHD0E247BTDMY7FQ64W3（REQ-009 營業日內逾時結束）、TC-DRAFT-01M3VPTHD0WNCBW0PTT605XNHQ／GM9HVQJ1EEZX3PHZ（CLR-DAILYREPORT-014
+      越權反應）、TC-DRAFT-01M3VPTHD1AH02CK6YDZYJGJNV（AC-0244 佈置方式）、TC-DRAFT-01M3VPTHD1QW6R1J0W8N4PPH4J（清除後的狀態）。'
+    explanation: '依本 run 的派發指示，待 PM 回覆的項目以 needs_human_confirmation: true 呈現屬合規的 exploratory；這些 expected 都已把未定義的部分排除在判準外（只記錄、不斷言），因此不列為
+      blocker。但依角色契約，未被 ApprovalDecision(RESOLVE_AMBIGUITY) 覆蓋的 assumption 必須在核准階段處理。'
+    recommended_change: 在 approval 階段逐條做 RESOLVE_AMBIGUITY（或明確標為 exploratory 接受）；CLR-DAILYREPORT-014 及 REQ-009／016／017 的 PM
+      回覆到了以後，回頭修訂對應 TC。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/場次數
+      quote: 為當日結束的場次筆數：依機台明細＝該機台帳號當日的場次數
+    evidence: ACTIVE TC-DAILYREPORT-031 v1（不在本 Draft）的 expected：「場次數 2（逾時結束 1 ＋ 日結結算 1；依假設含所有非進行中狀態…）」；CIR 判 unaffected，理由是「本案假設已由
+      CLR-007 與 APR-0003 確認」。RM v0.2 REQ-DAILYREPORT-009 ambiguity（major）：CLR-007 的前提在實測中不成立，營業日內逾時結束場次是否計入未定義（已送 PM）。
+    explanation: 本 Draft 的 TC-077 修訂已經改成避開逾時結束並標 assumption，但同需求的 ACTIVE TC-031 仍斷言逾時結束會計入，與 v0.2 RM 的 ambiguity 矛盾。這不是本 Draft
+      的缺陷，但影響修訂後 suite 的一致性。
+    recommended_change: 在核准或 CIR 複核時重新評估 TC-DAILYREPORT-031（標成待 PM 回覆，或暫停用於 regression 判定），等 REQ-009 ambiguity 裁定後再修訂。
+  coverage_summary:
+    requirements_total: 26
+    requirements_covered: 26
+    ac_total: 98
+    ac_covered: 98
+    uncovered_accepted:
+    - REQ-DAILYREPORT-011：出金作廢後收據／已兌現／未兌現的呈現依 CLR-DAILYREPORT-011 暫緩（PM 尚無規劃，Oscar 決定暫緩），不設計、不假設，不算覆蓋缺口
+    - REQ-DAILYREPORT-021：含作廢出金的列，驗算式是否成立依 CLR-DAILYREPORT-011 暫緩；AC-0211～0215 已由本 Draft 覆蓋（前置條件排除作廢）
+    - REQ-DAILYREPORT-015：未兌現／已兌現在含作廢出金時的歸屬依 CLR-DAILYREPORT-011 暫緩；AC-0151～0153 已覆蓋
+    - REQ-DAILYREPORT-009：AC-0093（進行中不計入）由 unaffected 的 ACTIVE TC-DAILYREPORT-030 覆蓋，本批未重設計
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+    assumptions_all_flagged: false
+    revisions_match_cir_reasons: true
+    cir_new_required_ac_covered: true
+    high_risk_non_happy_coverage: true
+    expected_quotes_verbatim_in_spec: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3VPTHCZFJEMKHBJZYW70Z6V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0AWSSN88T6M49XJ0Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0CRV16D8RHHPM8698
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0QW05NV93D1TCKBGH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0WME4A64SQKTNAFAF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0Q88CJH1VFZMTM4TQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD04Y2F1H3Y6ZENWSJQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0E247BTDMY7FQ64W3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0ZQJFECR0P6ZN1ZM1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0GRPM6JVCTFVDM2J2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0KR0EFEWXY8PDCBFY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0WNCBW0PTT605XNHQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0GM9HVQJ1EEZX3PHZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0G4T00SX3XAD53TGN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0YK6ZWJS6GV32P74Y
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD052D7HP2NGSA16CRA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0FT7A8CPNNHG0CVR3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD08S9A6ZVJ1DKFXMT0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0E6D34XP45A80FVQY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0WWKZNDGD7F65MS6Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0WCERQN7T78D8FT62
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD01N37RYCQKFY4K97A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0EN1N4RQ4T5RXGRWS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD09ZYD4AQE813JFK3P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0PHEEQ962WW4PPZXE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD09WPNJSG9QEQ25WMC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0J0259JBP9NM498ZA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0NA92F1R872VK64KC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD01RDQ6A1Z9HTGX2Z1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0AK595T6RZCQNK24V
+    verdict: issue
+  - draft_id: TC-DRAFT-01M3VPTHD0WZYWDPVT4Y21BJ8M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0V4YEE53KR9J5VKJB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0EKT4SGGX46ZCFSPB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0KP7PDE54ZXTRE38S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0KNAK792F3ZAJWK95
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD03BEMMPYVHF5AC7V6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD0KQ0PZ33R35CF14AK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1RCB9XP4ZKM6SV202
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1DV0J8G8NKHVNR8Q9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1NP8WATJKTW1YGY3M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1AH02CK6YDZYJGJNV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1B71Z3XNQHWCHX6RZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD18EM2K0S49KR8S84T
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD11792232J9P8TE7XP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1G0SW44V3JA4X0SMF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1FZHA49HFA3YMF4S9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1VJCA79J5W4DCA59X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VPTHD1QW6R1J0W8N4PPH4J
+    verdict: ok
+history:
+- at: '2026-10-01T12:35:02Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-007
