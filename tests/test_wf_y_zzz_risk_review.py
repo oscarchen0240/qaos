@@ -157,3 +157,21 @@ def test_77_manual_run_area_comes_from_record_and_unknown_area_is_rejected(monke
     engine.cancel(run["run_id"], "oscar@example.com")
     with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
         engine.new_run("manual-test-to-regression", {"manual_record_id": "MAN-19990101-001"}, "oscar@example.com")
+
+def test_78_risk_reviewer_input_schema_binds_validation_report():
+    """MR !1 review 第二輪：Reviewer 原本沿用 test-validator-input（additionalProperties false），傳不進必須綁定的 TVR ID。"""
+    from tools.qaos import schema
+    ok = {"run_id": "RUN-20261001-001", "task_id": "T3RR", "iteration": 0, "functional_area": "CASHOUT", "spec_id": "SPEC-CASHOUT-901", "spec_version": "1.0",
+          "requirement_model_artifact_id": "ART-RM-01M3TWMMFJAVVA15XRQY8RK4X5", "testcase_draft_artifact_id": "ART-TCD-01M3TWRCPN91JEQ9C2MGK4AZB2",
+          "validation_report_artifact_id": "ART-TVR-01M3TXFPR4DAFK585X0WD14DXE", "existing_active_testcase_ids": []}
+    assert schema.errors(ok, "artifact/tc-risk-reviewer-input.schema.json") == []
+    missing = {k: v for k, v in ok.items() if k != "validation_report_artifact_id"}
+    assert any("validation_report_artifact_id" in e for e in schema.errors(missing, "artifact/tc-risk-reviewer-input.schema.json"))
+    leaked = dict(ok, test_design_report_artifact_id="ART-TDR-01M3TWRCRS3B92JKQ4WR3JTWX2")   # 不給 Designer 的報告
+    assert schema.errors(leaked, "artifact/tc-risk-reviewer-input.schema.json")
+    # 每份 agent 契約指到的 input／output schema 檔都要存在
+    for c in sorted((REPO / "agents").glob("*.yaml")):
+        a = yaml.safe_load(open(c, encoding="utf-8"))
+        for key in ("input_schema", "output_schema"):
+            for s in ([a[key]] if isinstance(a[key], str) else a[key]):
+                assert (REPO / s).exists(), f"{c.name} {key} 指向不存在的 {s}"
