@@ -240,11 +240,17 @@ def g_risk(run, task, arts) -> list[str]:
     if not tvr: return ["找不到本 run Validator 的 VALID TestValidationReport"]
     if rv["validation_report_artifact_id"] != tvr["artifact_id"]: issues.append(f"reviewed.validation_report_artifact_id 應為 {tvr['artifact_id']}")
     if rv["testcase_draft_artifact_id"] != tvr["payload"]["testcase_draft_artifact_id"]: issues.append(f"reviewed.testcase_draft_artifact_id 應為 {tvr['payload']['testcase_draft_artifact_id']}（Validator 審過的那份）")
-    if rv["spec_id"] != run["input"].get("spec_id"): issues.append(f"reviewed.spec_id {rv['spec_id']} 與 run 的 {run['input'].get('spec_id')} 不符")
-    sd = store.spec_dir(rv["spec_id"])
-    if sd is None or sd.parent.name != rv["functional_area"]: issues.append(f"reviewed.functional_area {rv['functional_area']} 與 {rv['spec_id']} 所屬 area 不符")
     dp = store.find_artifact(tvr["payload"]["testcase_draft_artifact_id"])
-    did_set = {tc["draft_id"] for tc in store.load(dp)["payload"]["testcases"]} if dp else set()
+    draft = store.load(dp)["payload"] if dp else {"testcases": []}
+    did_set = {tc["draft_id"] for tc in draft["testcases"]}
+    # spec 綁定以 Validator 審過的 draft 為準；run 有指定 spec／目標版本時也必須一致（避免用舊版 requirement 支撐新版抽查）
+    if (rv["spec_id"], rv["spec_version"]) != (draft.get("spec_id"), draft.get("spec_version")):
+        issues.append(f"reviewed spec {rv['spec_id']}@{rv['spec_version']} 與 Validator 審過的 draft {draft.get('spec_id')}@{draft.get('spec_version')} 不符")
+    inp = run["input"]; want_ver = inp.get("to_version") or inp.get("spec_version")
+    if inp.get("spec_id") and rv["spec_id"] != inp["spec_id"]: issues.append(f"reviewed.spec_id {rv['spec_id']} 與 run 的 {inp['spec_id']} 不符")
+    if want_ver and rv["spec_version"] != want_ver: issues.append(f"reviewed.spec_version {rv['spec_version']} 與 run 的目標版本 {want_ver} 不符")
+    area = store.run_area(inp)
+    if rv["functional_area"] != area: issues.append(f"reviewed.functional_area {rv['functional_area']} 與本 run 的 area {area} 不符")
     if set(rv["testcase_draft_ids"]) != did_set:
         issues.append(f"testcase_draft_ids 必須恰為 draft 全部 TC（缺 {sorted(did_set - set(rv['testcase_draft_ids']))}，多 {sorted(set(rv['testcase_draft_ids']) - did_set)}）")
     dims = [d["dimension"] for d in p["dimension_results"]]
@@ -257,15 +263,26 @@ def g_risk(run, task, arts) -> list[str]:
     for f in p["findings"]:
         if f["finding_id"] in seen: issues.append(f"finding_id {f['finding_id']} 重複")
         seen.add(f["finding_id"])
-        if f["spec_basis"] is None and not f["needs_clarification"]:
+        sb = f["spec_basis"]
+        if sb is not None and not (sb["location"].strip() and sb["quote"].strip()):
+            issues.append(f"{f['finding_id']} 的 spec_basis 只有空白；沒有依據請填 null 並標 needs_clarification")
+        elif sb is None and not f["needs_clarification"]:
             issues.append(f"{f['finding_id']} 沒有 spec 依據卻未標 needs_clarification（不得自行寫出預期行為）")
         for rid in f["related_requirement_ids"]:
             if not refs.find_requirement(rid, rv["spec_id"], rv["spec_version"])[0]: issues.append(f"{f['finding_id']} 引用的 {rid} 不在 {rv['spec_id']}@{rv['spec_version']}")
         for tid in f["related_testcase_ids"]:
             if tid in did_set: continue
-            if not (tid.startswith(f"TC-{rv['functional_area']}-") and store.exists(store.tc_pointer_path(tid)) and store.load(store.tc_pointer_path(tid)).get("status") == "ACTIVE"):
-                issues.append(f"{f['finding_id']} 引用的 {tid} 既不是本次 draft，也不是同 area ACTIVE TC")
+            if not _active_tc_in_area(tid, rv["functional_area"]):
+                issues.append(f"{f['finding_id']} 引用的 {tid} 既不是本次 draft，也不是同 area 的 ACTIVE TC")
     return issues
+
+def _active_tc_in_area(tc_id, area) -> bool:
+    """看 pointer 指向的 ACTIVE 版本本身：狀態 ACTIVE 且 functional_area 相符（不只看 ID 前綴）。"""
+    if not store.exists(store.tc_pointer_path(tc_id)): return False
+    ptr = store.load(store.tc_pointer_path(tc_id)); ver = ptr.get("active_version")
+    if ptr.get("status") != "ACTIVE" or ver is None or not store.exists(store.tc_version_path(tc_id, ver)): return False
+    v = store.load(store.tc_version_path(tc_id, ver))
+    return v.get("status") == "ACTIVE" and v.get("functional_area") == area
 
 GATES = {"G-SPEC": g_spec, "G-DESIGN": g_design, "G-TVAL": g_tval, "G-BVAL": g_bval, "G-IMPACT": g_impact, "G-COMPARE": g_compare, "G-REG": g_reg, "G-RISK": g_risk}
 

@@ -42,11 +42,11 @@ def _expand_tasks(wf: dict, inputs: dict) -> list[dict]:
     return tasks
 
 def _risk_review_task_id(wf: dict, inputs: dict) -> str | None:
-    """ADR-009：run 的 functional area（由 spec_id 所在目錄決定）在風險抽查 agent 的 applies_to_areas 內 → 插入 <after>RR。"""
+    """ADR-009：run 的 functional area（store.run_area）在風險抽查 agent 的 applies_to_areas 內 → 插入 <after>RR。
+    area 判定不了時由 new_run 事先拒絕，這裡不會把「未知」當成「不需抽查」。"""
     cfg = wf.get("risk_review")
-    if not cfg or not inputs.get("spec_id"): return None
-    d = store.spec_dir(inputs["spec_id"])
-    if d is None or d.parent.name not in (agents()[cfg["agent"]].get("applies_to_areas") or []): return None
+    if not cfg: return None
+    if store.run_area(inputs) not in (agents()[cfg["agent"]].get("applies_to_areas") or []): return None
     return cfg["after"] + "RR"
 
 def _wf_task(wf: dict, task_id: str) -> dict:
@@ -68,6 +68,8 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
     missing = [k for k, v in wf["input"]["fields"].items() if v.get("required") and k not in inputs and k != "initiated_by"]
     if missing: raise EngineError(f"缺少必要 input：{missing}")
+    if wf.get("risk_review") and store.run_area(inputs) is None:
+        raise EngineError("無法判定本 run 的 functional area（需 spec_id，或 functional_area 有值的 manual_record_id），無法決定是否需要高風險抽查（ADR-009）")
     if workflow_id == "spec-to-bug" and not inputs.get("evidence_ids"):
         raise EngineError("No Evidence, No Formal Bug：spec-to-bug 需要 evidence_ids")
     for eid in inputs.get("evidence_ids", []):
@@ -502,7 +504,11 @@ def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False):
         _advance(run, task["task_id"]); return
     if back_to_generator:
         ids_ = [t["task_id"] for t in run["tasks"]]; i = ids_.index(task["task_id"])
-        gen = next(t for t in reversed(run["tasks"][:i]) if t["type"] == "agent" and t.get("agent_id") not in ("agent-supervisor", "agent-test-validator", "agent-bug-validator", "agent-tc-risk-reviewer"))
+        before = run["tasks"][:i]
+        # 有 Test Designer 就退回 Designer（產出 TC 的人）：spec-change-impact 的 T4 CIA compare 排在核准前，
+        # 只找「最近一個非 validator agent」會誤退回 compare，Designer／Validator／RR 都不會重跑（ADR-009 review 修正）
+        gen = next((t for t in reversed(before) if t.get("agent_id") == "agent-test-designer"), None) or \
+              next(t for t in reversed(before) if t["type"] == "agent" and t.get("agent_id") not in ("agent-supervisor", "agent-test-validator", "agent-bug-validator", "agent-tc-risk-reviewer"))
         gen["iteration"] += 1; gen["status"] = "READY"; gen["output_artifact_ids"] = []
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
             if t["task_id"] != task["task_id"] and t["status"] in ("DONE",) and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"):

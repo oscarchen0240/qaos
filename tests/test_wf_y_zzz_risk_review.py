@@ -95,3 +95,65 @@ def test_74_only_risk_reviewer_may_produce_risk_review(monkeypatch):
     forged = _review(rid, did, p.stem, draft_ids, agent="agent-test-validator")
     ok, problems = engine.submit(rid, "T3RR", str(forged))
     assert not ok and any("越權" in x for x in problems) and engine.load_run(rid)["status"] == "FAILED"
+
+def _run_to_risk_task(prefix):
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
+    tcs, draft_ids = _tcs(prefix=prefix)
+    did, _ = _submit_design(rid, tcs)
+    _, p = H.write_artifact(rid, "T3", "agent-test-validator", "TestValidationReport", H.validation_report(did, rm_aid, "PASS"), [{"entity_type": "Artifact", "id": did}], {"type": "TestCaseDraft", "ids": [did]}, "validation")
+    assert engine.submit(rid, "T3", str(p))[0] and engine.evaluate_gate(rid, "T3")["result"] == "PASS"
+    return rid, did, p.stem, draft_ids
+
+def test_75_risk_gate_binds_version_rejects_blank_basis_and_checks_active_area(monkeypatch):
+    """MR !1 review：版本須與 draft／run 一致；空白 spec_basis 不算依據；引用 ACTIVE TC 要看 ACTIVE 版本本身的 area。"""
+    rr = engine.agents()["agent-tc-risk-reviewer"]
+    monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
+    rid, did, tvr, draft_ids = _run_to_risk_task("01R2ZZZZZZZZZZZZZZZZZZZZZ")
+    # 空白 spec_basis → schema INVALID（不進 gate）
+    blank = _review(rid, did, tvr, draft_ids, findings=[_finding(spec_basis={"location": " ", "quote": " "}, needs_clarification=False)])
+    ok, problems = engine.submit(rid, "T3RR", str(blank)); assert not ok
+    # 版本與 draft／run 不符
+    p = _review(rid, did, tvr, draft_ids); d = store.load(p); d["payload"]["reviewed"]["spec_version"] = "9.9"; store.save(p, d)
+    assert engine.submit(rid, "T3RR", str(p))[0]
+    msgs = " ".join(engine.evaluate_gate(rid, "T3RR")["issues"])
+    assert "Validator 審過的 draft SPEC-NEG-001@1.0" in msgs and "目標版本 1.0" in msgs
+    # ID 前綴是 TC-NEG-，但 ACTIVE 版本實際是 AUTH 的 TC → 不算同 area
+    src = next(q for q in sorted((store.ROOT / "testcases" / "registry").glob("TC-AUTH-*.yaml")) if store.load(q)["status"] == "ACTIVE")
+    ptr = store.load(src); ver = ptr["active_version"]; v = store.load(store.tc_version_path(src.stem, ver))
+    store.save(store.tc_version_path("TC-NEG-900", ver), dict(v, testcase_id="TC-NEG-900")); store.save(store.tc_pointer_path("TC-NEG-900"), dict(ptr, testcase_id="TC-NEG-900"))
+    try:
+        p = _review(rid, did, tvr, draft_ids, findings=[_finding(related_testcase_ids=["TC-NEG-900"])])
+        assert engine.submit(rid, "T3RR", str(p))[0]
+        g = engine.evaluate_gate(rid, "T3RR")
+        assert g["result"] == "FAIL" and any("TC-NEG-900 既不是本次 draft，也不是同 area 的 ACTIVE TC" in x for x in g["issues"])
+    finally:
+        (store.ROOT / store.tc_pointer_path("TC-NEG-900")).unlink(); (store.ROOT / store.tc_version_path("TC-NEG-900", ver)).unlink()
+    engine.cancel(rid, "oscar@example.com")
+
+def test_76_change_impact_reject_returns_to_designer_and_resets_risk_task(monkeypatch):
+    """MR !1 review：spec-change-impact 的核准前是 T4 CIA compare；整批 reject 必須退回 T2 Designer，T3／T3RR／T4 一起重設。"""
+    rr = engine.agents()["agent-tc-risk-reviewer"]
+    monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["AUTH"])
+    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com"); rid = run["run_id"]
+    assert [t["task_id"] for t in run["tasks"]] == ["T0", "T1", "T2", "T3", "T3RR", "T4", "T5", "T6"]
+    for t in run["tasks"]:
+        if t["task_id"] in ("T0", "T1", "T2", "T3", "T3RR", "T4"): t["status"] = "DONE"
+    apr_task = next(t for t in run["tasks"] if t["task_id"] == "T5"); apr_task["status"] = "RUNNING"
+    engine._finish_approval_task(run, apr_task, ok=False, back_to_generator=True)
+    run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
+    assert run["current_task_id"] == "T2" and st["T2"] == "READY" and st["T1"] == "DONE"
+    assert st["T3"] == st["T3RR"] == st["T4"] == st["T5"] == "PENDING"
+    engine.cancel(rid, "oscar@example.com")
+
+def test_77_manual_run_area_comes_from_record_and_unknown_area_is_rejected(monkeypatch):
+    """MR !1 review：manual-test-to-regression 可不填 spec_id；area 改看 manual record，判定不了就拒絕建 run，不默默跳過抽查。"""
+    from tools.qaos import tc_ops
+    rr = engine.agents()["agent-tc-risk-reviewer"]
+    monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
+    rec = tc_ops.manual_new("提款連點測試", "demo", "NEG", ["連點送出"], "產生兩筆", "fail", "oscar@example.com")
+    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com")
+    assert "T2RR" in [t["task_id"] for t in run["tasks"]]
+    engine.cancel(run["run_id"], "oscar@example.com")
+    with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
+        engine.new_run("manual-test-to-regression", {"manual_record_id": "MAN-19990101-001"}, "oscar@example.com")
