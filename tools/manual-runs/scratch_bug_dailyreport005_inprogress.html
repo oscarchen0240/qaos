@@ -1,0 +1,173 @@
+<title>日結報表漏列進行中場次</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+figure.wide{grid-column:1/-1}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}dl.fields{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">Major / High</span>
+    <span class="badge scope">後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後台][Arcade][後端][場館日結報表] 依場次明細未列出進行中場次，總計列期末餘額亦未計入進行中場次的分數</h1>
+  <div class="subtitle">BUG-DAILYREPORT-005 · SPEC-DAILYREPORT-001 v0.1 · REQ-DAILYREPORT-008／014 · AC-0083 · TC-DAILYREPORT-099 · EXE-20261001-001 · CLR-DAILYREPORT-013</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>GALAXY-A（galaxyagroup）</dd>
+      <dt>遊戲名稱</dt><dd>真人大廳（真人）</dd>
+      <dt>測試環境</dt><dd>stage · 站台 Arcade（機台場館）· 場館日結時間 00:00（UTC+0）、場次逾時 1 小時</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ACAA00424</code>（機台帳號）· 查詢者 <code class="inline">ACAA00423</code>（站長）</dd>
+      <dt>測試時間</dt><dd>2026-10-01 10:31:45 建立場次，約 10:32～10:42 查詢報表（UTC+0）</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">後端：場次明細與期末餘額的查詢疑似沒有納入「進行中」的場次，前端因為沒有資料可顯示而沒有該列。本次沒有擷取 query-venue-daily-report 的 API 回應，無法完全排除是前端過濾，請 RD 一併確認。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">機台 ACAA00424 開了新場次 <code class="inline">ACAA00424_20261001_0002</code> 並下注兩局，場次還在進行中。到場館日結報表用「依場次明細」查詢，<b>列表只有同機台更早、已結束的場次 _0001，完全沒有 _0002 這一列</b>；總計列的期末餘額是 $0.00，沒有計入這個進行中場次的分數（機台目前分數 900）。進行中的場次在報表上查不到任何資料，要等場次結束後才會出現。</p>
+    <div class="specquote">
+      <b>需求依據：CLR-DAILYREPORT-013（PM 定案 A，2026-10-01）</b><br>
+      依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢當下的值；期末餘額一律計入進行中場次累計到查詢當下的分數（已結算的營業日仍取結算時點的值）。此定案以場館日結報表 spec 2026-09-17 修訂為準。
+    </div>
+    <div class="specquote">
+      <b>SPEC-DAILYREPORT-001 v0.1 §背景：場次資訊</b><br>
+      開始時間／結束時間：UTC+0；進行中的場次結束時間顯示「—」。場次時長：開始至結束的時間差；進行中則顯示累計至查詢當下。
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　依場次明細有 ACAA00424_20261001_0002 這一列：狀態「進行中」、結束時間「—」、場次時長累計到查詢當下、期末餘額為機台截至查詢當下的分數（本案 900）。總計列的期末餘額也要計入這個進行中場次的分數，不是 $0.00。</div>
+    <div class="actual"><b>實際</b>　列表總筆數 1，只有已結束的 ACAA00424_20261001_0001（08:25～08:41，場次時長 15 分），沒有 _0002；總計列期末餘額 $0.00。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0089</span>交易紀錄：10:31:45 開分 100、10:32:05 入鈔 1,000，場次 _0002，皆成功</li>
+      <li><span class="tag">EVD-0090</span>交易紀錄 API：兩筆 sessionCode 皆為 _0002，入鈔後 balance 1100</li>
+      <li><span class="tag">EVD-0091</span>注單 6745051、6745052：同機台真人大廳，各投注 100</li>
+      <li><span class="tag">EVD-0092</span>注單 API 6745052：sessionCode _0002，betTime 10:33:56Z</li>
+      <li><span class="tag">EVD-0093</span>注單 API 6745051：sessionCode _0002，betTime 10:33:35Z</li>
+      <li><span class="tag">EVD-0095</span>機台前台：兩局損益皆 -100，由 1,100 推算目前分數 900</li>
+      <li><span class="tag">EVD-0094</span>場館日結報表依場次明細：只有 _0001、沒有 _0002，總計期末 $0.00</li>
+      <li><span class="tag">EVD-0096</span>場館設定：Arcade 日結時間 00:00（UTC+0），查詢時仍在同一營業日，_0002 沒有被日結結束</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>在機台 <code class="inline">ACAA00424</code> 前台開分、入鈔並進行真人大廳投注，讓場次保持進行中（不要洗分或出金）</li>
+      <li>登入後台，站台切換至 <b>Arcade</b>，進入「各式報表 › 場館日結報表」</li>
+      <li>統計週期「按日」、統計維度「依場次明細」，結算日期涵蓋今日，按「搜尋」</li>
+      <li>檢查列表是否有該進行中場次的列，以及總計列的期末餘額</li>
+    </ol>
+    <p class="notice">前置：查詢時不要跨越場館的日結時間（Arcade 為 00:00 UTC+0），否則場次會被日結強制結束。</p>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text">場館日結報表 API <code class="inline">query-venue-daily-report</code>。本次沒有擷取 request 與 response，請 RD 確認回應中是否包含狀態為「進行中」的場次。</p>
+    <dl class="fields" style="margin-top:12px">
+      <dt>Request</dt><dd>—（未擷取）</dd>
+      <dt>Response</dt><dd>—（未擷取）</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>附註</h2>
+    <p class="body-text">1. 報表頁尾顯示「Arcade 日結時間 --」，但場館設定為 00:00（UTC+0）（EVD-0094、EVD-0096）。spec 沒有規定頁尾要怎麼顯示，不屬本單範圍，請 RD 順便確認頁尾是否應顯示設定值（Arcade 底下另有 2 個子站，可能和查詢範圍內有多個場館有關）。<br>
+    2. _0001 那一列的開分 100、進鈔 1,000、收據 900、損益 -200、期末 0 彼此一致（1,100 − 200 − 900 ＝ 0），看起來是另一輪相同金額的操作，不是 _0002 的注單被算進 _0001。</p>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure class="wide"><img src="img/EVD-0094.webp" alt="場館日結報表依場次明細只有 _0001"><figcaption>EVD-0094 · 場館日結報表（依場次明細）：只有 _0001，總計期末 $0.00</figcaption></figure>
+      <figure class="wide"><img src="img/EVD-0089.webp" alt="交易紀錄：場次 _0002 開分與入鈔"><figcaption>EVD-0089 · 交易紀錄：場次 _0002 開分 100、入鈔 1,000</figcaption></figure>
+      <figure class="wide"><img src="img/EVD-0091.webp" alt="注單查詢：兩筆注單"><figcaption>EVD-0091 · 注單查詢：6745051、6745052</figcaption></figure>
+      <figure><img src="img/EVD-0090.png" alt="交易紀錄 API"><figcaption>EVD-0090 · 交易紀錄 API（sessionCode _0002）</figcaption></figure>
+      <figure><img src="img/EVD-0095.webp" alt="機台前台注單紀錄"><figcaption>EVD-0095 · 機台前台：兩局皆輸</figcaption></figure>
+      <figure><img src="img/EVD-0093.png" alt="注單 API 6745051"><figcaption>EVD-0093 · 注單 API 6745051</figcaption></figure>
+      <figure><img src="img/EVD-0092.png" alt="注單 API 6745052"><figcaption>EVD-0092 · 注單 API 6745052</figcaption></figure>
+      <figure class="wide"><img src="img/EVD-0096.webp" alt="Arcade 場館設定"><figcaption>EVD-0096 · Arcade 場館設定：日結時間 00:00（UTC+0）</figcaption></figure>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>QAOS · RUN-20261001-006 · BugDraft ART-BD-01M3VHR7M6AHXVFE1V7E0VWPQW · Validator PASS · APR-0190 approved · <b>BUG-DAILYREPORT-005</b> OPEN</span>
+    <span>2026-10-01 · oscarchen@blockaction.tech</span>
+  </div>
+</div>

@@ -1,0 +1,91 @@
+artifact_id: ART-TCD-01M3VG71AJTECA1GK87CG6D1YB
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-002
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-01T10:29:58Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-DAILYREPORT-052@v2
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-017
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-052
+  version: 2
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 無進行中場次時日結不產生新場次
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0172
+    test_level: api
+    test_types:
+    - negative
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館已設定日結時間 06:00 UTC+0
+    - 測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊
+    - 各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）
+    - 查詢時點在日結時間之後
+    steps:
+    - n: 1
+      action: 機台 A 無進行中場次（機台資訊區塊顯示無進行中場次；可選用尚無任何交易的機台，或先以出金結束其場次——出金一律清空餘額，見 spec §場次資訊）
+    - n: 2
+      action: 不對機台 A 做任何交易，等待日結時間 06:00 UTC+0 到達
+    - n: 3
+      action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+    - n: 4
+      action: 依場次明細（機台帳號填機台 A）查詢，結算日期起日＝日結前所屬營業日、迄日＝日結後所屬營業日（即前一日與當日）
+    test_data: []
+    expected_result: 步驟 3：機台資訊區塊仍顯示無進行中場次（未因日結產生新場次）；步驟 4：查詢範圍內機台 A 沒有狀態「日結結算」的列，也沒有狀態「進行中」的列
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（進行中場次於依場次明細可見：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以
+        spec 2026-09-17 修訂為準，v0.1 不含該修訂））
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+    assumptions: []
+    critical_path: false
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-DAILYREPORT-052
+      version: 2
+    design_rationale: CLR-DAILYREPORT-013 PM 定案 A（2026-10-01）推翻 CLR-DAILYREPORT-012 的 B：依場次明細列出進行中場次（結束時間「—」）。v2 前置條件『依場次明細只列已結束／逾時結束／日結結算的場次』已不成立，已移除；新建立（進行中）的場次改回於依場次明細驗證。會員詳細頁「機台資訊」區塊的驗證點保留為補充（spec
+      §場次呈現位置明寫該區塊顯示目前進行中場次摘要，與依場次明細並列為兩個呈現位置，並不互斥），但不再宣稱『依場次明細看不到進行中場次』。AC-0172 的 then 為『不產生新場次』；因進行中場次現在會列在依場次明細，步驟 4 可直接用『無進行中列、無日結結算列』驗證，比
+      v2 只查當日的日結結算列更直接（日結結算列歸屬前一日，v2 只查當日會漏掉）。負面事實的比對基準：機台 A 在日結前無進行中場次、期間不交易，因此日結後範圍內不應出現進行中或日結結算列；已結束列（日結前洗分／出金結束者）可能存在，不在斷言範圍。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2
+history:
+- at: '2026-10-01T10:30:03Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-002

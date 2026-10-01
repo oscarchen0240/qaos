@@ -1,0 +1,129 @@
+title: '[後台][Arcade][後端][場館日結報表] 依場次明細未列出進行中場次，總計列期末餘額亦未計入進行中場次的分數'
+product: ba-admin
+functional_area: DAILYREPORT
+severity_rationale: 建議 major／high，最終由 Human 決定。理由：(1) 已有 PM 定案（CLR-DAILYREPORT-013 答覆 A，2026-10-01）明確判定「現行實作（進行中場次在日結報表查不到任何資料）為缺陷」，非
+  spec 模糊； (2) 場館日結報表用途為供平台與場館對帳，進行中場次對報表完全不可見（無列、無場次時間、無時長），期末餘額總計列顯示 $0.00 而非機台實際分數，屬帳務報表的數字錯誤； (3) 影響每一個尚未結束的場次、每次查詢當日營業日都會發生，非邊緣情境，故
+  priority 建議 high（與同功能 BUG-DAILYREPORT-001／002／003 的 major／high 一致）。 不建議 critical 的理由：本案是「進行中場次尚未納入」而非既有已結算數字被算錯——證據中已結束場次
+  _0001 列本身未見異常；規格亦定義日結時間到達時強制結束所有進行中場次（v0.1 §業務規則/場次日結），推測場次結束後會進入報表， 此點本單證據未驗證，僅為推測。若 Human 判斷站長／對帳人員會以當日即時報表的期末餘額作帳務依據，可上調
+  severity。
+environment:
+  name: stage
+  site: Arcade（機台場館；場館設定日結時間 00:00 UTC+0、場次逾時時間 1 小時，EVD-0096）
+  account: ACAA00424（機台帳號，交易發起）；查詢者 ACAA00423（站長）
+  timezone: UTC+0（後台時區 UTC+00:00）
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+requirement_id: REQ-DAILYREPORT-008
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0083
+testcase_id: TC-DAILYREPORT-099
+testcase_version: 1
+execution_id: EXE-20261001-001
+preconditions:
+- stage 環境後台，以站長 ACAA00423 登入，站台切換下拉選單已選定 Arcade（機台類型站台）
+- 機台帳號 ACAA00424 目前有進行中場次 ACAA00424_20261001_0002（2026-10-01 10:31:45 開分 100、10:32:05 入鈔 1,000，後續兩局真人大廳投注各 100 皆輸，機台目前分數 900），之後不再有任何交易
+- 同機台同日另有已結束場次 ACAA00424_20261001_0001（08:25～08:41）
+- 查詢時（約 2026-10-01 10:32～10:42 UTC）未跨越場館日結時間：Arcade 日結時間設定為 00:00（UTC+0，EVD-0096），場次 _0002 於 10:31:45 建立，查詢時仍屬 2026-10-01
+  營業日，未被日結強制結束
+reproduction_steps:
+- 於機台 ACAA00424 前台開分、入鈔並進行真人大廳投注，確認場次進行中（交易紀錄可查到 sessionCode ACAA00424_20261001_0002，機台目前分數 900，不要洗分或出金）
+- 進入 各式報表 > 場館日結報表，站台 Arcade，統計週期「按日」，統計維度「依場次明細」，機台帳號留空（或填 ACAA00424），結算日期 2026-09-25 起至含 2026-10-01，按「搜尋」
+- 檢視列表中 2026-10-01 的場次列，找場次編號 ACAA00424_20261001_0002 的列（預期狀態「進行中」、結束時間「—」、場次時長累計到查詢當下、期末餘額 900）
+- 檢視底部總計列的「期末餘額」
+expected_result: 依場次明細列出所有狀態的場次，含進行中：列表應有場次 ACAA00424_20261001_0002 的列，狀態「進行中」、結束時間顯示「—」，場次時長為累計到查詢當下的值， 期末餘額為累計到查詢當下的機台分數（TC-DAILYREPORT-099／AC-DAILYREPORT-0083
+  範例；本案機台目前分數 900，依 PM 定案 A 一律計入進行中場次累計到查詢當下的分數）； 總計列的期末餘額亦應計入該進行中場次的分數，而非 $0.00（同源需求 REQ-DAILYREPORT-014／AC-DAILYREPORT-0143：尚未結算的營業日取截至查詢當下的分數、含進行中場次）。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §背景：場次資訊/開始時間・結束時間、場次時長（v0.1 原文「進行中則顯示累計至查詢當下」）+ §列表欄位/場次編號；進行中場次列須出現、其場次時長與期末餘額累計到查詢當下， 依 CLR-DAILYREPORT-013（PM
+    定案 A，2026-10-01，以 spec 2026-09-17 修訂為準，推翻 CLR-DAILYREPORT-012 的 B）；v0.1 不含 09-17 修訂，故期末餘額計入進行中場次一節（REQ-DAILYREPORT-014）出自該
+    CLR 而非 v0.1 原文
+  quote: 進行中的場次結束時間顯示「—」
+actual_result: 機台 ACAA00424 於 2026-10-01 10:31:45 開分 100、10:32:05 入鈔 1,000，兩筆交易皆成功，場次編號皆為 ACAA00424_20261001_0002。 10:33:35
+  與 10:33:56 兩局真人大廳注單（流水號 6745051、6745052）各投注 100、有效投注 100，sessionCode 皆為 ACAA00424_20261001_0002。 機台前台注單紀錄兩局損益皆 -100，由入鈔後餘額
+  1,100 推算機台目前分數為 900。 場館日結報表（Arcade、按日、依場次明細、結算日期 2026-09-25 起）列表總筆數 1，只列出已結束場次 ACAA00424_20261001_0001（2026-10-01 08:25～08:41，場次時長
+  15 分），沒有 ACAA00424_20261001_0002 的列。 該列表的總計列期末餘額為 $0.00（唯一列 _0001 的期末餘額亦為 $0.00），未計入進行中場次的分數。 報表在場次結束前查不到該場次任何資料，只能由交易紀錄與注單證明場次存在。
+actual_result_evidence_map:
+- claim: 機台 ACAA00424 於 2026-10-01 10:31:45 開分 100、10:32:05 入鈔 1,000，兩筆交易狀態成功，場次編號為 ACAA00424_20261001_0002（後台交易紀錄畫面）
+  evidence_id: EVD-0089
+- claim: query-transaction-log 回應中交易 8798240 creditIn 100（balance 100）、8798241 cashIn 1000（balance 1100），sessionCode 皆為 ACAA00424_20261001_0002
+  evidence_id: EVD-0090
+- claim: 注單 6745051（投注 10:33:35／派彩 10:33:49）、6745052（投注 10:33:56／派彩 10:34:17）為機台 ACAA00424 真人大廳注單，投注 100、有效投注 100
+  evidence_id: EVD-0091
+- claim: 注單 6745052 的 sessionCode 為 ACAA00424_20261001_0002，betTime 10:33:56Z、gameBet 100、gameValidBet 100
+  evidence_id: EVD-0092
+- claim: 注單 6745051 的 sessionCode 為 ACAA00424_20261001_0002，betTime 10:33:35Z、gameBet 100、gameValidBet 100
+  evidence_id: EVD-0093
+- claim: 場館日結報表依場次明細只列已結束場次 ACAA00424_20261001_0001（08:25～08:41，場次時長 15 分），總筆數 1，沒有 ACAA00424_20261001_0002 的列
+  evidence_id: EVD-0094
+- claim: 報表總計列期末餘額 $0.00（_0001 列期末餘額亦為 $0.00）
+  evidence_id: EVD-0094
+- claim: 機台前台注單紀錄兩筆真人大廳注單（18:33:35／18:33:56 UTC+8）投注 100 TWD、損益皆 -100 TWD；機台目前分數 900 由入鈔後餘額 1,100 推算（推算值，非直接截取）
+  evidence_id: EVD-0095
+- claim: 報表在場次結束前查不到該場次任何資料（列表總筆數 1，僅 _0001）；場次存在只能由交易紀錄（EVD-0089／0090）與注單（EVD-0091～0093）證明
+  evidence_id: EVD-0094
+- claim: Arcade 場館設定日結時間為 00:00（UTC+0）、場次逾時 1 小時；查詢時未跨越日結時間，_0002 為進行中而非被日結結束
+  evidence_id: EVD-0096
+evidence_ids:
+- EVD-0089
+- EVD-0090
+- EVD-0091
+- EVD-0092
+- EVD-0093
+- EVD-0094
+- EVD-0095
+- EVD-0096
+impact: '站長／平台對帳人員在場次結束前，無法於場館日結報表看到進行中場次（無場次列、無開始時間、無場次時長、無開分／入鈔／損益等該場次資料）； 總計列與該營業日期末餘額少算進行中場次的分數（本案顯示 $0.00，機台目前分數 900，由
+  EVD-0095 推算）。 期末餘額與場次明細列同源（REQ-DAILYREPORT-008 與 REQ-DAILYREPORT-014／AC-DAILYREPORT-0143），皆因進行中場次未被報表納入而一併缺漏； 依機台明細或依場館彙總維度是否同樣漏計，本單證據未涵蓋（僅驗證依場次明細維度）。
+  TC-DAILYREPORT-099 的預期行為於目前實作下無法達成（EXE-20261001-001 result fail）。
+
+  附註（2026-10-01 補充）：報表頁尾顯示「Arcade 日結時間 --」，但場館設定為 00:00（UTC+0）（EVD-0094、EVD-0096）。spec 未規定頁尾的顯示方式，不屬本單缺陷範圍；請 RD 順便確認頁尾是否應顯示設定值（Arcade
+  底下另有 2 個子站，可能與查詢範圍內有多個場館有關）。'
+suspected_area: 後端 report/query-venue-daily-report 場次明細層與期末餘額彙總層疑似未納入進行中場次（場次狀態「進行中」的資料未被查詢或未回傳），前端因無資料可顯示而無該列； 判斷依據僅為報表畫面無該場次任何資料，本案證據未截取
+  query-venue-daily-report 的 API 回應，無法區分是後端未回傳或前端過濾，後端為較可能的推測，不確定。 另：已結束場次 _0001 列的注單數 2／有效投注額 $200／損益 -$200 與 _0002 的兩局投注金額相同，本案證據未含
+  _0001 自身的交易與注單，無法判斷這些數字是否正確歸屬 _0001，本單不處理。
+ambiguity_suspected: false
+bug_id: BUG-DAILYREPORT-005
+version: 1
+severity: major
+priority: high
+duplicate_of: null
+status: OPEN
+created_by: agent-bug-analyst
+validated_by: agent-bug-validator
+validation_report_id: ART-BVR-01M3VHYV47YK3N8Q0V2K44G0GT
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0190
+created_at: '2026-10-01T11:10:17Z'
+updated_at: '2026-10-01T11:10:42Z'
+history:
+- at: '2026-10-01T10:57:42Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-BD-01M3VHR7M6AHXVFE1V7E0VWPQW
+  run_id: RUN-20261001-006
+- at: '2026-10-01T10:57:42Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-006
+- at: '2026-10-01T11:01:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-BVR-01M3VHYV47YK3N8Q0V2K44G0GT
+  run_id: RUN-20261001-006
+- at: '2026-10-01T11:01:17Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261001-006
+- at: '2026-10-01T11:10:17Z'
+  from_status: PENDING_APPROVAL
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: APR-0190
+  run_id: RUN-20261001-006

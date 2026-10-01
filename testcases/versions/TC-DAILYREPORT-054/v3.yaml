@@ -1,0 +1,110 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids: []
+test_level: ui_e2e
+test_types:
+- negative
+- functional
+design_techniques:
+- state_transition
+- negative
+priority: high
+risk: high
+preconditions:
+- 機台 A 有分數餘額且場次進行中
+- 場館設定的場次逾時時間已知（預設 1 小時；測試可調短）
+- 已登入後台，可查看場館日結報表（依場次明細；依 CLR-DAILYREPORT-013 PM 定案 A 會列出進行中場次）與機台 A 的會員詳細頁「機台資訊」區塊
+steps:
+- n: 1
+  action: 讓機台 A 在有餘額狀態下超過場館逾時時間無任何交易與遊玩
+- n: 2
+  action: 在後台場館日結報表（依場次明細，機台帳號填機台 A）確認該場次狀態為「逾時結束」，記錄場次編號 S1
+- n: 3
+  action: 以剩餘分數在機台前台嘗試進入遊戲／下注
+- n: 4
+  action: 直接呼叫遊玩／下注 API
+- n: 5
+  action: 對機台 A 進行入金（或開分）
+- n: 6
+  action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+- n: 7
+  action: 依場次明細以相同條件重新查詢
+- n: 8
+  action: 再次嘗試遊玩
+test_data:
+- name: session_timeout
+  value: 場館設定值，建議測試時調為 5 分鐘
+expected_result: 步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 6：機台資訊區塊顯示新的進行中場次編號（不同於 S1）；步驟 7：S1 仍為「逾時結束」，另有一個機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」；步驟
+  8：可正常遊玩
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §背景：場次資訊/場次狀態（狀態值「逾時結束」）+ REQ-017 states + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依 CLR-DAILYREPORT-013（PM
+    定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））
+  quote: 進行中 / 已結束 / 逾時結束 / 日結結算
+assumptions:
+- text: 「逾時結束後、餘額仍在時前台與後端拒絕遊玩」與「再有交易即建立新場次」為 QA 實測觀察（MAN-20260914-001），SPEC-DAILYREPORT-001 未明寫；規則出處為機台金流與場次_spec_v01 §場次狀態
+  requirement_id: REQ-DAILYREPORT-017
+  needs_human_confirmation: false
+  resolved_by_approval: APR-0007
+critical_path: true
+source: change_workflow
+testcase_id: TC-DAILYREPORT-054
+version: 3
+supersedes: 2
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ
+created_at: '2026-10-01T10:36:12Z'
+updated_at: '2026-10-01T10:54:46Z'
+history:
+- at: '2026-10-01T10:36:12Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VG7258NB5MN8P53TG5B616
+  run_id: RUN-20261001-004
+- at: '2026-10-01T10:36:12Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-004
+- at: '2026-10-01T10:36:12Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ
+  run_id: RUN-20261001-004
+- at: '2026-10-01T10:44:05Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261001-004
+- at: '2026-10-01T10:54:46Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0188
+  run_id: RUN-20261001-004
+- at: '2026-10-01T10:54:46Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261001-004
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0188

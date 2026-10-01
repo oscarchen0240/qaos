@@ -1,0 +1,50 @@
+approval_id: APR-0185
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261001-001
+task_id: T3
+status: DECIDED
+summary: 1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（高風險抽查 ART-TRR-01M3VGT1QYQ6FKKQX2B1T5GFNQ：3 條補充建議，high 1、需澄清
+  2；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-051
+  version: 3
+artifact_ids:
+- ART-TVR-01M3VGPQSA5N1MMBTN58VYWN74
+- ART-TRR-01M3VGT1QYQ6FKKQX2B1T5GFNQ
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-051
+  version: 3
+requested_by: agent-supervisor
+requested_at: '2026-10-01T10:44:04Z'
+diff_summary: '[risk-review] RUN-20261001-001（TC-DAILYREPORT-051 修訂，iter1）抽查結果：共 3 條 finding，high 1 條。最大風險是「日結整點的未完成局與同時交易」：損益與承接餘額的歸屬
+  spec 沒有定義，需要澄清（RF-03）。另有兩條：報表上沒驗 S1 日結後時長停止累計、期末餘額與新場次期初＝X，這條有 spec 依據（RF-01）；「只開分不投注是否已構成場次」說法不一，需要澄清（RF-02），而 Draft 步驟
+  1 正依賴這一點。異常流程與權限已覆蓋；重複提交不適用。
+
+  [RF-01/medium/boundary] 步驟 5 只確認 S1 的狀態與結束時間，步驟 6 只確認新場次列存在且為進行中；承接金額只在會員詳細頁「機台資訊」區塊驗證。報表上有三件事沒驗：S1 轉為日結結算後，場次時長應從「累計至查詢當下」變成固定的「06:00－開始時間」，不再隨查詢增加；S1
+  期末餘額＝X；當日新場次列的期初餘額＝X。CLR-013 之後進行中列的時長會即時累計，最可能出問題的就是日結後忘了停止累計。 → 建議：步驟 5 記錄 S1 的開始時間、場次時長、期末餘額，數分鐘後用相同條件重查：S1 場次時長維持不變，且＝06:00－開始時間，期末餘額＝X。步驟
+  6 另記錄新場次列的期初餘額，應＝X（日結結算轉入的承接金額）。（相關 TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX）
+
+  [RF-02/medium/boundary/需澄清] Draft 步驟 1 用「開分任意金額、不投注」建立進行中場次 S1，前提是「只開分、還沒投注」時已經有進行中場次，而且會列在依場次明細。但 v0.1 對場次起點有兩種說法：場次定義寫「從機台有分數開始玩起算」，期初餘額寫「開分／入金起始者為
+  0」；AC-DAILYREPORT-0083 的 given 則是「已有開分與投注」。投注 0 筆時算不算已開始場次，spec 沒有明確定義。如果實作以第一次投注起算，步驟 2 會找不到 S1，日結時也不會出現日結結算列。這時應判為 TC
+  前提不成立還是缺陷，無從判斷。 → 建議：建議開 Clarification 確認三件事：機台只有開分／入金、尚未投注時，是否已有進行中場次？是否列在依場次明細？日結時是否以日結結算結束並承接餘額？定案前不要寫入預期結果；定案後再決定步驟
+  1 要不要「至少投注一次」，或另補一條「只開分、未投注」的臨界案例。（相關 TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX）
+
+  [RF-03/high/concurrency/需澄清] 日結時間到達時，如果機台 A 有一局已下注、尚未派彩（例如 05:59:59 下注、06:00 後派彩），或在 06:00 整點同時有開分／洗分，下列各項 spec 都沒有定義：該局損益歸
+  S1 還是新場次；承接到新場次的期初餘額 X 是否含這局派彩；S1 的期末餘額與前一營業日的期末餘額要取派彩前還是派彩後。這直接影響跨日承接的餘額正確性。 → 建議：建議開 Clarification 確認跨越日結的未完成局，以及日結整點交易的歸屬規則。定案後再補案例：05:59
+  左右下注、06:00 後派彩，比對 S1 的損益與期末餘額、新場次的期初餘額、前一日與當日依機台明細的期末餘額，確認同一筆派彩只計入一邊，且承接金額與機台實際分數一致。（相關 TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX,
+  TC-DAILYREPORT-021, TC-DAILYREPORT-022）'
+decision:
+  decision: approve
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-10-01T10:54:46Z'
+  rationale: CLR-DAILYREPORT-013 PM 定案 A 的 TC 修訂／新增；抽查建議另案處理

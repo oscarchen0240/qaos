@@ -1,0 +1,44 @@
+approval_id: APR-0186
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261001-002
+task_id: T3
+status: DECIDED
+summary: 1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（高風險抽查 ART-TRR-01M3VGT1TBJ6WSX0B3Z07X3GKP：2 條補充建議，high 1、需澄清
+  2；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-052
+  version: 3
+artifact_ids:
+- ART-TVR-01M3VGFPZF0WQVWXJTKEHR823Y
+- ART-TRR-01M3VGT1TBJ6WSX0B3Z07X3GKP
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-052
+  version: 3
+requested_by: agent-supervisor
+requested_at: '2026-10-01T10:44:04Z'
+diff_summary: '[risk-review] RUN-20261001-002（TC-DAILYREPORT-052 修訂）抽查結果：共 2 條 finding，high 1 條。主要風險是「逾時結束後留有餘數、但無進行中場次」的機台在日結時餘數怎麼處理，spec
+  沒有定義，需要澄清（RF-01，可和 RUN-004／005 的逾時餘數題合併）。另一條是日結整點新建場次的歸屬，需要澄清（RF-02）。邊界與權限已由既有 ACTIVE TC 覆蓋；重複提交不適用。
+
+  [RF-01/high/exception_flow/需澄清] v0.1 只規定「進行中的場次」在日結時強制結束，並把餘額轉為隔日新場次的期初餘額。逾時結束後分數仍留在機台（TC-054 v2 的情境），這時沒有進行中場次，但有餘數。日結時以下各項
+  spec 都沒有定義：要不要產生承接場次、要不要把餘數轉成隔日期初餘額、前一營業日與隔日的期末餘額要不要計入這筆餘數。AC-DAILYREPORT-0172 的「不產生新場次」只能涵蓋餘額為 0 的情況，套到有餘數的情況可能導致餘數在報表上消失或重複。
+  → 建議：建議開 Clarification 確認：逾時結束後留有餘數、無進行中場次的機台，日結時是否產生新場次並承接餘數，以及兩個營業日的期末餘額是否計入。這題可以和 RUN-20261001-004 RF-02、RUN-20261001-005
+  RF-04 併成同一張 Clarification。定案後補一條「逾時結束留餘數 r → 日結 → 查兩個營業日的依場次明細與依機台明細」的案例。（相關 TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2, TC-DAILYREPORT-054）
+
+  [RF-02/medium/concurrency/需澄清] 在日結整點 06:00 前後（日結結算執行期間），對無進行中場次的機台開分／入金，新建立的場次應該歸屬日結後的營業日並維持「進行中」，還是可能被同一次日結當成「進行中的場次」強制結束、變成日結結算？v0.1
+  沒有定義日結執行與新場次建立同時發生時的規則。AC-DAILYREPORT-0072 只規定交易本身歸入當日營業日。 → 建議：建議開 Clarification 確認日結整點新建場次的歸屬與狀態。定案後補案例：對無進行中場次的機台在 06:00:00
+  整點開分，查前一日與當日的依場次明細，確認只有一個場次列，並驗證它的狀態與營業日歸屬。（相關 TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2, TC-DAILYREPORT-022）'
+decision:
+  decision: approve
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-10-01T10:54:46Z'
+  rationale: CLR-DAILYREPORT-013 PM 定案 A 的 TC 修訂／新增；抽查建議另案處理

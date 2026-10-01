@@ -1,0 +1,258 @@
+artifact_id: ART-TCD-01M3VG7AXDYDB9Z59B8RJ6BGPY
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-005
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-01T10:30:08Z'
+status: SUPERSEDED
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-008
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-014
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 依場次明細的進行中場次列：結束時間「—」，場次時長與期末餘額累計到查詢當下
+    requirement_ids:
+    - REQ-DAILYREPORT-008
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0083
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館下有一台既有機台 A（自行從環境中選定）
+    - 執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）
+    - 機台 A 目前有一個進行中場次：已有開分與投注，且最後一次投注後不再有任何交易、也不再遊玩
+    - 機台 A 的目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）
+    test_data:
+    - name: X
+      value: 機台 A 目前分數；AC 範例 300，實際取機台前台讀值，須 > 0
+    - name: 等待間隔
+      value: 約 3 分鐘
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢
+    - n: 2
+      action: 在列表找出機台 A 的進行中場次列，記錄場次編號、狀態、結束時間、場次時長 T1、期末餘額，以及查詢的時間點
+    - n: 3
+      action: 不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄同一場次列的場次時長 T2、結束時間、期末餘額
+    expected_result: 步驟 2：該場次列存在，狀態「進行中」、結束時間「—」、期末餘額＝X；步驟 3：同一場次編號的列仍為「進行中」、結束時間仍為「—」，場次時長 T2 比 T1 多約 3 分鐘（隨查詢當下累計，非固定值），期末餘額仍＝X（期間無交易）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號 + §背景：場次資訊（結束時間、場次時長）；進行中場次的期末餘額累計到查詢當下依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17
+        修訂為準，v0.1 不含該修訂）
+      quote: 進行中的場次結束時間顯示「—」
+    assumptions: []
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 驗證 AC-0083。引用的 v0.1 原文只涵蓋『進行中場次結束時間顯示「—」』與場次時長『進行中則顯示累計至查詢當下』；『期末餘額為累計到查詢當下的值（＝X）』來自 CLR-DAILYREPORT-013（PM
+      定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂），不在 v0.1 原文內，已在 location 註明。取代已 RETIRED 的 TC-DAILYREPORT-027（只驗結束時間與時長）：新增期末餘額＝X
+      的斷言，並用兩次查詢（中間無交易）區分『累計到查詢當下』與『固定快照』。期間不交易是為了讓 X 不變，作為乾淨基準。技術為 requirement_based（單一情境、無組合或邊界）。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG7AWNF3J6H409YBPSDBN9
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 同一機台有已結束與進行中場次時，只有進行中場次顯示結束時間「—」並持續累計時長
+    requirement_ids:
+    - REQ-DAILYREPORT-008
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0083
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館下有一台既有機台 A（自行從環境中選定）
+    - 執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）
+    - 機台 A 在同一個營業日內先後有兩個場次：先一個已結束場次（有開分與投注，以出金結束——出金一律清空餘額，見 spec §場次資訊），之後再開分並投注形成一個進行中場次，且之後不再有任何交易
+    - （比對基準）已結束場次與進行中場次是同一台機台、同一次查詢內的兩列，彼此互為對照
+    test_data:
+    - name: 等待間隔
+      value: 約 3 分鐘
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢
+    - n: 2
+      action: 在列表分別找出機台 A 的已結束場次列與進行中場次列，記錄兩列的場次編號、狀態、結束時間、場次時長（已結束列 E1、進行中列 P1）
+    - n: 3
+      action: 不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄兩列的結束時間與場次時長（已結束列 E2、進行中列 P2）
+    expected_result: 已結束列：狀態「已結束」、結束時間為具體時間（不是「—」），兩次查詢的結束時間與場次時長不變（E2＝E1）；進行中列：狀態「進行中」、結束時間「—」，P2 比 P1 多約 3 分鐘；兩列的場次編號不同
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊（場次時長）+ §列表欄位/場次編號；進行中場次列於依場次明細依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1
+        不含該修訂）
+      quote: 開始至結束的時間差；進行中則顯示累計至查詢當下
+    assumptions: []
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-008 為 high risk，需要 non_happy 覆蓋。REQ-008 的 rejection_contract.defined=true（非場次明細維度不顯示場次編號欄，由 TC-DAILYREPORT-026
+      覆蓋），但針對 AC-0083 本身的反面是『「—」與累計時長只屬於進行中場次，其他狀態不應如此』。本案用同機台同查詢內的已結束列當對照組，驗證『已結束列不顯示「—」且時長固定』（依 spec 場次時長定義『開始至結束的時間差』）；已結束列的斷言出自
+      v0.1 場次資訊表而非 AC-0083 的 then 子句，僅作對照。與第一條 TC 的差異：第一條驗進行中列本身（含期末餘額＝X），本條驗進行中與已結束的區分，兩者斷言不重疊。技術為 requirement_based，不是 boundary_value（沒有數值邊界）。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG7AWNW6PJMBCEWYTGNWFT
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 當日營業日尚未日結時，依機台明細的期末餘額計入進行中場次的目前分數並隨查詢當下更新
+    requirement_ids:
+    - REQ-DAILYREPORT-014
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0143
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館下有一台既有機台 A（自行從環境中選定）
+    - 執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）
+    - 機台 A 目前有一個進行中場次（當前營業日尚未日結），目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）
+    test_data:
+    - name: X
+      value: 查詢前機台 A 目前分數；AC 範例 300，實際取機台前台讀值，須 > 0
+    - name: X'
+      value: 追加開分後機台 A 目前分數，須 ≠ X，取機台前台讀值
+    steps:
+    - n: 1
+      action: 進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢；記錄目前營業日列的期末餘額
+        E1，同時記錄機台前台目前分數 X（查詢前後機台 A 無交易）
+    - n: 2
+      action: 對機台 A 追加開分任意金額，記錄機台前台新的目前分數 X'（確認 X' ≠ X；若相同則再追加開分）
+    - n: 3
+      action: 以完全相同的條件重新查詢，記錄目前營業日列的期末餘額 E2
+    expected_result: 步驟 1：機台 A 目前營業日列的期末餘額 E1＝X（含進行中場次的分數）；步驟 3：E2＝X'（截至查詢當下，非查詢前的 X）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/期末餘額；進行中場次計入期末餘額（尚未結算取截至查詢當下）依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）
+      quote: 該日結算時點各機台的分數合計
+    assumptions: []
+    critical_path: true
+    source: spec_workflow
+    design_rationale: 驗證 AC-0143。v0.1 原文只有『該日結算時點各機台的分數合計』；『尚未結算的營業日取截至查詢當下、計入進行中場次』來自 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以
+      spec 2026-09-17 修訂為準，v0.1 不含該修訂），不在 v0.1 內，已在 location 註明（quote 僅涵蓋基本規則）。AC 範例為 300，但如何把分數精準佈置成 300 依賴未載明的分數換算與金流機制（開分金額與分數是否
+      1:1 v0.1 未寫），因此以『前台讀值 X』當基準，不寫死 300。步驟 2 追加開分並重查，是為了驗證 then 子句的『截至查詢當下』（不是場次開始時或首次查詢時的快照）。要求不跨日結是因為跨日結後當日營業日會變成已結算，結果不同。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG7AWNKEBM09DYEXMC4858
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 已結算營業日的期末餘額維持結算時點的值，不受之後進行中場次分數變動影響
+    requirement_ids:
+    - REQ-DAILYREPORT-014
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0143
+    test_level: ui_e2e
+    test_types:
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館已設定日結時間（記為 H，UTC+0），並已知其值（例如 06:00）
+    - 測試場館下有一台既有機台 A（自行從環境中選定），在日結時間 H 之前已有進行中場次，目前分數 S1（以機台前台畫面顯示的分數為準並記錄，須大於 0）；從記錄 S1 起至日結時間 H 到達為止，不對機台 A 做任何交易
+    - （比對基準）日結前的營業日列期末餘額與日結後追加開分前後的分數互為對照：S1 為日結時點分數、S2 為日結後之現值
+    test_data:
+    - name: S1
+      value: 日結前機台 A 目前分數，取機台前台讀值，須 > 0
+    - name: S2
+      value: 日結後追加開分後的目前分數，須 ≠ S1，取機台前台讀值
+    steps:
+    - n: 1
+      action: 在日結時間 H 到達之前，記錄機台前台機台 A 的目前分數 S1，之後不做任何交易，等待日結時間 H 到達（日結後承接餘額為新場次期初餘額，見 spec §業務規則/場次日結）
+    - n: 2
+      action: 日結後確認機台前台機台 A 的分數仍為 S1，再對機台 A 追加開分任意金額，記錄新的目前分數 S2（確認 S2 ≠ S1；若相同則再追加開分）
+    - n: 3
+      action: 進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A，結算日期起日＝日結前所屬營業日、迄日＝日結後所屬營業日，查詢
+    - n: 4
+      action: 分別記錄機台 A 兩個營業日列（日結前所屬營業日、日結後目前營業日）的期末餘額
+    expected_result: 日結前所屬營業日（已結算）列的期末餘額＝S1（結算時點的值，不是 S2）；日結後目前營業日（尚未結算，有進行中場次）列的期末餘額＝S2（截至查詢當下）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/期末餘額；已結算營業日仍為結算時點的值、未結算者計入進行中場次依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1
+        不含該修訂）
+      quote: 該日結算時點各機台的分數合計
+    assumptions: []
+    critical_path: false
+    source: spec_workflow
+    design_rationale: REQ-014 風險已升為 high（CLR-013），需 non_happy 覆蓋。此為負面事實驗證：『之後進行中場次的分數變動不得改寫已結算營業日的期末餘額』。比對基準：日結前記錄的 S1（無交易到日結）作為已結算日的預期值，日結後追加開分造成
+      S2 ≠ S1，若實作把已結算日也改成查詢當下分數，已結算列會顯示 S2 而非 S1。排除干擾：限定機台帳號 A，且 S1 記錄後到日結間不交易。『日結承接餘額』依 spec §業務規則/場次日結（餘額轉為隔日新場次期初餘額），『已結算日仍為結算時點的值』依
+      CLR-013 PM 答覆第②點。技術為 requirement_based：已結算／未結算是兩個並置情境而非決策表矩陣，日結時點亦非 spec 定義的數值邊界，故不標 boundary_value／decision_table。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG7AWN8WJTJPBK9DMC1ND8
+history:
+- at: '2026-10-01T10:30:08Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:30:20Z'
+  from_status: VALID
+  to_status: SUPERSEDED
+  by: system
+  trigger: replaced by ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+  run_id: RUN-20261001-005

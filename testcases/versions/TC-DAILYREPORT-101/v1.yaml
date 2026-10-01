@@ -1,0 +1,97 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 當日營業日尚未日結時，依機台明細的期末餘額計入進行中場次的目前分數並隨查詢當下更新
+requirement_ids:
+- REQ-DAILYREPORT-014
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0143
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 已登入後台並切換至機台場館站台（Arcade）
+- 測試場館下有一台既有機台 A（自行從環境中選定）
+- 執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）
+- 機台 A 目前有一個進行中場次（當前營業日尚未日結），目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）
+test_data:
+- name: X
+  value: 查詢前機台 A 目前分數；AC 範例 300，實際取機台前台讀值，須 > 0
+- name: X'
+  value: 追加開分後機台 A 目前分數，須 ≠ X，取機台前台讀值
+steps:
+- n: 1
+  action: 進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢；記錄目前營業日列的期末餘額
+    E1，同時記錄機台前台目前分數 X（查詢前後機台 A 無交易）
+- n: 2
+  action: 對機台 A 追加開分任意金額，記錄機台前台新的目前分數 X'（確認 X' ≠ X；若相同則再追加開分）
+- n: 3
+  action: 以完全相同的條件重新查詢，記錄目前營業日列的期末餘額 E2
+expected_result: 步驟 1：機台 A 目前營業日列的期末餘額 E1＝X（含進行中場次的分數）；步驟 3：E2＝X'（截至查詢當下，非查詢前的 X）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §列表欄位/期末餘額；進行中場次計入期末餘額（尚未結算取截至查詢當下）依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）
+  quote: 該日結算時點各機台的分數合計
+assumptions: []
+critical_path: true
+source: spec_workflow
+testcase_id: TC-DAILYREPORT-101
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ
+created_at: '2026-10-01T10:36:12Z'
+updated_at: '2026-10-01T10:54:47Z'
+history:
+- at: '2026-10-01T10:36:12Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:36:12Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:36:12Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:44:06Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:54:47Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0189
+  run_id: RUN-20261001-005
+- at: '2026-10-01T10:54:47Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261001-005
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0189

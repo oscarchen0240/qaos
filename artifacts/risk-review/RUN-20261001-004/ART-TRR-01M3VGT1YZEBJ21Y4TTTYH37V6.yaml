@@ -1,0 +1,129 @@
+artifact_id: ART-TRR-01M3VGT1YZEBJ21Y4TTTYH37V6
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-004
+task_id: T2RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-01T10:43:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG7258NB5MN8P53TG5B616
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG7258NB5MN8P53TG5B616
+- entity_type: Artifact
+  id: ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ
+requires_approval: null
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M3VG7258NB5MN8P53TG5B616
+    validation_report_artifact_id: ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    testcase_draft_ids:
+    - TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+    active_testcases_consulted:
+    - TC-DAILYREPORT-001
+    - TC-DAILYREPORT-002
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    - TC-DAILYREPORT-028
+    - TC-DAILYREPORT-031
+    - TC-DAILYREPORT-049
+    - TC-DAILYREPORT-054
+    - TC-DAILYREPORT-077
+  dimension_results:
+  - dimension: boundary
+    status: gaps_found
+    rationale: Draft 用「明顯超過逾時時間」觸發逾時結束，沒有驗逾時判定的臨界點（T－1 秒、T、T＋1 秒），也沒有驗逾時結束場次的結束時間與場次時長怎麼定。逾時規則定義在開發包③（機台金流與場次_spec_v01），本次無法取得；SPEC-DAILYREPORT-001
+      v0.1 只有狀態名「逾時結束」。依契約，這個面向不能判為 covered。見 RF-01。結算日期範圍的問題 Validator 已提 advisory，不重複列。
+  - dimension: exception_flow
+    status: gaps_found
+    rationale: 逾時結束是異常結束路徑，Draft 驗了前台與後端都拒絕遊玩、入金後建立新場次，但兩件事沒驗：逾時時留在機台的餘數，後續怎麼處理（RF-02）；以及逾時結束可以在同一營業日內發生，這和 REQ-009 依 CLR-007
+      的前提互相矛盾（RF-03）。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: 逾時臨界點前後，同一機台剛好有入金或尚未處理完的投注，這種競爭情境沒有覆蓋。見 RF-04。
+  - dimension: duplicate_submission
+    status: not_applicable
+    rationale: 本頁是唯讀統計檢視（TC-DAILYREPORT-049）。Draft 步驟 3、4 對逾時後的遊玩做前台與 API 嘗試，重送同一請求的結果一樣是被拒絕，不會產生資料；下注 API 的冪等性（同一交易編號重放）屬開發包③，SPEC-DAILYREPORT-001
+      v0.1 沒有定義。
+  - dimension: permission
+    status: covered
+    rationale: 報表的角色可見範圍由 TC-DAILYREPORT-001～004 覆蓋。Draft 步驟 4 直接呼叫的是機台端遊玩／下注 API，屬於機台前台，不是後台角色權限，不在 v0.1 權限表的範圍內。進行中場次列的角色範圍缺口統一寫在
+      RUN-20261001-005 的 TRR（RF-07）。
+  findings:
+  - finding_id: RF-01
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+    - TC-DAILYREPORT-054
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-008
+    gap: 逾時判定的臨界點沒有驗：最後一次活動後經過 T－1 秒時應仍為進行中，T 或 T＋1 秒時轉為逾時結束。逾時結束場次的結束時間應記為「最後活動時間＋逾時時間」還是「系統偵測到逾時的時點」，也沒有規定；這會決定依場次明細的場次時長在轉成固定值時取什麼值。SPEC-DAILYREPORT-001
+      v0.1 沒有逾時規則，規則在開發包③，本次無法取得原文。
+    suggested_scenario: 建議開 Clarification，或請 PM 提供開發包③的逾時判定原文，確認逾時的計時起點、臨界值與結束時間的記法。確認後補案例：在 T－1 秒查依場次明細，應仍為進行中、結束時間「—」；超過
+      T 後重查，記錄結束時間與場次時長，並對照定案的規則。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-02
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+    - TC-DAILYREPORT-054
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-014
+    - REQ-DAILYREPORT-008
+    gap: Draft 步驟 3 以「剩餘分數」嘗試遊玩，表示逾時結束後機台上還留有餘數 r。v0.1 期初餘額的規則只列出「開分／入金起始者為 0」和「承接洗分餘數或日結結算轉入者為承接金額」，沒有提到逾時餘數。因此步驟 5 入金或開分後，以下都沒有定義：新場次的期初餘額是
+      r 還是 0？r 是否仍在機台分數內，並計入新場次的期末餘額與依機台明細的期末餘額？步驟 7 新場次列的期末餘額（累計到查詢當下）正好落在這個未定義的地方，報表上的餘額可能少算 r，也可能重複計入 r。
+    suggested_scenario: 建議開 Clarification 確認逾時餘數的去向：新場次是否承接 r 作為期初、機台分數是否保留 r。這題可以和 RUN-20261001-002 RF-01、RUN-20261001-005
+      RF-04 合併處理。定案後，在步驟 7 記錄新場次列的期初餘額與期末餘額，並用依機台明細查當日期末餘額，與機台前台分數比對。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-03
+    dimension: exception_flow
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+    - TC-DAILYREPORT-077
+    - TC-DAILYREPORT-031
+    related_requirement_ids:
+    - REQ-DAILYREPORT-009
+    - REQ-DAILYREPORT-017
+    gap: REQ-DAILYREPORT-009 依 CLR-DAILYREPORT-007 定案：「逾時結束的時間會超過日結時間」，因此當日內場次只會以已結束或日結結算收尾（TC-077 也這樣寫）。但 TC-054 v2（APR-0007，依實測
+      MAN-20260914-001）和本 Draft 以預設 1 小時、測試時調為 5 分鐘的逾時時間，在同一營業日內就產生了逾時結束場次，兩者互相矛盾。如果逾時結束可以在當日發生，依機台明細與依場館彙總的「場次數」是否計入逾時結束場次就沒有定義。TC-031
+      預期計入，REQ-009 與 TC-077 則把它排除在範圍外。
+    suggested_scenario: 建議開 Clarification，重新確認 CLR-007 的前提：逾時時間是否一定超過日結時間，以及當日逾時結束的場次是否計入場次數。定案後再補案例：當日產生 1 場逾時結束、1 場已結束，用依機台明細查場次數。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-04
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-008
+    gap: 在逾時臨界點前後，對機台 A 送出入金，或有一筆在逾時前送出、逾時後才處理的投注，以下都沒有定義：入金應延續原場次，還是在逾時後建立新場次？那筆投注應被拒絕，還是計入原場次？原場次的結束時間與期末餘額會不會因此改變？SPEC-DAILYREPORT-001
+      v0.1 沒有逾時與交易同時發生時的規則。
+    suggested_scenario: 建議開 Clarification 確認：逾時判定與入金、投注同時發生時，交易要歸屬哪個場次。定案後補案例：在 T 前後 1 秒內送出入金，用依場次明細確認只有一個符合定案規則的場次列，且原場次的期末餘額與機台分數一致。
+    spec_basis: null
+    needs_clarification: true
+  summary: RUN-20261001-004（TC-DAILYREPORT-054 修訂）抽查結果：共 4 條 finding，high 1 條。最大風險是逾時結束後留在機台的餘數：入金後新場次的期初與期末餘額怎麼算，spec 沒有定義，需要澄清（RF-02），可和
+    RUN-002／005 合併成一張 Clarification。另有三條：CLR-007「當日不會出現逾時結束」與本 TC 的實測前提互相矛盾，連帶影響 REQ-009 場次數（RF-03）；逾時臨界點與結束時間的記法（RF-01）；逾時與交易同時發生（RF-04）。這三條都需要澄清。權限已覆蓋；重複提交不適用。
+history:
+- at: '2026-10-01T10:44:05Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-004
