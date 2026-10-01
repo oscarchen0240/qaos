@@ -89,6 +89,17 @@ pipelines:
             signal: strong
         notes: "Phase 3 起由 .claude/agents/qaos-test-designer.md 子 agent 執行；同一 run 可迭代最多 3 次（iteration 欄位）"
 
+      - id: analysis-review
+        order: 2.5
+        conditional: true
+        title: 測試分析覆核
+        agent: human
+        signals:
+          - source: runtime
+            match: { task: T2R, run_status: WAITING_HUMAN }
+            signal: strong
+        notes: "ADR-004 §13：input.analysis_review=required 時才插入（approval_type REVIEW_TEST_ANALYSIS），在 T2 之後、T3 之前；預設 skip，大多數 run 不會有這個 task"
+
       - id: validation
         order: 3
         title: 獨立驗證
@@ -101,6 +112,18 @@ pipelines:
             match: { task: T3 }
             signal: strong
         notes: "Validator 每輪都是全新的 general-purpose 子 agent（description 通常含「獨立審查」，但 hook payload 沒有 description）；單靠 events 只能推定，需搭配 runtime T3 狀態"
+
+      - id: risk-review
+        order: 3.5
+        conditional: true
+        title: 風險複核
+        agent: agent-tc-risk-reviewer
+        gate: G-RISK
+        signals:
+          - source: runtime
+            match: { task: T3RR }
+            signal: strong
+        notes: "ADR-009：functional area 在 agent-tc-risk-reviewer.applies_to_areas 內（CASHFLOW／CASHOUT／TXLOG／DAILYREPORT）才插入 T3RR，在 T3 之後、T4 之前；只提建議（TCRiskReview），不判 PASS/FAIL、不擋核准"
 
       - id: approval
         order: 4
@@ -252,6 +275,18 @@ pipelines:
             match: { task: T2 }
             signal: strong
 
+      - id: risk-review
+        order: 2.5
+        conditional: true
+        title: 風險複核
+        agent: agent-tc-risk-reviewer
+        gate: G-RISK
+        signals:
+          - source: runtime
+            match: { task: T2RR }
+            signal: strong
+        notes: "ADR-009：functional area 在 agent-tc-risk-reviewer.applies_to_areas 內才插入 T2RR，在 T2 之後、T3 之前；只提建議，不判 PASS/FAIL、不擋核准"
+
       - id: approval
         order: 3
         title: 人工核准
@@ -311,6 +346,18 @@ pipelines:
             match: { task: T2 }
             signal: strong
         notes: "PASS｜FAIL｜DUPLICATE（NEEDS_DECISION 人工決定 merge 或 discard）"
+
+      - id: risk-review
+        order: 2.5
+        conditional: true
+        title: 風險複核
+        agent: agent-tc-risk-reviewer
+        gate: G-RISK
+        signals:
+          - source: runtime
+            match: { task: T2RR }
+            signal: strong
+        notes: "ADR-009：functional area 在 agent-tc-risk-reviewer.applies_to_areas 內才插入 T2RR，在 T2 之後、T3 之前；只提建議，不判 PASS/FAIL、不擋核准"
 
       - id: approval-activate
         order: 3
@@ -460,6 +507,18 @@ pipelines:
           - source: runtime
             match: { task: T3 }
             signal: strong
+
+      - id: risk-review
+        order: 4.5
+        conditional: true
+        title: 風險複核
+        agent: agent-tc-risk-reviewer
+        gate: G-RISK
+        signals:
+          - source: runtime
+            match: { task: T3RR }
+            signal: strong
+        notes: "ADR-009：functional area 在 agent-tc-risk-reviewer.applies_to_areas 內才插入 T3RR，在 T3 之後、T4（版本比對）之前；只提建議，不判 PASS/FAIL、不擋核准"
 
       - id: compare
         order: 5
