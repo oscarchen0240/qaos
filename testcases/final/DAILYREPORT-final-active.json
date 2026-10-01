@@ -1,6 +1,6 @@
 [
   {
-    "title": "Admin 可查看任一站台的場館日結報表",
+    "title": "管理員站台切換選單僅列出管轄範圍內的站台，範圍外站台不出現，並可查看範圍內場館資料",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -10,59 +10,79 @@
       "AC-DAILYREPORT-0011"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
-      "functional"
+      "functional",
+      "negative"
     ],
     "design_techniques": [
-      "scenario",
       "requirement_based"
     ],
     "priority": "high",
     "risk": "high",
     "execution_mode": "manual",
-    "preconditions": [],
+    "preconditions": [
+      "環境負責人提供一個既有的管理員帳號 M，其管轄範圍已知且小於「全部站台」（「管轄範圍」的決定方式本 spec 未定義，一律以環境負責人給定的清單為準，不自行推斷）",
+      "環境負責人提供兩份清單：M 管轄範圍內的站台（至少含機台場館站台 Arcade）、M 管轄範圍外的站台（至少一個，作為「不應出現」的負面比對基準）；範圍外站台須確認確實存在於系統（例如可由管轄範圍涵蓋全部站台的帳號於站台列表頁查得），避免因站台根本不存在而誤判為「不出現」"
+    ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "以 Admin 登入後台"
+        "action": "以管理員帳號 M 登入後台"
       },
       {
         "n": 2,
-        "action": "在頁面標題下方站台切換選單選擇任一機台場館站台"
+        "action": "進入 各式報表 > 場館日結報表"
       },
       {
         "n": 3,
-        "action": "開啟場館日結報表並搜尋"
+        "action": "展開頁面標題下方的站台切換下拉選單，記錄下拉選單中列出的全部站台"
+      },
+      {
+        "n": 4,
+        "action": "逐一比對：選單中的每個站台是否都在 M 管轄範圍內清單；環境負責人給定的範圍外站台清單中的每一個是否出現在選單中"
+      },
+      {
+        "n": 5,
+        "action": "選擇管轄範圍內的機台場館站台（Arcade），將結算日期設為該場館有資料的單一營業日，搜尋"
       }
     ],
-    "expected_result": "可查看所選站台所有場館資料",
+    "expected_result": "步驟 3～4：下拉選單只含 M 管轄範圍內的站台；範圍外站台清單中的每一個站台都不出現在選單中（M 無法選取管轄範圍外的站台）。步驟 5：可查看所選範圍內站台的場館日結資料。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§功能說明/權限表"
+      "spec_version": "0.2",
+      "location": "§功能說明/權限表（v0.2：管理員由「全部」改為「管轄範圍」；「管轄範圍」的定義本 spec 未載）",
+      "quote": "| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": true,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "管理員『管轄範圍』的決定方式 v0.2 未定義（RM REQ-001 ambiguity：所屬站台及其子樹，或最上層管理員實質仍為全部）；本 TC 以環境負責人給定的『已知範圍清單』作為判定基準，並假設環境中存在一個範圍小於全部站台的管理員帳號",
+        "requirement_id": "REQ-DAILYREPORT-001",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-001 affected",
     "testcase_id": "TC-DAILYREPORT-001",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
     "title": "站長只能查看管轄範圍內場館的報表",
@@ -894,7 +914,7 @@
     "approval_id": "APR-0003"
   },
   {
-    "title": "按週以週一為週起，結算日期起日非週一時仍以週一分週",
+    "title": "按週以週一為週起，結算日期起日非週一時仍以週一分週；預設排序新→舊，完整週列金額等於週內各營業日合計",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -904,7 +924,7 @@
       "AC-DAILYREPORT-0052"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "functional",
@@ -917,74 +937,61 @@
     "risk": "high",
     "execution_mode": "manual",
     "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
       "進入 各式報表 > 場館日結報表",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料",
-      "結算日期預設為單一營業日 2026-09-05（起迄相同）；需要多日的案例於步驟中另設"
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館下有既有機台 A、B（自行從環境中選定），結算日期 2026-09-03～2026-09-13 內各營業日有交易資料（日期為示意：以環境中符合下列星期關係的區間替代亦可——起日非週一、迄日為週日；AC 範例 2026-09-03 為週四、2026-09-13 為週日）"
     ],
-    "test_data": [
-      {
-        "name": "date_from",
-        "value": "2026-09-03"
-      },
-      {
-        "name": "date_to",
-        "value": "2026-09-13"
-      }
-    ],
+    "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "結算日期選 2026-09-03(三)～2026-09-13(日)（起日非週一、迄日為完整週末）"
+        "action": "統計維度選「依場館彙總」，結算日期選 2026-09-03(四)～2026-09-13(日)（起日非週一、迄日為完整週末），統計週期選「按週」，搜尋"
       },
       {
         "n": 2,
-        "action": "統計週期選「按週」"
+        "action": "確認結算期間標題顯示 ▼（預設排序：結算期間新→舊），記錄列表的列數與每列的結算期間，依列表由上而下的順序"
       },
       {
         "n": 3,
-        "action": "搜尋"
-      }
-    ],
-    "expected_result": "列出兩列：第一列週起 2026-08-31(一)、第二列週起 2026-09-07(一)；第二列各欄＝09-07～09-13 營業日合計",
-    "expected_result_spec_reference": {
-      "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§篩選器/統計週期"
-    },
-    "assumptions": [
-      {
-        "text": "結算期間欄對不完整週（第一列）的顯示格式 Spec 未定義",
-        "requirement_id": "REQ-DAILYREPORT-005",
-        "needs_human_confirmation": false,
-        "resolved_by_approval": "APR-0003"
+        "action": "記錄「週一 2026-09-07 起」那一列與「含起日 09-03 的不完整週」那一列的開分、洗分、進鈔、收據、場次數"
       },
       {
-        "text": "結算日期範圍外但同週的營業日（08-31～09-02）是否計入第一列合計 Spec 未定義；本案只驗證第二列（完整週）的合計",
-        "requirement_id": "REQ-DAILYREPORT-005",
-        "needs_human_confirmation": false,
-        "resolved_by_approval": "APR-0003"
+        "n": 4,
+        "action": "統計週期改選「按日」，結算日期維持 2026-09-03～2026-09-13，搜尋；分別加總 09-07～09-13 七個營業日各列、以及 09-03～09-06 四個營業日各列的開分、洗分、進鈔、收據、場次數（08-31～09-02 不在查詢範圍，按日列不會出現）"
+      },
+      {
+        "n": 5,
+        "action": "比對步驟 3 兩列與步驟 4 兩組合計：09-07 起那列對 09-07～09-13 的合計；不完整週那列對 09-03～09-06 的合計"
       }
     ],
+    "expected_result": "步驟 2：列出兩列；依預設排序（新→舊），列表第一列為週一 2026-09-07 起的那一週（結算期間 09-07～09-13），第二列為含起日 09-03 的不完整週（週一 2026-08-31 所在週，結算期間依實際起迄顯示為 09-03～09-06，不補滿到 08-31，且範圍外的 08-31～09-02 不計入該列合計）。步驟 5：第一列的開分、洗分、進鈔、收據、場次數＝09-07～09-13 七個營業日按日各列的合計；第二列同樣各欄＝09-03～09-06 四個營業日按日各列的合計（範圍外的 08-31～09-02 不計入）（期初／期末餘額為時點值，不在此比對）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§篩選器/統計週期（不完整週的實際起迄顯示依 CLR-DAILYREPORT-008；預設排序見 §排序與分頁）",
+      "quote": "按週以週一為週起；非按日時，每列為該週期內各營業日的彙總"
+    },
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-014 affected",
     "testcase_id": "TC-DAILYREPORT-014",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
     "title": "按月彙總每月一列",
@@ -2616,7 +2623,7 @@
     "approval_id": "APR-0003"
   },
   {
-    "title": "有效投注額與損益以 TWD 計算",
+    "title": "有效投注額與損益以 TWD 計算，損益採機台（會員）端符號",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -2626,10 +2633,11 @@
       "AC-DAILYREPORT-0131"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "test_level": "api",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
     "test_types": [
-      "functional"
+      "functional",
+      "negative"
     ],
     "design_techniques": [
       "requirement_based"
@@ -2638,48 +2646,53 @@
     "risk": "medium",
     "execution_mode": "manual",
     "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
       "進入 各式報表 > 場館日結報表",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料",
-      "結算日期預設為單一營業日 2026-09-05（起迄相同）；需要多日的案例於步驟中另設"
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館下有一台既有機台 A（自行從環境中選定），在選定的過去營業日 D 有投注；可查閱機台 A 對應會員於 D 的投注紀錄，取得該營業日全部注單的有效投注額與派彩（TWD）（投注紀錄的入口與欄位本報表 spec 未定義，由環境負責人指引；v1 步驟已有『比對會員投注紀錄』作法，本 TC 沿用）"
     ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "機台 A 當日有投注"
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D（單一營業日），搜尋；記錄機台 A 列的有效投注額 V、損益 L（含正負號與顏色）"
       },
       {
         "n": 2,
-        "action": "搜尋並比對會員投注紀錄的 TWD 金額"
+        "action": "於機台 A 對應會員的投注紀錄，加總營業日 D 內全部注單的有效投注額 B 與派彩 P（TWD）"
+      },
+      {
+        "n": 3,
+        "action": "計算機台端損益 P − B（玩家淨贏為正、淨輸為負）"
       }
     ],
-    "expected_result": "有效投注額、損益與投注紀錄 TWD 合計一致",
+    "expected_result": "V＝B（以 TWD 表示）；L＝P − B：數值相同、正負號依機台（會員）端——P>B 時 L 為正值（綠色），P<B 時 L 為負值（紅色），不是 B − P。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位/有效投注額、損益"
+      "spec_version": "0.2",
+      "location": "§列表欄位/有效投注額、損益（核心貨幣 TWD；v0.2 新增機台端視角）",
+      "quote": "當日投注損益，以主站台核心貨幣計算；以機台（會員）端計算——正值代表玩家淨贏、機台分數增加"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-040 affected",
     "testcase_id": "TC-DAILYREPORT-040",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
     "title": "損益正值綠色、負值紅色",
@@ -2947,7 +2960,7 @@
     "approval_id": "APR-0003"
   },
   {
-    "title": "未兌現金額不受統計週期影響",
+    "title": "未兌現金額依各列結算期間歸屬：範圍內的未兌現收據只計入所屬期間列，範圍外（結算日期迄日之後）的收據不計入",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -2957,8 +2970,8 @@
       "AC-DAILYREPORT-0152"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "test_level": "api",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
     "test_types": [
       "boundary"
     ],
@@ -2969,49 +2982,56 @@
     "risk": "high",
     "execution_mode": "manual",
     "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
       "進入 各式報表 > 場館日結報表",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料",
-      "結算日期預設為單一營業日 2026-09-05（起迄相同）；需要多日的案例於步驟中另設",
-      "該場館無其他未兌現收據"
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "收據資料（造數）：營業日 d1（AC 範例 2026-09-08，週二）有一筆出金收據 300，截至查詢當下仍未兌現（待核實）；營業日 d2＝查詢迄日的次日（AC 範例 2026-09-11）有一筆出金收據 200，同樣未兌現",
+      "查詢範圍（AC 範例 2026-09-03～2026-09-10，週一為 09-07）內，除上述 d1 的 300 之外，場館沒有其他未兌現收據",
+      "查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）"
     ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "準備未兌現收據：09-05 300、09-03 200（皆在結算日期 09-01～09-07 範圍內）"
+        "action": "統計維度選「依場館彙總」，結算日期選 2026-09-03～2026-09-10（迄日恰為範圍外收據 d2 的前一天），統計週期選「按週」，搜尋"
       },
       {
         "n": 2,
-        "action": "結算日期 09-01～09-07，分別以按日（看 09-05 列）與按週搜尋"
+        "action": "記錄「09-07～09-10」列與「09-03～09-06」列的未兌現金額"
+      },
+      {
+        "n": 3,
+        "action": "統計週期改選「按日」，結算日期不變，搜尋；記錄 09-08 列的未兌現金額，以及其餘各日列的未兌現金額"
       }
     ],
-    "expected_result": "按日的 09-05 列與按週的該週列，未兌現金額皆為 500（不受統計週期切分影響）",
+    "expected_result": "步驟 2：「09-07～09-10」列未兌現 300（d1 的收據；不含範圍外 d2 的 200）；「09-03～09-06」列未兌現 0。步驟 3：09-08 列未兌現 300（未兌現金額不因統計週期切分而改變），其餘各日列未兌現 0。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位附註"
+      "spec_version": "0.2",
+      "location": "§列表欄位附註（未兌現受結算日期範圍限制依 CLR-DAILYREPORT-009；收據歸屬收據日依 CLR-DAILYREPORT-010）",
+      "quote": "「未兌現金額」不受週期影響、一律為截至查詢當下的累計"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-045 affected",
     "testcase_id": "TC-DAILYREPORT-045",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
     "title": "未兌現金額仍受結算日期範圍限制，範圍外的未兌現收據不計入",
@@ -3091,7 +3111,7 @@
     "approval_id": "APR-0122"
   },
   {
-    "title": "列表底部各欄總計等於各列合計",
+    "title": "列表底部總計為整個查詢結果（跨頁全部列）的各欄合計，且期初／期末餘額不為各列逐列相加",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -3101,10 +3121,11 @@
       "AC-DAILYREPORT-0161"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
-      "functional"
+      "functional",
+      "negative"
     ],
     "design_techniques": [
       "requirement_based"
@@ -3113,121 +3134,162 @@
     "risk": "medium",
     "execution_mode": "manual",
     "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
       "進入 各式報表 > 場館日結報表",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料",
-      "結算日期預設為單一營業日 2026-09-05（起迄相同）；需要多日的案例於步驟中另設"
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "分頁列顯示總筆數 23；第 2、3 頁各列的開分金額合計不為 0（使「全部 23 列合計」與「僅第 1 頁合計」可區分）",
+      "R23 內至少有兩個營業日的期末餘額不為 0 且彼此不同（使「逐列相加」與「時點值」可區分）",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）"
     ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "依機台明細搜尋多列"
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋；確認分頁列顯示總筆數 23、目前在第 1 頁"
       },
       {
         "n": 2,
-        "action": "檢視底部總計"
-      }
-    ],
-    "expected_result": "各欄總計＝各列加總",
-    "expected_result_spec_reference": {
-      "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位末段"
-    },
-    "assumptions": [],
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "critical_path": false,
-    "source": "spec_workflow",
-    "testcase_id": "TC-DAILYREPORT-047",
-    "version": 1,
-    "supersedes": null,
-    "status": "ACTIVE",
-    "created_by": "agent-test-designer",
-    "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
-    "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
-  },
-  {
-    "title": "匯出 CSV 內容與當前篩選結果一致",
-    "product": "ba-admin",
-    "functional_area": "DAILYREPORT",
-    "requirement_ids": [
-      "REQ-DAILYREPORT-016"
-    ],
-    "acceptance_criteria_ids": [
-      "AC-DAILYREPORT-0162"
-    ],
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "test_level": "ui_e2e",
-    "test_types": [
-      "functional"
-    ],
-    "design_techniques": [
-      "requirement_based"
-    ],
-    "priority": "medium",
-    "risk": "medium",
-    "execution_mode": "manual",
-    "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
-      "進入 各式報表 > 場館日結報表",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A、B（會員編號已知），並依各案例準備交易資料",
-      "結算日期預設為單一營業日 2026-09-05（起迄相同）；需要多日的案例於步驟中另設"
-    ],
-    "test_data": [],
-    "steps": [
-      {
-        "n": 1,
-        "action": "搜尋出結果"
-      },
-      {
-        "n": 2,
-        "action": "點右上角匯出 CSV"
+        "action": "記錄底部總計列的開分、洗分、進鈔、收據、場次數、期初餘額、期末餘額"
       },
       {
         "n": 3,
-        "action": "開啟檔案比對"
+        "action": "逐頁（第 1、2、3 頁）記錄全部 23 列的上述各欄；加總全部 23 列的開分、洗分、進鈔、收據、場次數；另加總僅第 1 頁 10 列的同樣欄位"
+      },
+      {
+        "n": 4,
+        "action": "比對總計列與「全部 23 列合計」「僅第 1 頁合計」；比對總計列期初／期末餘額與各列期初／期末餘額的逐列相加值，以及與「最新營業日列的期末餘額」「最早營業日列的期初餘額」"
       }
     ],
-    "expected_result": "列數與各欄數值與畫面一致",
+    "expected_result": "步驟 4：總計列的開分、洗分、進鈔、收據、場次數＝全部 23 列的合計（不是僅第 1 頁 10 列的合計）；總計列的期初餘額、期末餘額都不等於各列逐列相加的值；總計期末餘額＝最新營業日那一列的期末餘額，總計期初餘額＝最早營業日那一列的期初餘額（按日、依場館彙總時，依時點值規則）。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§操作/匯出 CSV"
+      "spec_version": "0.2",
+      "location": "§列表欄位末段 + §排序與分頁/總計列（餘額欄依時點值規則）",
+      "quote": "列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）；「期初餘額」與「期末餘額」不加總（見下）"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
-    "execution_cost": "medium",
+    "execution_cost": "high",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
-    "testcase_id": "TC-DAILYREPORT-048",
-    "version": 1,
-    "supersedes": null,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "RM REQ-DAILYREPORT-016 ambiguity（major）：CLR-DAILYREPORT-006「無資料時各欄顯示 0」與 v0.2「各列餘額含當期無場次但仍有留存分數者」衝突，PM 尚未回覆；本 TC 刻意選用每個營業日皆有資料的區間以避開此情境，不對「無資料營業日的期初／期末餘額應顯示 0 或留存分數」作任何斷言",
+        "requirement_id": "REQ-DAILYREPORT-016",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-047 affected",
+    "testcase_id": "TC-DAILYREPORT-047",
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
-    "title": "頁面不提供新增／編輯／刪除／審核操作",
+    "title": "匯出 CSV 為整個查詢結果（不受分頁限制）：含全部 23 列與總計列，總計列期初／期末餘額與畫面一致",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-016",
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0162",
+      "AC-DAILYREPORT-0196"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "測試場館下至少有兩台機台在 R23 內有資料（多機台、多日），且 R23 內至少兩個營業日的期末餘額不為 0 且彼此不同",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "可開啟下載的 CSV 檔（以試算表或文字編輯器開啟）"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋；翻到第 2 頁（確認分頁列為第 11–20 筆）"
+      },
+      {
+        "n": 2,
+        "action": "逐頁記錄全部 23 列的各欄，並記錄畫面底部總計列各欄（含期初餘額、期末餘額）"
+      },
+      {
+        "n": 3,
+        "action": "目前仍在第 2 頁時，點頁面右上角「匯出 CSV」"
+      },
+      {
+        "n": 4,
+        "action": "開啟 CSV：記錄資料列數、各列各欄數值、總計列各欄數值"
+      },
+      {
+        "n": 5,
+        "action": "比對 CSV 與畫面：列數、各列數值、總計列各欄（含期初／期末餘額）"
+      }
+    ],
+    "expected_result": "步驟 4～5：CSV 含全部 23 列資料（不是僅目前第 2 頁的 10 列）與總計列；各列數值與畫面一致；CSV 總計列的金額與筆數欄＝全部 23 列合計，期初餘額、期末餘額與畫面總計列的值一致（時點值，非各列逐列相加）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位末段 + §操作（CSV 總計列餘額依時點值規則）",
+      "quote": "頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "RM REQ-DAILYREPORT-016 ambiguity（major）：CLR-DAILYREPORT-006「無資料時各欄顯示 0」與 v0.2「各列餘額含當期無場次但仍有留存分數者」衝突，PM 尚未回覆；本 TC 刻意選用每個營業日皆有資料的區間以避開此情境，不對「無資料營業日的期初／期末餘額應顯示 0 或留存分數」作任何斷言",
+        "requirement_id": "REQ-DAILYREPORT-016",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-048 affected",
+    "testcase_id": "TC-DAILYREPORT-048",
+    "version": 2,
+    "supersedes": 1,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "管理員、站長、操作員檢視場館日結報表頁面，皆不提供新增／編輯／刪除／審核操作",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -3237,7 +3299,7 @@
       "AC-DAILYREPORT-0163"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "negative"
@@ -3249,41 +3311,51 @@
     "risk": "medium",
     "execution_mode": "manual",
     "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
+      "環境中有三個既有帳號（自行從環境中選定）：管理員、站長、操作員，皆可進入 各式報表 > 場館日結報表（各自的管轄範圍或自身場館含機台場館站台 Arcade）",
       "進入 各式報表 > 場館日結報表"
     ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "以 Admin、站長、操作員分別檢視頁面"
+        "action": "以管理員身分登入並檢視場館日結報表頁面（站台切換至其管轄範圍內的場館）"
+      },
+      {
+        "n": 2,
+        "action": "以站長身分登入並檢視同一頁面"
+      },
+      {
+        "n": 3,
+        "action": "以操作員身分登入並檢視同一頁面"
       }
     ],
-    "expected_result": "皆無新增／編輯／刪除／審核按鈕；核實操作只能在洗分出金核實頁",
+    "expected_result": "三種角色皆無新增／編輯／刪除／審核按鈕。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§操作"
+      "spec_version": "0.2",
+      "location": "§操作",
+      "quote": "本頁為統計檢視，不提供新增／編輯／刪除／審核操作"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "low",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-049 affected",
     "testcase_id": "TC-DAILYREPORT-049",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2DJ49HHDZVN62QCSCX11KNR",
-    "created_at": "2026-09-13T14:18:22Z",
-    "updated_at": "2026-09-13T18:07:19Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0003"
+    "approval_id": "APR-0191"
   },
   {
     "title": "無資料時點匯出 CSV",
@@ -3699,18 +3771,17 @@
     "approval_id": "APR-0188"
   },
   {
-    "title": "日結結算狀態的場次同樣計入當日場次數，不因是被強制結束而排除",
+    "title": "日結結算狀態的場次同樣計入當日場次數，不因是被強制結束而排除（不涵蓋逾時結束場次）",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
       "REQ-DAILYREPORT-009"
     ],
     "acceptance_criteria_ids": [
-      "AC-DAILYREPORT-0091",
-      "AC-DAILYREPORT-0092"
+      "AC-DAILYREPORT-0091"
     ],
     "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "functional"
@@ -3722,46 +3793,56 @@
     "risk": "high",
     "execution_mode": "manual",
     "preconditions": [
-      "以 Admin 登入後台",
-      "選定一台場次記錄同時包含『已結束』與『日結結算』兩種狀態的既有機台（可於機台交易紀錄依場次狀態篩選查找；不要求存在『逾時結束』狀態的樣本——依CLR-DAILYREPORT-007的邏輯，逾時結束的判定時間必然超過日結時間，日結時間到達時會搶先強制結束所有進行中場次，故『當日』範圍內結構上不會出現逾時結束這個終結狀態，本TC不要求也不依賴此類樣本）"
+      "已以管理員登入後台（所選機台須在該管理員的管轄範圍內），並切換至機台場館站台（Arcade）",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "選定一台既有機台 A（自行從環境中選定，須在該管理員管轄範圍內的場館），機台 A 在某個過去營業日 D（單一營業日）的場次記錄同時包含狀態「已結束」與「日結結算」兩種（可於機台交易紀錄依場次狀態篩選查找；日結結算場次歸屬於場次「開始」的營業日）",
+      "機台 A 在營業日 D 內沒有狀態「逾時結束」的場次，也沒有「進行中」的場次（逾時結束場次是否計入「當日結束的場次筆數」本 spec 未定義，見 assumption；為避免干擾，選用不含此狀態的機台與營業日）"
     ],
     "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "於機台交易紀錄核對該機台當日場次的狀態分布，分別記錄『已結束』與『日結結算』各自的筆數"
+        "action": "於機台交易紀錄核對機台 A 在營業日 D（依日結時間 T 切分的時間範圍）的場次狀態分布，分別記錄「已結束」與「日結結算」各自的筆數"
       },
       {
         "n": 2,
-        "action": "進入場館日結報表，統計維度選『依機台明細』，結算日期設為當日，查詢，檢視該機台的『場次數』"
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期設為營業日 D（起迄同一天），搜尋，找到機台 A 在營業日 D 的列，檢視「場次數」"
       }
     ],
-    "expected_result": "該機台的場次數＝已結束場次數＋日結結算場次數，不含進行中場次；依CLR-DAILYREPORT-007確認：日結結算狀態的場次（因日結時間到達被系統強制結束，非自然結束）同樣計入當日場次數，不因是被強制結束而被排除——這是本規則相對於『僅計已結束』這個較窄解讀的關鍵差異點。『逾時結束』依同一份CLR的邏輯推導，其判定時間必然超過日結時間，故當日範圍內結構上不會出現這個終結狀態，不在本TC的驗證範圍內",
+    "expected_result": "機台 A 在營業日 D 的場次數＝已結束場次數＋日結結算場次數，不含進行中場次；日結結算狀態的場次（因日結時間到達被系統強制結束）同樣計入當日場次數，歸屬於其開始的營業日，不因被強制結束而被排除。本 TC 不涵蓋「逾時結束」狀態的場次。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位/場次數",
-      "quote": "為當日結束的場次筆數"
+      "spec_version": "0.2",
+      "location": "§列表欄位/場次數（日結結算歸屬開始的營業日依 CLR-DAILYREPORT-007）",
+      "quote": "為當日結束的場次筆數：依機台明細＝該機台帳號當日的場次數"
     },
-    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "RM REQ-009 ambiguity（major）：營業日內『逾時結束』場次是否計入『當日結束的場次筆數』、歸屬哪個營業日，v0.2 與 CLR-007 皆未涵蓋（已送 PM、尚未回覆）；本 TC 選用不含逾時結束場次的機台與營業日，只斷言已結束＋日結結算的計入，不對逾時結束作任何預期",
+        "requirement_id": "REQ-DAILYREPORT-009",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-077 affected",
     "testcase_id": "TC-DAILYREPORT-077",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2RJ8PRNBH1DWTPPPJSKDGG8",
-    "created_at": "2026-09-17T20:52:29Z",
-    "updated_at": "2026-09-17T20:53:10Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0123"
+    "approval_id": "APR-0191"
   },
   {
     "product": "ba-admin",
@@ -3835,23 +3916,17 @@
     "approval_id": "APR-0166"
   },
   {
+    "title": "依場次明細的進行中場次列：結束時間「—」，場次時長與期末餘額累計到查詢當下",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "execution_mode": "manual",
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "title": "依場次明細的進行中場次列：結束時間「—」，場次時長與期末餘額累計到查詢當下",
     "requirement_ids": [
       "REQ-DAILYREPORT-008"
     ],
     "acceptance_criteria_ids": [
       "AC-DAILYREPORT-0083"
     ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "functional"
@@ -3861,10 +3936,12 @@
     ],
     "priority": "high",
     "risk": "high",
+    "execution_mode": "manual",
     "preconditions": [
       "已登入後台並切換至機台場館站台（Arcade）",
       "測試場館下有一台既有機台 A（自行從環境中選定）",
-      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "執行期間不得跨越場館日結時間 T（UTC+0）（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認）：自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢",
       "機台 A 目前有一個進行中場次：已有開分與投注，且最後一次投注後不再有任何交易、也不再遊玩",
       "機台 A 的目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）"
     ],
@@ -3881,7 +3958,7 @@
     "steps": [
       {
         "n": 1,
-        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢"
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A；結算日期涵蓋前一營業日與目前營業日（營業日依場館日結時間 T（UTC+0）切分；日期標示可能與測試人員所在地的日曆日不同，故取涵蓋兩天的區間）；列表預設依結算期間新→舊排序、每頁 10 筆，進行中場次屬於最新（目前）營業日、位於列表最上方，請以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」且「狀態＝進行中」定位目標列，不依賴列的位置；若目標列不在第 1 頁，翻頁尋找；查詢"
       },
       {
         "n": 2,
@@ -3892,46 +3969,46 @@
         "action": "不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄同一場次列的場次時長 T2、結束時間、期末餘額"
       }
     ],
-    "expected_result": "步驟 2：該場次列存在，狀態「進行中」、結束時間「—」、期末餘額＝X；步驟 3：同一場次編號的列仍為「進行中」、結束時間仍為「—」，場次時長 T2 比 T1 多約 3 分鐘（隨查詢當下累計，非固定值），期末餘額仍＝X（期間無交易）",
+    "expected_result": "步驟 2：該場次列存在，狀態「進行中」、結束時間「—」、期末餘額＝X；步驟 3：同一場次編號的列仍為「進行中」、結束時間仍為「—」，場次時長 T2 比 T1 多約 3 分鐘（隨查詢當下累計，非固定值），期末餘額仍＝X（期間無交易）。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位/場次編號 + §背景：場次資訊（結束時間、場次時長）；進行中場次的期末餘額累計到查詢當下依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
-      "quote": "進行中的場次結束時間顯示「—」"
+      "spec_version": "0.2",
+      "location": "§列表欄位/場次編號 + §背景：場次資訊（結束時間、場次時長）；進行中場次列的累計顯示見 §列表欄位附註/餘額驗算（v0.2 原文）",
+      "quote": "「依場次明細」維度的進行中場次列亦顯示累計至查詢當下的分數（比照「場次時長」的呈現方式，非顯示「—」）"
     },
-    "assumptions": [],
-    "critical_path": true,
-    "source": "spec_workflow",
-    "testcase_id": "TC-DAILYREPORT-099",
-    "version": 1,
-    "supersedes": null,
-    "status": "ACTIVE",
-    "created_by": "agent-test-designer",
-    "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
-    "created_at": "2026-10-01T10:36:12Z",
-    "updated_at": "2026-10-01T10:54:47Z",
-    "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0189"
-  },
-  {
-    "product": "ba-admin",
-    "functional_area": "DAILYREPORT",
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "execution_mode": "manual",
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
+    "critical_path": true,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-099 affected",
+    "testcase_id": "TC-DAILYREPORT-099",
+    "version": 2,
+    "supersedes": 1,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
     "title": "同一機台有已結束與進行中場次時，只有進行中場次顯示結束時間「—」並持續累計時長",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
     "requirement_ids": [
       "REQ-DAILYREPORT-008"
     ],
     "acceptance_criteria_ids": [
       "AC-DAILYREPORT-0083"
     ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "negative"
@@ -3941,10 +4018,12 @@
     ],
     "priority": "high",
     "risk": "high",
+    "execution_mode": "manual",
     "preconditions": [
       "已登入後台並切換至機台場館站台（Arcade）",
       "測試場館下有一台既有機台 A（自行從環境中選定）",
-      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "執行期間不得跨越場館日結時間 T（UTC+0）（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認）：自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢",
       "機台 A 在同一個營業日內先後有兩個場次：先一個已結束場次（有開分與投注，以出金結束——出金一律清空餘額，見 spec §場次資訊），之後再開分並投注形成一個進行中場次，且之後不再有任何交易",
       "（比對基準）已結束場次與進行中場次是同一台機台、同一次查詢內的兩列，彼此互為對照"
     ],
@@ -3957,57 +4036,57 @@
     "steps": [
       {
         "n": 1,
-        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢"
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A；結算日期涵蓋前一營業日與目前營業日（營業日依場館日結時間 T（UTC+0）切分；日期標示可能與測試人員所在地的日曆日不同，故取涵蓋兩天的區間）；列表預設依結算期間新→舊排序、每頁 10 筆，進行中場次屬於最新（目前）營業日、位於列表最上方，請以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」定位目標列，不依賴列的位置；若目標列不在第 1 頁，翻頁尋找；查詢（兩個場次皆屬目前營業日，位於列表最上方附近）"
       },
       {
         "n": 2,
-        "action": "在列表分別找出機台 A 的已結束場次列與進行中場次列，記錄兩列的場次編號、狀態、結束時間、場次時長（已結束列 E1、進行中列 P1）"
+        "action": "在列表分別找出機台 A 的已結束場次列與進行中場次列（以場次狀態區分），記錄兩列的場次編號、狀態、結束時間、場次時長（已結束列 E1、進行中列 P1）"
       },
       {
         "n": 3,
         "action": "不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄兩列的結束時間與場次時長（已結束列 E2、進行中列 P2）"
       }
     ],
-    "expected_result": "已結束列：狀態「已結束」、結束時間為具體時間（不是「—」），兩次查詢的結束時間與場次時長不變（E2＝E1）；進行中列：狀態「進行中」、結束時間「—」，P2 比 P1 多約 3 分鐘；兩列的場次編號不同",
+    "expected_result": "已結束列：狀態「已結束」、結束時間為具體時間（不是「—」），兩次查詢的結束時間與場次時長不變（E2＝E1）；進行中列：狀態「進行中」、結束時間「—」，P2 比 P1 多約 3 分鐘；兩列的場次編號不同。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§背景：場次資訊（場次時長）+ §列表欄位/場次編號；進行中場次列於依場次明細依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
+      "spec_version": "0.2",
+      "location": "§背景：場次資訊（場次時長）+ §列表欄位/場次編號；進行中場次列於依場次明細的呈現見 §列表欄位附註/餘額驗算（v0.2 原文）",
       "quote": "開始至結束的時間差；進行中則顯示累計至查詢當下"
     },
-    "assumptions": [],
-    "critical_path": false,
-    "source": "spec_workflow",
-    "testcase_id": "TC-DAILYREPORT-100",
-    "version": 1,
-    "supersedes": null,
-    "status": "ACTIVE",
-    "created_by": "agent-test-designer",
-    "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
-    "created_at": "2026-10-01T10:36:12Z",
-    "updated_at": "2026-10-01T10:54:47Z",
-    "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0189"
-  },
-  {
-    "product": "ba-admin",
-    "functional_area": "DAILYREPORT",
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
-    "execution_mode": "manual",
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-100 affected",
+    "testcase_id": "TC-DAILYREPORT-100",
+    "version": 2,
+    "supersedes": 1,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
     "title": "當日營業日尚未日結時，依機台明細的期末餘額計入進行中場次的目前分數並隨查詢當下更新",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
     "requirement_ids": [
       "REQ-DAILYREPORT-014"
     ],
     "acceptance_criteria_ids": [
       "AC-DAILYREPORT-0143"
     ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
     "test_level": "ui_e2e",
     "test_types": [
       "functional"
@@ -4017,10 +4096,12 @@
     ],
     "priority": "high",
     "risk": "high",
+    "execution_mode": "manual",
     "preconditions": [
       "已登入後台並切換至機台場館站台（Arcade）",
       "測試場館下有一台既有機台 A（自行從環境中選定）",
-      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "執行期間不得跨越場館日結時間 T（UTC+0）（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認）：自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢",
       "機台 A 目前有一個進行中場次（當前營業日尚未日結），目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）"
     ],
     "test_data": [
@@ -4036,7 +4117,7 @@
     "steps": [
       {
         "n": 1,
-        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢；記錄目前營業日列的期末餘額 E1，同時記錄機台前台目前分數 X（查詢前後機台 A 無交易）"
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋前一營業日與目前營業日（營業日依場館日結時間 T（UTC+0）切分；日期標示可能與測試人員所在地的日曆日不同，故取涵蓋兩天的區間），查詢；預設排序為結算期間新→舊、每頁 10 筆，請以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」定位目標列，不依賴列的位置；記錄該列的期末餘額 E1，同時記錄機台前台目前分數 X（查詢前後機台 A 無交易）"
       },
       {
         "n": 2,
@@ -4044,30 +4125,36 @@
       },
       {
         "n": 3,
-        "action": "以完全相同的條件重新查詢，記錄目前營業日列的期末餘額 E2"
+        "action": "以完全相同的條件重新查詢，以同樣方式定位目前營業日列，記錄期末餘額 E2"
       }
     ],
-    "expected_result": "步驟 1：機台 A 目前營業日列的期末餘額 E1＝X（含進行中場次的分數）；步驟 3：E2＝X'（截至查詢當下，非查詢前的 X）",
+    "expected_result": "步驟 1：機台 A 目前營業日列的期末餘額 E1＝X（含進行中場次的分數）；步驟 3：E2＝X'（截至查詢當下，非查詢前的 X）。",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§列表欄位/期末餘額；進行中場次計入期末餘額（尚未結算取截至查詢當下）依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
-      "quote": "該日結算時點各機台的分數合計"
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/餘額驗算（期末餘額一律取機台截至查詢當下的分數，v0.2 原文）；§列表欄位/期末餘額",
+      "quote": "故期末餘額一律取該機台截至查詢當下的分數"
     },
-    "assumptions": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
     "critical_path": true,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-101 affected",
     "testcase_id": "TC-DAILYREPORT-101",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
-    "created_at": "2026-10-01T10:36:12Z",
-    "updated_at": "2026-10-01T10:54:47Z",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0189"
+    "approval_id": "APR-0191"
   },
   {
     "product": "ba-admin",
@@ -4151,5 +4238,2972 @@
     "updated_at": "2026-10-01T10:54:47Z",
     "approved_by": "oscarchen@blockaction.tech",
     "approval_id": "APR-0189"
+  },
+  {
+    "title": "管理員直接呼叫報表查詢 API 並將站台／場館參數改為管轄範圍外時，不得取得範圍外場館的日結資料",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-001"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0011"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "api",
+    "test_types": [
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "negative"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "環境負責人提供一個既有的管理員帳號，其管轄範圍已知，並提供至少一個該帳號管轄範圍外、且確實存在於系統的站台／場館識別（作為越權目標）",
+      "瀏覽器可開啟開發者工具擷取請求；報表查詢請求的路徑與參數名稱本 spec 未載明，由步驟 2 現場擷取，不預設",
+      "進入 各式報表 > 場館日結報表"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以管理員帳號登入後台，進入 各式報表 > 場館日結報表，站台切換選單選擇一個管轄範圍內的機台場館站台，結算日期選該場館有資料的單一營業日，搜尋一次"
+      },
+      {
+        "n": 2,
+        "action": "開啟瀏覽器開發者工具的 Network 頁籤，找到該次報表查詢所送出的請求（記下請求方法、路徑、代表站台／場館的參數名稱與目前值）"
+      },
+      {
+        "n": 3,
+        "action": "以同一個登入 session 重送該請求，僅把代表站台／場館的參數值改為管理員管轄範圍外的站台／場館識別（由環境負責人提供，須確認該站台確實存在於系統），其餘參數不變"
+      },
+      {
+        "n": 4,
+        "action": "檢視回應：HTTP 狀態碼、回應內容（是否含任何範圍外場館的日結資料列）"
+      },
+      {
+        "n": 5,
+        "action": "（對照）以原本範圍內的參數值重送，確認同一請求在範圍內可正常取得資料，排除請求本身格式錯誤造成的假拒絕"
+      }
+    ],
+    "expected_result": "步驟 4：回應不含任何管轄範圍外場館的日結資料列（本 TC 只斷言「不得取得範圍外資料」；至於具體反應形式——被拒絕／錯誤碼，或回傳空列表——尚待 PM 確認，不作為判準，只記錄實際回應）。步驟 5：範圍內參數值的同一請求可正常回傳資料。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§功能說明/權限表（管理員＝管轄範圍；越權的系統反應 v0.2 未定義，待 CLR-DAILYREPORT-014）",
+      "quote": "| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "管理員越權（直接呼叫 API 帶管轄範圍外站台／場館）時的系統反應 v0.2 未定義（CLR-DAILYREPORT-014 OPEN）：本 TC 推定『不得取得範圍外資料』成立，並假設其反應可能比照操作員（後端拒絕）也可能為空列表；具體反應形式待 PM 確認，不作為本 TC 判準",
+        "requirement_id": "REQ-DAILYREPORT-001",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-001",
+    "testcase_id": "TC-DAILYREPORT-103",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "站長直接呼叫報表查詢 API 並將站台／場館參數改為管轄範圍外時，不得取得範圍外場館的日結資料",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-001"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0012"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "api",
+    "test_types": [
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "negative"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "環境負責人提供一個既有的站長帳號，其管轄範圍已知，並提供至少一個該帳號管轄範圍外、且確實存在於系統的站台／場館識別（作為越權目標）",
+      "瀏覽器可開啟開發者工具擷取請求；報表查詢請求的路徑與參數名稱本 spec 未載明，由步驟 2 現場擷取，不預設",
+      "進入 各式報表 > 場館日結報表"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以站長帳號登入後台，進入 各式報表 > 場館日結報表，站台切換選單選擇一個管轄範圍（自身及子站台）內的機台場館站台，結算日期選該場館有資料的單一營業日，搜尋一次"
+      },
+      {
+        "n": 2,
+        "action": "開啟瀏覽器開發者工具的 Network 頁籤，找到該次報表查詢所送出的請求（記下請求方法、路徑、代表站台／場館的參數名稱與目前值）"
+      },
+      {
+        "n": 3,
+        "action": "以同一個登入 session 重送該請求，僅把代表站台／場館的參數值改為站長管轄範圍外的站台／場館識別（由環境負責人提供，須確認該站台確實存在於系統），其餘參數不變"
+      },
+      {
+        "n": 4,
+        "action": "檢視回應：HTTP 狀態碼、回應內容（是否含任何範圍外場館的日結資料列）"
+      },
+      {
+        "n": 5,
+        "action": "（對照）以原本範圍內的參數值重送，確認同一請求在範圍內可正常取得資料，排除請求本身格式錯誤造成的假拒絕"
+      }
+    ],
+    "expected_result": "步驟 4：回應不含任何管轄範圍外場館的日結資料列（本 TC 只斷言「不得取得範圍外資料」；至於具體反應形式——被拒絕／錯誤碼，或回傳空列表——尚待 PM 確認，不作為判準，只記錄實際回應）。步驟 5：範圍內參數值的同一請求可正常回傳資料。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§功能說明/權限表（站長＝管轄範圍；越權的系統反應 v0.2 未定義，待 CLR-DAILYREPORT-014）",
+      "quote": "| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "站長越權（直接呼叫 API 帶管轄範圍外站台／場館）時的系統反應 v0.2 未定義（CLR-DAILYREPORT-014 OPEN）：本 TC 推定『不得取得範圍外資料』成立，並假設其反應可能比照操作員（後端拒絕）也可能為空列表；具體反應形式待 PM 確認，不作為本 TC 判準",
+        "requirement_id": "REQ-DAILYREPORT-001",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-001",
+    "testcase_id": "TC-DAILYREPORT-104",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依機台明細的損益以機台（會員）端計算：玩家淨贏的機台顯示正值綠色，玩家淨輸的機台顯示負值紅色",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-013"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0134",
+      "AC-DAILYREPORT-0135"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "equivalence_partitioning"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "選定一個過去營業日 D。測試場館下有兩台既有機台（自行從環境中選定）：機台 A 在 D 的派彩合計大於有效投注合計（玩家淨贏；AC 範例：有效投注 1000、派彩 1300），機台 B 在 D 的派彩合計小於有效投注合計（玩家淨輸；AC 範例：有效投注 1000、派彩 800）",
+      "各機台在 D 的有效投注與派彩由該機台對應會員的投注紀錄取得（投注紀錄入口與欄位本報表 spec 未定義，由環境負責人指引）；若環境中找不到符合條件的機台，由環境負責人以機台前台遊玩累積或造數，不自行假設結果"
+    ],
+    "test_data": [
+      {
+        "name": "AC-0134 示意",
+        "value": "有效投注 1000、派彩 1300 → 損益 +300（綠）"
+      },
+      {
+        "name": "AC-0135 示意",
+        "value": "有效投注 1000、派彩 800 → 損益 −200（紅）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D（單一營業日），搜尋；記錄機台 A 列的損益（數值、正負號、顏色）"
+      },
+      {
+        "n": 2,
+        "action": "機台帳號改填機台 B，其餘條件不變，搜尋；記錄機台 B 列的損益（數值、正負號、顏色）"
+      },
+      {
+        "n": 3,
+        "action": "於兩台機台對應會員的投注紀錄，各自加總營業日 D 內全部注單的有效投注額與派彩，計算機台端損益＝派彩 − 有效投注額"
+      }
+    ],
+    "expected_result": "機台 A 列損益＝派彩 − 有效投注額（AC 範例 +300）：為正值、綠色，不是其相反數（非 −300）；機台 B 列損益＝派彩 − 有效投注額（AC 範例 −200）：為負值、紅色。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位/損益（v0.2 新增機台端視角）",
+      "quote": "以機台（會員）端計算——正值代表玩家淨贏、機台分數增加（與手冊「直推總損益／會員損益」的視角一致；平台視角另用「派彩」一詞）。正值綠色、負值紅色"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-013",
+    "testcase_id": "TC-DAILYREPORT-105",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "當期無場次但仍留有分數的機台，其分數仍計入場館彙總列的期末餘額",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-014"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0144"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "equivalence_partitioning"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "營業日 D（過去的營業日，AC 範例 9/11）與其前一營業日 D−1：機台 A 於 D−1 結算時點分數 400（AC 範例），D 當日沒有任何場次與交易，D 結算時點仍留存 400",
+      "機台 B 在 D 當日有場次，D 結算時點分數 100（AC 範例）",
+      "場館內其他機台於 D 結算時點的分數皆為 0（若不為 0，將造數記錄中它們 D 結算時點的分數一併計入預期值）"
+    ],
+    "test_data": [
+      {
+        "name": "機台 A（無場次）D 結算時點分數",
+        "value": "400（AC 範例）"
+      },
+      {
+        "name": "機台 B D 結算時點分數",
+        "value": "100（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 D（單一營業日）、機台帳號留空，搜尋；記錄 D 列的期末餘額 E_all"
+      },
+      {
+        "n": 2,
+        "action": "依造數記錄計算預期值：機台 A（400）＋機台 B（100）＋其他機台（預設 0）"
+      },
+      {
+        "n": 3,
+        "action": "（對照組）機台帳號填機台 B，其餘條件不變，搜尋；記錄 D 列的期末餘額 E_B"
+      }
+    ],
+    "expected_result": "步驟 1：D 列期末餘額 E_all＝500（A 當期無場次但留存的 400 ＋ B 的 100），不是僅含有場次機台的 100；步驟 3（對照）：E_B＝100（僅含 B），E_all − E_B＝400（即 A 的留存分數）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理（各列餘額涵蓋含當期無場次但仍有留存分數者）",
+      "quote": "含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-014",
+    "testcase_id": "TC-DAILYREPORT-106",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "機台帳號篩選下，依場館彙總列的期末餘額只含該機台，不含場館其他機台",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-014"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0145"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "營業日 D（過去的營業日）：機台 A 於 D 結算時點分數 200、機台 B 於 D 結算時點分數 150（AC 範例），場館內其他機台於 D 結算時點分數皆為 0（若不為 0，將其計入「機台帳號留空」時的預期值）"
+    ],
+    "test_data": [
+      {
+        "name": "機台 A D 結算時點分數",
+        "value": "200（AC 範例）"
+      },
+      {
+        "name": "機台 B D 結算時點分數",
+        "value": "150（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 D（單一營業日）、機台帳號留空，搜尋；記錄 D 列期末餘額 E_all"
+      },
+      {
+        "n": 2,
+        "action": "機台帳號填機台 A，其餘條件不變，搜尋；記錄 D 列期末餘額 E_A"
+      },
+      {
+        "n": 3,
+        "action": "機台帳號改填機台 B，其餘條件不變，搜尋；記錄 D 列期末餘額 E_B"
+      }
+    ],
+    "expected_result": "E_A＝200（僅含機台 A，不含 B 的 150）；E_B＝150（僅含機台 B）；E_all＝350（機台帳號留空時含場館全部機台）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理（各列餘額涵蓋篩選條件內的所有機台；餘額比照機台帳號篩選條件）",
+      "quote": "餘額涵蓋篩選條件內的所有機台"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-014",
+    "testcase_id": "TC-DAILYREPORT-107",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依場次明細：同一機台洗分留餘數結束的場次與其後承接的出金場次，期末餘額各為餘數與 0，且總計列期末餘額為 0 而非兩列相加",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-014",
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0146",
+      "AC-DAILYREPORT-0191"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based",
+      "negative"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "機台 A 在營業日 D 內有兩個連續場次：S1 以開分起始、洗分結束並留有餘數 R（AC 範例 R＝900；實際值不限，須大於 0）；S2 承接該餘數 R，並以出金結束（出金一律清空餘額，S2 期末餘額為 0）；機台 A 在營業日 D 只有 S1、S2 兩個場次，且兩者皆已結束"
+    ],
+    "test_data": [
+      {
+        "name": "餘數 R（AC 範例）",
+        "value": 900
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場次明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D（單一營業日），搜尋"
+      },
+      {
+        "n": 2,
+        "action": "找到 S1、S2 兩列，記錄各自的期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "記錄底部總計列的期末餘額"
+      }
+    ],
+    "expected_result": "S1 列期末餘額＝R（AC 範例 900），S2 列期末餘額＝0；總計列期末餘額＝0（取機台 A 查詢範圍內最後一個場次 S2 的期末餘額），不是 S1＋S2 逐列相加的 R。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期末餘額不加總（2026-09-12 定案）；§背景：場次資訊/期末餘額",
+      "quote": "例如同一機台前一場次洗分後留餘數 900 結束、下一場次承接該 900 後出金清空為 0，兩列相加得 900，但結算時點該機台實際為 0"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-014",
+    "testcase_id": "TC-DAILYREPORT-108",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "按週時，週列的期初餘額取該週第一個營業日之前結算時點的值，而非該週第一個營業日當日的期末",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-015"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0153"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "一個完整週 W（週一 Wm 至週日 Ws，AC 範例以週一為該週第一個營業日）：W 之前一個營業日（週日）結算時點，場館各機台分數合計 700（AC 範例）",
+      "週一 Wm 當日有交易，使 Wm 當日結算時點的分數合計不等於 700（使『第一個營業日之前』與『第一個營業日當日』的值可區分）",
+      "場館內各機台於週一 Wm 前一營業日結算時點的分數合計已知（取自造數記錄）"
+    ],
+    "test_data": [
+      {
+        "name": "週一前一營業日結算時點分數合計",
+        "value": "700（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按週」、機台帳號留空、結算日期選 Wm～Ws（完整的一週），搜尋；記錄該週列的期初餘額"
+      },
+      {
+        "n": 2,
+        "action": "（對照）統計週期改選「按日」，結算日期不變，搜尋；記錄週一 Wm 那一列的期初餘額與期末餘額"
+      }
+    ],
+    "expected_result": "步驟 1：該週列期初餘額＝700（週一 Wm 之前一個營業日結算時點的分數合計），不等於週一 Wm 當日的期末餘額；步驟 2：週一 Wm 列期初餘額同為 700，期末餘額不等於 700。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註（非按日週期：期初餘額取該週期第一個營業日之前結算時點的值）",
+      "quote": "「期初餘額」取該週期第一個營業日之前結算時點的值"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-015",
+    "testcase_id": "TC-DAILYREPORT-109",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "變更排序欄位或切換頁碼時，底部總計列各欄數值不變",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-016"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0164"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "R23 內至少有兩個營業日的期末餘額不為 0 且彼此不同",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋（預設排序，第 1 頁）；記錄底部總計列全部欄位的數值 T0（含期初餘額、期末餘額）"
+      },
+      {
+        "n": 2,
+        "action": "點「下一頁」切到第 2 頁，記錄總計列全部欄位 T1；再切到第 3 頁，記錄 T2"
+      },
+      {
+        "n": 3,
+        "action": "點「開分金額」標題變更排序（遞增 ▲），記錄總計列 T3；再點一次（遞減 ▼），記錄 T4"
+      },
+      {
+        "n": 4,
+        "action": "點「期末餘額」標題變更排序，記錄總計列 T5"
+      }
+    ],
+    "expected_result": "T0、T1、T2、T3、T4、T5 的每一欄數值皆相同（含期初餘額與期末餘額）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/總計列",
+      "quote": "一律為整個查詢結果的合計（餘額欄仍依上述時點值規則），不隨排序與分頁改變"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "RM REQ-DAILYREPORT-016 ambiguity（major）：CLR-DAILYREPORT-006「無資料時各欄顯示 0」與 v0.2「各列餘額含當期無場次但仍有留存分數者」衝突，PM 尚未回覆；本 TC 刻意選用每個營業日皆有資料的區間以避開此情境，不對「無資料營業日的期初／期末餘額應顯示 0 或留存分數」作任何斷言",
+        "requirement_id": "REQ-DAILYREPORT-016",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-016",
+    "testcase_id": "TC-DAILYREPORT-110",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依機台明細、按日：期初餘額為前一營業日結算時點該機台的分數",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-018"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0181"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "營業日 D 與其前一營業日 D−1（過去的營業日，AC 範例 9/10 與 9/09）：機台 A 於 D−1 結算時點分數 1000（AC 範例），且 D 當日機台 A 有交易使 D 結算時點的分數不等於 1000（使期初與期末可區分）"
+    ],
+    "test_data": [
+      {
+        "name": "機台 A D−1 結算時點分數",
+        "value": "1000（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D（單一營業日），搜尋"
+      },
+      {
+        "n": 2,
+        "action": "找到機台 A 在營業日 D 的列，記錄期初餘額與期末餘額"
+      }
+    ],
+    "expected_result": "機台 A 列期初餘額＝1000（D−1 結算時點的分數，AC 範例）；期末餘額不等於期初餘額（區分『期初』與『期末』）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位/期初餘額（v0.2 新增）",
+      "quote": "該結算期間起點的分數合計——即前一營業日結算時點各機台的分數；無前一營業日資料時為 0"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-018",
+    "testcase_id": "TC-DAILYREPORT-111",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "新機台在其第一個營業日沒有前一營業日資料時，期初餘額為 0",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-018"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0182"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "boundary"
+    ],
+    "design_techniques": [
+      "boundary_value"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "環境負責人提供一台「新機台」A：在其第一個營業日 D1 之前，A 沒有任何結算紀錄（沒有任何場次、交易或分數），D1 當日 A 已有至少一筆交易（如開分）",
+      "本 TC 只涵蓋「查詢起點之前完全沒有任何結算紀錄」的情況；「緊鄰的前一營業日無資料、但更早營業日留有分數」時期初取 0 或沿用的關係，spec 未明確（RM REQ-018 ambiguity minor），不在本 TC 驗證範圍"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D1（A 的第一個營業日，單一營業日），搜尋"
+      },
+      {
+        "n": 2,
+        "action": "找到機台 A 在營業日 D1 的列，記錄期初餘額"
+      }
+    ],
+    "expected_result": "機台 A 列期初餘額＝0。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位/期初餘額（v0.2 新增）",
+      "quote": "無前一營業日資料時為 0"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-018",
+    "testcase_id": "TC-DAILYREPORT-112",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依場次明細的場次期初餘額：開分起始為 0、承接洗分餘數為承接金額、日結結算轉入為轉入金額、出金後再入金起始為 0",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-018"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0183",
+      "AC-DAILYREPORT-0184"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "equivalence_partitioning"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "機台 A（路徑一）：營業日 D 內場次 S1 以開分起始、洗分結束留餘數 R1（AC 範例 900）；場次 S2 承接該 R1，S2 在 D 結束的日結時刻（日結時間 T）仍進行中而被日結結算、結束時分數 R2（AC 範例 80）；次一營業日 D+1 的新場次 S3 由 S2 日結結算後轉入 R2",
+      "機台 B（路徑二）：場次 S1' 以出金結束（出金一律清空餘額），之後以入金開始場次 S2'",
+      "A、B 皆為環境中既有機台（自行選定）；兩台機台在查詢範圍內都沒有「逾時結束」場次"
+    ],
+    "test_data": [
+      {
+        "name": "AC-0183 示意",
+        "value": "S1 期初 0、S2 期初 900、S3 期初 80"
+      },
+      {
+        "name": "AC-0184 示意",
+        "value": "S2' 期初 0"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場次明細」、統計週期選「按日」、機台帳號填機台 A、結算日期涵蓋 D 與 D+1，搜尋；記錄 S1、S2、S3 三列的場次狀態與期初餘額"
+      },
+      {
+        "n": 2,
+        "action": "機台帳號改填機台 B，結算日期涵蓋 S1' 與 S2' 所屬營業日，搜尋；記錄 S1'、S2' 兩列的期初餘額"
+      }
+    ],
+    "expected_result": "機台 A：S1 期初餘額＝0（開分起始）、S2 期初餘額＝R1（承接洗分餘數，AC 範例 900）、S3 期初餘額＝R2（日結結算轉入，AC 範例 80）；機台 B：S2' 期初餘額＝0（出金清空、無餘數承接）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§背景：場次資訊/期初餘額",
+      "quote": "場次開始時的分數（開分／入金起始者為 0；承接洗分餘數或日結結算轉入者為承接金額；出金一律清空餘額、無餘數承接）"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-018",
+    "testcase_id": "TC-DAILYREPORT-113",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "各統計維度的列表欄位順序：「期初餘額」位於「期末餘額」的前一欄",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-018"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0185"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下有任一營業日有資料，使三種統計維度都能查出至少一列"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計週期選「按日」、結算日期選一個有資料的營業日，統計維度選「依場館彙總」，搜尋；由左至右記錄欄位標題順序"
+      },
+      {
+        "n": 2,
+        "action": "統計維度改選「依機台明細」，搜尋；由左至右記錄欄位標題順序"
+      },
+      {
+        "n": 3,
+        "action": "統計維度改選「依場次明細」，搜尋；由左至右記錄欄位標題順序"
+      }
+    ],
+    "expected_result": "三種統計維度下，「期初餘額」欄都在「期末餘額」欄的緊鄰前一欄（左側相鄰）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§變更記錄（2026-09-17 新增欄位）+ §列表欄位欄位表順序",
+      "quote": "（置於「期末餘額」前一欄）"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "low",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-018",
+    "testcase_id": "TC-DAILYREPORT-114",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "按日、依場館彙總的多日查詢：總計列期末餘額為最新營業日列的值、期初餘額為範圍起點前一營業日結算時點的值，均非逐列相加",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0192"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "三個連續營業日 D1、D2、D3（AC 範例 9/10～9/12）：場館各機台結算時點分數合計，D1 前一營業日為 200、D1 為 500、D2 為 300、D3 為 450（AC 範例；三個營業日的期末餘額彼此不同且非 0）",
+      "三個營業日內各日有開分等交易（金額欄不為 0）"
+    ],
+    "test_data": [
+      {
+        "name": "D1 前一營業日結算分數合計",
+        "value": "200（AC 範例）"
+      },
+      {
+        "name": "D1／D2／D3 期末",
+        "value": "500／300／450（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、機台帳號留空、結算日期選 D1～D3，搜尋（預設排序）"
+      },
+      {
+        "n": 2,
+        "action": "記錄 D1、D2、D3 各列的期初餘額、期末餘額與開分金額"
+      },
+      {
+        "n": 3,
+        "action": "記錄底部總計列的期初餘額、期末餘額與開分金額"
+      }
+    ],
+    "expected_result": "總計列期末餘額＝D3 列（最新營業日）的期末餘額（AC 範例 450），不是三列期末相加（範例 1250）；總計列期初餘額＝D1 前一營業日結算時點的分數合計（AC 範例 200），不是三列期初相加；開分等金額欄的總計＝三列合計。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理、期末餘額不加總",
+      "quote": "按日檢視時總計列的期末餘額就是最新一個營業日那一列的值"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-019",
+    "testcase_id": "TC-DAILYREPORT-115",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依機台明細的總計列期末餘額：各機台取其查詢範圍內最後一個營業日的期末餘額，再跨機台相加",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0193"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "查詢範圍為連續三個營業日 D1～D3；場館內只有機台 A、B 有分數（其餘機台各營業日分數為 0）：機台 A 於 D3 結算時點分數 200，且 D1、D2 的期末分數與 200 不同；機台 B 於 D3 結算時點分數 150，且 D1、D2 的期末分數與 150 不同（AC 範例 200／150）"
+    ],
+    "test_data": [
+      {
+        "name": "機台 A D3 期末",
+        "value": "200（AC 範例）"
+      },
+      {
+        "name": "機台 B D3 期末",
+        "value": "150（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號留空、結算日期選 D1～D3，搜尋"
+      },
+      {
+        "n": 2,
+        "action": "記錄每台機台各營業日列的期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "記錄底部總計列的期末餘額"
+      }
+    ],
+    "expected_result": "總計列期末餘額＝機台 A 的 D3 期末（200）＋機台 B 的 D3 期末（150）＝350（AC 範例），不是全部列期末相加。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期末餘額不加總",
+      "quote": "總計列一律各機台取其查詢範圍內時間最後一個場次／最後一個營業日結算時點的期末餘額，再跨機台相加"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-019",
+    "testcase_id": "TC-DAILYREPORT-116",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依場次明細查單一機台，最後一個場次為進行中時，總計列期末餘額計入進行中場次累計到查詢當下的分數",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0194"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "時間限制：（1）整個執行期間不得跨越日結時間 T（UTC+0），若目前距 T 不足 1 小時請改日再執行；（2）場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認），自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "機台 A 在目前營業日（查詢當下所屬的營業日）內先有一個已結束場次（以出金結束，出金一律清空餘額，故該場次期末餘額為 0），之後再開分形成進行中場次，目前分數 X 已知（以機台前台畫面顯示的分數為準，須大於 0；AC 範例 600），其後不再有任何交易",
+      "（資料佈置的未驗證前提）開分／投注／出金等機台金流操作的入口，以及機台目前分數的讀值來源，本報表 spec 均未載明（定義於「機台金流與場次」開發包③）；本 TC 以「機台前台畫面顯示的分數」為目前分數的讀值來源（沿用 TC-DAILYREPORT-099／101 作法），由環境負責人指引操作入口並確認讀值來源"
+    ],
+    "test_data": [
+      {
+        "name": "X",
+        "value": "機台 A 目前分數；AC 範例 600，實際取機台前台讀值，須 > 0"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期選「按日」、機台帳號填機台 A、結算日期涵蓋前一營業日與目前營業日（營業日依日結時間 T（UTC+0）切分，取涵蓋兩天的區間），搜尋"
+      },
+      {
+        "n": 2,
+        "action": "預設排序為結算期間新→舊、每頁 10 筆：以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」定位兩個場次列（已結束場次列、進行中場次列），不依賴列的位置，必要時翻頁；記錄兩列的期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "記錄底部總計列的期末餘額"
+      }
+    ],
+    "expected_result": "進行中場次列期末餘額＝X、已結束場次列期末餘額＝0；總計列期末餘額＝X（計入進行中場次累計到查詢當下的分數），不是最後一個已結束場次的 0。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期末餘額不加總（2026-09-17 修訂：計入進行中場次）",
+      "quote": "改為計入進行中場次累計至查詢當下的分數"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-019",
+    "testcase_id": "TC-DAILYREPORT-117",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依場次明細查單一機台：總計列期初餘額為範圍內最早場次的期初餘額，而非各場次期初餘額相加",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-019"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0195"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "機台 A 在查詢範圍內共有 3 個已結束場次；範圍起點前一營業日結算時點 A 的分數為 1000（AC 範例），故最早場次的期初餘額為 1000；另兩個場次的期初餘額與 1000 不同且大於 0（例如 400、700），使「取最早」與「相加」可區分"
+    ],
+    "test_data": [
+      {
+        "name": "最早場次期初",
+        "value": "1000（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場次明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選涵蓋該 3 個場次的區間，搜尋"
+      },
+      {
+        "n": 2,
+        "action": "記錄 3 個場次列各自的期初餘額"
+      },
+      {
+        "n": 3,
+        "action": "記錄底部總計列的期初餘額"
+      }
+    ],
+    "expected_result": "總計列期初餘額＝最早場次的期初餘額（AC 範例 1000），不是 3 個場次期初餘額相加（如 1000＋400＋700＝2100）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理",
+      "quote": "總計列取各機台在查詢範圍起點前一營業日結算時點的分數（＝該機台範圍內最早場次的期初餘額），再跨機台相加"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-019",
+    "testcase_id": "TC-DAILYREPORT-118",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "按日、依場館彙總：相鄰營業日列前後相接（前一日期末＝次一日期初），預設排序下第一列期末等於總計列期末",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-020"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0201",
+      "AC-DAILYREPORT-0204"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "三個連續營業日 D1、D2、D3（AC 範例 9/10～9/12），各日皆有資料；場館各機台結算時點分數合計於 D1／D2／D3 分別為 500／300／450（AC 範例）"
+    ],
+    "test_data": [
+      {
+        "name": "D1／D2／D3 期末",
+        "value": "500／300／450（AC 範例）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、機台帳號留空、結算日期選 D1～D3，搜尋（預設排序：結算期間 ▼，新→舊）"
+      },
+      {
+        "n": 2,
+        "action": "記錄 D3、D2、D1 各列（列表由上而下）的期初餘額與期末餘額，以及總計列的期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "比對相鄰列：D1 列期末餘額與 D2 列期初餘額；D2 列期末餘額與 D3 列期初餘額"
+      },
+      {
+        "n": 4,
+        "action": "比對列表第一列（最新營業日 D3）的期末餘額與總計列的期末餘額"
+      },
+      {
+        "n": 5,
+        "action": "點「結算期間」標題切換為遞增（▲，舊→新），再比對相鄰列：D1 列期末餘額與 D2 列期初餘額；D2 列期末餘額與 D3 列期初餘額"
+      }
+    ],
+    "expected_result": "步驟 3 與步驟 5：D1 列期末餘額＝D2 列期初餘額、D2 列期末餘額＝D3 列期初餘額（兩種結算期間排序方向下皆成立）；步驟 4：預設排序下第一列（最新營業日）的期末餘額＝總計列的期末餘額。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理（2026-09-17）",
+      "quote": "故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-020",
+    "testcase_id": "TC-DAILYREPORT-119",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "按週、依場館彙總：前一週列的期末餘額等於次一週列的期初餘額",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-020"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0202"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "兩個連續完整週 W1、W2（各自週一至週日），各週皆有資料，兩週的期末餘額彼此不同且非 0"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按週」、機台帳號留空、結算日期選 W1 週一～W2 週日（14 天），搜尋"
+      },
+      {
+        "n": 2,
+        "action": "記錄 W1、W2 兩列的期初餘額與期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "比對 W1 列期末餘額與 W2 列期初餘額"
+      }
+    ],
+    "expected_result": "W1 列期末餘額＝W2 列期初餘額。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理（2026-09-17）",
+      "quote": "故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-020",
+    "testcase_id": "TC-DAILYREPORT-120",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "依機台明細、按日：機台於中間營業日完全沒有場次但留存分數時，相鄰三日的餘額仍前後相接",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-020"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0203"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "連續三個營業日 D1、D2、D3（AC 範例 9/10～9/12）：機台 A 於 D1 結算時點分數 400（AC 範例）；D2 當日 A 沒有任何場次與交易，D2 結算時點仍留存 400；D3 當日 A 有場次"
+    ],
+    "test_data": [
+      {
+        "name": "機台 A D1／D2／D3 期末",
+        "value": "400／400／（D3 有場次，值不限）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D1～D3，搜尋（預設排序，新→舊）"
+      },
+      {
+        "n": 2,
+        "action": "找到機台 A 的 D1、D2、D3 三列（以結算期間欄定位，不依賴列位置），記錄各列的期初餘額與期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "比對：D1 期末與 D2 期初；D2 期末與 D3 期初"
+      }
+    ],
+    "expected_result": "機台 A：D1 期末餘額 400＝D2 期初餘額 400；D2 期末餘額 400＝D3 期初餘額 400（D2 無場次的期間仍沿用留存分數、列存在，前後相接，不中斷或歸 0）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/期初餘額比照辦理（2026-09-17）",
+      "quote": "故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "本 TC 的 D2 對機台 A 是『當期無任何場次與交易、但留有分數』的列，正落在 RM REQ-DAILYREPORT-016 ambiguity（major）：CLR-DAILYREPORT-006『無資料各欄 0』與 v0.2『各列餘額含當期無場次但仍有留存分數者』衝突，PM 尚未回覆。本 TC 依 v0.2 預期 D2 列存在且期初／期末為 400；若 PM 裁定無資料列餘額顯示 0，本 TC 的 expected 須跟著改（此假設掛在 REQ-020 名下，因 REQ-016 的 exploratory 案例已達上限 3 條，且本 TC 不涵蓋 REQ-016）",
+        "requirement_id": "REQ-DAILYREPORT-020",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-020",
+    "testcase_id": "TC-DAILYREPORT-121",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "餘額驗算式在損益為 0 與損益為正（玩家淨贏）的列上皆成立",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-021"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0211",
+      "AC-DAILYREPORT-0212"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）",
+      "列 L0（依機台明細、按日）：期初 1,000、入金 2,500、開分 1,500、出金 3,500、洗分 1,000，當日沒有投注（損益 0）——AC-0211 範例",
+      "列 L1（依機台明細、按日）：期初 0、開分 1,000、損益 +300（玩家淨贏）、洗分 1,300、進鈔 0、收據 0——AC-0212 範例",
+      "L0、L1 可為同一機台的不同營業日或不同機台，皆為過去營業日；範例數字為示意，環境中形狀相近即可（損益是否為 0、正值為判準）"
+    ],
+    "test_data": [
+      {
+        "name": "L0（AC-0211 範例）",
+        "value": "期初 1000、入金 2500、開分 1500、出金 3500、洗分 1000、損益 0 → 期末 500"
+      },
+      {
+        "name": "L1（AC-0212 範例）",
+        "value": "期初 0、開分 1000、損益 +300、洗分 1300 → 期末 0"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」，機台帳號與結算日期設為涵蓋列 L0 的條件，搜尋；記錄 L0 列的期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額"
+      },
+      {
+        "n": 2,
+        "action": "計算 期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額，與該列顯示的期末餘額比對"
+      },
+      {
+        "n": 3,
+        "action": "以涵蓋列 L1 的條件重新搜尋，對 L1 重複步驟 1～2"
+      }
+    ],
+    "expected_result": "L0：計算值＝顯示期末餘額（AC 範例 1,000＋2,500＋1,500＋0－1,000－3,500＝500）；L1：計算值＝顯示期末餘額（AC 範例 0＋1,000＋0＋300－1,300－0＝0）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/餘額驗算（2026-09-17 新增）",
+      "quote": "期末餘額 ＝ 期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-021",
+    "testcase_id": "TC-DAILYREPORT-122",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "餘額驗算以洗分、收據的交易發生金額計入，與已核實洗分、已兌現金額無關",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-021"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0213"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）",
+      "一列（依機台明細、按日，過去營業日）：洗分金額 500，且全部仍為待核實（已核實洗分 0）；收據金額 200，且全部仍未兌現（已兌現金額 0）；該列期初、開分、進鈔、損益可為任意值（使代入已核實／已兌現時與顯示期末餘額的差可區分）"
+    ],
+    "test_data": [
+      {
+        "name": "洗分金額（全待核實）",
+        "value": 500
+      },
+      {
+        "name": "收據金額（全未兌現）",
+        "value": 200
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依機台明細」、統計週期選「按日」，機台帳號與結算日期設為涵蓋該列的條件，搜尋；記錄該列的期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、已核實洗分、已兌現金額、期末餘額"
+      },
+      {
+        "n": 2,
+        "action": "計算 A：期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額（500） － 收據金額（200）"
+      },
+      {
+        "n": 3,
+        "action": "計算 B（對照）：期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 已核實洗分（0） － 已兌現金額（0）"
+      },
+      {
+        "n": 4,
+        "action": "分別以 A、B 與該列顯示的期末餘額比對"
+      }
+    ],
+    "expected_result": "A 等於該列顯示的期末餘額（洗分以 500、收據以 200 計入，不論核實與否）；B 與顯示期末餘額相差 700（確認本列資料具備區分力：若驗算誤用已核實洗分／已兌現金額，結果會不一致）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/餘額驗算（洗分／出金以交易發生為準，與核實狀態無關）",
+      "quote": "洗分／出金以交易發生為準計入（不論核實與否），故驗算與「已核實洗分」「已兌現金額」無關"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-021",
+    "testcase_id": "TC-DAILYREPORT-123",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "含進行中場次的列：期末餘額計入進行中場次的分數，且驗算式成立",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-021"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0214"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "時間限制：（1）整個執行期間不得跨越日結時間 T（UTC+0），若目前距 T 不足 1 小時請改日再執行；（2）場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認），自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）",
+      "機台 A 在目前營業日開始（日結時間 T）時分數為 0（前一營業日結算時點無餘額），目前營業日內 A 只有一個進行中場次：期初餘額 0，已開分（AC 範例 1,000）並已投注，目前損益為 L（AC 範例 −200；實際值不限），今日沒有任何洗分、出金、入金，其後不再有任何交易",
+      "（資料佈置的未驗證前提）開分／投注／出金等機台金流操作的入口，以及機台目前分數的讀值來源，本報表 spec 均未載明（定義於「機台金流與場次」開發包③）；本 TC 以「機台前台畫面顯示的分數」為目前分數的讀值來源（沿用 TC-DAILYREPORT-099／101 作法），由環境負責人指引操作入口並確認讀值來源"
+    ],
+    "test_data": [
+      {
+        "name": "AC-0214 示意",
+        "value": "期初 0、開分 1000、損益 −200 → 期末 800"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "記錄機台前台機台 A 的目前分數 X"
+      },
+      {
+        "n": 2,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選目前營業日（查詢當下所屬的營業日）（單一營業日），搜尋"
+      },
+      {
+        "n": 3,
+        "action": "找到機台 A 的目前營業日列，記錄期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額"
+      },
+      {
+        "n": 4,
+        "action": "計算 期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額，與期末餘額及 X 比對"
+      }
+    ],
+    "expected_result": "機台 A 列期末餘額＝X（含進行中場次的分數；AC 範例 800），且驗算式成立：期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額 ＝ 顯示的期末餘額（AC 範例 0＋1,000＋(−200)＝800）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/餘額驗算（進行中場次的分數計入期末餘額，驗算式在任何查詢範圍皆成立）",
+      "quote": "進行中場次的分數計入期末餘額"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-021",
+    "testcase_id": "TC-DAILYREPORT-124",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "按週、依場館彙總的任一週列：期末餘額＝期初餘額＋各金額合計＋損益合計（驗算式在非按日週期成立）",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-021"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0215"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）",
+      "一個完整週 W（週一至週日），週內各營業日皆有開分、洗分、進鈔、出金與投注交易，且該週損益不為 0"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按週」、機台帳號留空、結算日期選 W 週一～週日，搜尋"
+      },
+      {
+        "n": 2,
+        "action": "記錄 W 列的期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額"
+      },
+      {
+        "n": 3,
+        "action": "計算 期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額，與期末餘額比對"
+      }
+    ],
+    "expected_result": "計算值＝W 列顯示的期末餘額。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§列表欄位附註/餘額驗算（驗算式在任何查詢範圍皆成立）",
+      "quote": "驗算式在任何查詢範圍皆成立"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-021",
+    "testcase_id": "TC-DAILYREPORT-125",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "排序指示與切換：預設結算期間新→舊（▼）、點擊在遞增與遞減兩段間切換、點另一欄由遞增開始",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-022"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0221",
+      "AC-DAILYREPORT-0222",
+      "AC-DAILYREPORT-0223"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "state_transition"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續至少 3 個營業日、各日皆有資料且各日開分金額、損益彼此不同的區間（使排序結果可由數值順序判讀），以「依場館彙總＋按日」查詢時至少有 3 列"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選上述區間，搜尋（首次查詢，不做任何排序操作）；檢視各欄位標題的排序指示與列的順序"
+      },
+      {
+        "n": 2,
+        "action": "點「開分金額」標題一次；檢視該標題指示與列的順序"
+      },
+      {
+        "n": 3,
+        "action": "再點「開分金額」標題一次；檢視指示與列的順序"
+      },
+      {
+        "n": 4,
+        "action": "第三次點「開分金額」標題；檢視指示與列的順序"
+      },
+      {
+        "n": 5,
+        "action": "再點「開分金額」標題一次，使其處於遞減（▼）"
+      },
+      {
+        "n": 6,
+        "action": "點「損益」標題；檢視「損益」與「開分金額」兩個標題的指示，以及列的順序"
+      }
+    ],
+    "expected_result": "步驟 1：結算期間標題顯示 ▼、其餘欄位標題顯示 ⇅，列依結算期間新→舊（最新營業日在最上）。步驟 2：開分金額 ▲，列依開分金額遞增；步驟 3：開分金額 ▼，列依開分金額遞減；步驟 4：回到 ▲（只有遞增與遞減兩段，不會回到未排序 ⇅）。步驟 6：損益標題為 ▲（改依損益遞增），開分金額標題回到 ⇅。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/點擊切換、預設排序",
+      "quote": "點擊標題在遞增 → 遞減兩段之間切換；點擊另一欄時該欄由遞增開始"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-022",
+    "testcase_id": "TC-DAILYREPORT-126",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "排序一律套用整個查詢結果後再分頁：依開分金額遞減排序後，第 1 頁為全部列中開分最大的 10 列，第 2 頁接續第 11～20 名",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-022"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0224"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "boundary"
+    ],
+    "design_techniques": [
+      "boundary_value"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "R23 內各營業日的開分金額，在全部 23 列中排名第 10 與第 11 的兩列數值不相同（避免排序鍵值相同時次排序未定義〔RM REQ-022 ambiguity minor〕干擾頁面邊界的判讀）"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋；逐頁（第 1、2、3 頁）記錄全部 23 列的開分金額，由大到小排出名次 K1～K23，確認 K10 ≠ K11"
+      },
+      {
+        "n": 2,
+        "action": "點「開分金額」標題兩次，使其為遞減（▼）；確認列表回到第 1 頁"
+      },
+      {
+        "n": 3,
+        "action": "記錄第 1 頁 10 列的開分金額"
+      },
+      {
+        "n": 4,
+        "action": "切到第 2 頁，記錄 10 列的開分金額，並記錄分頁列顯示的區間"
+      },
+      {
+        "n": 5,
+        "action": "切到第 3 頁，記錄 3 列的開分金額"
+      }
+    ],
+    "expected_result": "第 1 頁 10 列的開分金額依序為 K1～K10（全部 23 列中最大的 10 列、遞減）；第 2 頁為 K11～K20（第 11–20 筆）；第 3 頁為 K21～K23。頁面邊界（K10→K11）沒有重複、遺漏或跳動。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/排序範圍",
+      "quote": "排序一律套用整個查詢結果後再分頁，翻頁不會出現資料跳動"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-022",
+    "testcase_id": "TC-DAILYREPORT-127",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "三種統計維度下，列表上的每個欄位標題皆可排序並顯示排序指示",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-022"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0225"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "三種統計維度下，各自選一段查詢條件使列表至少有 3 列、且各欄位數值不全相同（含場次編號、場館／機台、期初餘額、期末餘額欄）"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」，搜尋；記錄列表上的全部欄位標題（含：結算期間、場館／機台、場次數、開分金額、洗分金額、已核實洗分、待核實洗分、進鈔金額、收據金額、已兌現金額、未兌現金額、現金淨收、有效投注額、損益、期初餘額、期末餘額）；逐一點擊每一個欄位標題各一次（每次點擊另一欄時該欄由遞增開始），檢視該標題的指示是否為 ▲；數值欄（場次數、各金額欄、期初／期末餘額、損益等）另檢視列順序是否依數值遞增；文字與時間欄（結算期間、場館／機台、場次編號、開始／結束時間）只記錄實際列順序，不作判準"
+      },
+      {
+        "n": 2,
+        "action": "統計維度改選「依機台明細」，搜尋；重複步驟 1 的逐欄點擊"
+      },
+      {
+        "n": 3,
+        "action": "統計維度改選「依場次明細」，搜尋；記錄全部欄位標題（含場次編號、開始／結束時間、場次時長等該維度新增的欄位）；重複步驟 1 的逐欄點擊"
+      }
+    ],
+    "expected_result": "三種統計維度下，列表上的每個欄位標題都可點擊排序：點擊後該標題顯示 ▲，數值欄的列順序依數值單調遞增；不存在點擊後無反應或無排序指示的欄位。文字與時間欄（結算期間、場館／機台、場次編號、開始／結束時間，含進行中場次結束時間「—」）的實際排序規則 spec 未定義，只記錄實際順序、不作為通過與否的判準。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/可排序欄位",
+      "quote": "所有欄位皆可排序，欄位標題右側顯示排序指示（未排序 ⇅、遞增 ▲、遞減 ▼）"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-022",
+    "testcase_id": "TC-DAILYREPORT-128",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "非依結算期間排序時列表上方顯示餘額欄提示，改回依結算期間排序時提示消失",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-023"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0231",
+      "AC-DAILYREPORT-0232",
+      "AC-DAILYREPORT-0233"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "low",
+    "risk": "low",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段至少有 2 個營業日資料的區間，以「依場館彙總＋按日」查詢"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」，搜尋（預設依結算期間排序）；檢視列表上方是否有餘額欄提示"
+      },
+      {
+        "n": 2,
+        "action": "點「開分金額」標題改依開分金額排序；檢視列表上方"
+      },
+      {
+        "n": 3,
+        "action": "點「結算期間」標題改依結算期間排序；檢視列表上方"
+      }
+    ],
+    "expected_result": "步驟 1：不顯示餘額欄提示；步驟 2：顯示提示「「期初餘額」「期末餘額」僅在依結算期間排序時前後相接，其餘排序下兩欄各自正確但不可逐列銜接閱讀」；步驟 3：提示消失。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/餘額欄提示",
+      "quote": "排序欄位非「結算期間」時，列表上方顯示提示：「期初餘額」「期末餘額」僅在依結算期間排序時前後相接，其餘排序下兩欄各自正確但不可逐列銜接閱讀"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "low",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-023",
+    "testcase_id": "TC-DAILYREPORT-129",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "23 列結果的分頁列：第 1 頁 10 列、第 3 頁 3 列，首頁停用上一頁、末頁停用下一頁，且沒有調整每頁筆數的控制項",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-024"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0241",
+      "AC-DAILYREPORT-0242",
+      "AC-DAILYREPORT-0243"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional",
+      "boundary"
+    ],
+    "design_techniques": [
+      "boundary_value"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋；檢視第 1 頁的列數與分頁列（總筆數、顯示區間、頁碼、上一頁／下一頁按鈕狀態）"
+      },
+      {
+        "n": 2,
+        "action": "檢視分頁區是否有調整每頁筆數的控制項（例如每頁筆數下拉選單）"
+      },
+      {
+        "n": 3,
+        "action": "切到第 3 頁；檢視列數與分頁列"
+      }
+    ],
+    "expected_result": "步驟 1：第 1 頁顯示 10 列；分頁列顯示總筆數 23、第 1–10 筆、頁碼 1～3，「上一頁」停用；步驟 2：沒有調整每頁筆數的控制項；步驟 3：第 3 頁顯示 3 列，第 21–23 筆，「下一頁」停用。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/分頁列、每頁筆數",
+      "quote": "列表底部顯示總筆數、當前顯示區間（第 N–M 筆）、頁碼與上一頁／下一頁；首頁與末頁時對應按鈕停用"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-024",
+    "testcase_id": "TC-DAILYREPORT-130",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "每頁 10 筆的邊界：恰好 10 筆時只有一頁，11 筆時第二頁只有 1 筆",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-024"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0241",
+      "AC-DAILYREPORT-0242"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "boundary"
+    ],
+    "design_techniques": [
+      "boundary_value"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "R23 的前 10 個營業日（記為區間 R10）與前 11 個營業日（記為區間 R11，R11 比 R10 多一天）皆在 R23 內，每日皆有資料"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R10（10 個營業日），搜尋；檢視列數、分頁列（總筆數、顯示區間、頁碼、上一頁／下一頁按鈕狀態）"
+      },
+      {
+        "n": 2,
+        "action": "結算日期改選 R11（11 個營業日），搜尋；檢視第 1 頁的列數與分頁列"
+      },
+      {
+        "n": 3,
+        "action": "切到第 2 頁；檢視列數與分頁列"
+      }
+    ],
+    "expected_result": "R10：顯示 10 列，總筆數 10，頁碼只有 1，上一頁與下一頁皆停用（首頁即末頁）；R11：第 1 頁 10 列，頁碼 1～2；第 2 頁只有 1 列（第 11 筆），下一頁停用。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/每頁筆數、分頁列",
+      "quote": "固定 10 筆，不提供調整"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-024",
+    "testcase_id": "TC-DAILYREPORT-131",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "換頁不改變篩選條件、統計維度、排序與麵包屑狀態（含鑽取後依機台明細＋機台帳號篩選＋損益排序的情境）",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-024"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0244"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）",
+      "選定一台既有機台 A（自行從環境中選定），A 在 R23（連續 23 個營業日）內每個營業日皆有資料，使「依機台明細＋按日＋機台帳號篩選 A」時有 23 列、至少 3 頁",
+      "（AC 條件的限制）AC-0244 原條件為「機台帳號篩選＋依機台明細＋損益排序＋經鑽取、位於第 1 頁」，但鑽取（由場館彙總列點場館名）會把結算日期收斂為該列的單一結算期間；為使結果有第 2 頁，本 TC 在鑽取後把統計週期改為「按日」，使每日一列"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「區間合計」、結算日期選 R23，搜尋；結果為一列（結算期間＝R23 的起訖）"
+      },
+      {
+        "n": 2,
+        "action": "點該列的場館名向下鑽取（切至依機台明細，結算日期收斂為該列的結算期間）"
+      },
+      {
+        "n": 3,
+        "action": "統計週期改選「按日」、機台帳號填機台 A，搜尋；確認結果至少 11 列（即至少有第 2 頁）"
+      },
+      {
+        "n": 4,
+        "action": "點「損益」標題排序"
+      },
+      {
+        "n": 5,
+        "action": "記錄換頁前的基準狀態 S0：機台帳號、結算日期、統計週期、統計維度、排序欄位與指示、麵包屑（層數、各層文字、哪些層可點）、分頁列顯示的頁碼與區間"
+      },
+      {
+        "n": 6,
+        "action": "點「第 2 頁」"
+      },
+      {
+        "n": 7,
+        "action": "記錄換頁後的狀態 S1（同樣項目）並與 S0 比對"
+      }
+    ],
+    "expected_result": "S1 與 S0 相同：機台帳號、結算日期、統計週期、統計維度、排序欄位與指示（損益 ▲）、麵包屑（層數、各層文字與可點狀態）皆維持不變；僅頁碼與顯示區間改為第 2 頁（第 11–20 筆）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/狀態保留",
+      "quote": "切換頁碼保留當前篩選條件、統計維度、排序與鑽取麵包屑狀態；變更篩選、統計週期、統計維度、排序或鑽取層級時一律回到第 1 頁"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "AC-0244 原條件（依機台明細＋機台帳號篩選＋經鑽取）在鑽取收斂為單一期間後只有 1 列，無法產生第 2 頁；本 TC 以『鑽取後把統計週期改為按日』佈置出多頁，此佈置為推測。變更統計週期後麵包屑是否維持未定義（RM REQ-026 ambiguity），故只比對換頁前後一致，不斷言變更週期後的麵包屑內容",
+        "requirement_id": "REQ-DAILYREPORT-024",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-024",
+    "testcase_id": "TC-DAILYREPORT-132",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "在第 3 頁時變更篩選條件、統計週期、統計維度、排序欄位或鑽取層級，列表皆回到第 1 頁（且變更後仍為多頁）",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-024"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0245"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示 0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）",
+      "R23 內至少有 3 台機台（含機台 A）在每個營業日皆有資料且每日皆有場次（每台機台在 R23 內至少 11 個場次），使「依機台明細＋按日」至少有 69 列（≥7 頁）、「依機台明細＋按週」至少有 11 列（每台機台每週一列，R23 至少跨 4 個週期，3 台×4＝12 列，≥2 頁）、以機台帳號篩選 A 後的「依機台明細＋按日」有 23 列（3 頁）",
+      "基準狀態 B：統計維度「依機台明細」、統計週期「按日」、結算日期 R23、機台帳號留空、預設排序；每項變更前都先還原到基準狀態 B 並切到第 3 頁"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以基準狀態 B 搜尋，切到第 3 頁，記錄分頁列（目前頁、區間、總筆數）。【變更一：篩選條件】機台帳號填機台 A，搜尋；檢視分頁列：目前頁、區間、總筆數（預期仍有 23 列、3 頁）"
+      },
+      {
+        "n": 2,
+        "action": "還原基準狀態 B（清除機台帳號並搜尋），切到第 3 頁。【變更二：統計週期】統計週期改選「按週」；檢視分頁列（預期總筆數 ≥ 11、至少 2 頁）"
+      },
+      {
+        "n": 3,
+        "action": "還原基準狀態 B，切到第 3 頁。【變更三：統計維度】統計維度改選「依場館彙總」；檢視分頁列（預期 23 列、3 頁）"
+      },
+      {
+        "n": 4,
+        "action": "還原基準狀態 B，切到第 3 頁。【變更四：排序】點「開分金額」標題；檢視分頁列（預期總筆數不變、仍為多頁）"
+      },
+      {
+        "n": 5,
+        "action": "還原基準狀態 B，切到第 3 頁。【變更五：鑽取層級】點第 3 頁任一列的機台帳號向下鑽取（切至依場次明細）；檢視分頁列（預期該機台在 R23 內至少 11 個場次，至少 2 頁）"
+      }
+    ],
+    "expected_result": "五種變更之後，列表皆回到第 1 頁：分頁列顯示目前頁為第 1 頁、區間從第 1 筆起、「上一頁」停用；且每次變更後總筆數都 ≥ 11（仍為多頁，使『回到第 1 頁』與『本來就只有一頁』可區分）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§排序與分頁/狀態保留",
+      "quote": "切換頁碼保留當前篩選條件、統計維度、排序與鑽取麵包屑狀態；變更篩選、統計週期、統計維度、排序或鑽取層級時一律回到第 1 頁"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "high",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-024",
+    "testcase_id": "TC-DAILYREPORT-133",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "鑽取麵包屑的層級數隨統計維度變化（一層／兩層／三層），當前層為純文字、上層為可點連結，並與頁首功能路徑麵包屑並存",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0251",
+      "AC-DAILYREPORT-0252",
+      "AC-DAILYREPORT-0253",
+      "AC-DAILYREPORT-0254",
+      "AC-DAILYREPORT-0256"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一個有資料的營業日（單一營業日），三種統計維度皆能查出資料"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」，結算日期選該營業日，搜尋；檢視篩選器下方的麵包屑（層數、各層文字、每層下方的統計維度標註、各層是否可點），並檢視頁首功能路徑麵包屑（各式報表 / 場館日結報表）；嘗試點擊麵包屑唯一的一層，確認沒有任何導覽動作"
+      },
+      {
+        "n": 2,
+        "action": "不經鑽取，直接從統計維度下拉選單改選「依機台明細」；檢視麵包屑與頁首功能路徑麵包屑（不點擊任何連結，避免改變狀態）"
+      },
+      {
+        "n": 3,
+        "action": "不經鑽取，直接改選「依場次明細」；檢視麵包屑與頁首功能路徑麵包屑；嘗試點擊最後一層，確認沒有任何導覽動作"
+      },
+      {
+        "n": 4,
+        "action": "改選回「依場館彙總」（確認為一層），再直接改選「依場次明細」；檢視麵包屑是否同步更新為三層"
+      }
+    ],
+    "expected_result": "步驟 1：麵包屑只有一層「場館」（顯示當前所選場館名），下方標註「依場館彙總」，純文字不可點；步驟 2：兩層「場館 › 結算期間」，下方分別標註「依場館彙總」「依機台明細」，「場館」為可點連結、「結算期間」為純文字；步驟 3：三層「場館 › 結算期間 › 機台帳號」，前兩層為可點連結、最後一層「機台帳號」純文字；步驟 4：由一層直接改選依場次明細時，麵包屑同步更新為三層；步驟 1～4 的每個維度下，頁首功能路徑麵包屑（各式報表 / 場館日結報表）與頁內鑽取麵包屑同時存在。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/層級數、當前層級、上層連結",
+      "quote": "依場館彙總顯示一層、依機台明細兩層、依場次明細三層；直接切換「統計維度」下拉選單時麵包屑同步更新"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "low",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-025",
+    "testcase_id": "TC-DAILYREPORT-134",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "麵包屑第一層顯示站台切換選單所選的場館，且不提供切換其他場館的控制項",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0255"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台，其管轄範圍內有至少兩個可查詢場館日結報表的站台（其一為機台場館站台 Arcade；另一個由環境負責人提供，若環境僅有 Arcade 一個，則只執行步驟 1 並於結果註記）",
+      "進入 各式報表 > 場館日結報表"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "在頁面標題下方的站台切換下拉選單選擇站台 X1（Arcade），搜尋；檢視麵包屑第一層顯示的場館名，並檢視第一層是否有下拉選單、切換按鈕或其他可切換場館的控制項"
+      },
+      {
+        "n": 2,
+        "action": "在站台切換下拉選單改選站台 X2（另一個既有站台），搜尋；檢視麵包屑第一層顯示的場館名，以及是否有切換場館的控制項"
+      }
+    ],
+    "expected_result": "步驟 1：第一層顯示站台 X1 所屬場館；步驟 2：第一層顯示站台 X2 所屬場館；兩次第一層都沒有切換其他場館的控制項（只能透過頁面標題下方的站台切換下拉選單切換）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/第一層場館",
+      "quote": "即站台切換下拉選單所選的場館（場館範圍跟隨站台切換），故第一層僅顯示當前場館、不另提供切換"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "low",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-025",
+    "testcase_id": "TC-DAILYREPORT-135",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "向下鑽取（場館彙總→機台明細）：點場館名後結算日期收斂為該列的結算期間，按日列收斂為單日、按週列收斂為該週起訖",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-026"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0261",
+      "AC-DAILYREPORT-0262"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "測試場館 Arcade 下有一個涵蓋至少一個完整週（週一～週日）的區間 R（AC 範例 9/01～9/15，內含完整週 9/07～9/13），區間內各營業日有資料"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R，搜尋；記錄目前的結算日期；點其中一個營業日列（AC 範例 9/10）的場館名"
+      },
+      {
+        "n": 2,
+        "action": "檢視：統計維度、結算日期、麵包屑層數"
+      },
+      {
+        "n": 3,
+        "action": "點麵包屑第一層「場館」（或手動把統計維度改回「依場館彙總」），並把結算日期重設為 R（鑽取後結算日期已收斂為單日，不是 R），統計週期改選「按週」，搜尋；找到結算期間為完整週（AC 範例 09-07～09-13）的列，點該列的場館名"
+      },
+      {
+        "n": 4,
+        "action": "檢視：統計維度、結算日期、麵包屑層數"
+      }
+    ],
+    "expected_result": "步驟 2：統計維度切為「依機台明細」，結算日期收斂為該營業日單日（AC 範例 9/10～9/10），麵包屑變兩層；步驟 4：統計維度切為「依機台明細」，結算日期收斂為該週列的結算期間（AC 範例 9/07～9/13），麵包屑變兩層。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/向下鑽取",
+      "quote": "於「依場館彙總」列點場館名 → 切至「依機台明細」，並將結算日期收斂為該列的結算期間"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-026",
+    "testcase_id": "TC-DAILYREPORT-136",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "向下鑽取（機台明細→場次明細）：點機台帳號後該帳號帶入機台帳號篩選，麵包屑變三層",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-026"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0263"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "測試場館 Arcade 下選定一個有資料的營業日 D，當日至少有一台機台 A（自行從環境中選定）有場次"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 D，搜尋；點 D 列的場館名鑽取至「依機台明細」"
+      },
+      {
+        "n": 2,
+        "action": "在「依機台明細」列表找到機台 A 那一列（以機台帳號欄定位），記錄機台帳號；點該機台帳號"
+      },
+      {
+        "n": 3,
+        "action": "檢視：統計維度、篩選器的機台帳號欄位值、麵包屑層數與各層文字"
+      }
+    ],
+    "expected_result": "統計維度切為「依場次明細」；篩選器的機台帳號欄位帶入被點的機台帳號 A；麵包屑變三層（場館 › 結算期間 › 機台帳號）。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/向下鑽取",
+      "quote": "於「依機台明細」列點機台帳號 → 切至「依場次明細」，並將該機台帳號帶入篩選器"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-026",
+    "testcase_id": "TC-DAILYREPORT-137",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "點麵包屑上層連結回到該層，並還原該層鑽取前的統計維度、結算日期與機台帳號（三層→一層、三層→二層、二層→一層）",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-026"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0264",
+      "AC-DAILYREPORT-0265"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "state_transition"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "（歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源",
+      "測試場館 Arcade 下有一個區間 R（AC 範例 9/01～9/15）、其內一個有資料的營業日 D（AC 範例 9/10），且 D 當日機台 A（自行從環境中選定）有場次"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "統計維度「依場館彙總」、統計週期「按日」、機台帳號留空、結算日期選 R，搜尋；記錄起始條件 C1（統計維度、結算日期 R、機台帳號為空）"
+      },
+      {
+        "n": 2,
+        "action": "點營業日 D 列的場館名鑽取至「依機台明細」；記錄條件 C2（統計維度、結算日期、機台帳號）"
+      },
+      {
+        "n": 3,
+        "action": "點機台 A 的機台帳號鑽取至「依場次明細」，確認麵包屑為三層"
+      },
+      {
+        "n": 4,
+        "action": "點麵包屑第一層「場館」；檢視統計維度、結算日期、機台帳號與麵包屑層數，並與 C1 比對"
+      },
+      {
+        "n": 5,
+        "action": "再依步驟 2～3 鑽取回第三層"
+      },
+      {
+        "n": 6,
+        "action": "點麵包屑第二層「結算期間」；檢視統計維度、結算日期、機台帳號與麵包屑層數，並與 C2 比對"
+      },
+      {
+        "n": 7,
+        "action": "在此「依機台明細」（兩層）狀態下點麵包屑第一層「場館」；檢視統計維度、結算日期、機台帳號與麵包屑層數，並與 C1 比對"
+      }
+    ],
+    "expected_result": "步驟 4：回到「依場館彙總」，結算日期還原為 R、機台帳號還原為空（＝C1），麵包屑剩一層；步驟 6：回到「依機台明細」，結算日期為 D～D、機台帳號還原為空（＝C2，該層鑽取前的條件），麵包屑剩兩層；步驟 7：回到「依場館彙總」，結算日期還原為 R、機台帳號為空（＝C1），麵包屑剩一層。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/上層連結",
+      "quote": "點擊回到該層，並還原該層鑽取前的篩選條件（統計維度、結算日期、機台帳號）"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-DAILYREPORT-026",
+    "testcase_id": "TC-DAILYREPORT-138",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
+  },
+  {
+    "title": "鑽取到第三層後切換站台，或按「清除」，鑽取路徑重設為第一層",
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-026"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0266",
+      "AC-DAILYREPORT-0267"
+    ],
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "state_transition"
+    ],
+    "priority": "medium",
+    "risk": "medium",
+    "execution_mode": "manual",
+    "preconditions": [
+      "已以管理員登入後台，其管轄範圍內有至少兩個可查詢場館日結報表的站台（其一為機台場館站台 Arcade，另一個由環境負責人提供）",
+      "進入 各式報表 > 場館日結報表",
+      "測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非 UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）",
+      "Arcade 下有一個有資料的營業日 D，且 D 當日機台 A（自行從環境中選定）有場次"
+    ],
+    "test_data": [],
+    "steps": [
+      {
+        "n": 1,
+        "action": "站台切換選 Arcade；統計維度「依場館彙總」、統計週期「按日」、結算日期選 D，搜尋；點 D 列場館名再點機台 A 的機台帳號，鑽取到第三層（確認麵包屑為三層）"
+      },
+      {
+        "n": 2,
+        "action": "在頁面標題下方的站台切換下拉選單切換到另一個站台；檢視麵包屑層數與各層文字，並記錄此時的統計維度與篩選條件"
+      },
+      {
+        "n": 3,
+        "action": "站台切回 Arcade，重新依步驟 1 鑽取到第三層（確認為三層）"
+      },
+      {
+        "n": 4,
+        "action": "按篩選器的「清除」按鈕；檢視麵包屑層數與各層文字，並記錄此時的統計維度與篩選條件"
+      }
+    ],
+    "expected_result": "步驟 2（切換站台）與步驟 4（按「清除」）：鑽取路徑重設為第一層（麵包屑僅剩第一層「場館」）。統計維度與其他篩選條件的實際狀態僅記錄，不作為判準。",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.2",
+      "location": "§維度鑽取與麵包屑/重設",
+      "quote": "切換站台或按「清除」時鑽取路徑重設為第一層"
+    },
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "『鑽取路徑重設為第一層』重設後統計維度是否一併回到依場館彙總、其他篩選是否清空，spec 與 AC 未明寫（RM REQ-026 ambiguity）；本 TC 推定可觀察結果為麵包屑僅剩第一層，並只記錄統計維度與篩選條件的實際狀態，需 PM／BA 確認",
+        "requirement_id": "REQ-DAILYREPORT-026",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0191"
+      }
+    ],
+    "source_ref": "new_required:REQ-DAILYREPORT-026",
+    "testcase_id": "TC-DAILYREPORT-139",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM",
+    "created_at": "2026-10-01T12:40:21Z",
+    "updated_at": "2026-10-01T13:06:51Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0191"
   }
 ]
