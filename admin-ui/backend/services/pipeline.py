@@ -105,6 +105,13 @@ TERMINAL = ("CANCELLED", "FAILED", "COMPLETED")
 TASK_LABEL = {"T1": "Spec 分析", "T2": "測試設計", "T3": "獨立驗證", "T4": "人工核准", "T5": "結案"}
 
 
+def _stage_applies(st: dict, r: dict, active_run: dict | None) -> bool:
+    """條件式 stage（stages.yaml 的 conditional: true，例如 risk-review／analysis-review）只有在
+    這個 run 真的有對應 task（r 非空）時才算數。沒有的話不是「待進行」，是這個 run 根本不會走到，
+    不該出現在階段清單裡（例如非高風險 area 的 run 沒有 T3RR）。"""
+    return not (st.get("conditional") and active_run and not r)
+
+
 def _run_stage_status(cfg: dict, run: dict, pipeline: dict | None = None) -> dict[str, dict]:
     """由 run.yaml 的 task 狀態推每個 stage 的 runtime 狀態，依 run 的 workflow_id 選對應的 pipeline 大綱
     （不再有「所有 workflow 共用 spec-to-testcase 的 T1..T5 大綱」這件事——task id 相同不代表語意相同）。
@@ -332,6 +339,8 @@ def session_view(cfg: dict, s: dict, rows: dict[str, dict], runs: list[dict], no
     stages = []
     for st in pipeline["stages"]:
         r = rt.get(st["id"], {})
+        if not _stage_applies(st, r, active_run):
+            continue
         ev_hits = [a for a in agents if a["stage_id"] == st["id"]] if not ambiguous else []
         live = any(a["running"] for a in ev_hits)
         status = r.get("status", "pending")
