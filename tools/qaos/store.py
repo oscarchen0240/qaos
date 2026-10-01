@@ -1,5 +1,5 @@
 """檔案儲存層：路徑約定、YAML I/O、audit log、hash。"""
-import os, hashlib, datetime, pathlib, yaml
+import os, re, hashlib, datetime, pathlib, yaml
 
 def find_root(start: pathlib.Path | None = None) -> pathlib.Path:
     env = os.environ.get("QAOS_ROOT")
@@ -53,9 +53,11 @@ def spec_dir(spec_id: str) -> pathlib.Path | None:
         if (p / "spec.yaml").exists(): return p
     return None
 
+AREA_RE = re.compile(r"[A-Z0-9]+")   # 同 schemas/common/defs FunctionalArea
+
 def run_area(inputs: dict) -> str | None:
     """run 所屬 functional area（ADR-009），依序：run 的 spec_id → manual record 的 spec_hint.spec_id（皆看 spec 所在目錄）
-    → manual record 的 functional_area（須為大寫 area 代碼，空白／無效不算）。判定不了回 None，由 new_run 拒絕。"""
+    → manual record 的 functional_area（須符合 ^[A-Z0-9]+$，與 spec.schema 一致；空白／無效不算）。判定不了回 None，由 new_run 拒絕。"""
     def _spec_area(sid):
         d = spec_dir(sid) if sid else None
         return d.parent.name if d else None
@@ -65,7 +67,7 @@ def run_area(inputs: dict) -> str | None:
     area = _spec_area((rec.get("spec_hint") or {}).get("spec_id"))
     if area: return area
     fa = (rec.get("functional_area") or "").strip()
-    return fa if fa.isascii() and fa.isalpha() and fa.isupper() else None
+    return fa if AREA_RE.fullmatch(fa) else None
 
 def requirements_path(spec_id: str, spec_version: str) -> str:
     return f"artifacts/requirements/{spec_id}/v{spec_version}/requirements.yaml"
