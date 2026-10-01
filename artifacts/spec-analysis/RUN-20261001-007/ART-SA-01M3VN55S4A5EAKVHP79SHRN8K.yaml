@@ -1,0 +1,327 @@
+artifact_id: ART-SA-01M3VN55S4A5EAKVHP79SHRN8K
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-007
+task_id: T0
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-10-01T12:02:30Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-DAILYREPORT-001@0.2
+  - ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+references:
+- entity_type: SpecVersion
+  id: SPEC-DAILYREPORT-001
+  version: '0.2'
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  summary: 場館日結報表 v0.2（ba-spec main 2026-09-12～09-17 修訂）：在 v0.1 的三維度／四週期現金收支統計之上，權限改為管理員＝管轄範圍；損益明定以機台（會員）端計算；新增「期初餘額」欄；期初／期末餘額定義為時點存量，總計列與
+    CSV 總計列不逐列相加，各列餘額涵蓋含當期無場次但留存分數的機台、依結算期間排序時相鄰列前後相接；新增餘額驗算式；進行中場次分數計入期末餘額並於依場次明細列出；新增排序與分頁（所有欄位可排序、預設結算期間新→舊、固定每頁 10 筆、非結算期間排序時的餘額欄提示）、維度鑽取與麵包屑；總計與
+    CSV 改為整個查詢結果。v0.1 RM 經 CLR-DAILYREPORT-001～010、013 落地的 PM 定案，v0.2 原文多未收錄，本版逐條帶入並於 spec_reference.location 註明出處；CLR-012
+    已被 CLR-013 推翻不再適用；CLR-011 仍待回覆。需求共 26 條：沿用 v0.1 語意 12 條（version 1；其中 REQ-008 依 v0.2 原文更新出處、REQ-009／011／017 更新 ambiguity，語意不變）、修改
+    5 條（001／013／014／015／016，version 2）、新增 9 條（018～026）。
+  scope:
+    in_scope:
+    - 權限（管轄範圍）
+    - 篩選器（機台帳號、結算日期、統計週期、統計維度）
+    - 列表欄位與計算規則（含新增期初餘額、損益機台端視角）
+    - 期初／期末餘額時點值規則、總計列與 CSV 總計列
+    - 餘額驗算式
+    - 進行中場次於期末餘額與依場次明細的呈現
+    - 排序與分頁
+    - 維度鑽取與麵包屑
+    - 匯出 CSV（整個查詢結果）
+    - 場次日結（影響本報表分日與餘額承接）
+    out_of_scope:
+    - 核實操作本身（洗分出金核實，開發包⑤之一）
+    - 場次引擎與逾時規則細節（開發包③）
+    - 會員詳細頁「機台資訊」區塊、機台前台、機台交易紀錄的場次呈現
+    - 客戶版手冊
+    - 互動原型 proto 本身
+  requirement_ids:
+  - REQ-DAILYREPORT-001
+  - REQ-DAILYREPORT-002
+  - REQ-DAILYREPORT-003
+  - REQ-DAILYREPORT-004
+  - REQ-DAILYREPORT-005
+  - REQ-DAILYREPORT-006
+  - REQ-DAILYREPORT-007
+  - REQ-DAILYREPORT-008
+  - REQ-DAILYREPORT-009
+  - REQ-DAILYREPORT-010
+  - REQ-DAILYREPORT-011
+  - REQ-DAILYREPORT-012
+  - REQ-DAILYREPORT-013
+  - REQ-DAILYREPORT-014
+  - REQ-DAILYREPORT-015
+  - REQ-DAILYREPORT-016
+  - REQ-DAILYREPORT-017
+  - REQ-DAILYREPORT-018
+  - REQ-DAILYREPORT-019
+  - REQ-DAILYREPORT-020
+  - REQ-DAILYREPORT-021
+  - REQ-DAILYREPORT-022
+  - REQ-DAILYREPORT-023
+  - REQ-DAILYREPORT-024
+  - REQ-DAILYREPORT-025
+  - REQ-DAILYREPORT-026
+  ambiguities:
+  - requirement_id: REQ-DAILYREPORT-001
+    ambiguity:
+      level: minor
+      description: 「管理員」的「管轄範圍」本包未定義（權限表註明沿用正本「角色與權限」），v0.1 為「全部」；管理員與站長同為「管轄範圍」時兩者的實際差異不明。
+      options:
+      - 範圍由使用者所屬站台決定（所屬站台及其子樹），管理員與站長採同一模型、只差所屬站台層級（與 SITELIST 權限範圍模型一致）
+      - 平台最上層的管理員其管轄範圍實質仍為全部場館；僅下層站台的管理員受限
+  - requirement_id: REQ-DAILYREPORT-009
+    ambiguity:
+      level: major
+      description: CLR-DAILYREPORT-007 的定案以「逾時結束的時間必然超過日結時間，故同一營業日內場次只會以已結束或日結結算收尾」為前提，但實測曾在同一營業日內產生「逾時結束」場次，前提不成立；營業日內的逾時結束場次是否計入「當日結束的場次筆數」、歸屬哪個營業日，v0.2
+        與 CLR-007 皆未涵蓋（已送 PM，尚未回覆）。
+      options:
+      - 逾時結束視同當日結束：所有非進行中狀態（已結束、逾時結束、日結結算）皆計入其結束（或開始）營業日的場次數
+      - 逾時結束不計入場次數，維持 CLR-007 只計已結束與日結結算
+      - 同一營業日內不應出現逾時結束，實測現象屬場次引擎（開發包③）缺陷，報表規則不變
+  - requirement_id: REQ-DAILYREPORT-011
+    ambiguity:
+      level: major
+      description: 出金在「洗分出金核實」頁被作廢後（作廢不可復原、分數不退回機台），該筆收據金額在本報表如何呈現未定義：依現有定義推導，收據金額仍含已作廢、已兌現與未兌現皆不含，單列「收據＝已兌現＋未兌現」出現等於已作廢金額的殘差且報表無欄位說明。此題也影響餘額驗算式（REQ-DAILYREPORT-021，收據以交易發生為準計入）——若收據金額扣除已作廢，驗算式將不成立。CLR-DAILYREPORT-011
+        已送 PM（ASKED），尚未回覆。
+      options:
+      - A. 不另顯示：收據金額仍含已作廢，殘差＝已作廢，靠回推；需在欄位說明註明
+      - B. 新增「已作廢金額」欄，讓 收據＝已兌現＋未兌現＋已作廢 可直接勾稽
+      - C. 收據金額扣除已作廢，維持 收據＝已兌現＋未兌現
+  - requirement_id: REQ-DAILYREPORT-016
+    ambiguity:
+      level: major
+      description: CLR-DAILYREPORT-006（2026-09-13，當時尚無「期初餘額」欄）定案「無資料時列表仍列出、各欄位顯示 0」，但 v0.2 規定各列餘額涵蓋「含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）」；當期無任何場次與交易、但機台留有分數時，期初／期末餘額應顯示留存分數還是
+        0，兩者衝突，不自行裁定。
+      options:
+      - 依 v0.2：金額與筆數欄顯示 0，期初／期末餘額顯示留存分數（沿用最近一個營業日結算時點值）
+      - 依 CLR-DAILYREPORT-006：所有欄位（含期初／期末餘額）皆顯示 0
+  - requirement_id: REQ-DAILYREPORT-017
+    ambiguity:
+      level: major
+      description: 「逾時結束」的場次結束後若機台仍留有分數（餘數），日結時是否承接成隔日新場次的期初餘額、是否計入期末餘額，v0.2 未定義：§場次資訊「期初餘額」只列「承接洗分餘數或日結結算轉入者」，§業務規則「場次日結」只涵蓋「進行中的場次」。此題決定期末／期初餘額、相鄰列前後相接與餘額驗算式（REQ-DAILYREPORT-014／018／020／021）在含逾時結束場次時是否成立（已送
+        PM，尚未回覆）。
+      options:
+      - 承接：日結時以該餘數作為隔日新場次的期初餘額，並計入期末餘額（餘額前後相接、驗算成立）
+      - 不承接但計入：餘數仍計入期末餘額（機台實際分數），但不形成新場次期初，次日期初與前日期末不相接
+      - 不承接也不計入：逾時結束的餘數不計入期末餘額
+      - 逾時結束時餘數另有處置（例如清空或轉入其他帳務），由開發包③定義，本報表照其結果呈現
+  - requirement_id: REQ-DAILYREPORT-018
+    ambiguity:
+      level: minor
+      description: 「無前一營業日資料時為 0」與同節「含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）」的關係未明：若緊鄰的前一營業日該機台無資料、但更早的營業日留有分數，期初餘額取 0 還是沿用最近一個營業日的值。
+      options:
+      - 「無前一營業日資料」指該機台在查詢起點之前完全沒有結算紀錄；否則沿用最近一個營業日的結算時點值
+      - 嚴格指緊鄰的前一營業日無資料即為 0
+  - requirement_id: REQ-DAILYREPORT-022
+    ambiguity:
+      level: minor
+      description: 排序鍵值相同（例如依機台明細／依場次明細下同一結算期間有多列，或依金額排序時數值相同）時的次排序未定義；「翻頁不會出現資料跳動」需要穩定的次排序。
+      options:
+      - 以結算期間新→舊為次排序，再依場館／機台／場次編號
+      - 以場館／機台帳號／場次編號為次排序
+      - 不定義次排序，只保證同一查詢條件下順序穩定
+  - requirement_id: REQ-DAILYREPORT-025
+    ambiguity:
+      level: minor
+      description: 未經鑽取、直接以統計維度下拉選單切到依機台明細／依場次明細時，第二層「結算期間」與第三層「機台帳號」顯示什麼內容未定義（例如顯示結算日期範圍？機台帳號篩選留空時第三層顯示什麼？）。
+      options:
+      - 第二層顯示當前結算日期範圍、第三層顯示機台帳號篩選值（留空時顯示「全部機台」）
+      - 僅顯示層級名稱（結算期間／機台帳號），不帶值
+  - requirement_id: REQ-DAILYREPORT-026
+    ambiguity:
+      level: minor
+      description: 還原清單只列「統計維度、結算日期、機台帳號」，未提「統計週期」：向下鑽取（例如從按週列點場館名）後統計週期是否維持、回到上層時是否還原未定義；另「清除」重設為第一層時統計維度是否一併回到依場館彙總、其餘篩選是否清空也未明寫。
+      options:
+      - 統計週期在鑽取與還原間維持不變；清除時所有篩選回預設、統計維度回依場館彙總
+      - 統計週期也隨上層還原；清除只重設麵包屑與統計維度
+  constraints:
+  - text: 所有時間以 UTC+0 表示；日結時間為場館設定欄位
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §背景:場次資訊/開始時間 + §業務規則/日結時間
+      quote: 每日結算的截止時刻（UTC+0），用於場館日結報表分日
+    requirement_id: REQ-DAILYREPORT-007
+  - text: 本包與正本重疊處如有出入一律以正本為準
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: 拆包說明
+      quote: 重疊部分如有出入一律以正本為準
+  - text: 本功能未對客戶開放（INTERNAL）
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: 首行標記 / 內部章節說明
+      quote: 本功能尚未對客戶開放
+  - text: 期初／期末餘額為時點存量，總計列（含 CSV）不逐列相加
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期末餘額不加總
+      quote: 總計列一律**各機台取其查詢範圍內時間最後一個場次／最後一個營業日結算時點的期末餘額，再跨機台相加**
+    requirement_id: REQ-DAILYREPORT-019
+  - text: 餘額驗算式在任何查詢範圍皆成立（期末＝期初＋開分＋進鈔＋損益－洗分－收據）
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/餘額驗算
+      quote: 驗算式在任何查詢範圍皆成立。
+    requirement_id: REQ-DAILYREPORT-021
+  - text: 每頁固定 10 筆、不提供調整；總計與 CSV 一律為整個查詢結果
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/每頁筆數
+      quote: '**固定 10 筆，不提供調整**'
+    requirement_id: REQ-DAILYREPORT-024
+  - text: 本頁唯讀，不提供新增／編輯／刪除／審核；核實操作一律於洗分出金核實頁執行
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §操作
+      quote: 本頁為統計檢視，不提供新增／編輯／刪除／審核操作
+    requirement_id: REQ-DAILYREPORT-016
+  - text: v0.2 變更記錄第一筆 2026-09-17 條目仍寫「進行中場次的分數不計入期末餘額（沿用 9/12 定案）」，已被同日後續條目「進行中場次的分數計入期末餘額」修訂；本 RM 以後者（與正文、CLR-DAILYREPORT-013
+      一致）為準
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §變更記錄 2026-09-17（進行中場次的分數計入期末餘額）
+      quote: 期末餘額一律取截至查詢當下的分數
+    requirement_id: REQ-DAILYREPORT-014
+  edge_case_candidates:
+  - text: 結算日期起日 = 迄日（單日）
+    requirement_id: REQ-DAILYREPORT-004
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §篩選器/結算日期
+      quote: ''
+  - text: 交易剛好落在日結時間邊界（同秒）
+    requirement_id: REQ-DAILYREPORT-007
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §業務規則/日結時間
+      quote: ''
+  - text: 按週且結算日期起日非週一
+    requirement_id: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §篩選器/統計週期
+      quote: ''
+  - text: 查詢區間內核實狀態變動（同一筆先待核實後已核實）
+    requirement_id: REQ-DAILYREPORT-011
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/已核實洗分
+      quote: ''
+  - text: 現金淨收為負值的顯示
+    requirement_id: REQ-DAILYREPORT-012
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/現金淨收
+      quote: ''
+  - text: 損益為 0 時的顏色（非正非負）
+    requirement_id: REQ-DAILYREPORT-013
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/損益
+      quote: ''
+  - text: 期末餘額查詢當下恰逢日結時間（進行中場次正被日結結算）
+    requirement_id: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/餘額驗算
+      quote: ''
+  - text: 查詢範圍起點為機台第一個營業日（期初 0）且當日即有洗分餘數承接的多場次
+    requirement_id: REQ-DAILYREPORT-018
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/期初餘額
+      quote: ''
+  - text: 依場次明細查多台機台時總計列期初／期末（各機台取最早／最後值再相加，而非第一／最後一列）
+    requirement_id: REQ-DAILYREPORT-019
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期末餘額不加總
+      quote: ''
+  - text: 範圍內含逾時結束場次或已作廢出金時驗算式是否成立（依 REQ-017／REQ-011 ambiguity 結果）
+    requirement_id: REQ-DAILYREPORT-021
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/餘額驗算
+      quote: ''
+  - text: 查詢結果恰為 0／10／11 筆時的分頁列與按鈕停用狀態
+    requirement_id: REQ-DAILYREPORT-024
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/分頁列
+      quote: ''
+  - text: 排序值相同的多列跨頁邊界時是否穩定（翻頁不跳動）
+    requirement_id: REQ-DAILYREPORT-022
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/排序範圍
+      quote: ''
+  - text: 依結算期間遞增排序時總計期末餘額為最後一列而非第一列
+    requirement_id: REQ-DAILYREPORT-020
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期初餘額比照辦理
+      quote: ''
+  - text: 在依場次明細且非第 1 頁時點麵包屑上層，回到第 1 頁且條件還原
+    requirement_id: REQ-DAILYREPORT-026
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §維度鑽取與麵包屑/上層連結
+      quote: ''
+  - text: 由區間合計列（結算期間為整段範圍）點場館名鑽取，結算日期收斂後與原範圍相同
+    requirement_id: REQ-DAILYREPORT-026
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §維度鑽取與麵包屑/向下鑽取
+      quote: ''
+  open_questions:
+  - 逾時結束後留在機台的餘數：日結時是否承接成新場次的期初、是否計入期末餘額（已送 PM，尚未回覆；見 REQ-DAILYREPORT-017 ambiguity）
+  - CLR-DAILYREPORT-007 認定同一營業日內不會出現逾時結束，但實測曾發生；營業日內逾時結束場次的場次數計入與營業日歸屬（已送 PM；見 REQ-DAILYREPORT-009 ambiguity）
+  - CLR-DAILYREPORT-011（作廢後收據金額呈現）仍為 ASKED，待 PM 回覆（見 REQ-DAILYREPORT-011 ambiguity）
+  - CLR-DAILYREPORT-006 PM 提供的欄位清單含「注單數」，v0.2 列表欄位仍未列出此欄（文件缺口延續自 v0.1）；且 CLR-006 清單未含 v0.2 新增的「期初餘額」，CSV 匯出欄位以 v0.2 列表欄位為準是否正確待確認
+  - 管理員改為「管轄範圍」後，管理員／站長越權（管轄範圍外場館，含直接呼叫 API）時的系統反應未定義（REQ-DAILYREPORT-001 rejection_contract.defined=false，G-SPEC PASS 後將自動開
+    Clarification）
+  - CLR-DAILYREPORT-003 建議 spec v0.2 明寫「結算日期未填時的阻擋方式」，v0.2 仍未收錄；CLR-001～010、013 的定案多數未回寫 spec 原文，建議 ba-spec 補錄
+  previous_requirement_model_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+history:
+- at: '2026-10-01T12:02:47Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-007

@@ -54,6 +54,7 @@
 | [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ |  |
 | [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
 | [CLR-DAILYREPORT-013](ba-admin/DAILYREPORT/CLR-DAILYREPORT-013.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表對「進行中場次」的處理：CLR-DAILYREPORT-012 的定案（2026-09-22，B）與 spec 2026-09-17 修訂相反，以哪一個為準？①「依場次明細」是否列出進行中場次？②「期末餘額」是否計入進行中場次累計到查詢當下的分數？ | A：以 spec 2026-09-17 為準。①依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢 |
+| [CLR-DAILYREPORT-014](ba-admin/DAILYREPORT/CLR-DAILYREPORT-014.md) | OPEN | SPEC-DAILYREPORT-001 v0.2 | REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
 
 ## ba-admin / PLATFORMRULE
 
