@@ -1,0 +1,99 @@
+artifact_id: ART-TRR-01M3VGT1TBJ6WSX0B3Z07X3GKP
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-002
+task_id: T2RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-01T10:43:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG71AJTECA1GK87CG6D1YB
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG71AJTECA1GK87CG6D1YB
+- entity_type: Artifact
+  id: ART-TVR-01M3VGFPZF0WQVWXJTKEHR823Y
+requires_approval: null
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M3VG71AJTECA1GK87CG6D1YB
+    validation_report_artifact_id: ART-TVR-01M3VGFPZF0WQVWXJTKEHR823Y
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    testcase_draft_ids:
+    - TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2
+    active_testcases_consulted:
+    - TC-DAILYREPORT-001
+    - TC-DAILYREPORT-002
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    - TC-DAILYREPORT-021
+    - TC-DAILYREPORT-022
+    - TC-DAILYREPORT-049
+    - TC-DAILYREPORT-051
+    - TC-DAILYREPORT-054
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: Draft 用「無任何交易」或「出金後餘額清空為 0」的機台，驗證日結時不產生日結結算列與進行中列，查詢範圍涵蓋日結前後兩個營業日。營業日切分臨界點（日結前 1 秒／日結整點）由 TC-DAILYREPORT-021／022
+      覆蓋；「有進行中場次」的對照情境由 TC-DAILYREPORT-051（本批 RUN-20261001-001 修訂）覆蓋。「機台有餘數但沒有進行中場次」不屬於數值臨界，列在 exception_flow（RF-01）。
+  - dimension: exception_flow
+    status: gaps_found
+    rationale: Draft 只涵蓋「無進行中場次且餘額為 0」。機台還有一種狀態：前一場次以「逾時結束」收尾，但分數仍留在機台上（TC-DAILYREPORT-054 v2 步驟 3 以剩餘分數嘗試遊玩，表示餘數仍在）。這種「無進行中場次但有餘數」的狀態在日結時怎麼處理，spec
+      沒有定義。見 RF-01。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: Draft 在日結期間不對機台做任何交易。日結執行的同時，無進行中場次的機台剛好被開分／入金，這種日結與新場次建立的競爭情境沒有覆蓋；TC-DAILYREPORT-022 只驗交易歸屬當日營業日，沒驗場次狀態。見
+      RF-02。
+  - dimension: duplicate_submission
+    status: not_applicable
+    rationale: 本頁為唯讀統計檢視（spec §操作；TC-DAILYREPORT-049 已覆蓋「無新增／編輯／刪除／審核」）。Draft 只有查詢與觀察，重複查詢不會產生資料；日結結算由系統排程觸發，不是使用者送出的請求。排程重跑的冪等性屬開發包③場次引擎內部行為，SPEC-DAILYREPORT-001
+      v0.1 沒有定義，也無法從本報表以黑箱方式觸發，所以不適用。
+  - dimension: permission
+    status: covered
+    rationale: 角色可見範圍由 ACTIVE TC-DAILYREPORT-001～004 覆蓋（Admin 全部、站長管轄範圍、操作員自身場館，含 TC-004 直接呼叫 API 帶非自身場館參數）。本 Draft 驗證場次狀態轉換，不涉及角色差異。「進行中場次列與即時期末餘額是否同樣受角色範圍限制」這項缺口統一寫在
+      RUN-20261001-005 的 TRR（RF-07），這裡不重複列。
+  findings:
+  - finding_id: RF-01
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2
+    - TC-DAILYREPORT-054
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-014
+    gap: v0.1 只規定「進行中的場次」在日結時強制結束，並把餘額轉為隔日新場次的期初餘額。逾時結束後分數仍留在機台（TC-054 v2 的情境），這時沒有進行中場次，但有餘數。日結時以下各項 spec 都沒有定義：要不要產生承接場次、要不要把餘數轉成隔日期初餘額、前一營業日與隔日的期末餘額要不要計入這筆餘數。AC-DAILYREPORT-0172
+      的「不產生新場次」只能涵蓋餘額為 0 的情況，套到有餘數的情況可能導致餘數在報表上消失或重複。
+    suggested_scenario: 建議開 Clarification 確認：逾時結束後留有餘數、無進行中場次的機台，日結時是否產生新場次並承接餘數，以及兩個營業日的期末餘額是否計入。這題可以和 RUN-20261001-004 RF-02、RUN-20261001-005
+      RF-04 併成同一張 Clarification。定案後補一條「逾時結束留餘數 r → 日結 → 查兩個營業日的依場次明細與依機台明細」的案例。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-02
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG71AH0795ZDDE9AWTVBV2
+    - TC-DAILYREPORT-022
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-007
+    gap: 在日結整點 06:00 前後（日結結算執行期間），對無進行中場次的機台開分／入金，新建立的場次應該歸屬日結後的營業日並維持「進行中」，還是可能被同一次日結當成「進行中的場次」強制結束、變成日結結算？v0.1 沒有定義日結執行與新場次建立同時發生時的規則。AC-DAILYREPORT-0072
+      只規定交易本身歸入當日營業日。
+    suggested_scenario: 建議開 Clarification 確認日結整點新建場次的歸屬與狀態。定案後補案例：對無進行中場次的機台在 06:00:00 整點開分，查前一日與當日的依場次明細，確認只有一個場次列，並驗證它的狀態與營業日歸屬。
+    spec_basis: null
+    needs_clarification: true
+  summary: RUN-20261001-002（TC-DAILYREPORT-052 修訂）抽查結果：共 2 條 finding，high 1 條。主要風險是「逾時結束後留有餘數、但無進行中場次」的機台在日結時餘數怎麼處理，spec 沒有定義，需要澄清（RF-01，可和
+    RUN-004／005 的逾時餘數題合併）。另一條是日結整點新建場次的歸屬，需要澄清（RF-02）。邊界與權限已由既有 ACTIVE TC 覆蓋；重複提交不適用。
+history:
+- at: '2026-10-01T10:44:04Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-002

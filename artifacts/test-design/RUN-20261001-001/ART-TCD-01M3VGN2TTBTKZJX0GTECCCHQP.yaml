@@ -1,0 +1,104 @@
+artifact_id: ART-TCD-01M3VGN2TTBTKZJX0GTECCCHQP
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-001
+task_id: T1
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-10-01T10:37:38Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-DAILYREPORT-051@v2
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-017
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-051
+  version: 2
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - draft_id: TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX
+    title: 日結時間到達強制結束進行中場次並承接餘額
+    product: ba-admin
+    functional_area: DAILYREPORT
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0171
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 已登入後台並切換至機台場館站台（Arcade）
+    - 測試場館已設定日結時間 06:00 UTC+0
+    - 測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊
+    - 各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）
+    - 時間限制：步驟 1 佈置完成到日結時間 06:00 的間隔須短於場館的場次逾時時間（預設 1 小時），否則場次會先變「逾時結束」；建議在 06:00 前 30 分鐘內開始佈置，必要時先把場館逾時時間調長
+    - 步驟 5～7 的查詢時點在日結時間 06:00 UTC+0 之後
+    - 步驟 5～7 的結算日期：前一日（日結前所屬營業日）與當日（日結後所屬營業日，承接場次歸屬當日）
+    test_data:
+    - name: X
+      value: 步驟 1 佈置後機台 A 的目前分數，取機台前台畫面顯示值，須大於 0（原範例為 80，實際值不限）
+    steps:
+    - n: 1
+      action: （日結前 30 分鐘內佈置）若機台 A 已有進行中場次，先以出金結束（出金一律清空餘額）；再對機台 A 開分任意金額、不投注，在機台前台記錄目前分數 X（須大於 0）
+    - n: 2
+      action: 依場次明細（機台帳號填機台 A，結算日期涵蓋昨日與今日；營業日依日結時間切分，00:00～06:00 UTC+0 時進行中場次屬於前一營業日）找到機台 A 的進行中場次列，記錄場次編號 S1、狀態、結束時間
+    - n: 3
+      action: 日結時間 06:00 之前的檢查點：以相同條件重新查詢，確認 S1 仍為「進行中」、結束時間「—」，且機台前台分數仍為 X；若 S1 已為「逾時結束」或分數不是 X，本次執行作廢，縮短佈置到日結的間隔後重新佈置
+    - n: 4
+      action: 不對機台 A 做任何交易，等待日結時間 06:00 UTC+0 到達
+    - n: 5
+      action: 依場次明細（機台帳號填機台 A）查詢前一日，找到場次 S1
+    - n: 6
+      action: 依場次明細（機台帳號填機台 A）查詢當日，找到機台 A 在日結後的場次列
+    - n: 7
+      action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+    expected_result: 步驟 2、3：S1 該列狀態「進行中」、結束時間「—」；步驟 5：前一日 S1 狀態「日結結算」、結束時間＝06:00；步驟 6：當日有機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」；步驟
+      7：機台資訊區塊顯示一個進行中場次（場次編號不同於 S1），期初餘額＝X
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+      location: §業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以
+        spec 2026-09-17 修訂為準，v0.1 不含該修訂））
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-DAILYREPORT-051
+      version: 2
+    design_rationale: CLR-DAILYREPORT-013 PM 定案 A（2026-10-01）推翻 CLR-DAILYREPORT-012 的 B：依場次明細列出進行中場次（結束時間「—」）。v2 前置條件『依場次明細只列已結束／逾時結束／日結結算的場次』已不成立，已移除；新建立（進行中）的場次改回於依場次明細驗證。會員詳細頁「機台資訊」區塊的驗證點保留為補充（spec
+      §場次呈現位置明寫該區塊顯示目前進行中場次摘要，與依場次明細並列為兩個呈現位置，並不互斥），但不再宣稱『依場次明細看不到進行中場次』。AC-0171 的 then 只要求『日結結算、結束時間＝日結時間、新場次期初餘額承接』；步驟 2、3、6
+      對進行中列『進行中／—』的斷言來自 CLR-013 定案 A（對應 REQ-008 AC-0083），不是 AC-0171 的條文，只當作辨識新舊場次的觀察點。iteration 1 依 Validator 修正：佈置方式已直接寫進
+      steps／preconditions；餘額改以『前台讀值 X』為基準（AC 範例 80；開分金額與分數的換算 v0.1 未載明，故不寫死 80）；加入逾時時間限制與日結前檢查點（逾時時間概念沿用 TC-054 已核准的場次逾時規則）；查詢範圍改為昨日與今日。『出金一律清空餘額』依
+      spec 場次資訊期初餘額說明。【資料佈置的未驗證前提】開分／出金等機台金流操作的入口，v0.1 與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依
+      TC-DAILYREPORT-054 既有寫法推測的，需環境負責人確認。技術維持 state_transition：REQ-017 明定 進行中→日結結算 的狀態轉換。
+history:
+- at: '2026-10-01T10:37:41Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-001

@@ -1,0 +1,97 @@
+artifact_id: ART-TVR-01M3VGFPWVZ2HFRE0EG1M6C3EF
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-001
+task_id: T2
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-01T10:34:42Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG6T3TP75WESC1X6WJ5VMA
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG6T3TP75WESC1X6WJ5VMA
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M3VG6T3TP75WESC1X6WJ5VMA
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+  issues:
+  - testcase_id: TC-DRAFT-01M3VG6T3SEHNPVAQTT8HWHD9J
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結 L108
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+    evidence: steps[1].action：「機台 A 有進行中場次、餘額 80（以機台前台顯示的分數為準；佈置方式見 design_rationale 的資料佈置說明）」
+    explanation: TC 正式存檔時 design_rationale 會被移除，執行者看不到「資料佈置說明」。前置條件只說機台 A 為「既有機台會員，自行從環境中選定」，既有機台可能已有進行中場次且餘額不是 80，要把進行中場次餘額佈置成
+      80 需要先結束現有場次再開分，這段做法只存在於看不到的欄位；期初餘額 80 是步驟 5 的預期值，佈置不出來就無法判定。
+    recommended_change: 移除「見 design_rationale」的引用，把佈置方式直接寫進 step 1 或 preconditions，例如：「若機台 A 已有進行中場次，先以出金結束（出金一律清空餘額）；再開分
+      80、不投注，確認機台前台分數為 80」。或改為不限定 80：記錄機台前台分數 X（須 > 0），步驟 5 預期期初餘額＝X。
+  - testcase_id: TC-DRAFT-01M3VG6T3SEHNPVAQTT8HWHD9J
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊/場次狀態 L82
+      quote: 進行中 / 已結束 / 逾時結束 / 日結結算
+    evidence: steps[2].action：「不對機台 A 做任何交易，等待日結時間 06:00 UTC+0 到達」；preconditions 與 steps 都沒有限制 step 1 到 06:00 之間的間隔。對照 Registry
+      ACTIVE TC-DAILYREPORT-054 v2（APR-0007 核准）：場館有場次逾時時間（預設 1 小時），在有餘額狀態下超過逾時時間無任何交易與遊玩，場次會變成「逾時結束」
+    explanation: 這份 TC 要求在日結前完全不交易，如果 step 1 佈置完成的時間離 06:00 超過場館逾時時間，S1 會先變成「逾時結束」，不會變成「日結結算」；步驟 3、4、5 的預期都會落空，造成誤判。v2 就有這個隱藏風險，v3
+      新增「不對機台 A 做任何交易」之後變成明文要求，所以要處理。
+    recommended_change: 在 preconditions 加上時間限制：「step 1 佈置完成到日結時間 06:00 的間隔須短於場館場次逾時時間（例如 06:00 前 30 分鐘內佈置；必要時先把逾時時間調長）」，並在步驟
+      3 之前加一個檢查點：日結前 S1 仍為「進行中」。
+  advisories:
+  - testcase_id: TC-DRAFT-01M3VG6T3SEHNPVAQTT8HWHD9J
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/結算期間 L42
+      quote: 按日顯示營業日（依場館日結時間切分）
+    evidence: steps[0]：「結算日期涵蓋今日」；preconditions：「查詢時點在日結時間之後」，但 step 1 的查詢一定發生在日結之前（step 2 才等待日結）
+    explanation: 營業日依 06:00 UTC+0 切分（Registry TC-DAILYREPORT-042：營業日 09-05 的日結時點為 09-06 06:00）。在 00:00～06:00 UTC+0 執行 step
+      1 時，進行中場次屬於前一個營業日，只查「今日」會找不到 S1。另外，「查詢時點在日結之後」只適用於步驟 3～5，和步驟 1 的時序矛盾。
+    recommended_change: step 1 的結算日期改成「涵蓋昨日與今日」，寫法比照 RUN-20261001-005；precondition 改成「步驟 3～5 的查詢時點在日結時間之後」。
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted:
+    - REQ-DAILYREPORT-017 non-happy 由同批 TC-052/053/054 修訂覆蓋（NO_REJECTION_CONTRACT 僅作 G-DESIGN high risk 豁免）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3VG6T3SEHNPVAQTT8HWHD9J
+    verdict: issue
+history:
+- at: '2026-10-01T10:36:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-001

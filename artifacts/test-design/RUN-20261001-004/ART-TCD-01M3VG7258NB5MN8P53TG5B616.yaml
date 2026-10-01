@@ -1,0 +1,106 @@
+artifact_id: ART-TCD-01M3VG7258NB5MN8P53TG5B616
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-004
+task_id: T1
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-01T10:29:59Z'
+status: VALID
+source:
+  type: TestCaseVersion
+  ids:
+  - TC-DAILYREPORT-054@v2
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-017
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-054
+  version: 2
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  mode: change
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  testcases:
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: true
+    execution_cost: medium
+    stability: unknown
+    title: 場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩
+    requirement_ids:
+    - REQ-DAILYREPORT-017
+    acceptance_criteria_ids: []
+    test_level: ui_e2e
+    test_types:
+    - negative
+    - functional
+    design_techniques:
+    - state_transition
+    - negative
+    priority: high
+    risk: high
+    preconditions:
+    - 機台 A 有分數餘額且場次進行中
+    - 場館設定的場次逾時時間已知（預設 1 小時；測試可調短）
+    - 已登入後台，可查看場館日結報表（依場次明細；依 CLR-DAILYREPORT-013 PM 定案 A 會列出進行中場次）與機台 A 的會員詳細頁「機台資訊」區塊
+    steps:
+    - n: 1
+      action: 讓機台 A 在有餘額狀態下超過場館逾時時間無任何交易與遊玩
+    - n: 2
+      action: 在後台場館日結報表（依場次明細，機台帳號填機台 A）確認該場次狀態為「逾時結束」，記錄場次編號 S1
+    - n: 3
+      action: 以剩餘分數在機台前台嘗試進入遊戲／下注
+    - n: 4
+      action: 直接呼叫遊玩／下注 API
+    - n: 5
+      action: 對機台 A 進行入金（或開分）
+    - n: 6
+      action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+    - n: 7
+      action: 依場次明細以相同條件重新查詢
+    - n: 8
+      action: 再次嘗試遊玩
+    test_data:
+    - name: session_timeout
+      value: 場館設定值，建議測試時調為 5 分鐘
+    expected_result: 步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 6：機台資訊區塊顯示新的進行中場次編號（不同於 S1）；步驟 7：S1 仍為「逾時結束」，另有一個機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」；步驟
+      8：可正常遊玩
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊/場次狀態（狀態值「逾時結束」）+ REQ-017 states + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依
+        CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））
+      quote: 進行中 / 已結束 / 逾時結束 / 日結結算
+    assumptions:
+    - text: 「逾時結束後、餘額仍在時前台與後端拒絕遊玩」與「再有交易即建立新場次」為 QA 實測觀察（MAN-20260914-001），SPEC-DAILYREPORT-001 未明寫；規則出處為機台金流與場次_spec_v01
+        §場次狀態
+      requirement_id: REQ-DAILYREPORT-017
+      needs_human_confirmation: false
+      resolved_by_approval: APR-0007
+    critical_path: true
+    source: change_workflow
+    supersedes_testcase:
+      testcase_id: TC-DAILYREPORT-054
+      version: 2
+    design_rationale: CLR-DAILYREPORT-013 PM 定案 A（2026-10-01）推翻 CLR-DAILYREPORT-012 的 B：依場次明細列出進行中場次（結束時間「—」）。v2 前置條件『依場次明細只列已結束／逾時結束／日結結算的場次』已不成立，已移除；新建立（進行中）的場次改回於依場次明細驗證。會員詳細頁「機台資訊」區塊的驗證點保留為補充（spec
+      §場次呈現位置明寫該區塊顯示目前進行中場次摘要，與依場次明細並列為兩個呈現位置，並不互斥），但不再宣稱『依場次明細看不到進行中場次』。『逾時後拒絕遊玩、再有交易即建立新場次』沿用 v2 已核准的 assumption（QA 實測觀察
+      MAN-20260914-001，APR-0007 已核准，原文未寫在 v0.1），未新增任何假設；本次只把『新場次』的觀察點從『只在機台資訊區塊』擴為『機台資訊區塊＋依場次明細』。【資料佈置的未驗證前提】開分／投注／出金等機台金流操作的入口，v0.1
+      與本報表 spec 均未載明（定義於『機台金流與場次』開發包③），且『從哪裡讀機台目前分數』亦未載明；本 TC 以『機台前台畫面顯示的分數』為讀值來源，是依 TC-DAILYREPORT-054 既有寫法（以剩餘分數在機台前台嘗試進入遊戲）推測，需環境負責人確認。
+    draft_id: TC-DRAFT-01M3VG72579T5P39704Q1XQHWM
+history:
+- at: '2026-10-01T10:30:04Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-004

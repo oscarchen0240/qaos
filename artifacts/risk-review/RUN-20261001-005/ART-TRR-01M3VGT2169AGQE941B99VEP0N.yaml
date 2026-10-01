@@ -1,0 +1,191 @@
+artifact_id: ART-TRR-01M3VGT2169AGQE941B99VEP0N
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-005
+task_id: T3RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-01T10:43:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+- entity_type: Artifact
+  id: ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ
+requires_approval: null
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+    validation_report_artifact_id: ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    testcase_draft_ids:
+    - TC-DRAFT-01M3VG7JJAEXZ0C96DK8JFRXMH
+    - TC-DRAFT-01M3VG7JJATAPQNNNVSR8J4XV7
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DRAFT-01M3VG7JJAPV7BW51WMT5VPXC2
+    active_testcases_consulted:
+    - TC-DAILYREPORT-001
+    - TC-DAILYREPORT-002
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    - TC-DAILYREPORT-019
+    - TC-DAILYREPORT-025
+    - TC-DAILYREPORT-030
+    - TC-DAILYREPORT-042
+    - TC-DAILYREPORT-043
+    - TC-DAILYREPORT-047
+    - TC-DAILYREPORT-048
+    - TC-DAILYREPORT-049
+    - TC-DAILYREPORT-054
+  dimension_results:
+  - dimension: boundary
+    status: gaps_found
+    rationale: Draft 驗證了單一機台的情境：依場次明細進行中列的結束時間「—」、時長累計、期末＝X（MH、V7），依機台明細按日的期末餘額隨查詢當下更新（FC），以及已結算日與未結算日的對照（C2）。沒覆蓋的有兩項：一是期末餘額計入進行中場次後的彙總臨界，包括依場館彙總、非按日週期最後營業日為未結算日、列表總計（RF-01）；二是查詢時點剛好落在日結結算過渡期間（RF-02），因為
+      Draft 都刻意避開日結時間。進行中場次不計入場次數，由 TC-DAILYREPORT-030 覆蓋。逾時時間的前置條件 Validator 已提 advisory，不重複列。
+  - dimension: exception_flow
+    status: gaps_found
+    rationale: 場次在營業日中途以非出金方式結束時，期末餘額怎麼計算沒有覆蓋：洗分留餘數後承接成新的進行中場次，可能被重複加總（RF-03）；逾時結束後餘數仍留在機台，CLR-013 只說「計入進行中場次」（RF-04）。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: 進行中列的數值會隨時間與交易變動，有兩種讀寫競爭沒有覆蓋：查詢當下同一機台正在投注或派彩時，同一列各欄是否一致（RF-05）；匯出 CSV 與畫面查詢不在同一時點時，進行中列的值以哪個為準（RF-06）。
+  - dimension: duplicate_submission
+    status: not_applicable
+    rationale: 本頁是唯讀統計檢視（spec §操作；TC-DAILYREPORT-049 已覆蓋），查詢不會寫入資料，沒有重送或重放的請求。MH、V7 用完全相同的條件重查，已確認同一場次編號仍只有一列、不會因重查產生重複列；跨兩個營業日查詢時，進行中場次只會出現在尚未日結的營業日（日結會強制結束進行中場次），不會重複出現。
+  - dimension: permission
+    status: gaps_found
+    rationale: 角色可見範圍由 TC-DAILYREPORT-001～004 覆蓋，但這些 TC 都以已結算資料驗證。CLR-013 之後，報表多了進行中場次列與「截至查詢當下」的即時餘額，這類即時資料可能走不同的資料來源，現有
+      TC 沒有驗證它是否同樣受角色範圍限制。見 RF-07。
+  findings:
+  - finding_id: RF-01
+    dimension: boundary
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DRAFT-01M3VG7JJAPV7BW51WMT5VPXC2
+    - TC-DAILYREPORT-042
+    - TC-DAILYREPORT-043
+    - TC-DAILYREPORT-047
+    related_requirement_ids:
+    - REQ-DAILYREPORT-014
+    - REQ-DAILYREPORT-015
+    - REQ-DAILYREPORT-016
+    gap: 「期末餘額計入進行中場次」只在「依機台明細、按日、單一機台」驗證過（FC、C2）。TC-042／043 只驗已結算的營業日。以下幾種對帳實際會用到的組合都沒驗：依場館彙總時，同一場館有些機台有進行中場次、有些已結束或沒有場次，合計值應為各機台當下分數之和；按週、按月或區間合計時，週期最後一個營業日是尚未結算的當日，期末餘額應取查詢當下的值；列表底部總計是否用同一時點的值。
+    suggested_scenario: 同一場館準備機台 A（進行中，分數 a）、機台 B（當日已出金結束，分數 0）、機台 C（進行中，分數 c）：(1) 依場館彙總、按日查當日，期末餘額＝a＋c；(2) 依場館彙總、按週（本週含當日）查詢，期末餘額＝a＋c，不是前一個已結算營業日的值；(3)
+      依機台明細查當日，底部總計的期末餘額＝a＋0＋c；(4) 對 A 追加開分後重查，(1)～(3) 同步更新。
+    spec_basis:
+      location: CLR-DAILYREPORT-013 answer ②（PM 定案 A，2026-10-01）；非按日取最後營業日見 v0.1 §列表欄位附註
+      quote: 期末餘額一律計入進行中場次累計到查詢當下的分數（已結算的營業日仍為結算時點的值）
+    needs_clarification: false
+  - finding_id: RF-02
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DRAFT-01M3VG7JJAPV7BW51WMT5VPXC2
+    related_requirement_ids:
+    - REQ-DAILYREPORT-014
+    - REQ-DAILYREPORT-008
+    - REQ-DAILYREPORT-017
+    gap: Draft 都要求執行期間不能跨越日結時間，所以「日結時間 H 已到、日結結算還沒完成」或 H 前後 1 秒內的查詢沒有驗。這段期間有兩件事沒有定義：進行中列是否已轉為日結結算？該營業日的期末餘額要取查詢當下的值，還是結算時點的值？CLR-013
+      只定義了已結算與尚未結算兩種狀態，沒有定義結算進行中的過渡期。
+    suggested_scenario: 建議開 Clarification 確認：日結時間到達、但日結結算尚未完成時，報表應如何顯示該營業日的場次狀態與期末餘額。定案後補案例：在 H－1 秒與 H＋1 秒各查一次依場次明細與依機台明細，比對場次狀態與期末餘額的轉換。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-03
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DRAFT-01M3VG7JJATAPQNNNVSR8J4XV7
+    related_requirement_ids:
+    - REQ-DAILYREPORT-014
+    - REQ-DAILYREPORT-008
+    gap: 同一營業日內，機台 A 先以洗分留下餘數 r 結束場次 S1（S1 期末＝r），再用餘數繼續遊玩或追加開分，形成新的進行中場次（期初＝r）。這時依機台明細的期末餘額應等於機台當下分數。實作如果是把各場次期末加總（已結束 S1
+      的 r ＋ 進行中場次的當下分數），就會把 r 重複計入。FC 與 C2 都只有一個進行中場次，V7 的已結束場次又是出金結束（期末 0），三者都抓不到這個重複計算。
+    suggested_scenario: 機台 A 先開分 1000、投注，再洗分讓機台留下餘數 r。之後用餘數繼續投注（或追加開分 k），在機台前台讀取目前分數 Y。依機台明細查當日，期末餘額應＝Y，不是 r＋Y；依場次明細查詢，S1
+      期末＝r，新場次列期初＝r、期末＝Y。另外，對 V7 的情境（出金結束＋進行中）也補查依機台明細的期末餘額，應＝進行中場次的當下分數。
+    spec_basis:
+      location: §列表欄位/期末餘額（各機台分數合計）＋§背景：場次資訊/期末餘額「洗分結束留有餘數時為該餘數」；未結算日計入進行中依 CLR-DAILYREPORT-013
+      quote: 該日結算時點各機台的分數合計
+    needs_clarification: false
+  - finding_id: RF-04
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DAILYREPORT-054
+    related_requirement_ids:
+    - REQ-DAILYREPORT-014
+    gap: CLR-013 規定期末餘額「計入進行中場次」。但機台上的場次如果已經「逾時結束」（不是進行中），分數 r 仍留在機台上（TC-054 v2 的情境），那麼尚未結算的當日期末餘額要不要計入 r？已結算日的結算時點要不要計入 r？這兩點都沒有定義。v0.1
+      原文是「各機台的分數合計」，CLR-013 的說法只涵蓋進行中場次，兩者在這個情況下的結論可能不同。
+    suggested_scenario: 建議開 Clarification 確認：逾時結束後留在機台的餘數，是否計入當日與已結算日的期末餘額。這題可以和 RUN-20261001-002 RF-01、RUN-20261001-004 RF-02
+      合併。定案後補案例：讓機台 A 逾時結束且留下餘數 r，用依機台明細查當日期末餘額，再於日結後查前一日。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-05
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAEXZ0C96DK8JFRXMH
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    related_requirement_ids:
+    - REQ-DAILYREPORT-008
+    - REQ-DAILYREPORT-014
+    gap: Draft 都要求查詢期間機台沒有任何交易。如果查詢當下機台 A 正在投注或派彩，進行中列的投注筆數、有效投注額、損益、期末餘額、場次時長是否取自同一時點，依機台明細與依場次明細是否一致，都沒有定義。CLR-013 的 context
+      有提到 spec 09-17 新增的驗算式「期末餘額＝期初＋開分＋進鈔＋損益－洗分－收據」，但 PM 的答覆與 RM 都沒有把它定為規則，所以不能直接當作驗證依據。
+    suggested_scenario: 建議開 Clarification 確認兩件事：進行中列各欄是否須為同一時點的快照；09-17 驗算式是否適用於進行中列。定案後補案例：在機台連續投注期間反覆查詢，檢查每次查詢結果是否符合定案的一致性規則。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-06
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAEXZ0C96DK8JFRXMH
+    - TC-DAILYREPORT-048
+    related_requirement_ids:
+    - REQ-DAILYREPORT-016
+    - REQ-DAILYREPORT-008
+    gap: REQ-016 規定匯出 CSV 內容與當前篩選結果一致（TC-048）。但進行中列的場次時長與期末餘額會隨時間或交易變動，匯出時應取匯出當下的值，還是畫面上次查詢時的值？兩者不同時要怎麼判定「一致」？這些都沒有定義，TC-048
+      原本的比對方式套到進行中列可能會誤判。
+    suggested_scenario: 建議開 Clarification 確認：匯出 CSV 時，進行中列的場次時長、期末餘額取哪個時點，以及結束時間「—」在 CSV 中怎麼呈現。定案後補案例：查詢後等待數分鐘再匯出，依定案規則比對
+      CSV 與畫面。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-07
+    dimension: permission
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG7JJAEXZ0C96DK8JFRXMH
+    - TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    - TC-DAILYREPORT-002
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    related_requirement_ids:
+    - REQ-DAILYREPORT-001
+    - REQ-DAILYREPORT-008
+    - REQ-DAILYREPORT-014
+    gap: 進行中場次列與「截至查詢當下」的期末餘額是 CLR-013 才新增的即時資料，很可能和已結算資料走不同的查詢路徑。TC-002～004 驗證角色範圍時沒有包含進行中資料，所以無法確認操作員或站長會不會透過依場次明細、依機台明細，或直接呼叫
+      API，看到非自身或非管轄場館的進行中場次與即時分數。
+    suggested_scenario: 在自身場館與非自身場館各準備一個進行中場次：以操作員登入，依場次明細與依機台明細都只看得到自身場館的進行中列與即時期末餘額；用操作員憑證直接呼叫 API、帶非自身場館參數，不得取得對方的進行中資料（拒絕方式沿用
+      REQ-001 rejection_contract）；站長則只看得到管轄範圍內的進行中資料。
+    spec_basis:
+      location: §功能說明/權限表
+      quote: 場館日結報表 | 全部 | 管轄範圍 | 自身場館
+    needs_clarification: false
+  summary: RUN-20261001-005（新增 4 條，AC-0083、AC-0143）抽查結果：共 7 條 finding，high 3 條。其中 2 條有 spec 依據、可直接補 TC：RF-01，期末餘額含進行中場次後，依場館彙總、非按日週期、列表總計都沒驗；RF-03，洗分留餘數後承接成新的進行中場次，期末餘額可能被重複加總。RF-04
+    需要澄清：逾時結束後留在機台的餘數是否計入期末餘額，可和 RUN-002／004 合併處理。其餘需要澄清的有三條：日結過渡期（RF-02）、同時投注時的快照一致性（RF-05）、CSV 匯出時點（RF-06）。RF-07 是進行中即時資料的角色範圍，有
+    spec 依據。重複提交不適用。
+history:
+- at: '2026-10-01T10:44:05Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-005

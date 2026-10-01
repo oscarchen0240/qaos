@@ -1,0 +1,71 @@
+artifact_id: ART-TVR-01M3VGPQSA5N1MMBTN58VYWN74
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-001
+task_id: T2
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-01T10:38:32Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VGN2TTBTKZJX0GTECCCHQP
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VGN2TTBTKZJX0GTECCCHQP
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M3VGN2TTBTKZJX0GTECCCHQP
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-017
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結 L108
+      quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+    evidence: 對照 iter 0 報告 ART-TVR-01M3VGFPWVZ2HFRE0EG1M6C3EF 的 3 條：(1) step 1 已不再引用 design_rationale，佈置方式直接寫在步驟內（有進行中場次先以出金結束→開分任意金額、不投注→記錄前台分數
+      X），test_data 新增 X，預期改成期初餘額＝X；(2) preconditions 新增時間限制（佈置完成到 06:00 的間隔須短於場次逾時時間，建議 30 分鐘內，必要時把逾時時間調長），並新增 step 3 日結前檢查點（S1
+      仍為進行中、分數仍為 X，否則本次執行作廢、重新佈置）；(3) step 2 的結算日期改成涵蓋昨日與今日，並說明 00:00～06:00 時進行中場次屬於前一營業日；「查詢時點在日結之後」改成只限步驟 5～7。
+    explanation: iter 0 的 2 個 major（佈置方式引用 design_rationale、等待日結期間可能逾時）和 1 個 minor（營業日切分與時序矛盾）都已解決。修正後重新檢查：AC-0171 的 80 泛化成
+      X，不影響「餘額承接為隔日新場次期初餘額」的驗證；新增的步驟與預期一一對應；quote 在 spec L108 逐字存在；標籤 functional／state_transition 和案例性質相符；沒有新增假設；和其他 ACTIVE
+      TC 沒有重複。沒有引入新問題。
+    recommended_change: 無
+  coverage_summary:
+    requirements_total: 1
+    requirements_covered: 1
+    ac_total: 1
+    ac_covered: 1
+    uncovered_accepted:
+    - REQ-DAILYREPORT-017 non-happy 由同批 TC-052/053/054 修訂覆蓋（NO_REJECTION_CONTRACT 僅作 G-DESIGN high risk 豁免）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3VGN2TR49TSV0QG73YPNMHX
+    verdict: ok
+history:
+- at: '2026-10-01T10:39:04Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-001

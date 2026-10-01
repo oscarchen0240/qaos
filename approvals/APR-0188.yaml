@@ -1,0 +1,56 @@
+approval_id: APR-0188
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261001-004
+task_id: T3
+status: DECIDED
+summary: 1 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（含 1 條 exploratory，approve 即確認其假設）（高風險抽查 ART-TRR-01M3VGT1YZEBJ21Y4TTTYH37V6：4
+  條補充建議，high 1、需澄清 4；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-054
+  version: 3
+artifact_ids:
+- ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ
+- ART-TRR-01M3VGT1YZEBJ21Y4TTTYH37V6
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-054
+  version: 3
+requested_by: agent-supervisor
+requested_at: '2026-10-01T10:44:05Z'
+diff_summary: '[exploratory] TC-DAILYREPORT-054 v3 場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩：「逾時結束後、餘額仍在時前台與後端拒絕遊玩」與「再有交易即建立新場次」為
+  QA 實測觀察（MAN-20260914-001），SPEC-DAILYREPORT-001 未明寫；規則出處為機台金流與場次_spec_v01 §場次狀態
+
+  [risk-review] RUN-20261001-004（TC-DAILYREPORT-054 修訂）抽查結果：共 4 條 finding，high 1 條。最大風險是逾時結束後留在機台的餘數：入金後新場次的期初與期末餘額怎麼算，spec
+  沒有定義，需要澄清（RF-02），可和 RUN-002／005 合併成一張 Clarification。另有三條：CLR-007「當日不會出現逾時結束」與本 TC 的實測前提互相矛盾，連帶影響 REQ-009 場次數（RF-03）；逾時臨界點與結束時間的記法（RF-01）；逾時與交易同時發生（RF-04）。這三條都需要澄清。權限已覆蓋；重複提交不適用。
+
+  [RF-01/medium/boundary/需澄清] 逾時判定的臨界點沒有驗：最後一次活動後經過 T－1 秒時應仍為進行中，T 或 T＋1 秒時轉為逾時結束。逾時結束場次的結束時間應記為「最後活動時間＋逾時時間」還是「系統偵測到逾時的時點」，也沒有規定；這會決定依場次明細的場次時長在轉成固定值時取什麼值。SPEC-DAILYREPORT-001
+  v0.1 沒有逾時規則，規則在開發包③，本次無法取得原文。 → 建議：建議開 Clarification，或請 PM 提供開發包③的逾時判定原文，確認逾時的計時起點、臨界值與結束時間的記法。確認後補案例：在 T－1 秒查依場次明細，應仍為進行中、結束時間「—」；超過
+  T 後重查，記錄結束時間與場次時長，並對照定案的規則。（相關 TC-DRAFT-01M3VG72579T5P39704Q1XQHWM, TC-DAILYREPORT-054）
+
+  [RF-02/high/exception_flow/需澄清] Draft 步驟 3 以「剩餘分數」嘗試遊玩，表示逾時結束後機台上還留有餘數 r。v0.1 期初餘額的規則只列出「開分／入金起始者為 0」和「承接洗分餘數或日結結算轉入者為承接金額」，沒有提到逾時餘數。因此步驟
+  5 入金或開分後，以下都沒有定義：新場次的期初餘額是 r 還是 0？r 是否仍在機台分數內，並計入新場次的期末餘額與依機台明細的期末餘額？步驟 7 新場次列的期末餘額（累計到查詢當下）正好落在這個未定義的地方，報表上的餘額可能少算 r，也可能重複計入
+  r。 → 建議：建議開 Clarification 確認逾時餘數的去向：新場次是否承接 r 作為期初、機台分數是否保留 r。這題可以和 RUN-20261001-002 RF-01、RUN-20261001-005 RF-04 合併處理。定案後，在步驟
+  7 記錄新場次列的期初餘額與期末餘額，並用依機台明細查當日期末餘額，與機台前台分數比對。（相關 TC-DRAFT-01M3VG72579T5P39704Q1XQHWM, TC-DAILYREPORT-054）
+
+  [RF-03/medium/exception_flow/需澄清] REQ-DAILYREPORT-009 依 CLR-DAILYREPORT-007 定案：「逾時結束的時間會超過日結時間」，因此當日內場次只會以已結束或日結結算收尾（TC-077
+  也這樣寫）。但 TC-054 v2（APR-0007，依實測 MAN-20260914-001）和本 Draft 以預設 1 小時、測試時調為 5 分鐘的逾時時間，在同一營業日內就產生了逾時結束場次，兩者互相矛盾。如果逾時結束可以在當日發生，依機台明細與依場館彙總的「場次數」是否計入逾時結束場次就沒有定義。TC-031
+  預期計入，REQ-009 與 TC-077 則把它排除在範圍外。 → 建議：建議開 Clarification，重新確認 CLR-007 的前提：逾時時間是否一定超過日結時間，以及當日逾時結束的場次是否計入場次數。定案後再補案例：當日產生
+  1 場逾時結束、1 場已結束，用依機台明細查場次數。（相關 TC-DRAFT-01M3VG72579T5P39704Q1XQHWM, TC-DAILYREPORT-077, TC-DAILYREPORT-031）
+
+  [RF-04/medium/concurrency/需澄清] 在逾時臨界點前後，對機台 A 送出入金，或有一筆在逾時前送出、逾時後才處理的投注，以下都沒有定義：入金應延續原場次，還是在逾時後建立新場次？那筆投注應被拒絕，還是計入原場次？原場次的結束時間與期末餘額會不會因此改變？SPEC-DAILYREPORT-001
+  v0.1 沒有逾時與交易同時發生時的規則。 → 建議：建議開 Clarification 確認：逾時判定與入金、投注同時發生時，交易要歸屬哪個場次。定案後補案例：在 T 前後 1 秒內送出入金，用依場次明細確認只有一個符合定案規則的場次列，且原場次的期末餘額與機台分數一致。（相關
+  TC-DRAFT-01M3VG72579T5P39704Q1XQHWM）'
+decision:
+  decision: approve
+  decided_by: oscarchen@blockaction.tech
+  decided_at: '2026-10-01T10:54:46Z'
+  rationale: CLR-DAILYREPORT-013 PM 定案 A 的 TC 修訂／新增；抽查建議另案處理

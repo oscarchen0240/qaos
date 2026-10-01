@@ -3357,6 +3357,7 @@
     "approval_id": "APR-0003"
   },
   {
+    "title": "日結時間到達強制結束進行中場次並承接餘額",
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
     "requirement_ids": [
@@ -3377,72 +3378,96 @@
     "priority": "high",
     "risk": "high",
     "execution_mode": "manual",
-    "test_data": [],
+    "preconditions": [
+      "已登入後台並切換至機台場館站台（Arcade）",
+      "測試場館已設定日結時間 06:00 UTC+0",
+      "測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊",
+      "各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）",
+      "時間限制：步驟 1 佈置完成到日結時間 06:00 的間隔須短於場館的場次逾時時間（預設 1 小時），否則場次會先變「逾時結束」；建議在 06:00 前 30 分鐘內開始佈置，必要時先把場館逾時時間調長",
+      "步驟 5～7 的查詢時點在日結時間 06:00 UTC+0 之後",
+      "步驟 5～7 的結算日期：前一日（日結前所屬營業日）與當日（日結後所屬營業日，承接場次歸屬當日）"
+    ],
+    "test_data": [
+      {
+        "name": "X",
+        "value": "步驟 1 佈置後機台 A 的目前分數，取機台前台畫面顯示值，須大於 0（原範例為 80，實際值不限）"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "（日結前 30 分鐘內佈置）若機台 A 已有進行中場次，先以出金結束（出金一律清空餘額）；再對機台 A 開分任意金額、不投注，在機台前台記錄目前分數 X（須大於 0）"
+      },
+      {
+        "n": 2,
+        "action": "依場次明細（機台帳號填機台 A，結算日期涵蓋昨日與今日；營業日依日結時間切分，00:00～06:00 UTC+0 時進行中場次屬於前一營業日）找到機台 A 的進行中場次列，記錄場次編號 S1、狀態、結束時間"
+      },
+      {
+        "n": 3,
+        "action": "日結時間 06:00 之前的檢查點：以相同條件重新查詢，確認 S1 仍為「進行中」、結束時間「—」，且機台前台分數仍為 X；若 S1 已為「逾時結束」或分數不是 X，本次執行作廢，縮短佈置到日結的間隔後重新佈置"
+      },
+      {
+        "n": 4,
+        "action": "不對機台 A 做任何交易，等待日結時間 06:00 UTC+0 到達"
+      },
+      {
+        "n": 5,
+        "action": "依場次明細（機台帳號填機台 A）查詢前一日，找到場次 S1"
+      },
+      {
+        "n": 6,
+        "action": "依場次明細（機台帳號填機台 A）查詢當日，找到機台 A 在日結後的場次列"
+      },
+      {
+        "n": 7,
+        "action": "開啟機台 A 的會員詳細頁「機台資訊」區塊"
+      }
+    ],
+    "expected_result": "步驟 2、3：S1 該列狀態「進行中」、結束時間「—」；步驟 5：前一日 S1 狀態「日結結算」、結束時間＝06:00；步驟 6：當日有機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」；步驟 7：機台資訊區塊顯示一個進行中場次（場次編號不同於 S1），期初餘額＝X",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.1",
+      "quote": "日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額",
+      "location": "§業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））"
+    },
+    "assumptions": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": true,
-    "title": "日結時間到達強制結束進行中場次並承接餘額",
-    "preconditions": [
-      "已登入後台並切換至機台場館站台（Arcade）",
-      "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A（會員編號已知），可開啟其會員詳細頁「機台資訊」區塊",
-      "各式報表 > 場館日結報表 可用（依場次明細只列已結束／逾時結束／日結結算的場次，依 CLR-DAILYREPORT-012）",
-      "查詢時點在日結時間之後",
-      "結算日期：前一日與當日（承接場次歸屬當日）"
-    ],
-    "steps": [
-      {
-        "n": 1,
-        "action": "機台 A 有進行中場次、餘額 80（於機台資訊區塊記錄其場次編號）"
-      },
-      {
-        "n": 2,
-        "action": "等待日結時間 06:00 UTC+0 到達"
-      },
-      {
-        "n": 3,
-        "action": "依場次明細查詢前一日"
-      },
-      {
-        "n": 4,
-        "action": "開啟機台 A 的會員詳細頁「機台資訊」區塊"
-      }
-    ],
-    "expected_result": "步驟 3：前一日該場次狀態「日結結算」、結束時間＝06:00；步驟 4：機台資訊區塊顯示一個新的進行中場次（場次編號不同於步驟 1），期初餘額 80",
-    "expected_result_spec_reference": {
-      "spec_id": "SPEC-DAILYREPORT-001",
-      "spec_version": "0.1",
-      "location": "§業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）",
-      "quote": "日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額"
-    },
-    "assumptions": [],
     "source": "change_workflow",
     "testcase_id": "TC-DAILYREPORT-051",
-    "version": 2,
-    "supersedes": 1,
+    "version": 3,
+    "supersedes": 2,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M33M7D6VYP0NR42N7ED5PDC1",
-    "created_at": "2026-09-22T03:58:18Z",
-    "updated_at": "2026-09-22T05:06:46Z",
+    "validation_report_id": "ART-TVR-01M3VGPQSA5N1MMBTN58VYWN74",
+    "created_at": "2026-10-01T10:39:04Z",
+    "updated_at": "2026-10-01T10:54:46Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0161"
+    "approval_id": "APR-0185"
   },
   {
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "無進行中場次時日結不產生新場次",
     "requirement_ids": [
       "REQ-DAILYREPORT-017"
     ],
     "acceptance_criteria_ids": [
       "AC-DAILYREPORT-0172"
     ],
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
     "test_level": "api",
     "test_types": [
       "negative"
@@ -3452,30 +3477,21 @@
     ],
     "priority": "high",
     "risk": "high",
-    "execution_mode": "manual",
-    "test_data": [],
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "critical_path": false,
-    "title": "無進行中場次時日結不產生新場次",
     "preconditions": [
       "已登入後台並切換至機台場館站台（Arcade）",
       "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A（會員編號已知），可開啟其會員詳細頁「機台資訊」區塊",
-      "各式報表 > 場館日結報表 可用（依場次明細只列已結束／逾時結束／日結結算的場次，依 CLR-DAILYREPORT-012）",
+      "測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊",
+      "各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）",
       "查詢時點在日結時間之後"
     ],
     "steps": [
       {
         "n": 1,
-        "action": "機台 A 無進行中場次（機台資訊區塊顯示無進行中場次）"
+        "action": "機台 A 無進行中場次（機台資訊區塊顯示無進行中場次；可選用尚無任何交易的機台，或先以出金結束其場次——出金一律清空餘額，見 spec §場次資訊）"
       },
       {
         "n": 2,
-        "action": "日結時間到達"
+        "action": "不對機台 A 做任何交易，等待日結時間 06:00 UTC+0 到達"
       },
       {
         "n": 3,
@@ -3483,39 +3499,48 @@
       },
       {
         "n": 4,
-        "action": "依場次明細查詢當日"
+        "action": "依場次明細（機台帳號填機台 A）查詢，結算日期起日＝日結前所屬營業日、迄日＝日結後所屬營業日（即前一日與當日）"
       }
     ],
-    "expected_result": "步驟 3：機台資訊區塊仍顯示無進行中場次（未因日結產生新場次）；步驟 4：當日明細無機台 A 的「日結結算」列",
+    "test_data": [],
+    "expected_result": "步驟 3：機台資訊區塊仍顯示無進行中場次（未因日結產生新場次）；步驟 4：查詢範圍內機台 A 沒有狀態「日結結算」的列，也沒有狀態「進行中」的列",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
       "spec_version": "0.1",
-      "location": "§業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）",
+      "location": "§業務規則/場次日結 + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（進行中場次於依場次明細可見：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））",
       "quote": "日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額"
     },
     "assumptions": [],
+    "critical_path": false,
     "source": "change_workflow",
     "testcase_id": "TC-DAILYREPORT-052",
-    "version": 2,
-    "supersedes": 1,
+    "version": 3,
+    "supersedes": 2,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M33M7DK40E84V8ZQ9VNJVP3M",
-    "created_at": "2026-09-22T03:58:19Z",
-    "updated_at": "2026-09-22T05:06:46Z",
+    "validation_report_id": "ART-TVR-01M3VGFPZF0WQVWXJTKEHR823Y",
+    "created_at": "2026-10-01T10:36:11Z",
+    "updated_at": "2026-10-01T10:54:46Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0162"
+    "approval_id": "APR-0186"
   },
   {
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "已結束場次不可再變回進行中",
     "requirement_ids": [
       "REQ-DAILYREPORT-017"
     ],
     "acceptance_criteria_ids": [],
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
     "test_level": "api",
     "test_types": [
       "negative"
@@ -3525,25 +3550,16 @@
     ],
     "priority": "medium",
     "risk": "high",
-    "execution_mode": "manual",
-    "test_data": [],
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "critical_path": false,
-    "title": "已結束場次不可再變回進行中",
     "preconditions": [
       "已登入後台並切換至機台場館站台（Arcade）",
       "測試場館已設定日結時間 06:00 UTC+0",
-      "測試場館下有機台 A（會員編號已知），可開啟其會員詳細頁「機台資訊」區塊",
-      "各式報表 > 場館日結報表 可用（依場次明細只列已結束／逾時結束／日結結算的場次，依 CLR-DAILYREPORT-012）"
+      "測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊",
+      "各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）"
     ],
     "steps": [
       {
         "n": 1,
-        "action": "依場次明細取得機台 A 一個「已結束」場次，記錄其場次編號"
+        "action": "依場次明細（機台帳號填機台 A，結算日期涵蓋今日）取得機台 A 一個「已結束」場次，記錄其場次編號 S1（若沒有，先以出金結束機台 A 的進行中場次產生一個）"
       },
       {
         "n": 2,
@@ -3555,38 +3571,48 @@
       },
       {
         "n": 4,
-        "action": "依場次明細重新查詢"
+        "action": "依場次明細以相同條件重新查詢"
       }
     ],
-    "expected_result": "步驟 3：機台資訊區塊顯示一個進行中場次，其場次編號不同於步驟 1；步驟 4：步驟 1 的場次仍為「已結束」，狀態未變回進行中",
+    "test_data": [],
+    "expected_result": "步驟 3：機台資訊區塊顯示一個進行中場次，其場次編號不同於 S1；步驟 4：S1 該列狀態仍為「已結束」（結束時間不是「—」），未變回進行中；另有一個機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
       "spec_version": "0.1",
-      "location": "§背景：場次資訊（場次定義：從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次）+ §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）"
+      "location": "§背景：場次資訊（場次定義：從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次）+ §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））",
+      "quote": "從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次"
     },
     "assumptions": [],
+    "critical_path": false,
     "source": "change_workflow",
     "testcase_id": "TC-DAILYREPORT-053",
-    "version": 2,
-    "supersedes": 1,
+    "version": 3,
+    "supersedes": 2,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M33M7DYW8SEP75AJSM27RW37",
-    "created_at": "2026-09-22T03:58:19Z",
-    "updated_at": "2026-09-22T05:06:46Z",
+    "validation_report_id": "ART-TVR-01M3VGFQ1YVVAGXZE47H99HPPW",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:46Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0163"
+    "approval_id": "APR-0187"
   },
   {
     "product": "ba-admin",
     "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩",
     "requirement_ids": [
       "REQ-DAILYREPORT-017"
     ],
     "acceptance_criteria_ids": [],
-    "spec_id": "SPEC-DAILYREPORT-001",
-    "spec_version": "0.1",
     "test_level": "ui_e2e",
     "test_types": [
       "negative",
@@ -3598,24 +3624,10 @@
     ],
     "priority": "high",
     "risk": "high",
-    "execution_mode": "manual",
-    "test_data": [
-      {
-        "name": "session_timeout",
-        "value": "場館設定值，建議測試時調為 5 分鐘"
-      }
-    ],
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "critical_path": true,
-    "title": "場次逾時結束後不可再遊玩（前後端皆擋），再次入金或開分後建立新場次可遊玩",
     "preconditions": [
       "機台 A 有分數餘額且場次進行中",
       "場館設定的場次逾時時間已知（預設 1 小時；測試可調短）",
-      "已登入後台，可查看場館日結報表（依場次明細）與機台 A 的會員詳細頁「機台資訊」區塊"
+      "已登入後台，可查看場館日結報表（依場次明細；依 CLR-DAILYREPORT-013 PM 定案 A 會列出進行中場次）與機台 A 的會員詳細頁「機台資訊」區塊"
     ],
     "steps": [
       {
@@ -3624,7 +3636,7 @@
       },
       {
         "n": 2,
-        "action": "在後台場館日結報表（依場次明細）確認該場次狀態為「逾時結束」"
+        "action": "在後台場館日結報表（依場次明細，機台帳號填機台 A）確認該場次狀態為「逾時結束」，記錄場次編號 S1"
       },
       {
         "n": 3,
@@ -3644,14 +3656,25 @@
       },
       {
         "n": 7,
+        "action": "依場次明細以相同條件重新查詢"
+      },
+      {
+        "n": 8,
         "action": "再次嘗試遊玩"
       }
     ],
-    "expected_result": "步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 6：機台資訊區塊顯示新的進行中場次編號（不同於步驟 2 的逾時結束場次）；步驟 7：可正常遊玩",
+    "test_data": [
+      {
+        "name": "session_timeout",
+        "value": "場館設定值，建議測試時調為 5 分鐘"
+      }
+    ],
+    "expected_result": "步驟 3、4：前台拒絕進入遊戲、後端 API 亦拒絕；步驟 6：機台資訊區塊顯示新的進行中場次編號（不同於 S1）；步驟 7：S1 仍為「逾時結束」，另有一個機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」；步驟 8：可正常遊玩",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-DAILYREPORT-001",
       "spec_version": "0.1",
-      "location": "§背景：場次資訊/場次狀態（狀態值「逾時結束」）+ REQ-017 states + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）"
+      "location": "§背景：場次資訊/場次狀態（狀態值「逾時結束」）+ REQ-017 states + §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））",
+      "quote": "進行中 / 已結束 / 逾時結束 / 日結結算"
     },
     "assumptions": [
       {
@@ -3661,18 +3684,19 @@
         "resolved_by_approval": "APR-0007"
       }
     ],
+    "critical_path": true,
     "source": "change_workflow",
     "testcase_id": "TC-DAILYREPORT-054",
-    "version": 2,
-    "supersedes": 1,
+    "version": 3,
+    "supersedes": 2,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M33M8EKS88MTJ17BFWCZQNB2",
-    "created_at": "2026-09-22T03:58:52Z",
-    "updated_at": "2026-09-22T05:06:46Z",
+    "validation_report_id": "ART-TVR-01M3VGFQ4RE7WNF8H2ARZQRCNQ",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:46Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0164"
+    "approval_id": "APR-0188"
   },
   {
     "title": "日結結算狀態的場次同樣計入當日場次數，不因是被強制結束而排除",
@@ -3809,5 +3833,323 @@
     "updated_at": "2026-09-22T05:06:46Z",
     "approved_by": "oscarchen@blockaction.tech",
     "approval_id": "APR-0166"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "依場次明細的進行中場次列：結束時間「—」，場次時長與期末餘額累計到查詢當下",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-008"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0083"
+    ],
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "preconditions": [
+      "已登入後台並切換至機台場館站台（Arcade）",
+      "測試場館下有一台既有機台 A（自行從環境中選定）",
+      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "機台 A 目前有一個進行中場次：已有開分與投注，且最後一次投注後不再有任何交易、也不再遊玩",
+      "機台 A 的目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）"
+    ],
+    "test_data": [
+      {
+        "name": "X",
+        "value": "機台 A 目前分數；AC 範例 300，實際取機台前台讀值，須 > 0"
+      },
+      {
+        "name": "等待間隔",
+        "value": "約 3 分鐘"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢"
+      },
+      {
+        "n": 2,
+        "action": "在列表找出機台 A 的進行中場次列，記錄場次編號、狀態、結束時間、場次時長 T1、期末餘額，以及查詢的時間點"
+      },
+      {
+        "n": 3,
+        "action": "不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄同一場次列的場次時長 T2、結束時間、期末餘額"
+      }
+    ],
+    "expected_result": "步驟 2：該場次列存在，狀態「進行中」、結束時間「—」、期末餘額＝X；步驟 3：同一場次編號的列仍為「進行中」、結束時間仍為「—」，場次時長 T2 比 T1 多約 3 分鐘（隨查詢當下累計，非固定值），期末餘額仍＝X（期間無交易）",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.1",
+      "location": "§列表欄位/場次編號 + §背景：場次資訊（結束時間、場次時長）；進行中場次的期末餘額累計到查詢當下依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
+      "quote": "進行中的場次結束時間顯示「—」"
+    },
+    "assumptions": [],
+    "critical_path": true,
+    "source": "spec_workflow",
+    "testcase_id": "TC-DAILYREPORT-099",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:47Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0189"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "同一機台有已結束與進行中場次時，只有進行中場次顯示結束時間「—」並持續累計時長",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-008"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0083"
+    ],
+    "test_level": "ui_e2e",
+    "test_types": [
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "preconditions": [
+      "已登入後台並切換至機台場館站台（Arcade）",
+      "測試場館下有一台既有機台 A（自行從環境中選定）",
+      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "機台 A 在同一個營業日內先後有兩個場次：先一個已結束場次（有開分與投注，以出金結束——出金一律清空餘額，見 spec §場次資訊），之後再開分並投注形成一個進行中場次，且之後不再有任何交易",
+      "（比對基準）已結束場次與進行中場次是同一台機台、同一次查詢內的兩列，彼此互為對照"
+    ],
+    "test_data": [
+      {
+        "name": "等待間隔",
+        "value": "約 3 分鐘"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢"
+      },
+      {
+        "n": 2,
+        "action": "在列表分別找出機台 A 的已結束場次列與進行中場次列，記錄兩列的場次編號、狀態、結束時間、場次時長（已結束列 E1、進行中列 P1）"
+      },
+      {
+        "n": 3,
+        "action": "不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄兩列的結束時間與場次時長（已結束列 E2、進行中列 P2）"
+      }
+    ],
+    "expected_result": "已結束列：狀態「已結束」、結束時間為具體時間（不是「—」），兩次查詢的結束時間與場次時長不變（E2＝E1）；進行中列：狀態「進行中」、結束時間「—」，P2 比 P1 多約 3 分鐘；兩列的場次編號不同",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.1",
+      "location": "§背景：場次資訊（場次時長）+ §列表欄位/場次編號；進行中場次列於依場次明細依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
+      "quote": "開始至結束的時間差；進行中則顯示累計至查詢當下"
+    },
+    "assumptions": [],
+    "critical_path": false,
+    "source": "spec_workflow",
+    "testcase_id": "TC-DAILYREPORT-100",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:47Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0189"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "當日營業日尚未日結時，依機台明細的期末餘額計入進行中場次的目前分數並隨查詢當下更新",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-014"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0143"
+    ],
+    "test_level": "ui_e2e",
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "preconditions": [
+      "已登入後台並切換至機台場館站台（Arcade）",
+      "測試場館下有一台既有機台 A（自行從環境中選定）",
+      "執行期間不得跨越場館日結時間（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）",
+      "機台 A 目前有一個進行中場次（當前營業日尚未日結），目前分數 X 已知：以機台前台畫面顯示的分數為準並記錄（AC 範例為 300，實際值不限，須大於 0）"
+    ],
+    "test_data": [
+      {
+        "name": "X",
+        "value": "查詢前機台 A 目前分數；AC 範例 300，實際取機台前台讀值，須 > 0"
+      },
+      {
+        "name": "X'",
+        "value": "追加開分後機台 A 目前分數，須 ≠ X，取機台前台讀值"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期涵蓋昨日與今日（營業日依場館日結時間切分；日期標示可能與日曆日不同，故取涵蓋兩天的區間，並以列表中最後一個、尚未日結的營業日列為判讀對象），查詢；記錄目前營業日列的期末餘額 E1，同時記錄機台前台目前分數 X（查詢前後機台 A 無交易）"
+      },
+      {
+        "n": 2,
+        "action": "對機台 A 追加開分任意金額，記錄機台前台新的目前分數 X'（確認 X' ≠ X；若相同則再追加開分）"
+      },
+      {
+        "n": 3,
+        "action": "以完全相同的條件重新查詢，記錄目前營業日列的期末餘額 E2"
+      }
+    ],
+    "expected_result": "步驟 1：機台 A 目前營業日列的期末餘額 E1＝X（含進行中場次的分數）；步驟 3：E2＝X'（截至查詢當下，非查詢前的 X）",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.1",
+      "location": "§列表欄位/期末餘額；進行中場次計入期末餘額（尚未結算取截至查詢當下）依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
+      "quote": "該日結算時點各機台的分數合計"
+    },
+    "assumptions": [],
+    "critical_path": true,
+    "source": "spec_workflow",
+    "testcase_id": "TC-DAILYREPORT-101",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:47Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0189"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "DAILYREPORT",
+    "spec_id": "SPEC-DAILYREPORT-001",
+    "spec_version": "0.1",
+    "execution_mode": "manual",
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "title": "已結算營業日的期末餘額維持結算時點的值，不受之後進行中場次分數變動影響",
+    "requirement_ids": [
+      "REQ-DAILYREPORT-014"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-DAILYREPORT-0143"
+    ],
+    "test_level": "ui_e2e",
+    "test_types": [
+      "negative"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "priority": "high",
+    "risk": "high",
+    "preconditions": [
+      "已登入後台並切換至機台場館站台（Arcade）",
+      "測試場館已設定日結時間（記為 H，UTC+0），並已知其值（例如 06:00）",
+      "測試場館下有一台既有機台 A（自行從環境中選定），在日結時間 H 之前已有進行中場次，目前分數 S1（以機台前台畫面顯示的分數為準並記錄，須大於 0）；從記錄 S1 起至日結時間 H 到達為止，不對機台 A 做任何交易",
+      "（比對基準）日結前的營業日列期末餘額與日結後追加開分前後的分數互為對照：S1 為日結時點分數、S2 為日結後之現值"
+    ],
+    "test_data": [
+      {
+        "name": "S1",
+        "value": "日結前機台 A 目前分數，取機台前台讀值，須 > 0"
+      },
+      {
+        "name": "S2",
+        "value": "日結後追加開分後的目前分數，須 ≠ S1，取機台前台讀值"
+      }
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "在日結時間 H 到達之前，記錄機台前台機台 A 的目前分數 S1，之後不做任何交易，等待日結時間 H 到達（日結後承接餘額為新場次期初餘額，見 spec §業務規則/場次日結）"
+      },
+      {
+        "n": 2,
+        "action": "日結後確認機台前台機台 A 的分數仍為 S1，再對機台 A 追加開分任意金額，記錄新的目前分數 S2（確認 S2 ≠ S1；若相同則再追加開分）"
+      },
+      {
+        "n": 3,
+        "action": "進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期「按日」、機台帳號填機台 A，結算日期起日＝日結前所屬營業日、迄日＝日結後所屬營業日，查詢"
+      },
+      {
+        "n": 4,
+        "action": "分別記錄機台 A 兩個營業日列（日結前所屬營業日、日結後目前營業日）的期末餘額"
+      }
+    ],
+    "expected_result": "日結前所屬營業日（已結算）列的期末餘額＝S1（結算時點的值，不是 S2）；日結後目前營業日（尚未結算，有進行中場次）列的期末餘額＝S2（截至查詢當下）",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-DAILYREPORT-001",
+      "spec_version": "0.1",
+      "location": "§列表欄位/期末餘額；已結算營業日仍為結算時點的值、未結算者計入進行中場次依 CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂）",
+      "quote": "該日結算時點各機台的分數合計"
+    },
+    "assumptions": [],
+    "critical_path": false,
+    "source": "spec_workflow",
+    "testcase_id": "TC-DAILYREPORT-102",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ",
+    "created_at": "2026-10-01T10:36:12Z",
+    "updated_at": "2026-10-01T10:54:47Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0189"
   }
 ]

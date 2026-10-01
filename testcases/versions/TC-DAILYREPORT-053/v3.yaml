@@ -1,0 +1,94 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+title: 已結束場次不可再變回進行中
+requirement_ids:
+- REQ-DAILYREPORT-017
+acceptance_criteria_ids: []
+test_level: api
+test_types:
+- negative
+design_techniques:
+- state_transition
+priority: medium
+risk: high
+preconditions:
+- 已登入後台並切換至機台場館站台（Arcade）
+- 測試場館已設定日結時間 06:00 UTC+0
+- 測試場館下有機台 A（既有機台會員，自行從環境中選定），可開啟其會員詳細頁「機台資訊」區塊
+- 各式報表 > 場館日結報表 可用；依場次明細列出所有狀態的場次，含進行中（依 CLR-DAILYREPORT-013 PM 定案 A，推翻 CLR-DAILYREPORT-012 的 B）
+steps:
+- n: 1
+  action: 依場次明細（機台帳號填機台 A，結算日期涵蓋今日）取得機台 A 一個「已結束」場次，記錄其場次編號 S1（若沒有，先以出金結束機台 A 的進行中場次產生一個）
+- n: 2
+  action: 對機台 A 再產生開分或投注
+- n: 3
+  action: 開啟機台 A 的會員詳細頁「機台資訊」區塊
+- n: 4
+  action: 依場次明細以相同條件重新查詢
+test_data: []
+expected_result: 步驟 3：機台資訊區塊顯示一個進行中場次，其場次編號不同於 S1；步驟 4：S1 該列狀態仍為「已結束」（結束時間不是「—」），未變回進行中；另有一個機台 A 的新場次列，場次編號不同於 S1、狀態「進行中」、結束時間「—」
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  location: §背景：場次資訊（場次定義：從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次）+ §背景：場次資訊／場次呈現位置（會員詳細頁「機台資訊」區塊：顯示該機台目前進行中的場次摘要）（新場次於依場次明細列為進行中：依
+    CLR-DAILYREPORT-013（PM 定案 A，2026-10-01；以 spec 2026-09-17 修訂為準，v0.1 不含該修訂））
+  quote: 從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次
+assumptions: []
+critical_path: false
+source: change_workflow
+testcase_id: TC-DAILYREPORT-053
+version: 3
+supersedes: 2
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VGFQ1YVVAGXZE47H99HPPW
+created_at: '2026-10-01T10:36:12Z'
+updated_at: '2026-10-01T10:54:46Z'
+history:
+- at: '2026-10-01T10:36:12Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VG71R201MV1Y784SKG3SYR
+  run_id: RUN-20261001-003
+- at: '2026-10-01T10:36:12Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-003
+- at: '2026-10-01T10:36:12Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VGFQ1YVVAGXZE47H99HPPW
+  run_id: RUN-20261001-003
+- at: '2026-10-01T10:44:04Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261001-003
+- at: '2026-10-01T10:54:46Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0187
+  run_id: RUN-20261001-003
+- at: '2026-10-01T10:54:46Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261001-003
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0187

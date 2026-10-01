@@ -1,0 +1,98 @@
+artifact_id: ART-TRR-01M3VGT1WQ82W81FT788GPVAG5
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-003
+task_id: T2RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-01T10:43:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG71R201MV1Y784SKG3SYR
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG71R201MV1Y784SKG3SYR
+- entity_type: Artifact
+  id: ART-TVR-01M3VGFQ1YVVAGXZE47H99HPPW
+requires_approval: null
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M3VG71R201MV1Y784SKG3SYR
+    validation_report_artifact_id: ART-TVR-01M3VGFQ1YVVAGXZE47H99HPPW
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    testcase_draft_ids:
+    - TC-DRAFT-01M3VG71R1V0K840TCCR5M0SDM
+    active_testcases_consulted:
+    - TC-DAILYREPORT-001
+    - TC-DAILYREPORT-002
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    - TC-DAILYREPORT-025
+    - TC-DAILYREPORT-049
+    - TC-DAILYREPORT-053
+    - TC-DAILYREPORT-054
+  dimension_results:
+  - dimension: boundary
+    status: gaps_found
+    rationale: Draft 只用「出金（餘額清空）」產生已結束場次 S1。spec 定義的另外兩種結束方式都沒覆蓋：分數歸 0（含「剩 1 分仍為進行中」與「歸 0 即結束」的臨界），以及洗分後留有餘數（新場次以餘數承接為期初）。見
+      RF-01。結算日期範圍的問題 Validator 已提 advisory，不重複列。
+  - dimension: exception_flow
+    status: not_applicable
+    rationale: Draft 驗證的是「已結束不可變回進行中」的狀態不變性。結束交易本身（出金、洗分）中途失敗或逾時時要怎麼處置、資料要不要留存，屬於開發包③（機台金流與場次）的規則，SPEC-DAILYREPORT-001 v0.1
+      沒有涵蓋；本報表只呈現結果。跨越日結的情境由 TC-DAILYREPORT-051 負責，逾時的情境由 TC-DAILYREPORT-054 負責。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: 結束場次的交易（出金、洗分）與同一機台的投注幾乎同時送達，這種讀寫競爭沒有覆蓋。S1 可能在結束後仍被記入投注，造成「已結束」場次的內容事後改變。見 RF-02。
+  - dimension: duplicate_submission
+    status: not_applicable
+    rationale: 本頁為唯讀統計檢視（spec §操作；TC-DAILYREPORT-049 已覆蓋「無新增／編輯／刪除／審核」）。Draft 只有查詢與觀察，重複查詢不會產生資料；日結結算由系統排程觸發，不是使用者送出的請求。排程重跑的冪等性屬開發包③場次引擎內部行為，SPEC-DAILYREPORT-001
+      v0.1 沒有定義，也無法從本報表以黑箱方式觸發，所以不適用。
+  - dimension: permission
+    status: covered
+    rationale: 角色可見範圍由 ACTIVE TC-DAILYREPORT-001～004 覆蓋（Admin 全部、站長管轄範圍、操作員自身場館，含 TC-004 直接呼叫 API 帶非自身場館參數）。本 Draft 驗證場次狀態轉換，不涉及角色差異。「進行中場次列與即時期末餘額是否同樣受角色範圍限制」這項缺口統一寫在
+      RUN-20261001-005 的 TRR（RF-07），這裡不重複列。
+  findings:
+  - finding_id: RF-01
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG71R1V0K840TCCR5M0SDM
+    - TC-DAILYREPORT-053
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-008
+    gap: spec 定義場次有三種結束方式：洗分、出金、分數歸 0。Draft 步驟 1 只用出金產生 S1，下列兩種結束後的狀態不可逆都沒驗：(a) 分數歸 0，邊界是剩 1 分時場次仍為進行中，歸 0 才結束；(b) 洗分留有餘數
+      r，此時 S1 期末＝r，之後繼續遊玩或開分形成的新場次期初餘額應承接 r。其中 (b) 的 S1 結束後機台仍有分數，最容易在實作上被誤併回原場次。
+    suggested_scenario: 分別用三種方式產生 S1：出金、輸到分數歸 0、洗分留餘數 r。每種都要先在剩 1 分時確認 S1 仍為進行中。之後對機台 A 開分或投注，用依場次明細重查，確認三件事：S1 仍為「已結束」，結束時間與期末餘額不變（出金與歸
+      0 為 0，洗分為 r）；另有一個新的進行中列，場次編號不同於 S1；洗分路徑下，新場次的期初餘額＝r。
+    spec_basis:
+      location: §背景：場次資訊（場次定義；另見同表期初餘額「承接洗分餘數或日結結算轉入者為承接金額」、期末餘額「洗分結束留有餘數時為該餘數」）
+      quote: 從機台有分數開始玩起算，到洗分、出金或分數歸 0 為止，算一個場次
+    needs_clarification: false
+  - finding_id: RF-02
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M3VG71R1V0K840TCCR5M0SDM
+    related_requirement_ids:
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-008
+    gap: 對機台 A 送出出金或洗分（結束 S1），同時從前台或 API 送出一筆投注時，這筆投注應被拒絕，還是歸入新場次？S1 在結束時間之後，投注筆數、有效投注額、損益、期末餘額可不可能再變動？v0.1 只定義場次以洗分、出金、分數歸
+      0 結束，沒有定義結束交易與投注同時發生時的處置。
+    suggested_scenario: 建議開 Clarification 確認：結束交易與投注同時發生時，該筆投注要如何處置。定案後補案例：同時送出出金與投注 API，用依場次明細重查，比對 S1 結束前後的投注筆數、有效投注額、損益、期末餘額，以及新場次列的內容，確認那筆投注只出現在定案指定的一邊。
+    spec_basis: null
+    needs_clarification: true
+  summary: RUN-20261001-003（TC-DAILYREPORT-053 修訂）抽查結果：共 2 條 finding，無 high。RF-01 建議補「分數歸 0」與「洗分留餘數」兩種結束方式，以及剩 1 分的臨界案例，有
+    spec 依據。RF-02 是結束交易與投注同時送達時的處置，spec 沒有定義，需要澄清。權限由既有 ACTIVE TC 覆蓋；異常流程與重複提交不適用。
+history:
+- at: '2026-10-01T10:44:04Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-003

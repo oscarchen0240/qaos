@@ -1,0 +1,101 @@
+artifact_id: ART-TVR-01M3VGFQB4HMW947MWY1Z7CYGQ
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-005
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-01T10:34:42Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+- entity_type: Artifact
+  id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M3VG7JK42V3EYKDBAGQG66A0
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M3VG7JJAPV7BW51WMT5VPXC2
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊/場次狀態 L82
+      quote: 進行中 / 已結束 / 逾時結束 / 日結結算
+    evidence: preconditions：「從記錄 S1 起至日結時間 H 到達為止，不對機台 A 做任何交易」；沒有限制記錄 S1 到 H 的間隔。Registry TC-DAILYREPORT-054 v2：場館場次逾時時間預設
+      1 小時，有餘額時超時無交易，場次會變成逾時結束
+    explanation: 如果記錄 S1 的時間離 H 超過逾時時間，場次會在日結前就變成「逾時結束」。期末餘額以機台分數計算，預期值大致仍成立，但標題要驗的「日結時有進行中場次」情境就沒有真的測到，step 1 括號裡的「日結後承接餘額為新場次期初餘額」也不會發生。
+    recommended_change: preconditions 加上：「記錄 S1 到日結時間 H 的間隔須短於場館場次逾時時間（必要時先把逾時時間調長）」；可在 H 前加一個檢查點：場次仍為進行中。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-008
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊/場次時長 L84
+      quote: 開始至結束的時間差；進行中則顯示累計至查詢當下
+    evidence: TC-DRAFT-…JFRXMH／…8J4XV7 都要求「最後一次投注後不再有任何交易、也不再遊玩」並等待約 3 分鐘再查一次；Registry TC-DAILYREPORT-054 v2 的 test_data 建議測試環境把逾時時間調成
+      5 分鐘
+    explanation: 如果共用測試環境的場館逾時時間被調短（例如 5 分鐘），而進行中場次的最後一次活動已經過了一段時間，等待 3 分鐘時場次可能逾時結束，第二次查詢會看不到「進行中」列，造成誤判。
+    recommended_change: 在兩條 TC 的 preconditions 加上：「場館場次逾時時間須明顯大於『最後一次投注到第二次查詢』的間隔（建議 ≥ 30 分鐘）」。
+  coverage_summary:
+    requirements_total: 2
+    requirements_covered: 2
+    ac_total: 2
+    ac_covered: 2
+    uncovered_accepted:
+    - REQ-DAILYREPORT-001：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-002：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-003：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-004：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-005：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-006：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-007：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-009：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-010：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-011：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-012：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-013：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-015：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-016：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+    - REQ-DAILYREPORT-017：OUT_OF_SCOPE／NO_REJECTION_CONTRACT（本 run scope 僅 REQ-008／014 的 AC-0083、AC-0143；既有 TC 不受影響）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3VG7JJAEXZ0C96DK8JFRXMH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VG7JJATAPQNNNVSR8J4XV7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VG7JJAQBJFY6JB5NN34WFC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VG7JJAPV7BW51WMT5VPXC2
+    verdict: ok
+history:
+- at: '2026-10-01T10:36:12Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-005
