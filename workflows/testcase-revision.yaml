@@ -9,7 +9,7 @@ input:
     spec_version: {required: true}
     initiated_by: {required: true}
 initial_state: {workflow_run: CREATED, testcase: ACTIVE}
-agents: [agent-supervisor, agent-test-designer, agent-test-validator]
+agents: [agent-supervisor, agent-test-designer, agent-test-validator, agent-tc-risk-reviewer(conditional)]
 artifacts:
   - {type: TestCaseDraft, producer: agent-test-designer, note: "mode=change，supersedes_testcase 指向現行 ACTIVE 版本"}
   - {type: TestDesignReport, producer: agent-test-designer}
@@ -17,6 +17,7 @@ artifacts:
   - {type: ApprovalRequest, producer: agent-supervisor}
   - {type: WorkflowSummary, producer: agent-supervisor}
 max_validation_iterations: 3
+risk_review: {after: T2, agent: agent-tc-risk-reviewer}   # ADR-009：高風險 area 才插入 T2RR（applies_to_areas 見 agents/tc-risk-reviewer.yaml）
 tasks:
   - id: T1
     agent: agent-test-designer
@@ -37,7 +38,7 @@ tasks:
   - id: T4
     agent: agent-supervisor
     outputs: [WorkflowSummary]
-gates: [G-DESIGN, G-TVAL, G-APPROVAL]
+gates: [G-DESIGN, G-TVAL, G-APPROVAL, G-RISK(conditional)]
 failure_handling: {gate_fail: "同 spec-to-testcase"}
 human_approval: {required: [ACTIVATE_TESTCASE], conditional: [HUMAN_OVERRIDE]}
 output: ["新 TestCaseVersion ACTIVE", WorkflowSummary]

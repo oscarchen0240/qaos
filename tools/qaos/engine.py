@@ -35,10 +35,24 @@ def _expand_tasks(wf: dict, inputs: dict) -> list[dict]:
         if wf["workflow_id"] == "spec-to-testcase" and t["id"] == "T2" and inputs.get("analysis_review") == "required":
             tasks.append({"task_id": "T2R", "type": "approval", "status": "PENDING", "iteration": 0,
                           "input_artifact_ids": [], "input_entity_refs": [], "output_artifact_ids": []})
+        rr = _risk_review_task_id(wf, inputs)
+        if rr and t["id"] == wf["risk_review"]["after"]:
+            tasks.append({"task_id": rr, "type": "agent", "agent_id": wf["risk_review"]["agent"], "gate": "G-RISK", "status": "PENDING", "iteration": 0,
+                          "input_artifact_ids": [], "input_entity_refs": [], "output_artifact_ids": []})
     return tasks
+
+def _risk_review_task_id(wf: dict, inputs: dict) -> str | None:
+    """ADR-009：run 的 functional area（store.run_area）在風險抽查 agent 的 applies_to_areas 內 → 插入 <after>RR。
+    area 判定不了時由 new_run 事先拒絕，這裡不會把「未知」當成「不需抽查」。"""
+    cfg = wf.get("risk_review")
+    if not cfg: return None
+    if store.run_area(inputs) not in (agents()[cfg["agent"]].get("applies_to_areas") or []): return None
+    return cfg["after"] + "RR"
 
 def _wf_task(wf: dict, task_id: str) -> dict:
     if task_id == "T2R": return {"id": "T2R", "type": "approval", "approval_type": "REVIEW_TEST_ANALYSIS"}
+    if wf.get("risk_review") and task_id == wf["risk_review"]["after"] + "RR":
+        return {"id": task_id, "agent": wf["risk_review"]["agent"], "outputs": ["TCRiskReview"], "gate": "G-RISK"}
     return next(t for t in wf["tasks"] if t["id"] == task_id)
 
 def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
@@ -54,6 +68,8 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
     missing = [k for k, v in wf["input"]["fields"].items() if v.get("required") and k not in inputs and k != "initiated_by"]
     if missing: raise EngineError(f"缺少必要 input：{missing}")
+    if wf.get("risk_review") and store.run_area(inputs) is None:
+        raise EngineError("無法判定本 run 的 functional area（需 spec_id，或 functional_area 有值的 manual_record_id），無法決定是否需要高風險抽查（ADR-009）")
     if workflow_id == "spec-to-bug" and not inputs.get("evidence_ids"):
         raise EngineError("No Evidence, No Formal Bug：spec-to-bug 需要 evidence_ids")
     for eid in inputs.get("evidence_ids", []):
@@ -388,8 +404,11 @@ def _ci_entity(run, p):
 
 # ---------- Approval ----------
 def _create_approval_for_task(run, task, approval_type):
-    prev = next(t for t in reversed(run["tasks"][:[t["task_id"] for t in run["tasks"]].index(task["task_id"])]) if t["type"] == "agent")
+    before = run["tasks"][:[t["task_id"] for t in run["tasks"]].index(task["task_id"])]
+    prev = next(t for t in reversed(before) if t["type"] == "agent" and t.get("agent_id") != "agent-tc-risk-reviewer")
     arts = _valid_outputs(prev); art_ids = [a["artifact_id"] for a in arts.values()]
+    risk = next((_valid_outputs(t).get("TCRiskReview") for t in reversed(before) if t.get("agent_id") == "agent-tc-risk-reviewer" and t["status"] == "DONE"), None)
+    if risk: art_ids.append(risk["artifact_id"])
     items, impact, summary, options = [], [], "", [{"key": "approve", "label": "核准"}, {"key": "reject", "label": "退回"}, {"key": "override", "label": "強制通過（需 rationale）"}]
     if approval_type in ("ACTIVATE_TESTCASE", "APPLY_CHANGE"):
         src = next(t for t in reversed(run["tasks"]) if t.get("input_entity_refs"))
@@ -407,6 +426,13 @@ def _create_approval_for_task(run, task, approval_type):
             v = store.load(store.tc_version_path(it["id"], it["version"]))
             if v.get("assumptions"): exp_lines.append(f"[exploratory] {it['id']} v{it['version']} {v['title']}：" + "；".join(a["text"] for a in v["assumptions"]))
         if exp_lines: summary += f"（含 {len(exp_lines)} 條 exploratory，approve 即確認其假設）"
+        if risk:
+            rp = risk["payload"]; fs = rp["findings"]
+            summary += (f"（高風險抽查 {risk['artifact_id']}：{len(fs)} 條補充建議，high {sum(f['severity'] == 'high' for f in fs)}、需澄清 {sum(f['needs_clarification'] for f in fs)}；建議不影響本次核准，要採納請另起 run／開 CLR）"
+                        if fs else f"（高風險抽查 {risk['artifact_id']}：五面向皆無補充建議）")
+            exp_lines += [f"[risk-review] {rp['summary']}"] + [
+                f"[{f['finding_id']}/{f['severity']}/{f['dimension']}{'/需澄清' if f['needs_clarification'] else ''}] {f['gap']} → 建議：{f['suggested_scenario']}"
+                + (f"（相關 {', '.join(f['related_testcase_ids'])}）" if f["related_testcase_ids"] else "") for f in fs]
         if approval_type == "APPLY_CHANGE":
             ci = store.load(f"runs/{run['run_id']}/entities/change-impact.yaml"); state.apply("change_impact", ci, "PENDING_APPROVAL", SYSTEM, "compare done", run["run_id"]); store.save(f"runs/{run['run_id']}/entities/change-impact.yaml", ci)
     elif approval_type == "OPEN_BUG":
@@ -471,14 +497,19 @@ def _preflight_approval(apr, decision):
                 if c["status"] in ("OPEN", "ASKED"):
                     raise EngineError(f"{ref['id']} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
 
-def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False):
+def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, to_agent: str | None = None):
     if task["type"] == "approval":
         state.apply("task", task, "DONE", SYSTEM, "decided")
     if ok:
         _advance(run, task["task_id"]); return
     if back_to_generator:
         ids_ = [t["task_id"] for t in run["tasks"]]; i = ids_.index(task["task_id"])
-        gen = next(t for t in reversed(run["tasks"][:i]) if t["type"] == "agent" and t.get("agent_id") not in ("agent-supervisor", "agent-test-validator", "agent-bug-validator"))
+        before = run["tasks"][:i]
+        # to_agent：呼叫端明確指定退回對象。ACTIVATE_TESTCASE／APPLY_CHANGE 一律退回 Test Designer——spec-change-impact
+        # 的 T4 CIA compare 排在核准前，只找「最近一個非 validator agent」會誤退回 compare（ADR-009 review 修正）。
+        # 其餘核准（suite 成員、bug 等）維持「最近一個產出者」，例如 UPDATE_SUITE_MEMBERSHIP 退回 regression curator。
+        gen = (next((t for t in reversed(before) if t.get("agent_id") == to_agent), None) if to_agent else None) or \
+              next(t for t in reversed(before) if t["type"] == "agent" and t.get("agent_id") not in ("agent-supervisor", "agent-test-validator", "agent-bug-validator", "agent-tc-risk-reviewer"))
         gen["iteration"] += 1; gen["status"] = "READY"; gen["output_artifact_ids"] = []
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
             if t["task_id"] != task["task_id"] and t["status"] in ("DONE",) and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"):
@@ -532,7 +563,7 @@ def _commit_testcases(run, task, apr, decision, by):
             state.apply("change_impact", ci, "TEST_UPDATE_REQUIRED", by, apr["approval_id"], run["run_id"])
         store.save(ci_path, ci)
     store.audit(run["run_id"], SYSTEM, "COMMIT_TO_REGISTRY", ", ".join(activated) or "(none)")
-    _finish_approval_task(run, task, ok=decision in ("approve", "override") or bool(activated), back_to_generator=decision == "reject")
+    _finish_approval_task(run, task, ok=decision in ("approve", "override") or bool(activated), back_to_generator=decision == "reject", to_agent="agent-test-designer")
 
 def _commit_bug(run, task, apr, decision, by):
     b = store.load(_bug_path(run))

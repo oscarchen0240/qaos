@@ -12,7 +12,7 @@ input:
 initial_state:
   workflow_run: CREATED
   entities: {testcase: null, requirement: "DRAFT or ACTIVE (若已存在)"}
-agents: [agent-supervisor, agent-spec-analyst, agent-test-designer, agent-test-validator]
+agents: [agent-supervisor, agent-spec-analyst, agent-test-designer, agent-test-validator, agent-tc-risk-reviewer(conditional)]
 artifacts:
   - {type: SpecAnalysis, producer: agent-spec-analyst}
   - {type: RequirementModel, producer: agent-spec-analyst, persisted_to: artifacts/requirements/<spec_id>/v<spec_version>/}
@@ -22,6 +22,7 @@ artifacts:
   - {type: ApprovalRequest, producer: agent-supervisor}
   - {type: WorkflowSummary, producer: agent-supervisor}
 max_validation_iterations: 3
+risk_review: {after: T3, agent: agent-tc-risk-reviewer}   # ADR-009：高風險 area 才插入 T3RR（applies_to_areas 見 agents/tc-risk-reviewer.yaml）
 tasks:
   - id: T1
     agent: agent-spec-analyst
@@ -65,7 +66,7 @@ tasks:
     agent: agent-supervisor
     outputs: [WorkflowSummary]
     transitions: {workflow_run: "RUNNING → COMPLETED"}
-gates: [G-SPEC, G-DESIGN, G-TVAL, G-APPROVAL]
+gates: [G-SPEC, G-DESIGN, G-TVAL, G-APPROVAL, G-RISK(conditional)]
 failure_handling:
   structural_gate_fail: 不計入 max_validation_iterations；連續 2 次 → WAITING_HUMAN
   semantic_gate_fail: iteration+1；超限 → HUMAN_OVERRIDE

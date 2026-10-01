@@ -8,7 +8,7 @@ input:
     to_version: {required: true, description: 已由 Human 匯入 specs/}
     initiated_by: {required: true}
 initial_state: {workflow_run: CREATED, change_impact: DETECTED}
-agents: [agent-supervisor, agent-spec-analyst(conditional), agent-change-impact-analyst, agent-test-designer, agent-test-validator]
+agents: [agent-supervisor, agent-spec-analyst(conditional), agent-change-impact-analyst, agent-test-designer, agent-test-validator, agent-tc-risk-reviewer(conditional)]
 artifacts:
   - {type: RequirementModel, producer: agent-spec-analyst, conditional: true, note: to_version}
   - {type: ChangeImpactReport, producer: agent-change-impact-analyst}
@@ -19,6 +19,7 @@ artifacts:
   - {type: ApprovalRequest, producer: agent-supervisor}
   - {type: WorkflowSummary, producer: agent-supervisor}
 max_validation_iterations: 3
+risk_review: {after: T3, agent: agent-tc-risk-reviewer}   # ADR-009：高風險 area 才插入 T3RR（applies_to_areas 見 agents/tc-risk-reviewer.yaml）
 tasks:
   - id: T0
     agent: agent-spec-analyst
@@ -70,7 +71,7 @@ tasks:
   - id: T6
     agent: agent-supervisor
     outputs: [WorkflowSummary]
-gates: [G-SPEC(conditional), G-IMPACT, G-DESIGN, G-TVAL, G-COMPARE, G-APPROVAL]
+gates: [G-SPEC(conditional), G-IMPACT, G-DESIGN, G-TVAL, G-COMPARE, G-APPROVAL, G-RISK(conditional)]
 failure_handling:
   to_version_missing: run 建立時拒絕
   incompleteness: G-IMPACT structural FAIL → 回 T1
