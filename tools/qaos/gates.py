@@ -222,7 +222,52 @@ def g_reg(run, task, arts) -> list[str]:
         if not m["justification"].strip() or not m["risk_tag"].strip(): issues.append(f"{tid} 缺 justification / risk_tag")
     return issues
 
-GATES = {"G-SPEC": g_spec, "G-DESIGN": g_design, "G-TVAL": g_tval, "G-BVAL": g_bval, "G-IMPACT": g_impact, "G-COMPARE": g_compare, "G-REG": g_reg}
+RISK_DIMENSIONS = ("boundary", "exception_flow", "concurrency", "duplicate_submission", "permission")
+
+def g_risk(run, task, arts) -> list[str]:
+    """ADR-009：高風險抽查只檢查結構一致性（審的是本 run Validator PASS 的 draft、五面向齊全、建議可追溯）；
+    建議內容不擋關，由 Human 在 ACTIVATE／APPLY_CHANGE 核准單上判斷。"""
+    rr = arts.get("TCRiskReview")
+    if not rr: return ["缺 TCRiskReview"]
+    p = _payload(rr); rv = p["reviewed"]; issues = []
+    ids_ = [t["task_id"] for t in run["tasks"]]
+    vt = next((t for t in reversed(run["tasks"][:ids_.index(task["task_id"])]) if t.get("agent_id") == "agent-test-validator"), None)
+    tvr = None
+    for aid in reversed(vt["output_artifact_ids"] if vt else []):
+        ap = store.find_artifact(aid)
+        a = store.load(ap) if ap else None
+        if a and a["artifact_type"] == "TestValidationReport" and a["status"] == "VALID": tvr = a; break
+    if not tvr: return ["找不到本 run Validator 的 VALID TestValidationReport"]
+    if rv["validation_report_artifact_id"] != tvr["artifact_id"]: issues.append(f"reviewed.validation_report_artifact_id 應為 {tvr['artifact_id']}")
+    if rv["testcase_draft_artifact_id"] != tvr["payload"]["testcase_draft_artifact_id"]: issues.append(f"reviewed.testcase_draft_artifact_id 應為 {tvr['payload']['testcase_draft_artifact_id']}（Validator 審過的那份）")
+    if rv["spec_id"] != run["input"].get("spec_id"): issues.append(f"reviewed.spec_id {rv['spec_id']} 與 run 的 {run['input'].get('spec_id')} 不符")
+    sd = store.spec_dir(rv["spec_id"])
+    if sd is None or sd.parent.name != rv["functional_area"]: issues.append(f"reviewed.functional_area {rv['functional_area']} 與 {rv['spec_id']} 所屬 area 不符")
+    dp = store.find_artifact(tvr["payload"]["testcase_draft_artifact_id"])
+    did_set = {tc["draft_id"] for tc in store.load(dp)["payload"]["testcases"]} if dp else set()
+    if set(rv["testcase_draft_ids"]) != did_set:
+        issues.append(f"testcase_draft_ids 必須恰為 draft 全部 TC（缺 {sorted(did_set - set(rv['testcase_draft_ids']))}，多 {sorted(set(rv['testcase_draft_ids']) - did_set)}）")
+    dims = [d["dimension"] for d in p["dimension_results"]]
+    if sorted(dims) != sorted(RISK_DIMENSIONS): issues.append(f"dimension_results 必須五個面向各一（實際 {dims}）")
+    found = {f["dimension"] for f in p["findings"]}
+    for d in p["dimension_results"]:
+        if d["status"] == "gaps_found" and d["dimension"] not in found: issues.append(f"{d['dimension']} 標 gaps_found 但沒有對應 finding")
+        if d["status"] != "gaps_found" and d["dimension"] in found: issues.append(f"{d['dimension']} 有 finding 但 status 為 {d['status']}")
+    seen = set()
+    for f in p["findings"]:
+        if f["finding_id"] in seen: issues.append(f"finding_id {f['finding_id']} 重複")
+        seen.add(f["finding_id"])
+        if f["spec_basis"] is None and not f["needs_clarification"]:
+            issues.append(f"{f['finding_id']} 沒有 spec 依據卻未標 needs_clarification（不得自行寫出預期行為）")
+        for rid in f["related_requirement_ids"]:
+            if not refs.find_requirement(rid, rv["spec_id"], rv["spec_version"])[0]: issues.append(f"{f['finding_id']} 引用的 {rid} 不在 {rv['spec_id']}@{rv['spec_version']}")
+        for tid in f["related_testcase_ids"]:
+            if tid in did_set: continue
+            if not (tid.startswith(f"TC-{rv['functional_area']}-") and store.exists(store.tc_pointer_path(tid)) and store.load(store.tc_pointer_path(tid)).get("status") == "ACTIVE"):
+                issues.append(f"{f['finding_id']} 引用的 {tid} 既不是本次 draft，也不是同 area ACTIVE TC")
+    return issues
+
+GATES = {"G-SPEC": g_spec, "G-DESIGN": g_design, "G-TVAL": g_tval, "G-BVAL": g_bval, "G-IMPACT": g_impact, "G-COMPARE": g_compare, "G-REG": g_reg, "G-RISK": g_risk}
 
 def semantic_result(gate: str, arts) -> str | None:
     """Semantic 層：從 Validator artifact 讀 result；非 validator gate 回 None（= 只有 structural）。"""

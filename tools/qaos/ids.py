@@ -39,6 +39,7 @@ ART_PREFIX = {
     "SpecAnalysis": "ART-SA", "RequirementModel": "ART-RM", "TestDesignReport": "ART-TDR", "TestCaseDraft": "ART-TCD",
     "TestValidationReport": "ART-TVR", "BugDraft": "ART-BD", "BugValidationReport": "ART-BVR", "ChangeImpactReport": "ART-CIR",
     "VersionComparisonReport": "ART-VCR", "RegressionProposal": "ART-RP", "ApprovalRequest": "ART-AR", "WorkflowSummary": "ART-WS",
+    "TCRiskReview": "ART-TRR",
 }
 def artifact_id(artifact_type: str) -> str:
     return alloc(ART_PREFIX[artifact_type])

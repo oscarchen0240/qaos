@@ -51,7 +51,7 @@ for f in sorted((ROOT / "agents").glob("*.yaml")):
 print(f"[2] {len(agent_ids)} agent contracts checked")
 
 # --- 3. workflows ---
-gates = {"G-SPEC","G-DESIGN","G-TVAL","G-BVAL","G-IMPACT","G-COMPARE","G-REG","G-APPROVAL"}
+gates = {"G-SPEC","G-DESIGN","G-TVAL","G-BVAL","G-IMPACT","G-COMPARE","G-REG","G-APPROVAL","G-RISK"}
 v = validator("workflow/workflow-definition.schema.json")
 n=0
 for f in sorted(p for p in (ROOT / "workflows").glob("*.yaml") if p.name != "state-machines.yaml"):

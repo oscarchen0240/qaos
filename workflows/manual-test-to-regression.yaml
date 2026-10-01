@@ -8,7 +8,7 @@ input:
     spec_version: {required: false}
     initiated_by: {required: true}
 initial_state: {workflow_run: CREATED, testcase: null}
-agents: [agent-supervisor, agent-test-designer, agent-test-validator, agent-regression-curator]
+agents: [agent-supervisor, agent-test-designer, agent-test-validator, agent-regression-curator, agent-tc-risk-reviewer(conditional)]
 artifacts:
   - {type: TestDesignReport, producer: agent-test-designer, note: "含 mapping_confidence"}
   - {type: TestCaseDraft, producer: agent-test-designer, note: "source=manual_integration"}
@@ -17,6 +17,7 @@ artifacts:
   - {type: ApprovalRequest, producer: agent-supervisor, count: 2}
   - {type: WorkflowSummary, producer: agent-supervisor}
 max_validation_iterations: 3
+risk_review: {after: T2, agent: agent-tc-risk-reviewer}   # ADR-009：高風險 area 才插入 T2RR（applies_to_areas 見 agents/tc-risk-reviewer.yaml）
 tasks:
   - id: T1
     agent: agent-test-designer
@@ -51,7 +52,7 @@ tasks:
   - id: T6
     agent: agent-supervisor
     outputs: [WorkflowSummary]
-gates: [G-DESIGN, G-TVAL, G-APPROVAL, G-REG, G-APPROVAL]
+gates: [G-DESIGN, G-TVAL, G-APPROVAL, G-REG, G-APPROVAL, G-RISK(conditional)]
 failure_handling:
   cannot_map_requirement: 不得假設；WAITING_HUMAN
   duplicate: WAITING_HUMAN
