@@ -1,0 +1,79 @@
+title: 管理員站台切換選單僅列出管轄範圍內的站台，範圍外站台不出現，並可查看範圍內場館資料
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-001
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0011
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 環境負責人提供一個既有的管理員帳號 M，其管轄範圍已知且小於「全部站台」（「管轄範圍」的決定方式本 spec 未定義，一律以環境負責人給定的清單為準，不自行推斷）
+- 環境負責人提供兩份清單：M 管轄範圍內的站台（至少含機台場館站台 Arcade）、M 管轄範圍外的站台（至少一個，作為「不應出現」的負面比對基準）；範圍外站台須確認確實存在於系統（例如可由管轄範圍涵蓋全部站台的帳號於站台列表頁查得），避免因站台根本不存在而誤判為「不出現」
+test_data: []
+steps:
+- n: 1
+  action: 以管理員帳號 M 登入後台
+- n: 2
+  action: 進入 各式報表 > 場館日結報表
+- n: 3
+  action: 展開頁面標題下方的站台切換下拉選單，記錄下拉選單中列出的全部站台
+- n: 4
+  action: 逐一比對：選單中的每個站台是否都在 M 管轄範圍內清單；環境負責人給定的範圍外站台清單中的每一個是否出現在選單中
+- n: 5
+  action: 選擇管轄範圍內的機台場館站台（Arcade），將結算日期設為該場館有資料的單一營業日，搜尋
+expected_result: 步驟 3～4：下拉選單只含 M 管轄範圍內的站台；範圍外站台清單中的每一個站台都不出現在選單中（M 無法選取管轄範圍外的站台）。步驟 5：可查看所選範圍內站台的場館日結資料。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §功能說明/權限表（v0.2：管理員由「全部」改為「管轄範圍」；「管轄範圍」的定義本 spec 未載）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: change_workflow
+assumptions:
+- text: 管理員『管轄範圍』的決定方式 v0.2 未定義（RM REQ-001 ambiguity：所屬站台及其子樹，或最上層管理員實質仍為全部）；本 TC 以環境負責人給定的『已知範圍清單』作為判定基準，並假設環境中存在一個範圍小於全部站台的管理員帳號
+  requirement_id: REQ-DAILYREPORT-001
+  needs_human_confirmation: true
+source_ref: CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-001 affected
+testcase_id: TC-DAILYREPORT-001
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

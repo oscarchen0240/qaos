@@ -1,0 +1,83 @@
+title: 含進行中場次的列：期末餘額計入進行中場次的分數，且驗算式成立
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-021
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0214
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 時間限制：（1）整個執行期間不得跨越日結時間 T（UTC+0），若目前距 T 不足 1 小時請改日再執行；（2）場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認），自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢
+- 查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）
+- 查詢範圍內沒有被作廢的出金／收據（已作廢收據在報表上的呈現尚未定案，不在本 TC 驗證範圍）
+- 機台 A 在目前營業日開始（日結時間 T）時分數為 0（前一營業日結算時點無餘額），目前營業日內 A 只有一個進行中場次：期初餘額 0，已開分（AC 範例 1,000）並已投注，目前損益為 L（AC 範例 −200；實際值不限），今日沒有任何洗分、出金、入金，其後不再有任何交易
+- （資料佈置的未驗證前提）開分／投注／出金等機台金流操作的入口，以及機台目前分數的讀值來源，本報表 spec 均未載明（定義於「機台金流與場次」開發包③）；本 TC 以「機台前台畫面顯示的分數」為目前分數的讀值來源（沿用 TC-DAILYREPORT-099／101
+  作法），由環境負責人指引操作入口並確認讀值來源
+test_data:
+- name: AC-0214 示意
+  value: 期初 0、開分 1000、損益 −200 → 期末 800
+steps:
+- n: 1
+  action: 記錄機台前台機台 A 的目前分數 X
+- n: 2
+  action: 進入 各式報表 > 場館日結報表，統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選目前營業日（查詢當下所屬的營業日）（單一營業日），搜尋
+- n: 3
+  action: 找到機台 A 的目前營業日列，記錄期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額
+- n: 4
+  action: 計算 期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額，與期末餘額及 X 比對
+expected_result: 機台 A 列期末餘額＝X（含進行中場次的分數；AC 範例 800），且驗算式成立：期初餘額 ＋ 開分金額 ＋ 進鈔金額 ＋ 損益 － 洗分金額 － 收據金額 ＝ 顯示的期末餘額（AC 範例 0＋1,000＋(−200)＝800）。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位附註/餘額驗算（進行中場次的分數計入期末餘額，驗算式在任何查詢範圍皆成立）
+  quote: 進行中場次的分數計入期末餘額
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-DAILYREPORT-021
+testcase_id: TC-DAILYREPORT-124
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

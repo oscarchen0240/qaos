@@ -1,0 +1,76 @@
+title: 有效投注額與損益以 TWD 計算，損益採機台（會員）端符號
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-013
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0131
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 測試場館下有一台既有機台 A（自行從環境中選定），在選定的過去營業日 D 有投注；可查閱機台 A 對應會員於 D 的投注紀錄，取得該營業日全部注單的有效投注額與派彩（TWD）（投注紀錄的入口與欄位本報表 spec 未定義，由環境負責人指引；v1
+  步驟已有『比對會員投注紀錄』作法，本 TC 沿用）
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期選 D（單一營業日），搜尋；記錄機台 A 列的有效投注額 V、損益 L（含正負號與顏色）
+- n: 2
+  action: 於機台 A 對應會員的投注紀錄，加總營業日 D 內全部注單的有效投注額 B 與派彩 P（TWD）
+- n: 3
+  action: 計算機台端損益 P − B（玩家淨贏為正、淨輸為負）
+expected_result: V＝B（以 TWD 表示）；L＝P − B：數值相同、正負號依機台（會員）端——P>B 時 L 為正值（綠色），P<B 時 L 為負值（紅色），不是 B − P。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位/有效投注額、損益（核心貨幣 TWD；v0.2 新增機台端視角）
+  quote: 當日投注損益，以主站台核心貨幣計算；以機台（會員）端計算——正值代表玩家淨贏、機台分數增加
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-040 affected
+testcase_id: TC-DAILYREPORT-040
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

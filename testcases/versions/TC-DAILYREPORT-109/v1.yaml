@@ -1,0 +1,79 @@
+title: 按週時，週列的期初餘額取該週第一個營業日之前結算時點的值，而非該週第一個營業日當日的期末
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-015
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0153
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- （歷史資料佈置）本規格未定義如何造出過去營業日的資料：由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的 AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日結算時點的分數、各項金額）作為預期值的比對來源
+- 查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）
+- 一個完整週 W（週一 Wm 至週日 Ws，AC 範例以週一為該週第一個營業日）：W 之前一個營業日（週日）結算時點，場館各機台分數合計 700（AC 範例）
+- 週一 Wm 當日有交易，使 Wm 當日結算時點的分數合計不等於 700（使『第一個營業日之前』與『第一個營業日當日』的值可區分）
+- 場館內各機台於週一 Wm 前一營業日結算時點的分數合計已知（取自造數記錄）
+test_data:
+- name: 週一前一營業日結算時點分數合計
+  value: 700（AC 範例）
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」、統計週期選「按週」、機台帳號留空、結算日期選 Wm～Ws（完整的一週），搜尋；記錄該週列的期初餘額
+- n: 2
+  action: （對照）統計週期改選「按日」，結算日期不變，搜尋；記錄週一 Wm 那一列的期初餘額與期末餘額
+expected_result: 步驟 1：該週列期初餘額＝700（週一 Wm 之前一個營業日結算時點的分數合計），不等於週一 Wm 當日的期末餘額；步驟 2：週一 Wm 列期初餘額同為 700，期末餘額不等於 700。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位附註（非按日週期：期初餘額取該週期第一個營業日之前結算時點的值）
+  quote: 「期初餘額」取該週期第一個營業日之前結算時點的值
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-DAILYREPORT-015
+testcase_id: TC-DAILYREPORT-109
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

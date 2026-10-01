@@ -1,0 +1,217 @@
+artifact_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-007
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-01T12:39:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+- entity_type: Artifact
+  id: ART-RM-01M3VN55VDAAYSNV31Y9EJA2PC
+- entity_type: Artifact
+  id: ART-CIR-01M3VNQQ2Q073T4VH6R8C6JHEN
+- entity_type: Artifact
+  id: ART-TVR-01M3VQ72TQAXYSVZN4E3MEQG6B
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M3VN55VDAAYSNV31Y9EJA2PC
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M3VQFWHA4RSYN9AGM95KAGCK
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-020
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位附註/期初餘額比照辦理（2026-09-17）
+      quote: 含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）
+    evidence: 'assumptions[0]：requirement_id: REQ-DAILYREPORT-020，needs_human_confirmation: true；text 寫明 D2 正落在「RM REQ-DAILYREPORT-016
+      ambiguity（major）：CLR-DAILYREPORT-006『無資料各欄 0』與 v0.2…衝突」，並寫明「若 PM 裁定無資料列餘額顯示 0，本 TC 的 expected 須跟著改」。requirement_ids
+      只有 REQ-DAILYREPORT-020。'
+    explanation: 上一版的 blocker 已解決：依賴已明確揭露為 needs_human_confirmation 的假設，核准者讀假設文字就能看到它依賴 REQ-016 與 CLR-006 的裁定與後果。掛在 REQ-020
+      名下符合「假設的 requirement_id 須在該 TC 的 requirement_ids 內」的 gate 規則。剩下的風險只在追溯：任何以 requirement_id＝REQ-016 篩選受影響假設或 TC 的工具與查詢，都會漏掉這條。
+    recommended_change: 核准時在 RESOLVE_AMBIGUITY（或 exploratory 接受）的決定紀錄裡，明確寫上本 TC 與 REQ-DAILYREPORT-016 ambiguity 的相依；REQ-016
+      裁定後做 CLR 落地時，依 ADR-008 掃同 area 的 ACTIVE TC，要把本 TC 納入判定。Draft 本身不需要再改。
+  - testcase_id: TC-DRAFT-01M3VQFWHAAQ9FM15MNT1DTZ35
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-024
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §排序與分頁/狀態保留
+      quote: 變更篩選、統計週期、統計維度、排序或鑽取層級時一律回到第 1 頁
+    evidence: preconditions 只保證「R23 內至少有 3 台機台（含機台 A）…每台機台在 R23 內至少 11 個場次」；steps 5：「點第 3 頁任一列的機台帳號向下鑽取（切至依場次明細）；檢視分頁列（預期該機台在
+      R23 內至少 11 個場次，至少 2 頁）」；expected：「且每次變更後總筆數都 ≥ 11」。
+    explanation: 基準狀態 B 是依機台明細、機台帳號留空、預設排序，第 3 頁（第 21–30 筆）可能出現那 3 台以外、場次不足 11 的機台。執行者如果點到這種機台，系統行為正確也會因為「總筆數 ≥ 11」不成立而判失敗（假失敗）。這是本次修正新引入的小缺口。
+    recommended_change: 把步驟 5 限定為「點第 3 頁中屬於上述 3 台機台之一的那一列的機台帳號」，並在前置條件確保第 3 頁一定有這 3 台的列；或者把前置條件改為「R23 內有資料的每台機台都至少 11 個場次」。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: '以下 10 條 TC 帶 needs_human_confirmation: true 的假設：TC-DRAFT-01M3VQFWH9Z20WWHZBRDZXMER6（管轄範圍定義）、TC-DRAFT-01M3VQFWH9Q0V0QDC63HNH0FS2／99BG3WFRMMXZSWR02／98MJAEWB2NRTDNWWM（REQ-016
+      無資料列餘額，以選資料避開）、TC-DRAFT-01M3VQFWHA4RSYN9AGM95KAGCK（依賴 REQ-016 ambiguity 的裁定，本次新增）、TC-DRAFT-01M3VQFWH9NW486HN5BSKNGVJT（REQ-009
+      營業日內逾時結束）、TC-DRAFT-01M3VQFWH9JEZ8TDD249HJ9JB0／99B10KF9BAFFPX7FY（CLR-DAILYREPORT-014 越權反應）、TC-DRAFT-01M3VQFWHA5G82J3N996ADXPXX（AC-0244
+      佈置方式）、TC-DRAFT-01M3VQFWHAZ6XVJHSSV5F5VVX3（清除後的狀態）。'
+    explanation: '依本 run 的派發指示，待 PM 回覆的項目以 needs_human_confirmation: true 呈現屬合規 exploratory，不列 blocker。但依角色契約，未被 ApprovalDecision(RESOLVE_AMBIGUITY)
+      覆蓋的假設必須在核准階段處理。'
+    recommended_change: 在 approval 階段逐條做 RESOLVE_AMBIGUITY（或明確標為 exploratory 接受）；PM 回覆 CLR-DAILYREPORT-014 及 REQ-009／016／017
+      後，回頭修訂對應的 TC。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      location: §列表欄位/場次數
+      quote: 為當日結束的場次筆數：依機台明細＝該機台帳號當日的場次數
+    evidence: ACTIVE TC-DAILYREPORT-031 v1（不在本 Draft）的 expected：「場次數 2（逾時結束 1 ＋ 日結結算 1…）」；CIR 判 unaffected。RM v0.2 REQ-DAILYREPORT-009
+      ambiguity（major）：營業日內逾時結束場次是否計入未定義（已送 PM）。
+    explanation: 同需求的 ACTIVE TC-031 仍斷言逾時結束會計入，與 v0.2 RM 的 ambiguity 矛盾（沿用上一版的提醒；不是本 Draft 的缺陷）。
+    recommended_change: 在核准或 CIR 複核時重新評估 TC-DAILYREPORT-031，等 REQ-009 ambiguity 裁定後再修訂。
+  coverage_summary:
+    requirements_total: 26
+    requirements_covered: 26
+    ac_total: 98
+    ac_covered: 98
+    uncovered_accepted:
+    - REQ-DAILYREPORT-011：出金作廢後收據／已兌現／未兌現的呈現依 CLR-DAILYREPORT-011 暫緩（PM 尚無規劃，Oscar 決定暫緩），不設計、不假設，不算覆蓋缺口
+    - REQ-DAILYREPORT-021：含作廢出金的列，驗算式是否成立依 CLR-DAILYREPORT-011 暫緩；AC-0211～0215 已由本 Draft 覆蓋（前置條件排除作廢）
+    - REQ-DAILYREPORT-015：未兌現／已兌現在含作廢出金時的歸屬依 CLR-DAILYREPORT-011 暫緩；AC-0151～0153 已覆蓋
+    - REQ-DAILYREPORT-009：AC-0093 由 ACTIVE TC-DAILYREPORT-030 覆蓋；AC-0092 在本次修訂後從 TC-077 修訂移除，由 ACTIVE TC-DAILYREPORT-029 覆蓋
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    assumptions_all_flagged: true
+    revisions_match_cir_reasons: true
+    cir_new_required_ac_covered: true
+    high_risk_non_happy_coverage: true
+    expected_quotes_verbatim_in_spec: true
+    previous_iteration_issues_resolved: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3VQFWH9Z20WWHZBRDZXMER6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH966M68T4K7AJ0E6FQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH99HRAX98H0DXFEMQ8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH94YTJW1JJ13WW0GNR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9Q0V0QDC63HNH0FS2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH99BG3WFRMMXZSWR02
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9WG4BNVMK6T50MXQ0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9NW486HN5BSKNGVJT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH98GY8FFHFNQT7WBEQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9HPHMQP3KTS1JF1K0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9ZG4QHDE7JDYCXV9A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9JEZ8TDD249HJ9JB0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH99B10KF9BAFFPX7FY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH934H38EGBX2FE0GYF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH903336KWNGD7AEZ8V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9JYABSFJAPW5CACCK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH912SPERSHDX5RG98W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9REY0RJAZ5R6HDN1N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH98MJAEWB2NRTDNWWM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWH9VDVXZRVJJV67QWSG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAA14CST87SRX1A8DE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAF1RF46XQ65AF7GT7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHATQDVGMPWP0YB921Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHATGR14PPSYW1FXWAR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHARVKSSMYBE58S37P7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAS7HZPJ36EM9BVCX1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA2006CSWWAG9M5830
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAJYWRDN9T73BH6X1V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA6F7AK1CN5ANZG5DB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA4RSYN9AGM95KAGCK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAKZQ1P40XXPGT4FN9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAFTD9HPK8FP8TE765
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAPFPWJ6X3VFT03V96
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAZ0WK3F6YM2JX31KJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHARFEY6EE8D072ZZ6H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA90F0C7R8JCJ49P2E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAQKM9GF2Q2SQ9PBTD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA88356G8ZYKSKTY7T
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA6MZ1KRA228A94SRQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHARQM1TER0MJMJ18NJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA5G82J3N996ADXPXX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAAQ9FM15MNT1DTZ35
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA8E1C8TMS3BQE4QB3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHA8V80B5MT27YTBM84
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAZ92NANQS77K026CC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHADZ7DAGAN21EERJ8T
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHANZ1FA68VZDPZR7D2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3VQFWHAZ6XVJHSSV5F5VVX3
+    verdict: ok
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-007

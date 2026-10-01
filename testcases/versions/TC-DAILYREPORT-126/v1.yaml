@@ -1,0 +1,83 @@
+title: 排序指示與切換：預設結算期間新→舊（▼）、點擊在遞增與遞減兩段間切換、點另一欄由遞增開始
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-022
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0221
+- AC-DAILYREPORT-0222
+- AC-DAILYREPORT-0223
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- state_transition
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 測試場館 Arcade 下選定一段連續至少 3 個營業日、各日皆有資料且各日開分金額、損益彼此不同的區間（使排序結果可由數值順序判讀），以「依場館彙總＋按日」查詢時至少有 3 列
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」、統計週期選「按日」、結算日期選上述區間，搜尋（首次查詢，不做任何排序操作）；檢視各欄位標題的排序指示與列的順序
+- n: 2
+  action: 點「開分金額」標題一次；檢視該標題指示與列的順序
+- n: 3
+  action: 再點「開分金額」標題一次；檢視指示與列的順序
+- n: 4
+  action: 第三次點「開分金額」標題；檢視指示與列的順序
+- n: 5
+  action: 再點「開分金額」標題一次，使其處於遞減（▼）
+- n: 6
+  action: 點「損益」標題；檢視「損益」與「開分金額」兩個標題的指示，以及列的順序
+expected_result: 步驟 1：結算期間標題顯示 ▼、其餘欄位標題顯示 ⇅，列依結算期間新→舊（最新營業日在最上）。步驟 2：開分金額 ▲，列依開分金額遞增；步驟 3：開分金額 ▼，列依開分金額遞減；步驟 4：回到 ▲（只有遞增與遞減兩段，不會回到未排序
+  ⇅）。步驟 6：損益標題為 ▲（改依損益遞增），開分金額標題回到 ⇅。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §排序與分頁/點擊切換、預設排序
+  quote: 點擊標題在遞增 → 遞減兩段之間切換；點擊另一欄時該欄由遞增開始
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-DAILYREPORT-022
+testcase_id: TC-DAILYREPORT-126
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

@@ -1,0 +1,83 @@
+title: 按週以週一為週起，結算日期起日非週一時仍以週一分週；預設排序新→舊，完整週列金額等於週內各營業日合計
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-005
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0052
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 測試場館下有既有機台 A、B（自行從環境中選定），結算日期 2026-09-03～2026-09-13 內各營業日有交易資料（日期為示意：以環境中符合下列星期關係的區間替代亦可——起日非週一、迄日為週日；AC 範例 2026-09-03 為週四、2026-09-13
+  為週日）
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」，結算日期選 2026-09-03(四)～2026-09-13(日)（起日非週一、迄日為完整週末），統計週期選「按週」，搜尋
+- n: 2
+  action: 確認結算期間標題顯示 ▼（預設排序：結算期間新→舊），記錄列表的列數與每列的結算期間，依列表由上而下的順序
+- n: 3
+  action: 記錄「週一 2026-09-07 起」那一列與「含起日 09-03 的不完整週」那一列的開分、洗分、進鈔、收據、場次數
+- n: 4
+  action: 統計週期改選「按日」，結算日期維持 2026-09-03～2026-09-13，搜尋；分別加總 09-07～09-13 七個營業日各列、以及 09-03～09-06 四個營業日各列的開分、洗分、進鈔、收據、場次數（08-31～09-02
+    不在查詢範圍，按日列不會出現）
+- n: 5
+  action: 比對步驟 3 兩列與步驟 4 兩組合計：09-07 起那列對 09-07～09-13 的合計；不完整週那列對 09-03～09-06 的合計
+expected_result: 步驟 2：列出兩列；依預設排序（新→舊），列表第一列為週一 2026-09-07 起的那一週（結算期間 09-07～09-13），第二列為含起日 09-03 的不完整週（週一 2026-08-31 所在週，結算期間依實際起迄顯示為
+  09-03～09-06，不補滿到 08-31，且範圍外的 08-31～09-02 不計入該列合計）。步驟 5：第一列的開分、洗分、進鈔、收據、場次數＝09-07～09-13 七個營業日按日各列的合計；第二列同樣各欄＝09-03～09-06
+  四個營業日按日各列的合計（範圍外的 08-31～09-02 不計入）（期初／期末餘額為時點值，不在此比對）。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §篩選器/統計週期（不完整週的實際起迄顯示依 CLR-DAILYREPORT-008；預設排序見 §排序與分頁）
+  quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-014 affected
+testcase_id: TC-DAILYREPORT-014
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

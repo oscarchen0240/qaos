@@ -1,0 +1,81 @@
+title: 依場次明細查單一機台，最後一個場次為進行中時，總計列期末餘額計入進行中場次累計到查詢當下的分數
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-019
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0194
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 時間限制：（1）整個執行期間不得跨越日結時間 T（UTC+0），若目前距 T 不足 1 小時請改日再執行；（2）場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認），自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢
+- 查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）
+- 機台 A 在目前營業日（查詢當下所屬的營業日）內先有一個已結束場次（以出金結束，出金一律清空餘額，故該場次期末餘額為 0），之後再開分形成進行中場次，目前分數 X 已知（以機台前台畫面顯示的分數為準，須大於 0；AC 範例 600），其後不再有任何交易
+- （資料佈置的未驗證前提）開分／投注／出金等機台金流操作的入口，以及機台目前分數的讀值來源，本報表 spec 均未載明（定義於「機台金流與場次」開發包③）；本 TC 以「機台前台畫面顯示的分數」為目前分數的讀值來源（沿用 TC-DAILYREPORT-099／101
+  作法），由環境負責人指引操作入口並確認讀值來源
+test_data:
+- name: X
+  value: 機台 A 目前分數；AC 範例 600，實際取機台前台讀值，須 > 0
+steps:
+- n: 1
+  action: 進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期選「按日」、機台帳號填機台 A、結算日期涵蓋前一營業日與目前營業日（營業日依日結時間 T（UTC+0）切分，取涵蓋兩天的區間），搜尋
+- n: 2
+  action: 預設排序為結算期間新→舊、每頁 10 筆：以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」定位兩個場次列（已結束場次列、進行中場次列），不依賴列的位置，必要時翻頁；記錄兩列的期末餘額
+- n: 3
+  action: 記錄底部總計列的期末餘額
+expected_result: 進行中場次列期末餘額＝X、已結束場次列期末餘額＝0；總計列期末餘額＝X（計入進行中場次累計到查詢當下的分數），不是最後一個已結束場次的 0。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位附註/期末餘額不加總（2026-09-17 修訂：計入進行中場次）
+  quote: 改為計入進行中場次累計至查詢當下的分數
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-DAILYREPORT-019
+testcase_id: TC-DAILYREPORT-117
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

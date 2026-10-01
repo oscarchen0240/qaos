@@ -1,0 +1,89 @@
+title: 匯出 CSV 為整個查詢結果（不受分頁限制）：含全部 23 列與總計列，總計列期初／期末餘額與畫面一致
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-016
+- REQ-DAILYREPORT-019
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0162
+- AC-DAILYREPORT-0196
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 測試場館 Arcade 下選定一段連續 23 個營業日的結算日期區間（記為 R23，例如 2026-09-01～2026-09-23），區間內每個營業日皆有交易資料，使「依場館彙總＋按日」時每個營業日一列、共 23 列（3 頁：10＋10＋3）；不選含完全無資料營業日的區間——無資料時各欄顯示
+  0 與 v0.2 餘額規則（含當期無場次但仍有留存分數者）的關係尚未釐清（RM REQ-DAILYREPORT-016 ambiguity）
+- 測試場館下至少有兩台機台在 R23 內有資料（多機台、多日），且 R23 內至少兩個營業日的期末餘額不為 0 且彼此不同
+- 查詢範圍內不含狀態「逾時結束」的場次（逾時結束後留在機台的餘數是否承接、是否計入餘額，本 spec 未定義；為避免該未定義行為干擾餘額，請挑選或佈置不含逾時結束場次的資料）
+- 可開啟下載的 CSV 檔（以試算表或文字編輯器開啟）
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」、統計週期選「按日」、結算日期選 R23，搜尋；翻到第 2 頁（確認分頁列為第 11–20 筆）
+- n: 2
+  action: 逐頁記錄全部 23 列的各欄，並記錄畫面底部總計列各欄（含期初餘額、期末餘額）
+- n: 3
+  action: 目前仍在第 2 頁時，點頁面右上角「匯出 CSV」
+- n: 4
+  action: 開啟 CSV：記錄資料列數、各列各欄數值、總計列各欄數值
+- n: 5
+  action: 比對 CSV 與畫面：列數、各列數值、總計列各欄（含期初／期末餘額）
+expected_result: 步驟 4～5：CSV 含全部 23 列資料（不是僅目前第 2 頁的 10 列）與總計列；各列數值與畫面一致；CSV 總計列的金額與筆數欄＝全部 23 列合計，期初餘額、期末餘額與畫面總計列的值一致（時點值，非各列逐列相加）。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位末段 + §操作（CSV 總計列餘額依時點值規則）
+  quote: 頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions:
+- text: RM REQ-DAILYREPORT-016 ambiguity（major）：CLR-DAILYREPORT-006「無資料時各欄顯示 0」與 v0.2「各列餘額含當期無場次但仍有留存分數者」衝突，PM 尚未回覆；本 TC 刻意選用每個營業日皆有資料的區間以避開此情境，不對「無資料營業日的期初／期末餘額應顯示
+    0 或留存分數」作任何斷言
+  requirement_id: REQ-DAILYREPORT-016
+  needs_human_confirmation: true
+source_ref: CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-048 affected
+testcase_id: TC-DAILYREPORT-048
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

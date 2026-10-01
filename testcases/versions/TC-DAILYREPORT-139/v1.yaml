@@ -1,0 +1,81 @@
+title: 鑽取到第三層後切換站台，或按「清除」，鑽取路徑重設為第一層
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-026
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0266
+- AC-DAILYREPORT-0267
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- state_transition
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台，其管轄範圍內有至少兩個可查詢場館日結報表的站台（其一為機台場館站台 Arcade，另一個由環境負責人提供）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- Arcade 下有一個有資料的營業日 D，且 D 當日機台 A（自行從環境中選定）有場次
+test_data: []
+steps:
+- n: 1
+  action: 站台切換選 Arcade；統計維度「依場館彙總」、統計週期「按日」、結算日期選 D，搜尋；點 D 列場館名再點機台 A 的機台帳號，鑽取到第三層（確認麵包屑為三層）
+- n: 2
+  action: 在頁面標題下方的站台切換下拉選單切換到另一個站台；檢視麵包屑層數與各層文字，並記錄此時的統計維度與篩選條件
+- n: 3
+  action: 站台切回 Arcade，重新依步驟 1 鑽取到第三層（確認為三層）
+- n: 4
+  action: 按篩選器的「清除」按鈕；檢視麵包屑層數與各層文字，並記錄此時的統計維度與篩選條件
+expected_result: 步驟 2（切換站台）與步驟 4（按「清除」）：鑽取路徑重設為第一層（麵包屑僅剩第一層「場館」）。統計維度與其他篩選條件的實際狀態僅記錄，不作為判準。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §維度鑽取與麵包屑/重設
+  quote: 切換站台或按「清除」時鑽取路徑重設為第一層
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions:
+- text: 『鑽取路徑重設為第一層』重設後統計維度是否一併回到依場館彙總、其他篩選是否清空，spec 與 AC 未明寫（RM REQ-026 ambiguity）；本 TC 推定可觀察結果為麵包屑僅剩第一層，並只記錄統計維度與篩選條件的實際狀態，需
+    PM／BA 確認
+  requirement_id: REQ-DAILYREPORT-026
+  needs_human_confirmation: true
+source_ref: new_required:REQ-DAILYREPORT-026
+testcase_id: TC-DAILYREPORT-139
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

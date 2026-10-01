@@ -1,0 +1,81 @@
+title: 鑽取麵包屑的層級數隨統計維度變化（一層／兩層／三層），當前層為純文字、上層為可點連結，並與頁首功能路徑麵包屑並存
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-025
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0251
+- AC-DAILYREPORT-0252
+- AC-DAILYREPORT-0253
+- AC-DAILYREPORT-0254
+- AC-DAILYREPORT-0256
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 測試場館 Arcade 下選定一個有資料的營業日（單一營業日），三種統計維度皆能查出資料
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」，結算日期選該營業日，搜尋；檢視篩選器下方的麵包屑（層數、各層文字、每層下方的統計維度標註、各層是否可點），並檢視頁首功能路徑麵包屑（各式報表 / 場館日結報表）；嘗試點擊麵包屑唯一的一層，確認沒有任何導覽動作
+- n: 2
+  action: 不經鑽取，直接從統計維度下拉選單改選「依機台明細」；檢視麵包屑與頁首功能路徑麵包屑（不點擊任何連結，避免改變狀態）
+- n: 3
+  action: 不經鑽取，直接改選「依場次明細」；檢視麵包屑與頁首功能路徑麵包屑；嘗試點擊最後一層，確認沒有任何導覽動作
+- n: 4
+  action: 改選回「依場館彙總」（確認為一層），再直接改選「依場次明細」；檢視麵包屑是否同步更新為三層
+expected_result: 步驟 1：麵包屑只有一層「場館」（顯示當前所選場館名），下方標註「依場館彙總」，純文字不可點；步驟 2：兩層「場館 › 結算期間」，下方分別標註「依場館彙總」「依機台明細」，「場館」為可點連結、「結算期間」為純文字；步驟
+  3：三層「場館 › 結算期間 › 機台帳號」，前兩層為可點連結、最後一層「機台帳號」純文字；步驟 4：由一層直接改選依場次明細時，麵包屑同步更新為三層；步驟 1～4 的每個維度下，頁首功能路徑麵包屑（各式報表 / 場館日結報表）與頁內鑽取麵包屑同時存在。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §維度鑽取與麵包屑/層級數、當前層級、上層連結
+  quote: 依場館彙總顯示一層、依機台明細兩層、依場次明細三層；直接切換「統計維度」下拉選單時麵包屑同步更新
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-DAILYREPORT-025
+testcase_id: TC-DAILYREPORT-134
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

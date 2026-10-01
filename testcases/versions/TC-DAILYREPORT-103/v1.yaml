@@ -1,0 +1,81 @@
+title: 管理員直接呼叫報表查詢 API 並將站台／場館參數改為管轄範圍外時，不得取得範圍外場館的日結資料
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-001
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0011
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 環境負責人提供一個既有的管理員帳號，其管轄範圍已知，並提供至少一個該帳號管轄範圍外、且確實存在於系統的站台／場館識別（作為越權目標）
+- 瀏覽器可開啟開發者工具擷取請求；報表查詢請求的路徑與參數名稱本 spec 未載明，由步驟 2 現場擷取，不預設
+- 進入 各式報表 > 場館日結報表
+test_data: []
+steps:
+- n: 1
+  action: 以管理員帳號登入後台，進入 各式報表 > 場館日結報表，站台切換選單選擇一個管轄範圍內的機台場館站台，結算日期選該場館有資料的單一營業日，搜尋一次
+- n: 2
+  action: 開啟瀏覽器開發者工具的 Network 頁籤，找到該次報表查詢所送出的請求（記下請求方法、路徑、代表站台／場館的參數名稱與目前值）
+- n: 3
+  action: 以同一個登入 session 重送該請求，僅把代表站台／場館的參數值改為管理員管轄範圍外的站台／場館識別（由環境負責人提供，須確認該站台確實存在於系統），其餘參數不變
+- n: 4
+  action: 檢視回應：HTTP 狀態碼、回應內容（是否含任何範圍外場館的日結資料列）
+- n: 5
+  action: （對照）以原本範圍內的參數值重送，確認同一請求在範圍內可正常取得資料，排除請求本身格式錯誤造成的假拒絕
+expected_result: 步驟 4：回應不含任何管轄範圍外場館的日結資料列（本 TC 只斷言「不得取得範圍外資料」；至於具體反應形式——被拒絕／錯誤碼，或回傳空列表——尚待 PM 確認，不作為判準，只記錄實際回應）。步驟 5：範圍內參數值的同一請求可正常回傳資料。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §功能說明/權限表（管理員＝管轄範圍；越權的系統反應 v0.2 未定義，待 CLR-DAILYREPORT-014）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions:
+- text: 管理員越權（直接呼叫 API 帶管轄範圍外站台／場館）時的系統反應 v0.2 未定義（CLR-DAILYREPORT-014 OPEN）：本 TC 推定『不得取得範圍外資料』成立，並假設其反應可能比照操作員（後端拒絕）也可能為空列表；具體反應形式待
+    PM 確認，不作為本 TC 判準
+  requirement_id: REQ-DAILYREPORT-001
+  needs_human_confirmation: true
+source_ref: new_required:REQ-DAILYREPORT-001
+testcase_id: TC-DAILYREPORT-103
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007

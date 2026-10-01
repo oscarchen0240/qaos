@@ -1,0 +1,78 @@
+title: 同一機台有已結束與進行中場次時，只有進行中場次顯示結束時間「—」並持續累計時長
+product: ba-admin
+functional_area: DAILYREPORT
+requirement_ids:
+- REQ-DAILYREPORT-008
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0083
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 已登入後台並切換至機台場館站台（Arcade）
+- 測試場館下有一台既有機台 A（自行從環境中選定）
+- 執行期間不得跨越場館日結時間 T（UTC+0）（若目前離日結時間不到 30 分鐘，請改日或等日結後再執行）
+- 場次逾時預設為 1 小時（環境設定，本 spec 未載明，需環境負責人確認）：自機台 A 最後一次交易起算須在 1 小時內完成所有查詢，否則進行中場次可能變為「逾時結束」而使本次執行作廢
+- 機台 A 在同一個營業日內先後有兩個場次：先一個已結束場次（有開分與投注，以出金結束——出金一律清空餘額，見 spec §場次資訊），之後再開分並投注形成一個進行中場次，且之後不再有任何交易
+- （比對基準）已結束場次與進行中場次是同一台機台、同一次查詢內的兩列，彼此互為對照
+test_data:
+- name: 等待間隔
+  value: 約 3 分鐘
+steps:
+- n: 1
+  action: 進入 各式報表 > 場館日結報表，統計維度選「依場次明細」、統計週期「按日」、機台帳號填機台 A；結算日期涵蓋前一營業日與目前營業日（營業日依場館日結時間 T（UTC+0）切分；日期標示可能與測試人員所在地的日曆日不同，故取涵蓋兩天的區間）；列表預設依結算期間新→舊排序、每頁
+    10 筆，進行中場次屬於最新（目前）營業日、位於列表最上方，請以「機台帳號＝機台 A」且「結算期間＝目前營業日（查詢當下所屬的營業日）」定位目標列，不依賴列的位置；若目標列不在第 1 頁，翻頁尋找；查詢（兩個場次皆屬目前營業日，位於列表最上方附近）
+- n: 2
+  action: 在列表分別找出機台 A 的已結束場次列與進行中場次列（以場次狀態區分），記錄兩列的場次編號、狀態、結束時間、場次時長（已結束列 E1、進行中列 P1）
+- n: 3
+  action: 不對機台 A 做任何交易，等待約 3 分鐘，以完全相同的條件重新查詢，記錄兩列的結束時間與場次時長（已結束列 E2、進行中列 P2）
+expected_result: 已結束列：狀態「已結束」、結束時間為具體時間（不是「—」），兩次查詢的結束時間與場次時長不變（E2＝E1）；進行中列：狀態「進行中」、結束時間「—」，P2 比 P1 多約 3 分鐘；兩列的場次編號不同。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §背景：場次資訊（場次時長）+ §列表欄位/場次編號；進行中場次列於依場次明細的呈現見 §列表欄位附註/餘額驗算（v0.2 原文）
+  quote: 開始至結束的時間差；進行中則顯示累計至查詢當下
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions: []
+source_ref: CIR CI-SPEC-DAILYREPORT-001-0.1-0.2 testcase_impact：TC-DAILYREPORT-100 affected
+testcase_id: TC-DAILYREPORT-100
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+created_at: '2026-10-01T12:40:21Z'
+updated_at: '2026-10-01T12:40:21Z'
+history:
+- at: '2026-10-01T12:40:21Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3VQFWJM1RG582ZY6EKB7NP1
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261001-007
+- at: '2026-10-01T12:40:21Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3VQMPMC6BNNX7KB3GAFB0WM
+  run_id: RUN-20261001-007
