@@ -1,0 +1,178 @@
+<title>注單錢包餘額欄位對調</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eceef2; --border:#d8dce3;
+  --text:#1a1d24; --text-dim:#5a6072; --text-faint:#8890a0;
+  --accent:#c2410c; --accent-bg:#fff1ea; --accent-border:#f2c4a8;
+  --ok:#0f7a4e; --ok-bg:#e9f7f0;
+  --mono-bg:#0f1117; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+    --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+    --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+    --ok:#4fd39a; --ok-bg:#132a22;
+    --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161c; --surface:#1b1e26; --surface-2:#232733; --border:#333947;
+  --text:#e7e9ee; --text-dim:#a6acbd; --text-faint:#767d8f;
+  --accent:#f0864a; --accent-bg:#3a2418; --accent-border:#6b3d1f;
+  --ok:#4fd39a; --ok-bg:#132a22;
+  --mono-bg:#0b0d12; --mono-text:#d7dae3; --mono-key:#7aa2f7; --mono-str:#9ece6a; --mono-num:#e0af68;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+.badge.scope{background:var(--surface-2);color:var(--text-dim);border-color:var(--border)}
+.badgerow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.subtitle{color:var(--text-faint);font-size:13px;font-family:"IBM Plex Mono",monospace;margin-bottom:28px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:24px 28px;margin-bottom:20px}
+.card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);margin:0 0 16px}
+dl.fields{display:grid;grid-template-columns:120px 1fr;gap:10px 16px;margin:0}
+dl.fields dt{color:var(--text-faint);font-size:13px;padding-top:2px}
+dl.fields dd{margin:0;font-size:14px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.scope-cell{border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;font-size:13px;color:var(--text-faint)}
+.scope-cell.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+p.body-text{margin:0;font-size:14px}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+ol.steps li{font-size:14px}
+.expected{background:var(--ok-bg);border:1px solid color-mix(in srgb, var(--ok) 35%, var(--border));border-radius:8px;padding:14px 16px;font-size:14px}
+.expected b{color:var(--ok)}
+.actual{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:14px 16px;font-size:14px;margin-top:10px}
+.actual b{color:var(--accent)}
+code.inline{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.evmap{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evmap li{font-size:13px;color:var(--text-dim);display:flex;gap:8px}
+.evmap li span.tag{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;padding:0 6px;height:18px;line-height:18px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+figure{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+figure img{display:block;width:100%;height:auto;background:#000}
+figcaption{font-size:12px;color:var(--text-faint);padding:8px 12px;font-family:"IBM Plex Mono",monospace}
+.mono-block{background:var(--mono-bg);color:var(--mono-text);border-radius:8px;padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;overflow-x:auto;white-space:pre}
+.notice{font-size:12.5px;color:var(--text-faint);border-left:3px solid var(--border);padding-left:12px;margin-top:14px}
+.specquote{font-size:12.5px;color:var(--text-dim);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 12px;margin-top:12px;border-radius:0 6px 6px 0}
+.specquote b{color:var(--text)}
+.footer{color:var(--text-faint);font-size:12px;margin-top:32px;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:16px}
+table.calc{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+table.calc th,table.calc td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums}
+table.calc th:first-child,table.calc td:first-child{text-align:left}
+table.calc th{font-size:12px;color:var(--text-faint);font-weight:600}
+table.calc td.bad{color:var(--accent);font-weight:600}
+table.calc td.good{color:var(--ok);font-weight:600}
+.tblwrap{overflow-x:auto}
+@media (max-width:560px){.gallery,.scope-grid{grid-template-columns:1fr}dl.fields{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="badgerow">
+    <span class="badge">嚴重度待 RD／PM 評估</span>
+    <span class="badge scope">後端</span>
+    <span class="badge scope">Stage</span>
+  </div>
+  <h1>[後台][Arcade][後端][注單] 注單 API 的 walletBeforeBalance 與 walletAfterBalance 數值對調</h1>
+  <div class="subtitle">證據 EVD-0090～0093、EVD-0095 · 機台 ACAA00424 · 注單 6745051／6745052</div>
+
+  <section class="card">
+    <h2>Detail</h2>
+    <dl class="fields">
+      <dt>遊戲商</dt><dd>GALAXY-A（galaxyagroup）</dd>
+      <dt>遊戲名稱</dt><dd>真人大廳（真人，kingBaccarat）</dd>
+      <dt>測試環境</dt><dd>stage · 站台 Arcade（機台場館）</dd>
+      <dt>測試帳號</dt><dd><code class="inline">ACAA00424</code>（機台帳號）</dd>
+      <dt>測試時間</dt><dd>2026-10-01 10:33:35 與 10:33:56 投注（UTC+0），各投注 100、兩局皆輸</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>處理範圍</h2>
+    <div class="scope-grid">
+      <div class="scope-cell">前端</div>
+      <div class="scope-cell active">後端</div>
+      <div class="scope-cell">其他</div>
+    </div>
+    <p class="notice">後端：注單資料的投注前、後錢包餘額寫入或回傳時前後對調。若有畫面或報表讀取這兩個欄位，顯示也會跟著錯，請 RD 一併確認有哪些地方使用。</p>
+  </section>
+
+  <section class="card">
+    <h2>問題詳述</h2>
+    <p class="body-text">機台 ACAA00424 入鈔後錢包餘額為 1,100，接著在同一場次連續投注兩局、各 100，兩局都輸（前台注單紀錄損益皆為 -100，API 的 gameWin 皆為 0）。依此推算每局的投注前、後餘額，和注單 API 回傳的值比對，<b>兩筆注單的 walletBeforeBalance 與 walletAfterBalance 都剛好對調</b>：</p>
+    <div class="tblwrap" style="margin-top:14px">
+      <table class="calc">
+        <thead><tr><th>注單（投注時間 UTC+0）</th><th>投注前餘額（推算）</th><th>投注後餘額（推算）</th><th>API walletBeforeBalance</th><th>API walletAfterBalance</th></tr></thead>
+        <tbody>
+          <tr><td>6745051（10:33:35）</td><td class="good">1,100</td><td class="good">1,000</td><td class="bad">1,000</td><td class="bad">1,100</td></tr>
+          <tr><td>6745052（10:33:56）</td><td class="good">1,000</td><td class="good">900</td><td class="bad">900</td><td class="bad">1,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="notice">起始餘額 1,100 來自交易紀錄（入鈔 8798241 回傳 balance 1100，EVD-0090）。兩局皆輸，所以每局餘額只減少投注額 100。<br>
+    規格說明：目前的注單規格（各式報表 4.2 注單）沒有定義這兩個欄位，本單依欄位名稱的字面意思判斷：walletBeforeBalance＝投注前餘額、walletAfterBalance＝投注後（派彩後）餘額。若這兩個欄位另有定義，請 RD 說明。</p>
+  </section>
+
+  <section class="card">
+    <h2>預期結果 / 實際結果</h2>
+    <div class="expected"><b>預期</b>　6745051：walletBeforeBalance 1,100、walletAfterBalance 1,000；6745052：walletBeforeBalance 1,000、walletAfterBalance 900。</div>
+    <div class="actual"><b>實際</b>　6745051：walletBeforeBalance 1,000、walletAfterBalance 1,100；6745052：walletBeforeBalance 900、walletAfterBalance 1,000。兩筆的前後值對調。</div>
+    <ul class="evmap">
+      <li><span class="tag">EVD-0090</span>交易紀錄 API：入鈔 8798241 後 balance 1100（起始餘額）</li>
+      <li><span class="tag">EVD-0091</span>後台注單查詢：6745051、6745052，投注 100（派彩欄綠色 $100 為站台角度，代表站台贏，屬正常）</li>
+      <li><span class="tag">EVD-0093</span>注單 API 6745051：gameWin 0、walletBeforeBalance 1000、walletAfterBalance 1100</li>
+      <li><span class="tag">EVD-0092</span>注單 API 6745052：gameWin 0、walletBeforeBalance 900、walletAfterBalance 1000</li>
+      <li><span class="tag">EVD-0095</span>機台前台注單紀錄：兩局損益皆為 -100 TWD（兩局皆輸）</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>複製步驟</h2>
+    <ol class="steps">
+      <li>stage 站台 Arcade，機台 <code class="inline">ACAA00424</code> 開分 100、入鈔 1,000，錢包餘額 1,100</li>
+      <li>於機台前台進入 GALAXY-A 真人大廳，投注 100，該局輸；再投注 100，該局也輸</li>
+      <li>登入後台，切換至站台 Arcade，進入「各式報表 › 注單查詢」，查詢會員編號 ACAA00424</li>
+      <li>開啟瀏覽器開發者工具，查看注單查詢 API 的回應，比對兩筆注單的 walletBeforeBalance、walletAfterBalance</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>API URL</h2>
+    <p class="body-text">注單查詢頁的注單 API（本次截圖未拍到 endpoint 名稱與 request，請 RD 依注單查詢頁的請求確認）。</p>
+    <dl class="fields" style="margin-top:12px">
+      <dt>Request</dt><dd>—（未擷取）</dd>
+      <dt>Response</dt><dd>節錄兩筆相關欄位：</dd>
+    </dl>
+    <div class="mono-block" style="margin-top:10px">{ "finalGameLogId": 6745051, "sessionCode": "ACAA00424_20261001_0002",
+  "betTime": "2026-10-01T10:33:35Z", "payoffTime": "2026-10-01T10:33:49Z",
+  "gameBet": 100, "gameWin": 0,
+  "walletBeforeBalance": 1000, "walletAfterBalance": 1100 }
+
+{ "finalGameLogId": 6745052, "sessionCode": "ACAA00424_20261001_0002",
+  "betTime": "2026-10-01T10:33:56Z", "payoffTime": "2026-10-01T10:34:17Z",
+  "gameBet": 100, "gameWin": 0,
+  "walletBeforeBalance": 900, "walletAfterBalance": 1000 }</div>
+  </section>
+
+  <section class="card">
+    <h2>證據截圖</h2>
+    <div class="gallery">
+      <figure><img src="img/EVD-0093.png" alt="注單 API 6745051 回應"><figcaption>EVD-0093 · 注單 API 6745051</figcaption></figure>
+      <figure><img src="img/EVD-0092.png" alt="注單 API 6745052 回應"><figcaption>EVD-0092 · 注單 API 6745052</figcaption></figure>
+      <figure><img src="img/EVD-0095.webp" alt="機台前台注單紀錄，兩局損益 -100"><figcaption>EVD-0095 · 機台前台注單紀錄（兩局皆輸）</figcaption></figure>
+      <figure><img src="img/EVD-0090.png" alt="交易紀錄 API，入鈔後 balance 1100"><figcaption>EVD-0090 · 交易紀錄 API（入鈔後 1,100）</figcaption></figure>
+      <figure><img src="img/EVD-0091.webp" alt="後台注單查詢列表"><figcaption>EVD-0091 · 後台注單查詢</figcaption></figure>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>QAOS 證據 EVD-0090～0093、EVD-0095（sha256 已登錄）· 規格未定義這兩個欄位，本單未走 QAOS 正式 bug 流程</span>
+    <span>2026-10-01 · oscarchen@blockaction.tech</span>
+  </div>
+</div>

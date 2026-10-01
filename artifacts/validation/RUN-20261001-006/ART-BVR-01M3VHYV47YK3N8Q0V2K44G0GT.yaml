@@ -1,0 +1,152 @@
+artifact_id: ART-BVR-01M3VHYV47YK3N8Q0V2K44G0GT
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261001-006
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-10-01T11:00:26Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M3VHR7M6AHXVFE1V7E0VWPQW
+references:
+- entity_type: Artifact
+  id: ART-BD-01M3VHR7M6AHXVFE1V7E0VWPQW
+- entity_type: SpecVersion
+  id: SPEC-DAILYREPORT-001
+  version: '0.1'
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-008
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-014
+- entity_type: AcceptanceCriterion
+  id: AC-DAILYREPORT-0083
+- entity_type: Clarification
+  id: CLR-DAILYREPORT-013
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-099
+  version: 1
+- entity_type: TestExecution
+  id: EXE-20261001-001
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M3VHR7M6AHXVFE1V7E0VWPQW
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: TC-DAILYREPORT-099
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-014
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位（表後說明）
+      quote: 列表底部顯示當前篩選結果的各欄總計。
+    evidence: Draft 的 requirement_id 只有 REQ-DAILYREPORT-008、acceptance_criteria_ids 只有 AC-DAILYREPORT-0083、references 未列 REQ-DAILYREPORT-014；但
+      title、expected_result、impact 都主張「總計列期末餘額未計入進行中場次」，並以 REQ-DAILYREPORT-014／AC-DAILYREPORT-0143 為依據。AC-DAILYREPORT-0143
+      的 when 是「依機台明細查詢」，不是本案的依場次明細總計列。
+    explanation: 總計列這半段的需求依據沒有進入結構化追溯欄位，且引用的 AC 維度與實測維度不同。依場次明細總計列的期末餘額預期，應由 AC-DAILYREPORT-0083（進行中場次列期末餘額＝X）加上 spec「列表底部顯示各欄總計」推得（_0001
+      的 0 加 _0002 的 X），REQ-DAILYREPORT-014 statement（期末餘額計入進行中場次）為輔助依據。結論不變，屬追溯品質問題。
+    recommended_change: references 補上 Requirement REQ-DAILYREPORT-014；expected_result 的總計列依據改寫為「AC-DAILYREPORT-0083 ＋ §列表欄位『列表底部顯示當前篩選結果的各欄總計』，REQ-DAILYREPORT-014
+      statement 為輔」，並註明 AC-DAILYREPORT-0143（依機台明細）本案未驗證。
+  - testcase_id: TC-DAILYREPORT-099
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-008
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §背景：場次資訊/場次時長
+      quote: 進行中則顯示累計至查詢當下
+    evidence: expected_result 寫「期末餘額 900」。900 是由 EVD-0090 的入鈔後 balance 1100 減去兩局各 100 推算出來的，沒有任何 evidence 直接顯示機台分數 900（EVD-0095
+      只有注單紀錄，沒有餘額；Draft 已自行標註為推算值）。TC-DAILYREPORT-099 前置條件要求「X 以機台前台畫面顯示的分數為準並記錄」。另外 EVD-0094 的 yaml 寫「實際截圖於 10:32～10:42 UTC
+      之間」，但兩局的派彩時間是 10:33:49 與 10:34:17（EVD-0091／0092／0093），所以截圖當下的「查詢當下分數」不一定是 900，也可能是 1,100 或 1,000。
+    explanation: 缺陷本身（進行中場次沒有列出、總計列期末餘額 $0.00 未計入任何進行中分數）不受這一點影響：只要場次在 10:31:45 已建立，任何截圖時點的機台分數都大於 0。受影響的只是 expected 裡「＝900」這個具體數值的嚴謹度。
+    recommended_change: expected_result 改成「期末餘額＝查詢當下的機台分數 X（本案依交易與注單推算，兩局派彩完成後為 900）」；若有報表截圖的確切時間或機台前台分數截圖，補進 evidence；重現時依
+      TC-099 從機台前台讀取 X 並記錄。
+  - testcase_id: TC-DAILYREPORT-099
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-008
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則與驗證/日結時間
+      quote: 為場館設定欄位：每日結算的截止時刻（UTC+0），用於場館日結報表分日
+    evidence: EVD-0094 頁尾顯示「Arcade 日結時間 -- (UTC+0)」，表示該場館的日結時間未設定。但 Draft 的 environment 與 preconditions 都沒有記錄這一點；precondition
+      寫「查詢時未跨越場館日結時間」，在日結時間未設定的情況下無從確認。
+    explanation: 報表的營業日切分與「尚未結算的營業日」判定都依賴場館日結時間。日結時間未設定是 evidence 可見的環境狀態，可能影響後端是否把當日視為未結算。開發端重現時需要知道這個條件，否則可能在已設定日結時間的場館得到不同結果。這不改變缺陷判定，因為
+      CLR-DAILYREPORT-013 並未以日結時間是否設定作為條件。
+    recommended_change: environment 補「Arcade 場館日結時間未設定（報表頁尾顯示 --）」；precondition「查詢時未跨越場館日結時間」改為依實況描述。可選擇在已設定日結時間的場館再補測一次，確認是否同樣不列出進行中場次。
+  evidence_verification:
+  - evidence_id: EVD-0089
+    hash_verified: true
+    supports_claim: true
+    note: sha256 29a224fe…69caa 與 size 22984 相符。畫面為後台交易紀錄：8798241 入鈔 $1,000（10:32:05）、8798240 開分 $100（10:31:45），來源機台 ACAA00424，場次編號皆為
+      ACAA00424_20261001_0002，交易狀態「成功」。支撐 claim。
+  - evidence_id: EVD-0090
+    hash_verified: true
+    supports_claim: true
+    note: sha256 51a543e0…44633 與 size 312453 相符。DevTools 的 query-transaction-log 回應，respondedTime 2026-10-01T10:32:39Z：8798241
+      cashIn amount 1000、balance 1100；8798240 creditIn amount 100、balance 100；sessionCode 皆為 ACAA00424_20261001_0002。支撐 claim。
+  - evidence_id: EVD-0091
+    hash_verified: true
+    supports_claim: true
+    note: sha256 59e32472…0ea56 與 size 20178 相符。後台注單查詢：6745052（投注 10:33:56／派彩 10:34:17）、6745051（投注 10:33:35／派彩 10:33:49），會員
+      ACAA00424，投注額與有效投注額皆為 $100.00，遊戲類型「真人」，遊戲名稱「真人大廳」，狀態「派彩成功」。支撐 claim。畫面中派彩欄的綠色 $100.00 是站台角度，正常；Draft 未把它當成問題。
+  - evidence_id: EVD-0092
+    hash_verified: true
+    supports_claim: true
+    note: sha256 88d51e11…f33 與 size 296443 相符。注單 API：finalGameLogId 6745052，sessionCode ACAA00424_20261001_0002，betTime 2026-10-01T10:33:56Z，gameBet
+      100，gameValidBet 100，gameWin 0。支撐 claim。walletBefore／AfterBalance 對調屬另案，Draft 的 claim 未引用，正確。
+  - evidence_id: EVD-0093
+    hash_verified: true
+    supports_claim: true
+    note: sha256 c6739cf6…cc635 與 size 302177 相符。注單 API：finalGameLogId 6745051，sessionCode ACAA00424_20261001_0002，betTime
+      2026-10-01T10:33:35Z，gameBet 100，gameValidBet 100，gameWin 0。支撐 claim。walletBefore／AfterBalance 屬另案，Draft 未引用。
+  - evidence_id: EVD-0094
+    hash_verified: true
+    supports_claim: true
+    note: sha256 8541a4ee…176e4 與 size 45670 相符。場館日結報表，站長 ACAA00423，站台 Arcade，UTC+00:00，結算日期 2026-09-25 00:00:00 起（迄日在畫面上被截斷，但列表有
+      2026-10-01 列，可知範圍含當日），按日，依場次明細，機台帳號留空。總筆數 1，唯一列為 ACAA00424_20261001_0001（2026-10-01 08:25～08:41，場次時長 15 分，期初與期末皆 $0.00），沒有
+      _0002 的列；總計列期末餘額 $0.00。Draft 使用此 evidence 的三條 claim 都成立。頁尾顯示 Arcade 日結時間為「--」（見 issue 3）。_0001 列的開分 100／進鈔 1,000／注單數
+      2／有效投注 200／損益 -200 與 _0002 的數字相同，歸屬是否正確本單無法判斷，Draft 已註明不處理，這個保留是合理的。
+  - evidence_id: EVD-0095
+    hash_verified: true
+    supports_claim: true
+    note: sha256 510c3827…49d0 與 size 48722 相符。機台前台「注單紀錄」有兩筆真人大廳注單，會員 ACAA00424，投注時間 2026-10-01 18:33:56 與 18:33:35（UTC+8），投注金額
+      100.0000 TWD，損益皆為 -100.0000 TWD。畫面上沒有機台餘額，900 是推算值，Draft 已如實標註（見 issue 2）。依 spec 第 95 行「機台前台注單僅顯示當前進行中場次的內容」，這張圖也佐證約
+      10:45 UTC 時 _0002 仍在進行中。
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 同意 major／high。CLR-DAILYREPORT-013 的 PM 定案 A 已明確將現行實作判為缺陷。場館日結報表用於對帳與分潤，進行中場次在報表上完全看不到（沒有列、時間、時長），總計列期末餘額也少算，屬帳務報表的資料缺漏。每一個尚未結束的場次、每次查詢當日都會發生，所以
+      priority 給 high。不升到 critical，因為 spec 規定日結時間到達時會強制結束所有進行中場次（§業務規則/場次日結），已結算營業日的數字推測不受影響，而本案也沒有證據顯示已結束場次的數字算錯。與 BUG-DAILYREPORT-001／002／003
+      同功能的 major／high 一致。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 已檢索 bugs/ba-admin/DAILYREPORT/BUG-DAILYREPORT-001～004，並在 bugs/ 全目錄以「進行中」搜尋。BUG-002（CLOSED，REQ-008／AC-0081）是 API
+      缺 startTime／duration 欄位，針對已結束場次的欄位缺失；本案是進行中場次整列沒有列出，屬相關但不重複。BUG-004（OPEN，REQ-009）是跨場次注單被拆分、日結場次歸屬營業日錯誤，對象為已結算場次，不重複。BUG-001（場次數欄位）與
+      BUG-003（日期起迄篩選）無關。
+  ambiguity: null
+history:
+- at: '2026-10-01T11:01:17Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261001-006
