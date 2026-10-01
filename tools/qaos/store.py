@@ -54,14 +54,18 @@ def spec_dir(spec_id: str) -> pathlib.Path | None:
     return None
 
 def run_area(inputs: dict) -> str | None:
-    """run 所屬 functional area：有 spec_id 看 spec 所在目錄，否則看 manual record 的 functional_area；判定不了回 None（ADR-009）。"""
-    if inputs.get("spec_id"):
-        d = spec_dir(inputs["spec_id"])
+    """run 所屬 functional area（ADR-009），依序：run 的 spec_id → manual record 的 spec_hint.spec_id（皆看 spec 所在目錄）
+    → manual record 的 functional_area（須為大寫 area 代碼，空白／無效不算）。判定不了回 None，由 new_run 拒絕。"""
+    def _spec_area(sid):
+        d = spec_dir(sid) if sid else None
         return d.parent.name if d else None
+    if inputs.get("spec_id"): return _spec_area(inputs["spec_id"])
     rid = inputs.get("manual_record_id")
-    if rid and exists(f"testcases/manual/{rid}.yaml"):
-        return load(f"testcases/manual/{rid}.yaml").get("functional_area")
-    return None
+    rec = load(f"testcases/manual/{rid}.yaml") if rid and exists(f"testcases/manual/{rid}.yaml") else {}
+    area = _spec_area((rec.get("spec_hint") or {}).get("spec_id"))
+    if area: return area
+    fa = (rec.get("functional_area") or "").strip()
+    return fa if fa.isascii() and fa.isalpha() and fa.isupper() else None
 
 def requirements_path(spec_id: str, spec_version: str) -> str:
     return f"artifacts/requirements/{spec_id}/v{spec_version}/requirements.yaml"

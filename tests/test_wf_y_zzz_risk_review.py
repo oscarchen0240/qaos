@@ -171,6 +171,8 @@ def test_78_risk_reviewer_input_schema_binds_validation_report():
     assert any("validation_report_artifact_id" in e for e in schema.errors(missing, "artifact/tc-risk-reviewer-input.schema.json"))
     leaked = dict(ok, test_design_report_artifact_id="ART-TDR-01M3TWRCRS3B92JKQ4WR3JTWX2")   # 不給 Designer 的報告
     assert schema.errors(leaked, "artifact/tc-risk-reviewer-input.schema.json")
+    rr = yaml.safe_load(open(REPO / "agents" / "tc-risk-reviewer.yaml", encoding="utf-8"))
+    assert rr["input_schema"] == "schemas/artifact/tc-risk-reviewer-input.schema.json"   # 契約確實指向專用 schema，不是舊的 validator input
     # 每份 agent 契約指到的 input／output schema 檔都要存在
     for c in sorted((REPO / "agents").glob("*.yaml")):
         a = yaml.safe_load(open(c, encoding="utf-8"))
@@ -191,3 +193,26 @@ def test_79_suite_membership_reject_still_returns_to_curator():
     run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
     assert run["current_task_id"] == "T4" and st["T4"] == "READY" and st["T1"] == st["T2"] == st["T3"] == "DONE"
     engine.cancel(rid, "oscar@example.com")
+
+def test_80_manual_run_area_uses_spec_hint_and_rejects_blank_area(monkeypatch):
+    """MR !1 review 第三輪：functional_area 在 manual record schema 是選填、無格式限制。
+    ①只有 spec_hint 的合法紀錄不可被誤拒，area 取 spec 所在目錄；②空白 area 不算判定得了，必須拒絕，不可默默跳過抽查。"""
+    from tools.qaos import tc_ops
+    rr = engine.agents()["agent-tc-risk-reviewer"]
+    monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
+    # ① 只有 spec_hint（拿掉 functional_area）
+    rec = tc_ops.manual_new("只有 spec_hint", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com", spec_id="SPEC-NEG-001", spec_version="1.0")
+    path = f"testcases/manual/{rec}.yaml"; d = store.load(path); d.pop("functional_area"); store.save(path, d)
+    assert store.run_area({"manual_record_id": rec}) == "NEG"
+    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com")
+    assert "T2RR" in [t["task_id"] for t in run["tasks"]]; engine.cancel(run["run_id"], "oscar@example.com")
+    # spec_hint 指到的 spec 目錄優先於手填的 functional_area
+    d["functional_area"] = "AUTH"; store.save(path, d)
+    assert store.run_area({"manual_record_id": rec}) == "NEG"
+    # ② 空白／無效 area、且沒有 spec_hint → 拒絕
+    for bad in ("", "   ", "neg", "N-1"):
+        rec2 = tc_ops.manual_new("空白 area", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com")
+        p2 = f"testcases/manual/{rec2}.yaml"; d2 = store.load(p2); d2["functional_area"] = bad; store.save(p2, d2)
+        assert store.run_area({"manual_record_id": rec2}) is None, bad
+        with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
+            engine.new_run("manual-test-to-regression", {"manual_record_id": rec2}, "oscar@example.com")
