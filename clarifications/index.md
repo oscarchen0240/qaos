@@ -64,6 +64,7 @@
 | [CLR-PLATFORMRULE-001](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-001.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 「站長＝最高權限」的定義是否仍有效？三份 spec 的權限層級互相矛盾 | 以功能 spec 三層模型為準：管理員（最高）＞站長＞操作員。原則：可見範圍由所屬站台決定、權限層級由角色決定，兩者分開 |
 | [CLR-PLATFORMRULE-002](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-002.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | REQ-PLATFORMRULE-011 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 此為架構層要求（選單顯示規則需與排除規則同一來源，不得各自寫死），非使用者可觀察行為，且目前無任何排除項目被實際解除、無 |
 | [CLR-PLATFORMRULE-003](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-003.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 操作員角色是否可見「注單查詢」與「稽核明細」頁面？權限表未列此兩項，請補列定案 | 新需求：操作員有權限進入「注單查詢」與「稽核明細」（可見範圍比照其他報表頁限自身場館）。→ 權限表須補兩列（操作員：自身 |
+| [CLR-PLATFORMRULE-004](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-004.md) | WITHDRAWN | SPEC-PLATFORMRULE-001 v0.2 | REQ-PLATFORMRULE-011 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
 
 ## ba-admin / SCREENMGMT
 
@@ -88,6 +89,11 @@
 | [CLR-SITELIST-010](ba-admin/SITELIST/CLR-SITELIST-010.md) | APPLIED | SPEC-SITELIST-001 v0.4 | REQ-SITELIST-002「子站台強制跟隨主站台型別」規則，是否對根層站台（無上層站台，隱含上層為 admin）有例外？ | admin 例外規則為 PM 最終決定，非資料錯誤或臆測：根層站台（無上層站台）建立時，型別可自由選擇（機台或線上），核 |
 | [CLR-SITELIST-011](ba-admin/SITELIST/CLR-SITELIST-011.md) | APPLIED | SPEC-SITELIST-001 v0.4 | AC-SITELIST-0023「核心貨幣依所選類型連動建立，不需admin自身的鏈上錢包管理預先啟用該幣別」這句話裡，鏈上錢包管理跟站台核心貨幣是什麼關係？ | 鏈上錢包管理與站台核心貨幣是兩個完全不同、互不相依的概念。鏈上錢包管理管理的是「此平台整體能使用的幣種有哪些」，啟用/禁 |
 | [CLR-SITELIST-012](ba-admin/SITELIST/CLR-SITELIST-012.md) | APPLIED | SPEC-SITELIST-001 v0.4 | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣的精確關係為何？ | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣不是「完全無關」，而是「性質不同但有連動關係」。(1)鏈 |
+| [CLR-SITELIST-013](ba-admin/SITELIST/CLR-SITELIST-013.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-035 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-014](ba-admin/SITELIST/CLR-SITELIST-014.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-036 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-015](ba-admin/SITELIST/CLR-SITELIST-015.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-037 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-016](ba-admin/SITELIST/CLR-SITELIST-016.md) | OPEN | SPEC-SITELIST-001 v0.6 | v0.6 原文與已落地的 CLR 定案直接牴觸，本 RM 不自行裁定。v0.6（版本日期 2026-09-04）§角色與權限「子站台：刪除｜可操作｜可操作」、§列表欄位「操作｜編輯、刪除」、§操作/刪除站台（確認彈窗、二次確認、不可復原）、§業務規則/刪除確認，皆定義管理員與站長可刪除管轄範圍內的子站台（僅自身站台與根站台不可刪除）；CLR-SITELIST-008／009（2026-09-14，PM 與後端共同確認，晚於 v0.6 版本日期）定案「任何類型的站台皆不提供刪除操作，前後端皆拒絕，只能暫停／關閉」，原因是刪除會影響站台樹狀結構。v0.6 取自 ba-spec main 2026-09-29 快照仍保留刪除敘述，QA 增補草稿要求移除該節亦未合入正本，無法判斷是 spec 未同步 CLR，還是產品方向已改回可刪除。 |  |
+| [CLR-SITELIST-017](ba-admin/SITELIST/CLR-SITELIST-017.md) | OPEN | SPEC-SITELIST-001 v0.6 | 與 REQ-SITELIST-022 同一衝突（v0.6 原文可刪除子站台 vs CLR-SITELIST-008／009 任何站台皆不可刪除），應一併裁定；若採 v0.6 原文，刪除仍有子站台的站台時子樹如何處理 v0.6 亦未定義。 |  |
 
 ## ba-admin / TXLOG
 
