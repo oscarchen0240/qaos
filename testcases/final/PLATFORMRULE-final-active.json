@@ -2032,7 +2032,6 @@
     "approval_id": "APR-0037"
   },
   {
-    "title": "操作員嘗試查詢自身所屬場館以外的場館日結報表，查無資料或無法選取",
     "product": "ba-admin",
     "functional_area": "PLATFORMRULE",
     "requirement_ids": [
@@ -2041,8 +2040,6 @@
     "acceptance_criteria_ids": [
       "AC-PLATFORMRULE-0131"
     ],
-    "spec_id": "SPEC-PLATFORMRULE-001",
-    "spec_version": "0.1",
     "test_level": "ui_e2e",
     "test_types": [
       "negative",
@@ -2054,12 +2051,12 @@
     "priority": "high",
     "risk": "high",
     "execution_mode": "manual",
+    "title": "操作員嘗試查詢自身所屬場館以外的場館日結報表，查無資料或無法選取",
     "preconditions": [
-      "以 Admin 登入後台",
+      "以根站台 admin 的管理員登入後台（用於準備操作員帳號；v0.1 稱 Admin）",
       "承上，操作員帳號所屬場館為既有機台場館 X",
       "以該操作員帳號登入後台"
     ],
-    "test_data": [],
     "steps": [
       {
         "n": 1,
@@ -2071,12 +2068,15 @@
       }
     ],
     "expected_result": "操作員無法查得或選取場館 X 以外（例如場館 Y）的任何場館日結報表資料——場館選擇欄位（若存在）不包含場館 Y，或選取後查無資料，僅能查得場館 X 範圍內的資料",
-    "expected_result_spec_reference": {
-      "spec_id": "SPEC-PLATFORMRULE-001",
-      "spec_version": "0.1",
-      "location": "§角色與權限",
-      "quote": "可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館"
-    },
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": true,
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
     "assumptions": [
       {
         "text": "本 TC 需要測試環境當下存在至少兩個不同的既有機台場館（操作員所屬場館 X 之外，另需一個場館 Y 作為『其他場館』對照）；若環境當下僅有一個機台場館，需先依既有機台場館的建立方式另外建立一個測試用機台場館 Y 才能執行本 TC 的對照比較",
@@ -2085,40 +2085,37 @@
         "resolved_by_approval": "APR-0125"
       }
     ],
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "critical_path": true,
-    "source": "spec_workflow",
+    "source": "change_workflow",
+    "source_ref": "change_impact:CI-SPEC-PLATFORMRULE-001-0.1-0.2",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
+    },
     "testcase_id": "TC-PLATFORMRULE-048",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2RP0XE30XY2E56KV9CJHGA9",
-    "created_at": "2026-09-17T21:58:08Z",
-    "updated_at": "2026-09-17T22:15:44Z",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0125"
+    "approval_id": "APR-0193"
   },
   {
-    "title": "Admin 可查全部場館、站長僅可查其管轄範圍內的機台交易紀錄",
     "product": "ba-admin",
     "functional_area": "PLATFORMRULE",
     "requirement_ids": [
       "REQ-PLATFORMRULE-015"
     ],
-    "acceptance_criteria_ids": [
-      "AC-PLATFORMRULE-0151"
-    ],
-    "spec_id": "SPEC-PLATFORMRULE-001",
-    "spec_version": "0.1",
+    "acceptance_criteria_ids": [],
     "test_level": "ui_e2e",
     "test_types": [
       "functional",
+      "negative",
       "security"
     ],
     "design_techniques": [
@@ -2127,47 +2124,66 @@
     "priority": "high",
     "risk": "high",
     "execution_mode": "manual",
+    "title": "站長於機台交易紀錄查詢的站台切換選單僅含其管轄範圍（自身站台及所有子站台），可切換至管轄範圍內的場館查得其機台交易，且無法切換至範圍外場館",
     "preconditions": [
-      "以 Admin 登入後台",
-      "選定一個既有的站長帳號，確認其管轄的站台樹（自身站台及所有子站台）下涵蓋至少一個機台場館"
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易、S2 下的機台帳號 MS2 至少一筆機台交易，兩筆交易時間均落在同一個已知日期範圍內",
+      "機台交易紀錄查詢頁的資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台，不另設場館篩選欄位，見 SPEC-TXLOG-001「篩選器」）",
+      "以P1 站台的站長帳號（由環境負責人提供）登入後台（站長的管轄範圍即 P1 站台及其所有子站台）",
+      "（對照組）事先確認以根站台 admin 的管理員帳號（由環境負責人提供）登入時，站台切換下拉選單含 P2 與 T1，避免把『站台不存在』誤判為『站長看不到』"
     ],
-    "test_data": [],
     "steps": [
       {
         "n": 1,
-        "action": "以 Admin 登入後台，進入『各式報表 > 交易紀錄查詢』，不限定場館查詢，確認結果涵蓋來自不同機台場館的交易紀錄"
+        "action": "以 P1 站台的站長登入後台，進入『各式報表 > 交易紀錄查詢』"
       },
       {
         "n": 2,
-        "action": "改以前置作業準備好的站長帳號登入，重複同樣的查詢，檢視結果範圍"
+        "action": "展開頁面標題下方的 站台切換下拉選單，完整記錄所有選項"
+      },
+      {
+        "n": 3,
+        "action": "將站台切換至 S1，以涵蓋已知交易的日期範圍及機台帳號 MS1 查詢"
+      },
+      {
+        "n": 4,
+        "action": "將站台切換至 S2，以涵蓋已知交易的日期範圍及機台帳號 MS2 查詢"
+      },
+      {
+        "n": 5,
+        "action": "再次展開 站台切換下拉選單，檢視選項中是否有 P2、T1（平行主站台及其底下的場館），並嘗試找出任何可切換至 T1 的方式"
       }
     ],
-    "expected_result": "Admin 查詢結果涵蓋系統內全部機台場館範圍的交易紀錄；站長查詢結果僅涵蓋其自身站台及所有子站台下機台場館範圍內的交易，不包含管轄範圍以外的機台場館交易",
-    "expected_result_spec_reference": {
-      "spec_id": "SPEC-PLATFORMRULE-001",
-      "spec_version": "0.1",
-      "location": "§角色與權限",
-      "quote": "機台交易紀錄查詢 | 全部 | 管轄範圍 | 自身場館"
-    },
-    "assumptions": [],
+    "expected_result": "站長的站台切換選單只含管轄範圍內的 P1、S1、S1a、S2，不含平行主站台 P2 與 T1（無法切換至 T1 查詢，此為主要反向斷言）；切換至 S1 時查得 MS1 的機台交易、切換至 S2 時查得 MS2 的機台交易",
+    "test_data": [],
     "automation_status": "not_automated",
     "ci_eligible": false,
     "hotfix_eligible": true,
     "execution_cost": "medium",
     "stability": "unknown",
     "critical_path": false,
-    "source": "spec_workflow",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "assumptions": [],
+    "source": "change_workflow",
+    "source_ref": "change_impact:CI-SPEC-PLATFORMRULE-001-0.1-0.2",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）；『管轄範圍』依同節『可見場館範圍』列站長欄（自身站台及所有子站台下的場館）解讀；頁面資料範圍跟隨站台切換依 SPEC-TXLOG-001",
+      "quote": "| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |"
+    },
     "testcase_id": "TC-PLATFORMRULE-051",
-    "version": 1,
-    "supersedes": null,
+    "version": 2,
+    "supersedes": 1,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M2RP0XE30XY2E56KV9CJHGA9",
-    "created_at": "2026-09-17T21:58:08Z",
-    "updated_at": "2026-09-17T22:15:44Z",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0125"
+    "approval_id": "APR-0193"
   },
   {
     "product": "ba-admin",
@@ -2241,15 +2257,6 @@
   {
     "product": "ba-admin",
     "functional_area": "PLATFORMRULE",
-    "spec_id": "SPEC-PLATFORMRULE-001",
-    "spec_version": "0.1",
-    "execution_mode": "manual",
-    "automation_status": "not_automated",
-    "ci_eligible": false,
-    "hotfix_eligible": true,
-    "execution_cost": "medium",
-    "stability": "unknown",
-    "title": "操作員於注單查詢與稽核明細僅能查得自身所屬場館的資料",
     "requirement_ids": [
       "REQ-PLATFORMRULE-024",
       "REQ-PLATFORMRULE-013"
@@ -2267,11 +2274,12 @@
     ],
     "priority": "high",
     "risk": "high",
+    "execution_mode": "manual",
+    "title": "操作員於注單查詢與稽核明細僅能查得自身所屬場館的資料",
     "preconditions": [
       "以操作員身分登入後台，其所屬場館為 A",
       "另一機台場館 B 有已知的注單與機台交易（會員編號已知）"
     ],
-    "test_data": [],
     "steps": [
       {
         "n": 1,
@@ -2287,26 +2295,654 @@
       }
     ],
     "expected_result": "兩頁皆查無場館 B 的資料，僅能查得場館 A 範圍內的注單與稽核明細；若切換入口存在且可選 B，選擇後應查無資料或被系統阻擋（Spec 只定義資料層可見範圍，切換入口是否隱藏屬實作細節）",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": true,
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "assumptions": [],
+    "source": "change_workflow",
+    "source_ref": "change_impact:CI-SPEC-PLATFORMRULE-001-0.1-0.2",
     "expected_result_spec_reference": {
       "spec_id": "SPEC-PLATFORMRULE-001",
-      "spec_version": "0.1",
-      "location": "§角色與權限",
-      "quote": "可見場館範圍 | 全部場館 | 自身站台及所有子站台下的場館 | 僅自身所屬場館"
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001；注單查詢／稽核明細頁面存取依 CLR-PLATFORMRULE-003，v0.2 原文未載）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
     },
-    "assumptions": [],
+    "testcase_id": "TC-PLATFORMRULE-066",
+    "version": 2,
+    "supersedes": 1,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
     "critical_path": true,
     "source": "change_workflow",
-    "source_ref": "new_required:CLR-PLATFORMRULE-003_2026-09-22",
-    "testcase_id": "TC-PLATFORMRULE-066",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025",
+    "title": "非根站台的管理員（P1 主站台）於站台切換選單僅見自身站台及子站台下的場館，平行主站台下的場館不可見",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0251"
+    ],
+    "test_types": [
+      "functional",
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "以P1 站台的管理員帳號（由環境負責人提供）登入後台（P1 為根站台 admin 底下的主站台，非根站台）",
+      "（對照組）事先確認以根站台 admin 的管理員帳號（由環境負責人提供）登入時，站台切換下拉選單含 S1、S1a、S2 與 T1，避免把『場館不存在』誤判為『管理員看不到』"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以 P1 站台的管理員登入後台，展開 站台切換下拉選單，完整記錄選單中所有項目"
+      },
+      {
+        "n": 2,
+        "action": "檢視選單內是否含 P1（自身）、S1、S1a、S2（P1 的子站台）"
+      },
+      {
+        "n": 3,
+        "action": "檢視選單內是否出現 P2 或 T1（平行主站台及其底下的場館）"
+      }
+    ],
+    "expected_result": "選單可見 P1（自身站台）及其所有子站台下的場館 S1、S1a、S2；平行的另一主站台 P2 及其底下的場館 T1 皆不可見（選單中查無）",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-067",
     "version": 1,
     "supersedes": null,
     "status": "ACTIVE",
     "created_by": "agent-test-designer",
     "validated_by": "agent-test-validator",
-    "validation_report_id": "ART-TVR-01M33QDQFHHT40EDE0NXTWZC9C",
-    "created_at": "2026-09-22T04:54:11Z",
-    "updated_at": "2026-09-22T05:06:46Z",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
     "approved_by": "oscarchen@blockaction.tech",
-    "approval_id": "APR-0165"
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": true,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025",
+    "title": "非根站台的管理員（S1 中間層子站台）於站台切換選單僅見自身站台及子站台下的場館，平行子站台與上層站台下的場館不可見",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0251"
+    ],
+    "test_types": [
+      "functional",
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "以S1 站台的管理員帳號（由環境負責人提供）登入後台（S1 為 P1 底下的子站台，其上層站台為 P1、平行站台為 S2）",
+      "（對照組）事先確認以根站台 admin 的管理員帳號（由環境負責人提供）登入時，站台切換下拉選單含 P1、S1、S1a、S2 與 T1"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以 S1 站台的管理員登入後台，展開 站台切換下拉選單，完整記錄選單中所有項目"
+      },
+      {
+        "n": 2,
+        "action": "檢視選單內是否含 S1（自身）、S1a（S1 的子站台）"
+      },
+      {
+        "n": 3,
+        "action": "檢視選單內是否出現 S2（與 S1 平行、同屬上層站台 P1）、P1（上層站台）、P2 與 T1（其他主站台及其底下的場館）"
+      }
+    ],
+    "expected_result": "選單可見 S1（自身站台）及其子站台下的場館 S1a；平行的 S2、上層站台 P1、以及其他主站台 P2 與其底下的場館 T1 皆不可見（選單中查無）",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-068",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025",
+    "title": "根站台 admin 的管理員於站台切換選單可見全平台所有場館",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0252"
+    ],
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "以根站台 admin 的管理員帳號（由環境負責人提供）登入後台（根站台 admin 的子樹即全平台）"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以根站台 admin 的管理員登入後台，展開 站台切換下拉選單，完整記錄選單中所有項目"
+      },
+      {
+        "n": 2,
+        "action": "逐一核對選單是否含 P1、S1、S1a、S2、P2、T1 六個場館（跨兩個主站台）"
+      }
+    ],
+    "expected_result": "選單可見全平台所有場館：P1、S1、S1a、S2（P1 子樹）與 P2、T1（P2 子樹），兩個平行主站台下的場館皆可見",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（管理員說明；角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台），與站長的可見範圍相同、差別在操作深度；根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。"
+    },
+    "testcase_id": "TC-PLATFORMRULE-069",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025",
+    "title": "同一站台（P1）的管理員與站長於站台切換選單可見的場館範圍相同",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-025"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0253"
+    ],
+    "test_types": [
+      "functional",
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "同屬 P1 站台的兩個帳號：P1 站台的管理員帳號（由環境負責人提供）、P1 站台的站長帳號（由環境負責人提供）"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以 P1 站台的管理員登入後台，展開 站台切換下拉選單，完整記錄選單中所有項目，登出"
+      },
+      {
+        "n": 2,
+        "action": "以 P1 站台的站長登入後台，展開 站台切換下拉選單，完整記錄選單中所有項目"
+      },
+      {
+        "n": 3,
+        "action": "比對兩份記錄的場館清單"
+      }
+    ],
+    "expected_result": "兩個角色可見的場館清單完全相同（皆為 P1 自身及其所有子站台下的場館 S1、S1a、S2），且皆不含平行主站台 P2 與其底下的 T1",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（管理員說明；角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台），與站長的可見範圍相同、差別在操作深度；根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。"
+    },
+    "testcase_id": "TC-PLATFORMRULE-070",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": true,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-015",
+    "title": "非根站台管理員（S1）於機台交易紀錄查詢頁的站台切換選單僅含自身站台及子站台，可查得自身場館的機台交易，無法切換至平行子站台與其他主站台下的場館",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-015"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0152"
+    ],
+    "test_types": [
+      "functional",
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易，交易時間落在已知日期範圍內",
+      "機台交易紀錄查詢頁的資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台，不另設場館篩選欄位，見 SPEC-TXLOG-001「篩選器」）",
+      "以S1 站台的管理員帳號（由環境負責人提供）登入後台（S1 為 P1 底下的子站台；S2 與 S1 平行，T1 在平行的主站台 P2 底下）",
+      "（對照組）事先確認以根站台 admin 的管理員帳號（由環境負責人提供）登入時，站台切換下拉選單含 S2 與 T1，避免把『站台不存在』誤判為『管理員看不到』"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以 S1 站台的管理員登入後台，進入『各式報表 > 交易紀錄查詢』"
+      },
+      {
+        "n": 2,
+        "action": "展開頁面標題下方的 站台切換下拉選單，完整記錄所有選項"
+      },
+      {
+        "n": 3,
+        "action": "確認選單是否含 S1、S1a（自身及子站台），以及是否出現 S2（平行子站台）、P1（上層站台）、P2、T1（其他主站台及其底下的場館），並嘗試找出任何可切換至 S2 或 T1 的方式"
+      },
+      {
+        "n": 4,
+        "action": "站台切換停在 S1，以涵蓋已知交易的日期範圍及機台帳號 MS1 查詢"
+      }
+    ],
+    "expected_result": "交易紀錄查詢頁的站台切換選單只含自身站台 S1 及其子站台 S1a；不含平行的 S2、上層的 P1、其他主站台 P2 與 T1（無法切換至 S2／T1 查詢，此為主要反向斷言）；站台停在 S1 時查得 MS1 的機台交易",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-071",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "ui_e2e",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": true,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [],
+    "source_ref": "new_required:REQ-PLATFORMRULE-015",
+    "title": "根站台 admin 的管理員於機台交易紀錄查詢頁，站台切換選單列出全平台站台，可依序切換至兩個平行主站台底下的場館並各自查得其機台交易",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-015"
+    ],
+    "acceptance_criteria_ids": [
+      "AC-PLATFORMRULE-0153"
+    ],
+    "test_types": [
+      "functional"
+    ],
+    "design_techniques": [
+      "requirement_based"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易、S2 下的機台帳號 MS2 至少一筆機台交易、T1 下的機台帳號 MT1 至少一筆機台交易，三筆交易時間均落在同一個已知日期範圍內",
+      "機台交易紀錄查詢頁的資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台，不另設場館篩選欄位，見 SPEC-TXLOG-001「篩選器」）",
+      "以根站台 admin 的管理員帳號（由環境負責人提供）登入後台"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以根站台 admin 的管理員登入後台，進入『各式報表 > 交易紀錄查詢』"
+      },
+      {
+        "n": 2,
+        "action": "展開頁面標題下方的 站台切換下拉選單，確認含 P1、S1、S1a、S2、P2、T1"
+      },
+      {
+        "n": 3,
+        "action": "將站台切換至 S1，以涵蓋已知交易的日期範圍及機台帳號 MS1 查詢"
+      },
+      {
+        "n": 4,
+        "action": "將站台切換至 S2，以涵蓋已知交易的日期範圍及機台帳號 MS2 查詢"
+      },
+      {
+        "n": 5,
+        "action": "將站台切換至 T1（P2 底下），以涵蓋已知交易的日期範圍及機台帳號 MT1 查詢"
+      }
+    ],
+    "expected_result": "站台切換選單列出全平台場館（P1 子樹的 S1、S1a、S2 與 P2 子樹的 T1 皆在內）；依序切換至 S1、S2、T1 時，分別查得 MS1、MS2、MT1 的機台交易，跨兩個平行主站台皆可切換並查得",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-072",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "api",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "管理員或站長越權（略過畫面直接呼叫 API 帶範圍外場館）時的系統反應（回 4xx 拒絕、或回 200 但結果為空）v0.2 未定義，待 CLR-DAILYREPORT-014（OPEN，待 PM 回覆）；本案只斷言回應不含範圍外場館的交易資料，不斷言狀態碼與回應形態",
+        "requirement_id": "REQ-PLATFORMRULE-025",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      },
+      {
+        "text": "管理員／站長的可見場館範圍在後端也強制執行（不只前端隱藏選項）——v0.2 僅定義可見範圍，未明說後端是否強制；此為依操作員同類規則（REQ-013 既有 TC-017）類推的假設，非 spec 明文",
+        "requirement_id": "REQ-PLATFORMRULE-025",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      },
+      {
+        "text": "機台交易紀錄查詢送出的請求帶有可被改寫的場館／站台範圍參數（可由瀏覽器開發者工具的 Network 面板看到）；若實際請求不帶此參數（範圍完全由伺服端依登入身分決定），本案無從照步驟執行，需改定驗證方式",
+        "requirement_id": "REQ-PLATFORMRULE-015",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      }
+    ],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025+REQ-PLATFORMRULE-015",
+    "title": "非根站台的管理員略過畫面、直接以相同登入憑證改寫機台交易紀錄查詢請求的場館參數指向管轄範圍外的場館，回應不得含該場館的機台交易",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-025",
+      "REQ-PLATFORMRULE-015"
+    ],
+    "acceptance_criteria_ids": [],
+    "test_types": [
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "negative"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易、S2 下的機台帳號 MS2 至少一筆機台交易、T1 下的機台帳號 MT1 至少一筆機台交易，三筆交易時間均落在同一個已知日期範圍內",
+      "以S1 站台的管理員帳號（由環境負責人提供）登入後台；環境負責人另提供 T1 與 S2 的場館識別值（供改寫請求參數使用）",
+      "（對照組）事先由環境負責人或另一人以根站台 admin 的管理員於『各式報表 > 交易紀錄查詢』分別以 MS2、MT1 查詢，確認該兩筆交易存在"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以S1 站台的管理員（非根站台）登入後台，開啟瀏覽器開發者工具的 Network 面板，進入『各式報表 > 交易紀錄查詢』，以涵蓋三筆已知交易的日期範圍執行一次查詢，找出該次查詢送出的請求並記錄其場館／站台範圍參數"
+      },
+      {
+        "n": 2,
+        "action": "（驗證重送方式有效）以同一登入憑證，將請求的場館參數改為自身管轄範圍內的場館（S1）重送，確認回應含 MS1 的交易"
+      },
+      {
+        "n": 3,
+        "action": "將場館參數改寫為 T1 的場館識別值重送，記錄回應的狀態碼與內容"
+      },
+      {
+        "n": 4,
+        "action": "將場館參數改寫為 S2 的場館識別值重送，記錄回應的狀態碼與內容"
+      }
+    ],
+    "expected_result": "步驟 3、4 的回應內容皆不含 T1、S2 場館的任何機台交易資料（不含 MT1、MS2 的交易）；無論系統以拒絕（4xx）或空結果回應，只要沒有範圍外場館的交易內容即符合，具體反應待 PM 澄清",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-073",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
+  },
+  {
+    "product": "ba-admin",
+    "functional_area": "PLATFORMRULE",
+    "spec_id": "SPEC-PLATFORMRULE-001",
+    "spec_version": "0.2",
+    "test_level": "api",
+    "priority": "high",
+    "risk": "high",
+    "execution_mode": "manual",
+    "test_data": [],
+    "automation_status": "not_automated",
+    "ci_eligible": false,
+    "hotfix_eligible": false,
+    "execution_cost": "medium",
+    "stability": "unknown",
+    "critical_path": false,
+    "source": "change_workflow",
+    "assumptions": [
+      {
+        "text": "管理員或站長越權（略過畫面直接呼叫 API 帶範圍外場館）時的系統反應（回 4xx 拒絕、或回 200 但結果為空）v0.2 未定義，待 CLR-DAILYREPORT-014（OPEN，待 PM 回覆）；本案只斷言回應不含範圍外場館的交易資料，不斷言狀態碼與回應形態",
+        "requirement_id": "REQ-PLATFORMRULE-015",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      },
+      {
+        "text": "管理員／站長的可見場館範圍在後端也強制執行（不只前端隱藏選項）——v0.2 僅定義可見範圍，未明說後端是否強制；此為依操作員同類規則（REQ-013 既有 TC-017）類推的假設，非 spec 明文",
+        "requirement_id": "REQ-PLATFORMRULE-015",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      },
+      {
+        "text": "機台交易紀錄查詢送出的請求帶有可被改寫的場館／站台範圍參數（可由瀏覽器開發者工具的 Network 面板看到）；若實際請求不帶此參數（範圍完全由伺服端依登入身分決定），本案無從照步驟執行，需改定驗證方式",
+        "requirement_id": "REQ-PLATFORMRULE-015",
+        "needs_human_confirmation": false,
+        "resolved_by_approval": "APR-0193"
+      }
+    ],
+    "source_ref": "new_required:REQ-PLATFORMRULE-025+REQ-PLATFORMRULE-015",
+    "title": "站長略過畫面、直接以相同登入憑證改寫機台交易紀錄查詢請求的場館參數指向其管轄範圍（P1 子樹）外的場館，回應不得含該場館的機台交易",
+    "requirement_ids": [
+      "REQ-PLATFORMRULE-015"
+    ],
+    "acceptance_criteria_ids": [],
+    "test_types": [
+      "negative",
+      "security"
+    ],
+    "design_techniques": [
+      "negative"
+    ],
+    "preconditions": [
+      "站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台 T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館",
+      "交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易、S2 下的機台帳號 MS2 至少一筆機台交易、T1 下的機台帳號 MT1 至少一筆機台交易，三筆交易時間均落在同一個已知日期範圍內",
+      "以P1 站台的站長帳號（由環境負責人提供）登入後台；環境負責人另提供 T1 的場館識別值（供改寫請求參數使用）",
+      "（對照組）事先由環境負責人或另一人以根站台 admin 的管理員於『各式報表 > 交易紀錄查詢』以 MT1 查詢，確認該筆交易存在"
+    ],
+    "steps": [
+      {
+        "n": 1,
+        "action": "以 P1 站台的站長登入後台，開啟瀏覽器開發者工具的 Network 面板，進入『各式報表 > 交易紀錄查詢』，以涵蓋三筆已知交易的日期範圍執行一次查詢，找出該次查詢送出的請求並記錄其場館／站台範圍參數"
+      },
+      {
+        "n": 2,
+        "action": "（驗證重送方式有效）以同一登入憑證，將請求的場館參數改為自身管轄範圍內的場館（S2）重送，確認回應含 MS2 的交易"
+      },
+      {
+        "n": 3,
+        "action": "將場館參數改寫為 T1（平行主站台 P2 底下）的場館識別值重送，記錄回應的狀態碼與內容"
+      }
+    ],
+    "expected_result": "步驟 3 的回應內容不含 T1 場館的任何機台交易資料（不含 MT1 的交易）；無論系統以拒絕（4xx）或空結果回應，只要沒有範圍外場館的交易內容即符合，具體反應待 PM 澄清",
+    "expected_result_spec_reference": {
+      "spec_id": "SPEC-PLATFORMRULE-001",
+      "spec_version": "0.2",
+      "location": "§角色與權限（角色層級依 CLR-PLATFORMRULE-001）",
+      "quote": "| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |"
+    },
+    "testcase_id": "TC-PLATFORMRULE-074",
+    "version": 1,
+    "supersedes": null,
+    "status": "ACTIVE",
+    "created_by": "agent-test-designer",
+    "validated_by": "agent-test-validator",
+    "validation_report_id": "ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW",
+    "created_at": "2026-10-02T05:57:55Z",
+    "updated_at": "2026-10-02T06:05:56Z",
+    "approved_by": "oscarchen@blockaction.tech",
+    "approval_id": "APR-0193"
   }
 ]
