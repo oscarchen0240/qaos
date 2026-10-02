@@ -1,0 +1,80 @@
+product: ba-admin
+functional_area: PLATFORMRULE
+spec_id: SPEC-PLATFORMRULE-001
+spec_version: '0.2'
+test_level: ui_e2e
+priority: high
+risk: high
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+source: change_workflow
+assumptions: []
+source_ref: new_required:REQ-PLATFORMRULE-015
+title: 非根站台管理員（S1）於機台交易紀錄查詢頁的站台切換選單僅含自身站台及子站台，可查得自身場館的機台交易，無法切換至平行子站台與其他主站台下的場館
+requirement_ids:
+- REQ-PLATFORMRULE-015
+acceptance_criteria_ids:
+- AC-PLATFORMRULE-0152
+test_types:
+- functional
+- negative
+- security
+design_techniques:
+- requirement_based
+preconditions:
+- 站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台
+  T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館
+- 交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易，交易時間落在已知日期範圍內
+- 機台交易紀錄查詢頁的資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台，不另設場館篩選欄位，見 SPEC-TXLOG-001「篩選器」）
+- 以S1 站台的管理員帳號（由環境負責人提供）登入後台（S1 為 P1 底下的子站台；S2 與 S1 平行，T1 在平行的主站台 P2 底下）
+- （對照組）事先確認以根站台 admin 的管理員帳號（由環境負責人提供）登入時，站台切換下拉選單含 S2 與 T1，避免把『站台不存在』誤判為『管理員看不到』
+steps:
+- n: 1
+  action: 以 S1 站台的管理員登入後台，進入『各式報表 > 交易紀錄查詢』
+- n: 2
+  action: 展開頁面標題下方的 站台切換下拉選單，完整記錄所有選項
+- n: 3
+  action: 確認選單是否含 S1、S1a（自身及子站台），以及是否出現 S2（平行子站台）、P1（上層站台）、P2、T1（其他主站台及其底下的場館），並嘗試找出任何可切換至 S2 或 T1 的方式
+- n: 4
+  action: 站台切換停在 S1，以涵蓋已知交易的日期範圍及機台帳號 MS1 查詢
+expected_result: 交易紀錄查詢頁的站台切換選單只含自身站台 S1 及其子站台 S1a；不含平行的 S2、上層的 P1、其他主站台 P2 與 T1（無法切換至 S2／T1 查詢，此為主要反向斷言）；站台停在 S1 時查得 MS1
+  的機台交易
+expected_result_spec_reference:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  location: §角色與權限（角色層級依 CLR-PLATFORMRULE-001）
+  quote: '| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+testcase_id: TC-PLATFORMRULE-071
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+created_at: '2026-10-02T05:57:55Z'
+updated_at: '2026-10-02T05:57:55Z'
+history:
+- at: '2026-10-02T05:57:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+  run_id: RUN-20261002-002

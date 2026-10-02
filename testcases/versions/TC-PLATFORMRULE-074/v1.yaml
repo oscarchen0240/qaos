@@ -1,0 +1,83 @@
+product: ba-admin
+functional_area: PLATFORMRULE
+spec_id: SPEC-PLATFORMRULE-001
+spec_version: '0.2'
+test_level: api
+priority: high
+risk: high
+execution_mode: manual
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+critical_path: false
+source: change_workflow
+assumptions:
+- text: 管理員或站長越權（略過畫面直接呼叫 API 帶範圍外場館）時的系統反應（回 4xx 拒絕、或回 200 但結果為空）v0.2 未定義，待 CLR-DAILYREPORT-014（OPEN，待 PM 回覆）；本案只斷言回應不含範圍外場館的交易資料，不斷言狀態碼與回應形態
+  requirement_id: REQ-PLATFORMRULE-015
+  needs_human_confirmation: true
+- text: 管理員／站長的可見場館範圍在後端也強制執行（不只前端隱藏選項）——v0.2 僅定義可見範圍，未明說後端是否強制；此為依操作員同類規則（REQ-013 既有 TC-017）類推的假設，非 spec 明文
+  requirement_id: REQ-PLATFORMRULE-015
+  needs_human_confirmation: true
+- text: 機台交易紀錄查詢送出的請求帶有可被改寫的場館／站台範圍參數（可由瀏覽器開發者工具的 Network 面板看到）；若實際請求不帶此參數（範圍完全由伺服端依登入身分決定），本案無從照步驟執行，需改定驗證方式
+  requirement_id: REQ-PLATFORMRULE-015
+  needs_human_confirmation: true
+source_ref: new_required:REQ-PLATFORMRULE-025+REQ-PLATFORMRULE-015
+title: 站長略過畫面、直接以相同登入憑證改寫機台交易紀錄查詢請求的場館參數指向其管轄範圍（P1 子樹）外的場館，回應不得含該場館的機台交易
+requirement_ids:
+- REQ-PLATFORMRULE-015
+acceptance_criteria_ids: []
+test_types:
+- negative
+- security
+design_techniques:
+- negative
+preconditions:
+- 站台樹（由環境負責人準備；站台與帳號皆自行對應，不指定編號）：根站台 admin 底下有兩個互相平行的機台類型主站台 P1、P2；P1 底下有機台類型子站台 S1、S2（互相平行），S1 底下再有機台類型子站台 S1a；P2 底下有機台類型子站台
+  T1。依站台列表 spec，子站台與主站台同類型、機台類型站台（含主站台）皆帶機台專屬欄位，故 P1、S1、S1a、S2、P2、T1 皆視為場館
+- 交易資料（由環境負責人確認既有資料，或以既有機台開分／入金流程製造，並提供會員編號與交易時間）：S1 下的機台帳號 MS1 至少一筆機台交易、S2 下的機台帳號 MS2 至少一筆機台交易、T1 下的機台帳號 MT1 至少一筆機台交易，三筆交易時間均落在同一個已知日期範圍內
+- 以P1 站台的站長帳號（由環境負責人提供）登入後台；環境負責人另提供 T1 的場館識別值（供改寫請求參數使用）
+- （對照組）事先由環境負責人或另一人以根站台 admin 的管理員於『各式報表 > 交易紀錄查詢』以 MT1 查詢，確認該筆交易存在
+steps:
+- n: 1
+  action: 以 P1 站台的站長登入後台，開啟瀏覽器開發者工具的 Network 面板，進入『各式報表 > 交易紀錄查詢』，以涵蓋三筆已知交易的日期範圍執行一次查詢，找出該次查詢送出的請求並記錄其場館／站台範圍參數
+- n: 2
+  action: （驗證重送方式有效）以同一登入憑證，將請求的場館參數改為自身管轄範圍內的場館（S2）重送，確認回應含 MS2 的交易
+- n: 3
+  action: 將場館參數改寫為 T1（平行主站台 P2 底下）的場館識別值重送，記錄回應的狀態碼與內容
+expected_result: 步驟 3 的回應內容不含 T1 場館的任何機台交易資料（不含 MT1 的交易）；無論系統以拒絕（4xx）或空結果回應，只要沒有範圍外場館的交易內容即符合，具體反應待 PM 澄清
+expected_result_spec_reference:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  location: §角色與權限（角色層級依 CLR-PLATFORMRULE-001）
+  quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+testcase_id: TC-PLATFORMRULE-074
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+created_at: '2026-10-02T05:57:55Z'
+updated_at: '2026-10-02T05:57:55Z'
+history:
+- at: '2026-10-02T05:57:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+  run_id: RUN-20261002-002

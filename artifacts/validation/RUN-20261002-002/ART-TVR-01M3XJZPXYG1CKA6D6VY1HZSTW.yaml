@@ -1,0 +1,156 @@
+artifact_id: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261002-002
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-02T05:56:52Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+- entity_type: Artifact
+  id: ART-RM-01M3XGY20C2C01QSM6N88FR6EE
+- entity_type: Artifact
+  id: ART-CIR-01M3XJ09X6JYPY1SNA4TAP8H3D
+- entity_type: Artifact
+  id: ART-TVR-01M3XJQSW9ZJ7BRBZXW8NS3X6Z
+requires_approval: null
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M3XGY20C2C01QSM6N88FR6EE
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M3XJXECPT7SS704F7WK8EK0E
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: 'acceptance_criteria_ids: []（iteration 1 仍為空，Designer 說明維持）。RM v0.2 REQ-PLATFORMRULE-015 只有 AC-0151（操作員）、0152（非根站台管理員）、0153（根站台管理員），沒有站長的
+      AC。'
+    explanation: 沿用上一版報告（ART-TVR-01M3XJQSW9ZJ7BRBZXW8NS3X6Z）的 advisory。這是 RM 的缺口，Draft 端無法解決；在 RM 補 AC 之前，維持 requirement 層級追溯是正確做法。
+    recommended_change: 不需修改 Draft。下次 RM 修訂時，在 REQ-PLATFORMRULE-015 補站長 AC（站長僅能查得自身站台及所有子站台下場館的機台交易，無法切換至範圍外場館），再把本案掛上去。
+  - testcase_id: '*'
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+    evidence: 'N7（TC-DRAFT-01M3XJXECSRFPB90QBKZSTQY9G）各假設的 requirement_id 為 REQ-025／REQ-015；N8（TC-DRAFT-01M3XJXECSF8J28A0FQHM1VGMK）3
+      條假設的 requirement_id 已全改為 REQ-015。兩條各有 3 條 needs_human_confirmation: true 的假設（越權反應待 CLR-DAILYREPORT-014、後端是否強制可見範圍、請求是否帶可改寫的場館參數）；expected
+      只斷言「回應不含範圍外場館的交易」。'
+    explanation: 沿用上一版的 advisory：屬合規的 exploratory，未定義的行為都已列假設並標需人工確認。核准時須由 Human 逐條確認；CLR-DAILYREPORT-014 回覆後要回頭收斂預期。
+    recommended_change: 不需修改 Draft。核准時在 approval 註記這 6 條假設由 Human 確認；CLR-DAILYREPORT-014 回覆後依 ADR-008 做 impact 掃描，更新 N7、N8
+      的預期。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明）
+      quote: 根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。
+    evidence: 31 條不修訂的 affected TC（TC-PLATFORMRULE-001～017、019～032，現行 v1）前置條件仍為「以 Admin 登入後台」；上一版已逐條確認：都沒有 quote，引用的章節在 v0.2
+      仍存在，預期不依賴管理員的可見範圍。TC-028（「所有機台場館皆預設停用」）與 TC-007（兩個機台場館互切）隱含需要看得到多個或全部場館。
+    explanation: 沿用上一版的 advisory：按 Admin＝根站台 admin 的管理員的對應，31 條仍成立，不列 issue。剩下的只是用詞風險，執行者若誤解為非根站台的管理員，TC-028 的覆蓋會變小。這不在本 Draft
+      的修訂範圍內。
+    recommended_change: 核准時在 approval 註記「舊稱 Admin＝根站台 admin 的管理員」；TC-028、TC-007 日後改版時，順手把前置條件改為「以根站台 admin 的管理員登入後台」。
+  - testcase_id: '*'
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 額度上限（場館層級） | 可設定 | 可設定 | 唯讀 |'
+    evidence: TC-PLATFORMRULE-018 v3（不在本 Draft 範圍）的 expected_result_spec_reference.quote 混入了註解文字（截圖確認、SPEC-ARCADE-001 出處），不是逐字原文。
+    explanation: 沿用上一版的範圍外 advisory，是既有問題，與本次變更及本 Draft 的判定無關。
+    recommended_change: TC-018 下次改版時，quote 只留表格原文，說明移到 location 或 assumptions。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器 L27
+      quote: 頁面資料範圍跟隨頁面標題下方的**站台切換下拉選單**（後台各頁皆有，一次僅顯示所選站台），不另設「場館」篩選欄位。
+    evidence: 上一版報告（ART-TVR-01M3XJQSW9ZJ7BRBZXW8NS3X6Z）引用這段時，location 寫成「§功能說明 L27」；實際上 L27 位於「### 篩選器」（L25）之下。本 Draft 的前置條件寫「見
+      SPEC-TXLOG-001「篩選器」」，是正確的。
+    explanation: 這是驗證者自己的引用位置更正，引文本身逐字正確，不影響上一版的判定與本次的判定。
+    recommended_change: 無需 Designer 動作，僅供紀錄。
+  coverage_summary:
+    requirements_total: 25
+    requirements_covered: 24
+    ac_total: 38
+    ac_covered: 37
+    uncovered_accepted:
+    - REQ-PLATFORMRULE-011／AC-PLATFORMRULE-0111：架構層要求，依 CLR-PLATFORMRULE-002（APPLIED）維持 rejection_contract.defined=false、不強行設計
+      TC；本次 v0.2 未變動
+    - 計算口徑：RM v0.2 全部 ACTIVE requirement／AC，覆蓋來源為本 Draft 11 條加上 Registry ACTIVE TC（被本 Draft 取代的 048／051／066 v1 不計）。AC-PLATFORMRULE-0153
+      已由修正後的 N6 實質覆蓋
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    quotes_verbatim_in_spec_v02: true
+    revisions_match_cir_reasons: true
+    cir_new_required_ac_covered: true
+    assumptions_all_flagged: true
+    unrevised_affected_tcs_hold_under_v02: true
+    high_risk_non_happy_coverage: true
+    prior_iteration_major_issues_resolved: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3XJXECM7ZCBSFJ843DCET0Y
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECPT7SS704F7WK8EK0E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSAQD92FH74VZFD0WY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSH43CG0F4KH2SKCHZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECS6PSJV42VX4X28AV9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSM9XP96PYKT6HZE87
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSNWRXYGDE8FG025WM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSCWNBSBBF7B84CYZ6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSG6NJ2ZE1AQJEM01H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSRFPB90QBKZSTQY9G
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJXECSF8J28A0FQHM1VGMK
+    verdict: ok
+history:
+- at: '2026-10-02T05:57:55Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261002-002
