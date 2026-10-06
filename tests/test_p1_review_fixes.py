@@ -326,11 +326,32 @@ def test_p1r4_01_preexisting_target_is_not_claimed(content):
     root = U.mkroot(); victim = pathlib.Path(root) / f"operations/_global/{op}/blobs/{sha}"
     victim.parent.mkdir(parents=True); victim.write_bytes(data)                                     # 模擬其他程式先放好的檔案
     before = U.snapshot(root)
-    r = U.q(root, "tc-export", "AUTH"); assert r.returncode != 0 and "沒有計畫，需人工處理" in r.stderr, r.stderr
+    r = U.q(root, "tc-export", "AUTH"); assert r.returncode != 0 and "不是本次建立的" in r.stderr, r.stderr
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}            # 沒有建立認領、清單或任何檔案
     r = U.q(root, *spec_args()); assert r.returncode == 0, r.stderr                                 # 其他操作照常；既存檔案不被清
     assert victim.read_bytes() == data and "保留無法辨識的內容" in r.stderr
     assert U.q(root, "tc-export", "AUTH").returncode != 0 and victim.read_bytes() == data           # 衝突不會被自動處理成成功
+
+# ---------------------------------------------------------------- P1R5-01：同 op 既存的 staging 入口不能被新認領檔追溯取得
+@pytest.mark.parametrize("variant", ["manifest_other_format", "manifest_parseable", "manifest_symlink", "staging_tmp", "scope_plan_tmp"])
+def test_p1r5_01_preexisting_staging_entry_is_not_claimed(variant, tmp_path):
+    ref = U.mkroot(); assert U.q(ref, "tc-export", "AUTH", fault="before_plan_save").returncode == FAULT_EXIT
+    op, _ = _staged(ref); ref_manifest = (pathlib.Path(ref) / f"operations/_global/staging.d/{op}.yaml").read_bytes()
+    root = U.mkroot(); r_ = pathlib.Path(root); st = r_ / "operations/_global/staging.d"; st.mkdir(parents=True, exist_ok=True)
+    path = {"manifest_other_format": st / f"{op}.yaml", "manifest_parseable": st / f"{op}.yaml", "manifest_symlink": st / f"{op}.yaml",
+            "staging_tmp": st / f".qaos-tmp-{op[:16]}-{op}.yaml-01234567", "scope_plan_tmp": r_ / f"operations/_global/.qaos-tmp-{op[:16]}-{op}.yaml-01234567"}[variant]
+    if variant == "manifest_symlink": (tmp_path / "victim").write_bytes(b"outside"); path.symlink_to(tmp_path / "victim")
+    else: path.write_bytes({"manifest_other_format": b"kind: other\n", "manifest_parseable": ref_manifest}.get(variant, b"foreign temp keep"))   # 模擬請求前就存在的外部檔案
+    data = path.read_bytes()
+    before = U.snapshot(root)
+    for fault in (None, "after_claim"):                                                             # 帶 after_claim 也在認領之前就被拒（不是 86）
+        r = U.q(root, "tc-export", "AUTH", fault=fault); assert r.returncode == 1 and "不是本次建立的" in r.stderr, (fault, r.returncode, r.stderr)
+        assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+        assert not (st / f"{op}.claim").exists()
+    r = U.q(root, *spec_args()); assert r.returncode == 0, r.stderr                                 # 其他操作照常
+    assert path.read_bytes() == data and (variant != "manifest_symlink" or path.is_symlink())       # 既存檔案保留
+    r = U.q(root, *spec_args("1.1")); assert r.returncode == 0 and path.read_bytes() == data         # 再一個寫入請求的清理也不碰它
+    assert U.q(root, "tc-export", "AUTH").returncode == 1 and not (st / f"{op}.claim").exists()    # 衝突不會被自動處理成成功
 
 # ---------------------------------------------------------------- P1R4-02：路徑任何一層是 symlink → 拒絕，不刪任何東西
 @pytest.mark.parametrize("level", ["scope", "op", "blobs", "staging", "file"])

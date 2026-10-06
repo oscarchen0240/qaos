@@ -693,8 +693,12 @@ def check_plan_structure(plan: dict):
 def _save_plan(plan: dict, blobs: dict):
     check_plan_structure(plan)
     op = plan["op_id"]; d = store.ROOT / op_dir(plan["scope"], op)
-    if os.path.lexists(d) or os.path.lexists(_claim_path(op)):     # 清理之後仍存在 → 不屬於 executor，不取得它的擁有權
-        raise EvidenceConflict(f"{d.relative_to(store.ROOT)} 或其認領檔已存在，但沒有計畫，需人工處理")
+    # 認領檔會讓清理取得本 op 所有入口的刪除權；清理之後這些入口仍存在 → 不屬於 executor，不能追溯認領
+    pre = [d, _claim_path(op), store.ROOT / STAGING_DIR / f"{op}.yaml",
+           *(store.ROOT / STAGING_DIR).glob(f".qaos-tmp-*-{op}.yaml-*"), *(store.ROOT / "operations" / plan["scope"]).glob(f".qaos-tmp-*-{op}.yaml-*")]
+    found = [x for x in pre if os.path.lexists(x)]
+    if found:
+        raise EvidenceConflict(f"{found[0].relative_to(store.ROOT)} 已存在，但沒有計畫，也不是本次建立的，需人工處理")
     staging = f"{STAGING_DIR}/{op}.yaml"
     _claim_path(op).parent.mkdir(parents=True, exist_ok=True)
     os.close(os.open(_claim_path(op), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)); _fsync_dir(_claim_path(op).parent)
