@@ -5,10 +5,10 @@
 
 ## P1：executor 基礎設施
 
-- **執行 commit**：`bc0fb4ccf964531690a4012b02dda9878ab0a24c`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06、再審查 P1R2-01～04、局部複驗 P1R3-01～02 的修正）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`00e43024a60cee86da28fc84225bb8c023a5e657`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06、再審查 P1R2-01～04、局部複驗 P1R3-01～02、殘留清理複驗 P1R4-01～03 的修正）。本紀錄所在的 commit 只改文件
 - **環境**：macOS（Darwin 24.6）、Python 3.11.0、本機 APFS
 - **資料**：每個 P1 案例使用獨立的暫存 root（只複製 schemas、agents、workflows、permissions），以正式流程建立狀態；故障以 `QAOS_FAULT` 注入、同步以 `QAOS_PAUSE` 暫停點完成。沒有使用 repo 的業務資料。
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 196 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 207 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
 
 ### 狀態說明
 
@@ -60,7 +60,7 @@
 | AC-07-65 | 通過 | `test_p1_lock_fork.py::test_65_two_resumes_only_one_proceeds` | — |
 | AC-07-66 | 通過 | `test_p1_lock_fork.py::test_66_different_ops_only_one_acquires` | — |
 | AC-07-67、69 | 通過 | `test_p1_lock_fork.py::test_67_69_kill9_after_plan_save` | — |
-| AC-07-68 | 通過 | `test_p1_lock_fork.py::test_68_kill9_before_plan_save_no_residue`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（故障、寫入清單建立後 SIGKILL、內容檔建立後 SIGKILL、內容檔暫存寫好後 SIGKILL；下一個寫入只刪清單列出的殘留，8 種外部內容（含形狀完全符合的內容檔）與空 hex 目錄原樣保留，差異與未中止的對照 root 相同）、`test_p1_06_abort_after_plan_save_keeps_blobs_and_drops_manifest` | — |
+| AC-07-68 | 通過 | `test_p1_lock_fork.py::test_68_kill9_before_plan_save_no_residue`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（故障、寫入清單建立後 SIGKILL、內容檔建立後 SIGKILL、內容檔暫存寫好後 SIGKILL；下一個寫入只刪清單列出的殘留，8 種外部內容（含形狀完全符合的內容檔）與空 hex 目錄原樣保留，差異與未中止的對照 root 相同）、`test_p1_06_abort_after_plan_save_keeps_blobs_and_drops_manifest`、`test_p1r4_01_*`（目標既存：不同內容、相同內容）、`test_p1r4_02_*`（scope、op、blobs、staging.d、內容檔各層 symlink；拒絕且 root 與外部檔案都不變）、`test_p1r4_03_*`（認領後、清單短寫、清單零位元組中止；清理途中中止兩次後完成） | 不取鎖的外部程式同時修改這些路徑，不在保證範圍內 |
 | AC-07-71 | 通過 | `test_p1_lock_fork.py::test_71_stale_owner_file_is_ignored` | — |
 | AC-07-75、76 | 通過 | `test_p1_misc.py::test_75_*`、`test_76_*` | — |
 | AC-07-77a～c | 通過 | `test_p1_lock_fork.py::test_77abc_fork_child_drops_lock_parent_keeps_it` | — |
@@ -102,6 +102,6 @@
 7. **audit.log**：改為由事件檔整份重建（每個操作重建它影響的 run log 與全域 log），不再追加；需要和 Session B 協調（D8）。
 8. **效能**：測試時間從約 5 秒增加到約 2 分鐘（每次寫入都經過計畫、fsync 與 render）；全域 log 的 render 每次讀取所有事件檔，資料量增加時可在第二批改為增量。
 9. **登錄紀錄核對**：每次讀取登錄紀錄都核對全部紀錄的欄位、檔名與 `plan_seq` 連續性；和計畫、完成狀態紀錄的一致性（plan hash、action、registered_at）只在涉及該 op 時核對：續做、已完成回報、`operation list`，以及第 0 步的 rollback 紀錄（第 0 步不對所有紀錄做這項核對，附錄 A 4-11）。限制：兩筆登錄紀錄的 `plan_seq` 互換（仍連續）無法由紀錄本身偵測，`plan_seq` 不是可信的防竄改時間鏈；P3 的後續操作盤點沿用同一限制。
-10. **計畫保存前的殘留**（附錄 A 4-18）：擁有權的證據是寫入清單 `staging.d/<op>.yaml`，在寫任何內容檔之前建立、計畫保存後刪除。每個寫入請求取得鎖後，先核對有登錄紀錄卻沒有計畫檔的 op，有就拒絕、不做任何清理；再只刪清單列出的內容檔、其短寫暫存、該 op 的計畫暫存與因此變空的目錄。沒有清單的內容一律不刪（即使形狀完全符合），看起來像 op 目錄的保留並回報。
+10. **計畫保存前的殘留**（附錄 A 4-18）：擁有權的根據是零位元組的認領檔 `staging.d/<op>.claim`（O_EXCL 建立、最先建立、最後刪除），寫入清單 `staging.d/<op>.yaml` 列出將新建的內容檔；保存計畫時 op 目錄或認領檔已存在就拒絕，所以清單上的檔案必定是本次新建。每個寫入請求取得鎖後，先核對有登錄紀錄卻沒有計畫檔的 op，有就拒絕、不做任何清理；再先核對全部待刪路徑（每一層不是 symlink、內容檔 hash 相符）才刪。沒有認領檔的內容一律不刪，看起來像 op 目錄的保留並回報。限制：不取鎖的外部程式同時修改這些路徑，不在保證範圍內（不宣稱跨檔原子性）。
 11. **擷取 guard**：只載入 `store` 而沒有 executor 時，擷取與寫入一律拒絕（fail closed）。
 12. **時間比較**：render 判定移轉後的新 run 時，把 `created_at`、`migrated_at` 解析成 UTC 時間再比較；缺時區或格式不合法 → 拒絕。
