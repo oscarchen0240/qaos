@@ -3946,6 +3946,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 3-21 | 第一批的 `refs.py` | 只做 SourceRef 的解析與驗證函式；`refs report` 屬第二批 | I |
 | 3-22 | `defined_by_decision` 另附的補充 clarification 來源 | 也必須通過 X16（比「至少一筆」更嚴格） | R |
 | 3-23 | P2 實作補充的定義 | 答案修訂每筆另記 `op_id`；回答時 CLR 的 spec 版本必須已匯入（無法建立 basis → 拒絕回答，不寫入）。`applicability[]` 與答案修訂以外的紀錄的 `sha256` 為該筆紀錄（不含 `sha256` 欄位）的 canonical sha256。`applicability add` 的 `answer_rev` 必須已存在於 `answer_revisions`（舊 CLR 的 rev 0 由移轉或下一次 `answer` 寫入）；`--params` 以 JSON 物件給（`{}` 明寫）。`evidence_addenda` 的來源是 SourceRef（依 CLR 的 spec 版本驗證）或 document 型 `{type: document, file_name, sha256, package_sha256?, location}`。開單時給了決策點欄位就驗證（`known_rules`／`conflict_sides` 的 SourceRef、`coverage` 中的 SpecPin、文件索取單的引用處），並由 `missing_sources` 產生 `document_items`（`D01`…）。第 6 章 A3（ANSWERED → ANSWERED 追加答案修訂）在 P2 加入狀態機 | I |
+| 3-24 | SourceRef 索引的表示 | `answer_rev`、`resolution_index` 必須是 JSON／YAML 的整數表示且不小於 0；boolean、字串、`0.0` 這類浮點寫法一律是形狀錯誤（不轉換、不截斷）。`validate`、`x16`、`effective_basis`、`resolution_entry` 的入口都先做同一形狀檢查，核准單條目內部的來源同樣適用 | I |
 
 ### A.4 executor（第 4 章）
 

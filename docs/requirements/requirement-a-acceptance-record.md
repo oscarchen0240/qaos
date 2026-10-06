@@ -108,11 +108,11 @@
 
 ## P2：spec 引用、外部來源、有型別來源與 CLR 欄位
 
-- **執行 commit**：`ddab53ec85bdd8a56c0083eab031ebdc3606354e`（分支 `qaos/requirement-a`；P2 程式為 `490ba1b`、`33bc228`、`60ce878`，P2 程式碼審查 P2-01～03 的修正為 `ddab53e`）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`9b1bde0b0995a33c86b7dc7222bc57e9ea343ac3`（分支 `qaos/requirement-a`；P2 程式為 `490ba1b`、`33bc228`、`60ce878`，P2 程式碼審查 P2-01～03 的修正為 `ddab53e`，局部複驗 P2R2-01 的修正為 `9b1bde0`）。本紀錄所在的 commit 只改文件
 - **環境**：同 P1
 - **資料**：每個 P2 案例使用獨立的暫存 root，以正式 CLI 建立 spec、引用宣告、CLR、答案與適用紀錄；決策點欄位以入口 D（腳本呼叫 `clarification.new()`）提供。legacy spec 與 legacy CLR 以直接寫入舊格式檔案建立（模擬部署前就存在的資料）。核准單的 `decision.resolutions[]` 要到 P4 才由正式流程寫入，所以 approval 型 SourceRef 只以記憶體中的核准單做函式層測試。AC-02-6 的 RM、TC 情境沿用 session root（前面 WF 測試以正式流程建立）
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 286 passed；`tools/validate_phase1.py` ALL CHECKS PASSED。主資料夾既有的 spec.yaml 與 54 張 CLR（唯讀）全部通過新 schema
-- **突變檢查**：讓 `covers` 一律回傳 True、`x16` 一律通過時，5 個相關測試失敗；把 P2-01～03 的修正退回時，對應的 8 個反例失敗（4 個合法對照通過）；之後都還原
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 295 passed；`tools/validate_phase1.py` ALL CHECKS PASSED。主資料夾既有的 spec.yaml 與 54 張 CLR（唯讀）全部通過新 schema
+- **突變檢查**：讓 `covers` 一律回傳 True、`x16` 一律通過時，5 個相關測試失敗；把 P2-01～03 的修正退回時，對應的 8 個反例失敗（4 個合法對照通過）；把 P2R2-01 的修正退回時，新增的 9 個反例全部失敗；之後都還原
 
 ### AC 對照
 
@@ -139,7 +139,7 @@
 | AC-08-2 | 部分 | `test_ac_08_2_*`（新產出的空或缺 quote、location FAIL） | 「舊資料不 FAIL」的實際檢查點是 G-SPEC（P4） |
 | AC-08-6、17、27、38 | 部分 | `test_ac_08_6_*`、`test_ac_08_17_and_38_*`、`test_ac_08_27_28_*`（X16 FAIL；SourceRef 本身 PASS） | 「G-SPEC FAIL、不是 E1」在 P4 |
 | AC-08-20、26、29 | 部分 | `test_covers_table`、`test_ac_08_27_28_*`（29：人確認 basis_hash 後 X16 PASS） | 「成為／不成為 E1」在 P4 |
-| AC-08-9、12、13、33、34 | 部分 | `test_approval_ref_validation`、`test_ac_08_33_*`、`test_p2_01_approval_wrapper_validates_inner_source`（包裝內的 no_change、out_of_scope、錯 hash、錯 quote、已撤回都拒絕）、`test_p2_02_source_ref_index_shape`（記憶體中的核准單） | 核准單 `resolutions[]` 的正式寫入在 P4 |
+| AC-08-9、12、13、33、34 | 部分 | `test_approval_ref_validation`、`test_ac_08_33_*`、`test_p2_01_approval_wrapper_validates_inner_source`（包裝內的 no_change、out_of_scope、錯 hash、錯 quote、已撤回都拒絕）、`test_p2_02_source_ref_index_shape`、`test_p2r2_01_*`（索引 0.0、1.0、0.5、-1 在 validate、x16、effective_basis 與核准單內部來源都回傳錯誤；addenda CLI 不拋 traceback）（記憶體中的核准單） | 核准單 `resolutions[]` 的正式寫入在 P4 |
 | AC-08-10 | 部分 | `test_clarification_ref_checks_pinned_rev`（依釘選的 rev 驗證，新答案之後仍 PASS） | 舊 run 恢復在 P4（派發包快照） |
 | AC-08-16、32 | 部分 | `test_ac_08_17_and_38_*`（legacy CLR＋applicability 的合成版本） | DAILYREPORT 實際資料在 P3 移轉後驗收 |
 | AC-08-4 | 待 P3／P4 | — | CLR-CASHFLOW-005 的 rev 0 由移轉建立（P3）；完整 G-SPEC 在 P4 |
@@ -148,7 +148,7 @@
 ### P2 的實作說明（審查時請一併確認）
 
 1. **模組**：spec 的寫入指令集中在新模組 `tools/qaos/spec_ops.py`（`spec import` 從 `cli.py` 移入）；SourceRef 相關的讀取函式在新模組 `tools/qaos/sources.py`。第 2 章 §6 原寫「`store.py` 讀寫版本條目、legacy 預設值」，改由 `spec_ops` 提供。
-2. **介面補充**：附錄 A 2-12、3-23（`--package-file`、`--analysis-policy`、宣告紀錄的 `action`、答案修訂的 `op_id`、紀錄 `sha256` 的定義、`--params` 用 JSON 等）。
+2. **介面補充**：附錄 A 2-12、3-23、3-24（索引只接受整數表示、`--package-file`、`--analysis-policy`、宣告紀錄的 `action`、答案修訂的 `op_id`、紀錄 `sha256` 的定義、`--params` 用 JSON 等）。
 3. **回答必須能建立 basis**：CLR 的 spec 版本沒有匯入時拒絕回答。主資料夾目前只有 `CLR-CASHOUT-001`（APPLIED，`SPEC-CASHOUT-001@1.0` 未匯入）會遇到；它已 APPLIED 不會再回答，但 P3 移轉建立 rev 0 時要處理。既有測試 `test_20b` 因此先以正式流程匯入它使用的 spec，保留原本驗影響掃描的意圖。
 4. **第 6 章 A3 提前**：狀態機加入 ANSWERED → ANSWERED（追加答案修訂），讓「答案修訂只能追加」可以實際運作；第 6 章其餘轉換（INCORPORATED、新的 apply 檢查等）仍在 P5。
 5. **SourceRef 在需求、TC、RR、bug schema 中的位置**（第 3 章 §6.3、§14）沒有在 P2 加入：這些位置要配合 G-SPEC、G-DESIGN 的新檢查才有意義，移到 P4 一起做。P2 只提供 defs 的 SourceRef 與驗證函式。
