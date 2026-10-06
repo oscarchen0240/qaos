@@ -227,30 +227,32 @@ except op.OperationError as e: print("refused", e)
         assert d == {"added": [], "removed": [], "changed": []}, d
     assert len(U.op_list(root)) == n
 
-# ---------------------------------------------------------------- P1-06／P1R2-01：計畫保存前中止的殘留只清自己的
+# ---------------------------------------------------------------- P1-06／P1R2-01／P1R3-01、02：只清寫入清單列出的殘留
 def _plant_foreign(root):
-    """模擬其他程式放在 operations/ 下的內容（不是 executor 寫的）；回傳路徑 → sha256。"""
+    """模擬其他程式放在 operations/ 下的內容（不是 executor 寫的）；回傳路徑 → 內容。另建一個空的 hex 目錄。"""
     import hashlib
-    r = pathlib.Path(root); blob = b"x: 1\n"; sha = hashlib.sha256(blob).hexdigest()
+    r = pathlib.Path(root); blob = b"external CAS contents"; sha = hashlib.sha256(blob).hexdigest()
     files = {"operations/_global/other-tool/important.txt": b"keep",
              f"operations/_global/{'a' * 64}/external.txt": b"keep",                              # 64 hex 目錄，但內容不是 blobs
              f"operations/_global/{'b' * 64}/blobs/{'c' * 64}": blob,                           # 名稱和內容 hash 不符
-             f"operations/_global/{'d' * 64}/blobs/{sha}": blob,                                # 正確的內容檔，但多一個檔
-             f"operations/_global/{'d' * 64}/notes.txt": b"keep",
+             f"operations/_global/{'d' * 64}/blobs/{sha}": blob,                                # 形狀完全符合（只有合法內容檔），但沒有寫入清單
              f"operations/misc/{'e' * 64}/blobs/{sha}": blob,                                   # 不合法的 scope
-             f"operations/_global/.qaos-tmp-{'f' * 16}-{'0' * 64}.yaml-01234567": b"keep"}      # tag 和 op 不符
+             f"operations/_global/.qaos-tmp-{'f' * 16}-{'0' * 64}.yaml-01234567": b"keep",      # tag 和 op 不符
+             f"operations/_global/staging.d/{'9' * 64}.yaml": b"kind: other\n",                # 不是 executor 的清單格式
+             f"operations/_global/staging.d/notes.txt": b"keep"}
     for k, v in files.items():
         (r / k).parent.mkdir(parents=True, exist_ok=True); (r / k).write_bytes(v)
+    (r / f"operations/_global/{'8' * 64}").mkdir(parents=True)                                     # 空的 hex 目錄
     return files
 
-def _added_after_v11(root):
-    before = U.snapshot(root); r = U.q(root, *spec_args("1.1"), check=True)
+def _write_v11(root):
+    before = U.snapshot(root); r = U.q(root, *spec_args("1.1"))
     return U.diff(before, U.snapshot(root)), r
 
-@pytest.mark.parametrize("how", ["fault", "kill_after_first_blob", "kill_blob_tmp_written"])
+@pytest.mark.parametrize("how", ["fault", "kill_after_staging", "kill_after_first_blob", "kill_blob_tmp_written"])
 def test_p1_06_residue_before_plan_save_is_cleaned(how, tmp_path):
-    import signal
-    ref = U.mkroot(); _plant_foreign(ref); ref_d, _ = _added_after_v11(ref)                     # 對照：沒有中止時 v1.1 匯入的差異
+    import signal, collections, re as _re
+    ref = U.mkroot(); _plant_foreign(ref); ref_d, _ = _write_v11(ref)                            # 對照：沒有中止時 v1.1 匯入的差異
     root = U.mkroot(); foreign = _plant_foreign(root); base = U.snapshot(root)
     if how == "fault":
         assert U.q(root, *spec_args(), fault="before_plan_save").returncode == FAULT_EXIT
@@ -260,26 +262,49 @@ def test_p1_06_residue_before_plan_save_is_cleaned(how, tmp_path):
         wait_file(d / "paused"); p.send_signal(signal.SIGKILL); p.wait(timeout=30)
     left = U.diff(base, U.snapshot(root))
     assert left["removed"] == [] and left["changed"] == [] and left["added"], left
-    assert all(x.startswith("operations/_global/") and "/blobs/" in x for x in left["added"]), left   # 殘留只有內容檔／內容檔暫存
-    if how == "kill_blob_tmp_written": assert any(".qaos-tmp-" in x for x in left["added"]), left
-    d, r = _added_after_v11(root)                                                                 # 下一個寫入請求持鎖清除
-    assert sorted(set(d["removed"])) == sorted(left["added"]), d                                   # 只刪本次殘留
-    import collections, re as _re
-    norm = lambda xs: collections.Counter(_re.sub(r"/blobs/[0-9a-f]{64}$", "/blobs/<sha>", x) for x in xs)   # 內容檔名是內容 hash，含時間而不同
+    assert any(x.startswith("operations/_global/staging.d/") for x in left["added"]), left             # 清單先於任何內容檔
+    assert all(x.startswith("operations/_global/staging.d/") or "/blobs/" in x for x in left["added"]), left
+    if how == "kill_blob_tmp_written": assert any("/blobs/.qaos-tmp-" in x for x in left["added"]), left
+    d, r = _write_v11(root); assert r.returncode == 0, r.stderr                                    # 下一個寫入請求持鎖清除
+    assert sorted(d["removed"]) == sorted(left["added"]), d                                        # 只刪本次殘留（含清單）
+    norm = lambda xs: collections.Counter(_re.sub(r"/blobs/[0-9a-f]{64}$", "/blobs/<sha>", x) for x in xs)   # 內容檔名是含時間的 hash
     assert d["changed"] == ref_d["changed"] and norm(d["added"]) == norm(ref_d["added"]), (d, ref_d)
-    for k, h in foreign.items(): assert U.sha(pathlib.Path(root) / k) == U.sha(pathlib.Path(ref) / k)   # 外部內容原樣保留
-    assert "保留無法辨識的內容" in r.stderr
+    for k, v in foreign.items(): assert (pathlib.Path(root) / k).read_bytes() == v                 # 外部內容原樣保留
+    assert (pathlib.Path(root) / f"operations/_global/{'8' * 64}").is_dir()
+    assert "保留無法辨識的內容" in r.stderr, r.stderr
 
-@pytest.mark.parametrize("variant", ["plan_removed", "plan_to_tmp"])
-def test_p1_06_registered_without_plan_is_refused(variant):
-    """有登錄紀錄卻沒有計畫（竄改反例）→ 拒絕寫入、不刪任何東西，交人處理。"""
-    root = U.mkroot(); U.q(root, *spec_args(), check=True)
+def test_p1_06_abort_after_plan_save_keeps_blobs_and_drops_manifest():
+    """計畫已保存、清單尚未刪除時中止 → 內容檔屬於計畫；同請求重送續做完成，清單被刪、內容檔保留。"""
+    root = U.mkroot()
+    assert U.q(root, *spec_args(), fault="after_plan_save").returncode == FAULT_EXIT
+    op = U.unregistered_plans(root)[0]
+    assert (pathlib.Path(root) / f"operations/_global/staging.d/{op}.yaml").exists()
+    U.q(root, *spec_args(), check=True)
+    assert not (pathlib.Path(root) / f"operations/_global/staging.d/{op}.yaml").exists()
+    assert U.incomplete(root) == [] and list((pathlib.Path(root) / f"operations/_global/{op}/blobs").iterdir())
+
+@pytest.mark.parametrize("state", ["completed", "in_progress"])
+@pytest.mark.parametrize("variant", ["plan_removed", "plan_and_dir_removed", "plan_to_tmp"])
+def test_p1_06_registered_without_plan_is_refused(variant, state):
+    """有登錄紀錄卻沒有計畫（竄改反例）→ 拒絕寫入；拒絕前不清理任何東西（另有一份可清的殘留也保留）。"""
+    import shutil
+    root = U.mkroot()
+    if state == "completed": U.q(root, *spec_args(), check=True)
+    else: assert U.q(root, *spec_args(), fault="after_register").returncode == FAULT_EXIT
     op = next(o["op_id"] for o in U.op_list(root) if o["action"] == "spec_import")
     plan = pathlib.Path(root) / f"operations/_global/{op}.yaml"
-    if variant == "plan_removed": plan.rename(pathlib.Path(root) / "moved-plan.yaml")
-    else: plan.rename(plan.with_name(f".qaos-tmp-{op[:16]}-{op}.yaml-01234567"))
+    if variant == "plan_to_tmp": plan.rename(plan.with_name(f".qaos-tmp-{op[:16]}-{op}.yaml-01234567"))
+    else:
+        plan.rename(pathlib.Path(root) / "moved-plan.yaml")
+        if variant == "plan_and_dir_removed": shutil.move(str(pathlib.Path(root) / f"operations/_global/{op}"), str(pathlib.Path(root) / "moved-op-dir"))
+    # 另一份真正可清的殘留：以另一個 root 正式中止產生，複製過來（模擬同一 root 先前的中止）
+    other = U.mkroot(); assert U.q(other, "tc-export", "AUTH", fault="before_plan_save").returncode == FAULT_EXIT
+    for x in (pathlib.Path(other) / "operations/_global").rglob("*"):
+        if x.is_file() and ("staging.d" in x.parts or "blobs" in x.parts):
+            t = pathlib.Path(root) / x.relative_to(other); t.parent.mkdir(parents=True, exist_ok=True); t.write_bytes(x.read_bytes())
     before = U.snapshot(root)
-    r = U.q(root, *spec_args("1.1")); assert r.returncode != 0 and "有登錄紀錄卻沒有計畫" in r.stderr, r.stderr
+    for cmd in (spec_args("1.1"), ["tc-export", "AUTH"]):
+        r = U.q(root, *cmd); assert r.returncode != 0 and "有登錄紀錄卻沒有計畫" in r.stderr, r.stderr
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
 
 # ---------------------------------------------------------------- P1R2-02：store 單獨載入時不能自建擷取

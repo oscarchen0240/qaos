@@ -18,6 +18,7 @@ MARKER_PATH = "artifacts/requirements/_migration.yaml"
 GLOBAL = "_global"
 INDEX_DIR = f"operations/{GLOBAL}/index.d"
 STATUS_DIR = f"operations/{GLOBAL}/status.d"
+STAGING_DIR = "operations/_global/staging.d"   # 計畫保存前的寫入清單（executor 擁有權的證據）
 
 CONTROL_ACTIONS = {"maintenance_start", "maintenance_end", "migrate", "migrate_rollback"}
 TERMINAL = ("aborted_for_rollback", "rolled_back")
@@ -303,48 +304,63 @@ def check_terminal_consistency():
 # ---------------------------------------------------------------- 登錄補齊（§6.2）
 _HEX64 = re.compile(r"[0-9a-f]{64}")
 _RUN_SCOPE = re.compile(r"RUN-[0-9]{8}-[0-9]{3,}")
+STAGING_KIND = "qaos-plan-staging"
 
-def _blob_residue_files(op: str, d: pathlib.Path) -> list[pathlib.Path] | None:
-    """op 目錄若「只」含 executor 在計畫保存前寫的內容（blobs/ 下：名稱等於內容 sha256 的內容檔，或本 op 的短寫暫存），
-    回傳要刪的檔案；有任何其他內容 → None（無法證明擁有權）。"""
-    if [x.name for x in d.iterdir()] not in ([], ["blobs"]): return None
-    b = d / "blobs"; out = []
-    if not b.exists(): return out
-    if not b.is_dir() or b.is_symlink(): return None
-    tmp = re.compile(rf"\.qaos-tmp-{op[:16]}-[0-9a-f]{{64}}-[0-9a-f]{{8}}")
-    for f in b.iterdir():
-        if f.is_symlink() or not f.is_file(): return None
-        if _HEX64.fullmatch(f.name) and hashlib.sha256(f.read_bytes()).hexdigest() == f.name: out.append(f)
-        elif tmp.fullmatch(f.name): out.append(f)
-        else: return None
-    return out
+def _staging_manifest(plan: dict, blobs: dict) -> bytes:
+    """計畫保存前、寫任何內容檔之前，先記下本 op 將寫的確切檔案；清理只依這份清單刪除。"""
+    return store.dump({"kind": STAGING_KIND, "op_id": plan["op_id"], "scope": plan["scope"], "at": plan["clock"], "blobs": sorted(blobs)})
+
+def _parse_manifest(data: bytes, op: str) -> dict | None:
+    try: m = yaml.safe_load(data.decode("utf-8"))
+    except Exception: return None
+    ok = (isinstance(m, dict) and set(m) == {"kind", "op_id", "scope", "at", "blobs"} and m["kind"] == STAGING_KIND and m["op_id"] == op
+          and isinstance(m["scope"], str) and (m["scope"] == GLOBAL or _RUN_SCOPE.fullmatch(m["scope"]))
+          and isinstance(m["blobs"], list) and all(isinstance(b, str) and _HEX64.fullmatch(b) for b in m["blobs"]))
+    return m if ok else None
 
 def cleanup_unplanned():
-    """持鎖中清除「計畫檔保存之前就中止」留下的殘留（AC-07-68、98d）。只處理能證明屬於 executor 的內容：
-    - 合法 scope（`_global` 或 run_id）下、名稱為 64 位 hex、沒有計畫也沒有登錄紀錄的 op 目錄，而且內容只有 blobs（見上）；
-    - 同一 scope 下本 op 的計畫暫存檔（`.qaos-tmp-<op前16>-<op>.yaml-<8hex>`），op 沒有計畫也沒有登錄紀錄。
-    有登錄紀錄卻沒有計畫 → 證據衝突，拒絕本次寫入，不刪任何東西。其他內容一律不碰；看起來像 op 目錄但無法證明擁有權的，保留並回報。"""
+    """持鎖中清除「計畫檔保存之前就中止」留下的殘留（AC-07-68、98d）。
+    1. 有登錄紀錄卻沒有計畫檔的 op → 證據衝突，拒絕本次寫入；在清理任何東西之前檢查。
+    2. 擁有權的證據是 `staging.d/<op>.yaml`：executor 在寫任何內容檔之前先建立它，列出本 op 將寫的內容檔；
+       計畫保存後才刪除。清理只刪清單上的內容檔、這些內容檔的短寫暫存、本 op 的計畫暫存，以及因此變空的目錄，最後才刪清單。
+    3. 沒有清單的內容一律不刪；看起來像 op 目錄（64 位 hex）卻沒有計畫也沒有清單的，保留並回報。"""
     import sys
     base = store.ROOT / "operations"
     if not base.is_dir(): return
     plans, regs = plan_files(), registrations()
-    plan_tmp = re.compile(r"\.qaos-tmp-([0-9a-f]{16})-([0-9a-f]{64})\.yaml-[0-9a-f]{8}")
-    doomed: list[pathlib.Path] = []; dirs: list[pathlib.Path] = []
+    missing = sorted(set(regs) - set(plans))
+    if missing: raise EvidenceConflict(f"op {', '.join(missing)} 有登錄紀錄卻沒有計畫檔，需人工處理")
+    def report(x): print(f"qaos: 保留無法辨識的內容 {x.relative_to(store.ROOT)}（沒有計畫，也沒有 executor 的寫入清單）", file=sys.stderr)
+    staging = store.ROOT / STAGING_DIR; owned: set[str] = set()
+    if staging.is_dir():
+        for f in sorted(staging.iterdir()):
+            m_tmp = re.fullmatch(r"\.qaos-tmp-([0-9a-f]{16})-([0-9a-f]{64})\.yaml-[0-9a-f]{8}", f.name)
+            m_man = re.fullmatch(r"([0-9a-f]{64})\.yaml", f.name)
+            op = m_man.group(1) if m_man else m_tmp.group(2) if m_tmp and m_tmp.group(2).startswith(m_tmp.group(1)) else None
+            if f.is_symlink() or not f.is_file() or op is None: report(f); continue
+            man = _parse_manifest(f.read_bytes(), op)
+            if man is None: report(f); continue
+            if m_tmp: f.unlink(); continue                                  # 清單本身的暫存（建立清單途中中止；內容檔還沒開始寫）
+            owned.add(op)
+            if op in plans: f.unlink(); continue                            # 計畫已保存：內容檔屬於計畫，只刪清單
+            d = store.ROOT / op_dir(man["scope"], op); b = d / "blobs"
+            targets = [b / sha for sha in man["blobs"]]
+            if b.is_dir():
+                pat = re.compile(rf"\.qaos-tmp-{op[:16]}-({'|'.join(man['blobs']) or 'x^'})-[0-9a-f]{{8}}")
+                targets += [x for x in b.iterdir() if pat.fullmatch(x.name)]
+            sd = store.ROOT / "operations" / man["scope"]
+            if sd.is_dir(): targets += [x for x in sd.glob(f".qaos-tmp-{op[:16]}-{op}.yaml-*")]
+            for t in targets:
+                if t.is_symlink() or (t.exists() and not t.is_file()): raise EvidenceConflict(f"{t.relative_to(store.ROOT)} 不是一般檔案，需人工處理")
+                if t.exists(): t.unlink()
+            for x in (b, d):
+                if x.is_dir() and not any(x.iterdir()): x.rmdir()
+            if d.exists(): report(d)                                        # 清單之外還有東西：保留並回報
+            f.unlink()
     for scope in sorted(base.iterdir()):
         if scope.is_symlink() or not scope.is_dir() or not (scope.name == GLOBAL or _RUN_SCOPE.fullmatch(scope.name)): continue
         for d in sorted(scope.iterdir()):
-            if d.is_dir() and not d.is_symlink() and _HEX64.fullmatch(d.name) and d.name not in plans:
-                if d.name in regs: raise EvidenceConflict(f"op {d.name} 有登錄紀錄卻沒有計畫檔，需人工處理")
-                files = _blob_residue_files(d.name, d)
-                if files is None:
-                    print(f"qaos: 保留無法辨識的內容 {d.relative_to(store.ROOT)}（沒有計畫，也無法證明是 executor 的殘留）", file=sys.stderr); continue
-                doomed += files; dirs += [d / "blobs", d]
-            elif d.is_file() and not d.is_symlink() and (m := plan_tmp.fullmatch(d.name)) and m.group(2).startswith(m.group(1)) and m.group(2) not in plans:
-                if m.group(2) in regs: raise EvidenceConflict(f"op {m.group(2)} 有登錄紀錄卻沒有計畫檔（只剩計畫暫存檔），需人工處理")
-                doomed.append(d)
-    for f in doomed: f.unlink()
-    for d in dirs:
-        if d.exists(): d.rmdir()
+            if d.is_dir() and _HEX64.fullmatch(d.name) and d.name not in plans and d.name not in owned: report(d)
 
 def reconcile_registrations():
     regs = registrations()
@@ -631,6 +647,9 @@ def check_plan_structure(plan: dict):
 
 def _save_plan(plan: dict, blobs: dict):
     check_plan_structure(plan)
+    staging = f"{STAGING_DIR}/{plan['op_id']}.yaml"
+    _link_create(staging, _staging_manifest(plan, blobs), tag=plan["op_id"][:16])   # 擁有權證據：先於任何內容檔
+    pause("after_staging")
     for i, (sha, data) in enumerate(blobs.items()):
         _link_create(blob_path(plan["scope"], plan["op_id"], sha), data, tag=plan["op_id"][:16], pause_point="blob_tmp_written")
         if i == 0: pause("after_first_blob")
@@ -640,6 +659,7 @@ def _save_plan(plan: dict, blobs: dict):
     fault("before_plan_save")
     _atomic_replace(plan_path(plan["scope"], plan["op_id"]), data, tag=plan["op_id"][:16])
     fault("after_plan_save"); pause("after_plan_save")
+    _delete(staging); fault("after_staging_removed")
     return data
 
 def _takeover_target(op: str) -> str | None:
