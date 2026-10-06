@@ -108,11 +108,11 @@
 
 ## P2：spec 引用、外部來源、有型別來源與 CLR 欄位
 
-- **執行 commit**：`60ce8787c9c5662dbb602c54fb362ae432307645`（分支 `qaos/requirement-a`；P2 程式為 `490ba1b`、`33bc228`、`60ce878`）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`ddab53ec85bdd8a56c0083eab031ebdc3606354e`（分支 `qaos/requirement-a`；P2 程式為 `490ba1b`、`33bc228`、`60ce878`，P2 程式碼審查 P2-01～03 的修正為 `ddab53e`）。本紀錄所在的 commit 只改文件
 - **環境**：同 P1
 - **資料**：每個 P2 案例使用獨立的暫存 root，以正式 CLI 建立 spec、引用宣告、CLR、答案與適用紀錄；決策點欄位以入口 D（腳本呼叫 `clarification.new()`）提供。legacy spec 與 legacy CLR 以直接寫入舊格式檔案建立（模擬部署前就存在的資料）。核准單的 `decision.resolutions[]` 要到 P4 才由正式流程寫入，所以 approval 型 SourceRef 只以記憶體中的核准單做函式層測試。AC-02-6 的 RM、TC 情境沿用 session root（前面 WF 測試以正式流程建立）
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 274 passed；`tools/validate_phase1.py` ALL CHECKS PASSED。主資料夾既有的 spec.yaml 與 54 張 CLR（唯讀）全部通過新 schema
-- **突變檢查**：讓 `covers` 一律回傳 True、`x16` 一律通過時，5 個相關測試失敗；之後還原
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 286 passed；`tools/validate_phase1.py` ALL CHECKS PASSED。主資料夾既有的 spec.yaml 與 54 張 CLR（唯讀）全部通過新 schema
+- **突變檢查**：讓 `covers` 一律回傳 True、`x16` 一律通過時，5 個相關測試失敗；把 P2-01～03 的修正退回時，對應的 8 個反例失敗（4 個合法對照通過）；之後都還原
 
 ### AC 對照
 
@@ -127,7 +127,7 @@
 | AC-02-1～5 | 通過 | `test_ac_02_1_*`～`test_ac_02_5_*`、`test_metadata_upgrade_only_fills_missing`、`test_source_fields_recorded` | — |
 | AC-02-6 | 通過 | `test_ac_02_6_reference_only_refused_when_used_by_run`、`test_wf_zz_p2_reference_only_targets.py`（run、RM、TC）、`test_ac_02_6_referenced_in_closure_only_is_allowed`（附錄 A 2-8） | — |
 | AC-02-7 | 通過 | `test_ac_02_7_*` | — |
-| AC-10A-57 | 通過 | `test_ac_10a_57_blank_title_warns`、`test_title_normalization` | — |
+| AC-10A-57 | 通過 | `test_ac_10a_57_blank_title_warns`、`test_p2_03_explicit_title_is_kept_and_blank_warns`（省略、空字串、半形與全形空白、有效名稱）、`test_title_normalization` | — |
 | AC-06-1 | 待 P4 | — | 入口 A、B 逐欄抄寫需要決策點 |
 | AC-06-2 | 通過 | `test_p2_sources.py::test_ac_06_2_*`（入口 D） | 入口 A、B 在 P4 |
 | AC-06-3 | 通過 | `test_ac_06_3_*`（只有引用處 → 成立並產生 document_items；沒有引用處、空清單 → 拒絕、快照不變） | — |
@@ -139,7 +139,7 @@
 | AC-08-2 | 部分 | `test_ac_08_2_*`（新產出的空或缺 quote、location FAIL） | 「舊資料不 FAIL」的實際檢查點是 G-SPEC（P4） |
 | AC-08-6、17、27、38 | 部分 | `test_ac_08_6_*`、`test_ac_08_17_and_38_*`、`test_ac_08_27_28_*`（X16 FAIL；SourceRef 本身 PASS） | 「G-SPEC FAIL、不是 E1」在 P4 |
 | AC-08-20、26、29 | 部分 | `test_covers_table`、`test_ac_08_27_28_*`（29：人確認 basis_hash 後 X16 PASS） | 「成為／不成為 E1」在 P4 |
-| AC-08-9、12、13、33、34 | 部分 | `test_approval_ref_validation`、`test_ac_08_33_*`（記憶體中的核准單） | 核准單 `resolutions[]` 的正式寫入在 P4 |
+| AC-08-9、12、13、33、34 | 部分 | `test_approval_ref_validation`、`test_ac_08_33_*`、`test_p2_01_approval_wrapper_validates_inner_source`（包裝內的 no_change、out_of_scope、錯 hash、錯 quote、已撤回都拒絕）、`test_p2_02_source_ref_index_shape`（記憶體中的核准單） | 核准單 `resolutions[]` 的正式寫入在 P4 |
 | AC-08-10 | 部分 | `test_clarification_ref_checks_pinned_rev`（依釘選的 rev 驗證，新答案之後仍 PASS） | 舊 run 恢復在 P4（派發包快照） |
 | AC-08-16、32 | 部分 | `test_ac_08_17_and_38_*`（legacy CLR＋applicability 的合成版本） | DAILYREPORT 實際資料在 P3 移轉後驗收 |
 | AC-08-4 | 待 P3／P4 | — | CLR-CASHFLOW-005 的 rev 0 由移轉建立（P3）；完整 G-SPEC 在 P4 |
