@@ -111,7 +111,9 @@ def test_24_resubmit_already_valid_artifact_does_not_corrupt_it():
     did, p = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": "SPEC-NEG-001", "spec_version": "1.0", "testcases": tcs}, refs_, {"type": "x", "ids": []}, "test-design")
     assert engine.submit(rid, "T2", str(p))[0]
     assert store.load(p)["status"] == "VALID"
-    ok, problems = engine.submit(rid, "T2", str(p))   # 重複提交同一份已 VALID 的檔案
+    ok, problems = engine.submit(rid, "T2", str(p))   # 同一請求重送：冪等，回報先前的結果，不再寫入
+    assert ok and store.load(p)["status"] == "VALID"
+    ok, problems = engine.submit(rid, "T2", str(p), new_request=True)   # 刻意再提交一次同一份已 VALID 的檔案
     assert not ok and any("不可提交" in x for x in problems)
     assert store.load(p)["status"] == "VALID"   # 狀態不得被覆寫成 INVALID
     engine.cancel(rid, "oscar@example.com")

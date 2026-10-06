@@ -129,8 +129,10 @@ def _advance(run: dict, after: str | None = None):
 
 # ---------- Submit（Permission Guard + Structural Gate 第一層） ----------
 def _submit_request(run_id, task_id, artifact_path):
+    # 只用路徑與 artifact_id：提交本身會改寫 artifact 的狀態，內容 hash 不能進 op_id（否則中止後重送會變成另一個 op）
     r = store.rel(artifact_path)
-    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_sha256": store.sha256_file(r) if store.exists(r) else None}}
+    aid = store.load(r).get("artifact_id") if store.exists(r) else None
+    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_id": aid}}
 
 @operation.operation("submit", request=_submit_request, scope=lambda run_id, *a, **k: run_id)
 def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[str]]:
@@ -220,11 +222,8 @@ def _valid_outputs(task) -> dict:
 
 def _gate_request(run_id, task_id):
     task = _task(load_run(run_id), task_id)
-    outs = []
-    for aid in task.get("output_artifact_ids", []):
-        p = store.find_artifact(aid)
-        outs.append({"artifact_id": aid, "sha256": store.sha256_file(p) if p else None})
-    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"outputs": outs}}
+    # 只用 artifact_id：gate 的效果可能改寫 artifact，內容 hash 不能進 op_id
+    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"outputs": list(task.get("output_artifact_ids", []))}}
 
 @operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:

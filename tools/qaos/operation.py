@@ -39,6 +39,19 @@ def fault(point: str):
     if point in fs: os._exit(86)
     if f"raise:{point}" in fs: raise OSError(f"injected fault at {point}")
 
+def pause(point: str):
+    """QAOS_PAUSE=<point>=<dir>：在該點建立 <dir>/paused，等到 <dir>/go 出現才繼續（只供測試的同步點）。"""
+    spec = os.environ.get("QAOS_PAUSE", "")
+    if not spec or "=" not in spec: return
+    pt, d = spec.split("=", 1)
+    if pt != point: return
+    import time
+    d = pathlib.Path(d); d.mkdir(parents=True, exist_ok=True); (d / "paused").write_text(str(os.getpid()))
+    deadline = time.monotonic() + 60
+    while not (d / "go").exists():
+        if time.monotonic() > deadline: os._exit(87)
+        time.sleep(0.02)
+
 # ---------------------------------------------------------------- flock executor（§4）
 @dataclass(eq=False)
 class Context:
@@ -110,8 +123,9 @@ def op_id_of(request: dict) -> str:
 def normalize(v):
     """把呼叫參數轉成可 canonical 化的形式；路徑一律換成 {path, sha256}。"""
     if isinstance(v, pathlib.Path):
-        r = store.rel(v)
-        return {"path": r, "sha256": store.sha256_file(r) if store.exists(r) else None}
+        p = v.resolve()
+        try: return {"path": p.relative_to(store.ROOT).as_posix()}   # root 內的檔可能被操作本身改寫：只用路徑
+        except ValueError: return {"path": str(p), "sha256": store.sha256_bytes(p.read_bytes()) if p.is_file() else None}
     if isinstance(v, dict): return {str(k): normalize(x) for k, x in v.items()}
     if isinstance(v, (list, tuple)): return [normalize(x) for x in v]
     if v is None or isinstance(v, (bool, int, float, str)): return v
@@ -128,10 +142,11 @@ def _fsync_dir(d: pathlib.Path):
 def _tmp_name(target: pathlib.Path, tag: str) -> pathlib.Path:
     return target.parent / f".qaos-tmp-{tag}-{target.name}-{uuid.uuid4().hex[:8]}"
 
-def _atomic_replace(rel_path: str, data: bytes, tag: str):
+def _atomic_replace(rel_path: str, data: bytes, tag: str, point: str | None = None):
     t = store.ROOT / rel_path; t.parent.mkdir(parents=True, exist_ok=True)
     tmp = _tmp_name(t, tag)
     with open(tmp, "wb") as f: f.write(data); f.flush(); os.fsync(f.fileno())
+    if point: fault(point)
     os.replace(tmp, t); _fsync_dir(t.parent)
 
 def _link_create(rel_path: str, data: bytes, tag: str) -> bool:
@@ -492,7 +507,7 @@ def _write_step(plan: dict, step: dict):
     else:
         data = _load_blob(plan, step)
         if step["kind"] in ("event", "index", "status", "status_final"): _link_create(step["path"], data, tag)
-        else: _atomic_replace(step["path"], data, tag)
+        else: _atomic_replace(step["path"], data, tag, point=f"before_replace:{step['seq']}")
     fault(f"after_output:{step['seq']}")
 
 def _load_blob(plan: dict, step: dict) -> bytes:
@@ -522,7 +537,14 @@ def execute(plan: dict):
     _write_step(plan, final)
 
 # ---------------------------------------------------------------- 主流程（§6）
+def check_plan_structure(plan: dict):
+    """每個 path 在一個計畫中最多一步（AC-07-19）；違反 → 計畫產生失敗，沒有任何寫入。"""
+    paths = [s["path"] for s in plan.get("steps", [])]
+    dup = sorted({x for x in paths if paths.count(x) > 1})
+    if dup: raise OperationError(f"計畫中同一路徑出現兩次：{dup}")
+
 def _save_plan(plan: dict, blobs: dict):
+    check_plan_structure(plan)
     for sha, data in blobs.items():
         _link_create(blob_path(plan["scope"], plan["op_id"], sha), data, tag=plan["op_id"][:16])
     data = store.dump(plan)
@@ -530,7 +552,7 @@ def _save_plan(plan: dict, blobs: dict):
     if errs: raise OperationError("計畫不符 schema：" + "; ".join(errs[:3]))
     fault("before_plan_save")
     _atomic_replace(plan_path(plan["scope"], plan["op_id"]), data, tag=plan["op_id"][:16])
-    fault("after_plan_save")
+    fault("after_plan_save"); pause("after_plan_save")
     return data
 
 def _takeover_target(op: str) -> str | None:
@@ -573,6 +595,7 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
     """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。"""
     LAST_OUTCOME.clear()
     ctx = acquire()
+    pause("after_lock")
     try:
         check_terminal_consistency()                         # 第 0 步
         reconcile_registrations()                            # 登錄補齊

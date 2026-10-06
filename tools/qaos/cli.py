@@ -194,7 +194,7 @@ def cmd_bug_index(a): print(f"{bugindex.build(**_nr(a))} bugs indexed → bugs/i
 def cmd_op_list(a):
     print(READONLY_NOTE)
     for o in operation.list_operations(a.incomplete):
-        print(f"{o['plan_seq'] if o['plan_seq'] is not None else '-':>5} {o['state']:<20} {o['action']:<22} {o['op_id']}")
+        print(f"{o['plan_seq'] if o['plan_seq'] is not None else '-':>5} {o['state']:<20} {str(o['action'] or '?'):<22} {o['op_id']}")
 def cmd_op_resume(a): _print(operation.resume(a.op_id)); print(f"{a.op_id} 已完成")
 def cmd_maint_start(a): _print(operation.maintenance_start(a.by, **_nr(a)))
 def cmd_maint_end(a): _print(operation.maintenance_end(a.by, **_nr(a)))
