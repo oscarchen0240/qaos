@@ -3965,6 +3965,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 4-15 | Permission Guard 失敗（越權提交：`created_by` 不符、無權產出該型別、寫入路徑不在 `write_paths`） | **不屬於** §13 的「驗證失敗」，以正常操作（操作計畫）寫入：task 追加 `gate_results` FAIL 與 `permission_violations`，task 與 run 轉 FAILED，記 `PERMISSION_VIOLATION` 事件。被提交的 artifact 不修改。其餘結構驗證失敗（schema、引用、狀態、payload 前置）才是 §13 的診斷寫入（Oscar 2026-10-07 決定維持既有行為） | R |
 | 4-16 | §13 診斷寫入的允許範圍 | 只寫一份 run.yaml 與最多一個事件檔，其他任何檔案都不寫（含被提交的 artifact、核准單）。run.yaml 中：run 本身只有 `updated_at` 可以變，而且只能是本次 executor 的時間；只有一個 task 變更，限 `gate_results`（只追加一筆本次的 structural FAIL，記錄被拒的 `artifact_id`）、`history`（只追加，每筆是本次時間、依 task 狀態機合法且前後相接）、`status`（最後必須是 READY）、`started_at`（只能設為本次時間，task 重新進入 RUNNING 時）。超出範圍 → 拒絕，不寫入。同一 task 連續多次失敗仍只寫診斷，不自動開核准單；要放棄由人執行 `run cancel`。越權提交不屬於診斷（見 4-15） | I |
 | 4-17 | ID 配發的時點（§7.3） | 計數器的更新是計畫中的一步，ID 在擷取時配發、由計畫固定。和 §7.3「配發在計畫保存之前」的差異：計畫保存之前中止時計數器不前進（不留空號）；計畫保存之後中止時續做沿用計畫的 ID。兩者都不會重複使用 ID | R |
+| 4-18 | 計畫保存前中止的殘留（AC-07-68、98d） | 寫任何內容檔之前，先以 link-create 建立 `operations/_global/staging.d/<op_id>.yaml`（寫入清單：op_id、scope、時間、將寫的內容檔 sha256 清單），計畫保存後刪除。每個寫入請求取得鎖後，先核對「有登錄紀錄卻沒有計畫檔」的 op，有就拒絕、不做任何清理；再依清單清除：計畫未保存者，只刪清單列出的內容檔、這些內容檔的短寫暫存、該 op 的計畫暫存與因此變空的目錄，最後刪清單；計畫已保存者只刪清單。沒有清單的內容一律不刪，看起來像 op 目錄的保留並回報 | I |
 
 ### A.5 revision 與移轉（第 5 章）
 
