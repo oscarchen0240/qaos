@@ -77,6 +77,18 @@ def test_crash_before_plan_save_leaves_nothing():
     assert U.incomplete(root) == [] and U.unregistered_plans(root) == []
     U.q(root, *spec_import_args("1.1"), check=True)
 
+def test_9b_id_counter_does_not_advance_before_plan_save():
+    """9b（附錄 A 4-17）：ID 在擷取中配發、計數器更新是計畫的一步 → 計畫保存前中止，計數器不前進、不留空號；重送配到同一個 ID。"""
+    args = ["run", "new", "regression-generation", "--input", 'target_suites=["full_regression"]', "--input", "scope=all", "--input", "trigger=manual", "--by", "t"]
+    root = U.mkroot(); counters = pathlib.Path(root) / "testcases/registry/_counters.yaml"
+    before = counters.read_bytes() if counters.exists() else None
+    assert U.q(root, *args, fault="before_plan_save").returncode == FAULT_EXIT
+    assert (counters.read_bytes() if counters.exists() else None) == before                          # 計數器沒有前進
+    assert not list((pathlib.Path(root) / "runs").glob("RUN-*"))                                       # 沒有 run
+    rid = U.q(root, *args, check=True).stdout.split()[0]
+    assert rid.endswith("-001"), rid                                                                   # 重送配到同一個（第一個）ID，沒有空號
+    assert U.load(root, "testcases/registry/_counters.yaml")
+
 @pytest.mark.parametrize("entry", ["resend", "resume"])
 def test_9k_all_steps_done_completed_missing(entry):
     """9k、AC-07-97②：全部步驟都完成、completed 還沒寫 → 只建立狀態紀錄，沒有任何業務寫入。"""
