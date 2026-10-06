@@ -689,6 +689,243 @@
         }
       },
       "additionalProperties": false
+    },
+    "Topic": {
+      "type": "string",
+      "enum": [
+        "rejection_response",
+        "error_code",
+        "permission",
+        "boundary_value",
+        "state_transition",
+        "display_format",
+        "calculation",
+        "data_scope",
+        "other"
+      ],
+      "description": "受控分類（需求 A 附錄 A 1-3）；之後以修改 schema 的方式增減"
+    },
+    "Subject": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$",
+      "description": "受描述物件與面向的路徑字串"
+    },
+    "RoleScope": {
+      "description": "角色清單，或 [\"*\"] 代表與角色無關；必須明示，空陣列不合法（X18）；* 不得和具名角色混用（附錄 A 1-8）",
+      "oneOf": [
+        {
+          "type": "array",
+          "const": [
+            "*"
+          ]
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        }
+      ]
+    },
+    "QuestionParams": {
+      "type": "object",
+      "description": "鍵和值只允許 [a-z0-9_]，值可以是陣列；{} 代表沒有參數限制",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+$"
+            }
+          }
+        ]
+      }
+    },
+    "QuestionScope": {
+      "type": "object",
+      "required": [
+        "spec_id",
+        "requirement_id",
+        "subject",
+        "role_scope",
+        "params"
+      ],
+      "properties": {
+        "spec_id": {
+          "$ref": "#/$defs/SpecId"
+        },
+        "requirement_id": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "role_scope": {
+          "$ref": "#/$defs/RoleScope"
+        },
+        "params": {
+          "$ref": "#/$defs/QuestionParams"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Basis": {
+      "type": "object",
+      "description": "一次分析或一次回答所依據的文件集合；closure 只取 normative 遞移閉包（附錄 A 1-1）",
+      "required": [
+        "target",
+        "target_decl_rev",
+        "closure"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/SpecPin"
+        },
+        "target_decl_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closure": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "spec_id",
+              "spec_version",
+              "content_hash",
+              "decl_rev"
+            ],
+            "properties": {
+              "spec_id": {
+                "$ref": "#/$defs/SpecId"
+              },
+              "spec_version": {
+                "$ref": "#/$defs/SpecVersion"
+              },
+              "content_hash": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "decl_rev": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SourceRef": {
+      "description": "有型別的依據引用（需求 A 第 3 章 §6）：spec、clarification、approval 三型，都帶非空的 quote",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "spec_id",
+            "spec_version",
+            "content_hash",
+            "location",
+            "quote"
+          ],
+          "properties": {
+            "type": {
+              "const": "spec"
+            },
+            "spec_id": {
+              "$ref": "#/$defs/SpecId"
+            },
+            "spec_version": {
+              "$ref": "#/$defs/SpecVersion"
+            },
+            "content_hash": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "location": {
+              "type": "string",
+              "minLength": 1
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "clarification_id",
+            "answer_rev",
+            "answer_sha256",
+            "quote"
+          ],
+          "properties": {
+            "type": {
+              "const": "clarification"
+            },
+            "clarification_id": {
+              "$ref": "#/$defs/ClarificationId"
+            },
+            "answer_rev": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "answer_sha256": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "approval_id",
+            "decision_sha256",
+            "resolution_index",
+            "quote"
+          ],
+          "properties": {
+            "type": {
+              "const": "approval"
+            },
+            "approval_id": {
+              "$ref": "#/$defs/ApprovalId"
+            },
+            "decision_sha256": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "resolution_index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     }
   }
 }

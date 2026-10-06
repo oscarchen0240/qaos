@@ -28,10 +28,94 @@
     "answered_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
     "resolution": {"type": "string", "enum": ["spec_updated", "requirement_clarified", "no_change", "out_of_scope"], "description": "PM 回答後的落地方式：spec_updated = 會出新版 Spec；requirement_clarified = 選定某個解讀，Requirement 直接 ACTIVE；no_change = 維持現狀"},
     "resulting_spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "kind": {"type": "string", "enum": ["spec_question", "conflict_resolution", "document_request"], "description": "沒有 kind 的舊 CLR 視為 spec_question"},
+    "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}$"},
+    "topic": {"$ref": "../common/defs.schema.json#/$defs/Topic"},
+    "subject": {"$ref": "../common/defs.schema.json#/$defs/Subject"},
+    "params": {"$ref": "../common/defs.schema.json#/$defs/QuestionParams"},
+    "role_scope": {"$ref": "../common/defs.schema.json#/$defs/RoleScope"},
+    "level": {"type": "string", "enum": ["none", "minor", "major", "critical"]},
+    "known_rules": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SourceRef"}, "description": "已確定的部分"},
+    "conflict_sides": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SourceRef"}},
+    "conflict_note": {"type": "string"},
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "references_status": {"type": "string", "enum": ["undeclared", "declared_empty", "declared"]},
+        "consulted": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SpecPin"}},
+        "unconsulted_normative": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SpecPin"}},
+        "missing_sources": {"type": "array", "items": {"$ref": "#/$defs/MissingSource"}},
+        "waivers": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    },
+    "possible_source_missing": {"type": "boolean"},
+    "decision_needed": {"type": "string"},
+    "detail_gaps": {"type": "array", "items": {"type": "string"}},
+    "issue_key": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+    "related_clarifications": {"type": "array", "items": {"type": "object", "required": ["id", "relation"], "properties": {"id": {"$ref": "../common/defs.schema.json#/$defs/ClarificationId"}, "relation": {"type": "string", "enum": ["prior_version", "possible_duplicate"]}}, "additionalProperties": false}},
+    "answer_revisions": {"type": "array", "items": {"$ref": "#/$defs/AnswerRevision"}, "description": "不可變答案修訂，只能追加；頂層 answer 是最新修訂的檢視"},
+    "applicability": {"type": "array", "items": {"$ref": "#/$defs/Applicability"}, "description": "人工適用紀錄，只能追加"},
+    "evidence_addenda": {"type": "array", "items": {"$ref": "#/$defs/EvidenceAddendum"}, "description": "補充佐證，只能追加；不改變答案與狀態"},
+    "landings": {"type": "array", "items": {"type": "object", "required": ["type", "op_id", "at"], "properties": {"type": {"type": "string", "enum": ["incorporated", "applied"]}}}, "description": "落地紀錄，只能追加（欄位見需求 A 第 3 章 §3.7；檢查在 P5）"},
+    "document_items": {"type": "array", "items": {"type": "object", "required": ["item_id", "cited_at", "name", "status"], "properties": {"item_id": {"type": "string", "pattern": "^D[0-9]{2,}$"}, "cited_at": {"$ref": "#/$defs/CitedAt"}, "name": {"type": "string"}, "status": {"type": "string", "enum": ["open", "fulfilled", "waived"]}}, "additionalProperties": false}},
+    "fulfillments": {"type": "array", "items": {"type": "object", "required": ["item_id", "op_id", "at"]}, "description": "文件索取單的 fulfill 紀錄，只能追加（欄位見需求 A 第 3 章 §3.4；檢查在 P5）"},
+    "scan_ids": {"type": "array", "items": {"type": "string"}},
     "status": {"$ref": "../common/defs.schema.json#/$defs/ClarificationStatus"},
     "history": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/HistoryEntry"}}
   },
   "additionalProperties": false,
+  "$defs": {
+    "CitedAt": {"type": "object", "required": ["spec_id", "spec_version", "content_hash", "line", "text"], "properties": {"spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"}, "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"}, "content_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "line": {"type": "integer", "minimum": 1}, "text": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+    "MissingSource": {"type": "object", "required": ["cited_at", "name"], "description": "缺的文件：只需要引用處，不需要缺檔本身的 hash", "properties": {"cited_at": {"$ref": "#/$defs/CitedAt"}, "name": {"type": "string"}}, "additionalProperties": false},
+    "AnswerRevision": {
+      "type": "object",
+      "required": ["rev", "answer", "answered_by", "answered_at", "resolution", "answer_sources", "basis", "basis_hash", "sha256"],
+      "properties": {
+        "rev": {"type": "integer", "minimum": 0},
+        "answer": {"type": "string"},
+        "answered_by": {"type": "string"},
+        "answered_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+        "resolution": {"type": "string", "enum": ["spec_updated", "requirement_clarified", "no_change", "out_of_scope"]},
+        "answer_sources": {"type": "array", "items": {"type": "object"}, "description": "答案的出處；驗證規則見需求 A 第 6 章（P5）"},
+        "basis": {"$ref": "../common/defs.schema.json#/$defs/Basis"},
+        "basis_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+        "sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256", "description": "answer_sha256：答案文字（UTF-8）的 sha256"},
+        "op_id": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "Applicability": {
+      "type": "object",
+      "required": ["answer_rev", "scope", "basis_hash", "rationale", "by", "at", "op_id", "sha256"],
+      "properties": {
+        "answer_rev": {"type": "integer", "minimum": 0},
+        "scope": {"$ref": "../common/defs.schema.json#/$defs/QuestionScope"},
+        "basis_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+        "rationale": {"type": "string", "minLength": 1},
+        "by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+        "at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+        "op_id": {"type": "string"},
+        "sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256", "description": "本筆紀錄（不含 sha256 欄位）的 canonical sha256"}
+      },
+      "additionalProperties": false
+    },
+    "EvidenceAddendum": {
+      "type": "object",
+      "required": ["source", "note", "by", "at", "op_id"],
+      "properties": {
+        "source": {"oneOf": [
+          {"$ref": "../common/defs.schema.json#/$defs/SourceRef"},
+          {"type": "object", "required": ["type", "file_name", "sha256", "location"], "properties": {"type": {"const": "document"}, "file_name": {"type": "string", "minLength": 1}, "sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "package_sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "location": {"type": "string", "minLength": 1}}, "additionalProperties": false}
+        ]},
+        "note": {"type": "string", "minLength": 1},
+        "by": {"type": "string", "minLength": 1},
+        "at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+        "op_id": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
   "allOf": [
     {"if": {"properties": {"status": {"enum": ["ANSWERED", "APPLIED"]}}}, "then": {"required": ["answer", "answered_by", "answered_at", "resolution"]}},
     {"if": {"properties": {"status": {"enum": ["ASKED"]}}}, "then": {"required": ["asked_to", "asked_at"]}}

@@ -29,8 +29,10 @@ def _fake_active_tc(tc_id, area, req, title, steps, expected, product="demo"):
     raw_save(store.tc_version_path(tc_id, 1), {"testcase_id": tc_id, "version": 1, "status": "ACTIVE", "product": product, "functional_area": area, "title": title,
                                                   "requirement_ids": [req], "preconditions": [], "steps": [{"n": i + 1, "action": a} for i, a in enumerate(steps)], "expected_result": expected})
 
-def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys):
+def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys, tmp_path):
     """ADR-008：impact 掃同 product/area 的 ACTIVE TC——掛同 requirement 者、步驟／expected 命中關鍵詞者；其他 area、非 ACTIVE、無命中者不列。"""
+    f = tmp_path / "imp.md"; f.write_text("# IMP\n\n明細規格。\n", encoding="utf-8")       # 回答時要記錄 basis（需求 A 第 3 章 §7），CLR 的 spec 必須已匯入
+    cli(["spec", "import", str(f), "--spec-id", "SPEC-IMP-001", "--version", "1.0", "--product", "demo", "--area", "IMP", "--by", "oscar@example.com"]); capsys.readouterr()
     _fake_active_tc("TC-IMP-001", "IMP", "REQ-IMP-001", "掛同一需求", ["做 A"], "看到 A")
     _fake_active_tc("TC-IMP-002", "IMP", "REQ-IMP-002", "步驟提到進行中", ["讓機台有進行中場次"], "看到列")
     _fake_active_tc("TC-IMP-003", "IMP", "REQ-IMP-002", "expected 提到新場次", ["做 B"], "系統建立新場次")

@@ -32,7 +32,22 @@
         "decided_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
         "rationale": {"type": "string"},
         "per_item": {"type": "array", "items": {"type": "object", "required": ["id", "decision"], "properties": {"id": {"type": "string"}, "decision": {"$ref": "../common/defs.schema.json#/$defs/Decision"}, "rationale": {"type": "string"}}}},
-        "adjustments": {"type": "object", "description": "例如 OPEN_BUG 時 Human 改定的 severity/priority"}
+        "adjustments": {"type": "object", "description": "例如 OPEN_BUG 時 Human 改定的 severity/priority"},
+        "resolutions": {
+          "type": "array", "description": "RESOLVE_AMBIGUITY 的決議條目（需求 A 第 1 章 §3.7）；寫入與 preflight 在 P4",
+          "items": {
+            "type": "object", "required": ["requirement_id", "question_id", "outcome", "rationale"],
+            "properties": {
+              "requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"},
+              "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}$"},
+              "outcome": {"type": "string", "enum": ["select_interpretation", "waive_missing", "defer"]},
+              "source": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/SourceRef"}]},
+              "rationale": {"type": "string", "minLength": 1},
+              "waived": {"type": "array", "items": {"type": "object"}}
+            },
+            "additionalProperties": false
+          }
+        }
       },
       "additionalProperties": false,
       "allOf": [{"if": {"properties": {"decision": {"const": "override"}}}, "then": {"required": ["rationale"]}}]

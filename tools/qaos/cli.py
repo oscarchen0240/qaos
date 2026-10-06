@@ -172,6 +172,18 @@ def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.note or "", **_nr(a)); print
 def cmd_clr_list(a):
     for c in clr.list_(open_only=not a.all): print(f"{c['clarification_id']} [{c['status']}] {c['product']}/{c['functional_area']} {c['spec_id']}@{c['spec_version']} — {c['question']}")
 def cmd_clr_index(a): n = clr.build_index(**_nr(a)); print(f"clarifications/index.md（{n} 張）")
+def _json_arg(text, name):
+    try: return json.loads(text)
+    except json.JSONDecodeError as e: raise ValueError(f"{name} 必須是 JSON：{e}")
+def _role_scope(values): return ["*"] if values == ["*"] else values
+def cmd_clr_applicability_add(a):
+    _print(clr.applicability_add(a.id, a.answer_rev, a.requirement, a.subject, _role_scope(a.role_scope), _json_arg(a.params, "--params"), a.target, a.rationale, a.by,
+                                 confirm_basis=a.confirm_basis, **_nr(a)))
+def cmd_clr_addenda_add(a): clr.addenda_add(a.id, _json_arg(a.source, "--source"), a.note, a.by, **_nr(a)); print(f"{a.id} evidence_addenda +1")
+def cmd_clr_meta_upgrade(a):
+    c = clr.metadata_upgrade(a.id, a.by, a.reason, kind=a.kind, question_id=a.question_id, subject=a.subject,
+                             role_scope=_role_scope(a.role_scope) if a.role_scope else None, params=_json_arg(a.params, "--params") if a.params else None, **_nr(a))
+    print(f"{a.id} metadata upgraded")
 def cmd_bug_resolve(a): b = bug_lifecycle.resolve(a.bug_id, a.by, a.external_ref, a.note or "", a.fixed_by or "", **_nr(a)); print(f"{a.bug_id} → {b['status']}")
 def cmd_bug_verify(a): b = bug_lifecycle.verify(a.bug_id, a.execution, a.by, **_nr(a)); print(f"{a.bug_id} → {b['status']}")
 def cmd_bug_close(a): b = bug_lifecycle.close(a.bug_id, a.by, a.rationale or "", **_nr(a)); print(f"{a.bug_id} → {b['status']} (done)")
@@ -258,6 +270,19 @@ def main(argv=None):
     p = cs.add_parser("withdraw", parents=[W]); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.set_defaults(f=cmd_clr_withdraw)
     p = cs.add_parser("list", help="唯讀：列出 CLR"); p.add_argument("--all", action="store_true"); p.set_defaults(f=cmd_clr_list)
     p = cs.add_parser("index", parents=[W], help="寫檔：重建 clarifications/index.md"); p.set_defaults(f=cmd_clr_index)
+    ap_ = cs.add_parser("applicability", help="人工適用紀錄（只能由人執行）"); aps = ap_.add_subparsers(dest="sub2", required=True)
+    p = aps.add_parser("add", parents=[W]); p.add_argument("id"); p.add_argument("--answer-rev", type=int, required=True); p.add_argument("--requirement", required=True)
+    p.add_argument("--subject", required=True); p.add_argument("--role-scope", action="append", required=True, help="可重複；與角色無關時只給一個 *")
+    p.add_argument("--params", required=True, help='JSON 物件；沒有參數限制時明寫 {}'); p.add_argument("--target", required=True, metavar="SPEC_ID@VER", help="決定 scope 的 spec 與本次 basis")
+    p.add_argument("--rationale", required=True); p.add_argument("--confirm-basis", help="CLI 顯示的本次 basis_hash；相同才寫入"); p.add_argument("--by", required=True)
+    p.set_defaults(f=cmd_clr_applicability_add)
+    ad = cs.add_parser("addenda", help="補充佐證（只能追加）"); ads = ad.add_subparsers(dest="sub2", required=True)
+    p = ads.add_parser("add", parents=[W]); p.add_argument("id"); p.add_argument("--source", required=True, help="SourceRef 或 document 型來源（JSON）")
+    p.add_argument("--note", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_addenda_add)
+    cm = cs.add_parser("metadata", help="舊 CLR 的 metadata 升級（只補缺的欄位）"); cms = cm.add_subparsers(dest="sub2", required=True)
+    p = cms.add_parser("upgrade", parents=[W]); p.add_argument("id"); p.add_argument("--kind", choices=["spec_question", "conflict_resolution", "document_request"])
+    p.add_argument("--question-id"); p.add_argument("--subject"); p.add_argument("--role-scope", action="append"); p.add_argument("--params", help="JSON 物件")
+    p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_meta_upgrade)
     o = sp.add_parser("operation", help="操作計畫：查詢與續做"); os_ = o.add_subparsers(dest="sub", required=True)
     p = os_.add_parser("list", help="唯讀：列出操作計畫與狀態"); p.add_argument("--incomplete", action="store_true"); p.set_defaults(f=cmd_op_list)
     p = os_.add_parser("resume", help="續做一份未完成的計畫"); p.add_argument("op_id"); p.set_defaults(f=cmd_op_resume)
