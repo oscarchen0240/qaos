@@ -64,6 +64,26 @@ def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
     if wt.get("skip_if"): return exists
     return exists  # run_if "NOT exists" → skip when exists
 
+def _require_analyzable(workflow_id: str, inputs: dict):
+    """reference_only 的 spec 版本不能當任何 run 的分析目標（需求 A 第 2 章 §3.4 的 7 個入口）。"""
+    from . import spec_ops
+    checks = []
+    if inputs.get("spec_id"):
+        for k, label in (("spec_version", f"{workflow_id} 的 inputs.spec_id"), ("from_version", "spec-change-impact 的 from 端"), ("to_version", "spec-change-impact 的 to 端")):
+            if inputs.get(k): checks.append((inputs["spec_id"], inputs[k], label))
+    if workflow_id == "testcase-revision" and inputs.get("testcase_id") and store.exists(store.tc_pointer_path(inputs["testcase_id"])):
+        ptr = store.load(store.tc_pointer_path(inputs["testcase_id"]))
+        ver = ptr.get("active_version")
+        if ver and store.exists(store.tc_version_path(inputs["testcase_id"], ver)):
+            tv = store.load(store.tc_version_path(inputs["testcase_id"], ver))
+            if tv.get("spec_id") and tv.get("spec_version"): checks.append((tv["spec_id"], tv["spec_version"], "被修訂 TC 版本的 spec"))
+    if workflow_id == "manual-test-to-regression" and inputs.get("manual_record_id") and store.exists(f"testcases/manual/{inputs['manual_record_id']}.yaml"):
+        h = store.load(f"testcases/manual/{inputs['manual_record_id']}.yaml").get("spec_hint") or {}
+        if h.get("spec_id") and h.get("spec_version"): checks.append((h["spec_id"], h["spec_version"], "manual record 的 spec_hint"))
+    for sid, ver, label in checks:
+        try: spec_ops.require_analyzable(sid, str(ver), label)
+        except spec_ops.SpecError as e: raise EngineError(str(e))
+
 @operation.operation("run_new")
 def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
@@ -81,6 +101,7 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
             if inputs.get(k):
                 err = refs.resolve({"entity_type": "SpecVersion", "id": inputs["spec_id"], "version": inputs[k]})
                 if err: raise EngineError(err)
+    _require_analyzable(workflow_id, inputs)
     run_id = ids.alloc("RUN")
     run = {"run_id": run_id, "workflow_id": workflow_id, "workflow_version": wf["version"], "status": None,
            "input": {**inputs, "initiated_by": by}, "initiated_by": by, "created_at": store.now(), "updated_at": store.now(),

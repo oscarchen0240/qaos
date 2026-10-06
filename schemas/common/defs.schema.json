@@ -597,6 +597,98 @@
         "APPLIED",
         "WITHDRAWN"
       ]
+    },
+    "SpecPin": {
+      "type": "object",
+      "description": "spec 版本的身分：content_hash 必須同時等於 spec.yaml 登記值與實體檔 sha256（需求 A 第 2 章）",
+      "required": [
+        "spec_id",
+        "spec_version",
+        "content_hash"
+      ],
+      "properties": {
+        "spec_id": {
+          "$ref": "#/$defs/SpecId"
+        },
+        "spec_version": {
+          "$ref": "#/$defs/SpecVersion"
+        },
+        "content_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReferenceRole": {
+      "type": "string",
+      "enum": [
+        "normative",
+        "informative"
+      ]
+    },
+    "SpecReferenceDecl": {
+      "type": "object",
+      "description": "直接層引用（附錄 A 2-5）：SpecPin＋role＋scope；decl_rev、depth 只在閉包展開時計算",
+      "required": [
+        "spec_id",
+        "spec_version",
+        "content_hash",
+        "role"
+      ],
+      "properties": {
+        "spec_id": {
+          "$ref": "#/$defs/SpecId"
+        },
+        "spec_version": {
+          "$ref": "#/$defs/SpecVersion"
+        },
+        "content_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "role": {
+          "$ref": "#/$defs/ReferenceRole"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "RefNode": {
+      "type": "object",
+      "description": "引用閉包中的一個節點：SpecPin＋decl_rev＋role＋depth",
+      "required": [
+        "spec_id",
+        "spec_version",
+        "content_hash",
+        "decl_rev",
+        "role",
+        "depth"
+      ],
+      "properties": {
+        "spec_id": {
+          "$ref": "#/$defs/SpecId"
+        },
+        "spec_version": {
+          "$ref": "#/$defs/SpecVersion"
+        },
+        "content_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "decl_rev": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "role": {
+          "$ref": "#/$defs/ReferenceRole"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

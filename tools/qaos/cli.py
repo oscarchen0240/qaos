@@ -4,7 +4,7 @@
 要刻意再執行一次相同內容的請求請加 --new-request。唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，
 也不保證跨檔一致的快照。"""
 import argparse, json, sys, pathlib
-from . import store, schema, ids, engine, trace, operation, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
+from . import store, schema, ids, engine, trace, operation, spec_ops, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
 from .engine import EngineError
 from .state import TransitionError
 
@@ -25,30 +25,6 @@ def _notice():
         print(f"（已續做未完成的計畫 op={o['op_id'][:12]}…）", file=sys.stderr)
 
 # ---------------------------------------------------------------- 寫入（executor）
-def _spec_import_request(file, spec_id, version, product, area, **kw):
-    data = pathlib.Path(file).read_bytes()
-    return {"targets": {"spec_pins": [f"{spec_id}@{version}"]}, "params": operation.normalize({"product": product, "area": area, **kw}),
-            "inputs": {"source_sha256": store.sha256_bytes(data)}}
-
-@operation.operation("spec_import", request=_spec_import_request)
-def spec_import(file, spec_id, version, product, area, title=None, area_title=None, source=None, change_summary=None, supersede=False, by="human"):
-    """Human 匯入 Spec 版本：複製 markdown 到 specs/<product>/<area>/<spec_id>/v<ver>.md，登記 hash。"""
-    src = pathlib.Path(file).resolve(); text = src.read_text(encoding="utf-8")
-    d = f"specs/{product}/{area}/{spec_id}"
-    areas = store.load(f"specs/{product}/areas.yaml") if store.exists(f"specs/{product}/areas.yaml") else {"product": product, "areas": {}}
-    if area not in areas["areas"]: areas["areas"][area] = {"title": area_title or area}; store.save(f"specs/{product}/areas.yaml", areas)
-    spec = store.load(f"{d}/spec.yaml") if store.exists(f"{d}/spec.yaml") else {"spec_id": spec_id, "product": product, "functional_area": area, "title": title or spec_id, "versions": []}
-    if any(v["spec_version"] == version for v in spec["versions"]): raise ValueError(f"{spec_id} v{version} 已存在（Spec 版本不可覆蓋，請用新版本號）")
-    fname = f"v{version}.md"; store.write_text(f"{d}/{fname}", text)
-    for v in spec["versions"]:
-        if v["status"] != "SUPERSEDED": v["status"] = "SUPERSEDED" if supersede else v["status"]
-    spec["versions"].append({k: v for k, v in {"spec_version": version, "file": fname, "content_hash": store.sha256_text(text), "source_uri": source or str(src),
-                            "imported_by": by, "imported_at": store.now(), "status": "IMPORTED", "change_summary": change_summary}.items() if v is not None})
-    errs = schema.errors(spec, "spec/spec.schema.json")
-    if errs: raise ValueError("spec.yaml 不符 schema：" + "; ".join(errs))
-    store.save(f"{d}/spec.yaml", spec); store.audit(None, by, "IMPORT_SPEC", f"{spec_id}@{version}")
-    return f"{spec_id}@{version} imported → {d}/{fname}"
-
 def _evidence_request(type_, by, file=None, inline=None, **kw):
     inp = {"inline_sha256": store.sha256_text(inline)} if inline is not None else {"file_sha256": store.sha256_bytes(pathlib.Path(file).read_bytes())}
     return {"params": operation.normalize({"type": type_, "by": by, **kw}), "inputs": inp}
@@ -158,9 +134,19 @@ def cmd_approvals(a):
 def cmd_trace(a): [print(l) for l in trace.trace(a.id)]
 def cmd_suites_of(a): _print(trace.suites_of(a.tc_id))
 
+def _src_kw(a) -> dict:
+    return {"package": a.package, "package_file": a.package_file, "external_filename": a.external_filename, "external_version": a.external_version,
+            "external_effective_date": a.external_effective_date, "external_commit": a.external_commit}
+
 def cmd_spec_import(a):
-    print(spec_import(a.file, a.spec_id, a.version, a.product, a.area, title=a.title, area_title=a.area_title, source=a.source,
-                      change_summary=a.change_summary, supersede=a.supersede, by=a.by, **_nr(a)))
+    print(spec_ops.spec_import(a.file, a.spec_id, a.version, a.product, a.area, title=a.title, area_title=a.area_title, source=a.source,
+                               change_summary=a.change_summary, supersede=a.supersede, by=a.by, analysis_policy_value=a.analysis_policy, **_src_kw(a), **_nr(a)))
+
+def cmd_spec_ref_add(a): _print(spec_ops.reference_add(a.target, a.ref, a.role, a.by, scope=a.scope, **_nr(a)))
+def cmd_spec_ref_remove(a): _print(spec_ops.reference_remove(a.target, a.ref, a.by, reason=a.reason, **_nr(a)))
+def cmd_spec_ref_empty(a): _print(spec_ops.reference_declare_empty(a.target, a.reason, a.by, **_nr(a)))
+def cmd_spec_meta_upgrade(a):
+    _print(spec_ops.metadata_upgrade(a.target, a.by, a.reason, analysis_policy_value=a.analysis_policy, original_file=a.original_file, note=a.note, **_src_kw(a), **_nr(a)))
 
 def cmd_evidence_add(a):
     if a.inline is None and not a.file: sys.exit("evidence add 需要 --file 或 --inline")
@@ -231,8 +217,24 @@ def main(argv=None):
     p = sp.add_parser("trace"); p.add_argument("id"); p.set_defaults(f=cmd_trace)
     p = sp.add_parser("suites-of"); p.add_argument("tc_id"); p.set_defaults(f=cmd_suites_of)
     s = sp.add_parser("spec"); ss = s.add_subparsers(dest="sub", required=True)
-    p = ss.add_parser("import", parents=[W]); p.add_argument("file"); p.add_argument("--spec-id", required=True); p.add_argument("--version", required=True); p.add_argument("--product", required=True); p.add_argument("--area", required=True)
-    p.add_argument("--title"); p.add_argument("--area-title"); p.add_argument("--source"); p.add_argument("--change-summary"); p.add_argument("--supersede", action="store_true"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_spec_import)
+    SRC = argparse.ArgumentParser(add_help=False)
+    SRC.add_argument("--package", help="開發包名稱"); SRC.add_argument("--package-file", help="開發包 zip 或 manifest；計算 package_sha256")
+    SRC.add_argument("--external-filename"); SRC.add_argument("--external-version", help="外部版本標示"); SRC.add_argument("--external-effective-date", help="外部文件宣告的生效日（只當參考）")
+    SRC.add_argument("--external-commit", help="來源聲稱的 commit（記錄為 claimed: true）")
+    p = ss.add_parser("import", parents=[W, SRC]); p.add_argument("file"); p.add_argument("--spec-id", required=True); p.add_argument("--version", required=True); p.add_argument("--product", required=True); p.add_argument("--area", required=True)
+    p.add_argument("--title"); p.add_argument("--area-title"); p.add_argument("--source", help="來源 URI（舊欄位 source_uri）"); p.add_argument("--change-summary"); p.add_argument("--supersede", action="store_true"); p.add_argument("--by", required=True)
+    p.add_argument("--analysis-policy", choices=["analyze", "reference_only"], help="reference_only：只當參考文件，不建需求模型、不能當 run 目標")
+    p.set_defaults(f=cmd_spec_import)
+    r = ss.add_parser("reference", help="引用宣告（只能由人執行）"); rs = r.add_subparsers(dest="sub2", required=True)
+    p = rs.add_parser("add", parents=[W]); p.add_argument("target", metavar="SPEC_ID@VER"); p.add_argument("--ref", required=True, metavar="SPEC_ID@VER"); p.add_argument("--role", required=True, choices=["normative", "informative"])
+    p.add_argument("--scope", help="章節或關鍵段落說明"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_spec_ref_add)
+    p = rs.add_parser("remove", parents=[W]); p.add_argument("target", metavar="SPEC_ID@VER"); p.add_argument("--ref", required=True, metavar="SPEC_ID@VER"); p.add_argument("--reason", help="移除最後一個引用時必填")
+    p.add_argument("--by", required=True); p.set_defaults(f=cmd_spec_ref_remove)
+    p = rs.add_parser("declare-empty", parents=[W]); p.add_argument("target", metavar="SPEC_ID@VER"); p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_spec_ref_empty)
+    mt = ss.add_parser("metadata", help="metadata 升級（只補 legacy 條目缺少的欄位）"); mts = mt.add_subparsers(dest="sub2", required=True)
+    p = mts.add_parser("upgrade", parents=[W, SRC]); p.add_argument("target", metavar="SPEC_ID@VER"); p.add_argument("--analysis-policy", choices=["analyze", "reference_only"])
+    p.add_argument("--original-file", help="補 source 時必填：原檔，由指令重算 source_bytes_sha256"); p.add_argument("--note", help="原檔 hash 和 content_hash 不同時必填")
+    p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_spec_meta_upgrade)
     e = sp.add_parser("evidence"); es = e.add_subparsers(dest="sub", required=True)
     p = es.add_parser("add", parents=[W]); p.add_argument("--type", required=True); p.add_argument("--file"); p.add_argument("--inline"); p.add_argument("--owner", help="exe_id 或 bug 暫時歸屬目錄"); p.add_argument("--execution-id")
     p.add_argument("--description"); p.add_argument("--captured-at"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_evidence_add)
