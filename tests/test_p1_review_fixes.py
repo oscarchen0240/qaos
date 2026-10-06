@@ -181,6 +181,31 @@ print(p)
     assert len(U.op_list(root)) == n + 1 and U.op_list(root)[-1]["action"] == "submit" and U.incomplete(root) == []
     run = U.load(root, f"runs/{rid}/run.yaml"); assert run["status"] == "FAILED" and run["tasks"][0]["permission_violations"]
 
+@pytest.mark.parametrize("bad", ["other_file", "run_field", "two_tasks", "rewrite_gate_results", "two_events"])
+def test_p1_05_diagnostic_beyond_boundary_is_refused(bad):
+    """診斷擷取超出附錄 A 4-16 的邊界 → 拒絕、不寫入任何檔案（以測試專用的內部呼叫造出越界寫入）。"""
+    root = U.mkroot(); rid = _reg_run(root)
+    assert U.q(root, "submit", rid, "T1", _bad_artifact(root, rid)).returncode != 0          # 先有一筆合法診斷（gate_results 非空）
+    assert U.load(root, f"runs/{rid}/run.yaml")["tasks"][0]["gate_results"]
+    code = f"""
+from tools.qaos import operation as op, store
+def body():
+    store.mark_diagnostic()
+    run = store.load("runs/{rid}/run.yaml"); t = run["tasks"]
+    t[0].setdefault("gate_results", []).append({{"result": "FAIL"}})
+    if "{bad}" == "other_file": store.save("artifacts/x.yaml", {{"a": 1}})
+    if "{bad}" == "run_field": run["status"] = "FAILED"
+    if "{bad}" == "two_tasks": t[1]["status"] = "READY"
+    if "{bad}" == "rewrite_gate_results": t[0]["gate_results"][0] = {{"result": "PASS"}}
+    store.save("runs/{rid}/run.yaml", run); store.audit("{rid}", "t", "ARTIFACT_INVALID")
+    if "{bad}" == "two_events": store.audit("{rid}", "t", "ARTIFACT_INVALID")
+try: op.run_operation("test_internal", body, new_request=True); print("accepted")
+except op.OperationError as e: print("refused")
+"""
+    before = U.snapshot(root)
+    assert U.py(root, code).stdout.strip().splitlines()[-1] == "refused"
+    assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+
 # ---------------------------------------------------------------- P1-06：計畫保存前中止的殘留
 @pytest.mark.parametrize("how", ["fault", "kill"])
 def test_p1_06_residue_before_plan_save_is_cleaned(how, tmp_path):

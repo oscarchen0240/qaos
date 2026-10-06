@@ -652,6 +652,8 @@ def _check_diagnostic(cap: store.Capture):
         strip = lambda run: {**{k: v for k, v in run.items() if k != "updated_at"}, "tasks": [{k: v for k, v in t.items() if k not in DIAG_TASK_FIELDS} for t in run.get("tasks", [])]}
         if strip(before) != strip(after):
             raise OperationError(f"驗證失敗的診斷改動了 {r} 中不允許的欄位")
+        if sum(tb != ta for tb, ta in zip(before["tasks"], after["tasks"])) > 1:
+            raise OperationError(f"驗證失敗的診斷只能改動一個 task（{r}）")
         for tb, ta in zip(before["tasks"], after["tasks"]):
             gb, ga = tb.get("gate_results") or [], ta.get("gate_results") or []
             if ga[:len(gb)] != gb: raise OperationError("gate_results 只能追加")

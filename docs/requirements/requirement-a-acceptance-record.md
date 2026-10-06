@@ -5,10 +5,10 @@
 
 ## P1：executor 基礎設施
 
-- **執行 commit**：`04f29bf18f449340a85f9d529151434ce14d9a3a`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06 的修正）
+- **執行 commit**：本紀錄所在的 commit（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06 的修正，`04f29bf` 與其後的診斷邊界修正）
 - **環境**：macOS（Darwin 24.6）、Python 3.11.0、本機 APFS
 - **資料**：每個 P1 案例使用獨立的暫存 root（只複製 schemas、agents、workflows、permissions），以正式流程建立狀態；故障以 `QAOS_FAULT` 注入、同步以 `QAOS_PAUSE` 暫停點完成。沒有使用 repo 的業務資料。
-- **結果**：`pytest tests/` 170 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
+- **結果**：`pytest tests/` 175 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
 
 ### 狀態說明
 
@@ -21,7 +21,7 @@
 
 | AC | 狀態 | 測試（tests/…） | 待 |
 |---|---|---|---|
-| AC-07-8 | 通過 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_three_structural_failures_only_diagnostics`（連續 3 次） | — |
+| AC-07-8 | 通過 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_three_structural_failures_only_diagnostics`（連續 3 次）、`test_p1_05_diagnostic_beyond_boundary_is_refused`（越界五例） | — |
 | AC-07-9a | 通過 | 同上 | — |
 | AC-07-9b | 通過 | `test_p1_resume.py::test_crash_before_plan_save_leaves_nothing`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（故障、SIGKILL；完整快照不排除任何目錄） | — |
 | AC-07-9c、9l | 通過 | `test_p1_misc.py::test_9c_9l_half_written_tmp_is_cleaned` | — |
