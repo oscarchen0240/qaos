@@ -307,6 +307,72 @@ def test_p1_06_registered_without_plan_is_refused(variant, state):
         r = U.q(root, *cmd); assert r.returncode != 0 and "有登錄紀錄卻沒有計畫" in r.stderr, r.stderr
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
 
+# ---------------------------------------------------------------- P1R4-01：目標既存時不取得擁有權
+def _staged(root):
+    """root 中唯一一份寫入清單 → (op_id, manifest)。"""
+    m = next(pathlib.Path(root).glob("operations/_global/staging.d/*.yaml"))
+    return m.stem, yaml.safe_load(m.read_text())
+
+def _tree_hash(d):
+    import hashlib
+    d = pathlib.Path(d)
+    return {x.relative_to(d).as_posix(): hashlib.sha256(x.read_bytes()).hexdigest() for x in d.rglob("*") if x.is_file() and not x.is_symlink()}
+
+@pytest.mark.parametrize("content", ["different", "same"])
+def test_p1r4_01_preexisting_target_is_not_claimed(content):
+    ref = U.mkroot(); assert U.q(ref, "tc-export", "AUTH", fault="before_plan_save").returncode == FAULT_EXIT
+    op, man = _staged(ref); sha = man["blobs"][0]
+    data = (pathlib.Path(ref) / f"operations/_global/{op}/blobs/{sha}").read_bytes() if content == "same" else b"pre-existing foreign file"
+    root = U.mkroot(); victim = pathlib.Path(root) / f"operations/_global/{op}/blobs/{sha}"
+    victim.parent.mkdir(parents=True); victim.write_bytes(data)                                     # 模擬其他程式先放好的檔案
+    before = U.snapshot(root)
+    r = U.q(root, "tc-export", "AUTH"); assert r.returncode != 0 and "沒有計畫，需人工處理" in r.stderr, r.stderr
+    assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}            # 沒有建立認領、清單或任何檔案
+    r = U.q(root, *spec_args()); assert r.returncode == 0, r.stderr                                 # 其他操作照常；既存檔案不被清
+    assert victim.read_bytes() == data and "保留無法辨識的內容" in r.stderr
+    assert U.q(root, "tc-export", "AUTH").returncode != 0 and victim.read_bytes() == data           # 衝突不會被自動處理成成功
+
+# ---------------------------------------------------------------- P1R4-02：路徑任何一層是 symlink → 拒絕，不刪任何東西
+@pytest.mark.parametrize("level", ["scope", "op", "blobs", "staging", "file"])
+def test_p1r4_02_symlink_anywhere_on_path_is_refused(level, tmp_path):
+    import shutil
+    root = U.mkroot(); assert U.q(root, *spec_args(), fault="before_plan_save").returncode == FAULT_EXIT
+    op, man = _staged(root); r_ = pathlib.Path(root); outside = tmp_path / "foreign-store"; outside.mkdir()
+    target = {"scope": r_ / "operations/_global", "op": r_ / f"operations/_global/{op}", "blobs": r_ / f"operations/_global/{op}/blobs",
+              "staging": r_ / "operations/_global/staging.d"}.get(level)
+    if level == "file":                                                                             # 清單列出的內容檔換成指向外部檔案的 symlink
+        f = r_ / f"operations/_global/{op}/blobs/{man['blobs'][0]}"; (outside / "victim").write_bytes(f.read_bytes()); f.unlink(); f.symlink_to(outside / "victim")
+    else:                                                                                           # 把該層目錄搬到 root 之外，原位置改為 symlink
+        shutil.move(str(target), str(outside / "moved")); target.symlink_to(outside / "moved", target_is_directory=True)
+    before_root, before_out = U.snapshot(root), _tree_hash(outside)
+    r = U.q(root, "tc-export", "AUTH"); assert r.returncode != 0 and ("symlink" in r.stderr or "不是一般檔案" in r.stderr), r.stderr
+    assert U.diff(before_root, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+    assert _tree_hash(outside) == before_out                                                        # 外部檔案一個都沒少
+
+# ---------------------------------------------------------------- P1R4-03：建立證據途中中止、清理途中中止
+@pytest.mark.parametrize("point", ["after_claim", "short:staging_manifest", "empty:staging_manifest"])
+def test_p1r4_03_abort_while_creating_evidence_is_cleaned(point):
+    root = U.mkroot(); base = U.snapshot(root)
+    assert U.q(root, *spec_args(), fault=point).returncode == FAULT_EXIT
+    left = U.diff(base, U.snapshot(root))["added"]
+    assert left and all(x.startswith("operations/_global/staging.d/") for x in left), left          # 只有認領檔（與半寫的清單暫存）
+    assert any(x.endswith(".claim") for x in left) and (point == "after_claim" or any("/.qaos-tmp-" in x for x in left)), left
+    d, r = _write_v11(root); assert r.returncode == 0, r.stderr
+    assert sorted(d["removed"]) == sorted(left), d
+    assert not list((pathlib.Path(root) / "operations/_global/staging.d").iterdir())
+
+def test_p1r4_03_cleanup_interrupted_twice_then_completes():
+    root = U.mkroot(); base = U.snapshot(root)
+    assert U.q(root, *spec_args(), fault="before_plan_save").returncode == FAULT_EXIT
+    left = U.diff(base, U.snapshot(root))["added"]; n_blobs = sum("/blobs/" in x for x in left); assert n_blobs >= 2
+    for i in range(2):                                                                              # 清理刪掉一個檔案就中止，兩次
+        assert U.q(root, *spec_args("1.1"), fault="cleanup_mid").returncode == FAULT_EXIT
+        now = U.diff(base, U.snapshot(root))["added"]
+        assert sum("/blobs/" in x for x in now) == n_blobs - (i + 1) and any(x.endswith(".claim") for x in now)   # 證據最後才刪
+    d, r = _write_v11(root); assert r.returncode == 0, r.stderr
+    assert not [x for x in U.snapshot(root) if x in left]                                            # 殘留全部清除
+    assert not list((pathlib.Path(root) / "operations/_global/staging.d").iterdir())
+
 # ---------------------------------------------------------------- P1R2-02：store 單獨載入時不能自建擷取
 def test_p1r2_02_store_alone_fails_closed():
     root = U.mkroot()
