@@ -178,7 +178,7 @@ def g_impact(run, task, arts) -> list[str]:
     for rid in set(from_reqs) | set(to_reqs):
         if rid not in judged: issues.append(f"requirement {rid} 未出現在 requirement_diff")
     judged_tc = {t["testcase_id"] for t in p["testcase_impact"]}
-    for ptr in (store.ROOT / "testcases" / "registry").glob("TC-*.yaml"):
+    for ptr in store.glob("testcases/registry/TC-*.yaml"):
         d = store.load(ptr)
         if d["active_version"] is None: continue
         v = store.load(store.tc_version_path(d["testcase_id"], d["active_version"]))

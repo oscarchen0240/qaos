@@ -29,8 +29,8 @@ def test_10_evidence_and_execution_import(capsys):
     assert msg and "竄改" in msg and refs.resolve({"entity_type": "Evidence", "id": S["evd"]}) is None
 
 def test_11_no_evidence_no_formal_bug():
-    with pytest.raises(EngineError): engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "evidence_ids": []}, "oscar@example.com")
-    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com")
+    with pytest.raises(EngineError): engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "evidence_ids": []}, "oscar@example.com", new_request=True)
+    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com", new_request=True)
     S["run"] = run["run_id"]
     assert run["tasks"][0]["status"] == "DONE" and run["current_task_id"] == "T1"  # T0 因 RequirementModel 已存在而 skip
 
@@ -78,7 +78,7 @@ def test_13_open_bug_with_human_adjustment_and_manual_lifecycle(capsys):
 def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
     active = _active_tcs(); assert len(active) == 4
     manual = next(t for t in active if t[2]["execution_mode"] == "manual")
-    run = engine.new_run("regression-generation", {"target_suites": ["ci_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com")
+    run = engine.new_run("regression-generation", {"target_suites": ["ci_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com", new_request=True)
     prop = {"suite_id": "SUITE-CI", "suite_type": "ci_regression", "base_suite_version": None, "trigger": "manual",
             "proposed_memberships": [{"testcase_id": t[0], "pinned_version": "active", "justification": "high risk", "risk_tag": "auth"} for t in active],
             "diff": {"add": [{"testcase_id": t[0], "reason": "new"} for t in active], "remove": [], "repin": []},
@@ -87,7 +87,7 @@ def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
     assert engine.submit(run["run_id"], "T1", str(p))[0]
     r = engine.evaluate_gate(run["run_id"], "T1"); assert r["result"] == "FAIL" and any(manual[0] in i and "manual" in i for i in r["issues"])
     # Full regression：全部 4 個 → PASS → approval → commit
-    run2 = engine.new_run("regression-generation", {"target_suites": ["full_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com")
+    run2 = engine.new_run("regression-generation", {"target_suites": ["full_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com", new_request=True)
     prop.update({"suite_id": "SUITE-FULL", "suite_type": "full_regression"})
     rp, p = H.write_artifact(run2["run_id"], "T1", "agent-regression-curator", "RegressionProposal", prop, [{"entity_type": "TestCase", "id": t[0]} for t in active], {"type": "Registry", "ids": []}, "regression")
     assert engine.submit(run2["run_id"], "T1", str(p))[0] and engine.evaluate_gate(run2["run_id"], "T1")["result"] == "PASS"
@@ -103,7 +103,7 @@ def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
 def test_15_change_impact_v1_1_supersedes_testcase(fixtures):
     """WF-C：v1.0 → v1.1（8 → 12），REQ-AUTH-001 changed，兩個 TC affected → 新版本 → APPLY_CHANGE → v2 ACTIVE、v1 SUPERSEDED。"""
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.1.md"), "--spec-id", "SPEC-AUTH-001", "--version", "1.1", "--product", "demo", "--area", "AUTH", "--change-summary", "密碼最小長度 8 → 12", "--by", "oscar@example.com"])
-    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     assert run["current_task_id"] == "T0"  # to_version 尚無 RequirementModel
     rm = H.requirement_model("1.1", "12")
     sa = {"spec_id": "SPEC-AUTH-001", "spec_version": "1.1", "content_hash": store.load(store.spec_dir("SPEC-AUTH-001") / "spec.yaml")["versions"][1]["content_hash"], "summary": "v1.1", "scope": {"in_scope": [], "out_of_scope": []},

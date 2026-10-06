@@ -1,6 +1,7 @@
 """ApprovalRequest → 人可讀 Markdown（approvals/<id>.md）。"""
-from . import store
+from . import store, operation
 
+@operation.operation("approval_render")
 def render(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml"); lines = [f"# {apr_id} · {a['type']}", "", f"- Run：{a['run_id']}  · 狀態：{a['status']}  · 提出：{a['requested_at'][:10]}", f"- **{a['summary']}**", ""]
     if a["type"] in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and a.get("batch_items"):
@@ -54,9 +55,10 @@ def render(apr_id: str) -> str:
         lines += ["", "## 依據 artifact", ""] + [f"- {x}" for x in a["artifact_ids"]]
     lines += ["", "## 決定", "", f"```bash", f"bin/qaos approve {apr_id} --decision approve --by <you>", f"bin/qaos approve {apr_id} --decision approve --by <you> --per-item TC-xxx-001:reject", f"bin/qaos approve {apr_id} --decision reject --by <you> --rationale \"...\"", "```"]
     if a.get("decision"): lines += ["", f"**已決定：{a['decision']['decision']}** by {a['decision']['decided_by']} @ {a['decision']['decided_at']}"]
-    out = "\n".join(lines) + "\n"; (store.ROOT / "approvals" / f"{apr_id}.md").write_text(out, encoding="utf-8"); return out
+    out = "\n".join(lines) + "\n"; store.write_derived(f"approvals/{apr_id}.md", out); return out
 
 
+@operation.operation("approval_render_html")
 def render_html(apr_id: str) -> str:
     """approvals/<id>.html：固定欄寬、統一字級的審批頁（給人看；md 仍是文字版）。"""
     import html as H
@@ -125,4 +127,4 @@ ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:
         out.append("<h2>內容</h2><div class=summary style='white-space:pre-wrap'>" + H.escape(a["diff_summary"]) + "</div>")
     out.append(f"<h2>決定</h2><div class=cmd>bin/qaos approve {apr_id} --decision approve --by &lt;you&gt;\nbin/qaos approve {apr_id} --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject\nbin/qaos approve {apr_id} --decision reject --by &lt;you&gt; --rationale \"...\"</div>")
     if a.get("decision"): out.append(f"<p><b>已決定：{a['decision']['decision']}</b> by {H.escape(a['decision']['decided_by'])} @ {a['decision']['decided_at']}</p>")
-    html = "\n".join(out); (store.ROOT / "approvals" / f"{apr_id}.html").write_text(html, encoding="utf-8"); return html
+    html = "\n".join(out); store.write_derived(f"approvals/{apr_id}.html", html); return html

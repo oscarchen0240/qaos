@@ -1,6 +1,12 @@
 """測試用：模擬各 Agent 產出 artifact（Phase 3 前由測試手寫）。"""
-import pathlib
+import pathlib, yaml
 from tools.qaos import store, ids
+
+def raw_save(path, obj):
+    """測試專用：模擬 QAOS 以外的寫入（agent 產出 artifact、或標明的竄改反例），直接寫檔、不經 executor。
+    QAOS 自己的寫入一律經過 executor；這個函式只能用在「外部寫入」的情境。"""
+    p = store.ROOT / store.rel(path); p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=120), encoding="utf-8"); return p
 
 def write_artifact(run_id, task_id, agent, artifact_type, payload, references, source, subdir, iteration=0, requires_approval=None):
     aid = ids.artifact_id(artifact_type)
@@ -8,7 +14,7 @@ def write_artifact(run_id, task_id, agent, artifact_type, payload, references, s
            "iteration": iteration, "created_by": agent, "created_at": store.now(), "status": "DRAFT",
            "source": source, "references": references, "requires_approval": requires_approval, "payload": payload}
     p = store.ROOT / "artifacts" / subdir / run_id / f"{aid}.yaml"
-    store.save(p, art); return aid, p
+    raw_save(p, art); return aid, p
 
 def spec_ref(loc, quote=""): return {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "location": loc, "quote": quote}
 

@@ -1,5 +1,6 @@
 """Clarification（問 PM 的單）：手動生命週期、與 RESOLVE_AMBIGUITY 的自動接線；bug index。"""
 import pytest
+from tests.helpers import raw_save
 from tools.qaos import store, engine, clarification as clr, bugindex
 from tools.qaos.cli import main as cli
 from tools.qaos.engine import EngineError
@@ -19,12 +20,13 @@ def test_20_manual_clarification_lifecycle(capsys):
     with pytest.raises(ValueError, match="impact-reviewed"): clr.apply_(cid, "oscar@example.com")   # ADR-008：未做影響掃描判定不得 apply
     clr.apply_(cid, "oscar@example.com", impact_reviewed="無 ACTIVE TC 受影響"); assert clr.load(cid)["status"] == "APPLIED"
     assert "impact-scan[" in clr.load(cid)["history"][-1]["note"] and "reviewed: 無 ACTIVE TC 受影響" in clr.load(cid)["history"][-1]["note"]
-    cli(["clarification", "list", "--all"]); assert cid in capsys.readouterr().out and (store.ROOT / "clarifications/index.md").exists()
+    cli(["clarification", "list", "--all"]); assert cid in capsys.readouterr().out   # list 是唯讀指令，不寫檔
+    cli(["clarification", "index"]); assert (store.ROOT / "clarifications/index.md").exists()
 
 def _fake_active_tc(tc_id, area, req, title, steps, expected, product="demo"):
     """直接寫 registry pointer + version（impact 掃描只讀這兩個檔）。"""
-    store.save(store.tc_pointer_path(tc_id), {"testcase_id": tc_id, "active_version": 1, "status": "ACTIVE", "versions": [{"version": 1, "status": "ACTIVE"}]})
-    store.save(store.tc_version_path(tc_id, 1), {"testcase_id": tc_id, "version": 1, "status": "ACTIVE", "product": product, "functional_area": area, "title": title,
+    raw_save(store.tc_pointer_path(tc_id), {"testcase_id": tc_id, "active_version": 1, "status": "ACTIVE", "versions": [{"version": 1, "status": "ACTIVE"}]})
+    raw_save(store.tc_version_path(tc_id, 1), {"testcase_id": tc_id, "version": 1, "status": "ACTIVE", "product": product, "functional_area": area, "title": title,
                                                   "requirement_ids": [req], "preconditions": [], "steps": [{"n": i + 1, "action": a} for i, a in enumerate(steps)], "expected_result": expected})
 
 def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys):
@@ -34,9 +36,9 @@ def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys
     _fake_active_tc("TC-IMP-003", "IMP", "REQ-IMP-002", "expected 提到新場次", ["做 B"], "系統建立新場次")
     _fake_active_tc("TC-IMP-004", "IMP", "REQ-IMP-002", "不相干", ["做 C"], "看到 C")
     _fake_active_tc("TC-IMP-005", "OTHER", "REQ-IMP-001", "別的 area 掛同需求", ["做 D"], "看到 D")
-    ptr = store.load(store.tc_pointer_path("TC-IMP-004")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; store.save(store.tc_pointer_path("TC-IMP-004"), ptr)
+    ptr = store.load(store.tc_pointer_path("TC-IMP-004")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; raw_save(store.tc_pointer_path("TC-IMP-004"), ptr)
     _fake_active_tc("TC-IMP-006", "IMP", "REQ-IMP-002", "已退役但提到進行中", ["進行中"], "x")
-    ptr = store.load(store.tc_pointer_path("TC-IMP-006")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; store.save(store.tc_pointer_path("TC-IMP-006"), ptr)
+    ptr = store.load(store.tc_pointer_path("TC-IMP-006")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; raw_save(store.tc_pointer_path("TC-IMP-006"), ptr)
     c = clr.new("demo", "IMP", "SPEC-IMP-001", "1.0", "明細是否列進行中？", "oscar@example.com", requirement_id="REQ-IMP-001")
     cands = {x["testcase_id"]: x["reasons"] for x in clr.impact(c["clarification_id"], ["進行中", "新場次"])}
     assert cands == {"TC-IMP-001": ["requirement"], "TC-IMP-002": ["keyword:進行中"], "TC-IMP-003": ["keyword:新場次"]}
@@ -49,7 +51,7 @@ def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys
 
 def test_21_critical_ambiguity_opens_clarification_and_blocks_approve(fixtures):
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-PAY-001", "--version", "1.0", "--product", "demo", "--area", "PAY", "--by", "oscar@example.com"])
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-PAY-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-PAY-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     rm = H.requirement_model(); 
     for r in rm["requirements"]:
         r["spec_id"] = "SPEC-PAY-001"; r["requirement_id"] = r["requirement_id"].replace("AUTH", "PAY"); r["spec_reference"]["spec_id"] = "SPEC-PAY-001"
@@ -103,7 +105,7 @@ def test_24_resubmit_already_valid_artifact_does_not_corrupt_it():
     """engine bug fix (2026-09-14)：重複提交一份已是 VALID 的 artifact，不得把它的狀態改成 INVALID。"""
     from tools.qaos import engine, store
     from tests import helpers as H
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     tcs, _ = __import__("tests.test_wf_y_negative_coverage", fromlist=["_tcs"])._tcs(prefix="01JZZZZZZZZZZZZZZZZZZZZZZ")
     refs_ = [{"entity_type": "Requirement", "id": r} for r in sorted({r for t in tcs for r in t["requirement_ids"]})]
     did, p = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": "SPEC-NEG-001", "spec_version": "1.0", "testcases": tcs}, refs_, {"type": "x", "ids": []}, "test-design")

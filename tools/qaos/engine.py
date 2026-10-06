@@ -1,7 +1,7 @@
 """Workflow 引擎：Run 建立、Artifact 提交（Permission Guard + Structural Gate）、Gate 評估與效果、Approval、Commit。
 Agent 永遠不呼叫這裡的 commit；只有 approve() 在 Human 決定後觸發。"""
 import pathlib
-from . import store, schema, ids, state, refs, gates, clarification as clr
+from . import store, schema, ids, state, refs, gates, operation, clarification as clr
 from .state import TransitionError
 
 SYSTEM = "system"
@@ -14,7 +14,7 @@ def agents():
     global _agents
     if _agents is None:
         _agents = {}
-        for p in (store.ROOT / "agents").glob("*.yaml"):
+        for p in store.glob("agents/*.yaml"):
             a = store.load(p); _agents[a["id"]] = a
     return _agents
 
@@ -64,6 +64,7 @@ def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
     if wt.get("skip_if"): return exists
     return exists  # run_if "NOT exists" → skip when exists
 
+@operation.operation("run_new")
 def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
     missing = [k for k, v in wf["input"]["fields"].items() if v.get("required") and k not in inputs and k != "initiated_by"]
@@ -127,6 +128,11 @@ def _advance(run: dict, after: str | None = None):
         state.apply("workflow_run", run, "COMPLETED", SYSTEM, "all tasks done", run["run_id"]); _save_run(run)
 
 # ---------- Submit（Permission Guard + Structural Gate 第一層） ----------
+def _submit_request(run_id, task_id, artifact_path):
+    r = store.rel(artifact_path)
+    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_sha256": store.sha256_file(r) if store.exists(r) else None}}
+
+@operation.operation("submit", request=_submit_request, scope=lambda run_id, *a, **k: run_id)
 def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[str]]:
     run = load_run(run_id); task = _task(run, task_id); problems = []
     if run["status"] != "RUNNING": raise EngineError(f"Run 狀態 {run['status']}，不接受提交")
@@ -194,6 +200,7 @@ def _mark_invalid(run, task, art, p, problems):
     else:
         state.apply("task", task, "ARTIFACT_INVALID", SYSTEM, "structural fail")
         n = sum(1 for g in task["gate_results"] if g["layer"] == "structural" and g["result"] == "FAIL")
+        if n < 3: store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫（最終規格第 4 章 §13）
         if n >= 3:
             _create_approval(run, task, "NEEDS_DECISION", f"{task['task_id']} 連續 {n} 次 Structural FAIL", [], [], options=[{"key": "retry", "label": "重新 dispatch"}, {"key": "cancel", "label": "取消 run"}])
         else:
@@ -211,6 +218,15 @@ def _valid_outputs(task) -> dict:
         if a["status"] == "VALID": out[a["artifact_type"]] = a
     return out
 
+def _gate_request(run_id, task_id):
+    task = _task(load_run(run_id), task_id)
+    outs = []
+    for aid in task.get("output_artifact_ids", []):
+        p = store.find_artifact(aid)
+        outs.append({"artifact_id": aid, "sha256": store.sha256_file(p) if p else None})
+    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"outputs": outs}}
+
+@operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:
     run = load_run(run_id); task = _task(run, task_id); wf = workflow(run["workflow_id"]); wt = _wf_task(wf, task_id)
     if run["status"] != "RUNNING": raise EngineError(f"Run 狀態 {run['status']}")
@@ -225,6 +241,7 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
     issues = gates.GATES[gate](run, task, arts) if gate else []
     task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL" if issues else "PASS", "details": issues[:20] or [f"{gate} structural PASS"]})
     if issues:
+        store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫
         state.apply("task", task, "GATE_FAILED", SYSTEM, f"{gate} structural"); state.apply("task", task, "READY", SYSTEM, "revise")
         _save_run(run); store.audit(run_id, SYSTEM, "GATE_FAIL", f"{gate} structural: " + "; ".join(issues)[:300])
         return {"gate": gate, "layer": "structural", "result": "FAIL", "issues": issues}
@@ -466,6 +483,7 @@ def _create_approval(run, task, approval_type, summary, impact, art_ids, options
     store.audit(run["run_id"], "agent-supervisor", "REQUEST_HUMAN_APPROVAL", f"{apr_id} {approval_type}: {summary}")
     return apr
 
+@operation.operation("approve")
 def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_option: str | None = None, adjustments: dict | None = None, per_item: list | None = None) -> dict:
     if by.startswith("agent-") or by == SYSTEM: raise EngineError("RECORD_APPROVAL 只能由 Human 執行")
     if decision == "override" and not rationale.strip(): raise EngineError("override 必須提供 rationale")
@@ -670,8 +688,10 @@ def _after_needs_decision(run, task, apr, decision, by):
         _advance(run, cont); return
     t = _task(run, apr["task_id"]); t["status"] = "READY"; t["output_artifact_ids"] = []; _save_run(run)   # structural retry 不計入 semantic 迭代
 
+@operation.operation("run_cancel", scope=lambda run_id, *a, **k: run_id)
 def cancel(run_id: str, by: str):
     run = load_run(run_id); state.apply("workflow_run", run, "CANCELLED", by, "cancel", run_id); _save_run(run)
+    store.audit(run_id, by, "CANCEL_RUN", "")
 
 # ---------- Summary ----------
 def _summarize(run, task):

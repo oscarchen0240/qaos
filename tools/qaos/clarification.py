@@ -1,5 +1,5 @@
 """Clarification（問 PM 的單子）：建立、送出、回答、落地，以及給 PM 看的 Markdown 渲染。"""
-from . import store, ids, schema, state
+from . import store, ids, schema, state, operation
 
 def _render(c: dict) -> str:
     opts = "\n".join(f"- [ ] {o}" for o in c.get("options", [])) or "- （無預設選項，請自由回答）"
@@ -29,9 +29,10 @@ def save(c: dict):
     errs = schema.errors(c, "spec/clarification.schema.json")
     if errs: raise ValueError("Clarification 不符 schema：" + "; ".join(errs[:3]))
     path = store.clarification_path(c["product"], c["functional_area"], c["clarification_id"])
-    store.save(path, c); (store.ROOT / path).with_suffix(".md").write_text(_render(c), encoding="utf-8")
+    store.save(path, c); store.write_derived(path[:-len(".yaml")] + ".md", _render(c))
     return path
 
+@operation.operation("clarification_new")
 def new(product, area, spec_id, spec_version, question, by, context="", options=None, requirement_id=None, spec_reference=None, run_id=None, approval_id=None, impact=None) -> dict:
     c = {"clarification_id": ids.alloc("CLR", area), "product": product, "functional_area": area, "spec_id": spec_id, "spec_version": spec_version,
          "question": question, "context": context, "options": options or [], "raised_by": by, "raised_at": store.now(), "status": None, "history": []}
@@ -46,10 +47,12 @@ def load(clr_id: str) -> dict:
     if not p: raise FileNotFoundError(f"Clarification {clr_id} 不存在")
     return store.load(p)
 
+@operation.operation("clarification_ask")
 def ask(clr_id, asked_to, by):
     c = load(clr_id); c["asked_to"] = asked_to; c["asked_at"] = store.now()
     state.apply("clarification", c, "ASKED", by, f"asked {asked_to}"); save(c); return c
 
+@operation.operation("clarification_answer")
 def answer(clr_id, answer_text, answered_by, resolution, by, resulting_spec_version=None):
     c = load(clr_id); c.update({"answer": answer_text, "answered_by": answered_by, "answered_at": store.now(), "resolution": resolution})
     if resulting_spec_version: c["resulting_spec_version"] = resulting_spec_version
@@ -62,7 +65,7 @@ def _resync_human_docs(c):
     try:
         from . import req_export, approval_render
         if store.exists(store.requirements_path(c["spec_id"], c["spec_version"])): req_export.export(c["spec_id"], c["spec_version"])
-        for p in (store.ROOT / "approvals").glob("APR-*.yaml"):
+        for p in store.glob("approvals/APR-*.yaml"):
             a = store.load(p)
             if a["status"] == "PENDING" and a["type"] in ("ACTIVATE_TESTCASE", "APPLY_CHANGE"): approval_render.render(a["approval_id"]); approval_render.render_html(a["approval_id"])
     except Exception as e:
@@ -73,7 +76,7 @@ def impact(clr_id, keywords=None) -> list[dict]:
     回傳 [{testcase_id, version, title, reasons:[...]}]；reasons 為 'requirement' 或 'keyword:<詞>'。"""
     c = load(clr_id); req = c.get("requirement_id"); kws = [k for k in (keywords or []) if k]
     out = []
-    for ptr_p in sorted((store.ROOT / "testcases" / "registry").glob("TC-*.yaml")):
+    for ptr_p in store.glob("testcases/registry/TC-*.yaml"):
         ptr = store.load(ptr_p)
         if ptr.get("status") != "ACTIVE": continue
         tc = store.load(store.tc_version_path(ptr_p.stem, ptr["active_version"]))
@@ -85,6 +88,7 @@ def impact(clr_id, keywords=None) -> list[dict]:
         if reasons: out.append({"testcase_id": ptr_p.stem, "version": ptr["active_version"], "title": tc.get("title", ""), "reasons": reasons})
     return out
 
+@operation.operation("clarification_apply")
 def apply_(clr_id, by, note="", impact_reviewed=None, keywords=None):
     """落地 Clarification。ADR-008：必須先做影響掃描並逐條判定——impact_reviewed 為人／agent 對候選 TC 的結論（不受影響／需修訂／需 retire），
     未提供即拒絕；掃描候選清單與結論一併寫入 history note，供日後追溯。"""
@@ -99,16 +103,18 @@ def apply_(clr_id, by, note="", impact_reviewed=None, keywords=None):
     store.audit(c.get("run_id"), by, "APPLY_CLARIFICATION", f"{clr_id} impact-scan {len(cands)} candidates")
     return c
 
+@operation.operation("clarification_withdraw")
 def withdraw(clr_id, by, note=""):
     c = load(clr_id); state.apply("clarification", c, "WITHDRAWN", by, "withdrawn", note=note); save(c); return c
 
 def list_(open_only=True):
     out = []
-    for p in sorted((store.ROOT / "clarifications").glob("*/*/CLR-*.yaml")):
+    for p in store.glob("clarifications/*/*/CLR-*.yaml"):
         c = store.load(p)
         if not open_only or c["status"] in ("OPEN", "ASKED", "ANSWERED"): out.append(c)
     return out
 
+@operation.operation("clarification_index")
 def build_index():
     """clarifications/index.md：依 product/area 分組的總表。"""
     rows = list_(open_only=False); lines = ["# Clarifications（待 PM 釐清的需求）", "", f"- 更新：{store.now()[:10]}", ""]
@@ -118,5 +124,5 @@ def build_index():
         lines += [f"## {prod} / {area}", "", "| ID | 狀態 | 規格 | 問題 | PM 回覆 |", "|---|---|---|---|---|"]
         for c in cs: lines.append(f"| [{c['clarification_id']}]({prod}/{area}/{c['clarification_id']}.md) | {c['status']} | {c['spec_id']} v{c['spec_version']} | {c['question']} | {(c.get('answer') or '')[:60]} |")
         lines.append("")
-    (store.ROOT / "clarifications" / "index.md").write_text("\n".join(lines), encoding="utf-8")
+    store.write_derived("clarifications/index.md", "\n".join(lines))
     return len(rows)

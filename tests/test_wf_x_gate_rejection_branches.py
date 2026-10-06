@@ -11,6 +11,7 @@
 需要 engine 流程的案例（B、C 組）用既有已 ACTIVE 的 SPEC-AUTH-001@1.0 開新 run，只新增 run／artifact，不改共用 requirements。
 """
 import pytest
+from tests.helpers import raw_save
 from tools.qaos import store, engine, gates, refs
 from tests import helpers as H
 
@@ -29,7 +30,7 @@ def _req(rid, ac_id, status="ACTIVE", risk="medium", **extra):
 
 
 def _persist_gate_model(reqs):
-    store.save(store.requirements_path(GATE_SPEC, GATE_VER),
+    raw_save(store.requirements_path(GATE_SPEC, GATE_VER),
                {"spec_id": GATE_SPEC, "spec_version": GATE_VER, "source_artifact_id": "ART-RM-TESTONLY", "persisted_at": store.now(), "requirements": reqs})
 
 
@@ -187,8 +188,8 @@ def auth_ready(fixtures):
         for r in rm["requirements"]: r["status"] = "ACTIVE"
         rmid, p = H.write_artifact("RUN-GATE-BOOT", "T1", "agent-spec-analyst", "RequirementModel", rm,
                                    [{"entity_type": "SpecVersion", "id": "SPEC-AUTH-001", "version": "1.0"}], {"type": "SpecVersion", "ids": ["SPEC-AUTH-001@1.0"]}, "requirements")
-        store.save(p, dict(store.load(p), status="VALID"))
-        store.save(store.requirements_path("SPEC-AUTH-001", "1.0"),
+        raw_save(p, dict(store.load(p), status="VALID"))
+        raw_save(store.requirements_path("SPEC-AUTH-001", "1.0"),
                    {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "source_artifact_id": rmid, "persisted_at": store.now(), "requirements": rm["requirements"]})
 
 
@@ -198,7 +199,7 @@ def _auth_rm_id():
 
 def _new_run_at_t2():
     """T1 因 RequirementModel 已存在而 skip，run 直接停在 T2 READY。"""
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com")
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     assert run["current_task_id"] == "T2"
     return run["run_id"]
 
@@ -241,7 +242,7 @@ def test_61_submit_rejects_testcase_draft_whose_source_mismatches_mode(auth_read
     rid = _new_run_at_t2()
     did, p, tcs, ids_ = _submit_draft(rid, "01GATEPGC0000000000000000")
     tcs[1]["source"] = "change_workflow"
-    store.save(p, dict(store.load(p), payload=dict(store.load(p)["payload"], testcases=tcs)))
+    raw_save(p, dict(store.load(p), payload=dict(store.load(p)["payload"], testcases=tcs)))
     ok, problems = engine.submit(rid, "T2", str(p))
     assert not ok and any("source 與 mode 不一致" in x and ids_[1] in x for x in problems)
 
@@ -280,7 +281,7 @@ def test_62_gate_on_ready_task_reuses_existing_valid_artifacts_and_advances(auth
 def _write_evidence(eid, uri, sha256, inline=None):
     ev = {"evidence_id": eid, "type": "api_response", "captured_at": store.now(), "captured_by": "test", "description": "d", "uri": uri, "sha256": sha256}
     if inline is not None: ev["inline_content"] = inline
-    store.save(f"evidence/test/{eid}.yaml", ev)
+    raw_save(f"evidence/test/{eid}.yaml", ev)
 
 
 def test_70_evidence_resolve_rejects_when_file_missing_and_no_inline():

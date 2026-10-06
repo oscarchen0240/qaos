@@ -3,14 +3,14 @@ from . import store
 
 def find_requirement(req_id: str, spec_id: str | None = None, spec_version: str | None = None):
     pattern = f"{spec_id}/v{spec_version}/requirements.yaml" if spec_id and spec_version else "*/*/requirements.yaml"
-    for p in (store.ROOT / "artifacts" / "requirements").glob(pattern):
+    for p in store.glob(f"artifacts/requirements/{pattern}"):
         d = store.load(p)
         for r in d.get("requirements", []):
             if r["requirement_id"] == req_id: return r, p
     return None, None
 
 def find_ac(ac_id: str):
-    for p in (store.ROOT / "artifacts" / "requirements").glob("*/*/requirements.yaml"):
+    for p in store.glob("artifacts/requirements/*/*/requirements.yaml"):
         for r in store.load(p).get("requirements", []):
             for ac in r.get("acceptance_criteria", []):
                 if ac["ac_id"] == ac_id: return ac, r
@@ -41,8 +41,8 @@ def resolve(ref: dict) -> str | None:
     if t == "Evidence":
         p = store.find_evidence(i)
         if not p: return f"Evidence {i} 不存在"
-        e = store.load(p); fp = store.ROOT / e["uri"]
-        if fp.exists():
+        e = store.load(p); fp = e["uri"]
+        if store.exists(fp):
             actual = store.sha256_file(fp)
             if e.get("inline_content") is not None and store.sha256_text(e["inline_content"]) != actual:
                 return f"Evidence {i} 檔案與 inline_content 不一致（可能被竄改）"
