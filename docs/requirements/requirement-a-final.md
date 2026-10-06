@@ -1752,7 +1752,7 @@ require_context(ctx):
 - **通過** → 以 link 建立登錄紀錄（`plan_sha256` 等於計畫檔目前的 sha256），之後當成一般的 `in_progress` 計畫。沿用計畫中原有的 `clock`、`allocated_ids`（以及 rollback 計畫凍結的欄位），**不重新產生**；計畫檔一個位元組都不改。
 - 登錄紀錄的 link 已存在且內容相符（補齊本身中止後重跑）→ 略過。
 - **不通過** → 拒絕本次寫入請求（任何 action），回報這份計畫檔；不刪除、不覆寫、不登錄，由人處理（AC-07-99）。
-- 計畫檔保存**之前**中止 → 沒有計畫，也沒有殘留需要處理；已配發的 ID 允許成為空號。
+- 計畫檔保存**之前**中止 → 沒有計畫；計數器的更新是計畫的一步，所以計數器不前進、沒有空號（§7.3）；寫入證據與內容檔的殘留由下一個寫入請求清除（附錄 A 4-18）。
 
 #### 6.3 第 1 步：找出目標計畫
 
@@ -1796,7 +1796,7 @@ require_context(ctx):
 #### 7.1 建立順序
 
 1. 取得 flock，通過第 0 步、登錄補齊、第 1～3 步。
-2. 配發 ID（§7.3）。
+2. 在擷取中配發 ID（§7.3）；計數器的更新是計畫中的一步。
 3. 在記憶體中產生完整計畫（含 `clock`、`allocated_ids`、所有步驟的 `expected_after`、`audit_events` 的完整 payload）。
 4. **原子保存**計畫檔 `operations/<scope>/<op_id>.yaml`（沒有 run 的動作 scope 為 `_global`）。**保存完成，計畫就已建立。**
 5. 以 link 建立登錄紀錄（§7.5）。
@@ -1814,7 +1814,7 @@ require_context(ctx):
 | `to_state`、狀態變更所屬步驟 | 只有控制類操作：預期的 `to_state`，以及它自己造成的狀態變更所屬的步驟 |
 | `pre_state` | run 和 task 的狀態、相關檔案的 sha256 |
 | `clock` | 固定的時間值；本操作所有寫入（含事件時間、登錄時間）都用它 |
-| `allocated_ids` | 本操作會用到的 ID（CLR、APR、revision 編號等），計畫保存前就配好 |
+| `allocated_ids` | 本操作會用到的 ID（CLR、APR、revision 編號等），在擷取中配發、由計畫固定 |
 | `steps[]` | PlanStep 清單（§7.4）；每個 path 最多一步 |
 | `no_change[]` | `{path, kind, content_sha256 \| absent}`（§7.4） |
 | `audit_events` | 每個事件的**完整 payload**，時間一律取自 `clock`；所以每個事件步驟都有可預先算出的 `expected_after` |
@@ -1823,9 +1823,10 @@ require_context(ctx):
 
 #### 7.3 ID 配發
 
-- 在計畫保存**之前**配發。
-- 配發後、計畫保存前中止 → 計數器留下空號；重送時沒有計畫，重新配發新 ID。**允許空號，不重複使用。**
+- 在擷取中配發：讀取計數器、算出 ID，計數器的更新與使用 ID 的業務寫入一起成為計畫的步驟，ID 記入 `allocated_ids`。
+- 計畫保存前中止 → 計數器沒有前進、沒有空號；重送時沒有計畫，重新配發，得到同一個號碼。中止前沒有任何以該 ID 發布的物件，所以這不是重複使用 ID。
 - 計畫保存後，續做一律使用計畫中的 `allocated_ids`，不重新配發。
+- 單一全域鎖與「未完成計畫阻擋新請求」保證同一時間只有一份計畫在配發，ID 不會重複。
 
 #### 7.4 PlanStep 與 `no_change`
 
@@ -2070,7 +2071,7 @@ T5（rollback 接管准入，見移轉與回復章）和 V5 共用這一個判�
 | AC | 故障點 | 當下狀態 | 恢復 | 恢復後必須成立 |
 |---|---|---|---|---|
 | 9a | 預檢失敗 | 沒有計畫 | 不需要；修正輸入後重送（新 op_id） | 業務檔不變；只有 §13 的診斷寫入 |
-| 9b | ID 配發後、計畫保存前 | 計數器前進，沒有計畫 | 重送 → 沒有計畫 → 重新配發 → 正常執行 | 只有一組業務物件；計數器有空號（允許） |
+| 9b | ID 配發後、計畫保存前 | 計數器沒有前進，沒有計畫（只有寫入證據與內容檔的殘留） | 重送 → 清除殘留 → 沒有計畫 → 重新配發（同一個號碼） → 正常執行 | 只有一組業務物件；計數器沒有空號 |
 | 9c | 計畫的暫存檔寫到一半 | 暫存殘留，正式計畫不存在 | 清除本 op 暫存 → 同 9b | 同 9b |
 | 9d | 計畫保存後、第一步前 | 計畫存在 | 先登錄補齊（若未登錄，FP-P1）→ 從第一步執行 | 所有 ID 等於計畫中的 ID |
 | 9e | 部分 CLR（含 `topic: other`）已寫 | 各 CLR 等於 after 或不存在 | 略過或建立 | `other` 的 CLR 只有一張 |
@@ -2489,7 +2490,7 @@ FP-M0～M6（migrate）、FP-R0～R5（rollback）見移轉與回復章；對應
   - 最新 revision 有非 ACTIVE 的需求。
 - **manual-test-to-regression**：
   - inputs 的 `spec_id`／`spec_version` 或 manual record 的 `spec_hint` 必須有一個存在，而且指向已匯入、非 reference_only 的版本。
-  - 兩者都沒有 → `run new` **拒絕**，不建立 run（`runs/` 不留下新目錄；計數器可以有空號），提示「先在 manual record 補 `spec_hint`，或以 inputs 指定 spec」。
+  - 兩者都沒有 → `run new` **拒絕**，不建立 run（`runs/` 不留下新目錄；計數器不前進），提示「先在 manual record 補 `spec_hint`，或以 inputs 指定 spec」。
   - 有 spec 時：綁定與拒絕條件同 testcase-revision。
   - 保留「沒有 spec 就不能產生正式 TC」的既有限制；`manual new` 本身照常可以建立，不需要 spec。
 
@@ -3053,7 +3054,7 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
 - **AC-09-20**：既有 WAITING_HUMAN 的 testcase-revision run（fixture）→ 移轉 → 恢復。預期：G-DESIGN 讀到的是 sidecar 的 R000。
 - **AC-09-21**：新的 testcase-revision run。預期：`new_run` 時綁定最新 revision；派發包的 RMPin 和它相同。
 - **AC-09-22**：testcase-revision 的目標版本有 `declaration_changed`。預期：`run new` 拒絕。
-- **AC-09-23**：manual record 沒有 `spec_hint`、inputs 也沒有 spec，執行 `run new manual-test-to-regression`。預期：拒絕；`runs/` 沒有新目錄；計數器可以有空號。
+- **AC-09-23**：manual record 沒有 `spec_hint`、inputs 也沒有 spec，執行 `run new manual-test-to-regression`。預期：拒絕；`runs/` 沒有新目錄；計數器不前進。
 - **AC-09-24**：regression-generation。預期：移轉前後行為不變；不產生 sidecar。
 - **AC-09-25**：reference_only 拒絕點。預期：§4.4 的 7 個入口各一個測試，全部拒絕。
 - **AC-09-26**：移轉在寫了一半 sidecar 時中止 → 以同請求重送或 `operation resume` 續做。預期：續做完成，最終 sidecar 完整；標記寫入之前，業務寫入一直被拒絕。
@@ -3964,7 +3965,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 4-14 | 3b 拒絕前是否顯式釋放鎖 | 是（明確 `release` 後才回報拒絕；結果和程序結束相同） | I |
 | 4-15 | Permission Guard 失敗（越權提交：`created_by` 不符、無權產出該型別、寫入路徑不在 `write_paths`） | **不屬於** §13 的「驗證失敗」，以正常操作（操作計畫）寫入：task 追加 `gate_results` FAIL 與 `permission_violations`，task 與 run 轉 FAILED，記 `PERMISSION_VIOLATION` 事件。被提交的 artifact 不修改。其餘結構驗證失敗（schema、引用、狀態、payload 前置）才是 §13 的診斷寫入（Oscar 2026-10-07 決定維持既有行為） | R |
 | 4-16 | §13 診斷寫入的允許範圍 | 只寫一份 run.yaml 與最多一個事件檔，其他任何檔案都不寫（含被提交的 artifact、核准單）。run.yaml 中：run 本身只有 `updated_at` 可以變，而且只能是本次 executor 的時間；只有一個 task 變更，限 `gate_results`（只追加一筆本次的 structural FAIL，記錄被拒的 `artifact_id`）、`history`（只追加，每筆是本次時間、依 task 狀態機合法且前後相接）、`status`（最後必須是 READY）、`started_at`（只能設為本次時間，task 重新進入 RUNNING 時）。超出範圍 → 拒絕，不寫入。同一 task 連續多次失敗仍只寫診斷，不自動開核准單；要放棄由人執行 `run cancel`。越權提交不屬於診斷（見 4-15） | I |
-| 4-17 | ID 配發的時點（§7.3） | 計數器的更新是計畫中的一步，ID 在擷取時配發、由計畫固定。和 §7.3「配發在計畫保存之前」的差異：計畫保存之前中止時計數器不前進（不留空號）；計畫保存之後中止時續做沿用計畫的 ID。兩者都不會重複使用 ID | R |
+| 4-17 | ID 配發的時點（§7.3） | 計數器的更新是計畫中的一步，ID 在擷取時配發、由計畫固定：計畫保存之前中止時計數器不前進（不留空號）；計畫保存之後中止時續做沿用計畫的 ID；不會重複使用 ID。**Oscar 2026-10-07 定案**（Codex 技術上同意），已同步第 4 章 §6.2、§7.1～7.3、恢復表 9b 與 AC-09-23 | R |
 | 4-18 | 計畫保存前中止的殘留（AC-07-68、98d） | 保存計畫時，本 op 的任何入口（op 目錄、認領檔、寫入清單、staging.d 與 scope 目錄中本 op 的計畫暫存）在清理後仍存在 → 不取得擁有權，拒絕，不建立任何東西（認領檔不能追溯取得它建立之前就存在的檔案）。否則依序：以 O_EXCL 建立零位元組認領檔 `operations/_global/staging.d/<op_id>.claim` → 以 link-create 建立寫入清單 `staging.d/<op_id>.yaml`（op_id、scope、時間、將新建的內容檔 sha256）→ 寫內容檔 → 保存計畫 → 刪清單 → 刪認領檔。每個寫入請求取得鎖後：先核對「有登錄紀錄卻沒有計畫檔」的 op，有就拒絕、不做任何清理；認領檔是擁有權的根據，沒有認領檔的內容一律不刪（看起來像 op 目錄的保留並回報）。有認領檔者先核對全部待刪路徑（從 root 起每一層都不是 symlink、清單列出的內容檔 hash 相符），全部通過才刪：計畫未保存時刪清單列出的內容檔、其短寫暫存、該 op 的計畫暫存與因此變空的目錄；最後刪 staging.d 中的暫存、清單、認領檔（計畫已保存時只刪這些）。任何一項不符 → 證據衝突，不刪任何東西。不取鎖的外部程式同時修改這些路徑，不在保證範圍內 | I |
 
 ### A.5 revision 與移轉（第 5 章）

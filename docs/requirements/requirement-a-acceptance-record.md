@@ -5,10 +5,10 @@
 
 ## P1：executor 基礎設施
 
-- **執行 commit**：`f0542010da78f6cbf23c6fa7e8475d62dfe924ca`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06、再審查 P1R2-01～04、局部複驗 P1R3-01～02、殘留清理複驗 P1R4-01～03、第二次複驗 P1R5-01 的修正）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`99b384d4b1abf5c938588bd98e973cdf43d8f742`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06、再審查 P1R2-01～04、局部複驗 P1R3-01～02、殘留清理複驗 P1R4-01～03、第二次複驗 P1R5-01 的修正，以及附錄 A 4-17 定案後補的計數器測試）。本紀錄所在的 commit 只改文件
 - **環境**：macOS（Darwin 24.6）、Python 3.11.0、本機 APFS
 - **資料**：每個 P1 案例使用獨立的暫存 root（只複製 schemas、agents、workflows、permissions），以正式流程建立狀態；故障以 `QAOS_FAULT` 注入、同步以 `QAOS_PAUSE` 暫停點完成。沒有使用 repo 的業務資料。
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 212 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 213 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
 
 ### 狀態說明
 
@@ -23,7 +23,7 @@
 |---|---|---|---|
 | AC-07-8 | 通過 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_three_structural_failures_only_diagnostics`（連續 3 次）、`test_p1_05_diagnostic_beyond_boundary_is_refused`（對照組＋13 種越界：其他檔案、run 欄位、兩個 task、改寫或多寫 gate_results、PASS、兩個事件、終值 DONE／FAILED／強制改寫、任意 updated_at、started_at、改寫 history） | — |
 | AC-07-9a | 通過 | 同上 | — |
-| AC-07-9b | 部分 | 「沒有計畫、業務檔不變、殘留由下一個寫入清除」：`test_p1_resume.py::test_crash_before_plan_save_leaves_nothing`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned` | 原 AC 的「計數器已前進」與附錄 A 4-17（計數器在計畫中更新，保存前中止不前進）不同；待 4-17 定案並同步第 4 章 §7.3、恢復表 9b 後再判定 |
+| AC-07-9b | 通過 | `test_p1_resume.py::test_9b_id_counter_does_not_advance_before_plan_save`（計數器不前進、重送配到同一號碼）、`test_crash_before_plan_save_leaves_nothing`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（殘留清除） | — |
 | AC-07-9c、9l | 通過 | `test_p1_misc.py::test_9c_9l_half_written_tmp_is_cleaned` | — |
 | AC-07-9d | 通過 | `test_p1_resume.py::test_fp_p2_registered_before_first_step`、`test_fp_p1_*` | — |
 | AC-07-9e～9j | 部分 | 通用機制：`test_p1_resume.py::test_fp_w_every_step_of_spec_import`（每一步）、`test_types_run_new_submit_gate_approve_complete`（APR 與 run.yaml 的寫入中止） | 各列的業務情境（CLR、TC 版本、revision、landing）待 P3、P5 |
@@ -94,8 +94,8 @@
 ### P1 的實作說明（審查時請一併確認）
 
 1. **寫入擷取**：既有的業務邏輯在擷取（overlay）中執行一次，產生完整的計畫；所有步驟的內容存成計畫的內容檔（`operations/<scope>/<op>/blobs/<sha256>`），續做時寫入保存的內容，不重新計算。
-2. **ID 配發**：計數器的更新是計畫中的一步，ID 由計畫固定。和第 4 章 §7.3「配發在計畫保存之前」的差異列在最終規格附錄 A 4-17（類別 R，待確認）。
-3. **驗證失敗的診斷**：只寫 task 欄位（`gate_results` 追加並記錄被拒的 `artifact_id`、狀態回 READY）與一個事件檔；被提交的 artifact 不修改、不開核准單（附錄 A 4-16）。越權提交仍是正常操作（附錄 A 4-15，類別 R，待確認）。
+2. **ID 配發**：計數器的更新是計畫中的一步，ID 由計畫固定；計畫保存前中止不前進、不留空號。Oscar 2026-10-07 定案（附錄 A 4-17），規格主文已同步。
+3. **驗證失敗的診斷**：只寫 task 欄位（`gate_results` 追加並記錄被拒的 `artifact_id`、狀態回 READY）與一個事件檔；被提交的 artifact 不修改、不開核准單（附錄 A 4-16）。越權提交仍是正常操作（附錄 A 4-15；Oscar 決定、Codex 第二份審查接受）。
 4. **Python API 的 op 身分**：直接呼叫寫入函式時，op_id 同樣由請求內容決定（同一請求重送 → 同一 op）；要刻意再執行一次，傳 `new_request=True`。既有測試中刻意建立相同輸入的 run，已改為明確傳入。
 5. **唯讀指令**：`clarification list` 改為唯讀；寫 `clarifications/index.md` 改由 `clarification index`。
 6. **P1 的 migrate**：只做空 root 也需要的部分（凍結 legacy audit、移轉標記、第一次 render）與 `--acknowledge-idle`。移轉清單、R000、sidecar、CLR rev 0、`--cancel-run`、`migrate verify`、`migrate rollback` 屬 P3。
