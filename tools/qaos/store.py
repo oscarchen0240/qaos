@@ -40,13 +40,13 @@ class Capture:
         else: self.derived.discard(rel_path)
 
 _CAP: Capture | None = None
-CAPTURE_GUARD = None   # operation.py 設定：核對擷取的持有者仍是目前持鎖的 executor context
+CAPTURE_GUARD = None   # operation.py 設定：核對擷取的持有者仍是目前持鎖的 executor context；未設定 → 一律拒絕（fail closed）
 
 def begin_capture(clock: str, today: str, op_id: str, owner_token: str | None = None) -> Capture:
     global _CAP
     if _CAP is not None: raise RuntimeError("擷取已在進行中")
     cap = Capture(clock, today, op_id, owner_token)
-    if CAPTURE_GUARD is not None and not CAPTURE_GUARD(cap):
+    if CAPTURE_GUARD is None or not CAPTURE_GUARD(cap):
         raise NoExecutorContext("沒有持鎖的 executor context，不能開始擷取")
     _CAP = cap; return _CAP
 
@@ -61,7 +61,7 @@ def drop_inherited_capture():
 
 def _valid(cap: Capture | None) -> bool:
     if cap is None or cap.owner_pid != os.getpid(): return False
-    return CAPTURE_GUARD is None or CAPTURE_GUARD(cap)
+    return CAPTURE_GUARD is not None and CAPTURE_GUARD(cap)
 
 def capturing() -> Capture | None:
     return _CAP if _valid(_CAP) else None

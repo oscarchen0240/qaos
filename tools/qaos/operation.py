@@ -6,7 +6,7 @@
   → 原子保存計畫（即已建立）→ 登錄 → 依序執行步驟（輸出 → fsync → 完成紀錄）→ completed 狀態紀錄 → 釋放鎖。
 """
 from __future__ import annotations
-import os, json, uuid, errno, fcntl, socket, hashlib, functools, pathlib, datetime, yaml
+import os, re, json, uuid, errno, fcntl, socket, hashlib, functools, pathlib, datetime, yaml
 from dataclasses import dataclass
 from . import store
 
@@ -157,11 +157,12 @@ def _atomic_replace(rel_path: str, data: bytes, tag: str, point: str | None = No
     if point: fault(point)
     os.replace(tmp, t); _fsync_dir(t.parent)
 
-def _link_create(rel_path: str, data: bytes, tag: str) -> bool:
+def _link_create(rel_path: str, data: bytes, tag: str, pause_point: str | None = None) -> bool:
     """暫存檔 → fsync → link 到目標（已存在就失敗）→ 刪暫存檔。回傳 True 表示新建立；已存在且內容相同回傳 False。"""
     t = store.ROOT / rel_path; t.parent.mkdir(parents=True, exist_ok=True)
     tmp = _tmp_name(t, tag)
     with open(tmp, "wb") as f: f.write(data); f.flush(); os.fsync(f.fileno())
+    if pause_point: pause(pause_point)
     try:
         os.link(tmp, t); _fsync_dir(t.parent); return True
     except FileExistsError:
@@ -300,22 +301,50 @@ def check_terminal_consistency():
                 raise Refused(f"終態不一致：rollback 計畫 {op} 的 {path} 存在，但排在它前面的終態步驟不存在；需人工處理")
 
 # ---------------------------------------------------------------- 登錄補齊（§6.2）
+_HEX64 = re.compile(r"[0-9a-f]{64}")
+_RUN_SCOPE = re.compile(r"RUN-[0-9]{8}-[0-9]{3,}")
+
+def _blob_residue_files(op: str, d: pathlib.Path) -> list[pathlib.Path] | None:
+    """op 目錄若「只」含 executor 在計畫保存前寫的內容（blobs/ 下：名稱等於內容 sha256 的內容檔，或本 op 的短寫暫存），
+    回傳要刪的檔案；有任何其他內容 → None（無法證明擁有權）。"""
+    if [x.name for x in d.iterdir()] not in ([], ["blobs"]): return None
+    b = d / "blobs"; out = []
+    if not b.exists(): return out
+    if not b.is_dir() or b.is_symlink(): return None
+    tmp = re.compile(rf"\.qaos-tmp-{op[:16]}-[0-9a-f]{{64}}-[0-9a-f]{{8}}")
+    for f in b.iterdir():
+        if f.is_symlink() or not f.is_file(): return None
+        if _HEX64.fullmatch(f.name) and hashlib.sha256(f.read_bytes()).hexdigest() == f.name: out.append(f)
+        elif tmp.fullmatch(f.name): out.append(f)
+        else: return None
+    return out
+
 def cleanup_unplanned():
-    """持鎖中清除「計畫檔保存之前就中止」留下的殘留：沒有計畫檔、也沒有登錄紀錄的 op 目錄（內容檔、暫存），以及計畫檔的暫存。
-    計畫在保存完成時才建立，所以這些內容可以證明不屬於任何計畫。"""
-    import shutil
+    """持鎖中清除「計畫檔保存之前就中止」留下的殘留（AC-07-68、98d）。只處理能證明屬於 executor 的內容：
+    - 合法 scope（`_global` 或 run_id）下、名稱為 64 位 hex、沒有計畫也沒有登錄紀錄的 op 目錄，而且內容只有 blobs（見上）；
+    - 同一 scope 下本 op 的計畫暫存檔（`.qaos-tmp-<op前16>-<op>.yaml-<8hex>`），op 沒有計畫也沒有登錄紀錄。
+    有登錄紀錄卻沒有計畫 → 證據衝突，拒絕本次寫入，不刪任何東西。其他內容一律不碰；看起來像 op 目錄但無法證明擁有權的，保留並回報。"""
+    import sys
     base = store.ROOT / "operations"
     if not base.is_dir(): return
     plans, regs = plan_files(), registrations()
-    for scope in base.iterdir():
-        if not scope.is_dir(): continue
-        for d in scope.iterdir():
-            if d.is_dir() and d.name not in ("index.d", "status.d") and d.name not in plans and d.name not in regs:
-                shutil.rmtree(d, ignore_errors=True)
-            elif d.is_file() and d.name.startswith(".qaos-tmp-"):
-                m = d.name.split("-")
-                op_file = next((x for x in m if len(x) == 64 + 5 and x.endswith(".yaml")), None)
-                if op_file is None or op_file[:-5] not in plans: d.unlink(missing_ok=True)
+    plan_tmp = re.compile(r"\.qaos-tmp-([0-9a-f]{16})-([0-9a-f]{64})\.yaml-[0-9a-f]{8}")
+    doomed: list[pathlib.Path] = []; dirs: list[pathlib.Path] = []
+    for scope in sorted(base.iterdir()):
+        if scope.is_symlink() or not scope.is_dir() or not (scope.name == GLOBAL or _RUN_SCOPE.fullmatch(scope.name)): continue
+        for d in sorted(scope.iterdir()):
+            if d.is_dir() and not d.is_symlink() and _HEX64.fullmatch(d.name) and d.name not in plans:
+                if d.name in regs: raise EvidenceConflict(f"op {d.name} 有登錄紀錄卻沒有計畫檔，需人工處理")
+                files = _blob_residue_files(d.name, d)
+                if files is None:
+                    print(f"qaos: 保留無法辨識的內容 {d.relative_to(store.ROOT)}（沒有計畫，也無法證明是 executor 的殘留）", file=sys.stderr); continue
+                doomed += files; dirs += [d / "blobs", d]
+            elif d.is_file() and not d.is_symlink() and (m := plan_tmp.fullmatch(d.name)) and m.group(2).startswith(m.group(1)) and m.group(2) not in plans:
+                if m.group(2) in regs: raise EvidenceConflict(f"op {m.group(2)} 有登錄紀錄卻沒有計畫檔（只剩計畫暫存檔），需人工處理")
+                doomed.append(d)
+    for f in doomed: f.unlink()
+    for d in dirs:
+        if d.exists(): d.rmdir()
 
 def reconcile_registrations():
     regs = registrations()
@@ -526,7 +555,9 @@ def render_log_bytes(log_rel: str, extra_events: list[dict], mk: dict, overlay: 
         rr = f"runs/{run_id}/run.yaml"
         run = overlay[rr] if overlay and rr in overlay else _disk_bytes(rr)
         created = (yaml.safe_load(run.decode("utf-8")) or {}).get("created_at") if run else None
-        if run_id in (mk.get("runs") or []) or not created or str(created) < str(mk.get("migrated_at")):
+        try: after_migration = created is not None and parse_ts(created) >= parse_ts(mk.get("migrated_at"))
+        except ValueError: after_migration = False          # 缺時區或格式不合法 → 不能證明，拒絕
+        if run_id in (mk.get("runs") or []) or not after_migration:
             raise Refused(f"render {log_rel}：移轉標記中沒有它的 legacy 狀態，也無法證明它是移轉後建立的 run")
     return head + "".join(_format_line(e, global_log) for e in evs).encode("utf-8")
 
@@ -600,8 +631,9 @@ def check_plan_structure(plan: dict):
 
 def _save_plan(plan: dict, blobs: dict):
     check_plan_structure(plan)
-    for sha, data in blobs.items():
-        _link_create(blob_path(plan["scope"], plan["op_id"], sha), data, tag=plan["op_id"][:16])
+    for i, (sha, data) in enumerate(blobs.items()):
+        _link_create(blob_path(plan["scope"], plan["op_id"], sha), data, tag=plan["op_id"][:16], pause_point="blob_tmp_written")
+        if i == 0: pause("after_first_blob")
     data = store.dump(plan)
     errs = _plan_errors(plan)
     if errs: raise OperationError("計畫不符 schema：" + "; ".join(errs[:3]))
@@ -639,24 +671,57 @@ def _write_diagnostics(cap: store.Capture):
         ev = {"at": cap.clock, "actor": e["actor"], "action": e["action"], "detail": e["detail"] or "", "op_id": eid, "step": 0, "run_id": e["run_id"]}
         _link_create(_event_path(eid, e["run_id"], 0), store.dump(ev), tag="diag")
 
-DIAG_TASK_FIELDS = {"gate_results", "status", "history", "started_at", "permission_violations"}
+DIAG_TASK_FIELDS = {"gate_results", "status", "history", "started_at"}
+
+def parse_ts(v) -> datetime.datetime:
+    """RFC3339 時間 → UTC 的 aware datetime。缺時區或格式不合法 → ValueError（呼叫端據此拒絕）。"""
+    if isinstance(v, datetime.datetime): d = v
+    elif isinstance(v, str): d = datetime.datetime.fromisoformat(v.replace("Z", "+00:00") if v.endswith("Z") else v)
+    else: raise ValueError(f"不是時間：{v!r}")
+    if d.tzinfo is None: raise ValueError(f"時間缺少時區：{v!r}")
+    return d.astimezone(datetime.timezone.utc)
+
+def _same_ts(v, clock: str) -> bool:
+    try: return parse_ts(v) == parse_ts(clock)
+    except ValueError: return False
 
 def _check_diagnostic(cap: store.Capture):
-    """驗證失敗只允許兩種診斷：run.yaml 中 task 的診斷欄位（gate_results 追加、狀態回 READY），以及一個事件檔（§13）。超出 → 程式錯誤。"""
-    files = {r: d for r, d in cap.files.items()}
+    """驗證失敗只允許兩種診斷（第 4 章 §13、附錄 A 4-16），超出 → 拒絕、不寫入：
+    1. 一份 run.yaml：run 本身只有 updated_at 可以變，而且只能是本次 executor 的時間；只有一個 task 變更，
+       它的 gate_results 只追加一筆 structural FAIL、history 只追加、狀態依狀態機合法轉換且最後回到 READY、
+       started_at 只能設為本次時間（task 重新進入 RUNNING 時）；
+    2. 最多一個 audit 事件。"""
+    from . import state
+    files = dict(cap.files)
     runs = [r for r in files if r.startswith("runs/") and r.endswith("/run.yaml")]
+    def bad(msg): raise OperationError(f"驗證失敗的診斷超出允許範圍：{msg}")
     if len(files) != len(runs) or len(runs) > 1 or len(cap.events) > 1 or any(files[r] is None for r in runs):
-        raise OperationError(f"驗證失敗的診斷超出允許範圍：{sorted(files)}，事件 {len(cap.events)} 筆")
+        bad(f"{sorted(files)}，事件 {len(cap.events)} 筆")
     for r in runs:
         before = yaml.safe_load((store.ROOT / r).read_text(encoding="utf-8")); after = yaml.safe_load(files[r].decode("utf-8"))
+        if before.get("updated_at") != after.get("updated_at") and not _same_ts(after.get("updated_at"), cap.clock):
+            bad(f"{r} 的 updated_at 只能是本次時間")
         strip = lambda run: {**{k: v for k, v in run.items() if k != "updated_at"}, "tasks": [{k: v for k, v in t.items() if k not in DIAG_TASK_FIELDS} for t in run.get("tasks", [])]}
-        if strip(before) != strip(after):
-            raise OperationError(f"驗證失敗的診斷改動了 {r} 中不允許的欄位")
-        if sum(tb != ta for tb, ta in zip(before["tasks"], after["tasks"])) > 1:
-            raise OperationError(f"驗證失敗的診斷只能改動一個 task（{r}）")
-        for tb, ta in zip(before["tasks"], after["tasks"]):
+        if strip(before) != strip(after): bad(f"改動了 {r} 中不允許的欄位")
+        changed = [(tb, ta) for tb, ta in zip(before["tasks"], after["tasks"]) if tb != ta]
+        if len(changed) > 1: bad(f"只能改動一個 task（{r}）")
+        for tb, ta in changed:
             gb, ga = tb.get("gate_results") or [], ta.get("gate_results") or []
-            if ga[:len(gb)] != gb: raise OperationError("gate_results 只能追加")
+            new = ga[len(gb):]
+            if ga[:len(gb)] != gb or len(new) != 1: bad("gate_results 只能追加一筆")
+            if new[0].get("result") != "FAIL" or new[0].get("layer") != "structural" or not _same_ts(new[0].get("at"), cap.clock):
+                bad("追加的 gate_results 必須是本次的 structural FAIL")
+            hb, ha = tb.get("history") or [], ta.get("history") or []
+            if ha[:len(hb)] != hb: bad("history 只能追加")
+            cur = tb.get("status")
+            for h in ha[len(hb):]:
+                if h.get("from_status") != cur or not _same_ts(h.get("at"), cap.clock): bad("history 追加的轉換不連續或時間不符")
+                try: state.check("task", cur, h["to_status"], h.get("by", ""))
+                except Exception as e: bad(f"task 狀態轉換不合法：{e}")
+                cur = h["to_status"]
+            if cur != ta.get("status") or ta.get("status") != "READY": bad(f"task 最後狀態必須是 READY（實際 {ta.get('status')}）")
+            if tb.get("started_at") != ta.get("started_at") and not _same_ts(ta.get("started_at"), cap.clock):
+                bad("started_at 只能設為本次時間（task 重新進入 RUNNING）")
 
 def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, resume_op: str | None = None):
     """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。"""

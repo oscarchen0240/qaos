@@ -181,46 +181,160 @@ print(p)
     assert len(U.op_list(root)) == n + 1 and U.op_list(root)[-1]["action"] == "submit" and U.incomplete(root) == []
     run = U.load(root, f"runs/{rid}/run.yaml"); assert run["status"] == "FAILED" and run["tasks"][0]["permission_violations"]
 
-@pytest.mark.parametrize("bad", ["other_file", "run_field", "two_tasks", "rewrite_gate_results", "two_events"])
+DIAG_CASES = ["legit", "other_file", "run_field", "two_tasks", "rewrite_gate_results", "two_events",
+              "status_done", "status_failed", "status_forced", "updated_at", "gate_pass", "gate_two", "started_at", "history_rewrite"]
+
+@pytest.mark.parametrize("bad", DIAG_CASES)
 def test_p1_05_diagnostic_beyond_boundary_is_refused(bad):
-    """診斷擷取超出附錄 A 4-16 的邊界 → 拒絕、不寫入任何檔案（以測試專用的內部呼叫造出越界寫入）。"""
+    """診斷擷取超出附錄 A 4-16 的邊界 → 拒絕、完整快照不變（以測試專用的內部呼叫造出越界寫入）。
+    legit 是對照組：照 engine 的正式轉換（RUNNING → ARTIFACT_INVALID → READY）只寫允許的診斷，必須被接受。"""
     root = U.mkroot(); rid = _reg_run(root)
-    assert U.q(root, "submit", rid, "T1", _bad_artifact(root, rid)).returncode != 0          # 先有一筆合法診斷（gate_results 非空）
-    assert U.load(root, f"runs/{rid}/run.yaml")["tasks"][0]["gate_results"]
+    assert U.q(root, "submit", rid, "T1", _bad_artifact(root, rid)).returncode != 0          # 先有一筆合法診斷（gate_results、history、started_at 非空）
     code = f"""
-from tools.qaos import operation as op, store
+from tools.qaos import operation as op, store, state, engine
+S = engine.SYSTEM; bad = "{bad}"
 def body():
     store.mark_diagnostic()
     run = store.load("runs/{rid}/run.yaml"); t = run["tasks"]
-    t[0].setdefault("gate_results", []).append({{"result": "FAIL"}})
-    if "{bad}" == "other_file": store.save("artifacts/x.yaml", {{"a": 1}})
-    if "{bad}" == "run_field": run["status"] = "FAILED"
-    if "{bad}" == "two_tasks": t[1]["status"] = "READY"
-    if "{bad}" == "rewrite_gate_results": t[0]["gate_results"][0] = {{"result": "PASS"}}
-    store.save("runs/{rid}/run.yaml", run); store.audit("{rid}", "t", "ARTIFACT_INVALID")
-    if "{bad}" == "two_events": store.audit("{rid}", "t", "ARTIFACT_INVALID")
+    state.apply("task", t[0], "RUNNING", S, "x")
+    if bad == "status_done": state.apply("task", t[0], "DONE", S, "x")
+    elif bad == "status_failed": state.apply("task", t[0], "FAILED", S, "x")
+    else: state.apply("task", t[0], "ARTIFACT_INVALID", S, "x"); state.apply("task", t[0], "READY", S, "x")
+    if bad == "status_forced": t[0]["status"] = "DONE"
+    t[0]["gate_results"].append({{"at": store.now(), "layer": "structural", "result": "PASS" if bad == "gate_pass" else "FAIL", "details": []}})
+    if bad == "gate_two": t[0]["gate_results"].append({{"at": store.now(), "layer": "structural", "result": "FAIL", "details": []}})
+    if bad == "rewrite_gate_results": t[0]["gate_results"][0] = {{**t[0]["gate_results"][0], "result": "PASS"}}
+    if bad == "history_rewrite": t[0]["history"][0]["by"] = "someone"
+    if bad == "started_at": t[0]["started_at"] = "2000-01-01T00:00:00Z"
+    if bad == "run_field": run["status"] = "FAILED"
+    if bad == "two_tasks": t[1]["status"] = "READY"
+    engine._save_run(run)
+    if bad == "updated_at": run["updated_at"] = "2000-01-01T00:00:00Z"; store.save("runs/{rid}/run.yaml", run)
+    if bad == "other_file": store.save("artifacts/x.yaml", {{"a": 1}})
+    store.audit("{rid}", "t", "ARTIFACT_INVALID")
+    if bad == "two_events": store.audit("{rid}", "t", "ARTIFACT_INVALID")
 try: op.run_operation("test_internal", body, new_request=True); print("accepted")
-except op.OperationError as e: print("refused")
+except op.OperationError as e: print("refused", e)
 """
-    before = U.snapshot(root)
-    assert U.py(root, code).stdout.strip().splitlines()[-1] == "refused"
-    assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+    before = U.snapshot(root); n = len(U.op_list(root))
+    out = U.py(root, code).stdout.strip().splitlines()[-1]
+    d = U.diff(before, U.snapshot(root))
+    if bad == "legit":
+        assert out == "accepted" and d["changed"] == [f"runs/{rid}/run.yaml"] and len(d["added"]) == 1 and "/adhoc-" in d["added"][0], (out, d)
+        assert U.load(root, f"runs/{rid}/run.yaml")["tasks"][0]["status"] == "READY"
+    else:
+        assert out.startswith("refused"), out
+        assert d == {"added": [], "removed": [], "changed": []}, d
+    assert len(U.op_list(root)) == n
 
-# ---------------------------------------------------------------- P1-06：計畫保存前中止的殘留
-@pytest.mark.parametrize("how", ["fault", "kill"])
+# ---------------------------------------------------------------- P1-06／P1R2-01：計畫保存前中止的殘留只清自己的
+def _plant_foreign(root):
+    """模擬其他程式放在 operations/ 下的內容（不是 executor 寫的）；回傳路徑 → sha256。"""
+    import hashlib
+    r = pathlib.Path(root); blob = b"x: 1\n"; sha = hashlib.sha256(blob).hexdigest()
+    files = {"operations/_global/other-tool/important.txt": b"keep",
+             f"operations/_global/{'a' * 64}/external.txt": b"keep",                              # 64 hex 目錄，但內容不是 blobs
+             f"operations/_global/{'b' * 64}/blobs/{'c' * 64}": blob,                           # 名稱和內容 hash 不符
+             f"operations/_global/{'d' * 64}/blobs/{sha}": blob,                                # 正確的內容檔，但多一個檔
+             f"operations/_global/{'d' * 64}/notes.txt": b"keep",
+             f"operations/misc/{'e' * 64}/blobs/{sha}": blob,                                   # 不合法的 scope
+             f"operations/_global/.qaos-tmp-{'f' * 16}-{'0' * 64}.yaml-01234567": b"keep"}      # tag 和 op 不符
+    for k, v in files.items():
+        (r / k).parent.mkdir(parents=True, exist_ok=True); (r / k).write_bytes(v)
+    return files
+
+def _added_after_v11(root):
+    before = U.snapshot(root); r = U.q(root, *spec_args("1.1"), check=True)
+    return U.diff(before, U.snapshot(root)), r
+
+@pytest.mark.parametrize("how", ["fault", "kill_after_first_blob", "kill_blob_tmp_written"])
 def test_p1_06_residue_before_plan_save_is_cleaned(how, tmp_path):
-    import signal, subprocess, sys, time
-    root = U.mkroot(); before = U.snapshot(root)
+    import signal
+    ref = U.mkroot(); _plant_foreign(ref); ref_d, _ = _added_after_v11(ref)                     # 對照：沒有中止時 v1.1 匯入的差異
+    root = U.mkroot(); foreign = _plant_foreign(root); base = U.snapshot(root)
     if how == "fault":
         assert U.q(root, *spec_args(), fault="before_plan_save").returncode == FAULT_EXIT
     else:
         from tests.test_p1_lock_fork import popen_q, wait_file
-        d = tmp_path / "p"; p = popen_q(root, spec_args(), pause=("after_lock", d))
+        d = tmp_path / "p"; p = popen_q(root, spec_args(), pause=(how[len("kill_"):], d))
         wait_file(d / "paused"); p.send_signal(signal.SIGKILL); p.wait(timeout=30)
-    left = U.diff(before, U.snapshot(root))["added"]
-    U.q(root, *spec_args("1.1"), check=True)                                                              # 下一個寫入請求持鎖清除
-    new_ops = {o["op_id"] for o in U.op_list(root)} - {o["op_id"] for o in U.op_list(root)[:-1]}
-    after = U.diff(before, U.snapshot(root))["added"]
-    stray = [p for p in after if p.startswith("operations/") and not any(op in p for op in new_ops) and "/index.d/" not in p and "/status.d/" not in p]
-    assert stray == [], (left, stray)
-    assert not list(pathlib.Path(root).rglob(".qaos-tmp-*"))
+    left = U.diff(base, U.snapshot(root))
+    assert left["removed"] == [] and left["changed"] == [] and left["added"], left
+    assert all(x.startswith("operations/_global/") and "/blobs/" in x for x in left["added"]), left   # 殘留只有內容檔／內容檔暫存
+    if how == "kill_blob_tmp_written": assert any(".qaos-tmp-" in x for x in left["added"]), left
+    d, r = _added_after_v11(root)                                                                 # 下一個寫入請求持鎖清除
+    assert sorted(set(d["removed"])) == sorted(left["added"]), d                                   # 只刪本次殘留
+    import collections, re as _re
+    norm = lambda xs: collections.Counter(_re.sub(r"/blobs/[0-9a-f]{64}$", "/blobs/<sha>", x) for x in xs)   # 內容檔名是內容 hash，含時間而不同
+    assert d["changed"] == ref_d["changed"] and norm(d["added"]) == norm(ref_d["added"]), (d, ref_d)
+    for k, h in foreign.items(): assert U.sha(pathlib.Path(root) / k) == U.sha(pathlib.Path(ref) / k)   # 外部內容原樣保留
+    assert "保留無法辨識的內容" in r.stderr
+
+@pytest.mark.parametrize("variant", ["plan_removed", "plan_to_tmp"])
+def test_p1_06_registered_without_plan_is_refused(variant):
+    """有登錄紀錄卻沒有計畫（竄改反例）→ 拒絕寫入、不刪任何東西，交人處理。"""
+    root = U.mkroot(); U.q(root, *spec_args(), check=True)
+    op = next(o["op_id"] for o in U.op_list(root) if o["action"] == "spec_import")
+    plan = pathlib.Path(root) / f"operations/_global/{op}.yaml"
+    if variant == "plan_removed": plan.rename(pathlib.Path(root) / "moved-plan.yaml")
+    else: plan.rename(plan.with_name(f".qaos-tmp-{op[:16]}-{op}.yaml-01234567"))
+    before = U.snapshot(root)
+    r = U.q(root, *spec_args("1.1")); assert r.returncode != 0 and "有登錄紀錄卻沒有計畫" in r.stderr, r.stderr
+    assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+
+# ---------------------------------------------------------------- P1R2-02：store 單獨載入時不能自建擷取
+def test_p1r2_02_store_alone_fails_closed():
+    root = U.mkroot()
+    code = """
+import sys, json
+from tools.qaos import store
+res = {"operation_loaded": "tools.qaos.operation" in sys.modules}
+try: store.begin_capture("t", "t", "0" * 64); res["begin"] = "accepted"
+except store.NoExecutorContext: res["begin"] = "refused"
+store._CAP = store.Capture("t", "t", "0" * 64)
+res["capturing"] = store.capturing() is not None
+try: store.save("x.yaml", {"a": 1}); res["save"] = "accepted"
+except store.NoExecutorContext: res["save"] = "refused"
+from tools.qaos import operation
+store._CAP = store.Capture("t", "t", "0" * 64, owner_token="forged")
+try: store.save("y.yaml", {"a": 1}); res["after_import"] = "accepted"
+except store.NoExecutorContext: res["after_import"] = "refused"
+print(json.dumps(res))
+"""
+    out = json.loads(U.py(root, code).stdout.strip().splitlines()[-1])
+    assert out == {"operation_loaded": False, "begin": "refused", "capturing": False, "save": "refused", "after_import": "refused"}, out
+    assert not (pathlib.Path(root) / "x.yaml").exists() and not (pathlib.Path(root) / "y.yaml").exists()
+
+# ---------------------------------------------------------------- P1R2-04：render 以解析後的時間判定移轉後的新 run
+RENDER_CASES = [("2026-10-07T03:00:00+08:00", False), ("2026-10-07T01:00:00.001Z", True), ("2026-10-07T01:00:00Z", True),
+                ("2026-10-07T09:00:00+08:00", True), ("2026-10-07T00:59:59.999Z", False), ("2026-10-07T02:00:00", False),
+                ("garbage", False), (None, False)]
+
+@pytest.mark.parametrize("source", ["overlay", "disk"])
+def test_p1r2_04_render_compares_parsed_times(source):
+    root = U.mkroot(); rid = "RUN-20261007-900"
+    code = f"""
+import json, yaml, pathlib
+from tools.qaos import operation as op, store
+mk = {{"migrated_at": "2026-10-07T01:00:00Z", "runs": [], "logs": {{"runs/_audit.log": {{"legacy": "absent"}}}}}}
+cases = {RENDER_CASES!r} + [["2026-10-07T05:00:00Z", "in_runs"]]
+out = []
+for created, _ in cases:
+    m = dict(mk, runs=["{rid}"]) if _ == "in_runs" else mk
+    data = yaml.safe_dump({{"run_id": "{rid}", **({{"created_at": created}} if created is not None else {{}})}}).encode()
+    if "{source}" == "disk":   # 模擬既有的 run.yaml（測試直接寫檔）；另含一個未加引號、YAML 解析成 datetime 的寫法
+        p = store.ROOT / "runs/{rid}/run.yaml"; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(data); ov = None
+    else: ov = {{"runs/{rid}/run.yaml": data}}
+    try: op.render_log_bytes("runs/{rid}/audit.log", [], m, overlay=ov); out.append(True)
+    except op.Refused: out.append(False)
+if "{source}" == "disk":
+    p = store.ROOT / "runs/{rid}/run.yaml"
+    for raw in ("created_at: 2026-10-07T01:00:00.001Z", "created_at: 2026-10-07T00:59:59Z", "created_at: 2026-10-07 02:00:00"):
+        p.write_text(f"run_id: {rid}\\n" + raw + "\\n")
+        try: op.render_log_bytes("runs/{rid}/audit.log", [], mk); out.append(True)
+        except op.Refused: out.append(False)
+print(json.dumps(out))
+"""
+    out = json.loads(U.py(root, code).stdout.strip().splitlines()[-1])
+    expect = [ok for _, ok in RENDER_CASES] + [False] + ([True, False, False] if source == "disk" else [])
+    assert out == expect, out
