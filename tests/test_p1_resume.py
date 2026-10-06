@@ -286,3 +286,38 @@ except operation.OperationError as e:
     print("rejected", e)
 """
     assert "rejected" in U.py(root, code).stdout
+
+# ---------------------------------------------------------------- 多檔衍生輸出（AC-07-95 多檔 render、AC-07-100 ②～④）
+def _apr_root():
+    root = U.mkroot(); run_id = _reg_run(root); art = _reg_artifact(root, run_id)
+    U.q(root, "submit", run_id, "T1", art, check=True); U.q(root, "gate", run_id, "T1", check=True)
+    apr = U.load(root, f"runs/{run_id}/run.yaml")["waiting_on_approval_id"]
+    U.q(root, "approval", apr, check=True)                       # 第一次產生 md＋html
+    return root, apr
+
+def test_multi_file_render_abort_after_first_file():
+    """--new-request 的請求每次產生新 token，中止後只能以 operation resume 續做。"""
+    root, apr = _apr_root()
+    md, html = pathlib.Path(root) / f"approvals/{apr}.md", pathlib.Path(root) / f"approvals/{apr}.html"
+    md.unlink(); html.unlink()                                   # 竄改反例：兩個檢視都被刪，重建時兩檔都有步驟
+    args = ["approval", apr, "--new-request"]
+    ref, apr_r = _apr_root(); (pathlib.Path(ref) / f"approvals/{apr_r}.md").unlink(); (pathlib.Path(ref) / f"approvals/{apr_r}.html").unlink()
+    U.q(ref, *args, check=True)
+    first = [s for s in U.last_plan(ref)["steps"] if s["path"].startswith("approvals/")][0]
+    assert U.q(root, *args, fault=f"after_progress:{first['seq']}").returncode == FAULT_EXIT
+    op = U.incomplete(root)[0]["op_id"]
+    done = pathlib.Path(root) / first["path"]; ino = done.stat().st_ino
+    assert resume(root, "resume", args, op).returncode == 0      # --new-request 的請求只能以 operation resume 續做
+    assert done.stat().st_ino == ino and md.is_file() and html.is_file()
+    assert_clean(root)
+
+def test_partial_no_change_and_tampered_no_change_path():
+    root, apr = _apr_root()
+    md, html = pathlib.Path(root) / f"approvals/{apr}.md", pathlib.Path(root) / f"approvals/{apr}.html"
+    html.unlink()                                                # ②：只有 html 不同
+    assert U.q(root, "approval", apr, "--new-request", fault="before_completed").returncode == FAULT_EXIT
+    op = U.incomplete(root)[0]["op_id"]; plan = U.plan_of(root, op)
+    assert [s["path"] for s in plan["steps"] if s["path"].startswith("approvals/")] == [f"approvals/{apr}.html"]
+    assert any(n["path"] == f"approvals/{apr}.md" for n in plan["no_change"])
+    md.write_text(md.read_text() + "\n<!-- tampered -->\n")      # ④：中止期間竄改 no_change 路徑（業務檔）
+    r = U.q(root, "operation", "resume", op); assert r.returncode != 0 and "外部修改" in r.stderr

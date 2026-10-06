@@ -117,3 +117,16 @@ def test_39_event_target_with_different_content_stops():
     p = pathlib.Path(root) / ev["path"]; p.parent.mkdir(parents=True, exist_ok=True); p.write_text("tampered: true\n")
     r = U.q(root, "operation", "resume", op); assert r.returncode != 0 and ("證據衝突" in r.stderr or "內容不同" in r.stderr)
     assert p.read_text() == "tampered: true\n"
+
+def test_9r_first_render_abort_keeps_original_audit_log():
+    """9r：移轉的第一次 render 在原子替換之前中止 → audit.log 仍是移轉前的原內容；續做後才是 legacy＋事件。"""
+    root, run_id, run_legacy, glob_legacy = legacy_root()
+    U.q(root, "maintenance", "start", "--by", "m", check=True)
+    ref, rid2, _, _ = legacy_root(); U.q(ref, "maintenance", "start", "--by", "m", check=True)
+    U.q(ref, "migrate", "--by", "m", "--acknowledge-idle", rid2, check=True)
+    render = [s for s in U.last_plan(ref)["steps"] if s["path"] == "runs/_audit.log"][0]
+    args = ["migrate", "--by", "m", "--acknowledge-idle", run_id]
+    assert U.q(root, *args, fault=f"before_replace:{render['seq']}").returncode == FAULT_EXIT
+    assert (pathlib.Path(root) / "runs/_audit.log").read_bytes() == glob_legacy
+    U.q(root, *args, check=True)
+    assert (pathlib.Path(root) / "runs/_audit.log").read_bytes().startswith(glob_legacy)
