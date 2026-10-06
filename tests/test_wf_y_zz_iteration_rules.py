@@ -12,16 +12,15 @@ def _validator_fail(rid, did, rm_aid, it):
 def test_40_structural_retry_does_not_consume_semantic_iterations():
     run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
-    # 3 次 structural INVALID（引用不存在的 REQ）→ NEEDS_DECISION
+    # 3 次 structural INVALID（引用不存在的 REQ）→ 只寫診斷，不開核准單；task 維持可重試（最終規格第 4 章 §13）
     for i in range(3):
         tcs, _ = _tcs(prefix=f"01F{i}ZZZZZZZZZZZZZZZZZZZZZ"[:25])
         tcs[0]["requirement_ids"] = ["REQ-NEG-999"]
         _, p = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": "SPEC-NEG-001", "spec_version": "1.0", "testcases": tcs}, [{"entity_type": "Requirement", "id": "REQ-NEG-999"}], {"type": "x", "ids": []}, "test-design")
         assert not engine.submit(rid, "T2", str(p))[0]
-    run = engine.load_run(rid); assert run["status"] == "WAITING_HUMAN"
-    apr = store.load(f"approvals/{run['waiting_on_approval_id']}.yaml"); assert apr["type"] == "NEEDS_DECISION"
-    engine.approve(apr["approval_id"], "approve", "oscar@example.com", selected_option="retry")
-    assert engine.load_run(rid)["tasks"][1]["iteration"] == 0   # structural retry 不計入
+    run = engine.load_run(rid); assert run["status"] == "RUNNING" and not run.get("waiting_on_approval_id")
+    assert run["tasks"][1]["status"] == "READY" and run["tasks"][1]["iteration"] == 0   # structural retry 不計入
+    assert sum(1 for g in run["tasks"][1]["gate_results"] if g["result"] == "FAIL") == 3
     # 正常 Draft → Validator FAIL ×3 → HUMAN_OVERRIDE
     for it in range(3):
         tcs, _ = _tcs(prefix=f"01G{it}ZZZZZZZZZZZZZZZZZZZZZ"[:25]); lock = tcs[3]

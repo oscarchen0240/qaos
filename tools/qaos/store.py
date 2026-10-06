@@ -23,8 +23,9 @@ class NoExecutorContext(Exception):
 
 # ---- 寫入擷取（由 operation.py 開始與結束） ----
 class Capture:
-    def __init__(self, clock: str, today: str, op_id: str):
+    def __init__(self, clock: str, today: str, op_id: str, owner_token: str | None = None):
         self.clock, self.today, self.op_id = clock, today, op_id
+        self.owner_pid, self.owner_token = os.getpid(), owner_token   # 只有建立它、而且持有 executor context 的程序能使用
         self.files: dict[str, bytes | None] = {}     # rel → 最終內容（None = 刪除）
         self.derived: set[str] = set()               # 衍生輸出的 rel
         self.sequence: list[tuple] = []              # ("file", rel) 第一次觸碰 | ("event", idx)
@@ -39,25 +40,39 @@ class Capture:
         else: self.derived.discard(rel_path)
 
 _CAP: Capture | None = None
+CAPTURE_GUARD = None   # operation.py 設定：核對擷取的持有者仍是目前持鎖的 executor context
 
-def begin_capture(clock: str, today: str, op_id: str) -> Capture:
+def begin_capture(clock: str, today: str, op_id: str, owner_token: str | None = None) -> Capture:
     global _CAP
     if _CAP is not None: raise RuntimeError("擷取已在進行中")
-    _CAP = Capture(clock, today, op_id); return _CAP
+    cap = Capture(clock, today, op_id, owner_token)
+    if CAPTURE_GUARD is not None and not CAPTURE_GUARD(cap):
+        raise NoExecutorContext("沒有持鎖的 executor context，不能開始擷取")
+    _CAP = cap; return _CAP
 
 def end_capture():
     global _CAP
     _CAP = None
 
+def drop_inherited_capture():
+    """fork 掛鉤：子程序繼承的擷取一律失效（不能把子程序當成巢狀 executor）。"""
+    global _CAP
+    _CAP = None
+
+def _valid(cap: Capture | None) -> bool:
+    if cap is None or cap.owner_pid != os.getpid(): return False
+    return CAPTURE_GUARD is None or CAPTURE_GUARD(cap)
+
 def capturing() -> Capture | None:
-    return _CAP
+    return _CAP if _valid(_CAP) else None
 
 def mark_diagnostic():
     """驗證失敗的程式路徑呼叫：本次只產生允許的診斷寫入，不建立操作計畫（最終規格第 4 章 §13）。"""
-    if _CAP is not None: _CAP.diagnostic = True
+    cap = capturing()
+    if cap is not None: cap.diagnostic = True
 
 def _require_capture() -> Capture:
-    if _CAP is None:
+    if not _valid(_CAP):
         raise NoExecutorContext("寫入必須經過 executor（取得 flock 的操作）；不能直接寫檔")
     return _CAP
 
@@ -69,10 +84,12 @@ def real_today() -> str:
     return datetime.date.today().strftime("%Y%m%d")
 
 def now() -> str:
-    return _CAP.clock if _CAP is not None else real_now()
+    cap = capturing()
+    return cap.clock if cap is not None else real_now()
 
 def today() -> str:
-    return _CAP.today if _CAP is not None else real_today()
+    cap = capturing()
+    return cap.today if cap is not None else real_today()
 
 # ---- 路徑 ----
 def rel(path) -> str:
@@ -86,9 +103,9 @@ def abspath(path) -> pathlib.Path:
 
 # ---- 讀取（overlay 優先） ----
 def read_bytes(path) -> bytes:
-    r = rel(path)
-    if _CAP is not None and r in _CAP.files:
-        data = _CAP.files[r]
+    r = rel(path); cap = capturing()
+    if cap is not None and r in cap.files:
+        data = cap.files[r]
         if data is None: raise FileNotFoundError(str(ROOT / r))
         return data
     p = ROOT / r
@@ -102,8 +119,8 @@ def load(path) -> dict:
     return yaml.safe_load(read_bytes(path).decode("utf-8")) or {}
 
 def exists(path) -> bool:
-    r = rel(path)
-    if _CAP is not None and r in _CAP.files: return _CAP.files[r] is not None
+    r = rel(path); cap = capturing()
+    if cap is not None and r in cap.files: return cap.files[r] is not None
     return (ROOT / r).exists()
 
 def sha256_bytes(data: bytes) -> str:
@@ -127,8 +144,9 @@ def match(rel_path: str, pattern: str) -> bool:
 def glob(pattern: str) -> list[pathlib.Path]:
     """相對 ROOT 的檔案 glob（支援 `**`）；合併 overlay 新增、排除 overlay 刪除；回傳排序後的絕對路徑。"""
     found = {p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_file()}
-    if _CAP is not None:
-        for r, data in _CAP.files.items():
+    cap = capturing()
+    if cap is not None:
+        for r, data in cap.files.items():
             if data is None: found.discard(r)
             elif match(r, pattern): found.add(r)
     return [ROOT / r for r in sorted(found)]
@@ -139,8 +157,9 @@ def rglob(base: str, name_pattern: str) -> list[pathlib.Path]:
 def list_dirs(pattern: str) -> list[pathlib.Path]:
     """相對 ROOT 的目錄 glob（含 overlay 中新增檔案所在的目錄）。"""
     found = {p.relative_to(ROOT).as_posix() for p in ROOT.glob(pattern) if p.is_dir()}
-    if _CAP is not None:
-        for r, data in _CAP.files.items():
+    cap = capturing()
+    if cap is not None:
+        for r, data in cap.files.items():
             if data is None: continue
             parts = r.split("/")
             for k in range(1, len(parts)):

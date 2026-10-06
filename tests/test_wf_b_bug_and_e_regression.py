@@ -62,6 +62,38 @@ def test_12_bug_analyst_then_validator_pass():
     assert store.load(f"runs/{rid}/entities/bug.yaml")["status"] == "PENDING_APPROVAL"
     assert not list((store.ROOT / "bugs").rglob("BUG-*.yaml"))  # 未核准前 bugs/ 不得有正式檔
 
+def test_12b_bval_fail_gate_abort_then_resend_and_next_round(monkeypatch):
+    """P1 審查 P1-01：G-BVAL FAIL 的 gate 在 run.yaml 寫入後中止 → 同一請求重送可續做；完成後重送回報已完成；下一輪不同報告是新操作。"""
+    from tools.qaos import operation
+    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com", new_request=True)
+    rid = run["run_id"]
+    refs_ = [{"entity_type": "Requirement", "id": "REQ-AUTH-001"}, {"entity_type": "Evidence", "id": S["evd"]}, {"entity_type": "TestExecution", "id": S["exe"]},
+             {"entity_type": "TestCaseVersion", "id": S["tc"][0], "version": S["tc"][1]}]
+    def round_(n):
+        bd, p = H.write_artifact(rid, "T1", "agent-bug-analyst", "BugDraft", _bug_draft(S["evd"], S["tc"]), refs_, {"type": "TestExecution", "ids": [S["exe"]]}, "bug-analysis")
+        assert engine.submit(rid, "T1", str(p))[0] and engine.evaluate_gate(rid, "T1")["result"] == "PASS"
+        rep = {"result": "FAIL", "bug_draft_artifact_id": bd,
+               "checks": {k: k != "reproduction_sufficient" for k in ["violates_spec", "expected_has_spec_basis", "actual_supported_by_evidence", "reproduction_sufficient", "severity_reasonable", "priority_reasonable", "not_duplicate", "not_mere_ambiguity"]},
+               "issues": [{"testcase_id": S["tc"][0], "issue_type": "non_executable_steps", "severity": "major", "violated_requirement": None, "spec_reference": None,
+                           "evidence": "reproduction_steps", "explanation": f"第 {n} 輪：步驟不足", "recommended_change": "補步驟"}],
+               "evidence_verification": [{"evidence_id": S["evd"], "hash_verified": True, "supports_claim": True}],
+               "severity_assessment": {"severity_recommended": "major", "priority_recommended": "high", "agrees_with_analyst": True, "rationale": "同意"},
+               "duplicate_check": {"searched": True, "duplicate_of": None}}
+        _, p = H.write_artifact(rid, "T2", "agent-bug-validator", "BugValidationReport", rep, [{"entity_type": "Artifact", "id": bd}, {"entity_type": "Evidence", "id": S["evd"]}], {"type": "BugDraft", "ids": [bd]}, "validation")
+        assert engine.submit(rid, "T2", str(p))[0]
+    round_(1)
+    monkeypatch.setenv("QAOS_FAULT", "raise:after_progress:1")
+    with pytest.raises(OSError): engine.evaluate_gate(rid, "T2")
+    monkeypatch.delenv("QAOS_FAULT")
+    inc = [o for o in operation.list_operations() if o["state"] == "in_progress"]; assert len(inc) == 1
+    assert engine.evaluate_gate(rid, "T2")["result"] == "FAIL" and operation.LAST_OUTCOME["kind"] == "resumed"   # 同一請求重送 → 續做
+    first = operation.LAST_OUTCOME["op_id"]
+    assert not [o for o in operation.list_operations() if o["state"] == "in_progress"]
+    assert engine.load_run(rid)["current_task_id"] == "T1"
+    engine.evaluate_gate(rid, "T2"); assert operation.LAST_OUTCOME == {"kind": "completed", "op_id": first}    # 完成後重送 → 回報已完成
+    round_(2)
+    assert engine.evaluate_gate(rid, "T2")["result"] == "FAIL" and operation.LAST_OUTCOME["kind"] == "new" and operation.LAST_OUTCOME["op_id"] != first
+
 def test_13_open_bug_with_human_adjustment_and_manual_lifecycle(capsys):
     engine.approve(S["apr"], "approve", "oscar@example.com", adjustments={"severity": "critical"})
     bugs = list((store.ROOT / "bugs").rglob("BUG-*.yaml")); assert len(bugs) == 1

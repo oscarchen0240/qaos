@@ -234,7 +234,8 @@ def test_60_submit_rejects_artifact_referencing_another_runs_artifact(auth_ready
     _, p_rep = _submit_report(rid_b, did_b, tcs_b, extra_refs=[{"entity_type": "Artifact", "id": did_a}])
     ok, problems = engine.submit(rid_b, "T2", str(p_rep))
     assert not ok and any("其他 run 的 artifact" in x and did_a in x for x in problems)
-    assert store.load(p_rep)["status"] == "INVALID"
+    assert store.load(p_rep)["status"] == "DRAFT"   # 驗證失敗不改 artifact 檔；INVALID 記在 gate_results
+    t2 = next(t for t in engine.load_run(rid_b)["tasks"] if t["task_id"] == "T2"); assert t2["gate_results"][-1]["result"] == "FAIL"
 
 
 def test_61_submit_rejects_testcase_draft_whose_source_mismatches_mode(auth_ready):

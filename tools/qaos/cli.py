@@ -268,7 +268,9 @@ def main(argv=None):
     p.add_argument("target", nargs="?", metavar="RUN_ID"); p.add_argument("--global", dest="global_", action="store_true"); p.set_defaults(f=cmd_audit_render)
     a = ap.parse_args(argv)
     try:
-        a.f(a); _notice()
+        try: a.f(a)
+        except SystemExit: _notice(); raise     # gate FAIL 等以非零結束的指令，也要提示「先前已完成」
+        _notice()
     except (EngineError, TransitionError, FileNotFoundError, ValueError, operation.OperationError, store.NoExecutorContext) as e:
         sys.exit(f"qaos: {e}")
 

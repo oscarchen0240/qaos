@@ -67,6 +67,7 @@ _HOOK_REGISTERED = False
 def _drop_inherited_lock():
     """fork 掛鉤，只在子程序執行：只關閉繼承到的 fd，絕不 LOCK_UN（會解除父程序的鎖）。"""
     global _EXECUTOR
+    store.drop_inherited_capture()        # 子程序繼承的擷取一律失效
     ex = _EXECUTOR
     if ex is None: return
     _EXECUTOR = None
@@ -101,6 +102,13 @@ def require_context(ctx: Context | None):
 
 def current() -> Context | None:
     return _EXECUTOR
+
+def _capture_guard(cap) -> bool:
+    """擷取只屬於建立它、而且仍持有 executor context 的程序。"""
+    ex = _EXECUTOR
+    return ex is not None and ex.owner_pid == os.getpid() and cap.owner_pid == os.getpid() and cap.owner_token == ex.token
+
+store.CAPTURE_GUARD = _capture_guard
 
 def _write_owner(ctx: Context):
     """診斷檔：只供顯示，不是權威。"""
@@ -211,13 +219,35 @@ def registrations() -> dict[str, dict]:
     d = store.ROOT / INDEX_DIR
     if not d.is_dir(): return out
     for p in sorted(d.glob("*.yaml")):
+        if p.name.startswith(".qaos-tmp"): continue
         rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         op = rec.get("op_id")
-        if not op or not p.name.endswith(f"-{op}.yaml"):
-            raise EvidenceConflict(f"登錄紀錄 {p.name} 內容和檔名不符")
+        if set(rec) != REG_FIELDS or not isinstance(rec.get("plan_seq"), int) or p.name != f"{rec['plan_seq']:08d}-{op}.yaml":
+            raise EvidenceConflict(f"登錄紀錄 {p.name} 的欄位或檔名不符")
         if op in out: raise EvidenceConflict(f"op {op} 有兩筆登錄紀錄")
         rec["_file"] = p.name; out[op] = rec
+    # plan_seq 在持鎖下以 max+1 配發、link-create 寫入，所以必定是 1..N 連續且不重複；不是 → 有人改過登錄紀錄
+    seqs = sorted(r["plan_seq"] for r in out.values())
+    if seqs != list(range(1, len(seqs) + 1)): raise EvidenceConflict(f"登錄紀錄的 plan_seq 不符（不連續或重複）：{seqs[:5]}…")
     return out
+
+REG_FIELDS = {"plan_seq", "op_id", "action", "plan_sha256", "registered_at"}
+
+def verify_registration(op: str, reg: dict | None = None) -> dict:
+    """涉及某個 op 的續做、已完成回報與盤點時，核對登錄紀錄與不可變計畫的一致性（附錄 A 4-11）。回傳計畫。"""
+    reg = reg or registrations().get(op)
+    p = plan_files().get(op)
+    if reg is None or p is None: raise EvidenceConflict(f"op {op} 缺少登錄紀錄或計畫檔")
+    data = p.read_bytes(); plan = yaml.safe_load(data.decode("utf-8")) or {}
+    bad = [k for k, ok in (("plan_sha256", reg["plan_sha256"] == store.sha256_bytes(data)), ("action", reg["action"] == plan.get("action")),
+                           ("registered_at", reg["registered_at"] == plan.get("clock")), ("op_id", plan.get("op_id") == op)) if not ok]
+    if bad: raise EvidenceConflict(f"V1：op {op} 的登錄紀錄和計畫不符（{', '.join(bad)}）")
+    st = statuses(op)
+    if "completed" in st:
+        expect = store.dump({"op_id": op, "status": "completed", "at": plan["clock"]})
+        if (store.ROOT / status_path(op, "completed")).read_bytes() != expect:
+            raise EvidenceConflict(f"op {op} 的 completed 狀態紀錄內容不符")
+    return plan
 
 def plan_files() -> dict[str, pathlib.Path]:
     out = {}
@@ -260,8 +290,7 @@ def check_terminal_consistency():
     """每份已登錄的 rollback 計畫，依它不可變的 terminal 群組核對前綴；不一致 → 拒絕本次寫入請求，不做任何持久寫入。"""
     for op, reg in registrations().items():
         if reg.get("action") != "migrate_rollback": continue
-        plan = load_plan(op)
-        if not plan: continue
+        plan = verify_registration(op, reg)
         group = [s["path"] for s in plan.get("steps", []) if s.get("group") == "terminal"]
         present = [(store.ROOT / p).is_file() for p in group]
         seen_missing = False
@@ -271,6 +300,23 @@ def check_terminal_consistency():
                 raise Refused(f"終態不一致：rollback 計畫 {op} 的 {path} 存在，但排在它前面的終態步驟不存在；需人工處理")
 
 # ---------------------------------------------------------------- 登錄補齊（§6.2）
+def cleanup_unplanned():
+    """持鎖中清除「計畫檔保存之前就中止」留下的殘留：沒有計畫檔、也沒有登錄紀錄的 op 目錄（內容檔、暫存），以及計畫檔的暫存。
+    計畫在保存完成時才建立，所以這些內容可以證明不屬於任何計畫。"""
+    import shutil
+    base = store.ROOT / "operations"
+    if not base.is_dir(): return
+    plans, regs = plan_files(), registrations()
+    for scope in base.iterdir():
+        if not scope.is_dir(): continue
+        for d in scope.iterdir():
+            if d.is_dir() and d.name not in ("index.d", "status.d") and d.name not in plans and d.name not in regs:
+                shutil.rmtree(d, ignore_errors=True)
+            elif d.is_file() and d.name.startswith(".qaos-tmp-"):
+                m = d.name.split("-")
+                op_file = next((x for x in m if len(x) == 64 + 5 and x.endswith(".yaml")), None)
+                if op_file is None or op_file[:-5] not in plans: d.unlink(missing_ok=True)
+
 def reconcile_registrations():
     regs = registrations()
     for op, p in plan_files().items():
@@ -452,7 +498,7 @@ def _all_events(pattern: str) -> list[dict]:
             out.append(yaml.safe_load(p.read_text(encoding="utf-8")))
     return out
 
-def render_log_bytes(log_rel: str, extra_events: list[dict], mk: dict) -> bytes:
+def render_log_bytes(log_rel: str, extra_events: list[dict], mk: dict, overlay: dict | None = None) -> bytes:
     """legacy 原位元組（frozen 時驗證 hash）＋依 (at, op_id, step) 排序的事件。"""
     global_log = log_rel == "runs/_audit.log"
     if global_log: evs = _all_events("runs/*/audit.d/*.yaml") + _all_events("runs/_audit.d/*.yaml")
@@ -463,16 +509,25 @@ def render_log_bytes(log_rel: str, extra_events: list[dict], mk: dict) -> bytes:
     evs.sort(key=lambda e: (str(e["at"]), str(e["op_id"]), int(e["step"])))
     head = b""
     info = (mk.get("logs") or {}).get(log_rel)
-    if info and info.get("legacy") == "frozen":
-        legacy_rel = log_rel.replace("audit.log", "audit.legacy.log")
-        lb = _disk_bytes(legacy_rel)
-        if lb is None or store.sha256_bytes(lb) != info["sha256"]:
-            raise Refused(f"render {log_rel}：legacy 檔 {legacy_rel} 不存在或 hash 不符")
-        head = lb
-    elif info is None and not global_log:
+    if info is not None:
+        legacy = info.get("legacy")
+        if legacy == "frozen":
+            legacy_rel = log_rel.replace("audit.log", "audit.legacy.log")
+            lb = _disk_bytes(legacy_rel)
+            if lb is None or store.sha256_bytes(lb) != info.get("sha256"):
+                raise Refused(f"render {log_rel}：legacy 檔 {legacy_rel} 不存在或 hash 不符")
+            head = lb
+        elif legacy != "absent":
+            raise Refused(f"render {log_rel}：移轉標記中的 legacy 狀態不合法（{legacy!r}）")
+    elif global_log:
+        raise Refused("render runs/_audit.log：移轉標記中缺少全域 log 的 legacy 狀態")
+    else:   # 標記中沒有它：只有能證明是移轉之後才建立的 run，才只用事件
         run_id = log_rel.split("/")[1]
-        if run_id in (mk.get("runs") or []):
-            raise Refused(f"render {log_rel}：移轉標記中應有它的 legacy 狀態，但缺少")
+        rr = f"runs/{run_id}/run.yaml"
+        run = overlay[rr] if overlay and rr in overlay else _disk_bytes(rr)
+        created = (yaml.safe_load(run.decode("utf-8")) or {}).get("created_at") if run else None
+        if run_id in (mk.get("runs") or []) or not created or str(created) < str(mk.get("migrated_at")):
+            raise Refused(f"render {log_rel}：移轉標記中沒有它的 legacy 狀態，也無法證明它是移轉後建立的 run")
     return head + "".join(_format_line(e, global_log) for e in evs).encode("utf-8")
 
 def render_logs(cap: store.Capture, events: list[dict], logs: list[str] | None = None) -> dict[str, bytes]:
@@ -492,10 +547,10 @@ def render_logs(cap: store.Capture, events: list[dict], logs: list[str] | None =
             lb = cap.files[legacy_rel]
             if info and info.get("legacy") == "frozen" and store.sha256_bytes(lb) != info["sha256"]:
                 raise Refused(f"render {lg}：凍結內容 hash 不符")
-            body = render_log_bytes(lg, events, {**mk, "logs": {**mk.get("logs", {}), lg: {"legacy": "absent"}}})
+            body = render_log_bytes(lg, events, {**mk, "logs": {**mk.get("logs", {}), lg: {"legacy": "absent"}}}, cap.files)
             out[lg] = lb + body
         else:
-            out[lg] = render_log_bytes(lg, events, mk)
+            out[lg] = render_log_bytes(lg, events, mk, cap.files)
     return out
 
 # ---------------------------------------------------------------- 執行（§7.8、§8）
@@ -564,11 +619,7 @@ def _takeover_target(op: str) -> str | None:
     return None
 
 def _resume(plan: dict, *, request_hash: str | None):
-    regs = registrations()
-    reg = regs.get(plan["op_id"])
-    data = (store.ROOT / plan_path(plan["scope"], plan["op_id"])).read_bytes()
-    if reg is None or reg["plan_sha256"] != store.sha256_bytes(data):
-        raise EvidenceConflict(f"V1：{plan['op_id']} 的計畫檔和登錄紀錄不符")
+    verify_registration(plan["op_id"])
     if request_hash is not None and request_hash != plan["request_hash"]:
         raise EvidenceConflict("V1：請求和計畫的 request_hash 不符")
     others = [o for o in incomplete_plans() if o not in (plan["op_id"], plan.get("takeover_of"))]
@@ -588,8 +639,22 @@ def _write_diagnostics(cap: store.Capture):
         ev = {"at": cap.clock, "actor": e["actor"], "action": e["action"], "detail": e["detail"] or "", "op_id": eid, "step": 0, "run_id": e["run_id"]}
         _link_create(_event_path(eid, e["run_id"], 0), store.dump(ev), tag="diag")
 
-def _diagnostic_allowed(cap: store.Capture) -> bool:
-    return all(data is not None and (r.startswith("runs/") and r.endswith("/run.yaml") or r.startswith("artifacts/")) for r, data in cap.files.items()) and len(cap.events) <= 1
+DIAG_TASK_FIELDS = {"gate_results", "status", "history", "started_at", "permission_violations"}
+
+def _check_diagnostic(cap: store.Capture):
+    """驗證失敗只允許兩種診斷：run.yaml 中 task 的診斷欄位（gate_results 追加、狀態回 READY），以及一個事件檔（§13）。超出 → 程式錯誤。"""
+    files = {r: d for r, d in cap.files.items()}
+    runs = [r for r in files if r.startswith("runs/") and r.endswith("/run.yaml")]
+    if len(files) != len(runs) or len(runs) > 1 or len(cap.events) > 1 or any(files[r] is None for r in runs):
+        raise OperationError(f"驗證失敗的診斷超出允許範圍：{sorted(files)}，事件 {len(cap.events)} 筆")
+    for r in runs:
+        before = yaml.safe_load((store.ROOT / r).read_text(encoding="utf-8")); after = yaml.safe_load(files[r].decode("utf-8"))
+        strip = lambda run: {**{k: v for k, v in run.items() if k != "updated_at"}, "tasks": [{k: v for k, v in t.items() if k not in DIAG_TASK_FIELDS} for t in run.get("tasks", [])]}
+        if strip(before) != strip(after):
+            raise OperationError(f"驗證失敗的診斷改動了 {r} 中不允許的欄位")
+        for tb, ta in zip(before["tasks"], after["tasks"]):
+            gb, ga = tb.get("gate_results") or [], ta.get("gate_results") or []
+            if ga[:len(gb)] != gb: raise OperationError("gate_results 只能追加")
 
 def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, resume_op: str | None = None):
     """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。"""
@@ -598,6 +663,7 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
     pause("after_lock")
     try:
         check_terminal_consistency()                         # 第 0 步
+        cleanup_unplanned()                                  # 計畫保存前中止的殘留（不屬於任何計畫）
         reconcile_registrations()                            # 登錄補齊
         if resume_op is not None:                            # operation resume <op>
             ctx.op_id = resume_op; _write_owner(ctx)
@@ -613,10 +679,11 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
             raise Refused(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`")
         state = system_state(); admit(action, state)                           # 3c
         clock = store.real_now(); today = store.real_today()
-        cap = store.begin_capture(clock, today, op)
+        cap = store.begin_capture(clock, today, op, owner_token=ctx.token)
         try: result = fn()
         finally: store.end_capture()
-        if cap.diagnostic and _diagnostic_allowed(cap):
+        if cap.diagnostic:
+            _check_diagnostic(cap)
             _write_diagnostics(cap); LAST_OUTCOME.update(kind="diagnostic", op_id=None); return result
         plan, blobs = build_plan(cap, op_id=op, request=req, action=action, scope=scope, state=state, result=result)
         data = _save_plan(plan, blobs)
@@ -631,6 +698,7 @@ def _existing(plan: dict, *, request_hash: str | None):
     op = plan["op_id"]
     st = plan_state(op)
     if st == "completed":
+        verify_registration(op)
         LAST_OUTCOME.update(kind="completed", op_id=op); return plan.get("result")
     if st in TERMINAL: raise Refused(f"op {op} 已終結（{st}）；要重做請以 --new-request 建立新 op")
     r = _takeover_target(op)
@@ -662,6 +730,7 @@ def list_operations(incomplete_only: bool = False) -> list[dict]:
     out = []
     regs = registrations()
     for op, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]):
+        verify_registration(op, reg)
         st = plan_state(op)
         if incomplete_only and st != "in_progress": continue
         out.append({"plan_seq": reg["plan_seq"], "op_id": op, "action": reg["action"], "state": st, "registered_at": reg["registered_at"]})

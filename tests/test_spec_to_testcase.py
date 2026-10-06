@@ -53,7 +53,8 @@ def test_03_T1_spec_analyst_structural_gate():
     # 先提交一份缺 AC 的 RequirementModel → schema INVALID（requirement.acceptance_criteria minItems 1）
     broken = H.requirement_model(); broken["requirements"][0]["acceptance_criteria"] = []
     aid, p = H.write_artifact(rid, "T1", "agent-spec-analyst", "RequirementModel", broken, refs_, {"type": "SpecVersion", "ids": ["SPEC-AUTH-001@1.0"]}, "requirements")
-    ok, problems = engine.submit(rid, "T1", str(p)); assert not ok and store.load(p)["status"] == "INVALID"
+    ok, problems = engine.submit(rid, "T1", str(p)); assert not ok and store.load(p)["status"] == "DRAFT"   # 驗證失敗不改 artifact 檔
+    g = engine.load_run(rid)["tasks"][0]["gate_results"][-1]; assert g["result"] == "FAIL" and g["artifact_id"] == aid   # INVALID 記在 gate_results
     assert engine.load_run(rid)["tasks"][0]["status"] == "READY"  # structural fail 不計迭代、可重試
     # 正確提交 SpecAnalysis + RequirementModel
     sa_payload = {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "content_hash": store.load(store.spec_dir("SPEC-AUTH-001") / "spec.yaml")["versions"][0]["content_hash"],

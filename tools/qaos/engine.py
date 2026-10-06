@@ -188,25 +188,19 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     return True, []
 
 def _mark_invalid(run, task, art, p, problems):
-    if isinstance(art, dict) and art.get("artifact_id") and art.get("status") in ("DRAFT", "SUBMITTED"):
-        # 只有本次真正被評估中的 artifact（DRAFT/SUBMITTED）才標 INVALID；
-        # 若問題是「artifact 狀態 X 不可提交」這種 client 端誤用已存在的 VALID/SUPERSEDED artifact，不得覆寫其狀態。
-        art["status"] = "INVALID"; art.setdefault("history", None)
-        art.pop("history", None); store.save(p, art)
-    task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL", "details": problems[:20]})
+    # 驗證失敗不改 artifact 檔（最終規格第 4 章 §13）：INVALID 只記在 task 的 gate_results（含 artifact_id）。
+    aid = art.get("artifact_id") if isinstance(art, dict) else None
+    task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL", "details": problems[:20], **({"artifact_id": aid} if aid else {})})
     if any("越權" in x or "無權" in x or "write_paths" in x for x in problems):
         task.setdefault("permission_violations", []).append({"at": store.now(), "action": "CREATE_ARTIFACT", "detail": "; ".join(problems)[:500]})
         state.apply("task", task, "FAILED", SYSTEM, "permission violation")
         state.apply("workflow_run", run, "FAILED", SYSTEM, f"{task['task_id']} permission violation", run["run_id"])
         store.audit(run["run_id"], task.get("agent_id", "?"), "PERMISSION_VIOLATION", "; ".join(problems)[:300])
     else:
+        # 驗證失敗：只寫允許的診斷（task 欄位與一個事件），不建立計畫、不開核准單；task 維持可重試，要放棄由人 run cancel
+        store.mark_diagnostic()
         state.apply("task", task, "ARTIFACT_INVALID", SYSTEM, "structural fail")
-        n = sum(1 for g in task["gate_results"] if g["layer"] == "structural" and g["result"] == "FAIL")
-        if n < 3: store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫（最終規格第 4 章 §13）
-        if n >= 3:
-            _create_approval(run, task, "NEEDS_DECISION", f"{task['task_id']} 連續 {n} 次 Structural FAIL", [], [], options=[{"key": "retry", "label": "重新 dispatch"}, {"key": "cancel", "label": "取消 run"}])
-        else:
-            state.apply("task", task, "READY", SYSTEM, "retry allowed")
+        state.apply("task", task, "READY", SYSTEM, "retry allowed")
         store.audit(run["run_id"], task.get("agent_id", "?"), "ARTIFACT_INVALID", "; ".join(problems)[:300])
     _save_run(run)
 
@@ -221,9 +215,14 @@ def _valid_outputs(task) -> dict:
     return out
 
 def _gate_request(run_id, task_id):
+    """gate 請求的身分：這個 task 目前所有 VALID 的 artifact（gate 不改寫 artifact 檔）。
+    不用 task.output_artifact_ids：Validator FAIL 的退回會在同一個操作中清空它，中止後重送就會變成另一個 op。"""
     task = _task(load_run(run_id), task_id)
-    # 只用 artifact_id：gate 的效果可能改寫 artifact，內容 hash 不能進 op_id
-    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"outputs": list(task.get("output_artifact_ids", []))}}
+    valid = []
+    for p in store.glob(f"artifacts/*/{run_id}/*.yaml"):
+        a = store.load(p)
+        if a.get("task_id") == task_id and a.get("status") == "VALID": valid.append(a["artifact_id"])
+    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"valid_artifacts": sorted(valid)}}
 
 @operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:
