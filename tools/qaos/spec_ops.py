@@ -100,7 +100,7 @@ def spec_import(file, spec_id, version, product, area, title=None, area_title=No
     d = f"specs/{product}/{area}/{spec_id}"
     areas = store.load(f"specs/{product}/areas.yaml") if store.exists(f"specs/{product}/areas.yaml") else {"product": product, "areas": {}}
     if area not in areas["areas"]: areas["areas"][area] = {"title": area_title or area}; store.save(f"specs/{product}/areas.yaml", areas)
-    spec = store.load(f"{d}/spec.yaml") if store.exists(f"{d}/spec.yaml") else {"spec_id": spec_id, "product": product, "functional_area": area, "title": title or spec_id, "versions": []}
+    spec = store.load(f"{d}/spec.yaml") if store.exists(f"{d}/spec.yaml") else {"spec_id": spec_id, "product": product, "functional_area": area, "title": title if title is not None else spec_id, "versions": []}
     if any(v["spec_version"] == version for v in spec["versions"]): raise SpecError(f"{spec_id} v{version} 已存在（Spec 版本不可覆蓋，請用新版本號）")
     # 規則 1、2：重複內容
     same = [v["spec_version"] for v in spec["versions"] if v["content_hash"] == content_hash]

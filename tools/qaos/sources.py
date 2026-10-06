@@ -130,10 +130,16 @@ def resolution_entry(ref, loader, at=None) -> tuple[dict | None, list[str]]:
     if (entry.get("source") or {}).get("type") == "approval": errs.append("approval 型來源：條目的 source 又是 approval 型（巢狀，X15）")
     return entry, errs
 
-def _validate_approval(ref, loader, at, errors):
+def _validate_approval(ref, loader, target, at, errors, warnings):
     entry, errs = resolution_entry(ref, loader, at); errors += errs
-    if entry is not None and not quote_in(ref.get("quote"), entry.get("rationale", "")):
+    if entry is None: return
+    if not quote_in(ref.get("quote"), entry.get("rationale", "")):
         errors.append(f"approval 型來源：quote 不在 {ref['approval_id']} resolutions[{ref['resolution_index']}] 的 rationale 中")
+    src = entry.get("source")
+    if src is not None and src.get("type") != "approval":            # 巢狀 approval 已由 resolution_entry 拒絕（X15）
+        inner_errs, inner_warns = validate(src, target=target, at=at, loader=loader)   # 包裝不解除內部來源的基本驗證（hash、quote、resolution、WITHDRAWN）
+        where = f"（{ref['approval_id']} resolutions[{ref['resolution_index']}] 的 source）"
+        errors += [e + where for e in inner_errs]; warnings += [w + where for w in inner_warns]
 
 def validate(ref: dict, *, target=None, at=None, loader=None) -> tuple[list[str], list[str]]:
     """SourceRef 本身的驗證（不含 X16）。target = (spec_id, spec_version)：spec 型必須是目標或在閉包內；at = (requirement_id, question_id)。
@@ -142,16 +148,22 @@ def validate(ref: dict, *, target=None, at=None, loader=None) -> tuple[list[str]
     errs = _shape_errors(ref)
     if errs: return errs, warnings
     {"spec": lambda: _validate_spec(ref, target, errors, warnings), "clarification": lambda: _validate_clarification(ref, loader, errors),
-     "approval": lambda: _validate_approval(ref, loader, at, errors)}[ref["type"]]()
+     "approval": lambda: _validate_approval(ref, loader, target, at, errors, warnings)}[ref["type"]]()
     return errors, warnings
 
 REQUIRED = {"spec": ("spec_id", "spec_version", "content_hash", "location", "quote"), "clarification": ("clarification_id", "answer_rev", "answer_sha256", "quote"),
             "approval": ("approval_id", "decision_sha256", "resolution_index", "quote")}
 
 def _shape_errors(ref) -> list[str]:
+    """先檢查 type 與必要欄位（訊息指出缺哪個），再以 defs 的 SourceRef 該型分支驗證形狀（型別、hash 格式、索引非負）。"""
     if not isinstance(ref, dict) or ref.get("type") not in REQUIRED: return [f"SourceRef 的 type 必須是 spec、clarification 或 approval：{ref!r}"[:200]]
     missing = [k for k in REQUIRED[ref["type"]] if ref.get(k) in (None, "")]
-    return [f"{ref['type']} 型來源缺少 {', '.join(missing)}（新產出的 quote、location 不能是空字串）"] if missing else []
+    if missing: return [f"{ref['type']} 型來源缺少 {', '.join(missing)}（新產出的 quote、location 不能是空字串）"]
+    from jsonschema import Draft202012Validator
+    from . import schema
+    branch = list(REQUIRED).index(ref["type"])
+    v = Draft202012Validator({"$ref": f"https://qaos.local/schemas/common/defs.schema.json#/$defs/SourceRef/oneOf/{branch}"}, registry=schema.registry())
+    return [f"{ref['type']} 型來源的形狀不合法：{e.json_path}: {e.message}" for e in v.iter_errors(ref)]
 
 # ---------------------------------------------------------------- covers（第 1 章名詞表；附錄 A 1-8）
 def covers(a: dict, d: dict) -> bool:

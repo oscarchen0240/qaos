@@ -217,6 +217,14 @@ def test_ac_10a_57_blank_title_warns(tmp_path):
     log = (pathlib.Path(root) / "runs/_audit.log").read_text(); assert "WARN_TITLE_EMPTY" in log
     r = imp(root, write_md(tmp_path, "b.md", "# B\n"), "SPEC-B-001", "1.0", "--title", "Ｂ 規格"); assert "title" not in r.stderr
 
+@pytest.mark.parametrize("title,stored,warn", [(None, "SPEC-A-001", False), ("", "", True), ("   ", "   ", True), ("　", "　", True), ("Ａ", "Ａ", False)])
+def test_p2_03_explicit_title_is_kept_and_blank_warns(title, stored, warn, tmp_path):
+    """P2 審查 P2-03：省略 title → 預設 spec_id；明確給的值（含空字串）原樣保存，正規化後為空就警告並記 audit。"""
+    root = U.mkroot(); extra = [] if title is None else ["--title", title]
+    r = imp(root, write_md(tmp_path, "a.md", "# A\n"), "SPEC-A-001", "1.0", *extra)
+    assert U.load(root, "specs/demo/AUTH/SPEC-A-001/spec.yaml")["title"] == stored
+    assert ("title 正規化後為空" in r.stderr) == warn and ("WARN_TITLE_EMPTY" in (pathlib.Path(root) / "runs/_audit.log").read_text()) == warn
+
 def test_title_normalization():
     root = U.mkroot()
     code = """

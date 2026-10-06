@@ -402,3 +402,34 @@ def test_ac_07_29_applicability_add_abort_and_resume(entry, tmp_path):
     assert len(clr(root, cid)["applicability"]) == 1                                               # 第一步（CLR）已寫入
     r = U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", op); assert r.returncode == 0, r.stderr
     assert U.incomplete(root) == [] and len(clr(root, cid)["applicability"]) == 1 and clr(root, cid)["applicability"][0]["op_id"] == op
+
+# ---------------------------------------------------------------- P2 審查 P2-01、P2-02
+def test_p2_01_approval_wrapper_validates_inner_source(tmp_path):
+    """核准單包裝不解除內部來源的基本驗證：no_change、out_of_scope、錯 hash、錯 quote、已撤回都拒絕；合法的歷史 rev 與自行裁決仍成立。"""
+    root = mk(tmp_path, refs=False); at = ("REQ-AUTH-001", "Q01")
+    cid = scoped_clr(root); answer(root, cid, "維持現狀。", resolution="no_change")                    # rev 0 requirement_clarified、rev 1 no_change
+    cid2 = new_clr(root, **SCOPE_KW); answer(root, cid2, "不在範圍內。", resolution="out_of_scope")
+    cid3 = new_clr(root, **SCOPE_KW); U.q(root, "clarification", "withdraw", cid3, "--by", "oscar", check=True)
+    good = cref(root, cid, 0, "下限是 8 碼")
+    bad = {"no_change": cref(root, cid, 1, "維持現狀"), "out_of_scope": cref(root, cid2, 0, "不在範圍內"),
+           "wrong_hash": {**good, "answer_sha256": "0" * 64}, "wrong_quote": {**good, "quote": "下限是 12 碼"},
+           "withdrawn": {"type": "clarification", "clarification_id": cid3, "answer_rev": 0, "answer_sha256": "0" * 64, "quote": "x"}}
+    expect = {"no_change": "resolution", "out_of_scope": "resolution", "wrong_hash": "answer_sha256", "wrong_quote": "quote 不在", "withdrawn": "撤回"}
+    for name, inner in bad.items():
+        assert validate(root, inner)[0], name                                                              # 直接引用本來就 FAIL
+        apr = approval(source=inner)
+        errs, _ = mem(root, f"print(json.dumps(sources.validate({aref(root, apr)!r}, at={at!r}, loader=L)))", apr)
+        assert errs and expect[name] in errs[0] and "APR-0900 resolutions[0] 的 source" in errs[0], (name, errs)
+    for inner in (good, None):                                                                             # 合法的歷史 rev（之後已有 rev 1）、自行裁決
+        apr = approval(source=inner)
+        assert mem(root, f"print(json.dumps(sources.validate({aref(root, apr)!r}, at={at!r}, loader=L)))", apr) == [[], []]
+
+@pytest.mark.parametrize("field,value", [("answer_rev", -1), ("answer_rev", "0"), ("answer_rev", True), ("resolution_index", -1), ("resolution_index", "0"), ("resolution_index", False)])
+def test_p2_02_source_ref_index_shape(field, value, tmp_path):
+    root = mk(tmp_path, refs=False); at = ("REQ-AUTH-001", "Q01"); cid = scoped_clr(root)
+    apr = approval(); ref = cref(root, cid, 0, "下限是 8 碼") if field == "answer_rev" else aref(root, apr)
+    errs, _ = mem(root, f"print(json.dumps(sources.validate({{**{ref!r}, {field!r}: {value!r}}}, at={at!r}, loader=L)))", apr)
+    assert errs and "形狀不合法" in errs[0] and field in errs[0], errs                                    # 不會選到最後一筆，也沒有未捕捉的例外
+    errs, _ = mem(root, f"print(json.dumps(sources.validate({{**{ref!r}, {field!r}: 5}}, at={at!r}, loader=L)))", apr)
+    assert errs and "沒有" in errs[0]                                                                      # 超界
+    assert mem(root, f"print(json.dumps(sources.validate({ref!r}, at={at!r}, loader=L)))", apr)[0] == []   # 合法的 0
