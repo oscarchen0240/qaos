@@ -3963,7 +3963,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 4-13 | `migrate` 是否為控制類操作 | 是：記錄 `admitted_state`、`to_state`、`resume_states`；不列入後續操作盤點 | I |
 | 4-14 | 3b 拒絕前是否顯式釋放鎖 | 是（明確 `release` 後才回報拒絕；結果和程序結束相同） | I |
 | 4-15 | Permission Guard 失敗（越權提交：`created_by` 不符、無權產出該型別、寫入路徑不在 `write_paths`） | **不屬於** §13 的「驗證失敗」，以正常操作（操作計畫）寫入：task 追加 `gate_results` FAIL 與 `permission_violations`，task 與 run 轉 FAILED，記 `PERMISSION_VIOLATION` 事件。被提交的 artifact 不修改。其餘結構驗證失敗（schema、引用、狀態、payload 前置）才是 §13 的診斷寫入（Oscar 2026-10-07 決定維持既有行為） | R |
-| 4-16 | §13 診斷寫入的允許範圍 | run.yaml 只允許該 task 的 `gate_results`（只追加，記錄被拒的 `artifact_id`）、`status`、`history`、`started_at`、`permission_violations` 變更，run 本身與其他 task 不變；最多一個事件檔；其他任何檔案都不寫（含被提交的 artifact、核准單）。超出範圍 → 拒絕，不寫入。同一 task 連續多次失敗仍只寫診斷，不自動開核准單；要放棄由人執行 `run cancel` | I |
+| 4-16 | §13 診斷寫入的允許範圍 | 只寫一份 run.yaml 與最多一個事件檔，其他任何檔案都不寫（含被提交的 artifact、核准單）。run.yaml 中：run 本身只有 `updated_at` 可以變，而且只能是本次 executor 的時間；只有一個 task 變更，限 `gate_results`（只追加一筆本次的 structural FAIL，記錄被拒的 `artifact_id`）、`history`（只追加，每筆是本次時間、依 task 狀態機合法且前後相接）、`status`（最後必須是 READY）、`started_at`（只能設為本次時間，task 重新進入 RUNNING 時）。超出範圍 → 拒絕，不寫入。同一 task 連續多次失敗仍只寫診斷，不自動開核准單；要放棄由人執行 `run cancel`。越權提交不屬於診斷（見 4-15） | I |
 | 4-17 | ID 配發的時點（§7.3） | 計數器的更新是計畫中的一步，ID 在擷取時配發、由計畫固定。和 §7.3「配發在計畫保存之前」的差異：計畫保存之前中止時計數器不前進（不留空號）；計畫保存之後中止時續做沿用計畫的 ID。兩者都不會重複使用 ID | R |
 
 ### A.5 revision 與移轉（第 5 章）

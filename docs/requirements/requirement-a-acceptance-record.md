@@ -5,10 +5,10 @@
 
 ## P1：executor 基礎設施
 
-- **執行 commit**：本紀錄所在的 commit（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06 的修正，`04f29bf` 與其後的診斷邊界修正）
+- **執行 commit**：`3bacf626a59a162fcf13eddfc455e42882518e74`（分支 `qaos/requirement-a`；含 P1 程式碼審查 P1-01～P1-06 與再審查 P1R2-01～04 的修正）。本紀錄所在的 commit 只改文件
 - **環境**：macOS（Darwin 24.6）、Python 3.11.0、本機 APFS
 - **資料**：每個 P1 案例使用獨立的暫存 root（只複製 schemas、agents、workflows、permissions），以正式流程建立狀態；故障以 `QAOS_FAULT` 注入、同步以 `QAOS_PAUSE` 暫停點完成。沒有使用 repo 的業務資料。
-- **結果**：`pytest tests/` 175 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 190 passed；`tools/validate_phase1.py` ALL CHECKS PASSED（含 [4] fork 使用為零）
 
 ### 狀態說明
 
@@ -21,9 +21,9 @@
 
 | AC | 狀態 | 測試（tests/…） | 待 |
 |---|---|---|---|
-| AC-07-8 | 通過 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_three_structural_failures_only_diagnostics`（連續 3 次）、`test_p1_05_diagnostic_beyond_boundary_is_refused`（越界五例） | — |
+| AC-07-8 | 通過 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_three_structural_failures_only_diagnostics`（連續 3 次）、`test_p1_05_diagnostic_beyond_boundary_is_refused`（對照組＋13 種越界：其他檔案、run 欄位、兩個 task、改寫或多寫 gate_results、PASS、兩個事件、終值 DONE／FAILED／強制改寫、任意 updated_at、started_at、改寫 history） | — |
 | AC-07-9a | 通過 | 同上 | — |
-| AC-07-9b | 通過 | `test_p1_resume.py::test_crash_before_plan_save_leaves_nothing`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（故障、SIGKILL；完整快照不排除任何目錄） | — |
+| AC-07-9b | 部分 | 「沒有計畫、業務檔不變、殘留由下一個寫入清除」：`test_p1_resume.py::test_crash_before_plan_save_leaves_nothing`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned` | 原 AC 的「計數器已前進」與附錄 A 4-17（計數器在計畫中更新，保存前中止不前進）不同；待 4-17 定案並同步第 4 章 §7.3、恢復表 9b 後再判定 |
 | AC-07-9c、9l | 通過 | `test_p1_misc.py::test_9c_9l_half_written_tmp_is_cleaned` | — |
 | AC-07-9d | 通過 | `test_p1_resume.py::test_fp_p2_registered_before_first_step`、`test_fp_p1_*` | — |
 | AC-07-9e～9j | 部分 | 通用機制：`test_p1_resume.py::test_fp_w_every_step_of_spec_import`（每一步）、`test_types_run_new_submit_gate_approve_complete`（APR 與 run.yaml 的寫入中止） | 各列的業務情境（CLR、TC 版本、revision、landing）待 P3、P5 |
@@ -54,13 +54,13 @@
 | AC-07-41、43、45、49 | 通過 | `test_p1_audit.py::test_43_45_49_legacy_freeze_and_first_render` | — |
 | AC-07-44 | 待 P3 | — | `migrate --cancel-run` |
 | AC-07-46 | 通過 | `test_p1_maintenance.py::test_whitelist_table` | — |
-| AC-07-47 | 通過 | `test_p1_audit.py::test_47_frozen_legacy_deleted_render_refused`、`test_p1_review_fixes.py::test_p1_04_*`（全域紀錄缺漏、未知值、舊 run 缺紀錄；檢視不變且不建計畫；新 run 正常） | — |
+| AC-07-47 | 通過 | `test_p1_audit.py::test_47_frozen_legacy_deleted_render_refused`、`test_p1_review_fixes.py::test_p1_04_*`（全域紀錄缺漏、未知值、舊 run 缺紀錄；檢視不變且不建計畫；新 run 正常）、`test_p1r2_04_render_compares_parsed_times`（時區、小數秒、同秒、等價時間、缺時區、不合法、移轉清單；overlay 與磁碟兩種來源） | — |
 | AC-07-48 | 通過 | `test_p1_audit.py::test_48_new_run_after_migration_uses_events_only` | — |
 | AC-07-64、70、72、73、74 | 通過 | `test_p1_lock_fork.py::test_64_70_72_lock_held_same_request_refused_readonly_ok`、`test_70_child_write_while_parent_holds_lock_fails_fast` | — |
 | AC-07-65 | 通過 | `test_p1_lock_fork.py::test_65_two_resumes_only_one_proceeds` | — |
 | AC-07-66 | 通過 | `test_p1_lock_fork.py::test_66_different_ops_only_one_acquires` | — |
 | AC-07-67、69 | 通過 | `test_p1_lock_fork.py::test_67_69_kill9_after_plan_save` | — |
-| AC-07-68 | 通過 | `test_p1_lock_fork.py::test_68_kill9_before_plan_save_no_residue` | — |
+| AC-07-68 | 通過 | `test_p1_lock_fork.py::test_68_kill9_before_plan_save_no_residue`、`test_p1_review_fixes.py::test_p1_06_residue_before_plan_save_is_cleaned`（故障、內容檔建立後 SIGKILL、內容檔暫存寫好後 SIGKILL；下一個寫入只刪本次殘留，外部內容原樣保留，差異與未中止的對照 root 相同） | — |
 | AC-07-71 | 通過 | `test_p1_lock_fork.py::test_71_stale_owner_file_is_ignored` | — |
 | AC-07-75、76 | 通過 | `test_p1_misc.py::test_75_*`、`test_76_*` | — |
 | AC-07-77a～c | 通過 | `test_p1_lock_fork.py::test_77abc_fork_child_drops_lock_parent_keeps_it` | — |
@@ -86,7 +86,7 @@
 | AC-07-96 | 通過 | `test_p1_resume.py::test_tamper_stops_resume`（四例） | — |
 | AC-07-96（gate 退回） | 通過 | `test_p1_review_fixes.py::test_p1_01_validator_fail_gate_abort_then_resume`（G-TVAL，兩種入口）、`test_wf_b_bug_and_e_regression.py::test_12b_*`（G-BVAL：重送續做、完成後重送、下一輪新 op） | — |
 | AC-07-97 | 通過 | `test_fp_p2_*`（①）、`test_9k_*`（②）、`test_registrations_stay_valid_and_seq_contiguous`（③）、`test_tampered_registration_refuses_resume`、`test_p1_review_fixes.py::test_p1_03_*`（④：action、registered_at、plan_sha256、plan_seq、檔名 × 未完成／已完成；完成狀態紀錄竄改） | — |
-| AC-07-98 | 通過 | `test_fp_p1_unregistered_plan_is_registered_then_resumed`（a、b）、`test_fp_p1_other_op_after_reconcile_is_refused`（c）、`test_crash_before_plan_save_leaves_nothing`、`test_p1_06_*`（d） | — |
+| AC-07-98 | 通過 | `test_fp_p1_unregistered_plan_is_registered_then_resumed`（a、b）、`test_fp_p1_other_op_after_reconcile_is_refused`（c）、`test_crash_before_plan_save_leaves_nothing`、`test_p1_06_residue_*`、`test_p1_06_registered_without_plan_is_refused`（d） | — |
 | AC-07-99（防禦性） | 通過 | `test_p1_resume.py::test_invalid_unregistered_plan_refuses_all_writes` | — |
 | AC-07-100 | 通過 | `test_no_change_export_has_no_content_steps`（①）、`test_partial_no_change_and_tampered_no_change_path`（②④）、`test_multi_file_render_abort_after_first_file`（③） | — |
 | AC-07-1～7、11、101～104 | 待 P5 | — | 去重與開單關卡 |
@@ -101,5 +101,7 @@
 6. **P1 的 migrate**：只做空 root 也需要的部分（凍結 legacy audit、移轉標記、第一次 render）與 `--acknowledge-idle`。移轉清單、R000、sidecar、CLR rev 0、`--cancel-run`、`migrate verify`、`migrate rollback` 屬 P3。
 7. **audit.log**：改為由事件檔整份重建（每個操作重建它影響的 run log 與全域 log），不再追加；需要和 Session B 協調（D8）。
 8. **效能**：測試時間從約 5 秒增加到約 2 分鐘（每次寫入都經過計畫、fsync 與 render）；全域 log 的 render 每次讀取所有事件檔，資料量增加時可在第二批改為增量。
-9. **登錄紀錄核對**：續做、已完成回報、`operation list` 與第 0 步都核對登錄紀錄的欄位、檔名、`plan_seq` 連續性，以及與計畫、完成狀態紀錄的一致性。限制：兩筆登錄紀錄的 `plan_seq` 互換（仍連續）無法由紀錄本身偵測。
-10. **計畫保存前的殘留**：每個寫入請求取得鎖後，先清除沒有計畫也沒有登錄紀錄的 op 目錄與暫存檔。
+9. **登錄紀錄核對**：每次讀取登錄紀錄都核對全部紀錄的欄位、檔名與 `plan_seq` 連續性；和計畫、完成狀態紀錄的一致性（plan hash、action、registered_at）只在涉及該 op 時核對：續做、已完成回報、`operation list`，以及第 0 步的 rollback 紀錄（第 0 步不對所有紀錄做這項核對，附錄 A 4-11）。限制：兩筆登錄紀錄的 `plan_seq` 互換（仍連續）無法由紀錄本身偵測，`plan_seq` 不是可信的防竄改時間鏈；P3 的後續操作盤點沿用同一限制。
+10. **計畫保存前的殘留**：每個寫入請求取得鎖後，只清除能證明屬於 executor 的殘留：合法 scope（`_global` 或 run_id）下、名稱為 64 位 hex、沒有計畫也沒有登錄紀錄、內容只有 blobs（名稱等於內容 hash 的內容檔，或本 op 的暫存）的 op 目錄，以及這種 op 的計畫暫存檔。有登錄紀錄卻沒有計畫 → 證據衝突，拒絕寫入、不刪任何東西。看起來像 op 目錄但無法證明擁有權的內容保留並回報；其他內容不碰。
+11. **擷取 guard**：只載入 `store` 而沒有 executor 時，擷取與寫入一律拒絕（fail closed）。
+12. **時間比較**：render 判定移轉後的新 run 時，把 `created_at`、`migrated_at` 解析成 UTC 時間再比較；缺時區或格式不合法 → 拒絕。
