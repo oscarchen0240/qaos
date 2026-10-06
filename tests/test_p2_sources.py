@@ -390,3 +390,15 @@ def test_ac_08_19_applied_clr_accepts_addenda_but_not_new_answer(tmp_path):
     snap = U.snapshot(root)
     r = answer(root, cid, "改成 10 碼", check=False); assert r.returncode != 0 and "APPLIED" in r.stderr
     assert U.diff(snap, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
+
+@pytest.mark.parametrize("entry", ["resend", "resume"])
+def test_ac_07_29_applicability_add_abort_and_resume(entry, tmp_path):
+    """AC-07-29：applicability_add 在寫入 CLR 之後中止 → 兩種入口都續做完成；只有一筆紀錄。"""
+    root = mk(tmp_path); cid = scoped_clr(root); h = basis_hash(root)
+    args = ["clarification", "applicability", "add", cid, "--answer-rev", "0", "--requirement", "REQ-AUTH-001", "--subject", "password.min_length",
+            "--role-scope", "*", "--params", "{}", "--target", "SPEC-A-001@1.0", "--rationale", "x", "--by", "oscar", "--confirm-basis", h]
+    assert U.q(root, *args, fault="after_output:1").returncode == 86
+    op = U.incomplete(root)[0]["op_id"]; assert U.plan_of(root, op)["action"] == "applicability_add"
+    assert len(clr(root, cid)["applicability"]) == 1                                               # 第一步（CLR）已寫入
+    r = U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", op); assert r.returncode == 0, r.stderr
+    assert U.incomplete(root) == [] and len(clr(root, cid)["applicability"]) == 1 and clr(root, cid)["applicability"][0]["op_id"] == op
