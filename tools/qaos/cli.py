@@ -199,7 +199,9 @@ def cmd_op_resume(a): _print(operation.resume(a.op_id)); print(f"{a.op_id} 已�
 def cmd_maint_start(a): _print(operation.maintenance_start(a.by, **_nr(a)))
 def cmd_maint_end(a): _print(operation.maintenance_end(a.by, **_nr(a)))
 def cmd_migrate(a): _print(operation.migrate(a.by, a.acknowledge_idle or [], **_nr(a)))
-def cmd_audit_render(a): _print(operation.audit_render(a.target, **_nr(a)))
+def cmd_audit_render(a):
+    if a.target and a.global_: sys.exit("audit render：<run_id> 和 --global 只能擇一")
+    _print(operation.audit_render(None if a.global_ else a.target, **_nr(a)))
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="qaos", description="QAOS Deterministic Runtime"); sp = ap.add_subparsers(dest="cmd", required=True)
@@ -262,7 +264,8 @@ def main(argv=None):
     p = mss.add_parser("end", parents=[W]); p.add_argument("--by", required=True); p.set_defaults(f=cmd_maint_end)
     p = sp.add_parser("migrate", parents=[W], help="移轉既有資料（維護中執行）"); p.add_argument("--by", required=True); p.add_argument("--acknowledge-idle", action="append", metavar="RUN_ID"); p.set_defaults(f=cmd_migrate)
     au = sp.add_parser("audit"); aus = au.add_subparsers(dest="sub", required=True)
-    p = aus.add_parser("render", parents=[W]); p.add_argument("target", nargs="?", help="<run_id> 或 --global（預設 global）"); p.set_defaults(f=cmd_audit_render)
+    p = aus.add_parser("render", parents=[W], help="重建 audit.log（<run_id>；不給或 --global 為全域 runs/_audit.log）")
+    p.add_argument("target", nargs="?", metavar="RUN_ID"); p.add_argument("--global", dest="global_", action="store_true"); p.set_defaults(f=cmd_audit_render)
     a = ap.parse_args(argv)
     try:
         a.f(a); _notice()

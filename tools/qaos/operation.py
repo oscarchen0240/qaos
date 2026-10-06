@@ -717,6 +717,7 @@ def migrate(by: str, acknowledge_idle: list[str] | None = None, new_request: boo
 def _audit_render(target: str | None):
     mk = marker()
     if mk is None: raise Refused("尚未移轉（沒有移轉標記），不能 render")
+    if target not in (None, "--global") and not store.exists(f"runs/{target}/run.yaml"): raise Refused(f"run {target} 不存在")
     logs = ["runs/_audit.log"] if target in (None, "--global") else [f"runs/{target}/audit.log"]
     cap = store.capturing()
     for lg, data in render_logs(cap, [], logs).items():
