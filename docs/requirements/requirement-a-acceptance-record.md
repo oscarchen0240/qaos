@@ -105,3 +105,51 @@
 10. **計畫保存前的殘留**（附錄 A 4-18）：擁有權的根據是零位元組的認領檔 `staging.d/<op>.claim`（O_EXCL 建立、最先建立、最後刪除），寫入清單 `staging.d/<op>.yaml` 列出將新建的內容檔；保存計畫時本 op 的任何入口（op 目錄、認領檔、清單、本 op 的計畫暫存）已存在就拒絕，所以認領檔授予的清理權只涵蓋它之後本次新建的檔案。每個寫入請求取得鎖後，先核對有登錄紀錄卻沒有計畫檔的 op，有就拒絕、不做任何清理；再先核對全部待刪路徑（每一層不是 symlink、內容檔 hash 相符）才刪。沒有認領檔的內容一律不刪，看起來像 op 目錄的保留並回報。限制：不取鎖的外部程式同時修改這些路徑，不在保證範圍內（不宣稱跨檔原子性）。
 11. **擷取 guard**：只載入 `store` 而沒有 executor 時，擷取與寫入一律拒絕（fail closed）。
 12. **時間比較**：render 判定移轉後的新 run 時，把 `created_at`、`migrated_at` 解析成 UTC 時間再比較；缺時區或格式不合法 → 拒絕。
+
+## P2：spec 引用、外部來源、有型別來源與 CLR 欄位
+
+- **執行 commit**：`60ce8787c9c5662dbb602c54fb362ae432307645`（分支 `qaos/requirement-a`；P2 程式為 `490ba1b`、`33bc228`、`60ce878`）。本紀錄所在的 commit 只改文件
+- **環境**：同 P1
+- **資料**：每個 P2 案例使用獨立的暫存 root，以正式 CLI 建立 spec、引用宣告、CLR、答案與適用紀錄；決策點欄位以入口 D（腳本呼叫 `clarification.new()`）提供。legacy spec 與 legacy CLR 以直接寫入舊格式檔案建立（模擬部署前就存在的資料）。核准單的 `decision.resolutions[]` 要到 P4 才由正式流程寫入，所以 approval 型 SourceRef 只以記憶體中的核准單做函式層測試。AC-02-6 的 RM、TC 情境沿用 session root（前面 WF 測試以正式流程建立）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 274 passed；`tools/validate_phase1.py` ALL CHECKS PASSED。主資料夾既有的 spec.yaml 與 54 張 CLR（唯讀）全部通過新 schema
+- **突變檢查**：讓 `covers` 一律回傳 True、`x16` 一律通過時，5 個相關測試失敗；之後還原
+
+### AC 對照
+
+| AC | 狀態 | 測試（tests/…） | 待 |
+|---|---|---|---|
+| AC-01-1 | 通過 | `test_p2_spec.py::test_ac_01_1_*`（版本不存在、實體檔和登記值不符） | — |
+| AC-01-2 | 通過 | `test_ac_01_2_legacy_spec_passes_schema_and_reads_as_undeclared`、`test_ac_01_2_existing_repo_specs_pass_new_schema` | — |
+| AC-01-3 | 通過 | `test_ac_01_3_*`（add → remove → add；decl_rev 1、2、3；舊紀錄、content_hash、file、v.md 不變） | — |
+| AC-01-4 | 通過 | `test_ac_01_4_reference_only_refused_at_each_entry`（7 個入口各一例；不建立 run、快照不變） | testcase-revision 以 inputs 帶入 reference_only 版本驗證；「TC 版本本身釘在 reference_only 版本上」在正式流程中無法產生（metadata upgrade 會拒絕），engine 另外核對屬防禦性 |
+| AC-01-5 | 通過 | `test_ac_01_5_*` | — |
+| 附錄 A 2-2、2-4 | 通過 | `test_reference_and_upgrade_only_by_human`（system、agent-*）、`test_reference_status_transitions_and_rules` | — |
+| AC-02-1～5 | 通過 | `test_ac_02_1_*`～`test_ac_02_5_*`、`test_metadata_upgrade_only_fills_missing`、`test_source_fields_recorded` | — |
+| AC-02-6 | 通過 | `test_ac_02_6_reference_only_refused_when_used_by_run`、`test_wf_zz_p2_reference_only_targets.py`（run、RM、TC）、`test_ac_02_6_referenced_in_closure_only_is_allowed`（附錄 A 2-8） | — |
+| AC-02-7 | 通過 | `test_ac_02_7_*` | — |
+| AC-10A-57 | 通過 | `test_ac_10a_57_blank_title_warns`、`test_title_normalization` | — |
+| AC-06-1 | 待 P4 | — | 入口 A、B 逐欄抄寫需要決策點 |
+| AC-06-2 | 通過 | `test_p2_sources.py::test_ac_06_2_*`（入口 D） | 入口 A、B 在 P4 |
+| AC-06-3 | 通過 | `test_ac_06_3_*`（只有引用處 → 成立並產生 document_items；沒有引用處、空清單 → 拒絕、快照不變） | — |
+| AC-06-4 | 通過 | `test_ac_06_4_*` | — |
+| AC-06-5 | 通過 | `test_ac_06_5_*` | — |
+| AC-07-29（applicability_add） | 部分 | `test_ac_07_29_applicability_add_abort_and_resume`（兩種入口） | P6 收尾 |
+| AC-08-1、3、5、7、8、14、18、19、25、28、30、31 | 通過 | `test_ac_08_*`、`test_clarification_ref_checks_pinned_rev`、`test_answer_revisions_are_append_only_and_record_basis` | — |
+| AC-08-21～24、35～37 | 通過 | `test_covers_table` | — |
+| AC-08-2 | 部分 | `test_ac_08_2_*`（新產出的空或缺 quote、location FAIL） | 「舊資料不 FAIL」的實際檢查點是 G-SPEC（P4） |
+| AC-08-6、17、27、38 | 部分 | `test_ac_08_6_*`、`test_ac_08_17_and_38_*`、`test_ac_08_27_28_*`（X16 FAIL；SourceRef 本身 PASS） | 「G-SPEC FAIL、不是 E1」在 P4 |
+| AC-08-20、26、29 | 部分 | `test_covers_table`、`test_ac_08_27_28_*`（29：人確認 basis_hash 後 X16 PASS） | 「成為／不成為 E1」在 P4 |
+| AC-08-9、12、13、33、34 | 部分 | `test_approval_ref_validation`、`test_ac_08_33_*`（記憶體中的核准單） | 核准單 `resolutions[]` 的正式寫入在 P4 |
+| AC-08-10 | 部分 | `test_clarification_ref_checks_pinned_rev`（依釘選的 rev 驗證，新答案之後仍 PASS） | 舊 run 恢復在 P4（派發包快照） |
+| AC-08-16、32 | 部分 | `test_ac_08_17_and_38_*`（legacy CLR＋applicability 的合成版本） | DAILYREPORT 實際資料在 P3 移轉後驗收 |
+| AC-08-4 | 待 P3／P4 | — | CLR-CASHFLOW-005 的 rev 0 由移轉建立（P3）；完整 G-SPEC 在 P4 |
+| AC-08-11、15 | 待 P4 | — | 派發與狀態推導 |
+
+### P2 的實作說明（審查時請一併確認）
+
+1. **模組**：spec 的寫入指令集中在新模組 `tools/qaos/spec_ops.py`（`spec import` 從 `cli.py` 移入）；SourceRef 相關的讀取函式在新模組 `tools/qaos/sources.py`。第 2 章 §6 原寫「`store.py` 讀寫版本條目、legacy 預設值」，改由 `spec_ops` 提供。
+2. **介面補充**：附錄 A 2-12、3-23（`--package-file`、`--analysis-policy`、宣告紀錄的 `action`、答案修訂的 `op_id`、紀錄 `sha256` 的定義、`--params` 用 JSON 等）。
+3. **回答必須能建立 basis**：CLR 的 spec 版本沒有匯入時拒絕回答。主資料夾目前只有 `CLR-CASHOUT-001`（APPLIED，`SPEC-CASHOUT-001@1.0` 未匯入）會遇到；它已 APPLIED 不會再回答，但 P3 移轉建立 rev 0 時要處理。既有測試 `test_20b` 因此先以正式流程匯入它使用的 spec，保留原本驗影響掃描的意圖。
+4. **第 6 章 A3 提前**：狀態機加入 ANSWERED → ANSWERED（追加答案修訂），讓「答案修訂只能追加」可以實際運作；第 6 章其餘轉換（INCORPORATED、新的 apply 檢查等）仍在 P5。
+5. **SourceRef 在需求、TC、RR、bug schema 中的位置**（第 3 章 §6.3、§14）沒有在 P2 加入：這些位置要配合 G-SPEC、G-DESIGN 的新檢查才有意義，移到 P4 一起做。P2 只提供 defs 的 SourceRef 與驗證函式。
+6. **開單關卡與去重**（入口 C 的 `--consulted`、issue key）屬 P5；P2 的 `clarification.new()` 只在給了決策點欄位時驗證，舊的呼叫端不受影響。

@@ -3917,6 +3917,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 2-9 | title 正規化後為空的警告 | 匯入成功；stderr 輸出「警告：title 正規化後為空，文件名稱比對不會使用這個 title」，並寫入一筆 audit 事件；不寫入 `spec.yaml` | I |
 | 2-10 | FIX-03 的細節（規則清單維護者、`candidates_ack` 結構、同名不同 hash 的分類、規則版本編號） | 屬第二批，於第二批設計時定案 | I |
 | 2-11 | remove 的紀錄 | 記在 `reference_declarations` 的該筆（by、at、reason） | I |
+| 2-12 | P2 實作補充的介面 | `spec import` 另有 `--package-file <zip\|manifest>`（計算 `package_sha256`；`--package` 是名稱）與 `--analysis-policy`（手冊等文件以 `reference_only` 匯入）；新匯入的條目一律帶 `source`（至少 `source_bytes_sha256`），不是 legacy 條目；`--external-filename` 不給時不做同名比對。`reference_declarations[]` 每筆另記 `action`（add／remove／declare_empty）。add 時拒絕重複宣告與引用自己；目前有引用時拒絕 `declare-empty`（先 remove）。`metadata_history[]` 每筆 `{at, by, reason, note?, op_id, changes: {欄位: {old, new}}}` | I |
 
 ### A.3 CLR 欄位、有型別來源、去重與開單關卡（第 3 章）
 
@@ -3944,6 +3945,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 3-20 | `answer_sha256` | 答案文字（UTF-8）的 sha256 | I |
 | 3-21 | 第一批的 `refs.py` | 只做 SourceRef 的解析與驗證函式；`refs report` 屬第二批 | I |
 | 3-22 | `defined_by_decision` 另附的補充 clarification 來源 | 也必須通過 X16（比「至少一筆」更嚴格） | R |
+| 3-23 | P2 實作補充的定義 | 答案修訂每筆另記 `op_id`；回答時 CLR 的 spec 版本必須已匯入（無法建立 basis → 拒絕回答，不寫入）。`applicability[]` 與答案修訂以外的紀錄的 `sha256` 為該筆紀錄（不含 `sha256` 欄位）的 canonical sha256。`applicability add` 的 `answer_rev` 必須已存在於 `answer_revisions`（舊 CLR 的 rev 0 由移轉或下一次 `answer` 寫入）；`--params` 以 JSON 物件給（`{}` 明寫）。`evidence_addenda` 的來源是 SourceRef（依 CLR 的 spec 版本驗證）或 document 型 `{type: document, file_name, sha256, package_sha256?, location}`。開單時給了決策點欄位就驗證（`known_rules`／`conflict_sides` 的 SourceRef、`coverage` 中的 SpecPin、文件索取單的引用處），並由 `missing_sources` 產生 `document_items`（`D01`…）。第 6 章 A3（ANSWERED → ANSWERED 追加答案修訂）在 P2 加入狀態機 | I |
 
 ### A.4 executor（第 4 章）
 
