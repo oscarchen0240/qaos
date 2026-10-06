@@ -115,6 +115,8 @@ def _validate_clarification(ref, loader, errors):
 
 def resolution_entry(ref, loader, at=None) -> tuple[dict | None, list[str]]:
     """approval 型：核對核准單與條目，回傳 (條目, errors)。at = (requirement_id, question_id)。"""
+    shape = _shape_errors(ref)
+    if shape: return None, shape
     a = loader.approval(ref["approval_id"]); errs = []
     if a is None: return None, [f"approval 型來源：{ref['approval_id']} 不存在"]
     if a["type"] != "RESOLVE_AMBIGUITY": return None, [f"approval 型來源：{ref['approval_id']} 是 {a['type']}，只接受 RESOLVE_AMBIGUITY"]
@@ -154,6 +156,8 @@ def validate(ref: dict, *, target=None, at=None, loader=None) -> tuple[list[str]
 REQUIRED = {"spec": ("spec_id", "spec_version", "content_hash", "location", "quote"), "clarification": ("clarification_id", "answer_rev", "answer_sha256", "quote"),
             "approval": ("approval_id", "decision_sha256", "resolution_index", "quote")}
 
+INDEX_FIELDS = {"clarification": ("answer_rev",), "approval": ("resolution_index",)}
+
 def _shape_errors(ref) -> list[str]:
     """先檢查 type 與必要欄位（訊息指出缺哪個），再以 defs 的 SourceRef 該型分支驗證形狀（型別、hash 格式、索引非負）。"""
     if not isinstance(ref, dict) or ref.get("type") not in REQUIRED: return [f"SourceRef 的 type 必須是 spec、clarification 或 approval：{ref!r}"[:200]]
@@ -161,6 +165,8 @@ def _shape_errors(ref) -> list[str]:
     if missing: return [f"{ref['type']} 型來源缺少 {', '.join(missing)}（新產出的 quote、location 不能是空字串）"]
     from jsonschema import Draft202012Validator
     from . import schema
+    bad_idx = [k for k in INDEX_FIELDS.get(ref["type"], ()) if type(ref[k]) is not int]
+    if bad_idx: return [f"{ref['type']} 型來源的形狀不合法：{', '.join(bad_idx)} 必須是整數表示（不接受 boolean、字串或 0.0 這類浮點寫法；附錄 A 3-24）"]
     branch = list(REQUIRED).index(ref["type"])
     v = Draft202012Validator({"$ref": f"https://qaos.local/schemas/common/defs.schema.json#/$defs/SourceRef/oneOf/{branch}"}, registry=schema.registry())
     return [f"{ref['type']} 型來源的形狀不合法：{e.json_path}: {e.message}" for e in v.iter_errors(ref)]
@@ -190,6 +196,8 @@ def x16(ref: dict, scope: dict, dp_basis_hash: str, *, loader=None, at=None) -> 
     """clarification 型來源作為依據或 resolution 時，(a) 答案自身 basis_hash 相等且自身範圍涵蓋，或 (b) 有相符的人工 applicability。
     approval 型遞迴檢查條目內部的 clarification source；spec 型不適用。"""
     loader = loader or StoreLoader()
+    shape = _shape_errors(ref)
+    if shape: return shape
     if ref["type"] == "spec": return []
     if ref["type"] == "approval":
         entry, errs = resolution_entry(ref, loader, at)
@@ -209,6 +217,8 @@ def x16(ref: dict, scope: dict, dp_basis_hash: str, *, loader=None, at=None) -> 
 # ---------------------------------------------------------------- effective_basis（§10）
 def effective_basis(ref: dict, *, at=None, loader=None) -> tuple:
     loader = loader or StoreLoader()
+    shape = _shape_errors(ref)
+    if shape: raise SourceError("; ".join(shape))
     if ref["type"] == "clarification": return ("clarification", ref["clarification_id"], ref["answer_rev"], ref["answer_sha256"])
     if ref["type"] == "spec": return ("spec", ref["spec_id"], ref["spec_version"], ref["content_hash"], ref["location"])
     entry, errs = resolution_entry(ref, loader, at)

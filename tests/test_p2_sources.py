@@ -433,3 +433,34 @@ def test_p2_02_source_ref_index_shape(field, value, tmp_path):
     errs, _ = mem(root, f"print(json.dumps(sources.validate({{**{ref!r}, {field!r}: 5}}, at={at!r}, loader=L)))", apr)
     assert errs and "沒有" in errs[0]                                                                      # 超界
     assert mem(root, f"print(json.dumps(sources.validate({ref!r}, at={at!r}, loader=L)))", apr)[0] == []   # 合法的 0
+
+# ---------------------------------------------------------------- P2 局部複驗 P2R2-01：索引只接受整數表示（附錄 A 3-24）
+@pytest.mark.parametrize("field", ["answer_rev", "resolution_index"])
+@pytest.mark.parametrize("value", [0.0, 1.0, 0.5, -1])
+def test_p2r2_01_float_index_is_an_error_everywhere(field, value, tmp_path):
+    """validate、x16、effective_basis 都回傳驗證錯誤（不拋 TypeError、不截斷成 0、不誤取其他修訂）；approval 內部來源同樣。"""
+    root = mk(tmp_path, refs=False); at = ("REQ-AUTH-001", "Q01"); cid = scoped_clr(root); answer(root, cid, "下限改為 10 碼。")   # 有 rev 0、rev 1
+    inner = cref(root, cid, 0, "下限是 8 碼"); apr = approval()
+    ref = {**inner, "answer_rev": value} if field == "answer_rev" else {**aref(root, apr), "resolution_index": value}
+    bh = basis_hash(root)
+    out = mem(root, f"""
+r = {ref!r}
+v = sources.validate(r, at={at!r}, loader=L)[0]
+x = sources.x16(r, {D_SCOPE!r}, {bh!r}, loader=L, at={at!r})
+try: sources.effective_basis(r, at={at!r}, loader=L); e = "resolved"
+except sources.SourceError as ex: e = str(ex)
+print(json.dumps([v, x, e]))""", apr)
+    for got in (out[0], out[1], [out[2]]):
+        assert got and "形狀不合法" in got[0] and field in got[0], out
+    if field == "answer_rev":                                                                             # 包在核准單內部的來源也一樣
+        wrapped = approval(source={**inner, "answer_rev": value})
+        errs, _ = mem(root, f"print(json.dumps(sources.validate({aref(root, wrapped)!r}, at={at!r}, loader=L)))", wrapped)
+        assert errs and "形狀不合法" in errs[0] and "APR-0900 resolutions[0] 的 source" in errs[0], errs
+    assert mem(root, f"print(json.dumps(sources.validate({(inner if field == 'answer_rev' else aref(root, apr))!r}, at={at!r}, loader=L)))", apr)[0] == []   # 整數 0 仍通過
+
+def test_p2r2_01_addenda_cli_reports_error_without_traceback(tmp_path):
+    root = mk(tmp_path, refs=False); cid = scoped_clr(root); before = U.snapshot(root)
+    src = {**cref(root, cid, 0, "下限是 8 碼"), "answer_rev": 0.0}
+    r = U.q(root, "clarification", "addenda", "add", cid, "--source", json.dumps(src), "--note", "x", "--by", "oscar")
+    assert r.returncode == 1 and "Traceback" not in r.stderr and "形狀不合法" in r.stderr, r.stderr
+    assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
