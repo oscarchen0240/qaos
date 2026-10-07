@@ -297,7 +297,7 @@ def test_ac_09_73_74_t5_refuses_with_report(case):
     snap = U.snapshot(root); n = len(plans(root))
     r = U.q(root, *rb_args(x)); assert r.returncode != 0 and "T5" in r.stderr, r.stderr
     path = s["path"] if case != "progress_deleted" else prog(root, xp, s).relative_to(P(root)).as_posix()
-    assert (s["path"] in r.stderr or path in r.stderr) and ("記錄值" in r.stderr or "：" in r.stderr)
+    assert (s["path"] in r.stderr or path in r.stderr) and f"步驟 {s['step_id']}" in r.stderr
     assert any(w in r.stderr for w in ("缺完成紀錄", "既不是 before 也不是 after", "輸出不存在或被還原", "完成紀錄")), r.stderr   # 原因
     assert U.diff(snap, U.snapshot(root)) == NOTHING and len(plans(root)) == n and status_files(root, x) == []
 
