@@ -580,12 +580,11 @@ def show(clr_id: str) -> dict:
 def stale_tcs(clr_id: str) -> dict:
     """依賴本 CLR、但尚未依最新答案處理的 TC（第 6 章 §7；不保證完整）。掃描規則同 (a)～(d)：目標＝各 spec 版本最新 revision 中採用本 CLR
     任一 answer_rev 的決策點（A5 之後 revision 還沒重新納入時仍能找到依賴舊答案的 TC），加上歷次 applied landing 確認與延後的目標；單位依 (product, area)；另外列出任何單位中 decision_refs 指向本 CLR 舊 rev 的 TC。
-    關鍵字取最近一次 applied landing，沒有時取最近一次掃描紀錄（附錄 A 6-19）。"""
+    關鍵字取最近一次 applied landing（無關鍵字結案時為空集合）；完全沒有 applied landing 時才取最近一次掃描紀錄（附錄 A 6-19）。"""
     c = clr.load(clr_id); rev = (c.get("answer_revisions") or [{}])[-1]; cid = clr_id
-    kws = []
-    for l in reversed(c.get("landings") or []):
-        if l.get("type") == "applied" and l.get("final_keywords"): kws = l["final_keywords"]; break
-    if not kws and c.get("scan_ids"):
+    applied = next((l for l in reversed(c.get("landings") or []) if l.get("type") == "applied"), None)
+    kws = list(applied.get("final_keywords") or []) if applied else []      # 無關鍵字結案（no_keyword_reason）也以該 landing 為準，不退回舊掃描
+    if applied is None and c.get("scan_ids"):
         try: kws = load_scan(c, c["scan_ids"][-1])["keywords"]
         except LifecycleError: kws = []
     targets = {target_id(t): t for t in _adopting_points(c)}

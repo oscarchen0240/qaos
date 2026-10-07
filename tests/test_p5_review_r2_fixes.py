@@ -2,7 +2,7 @@
 狀態都以正式流程建立；標明「函式層」的子例直接呼叫內部函式。"""
 import json
 from tests.test_p4_dispatch import mkroot, py
-from tests.test_p5_paths import BUG
+from tests.test_p5_paths import BUG, HDR
 
 # 退回後重做：控制的是 agent 新產出的合法 artifact ID（不改 runtime 狀態），讓「舊稿 ID 大、新稿 ID 小」，檔名排序會選到舊稿。
 REDO = BUG + """
@@ -137,3 +137,23 @@ print(json.dumps({"first": first, "bad": [bad_hit_level, bad_hit_cov, bad_new_le
     for b in out["bad"]: assert "不符 schema" in b.get("error", ""), b
     assert out["h"][0] == out["h"][1] and out["l"][0] == out["l"][1]                                   # 沒有連結、沒有 LINK audit、既有單不變
     assert out["same"] == {"id": out["first"]["id"], "linked": True} and out["l"][2] == out["l"][1] + 1
+
+def test_p5_03_stale_tcs_keywords_follow_latest_applied_landing(tmp_path):
+    """P5-03（第 6 章 §7、附錄 A 6-19）：無關鍵字結案（no_keyword_reason）後，stale-tcs 以該 landing 的空關鍵字為準，不退回舊掃描的關鍵字。
+    正例：完全沒有 applied landing 時，仍取最近一次掃描的關鍵字。"""
+    root = mkroot(tmp_path)
+    out = py(root, HDR + """
+ra = P.full_ra()                                                                         # 建立含「刪除」的 ACTIVE TC
+def no_req_clr(q):
+    c = clr.new("demo", "DEMO", F.SPEC, F.VER, q, "oscar", consulted=["SPEC-DEMO-001@1.0"], new_request=True)["clarification_id"]
+    clr.answer(c, "維持現狀。", "pm", "no_change", "oscar", new_request=True); return c
+a = no_req_clr("子站台刪除後要不要保留紀錄？")
+s = L.impact(a, ["刪除"], [], "oscar", new_request=True)
+ok = P.apply_(a, path="a7", no_keyword_reason="答案不改任何行為，背景文字命中不相關", tc_conclusions=[])
+b = no_req_clr("子站台刪除要不要二次確認？")
+L.impact(b, ["刪除"], [], "oscar", new_request=True)
+print(json.dumps({"scan": [x["tc_id"] for x in s["candidates"]], "ok": ok, "a": clr.load(a)["status"], "land": clr.load(a)["landings"][-1],
+                  "stale_a": L.stale_tcs(a)["tcs"], "stale_b": L.stale_tcs(b)["tcs"]}, default=str))""")
+    assert out["scan"] and out["a"] == "APPLIED" and "final_keywords" not in out["land"], out
+    assert out["stale_a"] == []                                                              # 不再以舊 scan 的「刪除」列出 TC
+    assert {x["tc_id"] for x in out["stale_b"]} == set(out["scan"]) and all(r == "keyword:刪除" for x in out["stale_b"] for r in x["reasons"])
