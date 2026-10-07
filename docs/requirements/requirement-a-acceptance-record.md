@@ -464,7 +464,7 @@
 
 ### 仍需正式 M1 或 Oscar 決定的項目
 
-- **M1**：部署當天重新讀取主資料夾的業務現況（含 9/18 未追蹤的 run、執行紀錄與證據）後重做預演；第二份工作複本的故障演練（FP-M2、M3、R0、W、P1）；AC-09-20、24、64、66、67；AC-08-16、32 的完整驗證（需 DAILYREPORT 0.3）；真實 PLATFORMRULE 0.2 與 DAILYREPORT 0.3 的正式 CIA；依附錄 A 5-10 以當天真實 ID 驗收；AC-08-16 的需求 ID（AC 寫 REQ-DAILYREPORT-012，資料中為 011）以 M1 的實際對象驗證；M1 以當天資料重新計算附錄 A 6-38 的 baseline，與清單不同時停下交 Oscar
+- **M1**：2026-10-08 已執行，結果見下方「M1 預演」段（受阻停止）。仍待 Oscar 決定：D-M1-1（AC-09-64 舊 validate 的解讀）、D-M1-2（當天資料不具備項目的結案方式）、D-M1-3（AC-08-16 的需求 ID）、D10（M3 模式）
 - **之後的需求議題**（Oscar 2026-10-08：先維持現行做法）：ARCADE 0.7 有 1 條 RETIRED 需求，依「最新 revision 有非 ACTIVE 需求」規則，移轉後 9 條 ACTIVE TC 不能直接 testcase-revision；是否改為只擋 DRAFT 另議
 - **觀察**（不是本階段缺陷，列給審查參考）：G7 不檢查 `requirement_diff` 的 change 標記是否正確；G-COMPARE 不檢查 `new_draft_id` 是否為本輪 Draft、是否每張 affected TC 都有比對（與 6-36 同類）
 
@@ -476,3 +476,34 @@
 - `python3 tools/validate_phase1.py`：**ALL CHECKS PASSED**（含 [4] fork 使用為零）
 - 中途紀錄：`e761727`（merge 後）462 passed、`7ef07ee`（F1、F5 後）467 passed、`7279e29`（收尾測試後）609 passed，validate 都通過
 - 自審：交審前以獨立 agent 找反例，提出 4 項（AC-A-B1-5 缺執行結果、AC-08-10 證據不對題、一條永遠成立的測試斷言、F5 拒絕訊息對確認重複的 run 提示 a6b），都已修正（見「P6 的修正」）
+
+## M1 預演（2026-10-08）
+
+- **結果**：**受阻停止**。AC-09-64 的 R5「舊程式的 validate 通過」照字面不成立，待 Oscar 決定（D-M1-1）。其他項目都已完成，全部符合預期
+- **程式**：`4e34efb2633cfe3d1b0857f017e8c368ba5c1f77`（未修改程式）
+- **資料**：主資料夾 `/Users/oscar/Desktop/qa-agent-os` 當天的工作目錄，含未追蹤的 9/18 業務檔（`runs/RUN-20260918-012`、`013`，`executions/2026-09/EXE-20260918-001`、`002`，`evidence/testrun-6`）
+  - 以 rsync 複製，排除 `.git`、`.codex`、`review-handoff`、`.claude`、`AGENTS.md`、admin-ui 的 `node_modules`／`.venv`、快取、`.DS_Store`
+  - 再覆蓋 f5188b0→4e34efb 的 116 個程式／定義檔，模擬 M2。兩者的業務資料相同
+  - 來源 4632 檔，唯讀
+- **原始資料唯讀**：主資料夾逐檔 sha256（排除 `.git`，20513 檔）在複製前、複製後、中途、M1 結束時四次都相同（tree sha256 `d14f4f4f…`）
+- **報告**：`review-handoff/clr-spec-investigation/requirement-a-m1-report.md`（未進版控）。原始輸出在 Claude session 的 scratchpad
+
+| 項目 | 結果 |
+|---|---|
+| 業務現況（§4.1） | 與 2026-10-06 相同：RUNNING `RUN-20260914-001`、WAITING_HUMAN `RUN-20261002-001`、PENDING 只有 APR-0192。本機 `main` 已與 `origin/main` 同步。新增未追蹤的 9/18 兩個 CANCELLED spec-to-bug run 與執行紀錄、證據，已納入 |
+| 附錄 A 6-38 baseline | 以當天資料重算：移轉前 13 檔、移轉後 14 檔，**與清單相同**（ack、cancel 兩份都相同） |
+| 第一份工作複本 8 步 | `tests/p6_rehearsal.py`。acknowledge-idle、cancel-run 各一份，0 項失敗。包含 AC-A-B1-4 逐項（R000 16 個、TC sidecar 96／44／57 共 499、CLR rev 0 42 張、`audit.legacy.log` 94 份、untouched 全部吻合）、AC-09-46、AC-09-63 |
+| 故障演練 | FP-M2（直接 rollback）、FP-M3、FP-R0、FP-W（直接 rollback、續做）、FP-P1，各以同請求重送與 `operation resume` 兩種入口驗收（FP-M2 與 FP-W 的直接 rollback 各一組），共 10 組，每組一份全新子複本，151 項全部 PASS |
+| AC-09-64 | **受阻**。R1～R4 正常：新程式 rollback、verify；R4 後追蹤檔全部等於 f5188b0。R5 中舊 `validate_phase1` 通過、舊 pytest 59 passed、restore／remove／untouched 全部吻合、R6 之後舊程式照常執行且不讀鎖檔，這些都符合。<br>逐檔舊 `bin/qaos validate` 有兩點不符字面預期：(1) 舊程式＋原資料本來就有 23 檔 INVALID，回復後逐檔結果相同；(2) rollback 保留的 4 個 `runs/_audit.d/*.yaml` 被舊 `schema.infer`（`runs/` → workflow-run）判 INVALID |
+| AC-09-20 | 當天資料不具備（沒有 WAITING_HUMAN 的 testcase-revision run）。同機制以 RUN-20261002-001 的複本驗證派發包帶 sidecar R000（AC-09-3），PASS |
+| AC-09-24 | 新 regression-generation run 不綁 revision、沒有 sidecar，PASS。既有 run 的部分：當天資料不具備 |
+| AC-09-66、67 | 當天資料不具備（所有 run 都有 `audit.log`；所有 CLR 都有 `.md`） |
+| AC-08-4 | CLR-CASHFLOW-005 rev 0 的 SourceRef 本身驗證 PASS（函式層；不宣稱 Draft 或 G-SPEC 有效）；X16 依 6-35 FAIL |
+| AC-08-16 | 實際對象：CLR-DAILYREPORT-010 自身是 REQ-DAILYREPORT-011；它的 APPLIED 紀錄也涵蓋 REQ-012（現金淨收）。AC 的 REQ-012 是 applicability 的目標，與資料不矛盾（D-M1-3）。0.3 部分：當天資料不具備 |
+| AC-08-32 | CLR-010 rev 0 的 legacy basis（0.1、`target_decl_rev` 0、閉包空）PASS。0.3 部分：當天資料不具備 |
+| AC-09-27 | 真實 `RUN-20260914-001` 移轉後的 sidecar 綁 DAILYREPORT 0.1 R000，PASS。這個 workflow 沒有 RR，T1、T2 移轉前已 DONE，剩下的 T4（Curator）不需要派發包（附錄 A 1-6）。RR／Validator 派發包的部分：當天資料不具備 |
+| AC-09-31 | 96 條＝0.1 R000 48＋0.2 R000 48，g_impact PASS；只判 0.2 → G2、G5 FAIL。0.2→0.3：當天資料不具備 |
+| 真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA | 當天資料不具備。移轉後 16 個 RM 都不是過時狀態，沒有真實的裁決變更；沒有 DAILYREPORT 0.3 |
+| 附錄 A 5-10 | 真實 ID 以當天資料核對（RUN-20260914-001、RUN-20261002-001、APR-0006／0007／0192、CLR-CASHFLOW-005、CLR-DAILYREPORT-010、CLR-CASHOUT-001） |
+| 附錄 A 6-35 | 現存 ANSWERED 的舊格式 CLR：0 張。之後會遇到的 OPEN／ASKED 舊格式單 10 張（CLR-CASHFLOW-001、002、007，CLR-DAILYREPORT-011、014，CLR-SITELIST-013～017），與 P6 快照相同 |
+| M3 模式（D10） | 兩種模式都全部通過。建議 acknowledge-idle（移轉不夾帶業務決定、回復面較小、恢復路徑已驗證），由 Oscar 決定 |
