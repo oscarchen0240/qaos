@@ -58,6 +58,12 @@ def save(c: dict):
     store.save(path, c); store.write_derived(path[:-len(".yaml")] + ".md", _render(c))
     return path
 
+def _check_request_shape(c: dict):
+    """開單關卡（第 3 章 §5；附錄 A 3-29）：在去重之前以 schema 驗證完整的待開單輸入，連結既有單與新開單受同一個關卡約束。
+    尚未配發的 ID 與狀態以合法的佔位值代入，不配號、不寫檔。"""
+    errs = schema.errors({**c, "clarification_id": f"CLR-{c['functional_area']}-000", "status": "OPEN"}, "spec/clarification.schema.json")
+    if errs: raise ClarificationError("開單關卡：輸入不符 schema：" + "; ".join(errs[:3]))
+
 DECISION_FIELDS = ("kind", "question_id", "topic", "subject", "params", "role_scope", "level", "known_rules", "conflict_sides", "conflict_note",
                    "coverage", "possible_source_missing", "decision_needed", "detail_gaps")
 
@@ -167,6 +173,7 @@ def new(product, area, spec_id, spec_version, question, by, context="", options=
     if key_material(c) is not None:
         try: c["issue_key"] = issue_key(c, sources.basis(spec_id, spec_version))
         except (spec_ops.SpecError, sources.SourceError) as e: raise ClarificationError(f"無法建立 issue key 的 basis：{e}")
+    _check_request_shape(c)
     hit, rel, warns = _dedupe(c, list_(open_only=False))
     if hit is not None:
         store.audit(run_id, by, "LINK_CLARIFICATION", f"{hit['clarification_id']}（issue key 相同，不新開）: {question}")

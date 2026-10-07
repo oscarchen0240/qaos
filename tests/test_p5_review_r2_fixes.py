@@ -108,3 +108,32 @@ print(json.dumps({"old_status": store.load(store.find_artifact(olds[-1]))["statu
     assert out["old_status"] == "VALID"                                     # 前提：舊稿殘留為 VALID，而且 ID 較大
     assert out["final"] == out["new"] and out["scope"] == ["REQ-DEMO-002"]
     assert out["mine"] == ["SPEC-DEMO-001@1.0:REQ-DEMO-002#Q01"]
+
+GATE = """
+from tests import p4_flow as F
+from tools.qaos import clarification as clr, store
+def mk(subject="site.child.delete", level="minor", cov=None):
+    try:
+        c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "agent-spec-analyst", requirement_id="REQ-DEMO-001", new_request=True, kind="spec_question",
+                    question_id="Q01", topic="permission", subject=subject, role_scope=["admin"], params={}, level=level, known_rules=[], coverage=cov or F.cov())
+        return {"id": c["clarification_id"], "linked": bool(c.get("_linked"))}
+    except clr.ClarificationError as e: return {"error": str(e)}
+def links(): return [store.load(p)["action"] for p in store.glob("runs/_audit.d/*.yaml")].count("LINK_CLARIFICATION")
+"""
+
+def test_p5_02_dedupe_hit_still_validates_input(tmp_path):
+    """P5-02／P5-R2-03（第 3 章 §5、附錄 A 3-29）：決策點欄位無效時，不論有沒有同 key 的既有單都拒絕；有同 key 時不連結、不寫 LINK audit，既有 CLR 不變。
+    正例：同 key、欄位合法 → 照常連結。"""
+    root = mkroot(tmp_path)
+    out = py(root, GATE + """
+first = mk(); h0 = store.sha256_bytes((store.ROOT / store.clarification_path("demo", "DEMO", first["id"])).read_bytes()); l0 = links()
+bad_hit_level = mk(level="INVALID")
+bad_hit_cov = mk(cov={**F.cov(), "references_status": "bogus"})
+bad_new_level = mk(subject="site.child.rename", level="INVALID")                                    # 沒有同 key：原本就由 schema 拒絕
+h1 = store.sha256_bytes((store.ROOT / store.clarification_path("demo", "DEMO", first["id"])).read_bytes()); l1 = links()
+same = mk(); l2 = links()
+print(json.dumps({"first": first, "bad": [bad_hit_level, bad_hit_cov, bad_new_level], "h": [h0, h1], "l": [l0, l1, l2], "same": same}))""")
+    assert "id" in out["first"] and not out["first"]["linked"]
+    for b in out["bad"]: assert "不符 schema" in b.get("error", ""), b
+    assert out["h"][0] == out["h"][1] and out["l"][0] == out["l"][1]                                   # 沒有連結、沒有 LINK audit、既有單不變
+    assert out["same"] == {"id": out["first"]["id"], "linked": True} and out["l"][2] == out["l"][1] + 1
