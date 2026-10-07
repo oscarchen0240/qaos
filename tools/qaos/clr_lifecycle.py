@@ -141,6 +141,7 @@ def resolve_targets(c: dict, landed_in=()) -> list:
         if not d.get("revisions"): continue
         for t in _targets_in_revision(c, rm.pin_of(d["spec_id"], d["spec_version"], d["revisions"][-1]["revision"])): found.setdefault(target_id(t), t)
     for rid in landed_in:
+        if bug_rejected(rid): continue                                                 # 6-37：Bug 已 REJECTED 的 run 不提供採用目標
         run = store.load(f"runs/{rid}/run.yaml")
         try: pin = rm.run_pin(run)
         except rm.RMError: pin = None
@@ -398,7 +399,10 @@ def apply(clr_id: str, path: str, by: str, landed_in=(), targets=(), defer_targe
             if not store.exists(f"runs/{rid}/run.yaml"): raise LifecycleError(f"--landed-in {rid} 不存在")
             st = store.load(f"runs/{rid}/run.yaml")["status"]
             if st != "COMPLETED": raise LifecycleError(f"--landed-in {rid} 的狀態是 {st}，不是 COMPLETED")
-            if path == "a6" and bug_rejected(rid): raise LifecycleError(f"--landed-in {rid} 的 Bug 已 REJECTED，不能作為 a6 的落地證據；答案只經 bug reject 路徑落地時改用 --path a6b，否則以其他 run 落地（附錄 A 6-37）")
+            if path == "a6" and bug_rejected(rid):
+                dup = store.load(f"runs/{rid}/entities/bug.yaml").get("duplicate_of")
+                hint = f"確認重複於 {dup}，請以其他 run 落地" if dup else "答案只經 RESOLVE_AMBIGUITY reject 落地時改用 --path a6b，否則以其他 run 落地"
+                raise LifecycleError(f"--landed-in {rid} 的 Bug 已 REJECTED，不能作為 a6 的落地證據；{hint}（附錄 A 6-37）")
     if path == "a6":
         resolved = {target_id(t): t for t in resolve_targets(c, landed_in)}
         unknown = [t for t in list(targets) + list(defer) if t not in resolved]

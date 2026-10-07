@@ -107,7 +107,7 @@ b2, evd2 = bug_run(); bd2 = bug_draft(b2, evd2, **adopt(cid)); assert bug_valida
 ok = P.apply_(cid, landed_in=[b2], targets=[T], keywords=["刪除"], tc_conclusions=concl)
 print(json.dumps({"inc": inc, "g2": g2["result"], "run": run["status"], "ent": ent, "bad": bad, "h": [h0, h1], "rt": rt, "fb": fb, "ok": ok, "s": clr.load(cid)["status"]}, default=str))""")
     assert out["inc"] == "INCORPORATED" and out["run"] == "COMPLETED" and out["ent"] == "REJECTED"
-    assert "Bug 已 REJECTED" in out["bad"].get("error", "") and "a6b" in out["bad"]["error"], out["bad"]
+    assert "Bug 已 REJECTED" in out["bad"].get("error", "") and "確認重複於 BUG-DEMO-0001" in out["bad"]["error"] and "a6b" not in out["bad"]["error"], out["bad"]
     assert out["h"][0] == out["h"][1] and out["rt"] == [] and out["fb"] is None
     assert "error" not in out["ok"] and out["s"] == "APPLIED", out["ok"]
 
@@ -117,5 +117,5 @@ def test_f5_rejected_ambiguity_bug_run_is_not_a6_landed_in(tmp_path):
     out = py(root, _rejected_bug_case("AMBIGUITY") + """
 print(json.dumps({"run": run["status"], "ent": ent, "bad": bad, "h": [h0, h1], "rt": rt, "fb": fb, "s": clr.load(cid)["status"]}, default=str))""")
     assert out["run"] == "COMPLETED" and out["ent"] == "REJECTED"
-    assert "Bug 已 REJECTED" in out["bad"].get("error", ""), out["bad"]
+    assert "Bug 已 REJECTED" in out["bad"].get("error", "") and "--path a6b" in out["bad"]["error"], out["bad"]
     assert out["h"][0] == out["h"][1] and out["rt"] == [] and out["fb"] is None and out["s"] == "INCORPORATED"
