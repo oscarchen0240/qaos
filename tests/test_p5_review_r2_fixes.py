@@ -250,3 +250,21 @@ print(json.dumps(r))""")
     for k in ("no_hash", "str_consulted"): assert out[k].startswith("gate: 開單關卡：輸入不符 schema"), (k, out[k])
     assert out["bad_area"].startswith("gate: 開單關卡：functional_area 必須是大寫英數"), out["bad_area"]
     assert out["ok"] == "accepted"
+
+def test_p5_r2_04_legacy_e6_applicability_alone(tmp_path):
+    """P5-R2-04 自審補充（附錄 A 6-35 (2)）：basis 改變時，不做 metadata upgrade、只以 applicability 確認也能讓 X16 成立 → INCORPORATED；
+    對照：applicability 之前直接引用 → X16 FAIL。"""
+    root = mkroot(tmp_path)
+    a = py(root, E6 + """
+rid, cid = e6_answered(); engine.cancel(rid, F.BY, new_request=True)
+print(json.dumps({"cid": cid}))""")
+    U.q(root, "spec", "reference", "add", "SPEC-DEMO-001@1.0", "--ref", "SPEC-REFB-001@1.0", "--role", "normative", "--by", "oscar", "--new-request", check=True)
+    out = py(root, E6 + f"""
+from tools.qaos import sources
+cid = "{a['cid']}"
+rid = F.new_run(); g1 = F.analyze(rid, [P.conflict_req(1, res(cid))])
+bh = sources.basis_hash(sources.basis(F.SPEC, F.VER))
+clr.applicability_add(cid, 0, "REQ-DEMO-001", "site.child.delete", ["admin"], {{}}, "SPEC-DEMO-001@1.0", "人工確認舊答案適用新決策點", "oscar", confirm_basis=bh, new_request=True)
+g2 = F.analyze(rid, [P.conflict_req(1, res(cid))]); c = clr.load(cid)
+print(json.dumps({{"g1": g1["result"], "g2": g2["result"], "s": c["status"], "subject": c.get("subject")}}, default=str))""")
+    assert out == {"g1": "FAIL", "g2": "PASS", "s": "INCORPORATED", "subject": None}, out
