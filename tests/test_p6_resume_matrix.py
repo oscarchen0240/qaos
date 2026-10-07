@@ -232,7 +232,8 @@ def tval_business(root, info, op, plan, fault):
 @pytest.mark.parametrize("entry", ENTRIES)
 def test_9h_tc_versions_and_activate_approve(entry):
     """AC-07-9h（部分 TC 版本檔等於 before → 只寫那些；所有列入的 TC 都是 PENDING_APPROVAL）、AC-07-22（G-TVAL 的 submit_gate）、
-    AC-07-23、24（ACTIVATE 的 approve 與 complete_run）：每個中止點續做；核准後兩張 TC 各只有 v1、ACTIVE，run COMPLETED 一次。"""
+    AC-07-23、24（ACTIVATE 的 approve 與 complete_run）：G-TVAL 的 gate 以 apply_every_point 逐點續做（FP-W 由兩種入口交替分擔，見 points_for）；
+    ACTIVATE 的 approve 只在指定代表點（第 2 步輸出之後）中止、以本 entry 續做。核准後兩張 TC 各只有 v1、ACTIVE，run COMPLETED 一次。"""
     _, info = template("tval", build_tval); rid = info["rid"]; args = ["gate", rid, "T3"]
     steps = reference_steps("tval", build_tval, args)
     vers = [s["seq"] for s in steps if s["path"].startswith("testcases/versions/")]

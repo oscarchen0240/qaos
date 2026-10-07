@@ -392,6 +392,8 @@
 | P6-S00-05 | AC-08-10 原本只有函式層與派發包快照的證據 | 補正式流程測試 | `test_p6_s00_fixes.py::test_ac_08_10_*` |
 | P6-S00-06 | `test_ac_09_73_74_t5_refuses_with_report` 有永遠成立的替代斷言 | 改為斷言「步驟 <step_id>」 | 同左 |
 | P6-S00-07 | F5 的拒絕訊息對 CONFIRM_DUPLICATE 的 run 也提示 a6b（a6b 對它必拒） | 依 `duplicate_of` 分兩種提示；`resolve_targets` 也略過 REJECTED 的 run（防禦性，正式入口由 a6 的拒絕先擋下） | `test_f5_*` |
+| P6-C01-01 | G-COMPARE 只檢查逐列欄位，不核對比較範圍與 Draft 身分：漏列 affected TC、引用非本輪 draft_id 的報告仍 PASS，APPLY_CHANGE 會啟用沒有被比較的版本 | `gates._compare_coverage_issues`：以本 run 本輪有效的 CIR 與 G-TVAL 審過的 Draft 核對——affected／obsolete 的 TC 恰好比較一次且 `old_version` 等於 `active_version`；`new_draft_id` 屬於該 Draft、Draft 的每張 TC 恰好比較一次；取代關係與版本相符、新 TC 為 added；`change_impact_id` 相符。只核對身分與集合，不判斷 diff 語意 | `test_p6_c01_fixes.py::test_c01_01_*`（漏列、非本輪 draft_id、取代關係錯、old_version 錯 → Structural FAIL、不建立 APPLY_CHANGE；合法 → PASS） |
+| P6-C01-04 | 恢復矩陣的紀錄寫成「每種操作 × 兩種入口 × 每個中止點」，強於實際證據 | 紀錄改寫為實際範圍（逐點循環、FP-W 兩種入口交替分擔、指定代表點） | — |
 | merge | MR !7 的獨立 root 測試在需求 A 下是 `S_pre`，spec import 被拒 | 子程序內先走 maintenance start → migrate → maintenance end | `test_wf_zzzz_bug_override.py` |
 
 ### 前面階段「部分」「待」項目的結清
@@ -401,7 +403,7 @@
 | AC-07-9e～9j、9x、9y、9aa、9ab | `test_p6_resume_matrix.py::test_9e_to_9j_*`、`test_9h_*`、`test_apply_a6_every_point`、`test_apply_a6b_every_point`、`test_9y_*`、`test_9aa_*`、`test_9ab_*` | 通過 |
 | AC-07-10、1～7、11、101～104 | P5 已通過（見 P5 段） | 通過 |
 | AC-07-13～18（op-P1／P2、op-N1～N6） | `test_op_p1_p2_*`、`test_op_n1_n2_*`、`test_op_n3_n4_n5_apply`、`test_op_n6_*` | 通過 |
-| AC-07-22～29（每種操作 × 兩種入口 × 每個中止點） | `test_p6_resume_matrix.py`（submit_gate 含 A4、approve 含 A9、impact、apply a6／a6b／a7、fulfill、waive-item、spec 與 clarification 的 metadata upgrade、applicability_add、migrate FP-M0～M6）；其餘見 P1、P3 | 通過 |
+| AC-07-22～29（中止加續做） | `test_p6_resume_matrix.py` 的逐點循環（`apply_every_point`）：G-SPEC 與 G-TVAL 的 submit_gate、submit_gate 含 A4、approve 含 A9、impact、apply a6／a6b／a7、fulfill、waive-item、spec 與 clarification 的 metadata upgrade、applicability_add。每項的 FP-P1（計畫保存後）、FP-P2（登錄後）、9k（completed 之前）以兩種入口各做一次；FP-W（每一步輸出之後）由兩種入口**交替分擔**（奇數步驟同請求重送、偶數步驟 `operation resume`），每一步至少一次；另有指定點兩種入口都做（9h 的第一張 TC 版本之後、9y 的掃描紀錄之前）。**指定代表點**：ACTIVATE 的 approve／complete_run 只在第 2 步輸出之後中止、兩種入口各一次；migrate 為 FP-M0～M5 各點 × 兩種入口（`test_migrate_x_abort_points_then_resume`）；P1 的 `test_types_*`（run new、submit_gate、approve、complete_run、cancel_run、寫檔 export、audit render）各在指定代表中止點驗證；其餘見 P1、P3 | 通過（範圍如左；不是「全部操作 × 全部中止點 × 兩種入口」的笛卡兒積） |
 | AC-07-44 | `test_p6_clr_residual.py::test_ac_07_44_*`、`test_p6_migrate_residual.py::test_ac_09_50_*`（逐位元比對 render） | 通過 |
 | AC-07-80、82、83 | `test_p6_migrate_residual.py::test_ac_07_80_82_*`；83 已由 `test_p3_migrate.py::test_rollback_abort_points_then_resume` 涵蓋 | 通過 |
 | AC-07-90～93 | `test_p6_resume_matrix.py::test_migrate_x_abort_points_then_resume`、`test_ac_07_92_*`、`test_ac_07_93_*` | 通過 |
@@ -438,7 +440,7 @@
 |---|---|---|
 | 1 | `test_p5_lifecycle.py::test_ra_end_to_end_*`、`test_p6_clr_residual.py::test_ac_a_b1_1_every_stop_asserts_clr_state` | 通過 |
 | 2 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_*` | 通過 |
-| 3 | `test_p6_resume_matrix.py`（矩陣）＋ P1、P3、P5 的恢復測試 | 通過 |
+| 3 | `test_p6_resume_matrix.py`（逐點循環、兩種入口交替分擔 FP-W、指定代表點，範圍見 AC-07-22～29 列）＋ P1、P3、P5 的恢復測試 | 通過 |
 | 4 | `tests/p6_rehearsal.py`（三種處理方式各一份工作複本）：R000 hash、`_skip`（SITELIST 0.6 false）、RUN-20261002-001 sidecar、RUN-20260914-001 三種處理方式、TC sidecar 96／44／57、CLR rev 0（42 張）、`audit.legacy.log`（92 份）、untouched 全部吻合；rollback、`--new-request` 重新移轉、verify 都通過 | **部分**：「全部 schema PASS」照字面不成立——嚴格驗證 4271 檔有 14 檔失敗，全部是移轉前既有的資料（11 檔連舊程式的 schema 也不通過；TXLOG 0.1 的 R000 是原檔複本；2 個歷史 CIR 因新 schema 新增必填的 `from_rm_revision`、`to_rm_revision`、`pin_groups` 而失敗）；移轉新增或修改的檔案全部通過。待 Oscar 決定 AC 的寫法或 CIR schema 是否接受 legacy 形狀 |
 | 5 | 本段「執行結果」（610 passed、validate_phase1 ALL CHECKS PASSED） | 通過 |
 | 6 | `test_ac_a_b1_6_s1_q_to_s3_first_batch_commands_only` | 通過 |
