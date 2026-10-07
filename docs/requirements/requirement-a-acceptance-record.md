@@ -289,3 +289,68 @@
 7. **狀態機**：CLR 的 OPEN／ASKED → WITHDRAWN 拆成人（A10）與 system（A9，`kinds: [document_request]`）兩條；`state.check` 支援以 `kinds` 限定轉換。
 8. **下游 iteration 的時點**（`1654b0b`）：被退回的下游 task 在下一次推進成 READY 時才進入新 iteration，不在自己的 gate 操作中改變，gate 的請求身分仍含 iteration（`ff21296` 曾把它拿掉，造成退回後對同一組 artifact 的重評被當成「已完成」，已還原）。需要派發包的 task，上一輪的產出不能在新一輪重新評估：`test_62` 的契約因此改變（原本固定「退回後不重新提交、直接 gate 舊 artifact 也會推進」），同一 iteration 內的重評另以 `test_62b` 固定（真正的 FAIL → READY → 不重新提交的第二次 gate）。
 9. **審查修正（P4-01～05）**：附錄 A 1-37～1-40；1-19 經 Oscar 確認（停下由人處理，不新增 pin 型文件項目）。AC-04-4 的測試改用「合法但範圍外」的來源：Designer 派發時以 `--extra` 登記、Validator 派發包沒有登記的 spec。閉包外、未登記的 spec 在 G-DESIGN 就因 SourceRef 驗證失敗；沒有綁定決策點的 CLR、核准來源也在 G-DESIGN 被拒（P4R2-01），都不會走到 Validator。
+
+## P5：開單關卡與 issue key 去重、CLR 生命週期（FIX-10）、ADR-010
+
+- **執行 commit**：`3c00168d0e8f91c19c4567100d1c7ea107f25c30`（分支 `qaos/requirement-a`；P5 程式、schema、狀態機、ADR 與測試）。本紀錄所在的 commit 只改文件
+- **環境**：同 P1
+- **資料**：每個案例使用獨立的暫存 root。spec、引用、run、派發、提交、gate、核准、CLR 的開單／詢問／回答／適用紀錄／impact／apply／fulfill／waive-item 都走正式 API 或 CLI（`tests/p5_flow.py` 的 RA-P1～P3 共用流程）。第二個 product 以 `spec import --product other` 建立。故障恢復以 `QAOS_FAULT` 注入（明確標示）；標明「函式層」的子例直接呼叫內部函式
+- **既有測試的配合**：入口 D（以人為 `--by`）的開單一律附 `--consulted` 或 `--no-source-check --reason`；`withdraw` 附 `--reason`；舊的 `clarification apply`（沒有 `--path`）改為 `--path a7`；舊資料的 RESOLVE_AMBIGUITY 核准後 CLR 維持 ANSWERED（`test_wf_z_*::test_20`、`test_20b`、`test_21` 依 ADR-010 改寫）；P4 範例 B 的 CLR 在重新分析採用後成為 INCORPORATED
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 450 passed（快照與 commit 的程式、測試內容逐檔相同）；`tools/validate_phase1.py` ALL CHECKS PASSED
+- **突變檢查**（在 scratchpad 的複本上逐一套用、跑對應測試，worktree 不變）：P5 原有 24 項、驗收補測 1 項（候選規則 (b)）、自審修正 25 項，全部被對應測試抓到（未突變的複本作為對照組全部通過）——開單關卡（agent 缺欄位、人工沒有查閱證據、legacy_e6 的驗證、coverage 完整）、去重（topic other、basis 不同、舊單 possible_duplicate）、A4（revision、BugDraft、只認最新 rev）、apply（缺結論、多餘結論、重複結論、結論格式、CANCELLED run、agent、不存在的目標、同時確認又延後、沒有關鍵字、scan 屬於別張 CLR、a7 的全部歷史、a6b 的 spec-to-bug／6-6／reject 決議、landed-in 的 run 範圍）、文件索取單（fulfill 的版本、cited_at.text 比對、waive-item 只能由人、A9 只計本張核准）、給人看的文件與未結案清單、G-SPEC 需求層 source_refs、G-BVAL 的 BugDraft 來源、目標解析的 X16（竄改）、stale-tcs 的目標
+- **自審**：交 Codex 前以獨立 agent 找反例，發現 9 項（3 項 major：landed-in 沒有比對 run 的範圍、先以 waive-item 豁免再核准部分項目時誤判 A9、INCORPORATED 的 PM 回答從需求清單與審批頁消失；6 項 minor：`legacy_e6` 可繞過開單關卡、agent 開單的 coverage 只檢查非 None、同一張 TC 可給兩個結論、多項檢查沒有測試抓到、舊格式 CLR 的結案路徑（規格缺口）、stale-tcs 沒有沿用 (a)～(d)）。程式問題全部修正並補反例（`tests/test_p5_review_fixes.py`）；規格缺口寫入附錄 A 6-35（R）。沒有測試抓到的檢查中，A4「只認最新 rev」在 revision 路徑上會先被 G-SPEC 的 3-18 擋下（AC-08-11），屬防禦性檢查；目標解析的 X16 以標明「竄改」的子例驗證（正式流程沒有移除 applicability 的指令）
+
+### AC 對照
+
+| AC | 狀態 | 測試（tests/…） | 待 |
+|---|---|---|---|
+| AC-07-1、2、3、6 | 通過 | `test_p5_gate_dedupe.py::test_ac_07_1_2_3_6_*`（不同 subject、role_scope、同 topic 不同 subject → 各自新開；params 陣列排序去重、鍵順序無關 → 同一個 key） | — |
+| AC-07-4、10、11 | 通過 | `test_ac_07_4_10_11_*`（topic `other` 一律新開並互標 possible_duplicate；同一請求中止後重送沿用計畫中的 ID；新請求新開） | — |
+| AC-07-5 | 通過 | `test_ac_07_5_*`（重送 G-SPEC：入口 A、B 連結既有單、不重複開單，audit 有 LINK_CLARIFICATION） | — |
+| AC-07-7、104 | 通過 | `test_ac_07_7_and_104_*`（只有 basis 不同 → 新開、`prior_version`；basis 也相同 → 連結） | — |
+| AC-07-101～103 | 通過 | `test_ac_07_101_102_103_*`（agent 缺決策點欄位 → 拒絕；人工沒有查閱證據也沒有理由 → 拒絕；同需求已有沒有 key 的舊單 → possible_duplicate＋WARN_POSSIBLE_DUPLICATE） | — |
+| AC-10A-1～3、42；AC-A-B1-1 | 通過 | `test_p5_lifecycle.py::test_ra_end_to_end_*`（每個停點斷言 ANSWERED → INCORPORATED → APPLIED） | — |
+| AC-10A-4、5、10、18、29、41 | 通過 | 同上，在同一份狀態上的拒絕案例，CLR 檔 hash 不變 | — |
+| AC-10A-6、62 | 通過 | `test_a5_old_run_and_stale_scan` | — |
+| AC-10A-7、20～22 | 通過 | `test_p5_documents.py::test_fulfill_name_match_mapping_and_applied` | — |
+| AC-10A-8、23～25 | 通過 | `test_one_document_two_items_and_revalidation`（以正式 `spec reference remove` 讓第一項失效） | — |
+| AC-10A-9、36～38、40 | 通過 | `test_p5_paths.py::test_a7_paths`（approval 包裝、revision、TC 各一處引用都被列出） | — |
+| AC-10A-39 | 部分 | `test_a7_paths` 以**現行** TC 版本的 `decision_refs` 驗證「全部歷史」的引用檢查 | SUPERSEDED 版本的專門案例在 P6 |
+| AC-10A-11、32 | 通過 | `test_bug_flow_a4_and_a6`（有 SourceRef 的 BugDraft → A4 → a6 APPLIED；沒有 SourceRef → 不觸發 A4） | — |
+| AC-10A-12 | 通過 | RA-P3（原題目標唯一、候選 (a)(c)(d) 都要結論）；(b) 在 `test_a5_old_run_and_stale_scan`、`test_two_targets_confirm_and_defer` | — |
+| AC-10A-13、16、17、34 | 通過 | `test_two_targets_confirm_and_defer`（applicability 讓答案有兩個目標；只確認一個 → 拒絕；延後 → 通過；`show` 列出延後目標與 TC 結論） | — |
+| AC-10A-14、47 | 待 P6 | — | 同 product、跨 area 的掃描範圍。跨 product 的單位分開掃描已由 AC-10A-50、51 驗證，同 product 另一個 area 尚未有專門案例 |
+| AC-10A-15 | 部分 | 候選結論的檢查對所有目標一致：原題目標（AC-10A-4）、延後目標（AC-10A-66）都有反例 | 「已確認的第二個目標」的專門反例在 P6 |
+| AC-10A-19 | 通過 | P4 `test_ac_05_9_*`（沒有 applicability → X16，不成為 E1，也不會成為採用目標） | — |
+| AC-10A-26、27、30、58～61、63 | 通過 | `test_keyword_rules_and_scan_validation`、`test_no_keyword_reason_with_empty_scan` | — |
+| AC-10A-28 | 部分 | apply 一律在鎖內重新掃描、landing 保存當下的版本與 sha256（`test_keyword_rules_*`） | 「scan 後 TC 被修訂」的專門案例在 P6 |
+| AC-10A-31、43～45 | 通過 | `test_a6b_bug_reject_path` | — |
+| AC-10A-46 | 通過 | `test_a6b_reject_approval_is_not_a_wrapper_in_gspec` | — |
+| AC-10A-33 | 通過 | `test_p5_misc.py::test_ac_10a_33_*` | — |
+| AC-10A-35 | 通過 | `test_show_and_stale_tcs_readonly_while_locked` | — |
+| AC-10A-48～51、64～66；AC-A-B1-17 | 通過 | `test_p5_cross_product.py::test_r1102_cross_product`（依 P2 → P3a → N2 → N1 → N3 → P5，每個反例後 CLR 檔 hash 不變） | — |
+| AC-10A-52～56 | 通過 | `test_name_validity` | — |
+| AC-10A-57 | 通過 | 見 P2 | — |
+| AC-10A-67～69 | 通過 | `test_waive_item_and_approval_waive_interplay` | — |
+| AC-A-B1-3（P5 的操作） | 通過 | `test_p5_resume.py`：submit_gate（含 A4）、apply a6、impact、apply a7、fulfill、waive-item、approve（含 A9），每種都以同請求重送與 `operation resume` 兩種入口續做；landing、掃描紀錄、fulfillment、WITHDRAWN 都只有一筆 | 其他操作類型與恢復表全部列在 P6 |
+| 附錄 A 6-31（run 的範圍） | 通過 | `test_p5_review_fixes.py::test_s5_01_landed_in_run_scope`（spec-to-bug run 綁定的 revision 含目標、但 BugDraft 沒有採用 → 拒絕）、`test_s5_01_manual_run_scope`（函式層：manual run 只含本 run TC 的需求） | manual run 的完整 apply（要走到 T6 才 COMPLETED）在 P6 |
+| 附錄 A 6-32（A9 的涵蓋範圍） | 通過 | `test_s5_02_*`（waive-item 豁免 D02、核准只列 D01 → APPLIED，不是 A9） | — |
+| 給人看的文件 | 通過 | `test_s5_03_*`（INCORPORATED 時需求清單、ACTIVATE 審批頁仍顯示 PM 回答；未結案清單含 INCORPORATED） | — |
+| 附錄 A 3-25、3-30 | 通過 | `test_s5_04_05_*`（legacy_e6 不帶需求、用在新格式需求、由人呼叫 → 拒絕；coverage 為空或型別錯 → 拒絕） | — |
+| 附錄 A 6-33 與 apply 的輸入檢查 | 通過 | `test_s5_06_07_apply_input_checks`、`test_s5_07_a6b_*`、`test_s5_07_fulfill_version_and_cited_text_and_agent`、`test_s5_07_gate_source_refs`、`test_s5_07_bugdraft_old_rev_does_not_incorporate`、`test_s5_07_target_resolution_requires_x16`（竄改） | — |
+| 附錄 A 6-34（stale-tcs） | 通過 | `test_s5_09_*`（A5 之後兩個需求上的 TC 都列為 stale_decision_ref＋target_requirement） | — |
+| AC-A-B1-12 | 部分 | 上述 AC-10A-1～69 中標「通過」的項目 | 標「部分」「待 P6」的項目 |
+| AC-A-B1-15 | 通過 | AC-10A-33～35 | — |
+| AC-A-B1-16 | 通過 | A6（RA-P3）、A6b、A7 各走一次正式流程；a6b 帶 `--defer-target`、a7 帶 `--landed-in`／`--target`／`--defer-target` 都被拒絕（`test_a7_paths`、`test_a6b_bug_reject_path`） | — |
+
+### P5 的實作說明（審查時請一併確認）
+
+1. **模組**：CLR 生命週期（A4、目標解析、掃描、apply、fulfill、waive-item、最後判定、show、stale-tcs）在新模組 `tools/qaos/clr_lifecycle.py`；`clarification.py` 保留開單（關卡、issue key、去重）、ask、answer、withdraw、applicability。舊的 `impact`、`apply_`、`document_final_judgment`、`waive_items_by_approval` 移除或搬到新模組。
+2. **核准不再 apply**（附錄 A 6-25）：P4 只對新資料停止 apply；P5 起新舊資料的 approve、override 都不 apply 任何 CLR。舊資料核准前「掛的 CLR 都必須已回答」的檢查保留。
+3. **A4 的觸發位置**（附錄 A 6-22）：G-SPEC 持久化 revision 之後、G-BVAL 驗證 BugDraft 之後。同一份 revision 或 BugDraft 每張 CLR 只寫一筆 incorporated landing；APPLIED 後再被採用（A4'）只追加 landing、不改狀態。BugDraft 的 `source_refs`、`decision_refs` 是第一批選填欄位；Bug Analyst 的契約與指示沒有改（規格沒有列入），agent 不提供時不觸發 A4（ADR-010 限制 8）。
+4. **開單關卡**（附錄 A 3-25、3-27）：舊格式需求的自動開單（入口 A、B 的舊路徑）以 `legacy_e6` 豁免決策點欄位；人工開單需要查閱證據或理由。
+5. **掃描紀錄**（附錄 A 6-24）：`impact` 是寫入操作，掃描紀錄以全域 `SCAN-<ULID>` 命名；`--scan` 不能指向別張 CLR 的紀錄。
+6. **撤回**（附錄 A 6-30）：A10 只能由人執行、`--reason` 必填；被撤回的 CLR 讓引用它的 revision 成為 `decision_revised`。
+7. **自審修正**：landed-in 的 run 範圍（6-31）、A9 只計本張核准（6-32）、`req-export` 與審批頁改用 `ANSWERED_STATES`、未結案清單（`clarification list`、舊路徑的開單去重）含 INCORPORATED、`legacy_e6` 與 agent coverage 的驗證（3-25、3-30）、apply 輸入重複（6-33）、stale-tcs 的目標（6-34）。
+8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。
+9. **已知限制**：見 ADR-010。

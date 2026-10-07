@@ -3909,7 +3909,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 1-24 | 第一批（P4）的自動開單去重 | issue key 在 P5；P4 以 `(spec_id, spec_version, requirement_id, question_id, kind)` 判斷，有未撤回的同鍵 CLR 就連結（DRAFT 路由時掛到核准單），不重開 | I |
 | 1-25 | 豁免後新開的 `spec_question` 指回文件索取單 | `related_clarifications` 的 relation 使用 `waived_document_request` | I |
 | 1-26 | 沒有 `rejection_response` 決策點、agent 卻填了 `rejection_contract` | 依附錄 A 1-2 推導為「不產生」，視為和推導值不同 → X8 | R |
-| 1-27 | 新資料的 RESOLVE_AMBIGUITY 核准是否 apply CLR | 核准單上屬於新資料需求（revision 中有決策點）的 CLR，核准不再 apply（第 6 章 §3.4，P4 先套用於新資料）；屬於舊資料需求、或核准單沒有綁定 revision 的 CLR 維持現行行為（核准前必須已回答、核准後 apply）。同一 revision 同時有兩種需求時兩套規則並行 | R |
+| 1-27 | 新資料的 RESOLVE_AMBIGUITY 核准是否 apply CLR | 核准單上屬於新資料需求（revision 中有決策點）的 CLR，核准不再 apply（第 6 章 §3.4，P4 先套用於新資料）；屬於舊資料需求、或核准單沒有綁定 revision 的 CLR，核准前仍必須已回答。同一 revision 同時有兩種需求時兩套檢查並行。**P5 起**舊資料的核准也不再 apply（附錄 A 6-25） | R |
 | 1-28 | P4 的 A9 與 A8 | P4 只有核准的 `waive_missing` 這條路徑：列出的項目標為 waived，涵蓋全部項目且沒有有效 fulfillment → WITHDRAWN（system）；`fulfill`、`waive-item` 與 A8 在 P5。狀態機允許 system 執行 OPEN／ASKED → WITHDRAWN，程式只在文件索取單的最後判定使用 | I |
 | 1-29 | 推導結果的保存 | 持久化的決策點另存 `derived: {state, effective_level, route, resolved, gap_missing, gap_unverified, resolved_conflict?}` 與 `basis_hash`；G-DESIGN、preflight 讀 revision 中的 `derived`。revision 另記 `dispatch_packet_sha256` 與 `decision_snapshot_hashes: {resolutions, run_decisions}`（派發包兩份快照的 canonical sha256；附錄 A 5-14） | I |
 | 1-30 | G-DESIGN 第 1 點的機械判斷 | TC 覆蓋的每一條新資料需求，都必須至少有一筆指向它的 `decision_refs`（expected 依據與 negative／error_guessing 斷言都要標明依賴的決策點；否則依賴 E3～E5 的斷言可以不標而繞過 exploratory 限制）；依賴 E1 決策點的 `decision_refs` 必須有 `basis_ref`；exploratory 的判斷是該 TC 有指向此需求、`needs_human_confirmation: true` 的 assumption。舊資料的「rejection_contract 未定義 → negative 必須 exploratory」規則只用於舊資料 | R |
@@ -3969,6 +3969,12 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 3-22 | `defined_by_decision` 另附的補充 clarification 來源 | 也必須通過 X16（比「至少一筆」更嚴格） | R |
 | 3-23 | P2 實作補充的定義 | 答案修訂每筆另記 `op_id`；回答時 CLR 的 spec 版本必須已匯入（無法建立 basis → 拒絕回答，不寫入）。`applicability[]` 與答案修訂以外的紀錄的 `sha256` 為該筆紀錄（不含 `sha256` 欄位）的 canonical sha256。`applicability add` 的 `answer_rev` 必須已存在於 `answer_revisions`（舊 CLR 的 rev 0 由移轉或下一次 `answer` 寫入）；`--params` 以 JSON 物件給（`{}` 明寫）。`evidence_addenda` 的來源是 SourceRef（依 CLR 的 spec 版本驗證）或 document 型 `{type: document, file_name, sha256, package_sha256?, location}`。開單時給了決策點欄位就驗證（`known_rules`／`conflict_sides` 的 SourceRef、`coverage` 中的 SpecPin、文件索取單的引用處），並由 `missing_sources` 產生 `document_items`（`D01`…）。第 6 章 A3（ANSWERED → ANSWERED 追加答案修訂）在 P2 加入狀態機 | I |
 | 3-24 | SourceRef 索引的表示 | `answer_rev`、`resolution_index` 必須是 JSON／YAML 的整數表示且不小於 0；boolean、字串、`0.0` 這類浮點寫法一律是形狀錯誤（不轉換、不截斷）。`validate`、`x16`、`effective_basis`、`resolution_entry` 的入口都先做同一形狀檢查，核准單條目內部的來源同樣適用 | I |
+| 3-25 | 舊格式需求（E6）的自動開單與開單關卡 | 沒有決策點的舊格式需求維持現行的入口 A、B（`legacy_e6`），不要求決策點欄位；有決策點的新資料一律經關卡（欄位齊全並通過驗證）。其他 agent／system 呼叫 `clarification.new()` 都受關卡約束。`legacy_e6` 在開單時驗證：呼叫者是 agent／system、帶 requirement_id，而且該需求在 spec 版本最新的 revision（移轉前為需求檔）中存在、沒有決策點；否則拒絕 | R |
+| 3-26 | 需求層 `source_refs[]` | 需求層只接受 spec 型（G-SPEC 以 X10 驗證）；clarification、approval 型必須放在決策點的 `known_rules`、`resolution`（那裡才有可核對的引用處，對應附錄 A 1-38 的綁定規則） | R |
+| 3-27 | 人工開單的查閱證據 | `--consulted <spec_id@ver>` 的 pin 寫入 CLR 的 `coverage.consulted`；入口 D（以人為 `--by`）給了決策點欄位、而且 `coverage.consulted` 非空時也算有查閱證據；`--no-source-check --reason` 的理由寫在 OPEN 那筆 history 的 note | I |
+| 3-28 | 沒有 issue key 的 CLR | issue key 只在 kind、requirement_id、topic、subject、params、role_scope 都有值時計算（basis 由 CLR 的 spec 版本建立）；欄位不齊的新單（例如人工只填問題）沒有 issue key，去重規則 4 把它和移轉前的舊單一樣看待 | I |
+| 3-29 | key 相同時的連結 | `clarification.new()` 回傳既有的 CLR（帶 `_linked: true`，不寫回）並寫一筆 `LINK_CLARIFICATION` audit；入口 B 把它加進核准單的 impact；CLI 顯示「已連結既有單」 | I |
+| 3-30 | agent／system 開單的 coverage | 必須是完整的 Coverage：`references_status`、`consulted[]`、`unconsulted_normative[]`、`missing_sources[]`、`waivers[]` 五個欄位都在，清單欄位是清單；`known_rules` 必須是清單（可以是空的）。人工開單（入口 D）的 coverage 可以只有 `consulted` | I |
 
 ### A.4 executor（第 4 章）
 
@@ -4037,4 +4043,18 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 6-19 | `stale-tcs` 沒有 applied landing 時的關鍵字 | 用最近一次掃描紀錄的關鍵字；沒有掃描紀錄時只做 requirement 與 decision_refs 規則 | I |
 | 6-20 | AC-A-B1-11 的範圍 | AC-07-77a～77k 與 77e-ctrl | I |
 | 6-21 | AC-A-B1-9、10 引用的 fixture | AC-A-B1-9 = AC-08-27～32（跨 basis）加上 effective_basis 解析：approval 包裝解析成 CLR 的 rev（原 R603-P1）、source 為 null 時是核准本身（原 R603-N4）、條目的 requirement／question 不同時 X15 FAIL（原 R603-N5）；不含需求 B 的「匹配」判定。AC-A-B1-10 = AC-07-36～49 | I |
+| 6-22 | A4 的「明確 SourceRef」位置 | 決策點的 `resolution.source`，以及 basis 為 `defined_by_decision` 的 `known_rules`（clarification、approval 型，approval 包裝展開）；必須是 CLR 最新 answer_rev、通過 X16（自身範圍或 applicability）。`conflict_sides`、undefined 的背景 `known_rules`、需求層 `source_refs` 不觸發 A4。同一份 revision（或 BugDraft）每張 CLR 一筆 incorporated landing | R |
+| 6-23 | A8 的 landing | `{type: applied, path: a8, items: [{item_id, result: fulfilled｜waived}], op_id, at, by}`；`by` 是執行 fulfill／waive-item 或核准的人；A9 的 WITHDRAWN 由 system 寫入 | I |
+| 6-24 | 掃描紀錄的 ID 與候選理由 | `scan_id = SCAN-<ULID>`，全域唯一（`--scan` 指到別張 CLR 的紀錄時可明確拒絕）；路徑 `clarifications/<product>/<area>/scans/<CLR>-<scan_id>.yaml`；沒有 `--scan` 時 `scan_reused: none`；`rule_version: "1"`。候選理由：`target_requirement`（a）、`stale_decision_ref:<REQ>#<Q>`（b）、`clr_requirement`（c）、`keyword:<詞>`（d） | I |
+| 6-25 | 舊資料的核准是否 apply | P4 時舊資料的 RESOLVE_AMBIGUITY 核准仍 apply（附錄 A 1-27）；P5 起依第 6 章 §3.4，approve 和 override **都不再** apply 任何 CLR（新舊資料皆同）。舊資料的核准前檢查（所有掛的 CLR 都必須已回答）保留 | R |
+| 6-26 | BugDraft 的 SourceRef | 第一批選填：`source_refs[]`、`decision_refs[]`；clarification、approval 型必須對應 `decision_refs` 的決策點（run 綁定的 revision 中），並通過共用驗證與 X16（G-BVAL）。`expected_result_spec_reference` 放寬為 SpecReference 或 SourceRef | I |
+| 6-27 | 文件項目的紀錄位置 | fulfillment 存在各項目的 `fulfillments[]`；豁免存在 `waive_records[]`（`source` 為 `waive-item` 或 `approval <APR>`）。頂層 `fulfillments` 欄位不使用 | I |
+| 6-28 | A1、A2 的補充欄位 | `ask --sent-at --channel`：`asked_at` 是記錄時間，`sent_at` 是實際送出時間，兩者並存。`answer --answer-source <JSON>`：spec 型（核對 SpecPin）、document 型（file_name、sha256、location）、message 型（channel、sent_by、at）。文件索取單不能 `answer` | I |
+| 6-29 | a6b 的落地 run | 必須是 spec-to-bug、COMPLETED；`--target <APR>#<索引>` 的核准單屬於該 run、是 reject 決議；條目的 (requirement_id, question_id) 必須是該 run 綁定 revision 中的決策點，source 依自身範圍或 applicability 通過 X16 | R |
+| 6-30 | 撤回（A10）與過時判定 | revision 引用的 CLR 被撤回時，`decision_revised` 為真（附錄 A 6-3）；過時判定展開 approval 包裝 | I |
+| 6-31 | landed-in 的「run 的範圍」（§5.6 第 3 點） | spec-to-bug：只看該 run 最終 BugDraft 的明確 SourceRef（run 綁定的 revision 是分析依據，不是這個 run 的產出）；manual-test-to-regression：綁定 revision 中的目標，限於本 run 最終 TestCaseDraft 各 TC 的 `requirement_ids`；spec-to-testcase、spec-change-impact：綁定 revision 的全部需求 | R |
+| 6-32 | A9 的「涵蓋全部項目」 | 只計**這張核准**的 `waive_missing` 列出的項目；先前以 `waive-item` 人工豁免的項目不算。核准沒有涵蓋全部項目時，依 §6.6 最後判定（全部有效 fulfillment 或 waived → APPLIED） | I |
+| 6-33 | apply 輸入的重複 | 同一張 TC 重複給 `--tc-conclusion`（不論值是否相同）、同一個目標重複給 `--defer-target` → 拒絕 | I |
+| 6-34 | `stale-tcs` 的目標 | 各 spec 版本最新 revision 中採用本 CLR **任一** answer_rev 的決策點（A5 之後、revision 還沒重新納入最新 rev 時，仍能以 (a)(b) 找到依賴舊答案的 TC），加上歷次 applied landing 確認與延後的目標；掃描單位、(a)～(d) 與 apply 相同；另外列出任何單位中 `decision_refs` 指向本 CLR 舊 rev 的 TC | I |
+| 6-35 | 舊格式（E6）CLR 的結案路徑 | 核准不再 apply（6-25）之後，舊格式需求的 CLR 若回答 `requirement_clarified` 等需要落地的 resolution：重新分析時 Spec Analyst 依現行契約以決策點的 `resolution.source` 引用該 CLR（需求轉為新格式）→ A4 → a6；答案不需落地時走 a7；都不適用時由人撤回（A10）。系統不為舊格式需求另開結案路徑。**推論**：移轉後的 M1 預演要確認現存 ANSWERED 的舊格式 CLR 都能依此路徑結案 | R |
 
