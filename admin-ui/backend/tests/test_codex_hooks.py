@@ -5,10 +5,13 @@ Codex 與 Claude Code 的差異（實測，Codex 0.160）：
 - PreToolUse 不支援 permissionDecision=ask（會顯示 hook 失敗、指令照跑）→ 守門改 deny
 - 檔案編輯工具叫 apply_patch，tool_input 沒有 file_path（路徑在 patch 內文）
 """
+import importlib.machinery
+import importlib.util
 import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -20,6 +23,20 @@ HOOKS_DIR = ADMIN_DIR / "hooks"
 REPO_ROOT = ADMIN_DIR.parent
 LAUNCHER = HOOKS_DIR / "codex" / "qaos-codex"
 DEFINITION = HOOKS_DIR / "codex" / "qaos-hooks.json"
+
+
+def _load(path: pathlib.Path, name: str):
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    spec = importlib.util.spec_from_loader(name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def _hostenv():
+    if str(HOOKS_DIR) not in sys.path:
+        sys.path.insert(0, str(HOOKS_DIR))
+    return _load(HOOKS_DIR / "_hostenv.py", "qaos_hostenv_under_test")
 
 
 @pytest.fixture
@@ -119,6 +136,28 @@ def test_log_event_codex_apply_patch_outside_final_is_ignored(repo):
     assert rc == 0 and _events(repo) == []
 
 
+def test_log_event_codex_relative_patch_paths_resolve_against_cwd(repo):
+    """Codex review R1-02：session cwd 在 <repo>/testcases 時，patch 裡的 final/X.html 實際寫進 testcases/final/，要記到。"""
+    cwd = repo / "testcases"
+    cwd.mkdir()
+    patch = "*** Begin Patch\n*** Add File: final/X-final.html\n+x\n*** Update File: ../docs/notes.md\n@@\n-a\n+b\n*** End Patch"
+    run_codex_hook("log_event.py", _post_patch(repo, cwd, patch), cwd, QAOS_HOOK_HOST="codex")
+    assert [e["file_path"] for e in _events(repo)] == ["testcases/final/X-final.html"]
+
+
+def test_log_event_codex_dotdot_escaping_final_is_not_recorded(repo):
+    """testcases/final/../../docs/X.html 實際在 final 目錄外，不可誤記。"""
+    patch = "*** Begin Patch\n*** Add File: {r}/testcases/final/../../docs/X.html\n+x\n*** End Patch".format(r=repo)
+    run_codex_hook("log_event.py", _post_patch(repo, repo, patch), repo, QAOS_HOOK_HOST="codex")
+    assert _events(repo) == []
+
+
+def test_log_event_codex_relative_path_from_repo_root(repo):
+    patch = "*** Begin Patch\n*** Add File: testcases/final/A-final.html\n+x\n*** End Patch"
+    run_codex_hook("log_event.py", _post_patch(repo, repo, patch), repo, QAOS_HOOK_HOST="codex")
+    assert [e["file_path"] for e in _events(repo)] == ["testcases/final/A-final.html"]
+
+
 def test_log_event_codex_session_events_use_git_toplevel_not_cwd(repo):
     """SessionStart／SessionEnd 的 Codex payload 沒有 turn_id，不能靠 payload 判斷宿主；專案根仍要是 git toplevel。"""
     cwd = repo / "sub" / "dir"
@@ -135,6 +174,34 @@ def test_log_event_project_dir_override_wins(repo, tmp_path_factory):
     run_codex_hook("log_event.py", {"hook_event_name": "Stop", "session_id": "s1", "cwd": str(repo)}, repo,
                    QAOS_HOOK_HOST="codex", QAOS_PROJECT_DIR=str(other))
     assert len(_events(other)) == 1 and _events(repo) == []
+
+
+def test_project_dir_claude_fallback_is_unchanged(repo, monkeypatch):
+    """Codex review R1-03：Claude 沒有 CLAUDE_PROJECT_DIR 時維持舊 fallback（payload.cwd → os.getcwd()），
+    不套用 QAOS_PROJECT_DIR 或 git toplevel；這兩個只屬於 Codex。"""
+    h = _hostenv()
+    sub = str(repo / "sub")
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("QAOS_PROJECT_DIR", str(repo))          # Claude 分支不可讀這個
+    monkeypatch.setenv("QAOS_HOOK_HOST", "claude")
+    assert h.project_dir({"cwd": sub}) == sub                   # 不是 repo toplevel
+    monkeypatch.chdir(repo / "sub" / "dir")
+    assert h.project_dir({}) == os.getcwd()
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", "/claude/proj")
+    assert h.project_dir({"cwd": sub}) == "/claude/proj"        # 有設時一律優先
+
+
+def test_project_dir_codex_branch(repo, tmp_path_factory, monkeypatch):
+    h = _hostenv()
+    monkeypatch.setenv("QAOS_HOOK_HOST", "codex")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", "/claude/proj")    # Codex 分支忽略它
+    monkeypatch.delenv("QAOS_PROJECT_DIR", raising=False)
+    assert h.project_dir({"cwd": str(repo / "sub" / "dir")}) == str(repo)
+    other = tmp_path_factory.mktemp("proj")
+    monkeypatch.setenv("QAOS_PROJECT_DIR", str(other))
+    assert h.project_dir({"cwd": str(repo)}) == str(other)
+    monkeypatch.setenv("QAOS_PROJECT_DIR", "/no/such/dir")      # 無效 override 退回 git toplevel
+    assert h.project_dir({"cwd": str(repo / "sub")}) == str(repo)
 
 
 def test_log_event_claude_write_behaviour_unchanged(run_hook, qaos_root):
@@ -177,6 +244,70 @@ def test_launcher_flags_round_trip_the_definition():
     for f in flags[1::2]:
         parsed.update(tomllib.loads(f)["hooks"])           # `hooks.X=[...]` 必須是合法 TOML，內容與 JSON 定義一致
     assert parsed == definition
+
+
+@pytest.fixture
+def hooked_repo(repo: pathlib.Path) -> pathlib.Path:
+    """repo 內放一份 admin-ui/hooks（含可執行的 .sh），像真實專案。"""
+    shutil.copytree(HOOKS_DIR, repo / "admin-ui" / "hooks")
+    return repo
+
+
+def test_launcher_resolves_project_root_from_cwd_or_cd_flag(hooked_repo):
+    L = _load(LAUNCHER, "qaos_codex_launcher")
+    sub = hooked_repo / "sub" / "dir"
+    assert L.resolve_project_dir(["-C", str(sub), "x"], {}) == hooked_repo
+    assert L.resolve_project_dir([f"--cd={sub}"], {}) == hooked_repo
+    assert L.resolve_project_dir([f"-C{sub}"], {}) == hooked_repo
+    assert L.resolve_project_dir(["exec", "--cd", str(sub), "prompt"], {}) == hooked_repo
+    assert L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(hooked_repo)}) == hooked_repo     # 有效 override
+
+
+def test_launcher_refuses_when_root_cannot_be_verified(tmp_path, tmp_path_factory, hooked_repo, monkeypatch):
+    """Codex review R1-01：找不到 git 根目錄、override 無效、或腳本缺少時一律中止，不啟動沒有守門的 session。"""
+    L = _load(LAUNCHER, "qaos_codex_launcher2")
+    nongit = tmp_path_factory.mktemp("nongit")
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(nongit.parent))     # 避免上層目錄剛好是 git repo
+    with pytest.raises(L.LauncherError, match="找不到 QAOS 專案根"):
+        L.resolve_project_dir(["-C", str(nongit)], {})
+    with pytest.raises(L.LauncherError, match="不是目錄"):
+        L.resolve_project_dir([], {"QAOS_PROJECT_DIR": "/no/such/dir"})
+    with pytest.raises(L.LauncherError, match="缺少或不可執行"):
+        L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(nongit)})                    # 目錄存在但沒有 hook 腳本
+    (hooked_repo / "admin-ui" / "hooks" / "guard_qaos.sh").chmod(0o644)
+    with pytest.raises(L.LauncherError, match="guard_qaos.sh"):
+        L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(hooked_repo)})              # 守門腳本不可執行
+
+
+def _fake_codex(tmp_path: pathlib.Path) -> pathlib.Path:
+    f = tmp_path / "fake-codex"
+    f.write_text('#!/bin/bash\necho "ROOT=$QAOS_PROJECT_DIR"\nprintf "ARG:%s\\n" "$@"\ntouch "$FAKE_CODEX_MARKER"\n')
+    f.chmod(0o755)
+    return f
+
+
+def test_launcher_exec_passes_verified_root_and_hooks_to_codex(hooked_repo, tmp_path_factory):
+    work = tmp_path_factory.mktemp("fake")
+    marker = work / "ran"
+    env = _codex_env(CODEX_BIN=str(_fake_codex(work)), FAKE_CODEX_MARKER=str(marker))
+    r = subprocess.run([sys.executable, str(LAUNCHER), "exec", "-C", str(hooked_repo / "sub" / "dir"), "hi"],
+                       capture_output=True, text=True, env=env, cwd=work, timeout=20)
+    assert r.returncode == 0 and marker.exists()
+    lines = r.stdout.splitlines()
+    assert lines[0] == f"ROOT={hooked_repo}"                    # 驗證過的絕對根目錄傳給 codex
+    args = [l[4:] for l in lines if l.startswith("ARG:")]
+    assert args[0:16:2] == ["-c"] * 8 and all(a.startswith("hooks.") for a in args[1:16:2])      # 8 個事件的 -c 參數在最前面
+    assert args[16:] == ["exec", "-C", str(hooked_repo / "sub" / "dir"), "hi"]                  # 使用者參數原樣轉給 codex
+
+
+def test_launcher_exec_aborts_without_starting_codex_outside_git(tmp_path_factory):
+    work = tmp_path_factory.mktemp("fake")
+    nongit = tmp_path_factory.mktemp("nongit")
+    marker = work / "ran"
+    env = _codex_env(CODEX_BIN=str(_fake_codex(work)), FAKE_CODEX_MARKER=str(marker), GIT_CEILING_DIRECTORIES=str(nongit.parent))
+    r = subprocess.run([sys.executable, str(LAUNCHER), "exec", "hi"], capture_output=True, text=True, env=env, cwd=nongit, timeout=20)
+    assert r.returncode != 0 and not marker.exists()            # codex 沒被啟動
+    assert "找不到 QAOS 專案根" in r.stderr
 
 
 def test_codex_hook_commands_are_codex_ready():

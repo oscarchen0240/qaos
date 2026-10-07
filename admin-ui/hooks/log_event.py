@@ -2,9 +2,10 @@
 
 保證：不打網路、不輸出 stdout、任何錯誤都吞掉並以 exit 0 結束（由 log_event.sh 再保險一次）。
 
-PostToolUse 只記錄寫進 testcases/final/ 的檔案：Claude 的 Write／Edit 看 tool_input.file_path；
+PostToolUse 只記錄寫進 testcases/final/ 的檔案：Claude 的 Write／Edit 看 tool_input.file_path（比對方式維持原樣）；
 Codex 的 apply_patch 沒有 file_path，從 patch 內文的 `*** Add/Update/Delete File:`、`*** Move to:` 行取路徑
-（一個 patch 動到幾個 final 檔就記幾筆）。
+（一個 patch 動到幾個 final 檔就記幾筆）。patch 裡的路徑可能是相對於工具 cwd 的相對路徑（甚至帶 ..），
+所以先依 payload.cwd 解析並 normalize，再判斷是否落在 testcases/final/ 下。
 """
 import json
 import os
@@ -20,20 +21,26 @@ FINAL_PREFIX = "testcases/final/"
 PATCH_FILE_LINE = re.compile(r"^\*\*\* (?:Add File|Update File|Delete File|Move to): (.+?)\s*$", re.M)
 
 
-def _written_paths(tool_input) -> list[str]:
+def _written_paths(tool_input) -> list[tuple[str, bool]]:
+    """回傳 [(路徑, 是否來自 patch 內文)]。"""
     if isinstance(tool_input, str):
-        return PATCH_FILE_LINE.findall(tool_input)
+        return [(x, True) for x in PATCH_FILE_LINE.findall(tool_input)]
     if not isinstance(tool_input, dict):
         return []
     fp = tool_input.get("file_path")
     if fp:
-        return [fp]
+        return [(fp, False)]
     patch = tool_input.get("command") or tool_input.get("input") or ""
-    return PATCH_FILE_LINE.findall(patch) if isinstance(patch, str) else []
+    return [(x, True) for x in PATCH_FILE_LINE.findall(patch)] if isinstance(patch, str) else []
 
 
-def _final_path(raw_path: str) -> str:
+def _final_path(raw_path: str, patch_cwd: str | None = None) -> str:
+    """patch_cwd 有值（patch 路徑）時：相對路徑接到 cwd 後 normalize（消掉 .. 與 .），再找 testcases/final/。"""
     norm = raw_path.replace("\\", "/")
+    if patch_cwd is not None:
+        if not norm.startswith("/"):
+            norm = patch_cwd.replace("\\", "/").rstrip("/") + "/" + norm
+        norm = os.path.normpath(norm).replace("\\", "/")
     idx = norm.find(FINAL_PREFIX)
     return norm[idx:] if idx >= 0 else ""
 
@@ -47,7 +54,8 @@ def main() -> None:
     tool_input = p.get("tool_input") or {}
 
     if ev == "PostToolUse":
-        file_paths = [fp for fp in (_final_path(x) for x in _written_paths(tool_input)) if fp]
+        cwd = p.get("cwd") or os.getcwd()
+        file_paths = [fp for fp in (_final_path(x, cwd if from_patch else None) for x, from_patch in _written_paths(tool_input)) if fp]
         if not file_paths:
             return
     else:
