@@ -318,13 +318,13 @@
 | AC-10A-39 | 部分 | `test_a7_paths` 以**現行** TC 版本的 `decision_refs` 驗證「全部歷史」的引用檢查 | SUPERSEDED 版本的專門案例在 P6 |
 | AC-10A-11、32 | 通過 | `test_bug_flow_a4_and_a6`（有 SourceRef 的 BugDraft → A4 → a6 APPLIED；沒有 SourceRef → 不觸發 A4） | — |
 | AC-10A-12 | 通過 | RA-P3（原題目標唯一、候選 (a)(c)(d) 都要結論）；(b) 在 `test_a5_old_run_and_stale_scan`、`test_two_targets_confirm_and_defer` | — |
-| AC-10A-13、16、17、34 | 通過 | `test_two_targets_confirm_and_defer`（applicability 讓答案有兩個目標；只確認一個 → 拒絕；延後 → 通過；`show` 列出延後目標與 TC 結論） | — |
+| AC-10A-13、16、17、34 | 通過 | `test_two_targets_confirm_and_defer`（applicability 讓答案有兩個目標；只確認一個 → 拒絕；延後 → 通過；`show` 列出延後目標、`deferred` 與 `retire_planned` 的 TC，`updated` 不列） | — |
 | AC-10A-14、47 | 待 P6 | — | 同 product、跨 area 的掃描範圍。跨 product 的單位分開掃描已由 AC-10A-50、51 驗證，同 product 另一個 area 尚未有專門案例 |
 | AC-10A-15 | 部分 | 候選結論的檢查對所有目標一致：原題目標（AC-10A-4）、延後目標（AC-10A-66）都有反例 | 「已確認的第二個目標」的專門反例在 P6 |
 | AC-10A-19 | 通過 | P4 `test_ac_05_9_*`（沒有 applicability → X16，不成為 E1，也不會成為採用目標） | — |
 | AC-10A-26、27、30、58～61、63 | 通過 | `test_keyword_rules_and_scan_validation`、`test_no_keyword_reason_with_empty_scan` | — |
 | AC-10A-28 | 部分 | apply 一律在鎖內重新掃描、landing 保存當下的版本與 sha256（`test_keyword_rules_*`） | 「scan 後 TC 被修訂」的專門案例在 P6 |
-| AC-10A-31、43～45 | 通過 | `test_a6b_bug_reject_path` | — |
+| AC-10A-31、43～45 | 通過 | `test_a6b_bug_reject_path`（舊 rev、普通 reject）、`test_s5_07_a6b_*`（條目不是 reject 決議）、`test_p5_review_r2_fixes.py::test_ac_10a_44_a6b_scope_mismatch_rejected`（scope 不符 → X16） | — |
 | AC-10A-46 | 通過 | `test_a6b_reject_approval_is_not_a_wrapper_in_gspec` | — |
 | AC-10A-33 | 通過 | `test_p5_misc.py::test_ac_10a_33_*` | — |
 | AC-10A-35 | 通過 | `test_show_and_stale_tcs_readonly_while_locked` | — |
@@ -365,3 +365,4 @@
 | P5-02／P5-R2-03：去重命中時在 schema 驗證之前返回，無效的決策點欄位（level、coverage 的 enum 等）會變成連結 | `_check_request_shape`：去重之前以 schema 驗證完整的待開單輸入（ID、狀態以合法佔位值代入，不配號、不寫檔）；連結仍不寫回既有 CLR | `test_p5_02_dedupe_hit_still_validates_input`（同 key＋無效 level、無效 references_status、不同 key＋無效 level 都拒絕；沒有 LINK audit、既有 CLR hash 不變；同 key 合法輸入照常連結） |
 | P5-03：無關鍵字結案後，stale-tcs 仍退回舊掃描的關鍵字 | 關鍵字取最近一次 applied landing（無關鍵字結案時為空集合）；完全沒有 applied landing 時才取最近一次掃描（6-19） | `test_p5_03_stale_tcs_keywords_follow_latest_applied_landing`（a7 以 no_keyword_reason 結案 → stale-tcs 不列背景命中的 TC；只有 impact、沒有 applied landing → 仍以掃描關鍵字列出） |
 | P5-R2-04：6-35 的舊格式結案方案漏列 X16 的前置（自身範圍、basis） | 附錄 A 6-35 補明前置：(1) 範圍一致 → metadata upgrade 補齊；(2) basis 不同 → applicability `--confirm-basis`；(3) 都不能確認 → 重新詢問或 A10；M1 逐單記錄。程式不變，X16 不放寬 | `test_p5_r2_04_legacy_e6_close_requires_scope`（E6 自動單 → 核准仍 ANSWERED → 直接引用 X16 FAIL → metadata upgrade → PASS、INCORPORATED → a6 APPLIED）、`test_p5_r2_04_legacy_e6_basis_change_requires_applicability`（答案之後新增 normative 引用 → 只補 metadata 仍 X16 FAIL → applicability 後 PASS）。移轉 rev 0 的現存資料在 M1 預演 |
+| 審查 A 的驗收建議（逐項核實後調整） | AC-10A-34 原測試沒有 `retire_planned` → 補一張 retire_planned 的 TC 並斷言 `show`；AC-10A-44 原測試沒有 scope 不符的子例 → 補反例（突變對照：移除 X16 檢查後該測試失敗）；`test_s5_07_bugdraft_old_rev_does_not_incorporate` 原本捕捉 AssertionError，任何更早的失敗都會綠燈 → 改為要求 G-BVAL PASS（突變對照：A4 不比對 rev 時該測試失敗）；`test_p5_resume.py` 的 apply 中止點註解更正為「CLR YAML（狀態與 landing 一起寫出）寫出之後」。AC-A-B1-15 隨 AC-10A-34 維持通過 | `test_two_targets_confirm_and_defer`、`test_ac_10a_44_a6b_scope_mismatch_rejected`、`test_s5_07_bugdraft_old_rev_does_not_incorporate` |

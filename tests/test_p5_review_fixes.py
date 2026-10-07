@@ -160,6 +160,7 @@ b, evd = bug_run()
 try: bug_draft(b, evd, srcs=[src0], drefs=[{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": F.ident(src0)}]); g = "PASS"
 except AssertionError as e: g = "FAIL " + str(e)
 c = clr.load(cid); print(json.dumps([g, c["status"], [l["type"] for l in c.get("landings") or []]]))""")
+    assert out[0] == "PASS", out                                    # 必須是合法舊 rev 通過 G-BVAL，而不是更早的失敗（審查 A 的驗收建議）
     assert out[1] == "ANSWERED" and out[2] == [], out
 
 def test_s5_07_fulfill_version_and_cited_text_and_agent(tmp_path):

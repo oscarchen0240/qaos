@@ -83,7 +83,7 @@ print(json.dumps({"s_a5": s_a5, "s_b": s_b, "ra_tcs": ra["tcs"], "s_re": s_re, "
 
 def test_two_targets_confirm_and_defer(tmp_path):
     """跨需求的採用（applicability，AC-10A-13）讓答案有兩個目標：只確認一個 → 拒絕並列出遺漏（AC-10A-16）；另一個延後 → 通過，
-    landing 記錄延後與理由、show 列出、延後目標的單位仍被掃描（AC-10A-17）。"""
+    landing 記錄延後與理由、show 列出延後目標、deferred 與 retire_planned 的 TC（AC-10A-34）、延後目標的單位仍被掃描（AC-10A-17）。"""
     root = mkroot(tmp_path)
     out = py(root, HDR + """
 rid, cid, apr = P.ra_p1()
@@ -93,14 +93,16 @@ res = {"source": F.cref(cid, "任何站台都不能刪除"), "decided_at": "2026
 g = F.analyze(rid, [P.conflict_req(1, res), P.conflict_req(2, res)])
 src = F.cref(cid, "任何站台都不能刪除")
 tcs = P.ra_p3_design(rid, cid, g, extra_tcs=[F.tc(2, "REQ-DEMO-002", "刪除子站台被拒（REQ-002）", techs=["negative"], types=["negative"],
-                                                    drefs=[{"requirement_id": "REQ-DEMO-002", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])])
+                                                    drefs=[{"requirement_id": "REQ-DEMO-002", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src]),
+                                               F.tc(3, "REQ-DEMO-001", "刪除總站台被拒（舊規則，將退役）", techs=["negative"], types=["negative"],
+                                                    drefs=[{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])])
 T1, T2 = "SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", "SPEC-DEMO-001@1.0:REQ-DEMO-002#Q01"
 targets = [l["requirement_id"] for l in L.resolve_targets(clr.load(cid))]
 h0 = P.clr_sha(cid)
 miss = P.apply_(cid, landed_in=[rid], targets=[T1], keywords=["刪除"], tc_conclusions=[f"{t}=updated" for t in tcs])
 h1 = P.clr_sha(cid)
 ok = P.apply_(cid, landed_in=[rid], targets=[T1], defer_targets=[T2 + "=REQ-002 的 TC 下週一起修"], keywords=["刪除"],
-              tc_conclusions=[f"{tcs[0]}=updated", f"{tcs[1]}=deferred:等 REQ-002 一起修"])
+              tc_conclusions=[f"{tcs[0]}=updated", f"{tcs[1]}=deferred:等 REQ-002 一起修", f"{tcs[2]}=retire_planned"])
 print(json.dumps({"targets": targets, "miss": miss, "h": [h0, h1], "ok": ok, "land": clr.load(cid)["landings"][-1], "show": L.show(cid), "tcs": tcs}, default=str))""")
     assert out["targets"] == ["REQ-DEMO-001", "REQ-DEMO-002"]
     assert "沒有被 --target 確認或 --defer-target 延後" in out["miss"]["error"] and "REQ-DEMO-002" in out["miss"]["error"] and out["h"][0] == out["h"][1]
@@ -110,6 +112,8 @@ print(json.dumps({"targets": targets, "miss": miss, "h": [h0, h1], "ok": ok, "la
     follow = out["show"]["follow_ups"]
     assert {"target": "SPEC-DEMO-001@1.0:REQ-DEMO-002#Q01", "deferred_reason": "REQ-002 的 TC 下週一起修"} in follow     # AC-10A-34
     assert {"tc_id": out["tcs"][1], "conclusion": "deferred:等 REQ-002 一起修"} in follow
+    assert {"tc_id": out["tcs"][2], "conclusion": "retire_planned"} in follow                          # AC-10A-34：retire_planned 也列出
+    assert not any(f.get("tc_id") == out["tcs"][0] for f in follow)                                     # updated 不列為待處理
 
 def test_keyword_rules_and_scan_validation(tmp_path):
     """關鍵字候選與 scan 的驗證（AC-10A-26、27、30、58～61、63）。"""

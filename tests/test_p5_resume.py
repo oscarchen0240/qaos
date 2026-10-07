@@ -43,7 +43,7 @@ g = {{"rmid": [a for a in engine._task(engine.load_run("{rid}"), "T1")["output_a
 print(json.dumps(P.ra_p3_design("{rid}", "{cid}", g)))""")
     args = ["clarification", "apply", cid, "--path", "a6", "--landed-in", rid, "--target", "SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", "--keyword", "刪除",
             *sum((["--tc-conclusion", f"{t}=updated"] for t in tcs), []), "--impact-reviewed", "逐張確認", "--by", "oscar"]
-    abort_then_continue(root, args, entry, fault="after_output:1")                                    # apply：CLR 狀態寫入之後、landing 之前（同一檔）中止
+    abort_then_continue(root, args, entry, fault="after_output:1")                                    # apply：第一個輸出檔（CLR YAML，狀態與 landing 一起寫出）寫出之後中止；同一檔內沒有可獨立中止的兩次寫入
     c = clr_doc(root, cid)
     assert c["status"] == "APPLIED" and [l["type"] for l in c["landings"]] == ["incorporated", "applied"]
 

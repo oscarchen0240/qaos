@@ -208,3 +208,26 @@ g2 = F.analyze(rid, [P.conflict_req(1, res(cid))])
 print(json.dumps({{"g1": [g1["result"], g1.get("issues")], "s1": s1, "g2": g2["result"], "s2": clr.load(cid)["status"]}}, default=str))""")
     assert out["g1"][0] == "FAIL" and any("X16" in i and "basis_hash 不同" in i for i in out["g1"][1]) and out["s1"] == "ANSWERED", out["g1"]
     assert out["g2"] == "PASS" and out["s2"] == "INCORPORATED"
+
+def test_ac_10a_44_a6b_scope_mismatch_rejected(tmp_path):
+    """AC-10A-44（審查 A 驗收缺口）：reject 決議條目的 source 指向本 CLR 最新 rev，但條目落在 subject 不同的決策點（scope 不符）→ X16 拒絕，CLR 不變。
+    對照：同一個 run 的同型條目落在 CLR 自身的決策點 → APPLIED（確認拒絕確實來自 scope）。"""
+    root = mkroot(tmp_path)
+    out = py(root, BUG + """
+rid = F.new_run()
+F.analyze(rid, [F.req(1, [F.dp("Q01", "undefined", "minor", decision_needed="站長能否刪除自己站的子站台")], ambiguity=F.amb("minor", "minor")),
+                F.req(2, [F.dp("Q01", "defined_in_target", "none", known=[F.sref("任何站台都不能刪除。")], subject="site.child.rename")])])
+cid = F.clrs(requirement_id="REQ-DEMO-001")[0]["clarification_id"]
+clr.answer(cid, "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
+src = F.cref(cid, "任何站台都不能刪除")
+entry = lambda req: {"requirement_id": req, "question_id": "Q01", "outcome": "select_interpretation", "source": src, "rationale": "依 PM 回答，這不是 bug"}
+b, evd = bug_run(); bd = bug_draft(b, evd); bug_validate(b, bd, evd, "AMBIGUITY"); apr = reject_with(b, [entry("REQ-DEMO-002"), entry("REQ-DEMO-001")])
+h0 = P.clr_sha(cid)
+bad = P.apply_(cid, path="a6b", landed_in=[b], targets=[f"{apr}#0"], keywords=["刪除"])
+h1 = P.clr_sha(cid)
+ok = P.apply_(cid, path="a6b", landed_in=[b], targets=[f"{apr}#1"], keywords=["刪除"])
+print(json.dumps({"st": engine.load_run(b)["status"], "bad": bad, "h": [h0, h1], "ok": ok, "s": clr.load(cid)["status"]}, default=str))""")
+    assert out["st"] == "COMPLETED"
+    assert "沒有通過 X16" in out["bad"].get("error", ""), out["bad"]
+    assert out["h"][0] == out["h"][1]
+    assert "error" not in out["ok"] and out["s"] == "APPLIED", out["ok"]
