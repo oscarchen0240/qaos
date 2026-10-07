@@ -3901,6 +3901,24 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 1-16 | 範例中的 ⑧ SPEC ID | 範例 ID 僅供說明（`SPEC-ROLEPERM-001` 為暫定），不是實作或驗收的固定值 | I |
 | 1-17 | 第一批的 `gap_unverified` | 第一批沒有引用候選紀錄（FIX-03 屬第二批），`gap_unverified` 等同 `references_status: undeclared` | I |
 | 1-18 | Applicability 的定義位置 | 以第 3 章為準；第 1 章只保留簡述並指向第 3 章 | I |
+| 1-19 | 缺文件（E3）只由 `reason: unavailable` 的未查參考構成 | 文件索取單至少要有一個引用處（第 3 章 §3.4），未查參考本身沒有引用處。處理：推導為 E3、但決策點沒有 `missing_sources` 時 G-SPEC FAIL，要求 Spec Analyst 把該參考在目標中的引用處列入 `missing_sources`；不捏造引用處 | R |
+| 1-20 | `dispatch_packet_sha256` 的位置 | 放在 artifact envelope（所有需要派發包的 task 的產出都帶，SpecAnalysis 的這個欄位即 envelope 欄位）；submit 時必須等於 task 本次 iteration 的派發包，否則 Structural FAIL（沒有派發包、沿用舊 iteration 的派發包都拒絕） | I |
+| 1-21 | 派發包的補充欄位與下游的範圍 | 派發包另含 `references_status`、`basis_hash`、`target_decl_rev`、`closure[].required`（depth=1 的 normative），以及 `decision_sources`：綁定 revision（含 pin_groups）中決策點已使用的 SourceRef 身分。下游 agent 的「派發包範圍」＝目標、閉包、決議快照中的同一 answer_rev、本 run 已決的裁決、`decision_sources`、登記的額外 spec | I |
+| 1-22 | 派發之後目標或閉包的宣告改變 | G-SPEC 以目前的 basis_hash 核對派發包的 basis_hash，不同 → FAIL；同一 iteration 不能重新派發，處理方式是取消該 run 後重新分析 | R |
+| 1-23 | Validator 漏報派發包範圍外的來源 | runtime 在 G-TVAL 以 Validator 自己的派發包重算 Draft 的 SourceRef（`source_refs`、`decision_refs[].basis_ref`）是否在範圍內；有範圍外的來源而報告沒有對該 TC 的 `missing_reference`（blocker 或 major）→ G-TVAL Structural FAIL。TC Risk Reviewer 不擋關，只在契約要求 | R |
+| 1-24 | 第一批（P4）的自動開單去重 | issue key 在 P5；P4 以 `(spec_id, spec_version, requirement_id, question_id, kind)` 判斷，有未撤回的同鍵 CLR 就連結（DRAFT 路由時掛到核准單），不重開 | I |
+| 1-25 | 豁免後新開的 `spec_question` 指回文件索取單 | `related_clarifications` 的 relation 使用 `waived_document_request` | I |
+| 1-26 | 沒有 `rejection_response` 決策點、agent 卻填了 `rejection_contract` | 依附錄 A 1-2 推導為「不產生」，視為和推導值不同 → X8 | R |
+| 1-27 | 新資料的 RESOLVE_AMBIGUITY 核准是否 apply CLR | 核准單上屬於新資料需求（revision 中有決策點）的 CLR，核准不再 apply（第 6 章 §3.4，P4 先套用於新資料）；屬於舊資料需求、或核准單沒有綁定 revision 的 CLR 維持現行行為（核准前必須已回答、核准後 apply）。同一 revision 同時有兩種需求時兩套規則並行 | R |
+| 1-28 | P4 的 A9 與 A8 | P4 只有核准的 `waive_missing` 這條路徑：列出的項目標為 waived，涵蓋全部項目且沒有有效 fulfillment → WITHDRAWN（system）；`fulfill`、`waive-item` 與 A8 在 P5。狀態機允許 system 執行 OPEN／ASKED → WITHDRAWN，程式只在文件索取單的最後判定使用 | I |
+| 1-29 | 推導結果的保存 | 持久化的決策點另存 `derived: {state, effective_level, route, resolved, gap_missing, gap_unverified, resolved_conflict?}` 與 `basis_hash`；G-DESIGN、preflight 讀 revision 中的 `derived`。revision 另記 `dispatch_packet_sha256` 與 `decision_snapshot_hashes: {resolutions, run_decisions}`（派發包兩份快照的 canonical sha256；附錄 A 5-14） | I |
+| 1-30 | G-DESIGN 第 1 點的機械判斷 | TC 覆蓋的每一條新資料需求，都必須至少有一筆指向它的 `decision_refs`（expected 依據與 negative／error_guessing 斷言都要標明依賴的決策點；否則依賴 E3～E5 的斷言可以不標而繞過 exploratory 限制）；依賴 E1 決策點的 `decision_refs` 必須有 `basis_ref`；exploratory 的判斷是該 TC 有指向此需求、`needs_human_confirmation: true` 的 assumption。舊資料的「rejection_contract 未定義 → negative 必須 exploratory」規則只用於舊資料 | R |
+| 1-31 | preflight 的補充 | 所有條目（不只 critical 決策點）都檢查：每個決策點最多一筆；outcome 必須是該決策點有效狀態允許的（E1 的決策點不接受條目）；條目必須指向綁定 revision 中存在的決策點；`select_interpretation` 的 source 只能是 clarification 型或 null；`waive_missing` 必須列出 `waived`，每一項完全等於該決策點的缺檔（cited_at 的 SpecPin＋line＋name）或未查參考（pin）；`resolutions` 只用於 RESOLVE_AMBIGUITY | I |
+| 1-32 | G-SPEC 對 coverage 的檢查 | `coverage.references_status` 必須等於目標版本；`coverage.consulted` 只能是目標或派發包閉包內的 pin；`missing_sources[].cited_at` 的 pin 必須相符，且該行含有 `text`；同一需求的 `question_id` 不得重複 | R |
+| 1-34 | approval 型 SourceRef 作為 `defined_by_decision` 的依據 | 只接受 outcome 為 `select_interpretation` 的條目（和 effective_basis 的定義一致）；指向 `waive_missing` 等其他條目 → X12（豁免缺文件不是行為裁決） | R |
+| 1-35 | system 撤回 CLR 的範圍 | 狀態機以 `kinds: [document_request]` 限定 system 的 OPEN／ASKED → WITHDRAWN（A9）；其他 kind 只能由人撤回（A10） | I |
+| 1-36 | 自動開單的問題文字 | `decision_needed` 至少 5 個字時作為 CLR 的 `question`；較短時改用「需求／question_id（subject）需要決定：<decision_needed>」，`decision_needed` 欄位仍逐字抄寫 | I |
+| 1-33 | 範例中的 topic | 範例 A、E、F 的 `deletion_policy`、`assignment_scope`、`aggregation_rule` 不在 1-3 的受控清單內；範例只示意形狀，實作與驗收以 1-3 的清單為準 | I |
 
 ### A.2 spec 引用與外部來源（第 2 章）
 

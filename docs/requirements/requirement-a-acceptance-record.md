@@ -225,3 +225,59 @@
 8. **AC-09-50 等未測項目**：舊程式的 legacy fixture 沒有「有 PENDING APR 的 RUNNING run」等資料；這些在 M1 預演（真實資料的唯讀複本）或 P6 驗收，已在上表標「待」。
 9. **顯示端的退回**：核准單渲染、final export 只有在移轉前（沒有移轉標記）的 legacy 資料缺 pin 時，才改用最新 revision 顯示；移轉後缺 pin 一律報錯。
 10. **`migrate verify`（移轉後）**：由 X 的不可變計畫逐步核對，所以要在移轉剛完成、離開維護之前執行（第 5 章 §15 M3）；之後的操作會重新 render audit.log，屬正常變動。
+
+## P4：派發包、決策點、狀態推導與路由、G-DESIGN、preflight、agent 契約
+
+- **執行 commit**：`865f28781a3f114db831ece75cc53cb772c0d221`（分支 `qaos/requirement-a`；程式、schema、agent 契約與測試）。本紀錄所在的 commit 只改文件
+- **環境**：同 P1
+- **資料**：每個案例使用獨立的暫存 root。spec 以 `spec import`、引用以 `spec reference add` 建立；run、派發、提交、gate、核准、CLR 的回答與適用紀錄都走正式 API（`tests/p4_flow.py`）。CLR 的入口 D（腳本呼叫 `clarification.new()`）另外標示。範例 A～F 以測試 root 中的小型 spec（`SPEC-DEMO-001`、`SPEC-REF-001` 等）重現同樣的資料形狀與推導，**不是** SITELIST、DAILYREPORT 的真實資料；真實資料的重現在 M1 預演時驗收。標明「函式層」的子例直接呼叫內部函式（64 組合路由表、狀態機的 kind 限制、G-SPEC 的派發包 sha 核對）；標明「竄改」的子例才在流程後修改檔案
+- **既有測試的配合**：需要派發包的 task，測試 helper（`tests/helpers.write_artifact`）在寫入 artifact 前以正式指令 `dispatch` 產生派發包並填入 `dispatch_packet_sha256`（模擬 orchestrator 在派工前執行 `qaos dispatch`）；SpecAnalysis 沒有給 `consulted_sources` 時，helper 以派發包中的目標與全部必讀參考填入（模擬讀完必讀來源）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 398 passed（快照與 commit 的程式、測試內容逐檔相同）；`tools/validate_phase1.py` ALL CHECKS PASSED
+- **突變檢查**（在 scratchpad 的複本上逐一套用、跑對應測試，worktree 不變）：31 項全部被對應測試抓到——派發（沒有派發包、沿用舊派發包、同一 iteration 重複派發、額外來源不附理由）、G-SPEC（consulted hash、必讀參考、派發包 sha、派發後宣告改變、references_status、引用處文字、consulted 不在閉包、X14、X15 的 CLR 狀態、X16、X18 的 `*` 混用、3-18、approval 依據的 outcome、agent 自填推導欄位）、推導（豁免不影響 gap_missing）、G-DESIGN（E1 引用未採用的一側、背景 known_rules、E3～E5 的 exploratory、每個 TC 的 decision_refs）、G-TVAL（派發包範圍）、preflight（defer、重複條目、混合 revision 的舊規則）、開單（去重、短問題文字）、A9 與狀態機的 kind 限制
+- **自審**：交 Codex 前以獨立 agent 找反例，發現 9 項（1 項 blocker：`withdraw` 的操作裝飾器被移位；4 項 major：approval 型依據未限 `select_interpretation`、只有 negative TC 要求 decision_refs、混合 revision 時略過舊規則、附錄 A 1-19 需要審查確認；4 項 minor）。除 1-19 交審查確認外都已修正並補反例
+
+### AC 對照
+
+| AC | 狀態 | 測試（tests/…） | 待 |
+|---|---|---|---|
+| AC-04-1 | 通過 | `test_p4_dispatch.py::test_ac_04_1_*`（第二次拒絕、快照不變、sha 和 task 紀錄一致；approval task 不需要派發包） | — |
+| AC-04-2 | 通過 | `test_ac_04_2_*`（核准後 iteration 1：還沒派發 → 拒絕；已派發新包、產出沿用舊包 → 拒絕；新包 → PASS） | — |
+| AC-04-3 | 通過 | `test_ac_04_3_*`（hash 不符、不在派發包內、必讀參考沒查也沒列 → FAIL；列為 out_of_scope → PASS；竄改參考檔 → FAIL）、`test_p4_negative_cases.py::test_gspec_packet_sha_*` | — |
+| AC-04-4 | 通過 | `test_ac_04_4_*`（Validator 沒報 missing_reference → G-TVAL Structural FAIL；有報 → 依 Validator FAIL 退回 Designer） | Risk Reviewer 只有契約要求（不擋關） |
+| AC-04-5 | 通過 | `test_ac_04_5_*`（CLI 與 API 都拒絕；附理由後記錄 kind、hash、理由） | — |
+| AC-05-1 | 通過 | `test_p4_decisions.py::test_ac_05_1_2_*`（E2 critical、R3、DRAFT、conflict_resolution、核准單綁 revision、G-DESIGN 拒絕） | 真實 REQ-SITELIST-022 在 M1 |
+| AC-05-2 | 通過 | 同上（核准 → 重新分析 → E1 none；ACTIVE；none／critical；resolution 與 side 1 PASS、side 0 FAIL；`adopted_side_index: null` 兩側都不能引用（函式層）） | 同上；CLR A4（INCORPORATED）在 P5 |
+| AC-05-3 | 通過 | `test_ac_05_3_*`（Q01、Q02 E1、Q03 E4 minor；`rejection_contract.defined` false；只依賴 Q01 的 negative 不必 exploratory） | — |
+| AC-05-4、11、12、15 | 通過 | `test_ac_05_4_x_combinations_each_fail`（X1～X18 各一例，訊息指出編號；X12 含 AC-05-11、12 兩例；同一 CLR、範圍涵蓋的正例 PASS）、`test_gspec_coverage_and_x_subconditions` | — |
+| AC-05-5、6 | 通過 | `test_ac_05_5_6_13_*`（只開文件索取單＋等文件核准單；preflight 允許 OPEN 的文件索取單；A9 撤回；重開 T1；E4 critical → 新 spec_question 指回原單；退回後重跑不重複開單） | — |
+| AC-05-7 | 通過 | `test_ac_05_7_*`（E5 minor、`possible_source_missing`；背景 CLR 當依據 → G-DESIGN FAIL；當 resolution → X16） | 真實 REQ-DAILYREPORT-001 在 M1 |
+| AC-05-8 | 通過 | `test_ac_05_8_*` | — |
+| AC-05-9 | 通過 | `test_ac_05_9_*`（沒有 applicability → X16；加入後 E1；side 0 PASS、side 1 FAIL） | 真實 REQ-DAILYREPORT-012 在 M1 |
+| AC-05-10 | 通過 | `test_ac_05_5_6_13_*`（defer 拒絕、核准單維持 PENDING）、`test_preflight_checks_every_entry` | — |
+| AC-05-13 | 通過 | `test_ac_05_5_6_13_*`（只有名稱相同、指向別的 question → X14） | — |
+| AC-05-14 | 通過 | X13 在 `test_ac_05_4_*`；X15（條目 rationale 只有空白）在 `test_ac_05_14_*` | — |
+| §3.5.2 64 組合 | 通過 | `test_64_legal_combinations_route_table`（函式層；統計 R1 44、R2 4、R3 4、R4 4、R5 2、R6 2、R7 1、R8 2、R9 1） | — |
+| AC-06-1 | 通過 | `test_ac_05_1_2_*`（入口 B）、`test_ac_05_3_*`（入口 A）：12 個欄位逐欄等於來源決策點 | — |
+| AC-08-2 | 通過 | 新產出見 P2；舊資料（沒有決策點）G-SPEC PASS：`test_legacy_requirement_and_derived_fields` | — |
+| AC-08-6、17、27、38 | 通過 | X16 → G-SPEC FAIL、不是 E1：`test_ac_05_4_*`、`test_ac_05_7_background_clr_as_resolution_is_x16`、`test_ac_05_9_*` | — |
+| AC-08-20、26、29 | 通過 | 範圍涵蓋或人工 applicability 後成為 E1：`test_ac_05_1_2_*`、`test_ac_05_9_*` | — |
+| AC-08-9、12、13、33、34 | 通過 | 核准單 `resolutions[]` 由正式 approve 寫入：`test_ac_05_1_2_*`、`test_ac_05_14_*`、`test_waive_missing_entry_is_not_a_behaviour_decision` | — |
+| AC-08-10 | 部分 | 派發包保存決議快照（`resolutions`、`run_decisions`），revision 記錄兩份快照的 hash | 舊 run 恢復時以快照比對的完整情境在 M1／P6 |
+| AC-08-11 | 通過 | `test_ac_05_1_2_*` 的後段（CLR 新增 rev 1 → decision_revised、新 run 不跳過；沿用 rev 0 → G-SPEC FAIL，附錄 A 3-18） | — |
+| AC-08-15 | 部分 | conflict 沒有 resolution → E2（`test_ac_05_1_2_*`） | 「不因日期較晚自動採用」是 Spec Analyst 的判斷，只能以契約要求 |
+| AC-08-4 | 待 M1 | — | CLR-CASHFLOW-005 的真實資料 |
+| AC-08-16、32 | 部分 | 同 P2 | DAILYREPORT 實際資料在 M1 |
+| AC-09-12 | 通過 | `test_ac_05_1_2_*` 的後段（approval 包裝內的 CLR 也展開檢查） | — |
+| AC-09-27 | 部分 | `test_p3_migrate.py::test_old_running_run_resumes_on_its_sidecar_revision`（移轉前就在跑的 spec-to-testcase run，T2、T3 的派發包都帶 sidecar 的 R000） | manual run 與 RR 的組合在 M1 |
+| AC-09-33 | 通過 | `test_p4_flows.py::test_ac_09_33_*`（manual new → run new 綁最新 revision → dispatch → Draft 帶 decision_refs、SourceRef → gate → Validator → ACTIVATE；TC 版本帶 `requirement_model_revision`） | — |
+| AC-09-28～30 | 部分 | CIA 的派發包帶全部 pin_groups：`test_cia_packet_carries_pin_groups`；契約與指示已更新 | 兩輪完整 CIA 與 legacy sidecar 混合在 P6 |
+
+### P4 的實作說明（審查時請一併確認）
+
+1. **模組**：派發包在新模組 `tools/qaos/dispatch.py`；決策點的檢查與推導（X1～X18、旗標、E1～E5、路由）在新模組 `tools/qaos/decisions.py`。G-SPEC 呼叫它檢查，`_apply_effects` 呼叫它推導並持久化。
+2. **附錄 A 1-19（R，請審查確認）**：E3 只由 `unavailable` 的未查參考構成時，文件索取單沒有引用處可用；目前定為 G-SPEC FAIL，要求列出該參考在目標中的引用處。若改為讓文件索取單支援 pin 型項目，影響第 3 章 §3.4 與第 6 章 §6。
+3. **附錄 A 1-20～1-36**：派發包欄位與範圍、Validator 漏報、P4 的開單去重鍵、推導結果的保存、G-DESIGN 第 1 點的機械判斷、preflight 對所有條目的檢查、approval 型依據的 outcome、system 撤回的 kind 限制等定案。
+4. **第 6 章提前的部分**：新資料的 RESOLVE_AMBIGUITY 核准不再 apply CLR；`waive_missing` 只做 A9（P4 沒有 fulfill，A8 與 `fulfill`、`waive-item` 在 P5）。A4（INCORPORATED）與 issue key 去重仍在 P5。
+5. **既有測試**：helper 自動派發與填 `consulted_sources`（見上）。舊格式需求（沒有決策點）的行為不變，既有 WF 測試沒有改動斷言。
+6. **agent 契約與指示**：spec-analyst、test-designer、test-validator、tc-risk-reviewer、change-impact-analyst 的契約版本升級，並更新對應的 `.claude/agents/qaos-*.md`（派發包、決策點、decision_refs、派發包範圍、pin_groups）。
+7. **狀態機**：CLR 的 OPEN／ASKED → WITHDRAWN 拆成人（A10）與 system（A9，`kinds: [document_request]`）兩條；`state.check` 支援以 `kinds` 限定轉換。
