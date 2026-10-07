@@ -333,7 +333,7 @@
 | AC-10A-57 | 通過 | 見 P2 | — |
 | AC-10A-67～69 | 通過 | `test_waive_item_and_approval_waive_interplay` | — |
 | AC-A-B1-3（P5 的操作） | 通過 | `test_p5_resume.py`：submit_gate（含 A4）、apply a6、impact、apply a7、fulfill、waive-item、approve（含 A9），每種都以同請求重送與 `operation resume` 兩種入口續做；landing、掃描紀錄、fulfillment、WITHDRAWN 都只有一筆 | 其他操作類型與恢復表全部列在 P6 |
-| 附錄 A 6-31（run 的範圍） | 通過 | `test_p5_review_fixes.py::test_s5_01_landed_in_run_scope`（spec-to-bug run 綁定的 revision 含目標、但 BugDraft 沒有採用 → 拒絕）、`test_s5_01_manual_run_scope`（函式層：manual run 只含本 run TC 的需求） | manual run 的完整 apply（要走到 T6 才 COMPLETED）在 P6 |
+| 附錄 A 6-31（run 的範圍） | 通過 | `test_p5_review_fixes.py::test_s5_01_landed_in_run_scope`（spec-to-bug run 綁定的 revision 含目標、但 BugDraft 沒有採用 → 拒絕）、`test_s5_01_manual_run_scope`（函式層：manual run 只含本 run TC 的需求）；最終稿的身分見下方「Codex 審查修正」P5-01 | manual run 的完整 apply（要走到 T6 才 COMPLETED）在 P6 |
 | 附錄 A 6-32（A9 的涵蓋範圍） | 通過 | `test_s5_02_*`（waive-item 豁免 D02、核准只列 D01 → APPLIED，不是 A9） | — |
 | 給人看的文件 | 通過 | `test_s5_03_*`（INCORPORATED 時需求清單、ACTIVATE 審批頁仍顯示 PM 回答；未結案清單含 INCORPORATED） | — |
 | 附錄 A 3-25、3-30 | 通過 | `test_s5_04_05_*`（legacy_e6 不帶需求、用在新格式需求、由人呼叫 → 拒絕；coverage 為空或型別錯 → 拒絕） | — |
@@ -354,3 +354,11 @@
 7. **自審修正**：landed-in 的 run 範圍（6-31）、A9 只計本張核准（6-32）、`req-export` 與審批頁改用 `ANSWERED_STATES`、未結案清單（`clarification list`、舊路徑的開單去重）含 INCORPORATED、`legacy_e6` 與 agent coverage 的驗證（3-25、3-30）、apply 輸入重複（6-33）、stale-tcs 的目標（6-34）。
 8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。
 9. **已知限制**：見 ADR-010。
+
+### P5 Codex 審查修正
+
+兩份 Codex 審查（審查 A 的 P5-01～03、審查 B 的 P5-R2-01～04）的修正。每項一個 commit，測試在 `tests/test_p5_review_r2_fixes.py`；狀態以正式流程建立，標明「函式層」的子例直接呼叫內部函式。
+
+| 問題 | 修正 | 測試 |
+|---|---|---|
+| P5-01／P5-R2-01：最終 BugDraft／manual TestCaseDraft 以檔名排序挑選，退回重做後會選到仍為 VALID 的舊稿 | `_final_draft`：取產生者 task 本輪 `output_artifact_ids` 中的 VALID Draft，而且必須是本 run 最後一份 VALID 驗證報告審查的那份；對不上視為沒有最終稿。`_final_bugdraft`（spec-to-bug）與 `_run_scope`（manual）共用 | `test_p5_01_final_bugdraft_is_this_round_output`（正式流程：OPEN_BUG reject 重做、舊稿 ID 較大；只有舊稿採用 → a6 拒絕、CLR 不變；反方向新稿採用 → APPLIED）、`test_p5_01_manual_run_scope_after_override_reject`（函式層：FAIL ×3 → HUMAN_OVERRIDE reject 重做後，run 範圍取本輪 Draft）、`test_p5_01_final_draft_must_match_validator`（函式層：產出與報告對不上 → 沒有最終稿） |

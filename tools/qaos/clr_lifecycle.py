@@ -81,12 +81,26 @@ def _targets_in_revision(c: dict, pin: dict) -> list:
                         "requirement_id": req["requirement_id"], "question_id": dp["question_id"], "scope": scope, "via": via})
     return out
 
+_FINAL = {"BugDraft": ("agent-bug-analyst", "agent-bug-validator", "BugValidationReport", "bug_draft_artifact_id"),
+          "TestCaseDraft": ("agent-test-designer", "agent-test-validator", "TestValidationReport", "testcase_draft_artifact_id")}
+
+def _last_output(run: dict, agent: str, art_type: str) -> dict | None:
+    t = next((x for x in run["tasks"] if x.get("agent_id") == agent), None)
+    for aid in reversed((t or {}).get("output_artifact_ids") or []):
+        p = store.find_artifact(aid); a = store.load(p) if p else None
+        if a and a["artifact_type"] == art_type and a["status"] == "VALID": return a
+    return None
+
+def _final_draft(run: dict, art_type: str) -> dict | None:
+    """run 的最終 Draft（第 6 章 §5.6、附錄 A 6-31）：產生者 task 本輪 output_artifact_ids 中的 VALID Draft，而且必須是本 run 最後一份 VALID
+    驗證報告審查的那份。退回重做會清空 output_artifact_ids 但不把舊稿改成 SUPERSEDED，所以不能以檔名或 artifact ID 排序推定；兩者對不上視為沒有最終稿。"""
+    gen, val, rep_type, key = _FINAL[art_type]
+    draft, rep = _last_output(run, gen, art_type), _last_output(run, val, rep_type)
+    if draft is None or rep is None or rep["payload"].get(key) != draft["artifact_id"]: return None
+    return draft
+
 def _final_bugdraft(run_id: str) -> dict | None:
-    best = None
-    for p in store.glob(f"artifacts/*/{run_id}/*.yaml"):
-        a = store.load(p)
-        if a.get("artifact_type") == "BugDraft" and a.get("status") == "VALID": best = a
-    return best
+    return _final_draft(store.load(f"runs/{run_id}/run.yaml"), "BugDraft")
 
 def _targets_in_bugdraft(c: dict, run: dict, art: dict) -> list:
     """BugDraft 的明確 SourceRef（必須對應 decision_refs 的決策點）中，effective_basis 為最新 answer_rev、通過 X16 者。"""
@@ -134,10 +148,7 @@ def _run_scope(run: dict) -> set | None:
     """run 的範圍（第 6 章 §5.6 第 3 點；附錄 A 6-31）：manual-test-to-regression 是本 run 最終 TestCaseDraft 各 TC 的 requirement_ids；
     其他（spec-to-testcase、spec-change-impact）是綁定 revision 的全部需求（None）。spec-to-bug 只看最終 BugDraft，不經過這裡。"""
     if run.get("workflow_id") != "manual-test-to-regression": return None
-    draft = None
-    for p in store.glob(f"artifacts/*/{run['run_id']}/*.yaml"):
-        a = store.load(p)
-        if a.get("artifact_type") == "TestCaseDraft" and a.get("status") == "VALID": draft = a
+    draft = _final_draft(run, "TestCaseDraft")
     return {r for t in ((draft or {}).get("payload") or {}).get("testcases") or [] for r in t.get("requirement_ids") or []}
 
 def run_targets(c: dict, run_id: str) -> list:
