@@ -1476,7 +1476,7 @@ AC-07-8（驗證失敗時業務檔 hash 不變）屬於驗證失敗處理，列�
 | AC-08-13 | 同一份核准單被引用到沒有列在 `resolutions` 中的需求 | FAIL |
 | AC-08-14 | 舊 CLR 第一次被新版 `answer()` 寫入 | rev 0 的 hash 等於原答案文字的 sha256 |
 | AC-08-15 | spec 原文和決議不一致，但沒有 resolution | 判為 conflict；不會因為日期較晚就自動採用 |
-| AC-08-16 | REQ-DAILYREPORT-012（v0.3）以 CLR-010 rev 0 作 resolution；CLR-010 有一筆人建立的 applicability，scope 為完整 QuestionScope `{SPEC-DAILYREPORT-001, REQ-DAILYREPORT-012, report.cash_net.semantics, ["*"], {}}` | PASS（basis_hash 也相符時；basis_hash 的驗收見 AC-08-32） |
+| AC-08-16 | REQ-DAILYREPORT-012（v0.3）以 CLR-010 rev 0 作 resolution；CLR-010 有一筆人建立的 applicability，scope 為完整 QuestionScope `{SPEC-DAILYREPORT-001, REQ-DAILYREPORT-012, report.cash_net.semantics, ["*"], {}}` | PASS（basis_hash 也相符時；basis_hash 的驗收見 AC-08-32）。CLR 自身範圍為 REQ-DAILYREPORT-011；本 AC 的 REQ-012 是人建立的 applicability 的目標（附錄 A 3-31） |
 | AC-08-17 | 同 AC-08-16，但沒有 applicability | X16 FAIL |
 | AC-08-18 | agent 或 system 執行 `applicability add` | 拒絕 |
 | AC-08-19 | 對 APPLIED 的 CLR 追加 `evidence_addenda`；另企圖追加答案修訂 | 追加 addenda 後狀態、`answer_sha256`、`answer_revisions` 都不變；追加答案修訂被拒絕 |
@@ -2985,7 +2985,7 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
 | R2 | `migrate rollback --op X`（中止時依 §13 續做 R） | 新程式（舊程式沒有回復功能，所以資料先回復） |
 | R3 | `migrate verify --rolled-back` 全部通過 | 新程式 |
 | R4 | 程式 revert：在 `main` 上 revert MR 的 merge commit（以指定方式）；本機 working tree 回到舊程式 | — |
-| R5 | 以**舊程式**驗證：`validate_phase1`、pytest；對全部業務資料執行舊的 `bin/qaos validate`；確認 `restore` 類全部等於 `pre_sha256`、`remove` 類全部不存在 | 舊程式 |
+| R5 | 以**舊程式**驗證：`validate_phase1`、pytest；對全部業務資料執行舊的 `bin/qaos validate`，以 baseline 比對判定（附錄 A 5-16）：移轉前就存在的檔案，逐檔結果與「舊程式＋移轉前資料」相同；回復後保留的 `retain_audit` 稽核檔不在舊 validate 範圍；確認 `restore` 類全部等於 `pre_sha256`、`remove` 類全部不存在 | 舊程式 |
 | R6 | 移除 `locks/maintenance.yaml`（舊程式不認得它）；**鎖檔、診斷檔、登錄與狀態紀錄、`retain_audit` 都保留**；結束維護窗口並通知 admin-ui | — |
 
 - 資料回復（R2、R3）一定在程式 revert（R4）之前；R4 之後不再執行新程式的寫入指令。
@@ -3116,7 +3116,7 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
   - ② `operation resume X` → 拒絕；
   - ③ `migrate --new-request` → 產生新 op Y；不會誤判已移轉；清單依當時的 pre-state 重新產生；Y 的清單不包含 X 的稽核物；X 的稽核物保持不變；
   - `migrate verify` 通過。
-- **AC-09-64**：R0～R6 完整順序（測試中以舊版程式的 checkout 執行 R5）。前提：AC-09-55～59、61、71～85 先通過。預期：舊程式的 validate、pytest 都通過；R6 之後鎖檔仍存在，但舊程式不讀取它。
+- **AC-09-64**：R0～R6 完整順序（測試中以舊版程式的 checkout 執行 R5）。前提：AC-09-55～59、61、71～85 先通過。預期：舊程式的 `validate_phase1`、pytest 都通過；舊的 `bin/qaos validate` 依附錄 A 5-16 以 baseline 比對——移轉前就存在的檔案，逐檔結果與「舊程式＋移轉前資料」相同（移轉前既有的失敗不算新失敗），回復後保留的 `retain_audit` 稽核檔（`runs/_audit.d/*`、`runs/<run>/audit.d/*`、`operations/` 下的計畫、清單、backup、登錄、狀態與完成紀錄）不在舊 validate 範圍；R6 之後鎖檔仍存在，但舊程式不讀取它。
 - **AC-09-65**：不在維護中執行 rollback。預期：拒絕（S_pre 或 S_post）。
 - **AC-09-66**：某個 run 原本沒有 `audit.log` → 移轉（render 新建）→ rollback。預期：該 `audit.log` 屬於 `remove`，回復後不存在；legacy 狀態在標記中記為 `absent`。
 - **AC-09-67**：CLR 原本沒有 `.md` render → 移轉時產生 → rollback。預期：該 `.md` 屬於 `remove`，回復後不存在。
@@ -3976,6 +3976,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 3-28 | 沒有 issue key 的 CLR | issue key 只在 kind、requirement_id、topic、subject、params、role_scope 都有值時計算（basis 由 CLR 的 spec 版本建立）；欄位不齊的新單（例如人工只填問題）沒有 issue key，去重規則 4 把它和移轉前的舊單一樣看待 | I |
 | 3-29 | key 相同時的連結 | `clarification.new()` 回傳既有的 CLR（帶 `_linked: true`，不寫回）並寫一筆 `LINK_CLARIFICATION` audit；入口 B 把它加進核准單的 impact；CLI 顯示「已連結既有單」 | I |
 | 3-30 | agent／system 開單的 coverage | 必須是完整的 Coverage：`references_status`、`consulted[]`、`unconsulted_normative[]`、`missing_sources[]`、`waivers[]` 五個欄位都在，清單欄位是清單；`known_rules` 必須是清單（可以是空的）。人工開單（入口 D）的 coverage 可以只有 `consulted` | I |
+| 3-31 | AC-08-16 的需求 ID | 維持 REQ-DAILYREPORT-012。CLR-DAILYREPORT-010 自身的 `requirement_id` 是 REQ-DAILYREPORT-011（「已兌現金額」的歸屬日），它的 APPLIED 紀錄同時涵蓋 REQ-012（現金淨收）；AC-08-16 驗的是把 CLR-010 的答案以人建立的 applicability 套用到 REQ-012（`report.cash_net.semantics`），和 CLR 自身範圍是不同角色。M1（2026-10-08）以實際資料確認。2026-10-08 Oscar 決定（D-M1-3） | I |
 
 ### A.4 executor（第 4 章）
 
@@ -4019,6 +4020,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 5-13 | T7 對 `audit.log` 檢視的判定 | `audit.log` 是由事件檔重建的衍生檢視，移轉之後的任何操作（含 `maintenance end`、`start`）都會重新 render 全域 log。T7 對 `runs/_audit.log`、`runs/<run>/audit.log` 另外接受「目前內容等於依目前事件與 legacy 重新 render 的結果」：這代表它只是被正常更新過，R 照樣回復成移轉前的位元組（restore）或刪除（remove），那一步的 `expected_before` 是目前內容。其他內容（竄改）仍以 T7 拒絕。否則 AC-09-61 ② 與 AC-09-70 的情境永遠會被 T7 拒絕 | R |
 | 5-14 | P3 實作補充的定義 | 新分析的 revision 從 R001 起編號，R000 只由移轉建立。run.yaml 的 `requirement_model_revision` 是目標端（spec-change-impact 時是 to 端），另有 `from_requirement_model_revision`、testcase-revision 的 `testcase_pin`（被修訂 TC 的舊 pin）。移轉 sidecar 的 `legacy_binding` 在 testcase-revision、manual 與 TC sidecar 為 true，其他為 false。清單中會造成循環的項目只列路徑、不列 sha（清單自己那一步與標記那一步的完成紀錄、標記的 remove 項、計畫檔、登錄紀錄），verify 與 rollback 改依計畫步驟或登錄紀錄核對。`untouched` 涵蓋 spec.yaml、TC 版本、registry、其他 run.yaml、需求模型檢視、核准單、CLR、移轉前已存在的登錄與狀態紀錄。R 寫兩個事件：接管（R2）與回復摘要。`req accept-declaration` 需要 `--by`（只能由人），`--rev` 必須是最新 revision。revision 的 `decision_snapshot_hashes` 與派發包一起在 P4 加入。R000 的 `reason=decision_applied` 判定：revision 引用的 CLR 有任何 applied landing 即成立（R000 沒有建立時間） | I |
 | 5-15 | AC-09-85 ⑤ 與 §13.7 續做表 | 部分移轉（`marker` 群組為空）的 R 在檢查 B 通過後、`terminal` 寫入前中止時，R 沒有可落盤的「檢查 B 已通過」證據，續做無法與「還沒做檢查 A」區分，依 §13.7 該列重新執行檢查 A。兩個檢查此時的條件相同（標記必須不存在），沒有安全差異；AC-09-85 ⑤ 原寫「不執行檢查 A」與續做表矛盾，改依續做表。P6 驗收時發現 | R |
+| 5-16 | AC-09-64 R5 的舊 validate 判定 | 改為 baseline 比對，不改程式：(1) 移轉前就存在的檔案，舊程式 `bin/qaos validate` 的逐檔結果與「舊程式＋移轉前資料」相同（移轉前既有的失敗不算新失敗）；(2) 回復後依 R6 保留的 `retain_audit` 稽核檔（`runs/_audit.d/*`、`runs/<run>/audit.d/*`、`operations/` 下的計畫、清單、backup、登錄、狀態與完成紀錄）不在舊 validate 範圍。理由：舊 `schema.infer` 的 `PATH_RULES` 把 `runs/` 下所有 yaml 推斷成 `workflow/workflow-run.schema.json`，這是舊程式的推斷限制——移轉前的 `runs/*/entities/*.yaml` 也因此失敗，保留的事件檔指定給舊 validate 時同樣失敗；舊程式的正常流程不掃描 `runs/_audit.d/`。**實際回復時**：(1) 的對照結果要在移轉前取得（W1 之後、M2 之前，仍是舊程式時，對全部業務資料逐檔執行並保存）。M1（2026-10-08）：對照組 23 檔既有失敗、回復後逐檔相同，保留的事件檔 4 個被判 INVALID。2026-10-08 Oscar 決定（D-M1-1） | R |
 
 ### A.6 CLR 生命週期（第 6 章）
 
