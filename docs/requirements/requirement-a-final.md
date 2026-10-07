@@ -3196,7 +3196,8 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
 - **AC-09-91**（防禦性）：以測試專用的故障注入，讓某個 spec 版本在移轉前就有宣告。分兩例：(a) 目前 `references` 非空；(b) `references` 為空，但已有 `reference_declarations`（有宣告歷史）。預期：兩例都拒絕移轉，不建立計畫、不寫任何檔案。前提檢查不能只看目前 `references` 是否非空。只證明前提檢查存在，不屬於正式流程。
 - AC-09-88、89、90 各使用獨立的 fixture；AC-09-89 的宣告變更之後，rollback 仍受 `untouched`、T7 與後續操作限制。
   - 每例先斷言各群組的狀態（例如 ③：`takeover`、`restore`、`marker` 全部 after，Rt1 after 且有完成紀錄，Rt2 before）；
-  - ①②③⑤：第 0 步通過（② 符合前綴規則；⑤ 的 R 只有 Rt2，合法）；不執行檢查 A；依前綴規則再執行一次檢查 B → 通過 → 寫入剩下的終態步驟 → 完成；
+  - ①②③：第 0 步通過（② 符合前綴規則）；不執行檢查 A；依前綴規則再執行一次檢查 B → 通過 → 寫入剩下的終態步驟 → 完成；
+  - ⑤：第 0 步通過（R 只有 Rt2，合法）；`marker` 群組是空的、`terminal` 尚未寫入，依 §13.7 續做表「`marker` 群組是空的」一列再執行一次檢查 A（條件與檢查 B 相同：標記必須不存在）→ 檢查 B → 寫入 Rt2 → 完成（附錄 A 5-15）；
   - `status.d/<X>-rolled_back`、`<R>-completed` 各只有一個；Rt1 不重寫；
   - ④a：在 V5 停止，沒有到達檢查 B；④b：先斷言 V5 通過，再斷言在檢查 B 停止；
   - ④a、④b 兩種入口都斷言：Rt1 不重寫、Rt2 不寫，R 保持 `in_progress`，`maintenance end` 被拒絕；Rt1 已記錄的 X 終態不撤回；
@@ -4017,6 +4018,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 5-12 | CLR 的 spec 版本沒有匯入時的 rev 0 | 移轉無法為它建立 legacy basis（沒有可核對的 content_hash），也不能在移轉中匯入 spec（業務寫入在移轉前與維護中都被拒絕）。處理：**跳過該 CLR 的 rev 0**，在移轉標記的 `exceptions[]` 記錄 `{path, kind: clr_rev0_skipped, reason}` 並回報；不捏造 pin、不以目前資料當歷史依據。該 CLR 沒有 `answer_revisions`，不能被 clarification 型 SourceRef 引用。規則保留作為安全網。現有資料原本只有 `CLR-CASHOUT-001`（標示 v1.0，但 SPEC-CASHOUT-001 只匯入過 v0.1）會遇到；**Oscar 2026-10-07 決定以資料更正處理**：該單的 spec_version 更正為 0.1（主資料夾 main `e312a00`，history 留紀錄），移轉時正常建立 rev 0，現有資料不再觸發這個例外 | R |
 | 5-13 | T7 對 `audit.log` 檢視的判定 | `audit.log` 是由事件檔重建的衍生檢視，移轉之後的任何操作（含 `maintenance end`、`start`）都會重新 render 全域 log。T7 對 `runs/_audit.log`、`runs/<run>/audit.log` 另外接受「目前內容等於依目前事件與 legacy 重新 render 的結果」：這代表它只是被正常更新過，R 照樣回復成移轉前的位元組（restore）或刪除（remove），那一步的 `expected_before` 是目前內容。其他內容（竄改）仍以 T7 拒絕。否則 AC-09-61 ② 與 AC-09-70 的情境永遠會被 T7 拒絕 | R |
 | 5-14 | P3 實作補充的定義 | 新分析的 revision 從 R001 起編號，R000 只由移轉建立。run.yaml 的 `requirement_model_revision` 是目標端（spec-change-impact 時是 to 端），另有 `from_requirement_model_revision`、testcase-revision 的 `testcase_pin`（被修訂 TC 的舊 pin）。移轉 sidecar 的 `legacy_binding` 在 testcase-revision、manual 與 TC sidecar 為 true，其他為 false。清單中會造成循環的項目只列路徑、不列 sha（清單自己那一步與標記那一步的完成紀錄、標記的 remove 項、計畫檔、登錄紀錄），verify 與 rollback 改依計畫步驟或登錄紀錄核對。`untouched` 涵蓋 spec.yaml、TC 版本、registry、其他 run.yaml、需求模型檢視、核准單、CLR、移轉前已存在的登錄與狀態紀錄。R 寫兩個事件：接管（R2）與回復摘要。`req accept-declaration` 需要 `--by`（只能由人），`--rev` 必須是最新 revision。revision 的 `decision_snapshot_hashes` 與派發包一起在 P4 加入。R000 的 `reason=decision_applied` 判定：revision 引用的 CLR 有任何 applied landing 即成立（R000 沒有建立時間） | I |
+| 5-15 | AC-09-85 ⑤ 與 §13.7 續做表 | 部分移轉（`marker` 群組為空）的 R 在檢查 B 通過後、`terminal` 寫入前中止時，R 沒有可落盤的「檢查 B 已通過」證據，續做無法與「還沒做檢查 A」區分，依 §13.7 該列重新執行檢查 A。兩個檢查此時的條件相同（標記必須不存在），沒有安全差異；AC-09-85 ⑤ 原寫「不執行檢查 A」與續做表矛盾，改依續做表。P6 驗收時發現 | R |
 
 ### A.6 CLR 生命週期（第 6 章）
 
