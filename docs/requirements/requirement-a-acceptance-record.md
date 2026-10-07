@@ -413,17 +413,17 @@
 | AC-07-44 | `test_p6_clr_residual.py::test_ac_07_44_*`、`test_p6_migrate_residual.py::test_ac_09_50_*`（逐位元比對 render） | 通過 |
 | AC-07-80、82、83 | `test_p6_migrate_residual.py::test_ac_07_80_82_*`；83 已由 `test_p3_migrate.py::test_rollback_abort_points_then_resume` 涵蓋 | 通過 |
 | AC-07-90～93 | `test_p6_resume_matrix.py::test_migrate_x_abort_points_then_resume`、`test_ac_07_92_*`、`test_ac_07_93_*` | 通過 |
-| AC-08-4、16、32 | 快照預演：CLR-CASHFLOW-005 rev 0 的 SourceRef 驗證通過、X16 依 6-35 FAIL（函式層）；CLR-DAILYREPORT-010 rev 0 的 basis；M1 w1-ack 以當天資料重做（函式層） | AC-08-4 通過（M1 以當天資料驗 SourceRef 本身）；AC-08-16、32 的 legacy basis 部分通過，0.3 部分「M1：當天資料不具備」，證據分類見「M1 預演」段的缺項證據表；暫定，待 Oscar 確認（D-M1-2）。AC-08-16 維持 REQ-DAILYREPORT-012，CLR 自身範圍為 REQ-011（附錄 A 3-31，D-M1-3） |
+| AC-08-4、16、32 | 快照預演：CLR-CASHFLOW-005 rev 0 的 SourceRef 驗證通過、X16 依 6-35 FAIL（函式層）；CLR-DAILYREPORT-010 rev 0 的 basis；M1 w1-ack 以當天資料重做（函式層） | AC-08-4 通過（M1 以當天資料驗 SourceRef 本身）；AC-08-16、32 的 legacy basis 部分通過，0.3 部分為已接受的缺口（Oscar 2026-10-08，見「M1 預演」段）。AC-08-16 維持 REQ-DAILYREPORT-012，CLR 自身範圍為 REQ-011（附錄 A 3-31） |
 | AC-08-10 | `test_p6_s00_fixes.py::test_ac_08_10_old_run_keeps_pinned_answer_rev_after_new_answer`（revision 以 rev 0 為 resolution → PM 再回答追加 rev 1 → 舊 run 以釘選的 rev 0 設計、驗證、ACTIVATE → COMPLETED；改引用 rev 1 → G-DESIGN FAIL） | 通過 |
-| AC-09-27 | 快照預演：RUN-20261002-001 續做的派發包仍帶 sidecar 的 R000（AC-09-3／20） | 部分：真實 manual run 的 sidecar 綁 R000（M1）通過；AC 的核心情境「RR、Validator 的派發包使用同一個 R000」沒有驗到，RR／Validator 派發包的真實組合「M1：當天資料不具備」（既有 run 的 task graph 沒有 T2RR，T1、T2 移轉前已 DONE），證據分類見「M1 預演」段的缺項證據表；暫定，待 Oscar 確認（D-M1-2） |
-| AC-09-3、20 | 快照預演（work1） | 通過；AC-09-20「M1：當天資料不具備」（沒有 WAITING_HUMAN 的 testcase-revision run），證據分類見「M1 預演」段的缺項證據表；暫定，待 Oscar 確認（D-M1-2） |
+| AC-09-27 | 快照預演：RUN-20261002-001 續做的派發包仍帶 sidecar 的 R000（AC-09-3／20） | 通過：`test_m1_resume_pins.py::test_ac_09_27_*`（RR 與 Validator 的派發包使用同一個 sidecar R000）；真實 manual run 的 sidecar 綁 R000（M1） |
+| AC-09-3、20 | 快照預演（work1） | 通過；AC-09-20：`test_m1_resume_pins.py::test_ac_09_20_*`（M1 補測） |
 | AC-09-11 | 快照預演：SITELIST 0.6 不跳過；DAILYREPORT 0.2 跳過並 WARN_LEGACY_SKIP | 通過 |
 | AC-09-14 | `test_p6_migrate_residual.py::test_ac_09_14_*` | 通過 |
 | AC-09-15 | `test_p6_cia_manual_flows.py::test_ac_09_15_*`（PLATFORMRULE 形狀的測試 spec） | 通過（真實 PLATFORMRULE 0.2 未驗） |
 | AC-09-17、32 | `test_ac_09_17_32_cancel_run_with_several_pending_approvals`（第二張 PENDING 以故障注入建立）；快照預演：RUN-20261002-001 cancel、新 0.4→0.7 run 不綁 0.6 | 通過 |
 | AC-09-18、19 | P5 RA 流程（`test_p5_lifecycle.py`） | 通過 |
-| AC-09-24、66、67 | 快照預演：新 regression-generation run 不綁 revision（24） | AC-09-24 新 run 的部分：通過；既有 run 部分、AC-09-66、67「M1：當天資料不具備」，證據分類見「M1 預演」段的缺項證據表；暫定，待 Oscar 確認（D-M1-2） |
-| AC-09-28～31、AC-A-B1-7 | `test_ac_09_28_29_30_two_rounds_*`（含 legacy R000 混合、G2＋G5、G4 反例）；快照預演：DAILYREPORT 96 條分 0.1／0.2 各 48 → PASS、只判一組 → G2、G5 FAIL（函式層 g_impact） | AC-09-28～30、AC-A-B1-7 通過（同版本 CIA）。AC-09-31 部分：96 條分兩組的函式層檢查通過，AC 本身定義的 0.2→0.3 跨版本情境沒有驗到；0.2→0.3 跨版本與真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA「M1：當天資料不具備」，證據分類見「M1 預演」段的缺項證據表；暫定，待 Oscar 確認（D-M1-2） |
+| AC-09-24、66、67 | 快照預演：新 regression-generation run 不綁 revision（24） | 通過：`test_m1_migrate_absent.py` 的 AC-09-24、66、67（M1 補測） |
+| AC-09-28～31、AC-A-B1-7 | `test_ac_09_28_29_30_two_rounds_*`（含 legacy R000 混合、G2＋G5、G4 反例）；快照預演：DAILYREPORT 96 條分 0.1／0.2 各 48 → PASS、只判一組 → G2、G5 FAIL（函式層 g_impact） | 通過；AC-09-31 的跨版本情境：`test_m1_cross_version_cia.py`（M1 補測）。真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA：M1 當天資料不具備，有測試 spec 的機制證據（AC-09-15、本列） |
 | AC-09-45、47、48、50 | `test_p6_migrate_residual.py::test_ac_09_45_*`、`_47_*`、`_48_*`、`_50_*` | 通過 |
 | AC-09-58、79、81 | `test_ac_09_81_58_*`、`test_ac_09_79_*` | 通過 |
 | AC-09-73、74、76 | `test_ac_09_73_74_*`、`test_ac_09_73_t5_report_names_the_step`、`test_ac_09_74_3_*`、`test_ac_09_76_*` | 通過 |
@@ -431,7 +431,7 @@
 | AC-09-83、84、85 | `test_ac_09_83_*`、`test_ac_09_84_*`、`test_ac_09_85_*`（84 ⑥ 為函式層，屬防禦性） | 通過 |
 | migrate verify（§12） | `test_verify_after_migrate_each_category`、`test_verify_after_rollback_each_category`、`test_verify_after_partial_rollback_*` | 通過 |
 | AC-09-89 (b) | `test_ac_09_89_b_*` | 通過 |
-| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 暫定成立（依附錄 A 5-16 的 baseline 比對；D-M1-1 待獨立審查與 Oscar 確認；見「M1 預演」段） |
+| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 通過（依附錄 A 5-16 的 baseline 比對，Oscar 2026-10-08 決定 D-M1-1；W1 對照工具 `tools/legacy_validate_snapshot.py`） |
 | AC-10A-14、47 | `test_p6_clr_residual.py::test_ac_10a_14_47_same_product_cross_area` | 通過 |
 | AC-10A-15 | `test_ac_10a_15_confirmed_second_target_stale_tc` | 通過 |
 | AC-10A-28 | `test_ac_10a_28_candidate_revised_after_scan` | 通過 |
@@ -464,7 +464,7 @@
 
 ### M1 與 Oscar 決定的項目
 
-- **M1**：2026-10-08 已執行，結果見下方「M1 預演」段。Oscar 2026-10-08 初步決定（定案前先經獨立審查）：D-M1-1（AC-09-64 改為 baseline 比對，附錄 A 5-16）、D-M1-2（當天資料不具備的項目標「M1：當天資料不具備」，證據依下方缺項證據表逐項區分；沒有對題測試的項目待 Oscar 決定）、D-M1-3（AC-08-16 維持 REQ-012，附錄 A 3-31）、D10（M3 用 acknowledge-idle；RUN-20260914-001 是否取消部署後另外決定）
+- **M1**：2026-10-08 已執行，結果見下方「M1 預演」段。Oscar 2026-10-08 決定：D-M1-1（AC-09-64 改為 baseline 比對，附錄 A 5-16；W1 對照以 `tools/legacy_validate_snapshot.py` 保存全文）、D-M1-2（AC-09-66、67、20、24 既有 run、27 RR、31 跨版本補隔離測試；AC-08-16／32 的 0.3 部分接受缺口）、D-M1-3（AC-08-16 維持 REQ-012，附錄 A 3-31）、D10（M3 用 acknowledge-idle；M3 第一步由 Oscar 確認 RUN-20260914-001 為 idle；是否取消部署後另外決定）
 - **之後的需求議題**（Oscar 2026-10-08：先維持現行做法）：ARCADE 0.7 有 1 條 RETIRED 需求，依「最新 revision 有非 ACTIVE 需求」規則，移轉後 9 條 ACTIVE TC 不能直接 testcase-revision；是否改為只擋 DRAFT 另議
 - **觀察**（不是本階段缺陷，列給審查參考）：G7 不檢查 `requirement_diff` 的 change 標記是否正確；G-COMPARE 不檢查 `new_draft_id` 是否為本輪 Draft、是否每張 affected TC 都有比對（與 6-36 同類）
 
@@ -479,7 +479,7 @@
 
 ## M1 預演（2026-10-08）
 
-- **結果**：**暫定，待 Oscar 確認**。執行時因 AC-09-64 的 R5「舊程式的 validate 通過」照字面不成立而受阻停止；依 D-M1-1 擬採 baseline 判定（附錄 A 5-16），AC-09-64 以本次證據暫定成立（未重跑）。其他項目執行時即符合預期；當天資料不具備的項目證據分類見下方缺項證據表
+- **結果**：**通過（附已接受的缺口：AC-08-16／32 的 0.3 部分）**。執行時因 AC-09-64 的 R5「舊程式的 validate 通過」照字面不成立而受阻停止；Oscar 2026-10-08 決定改為 baseline 比對（附錄 A 5-16），AC-09-64 以本次證據成立（未重跑）。當天資料不具備的項目中，AC-09-66、67、20、24（既有 run）、27（RR）、31（跨版本）已以隔離測試補驗，其餘見「已接受的缺口」
 - **程式**：`4e34efb2633cfe3d1b0857f017e8c368ba5c1f77`（未修改程式）
 - **資料**：主資料夾 `/Users/oscar/Desktop/qa-agent-os` 當天的工作目錄，含未追蹤的 9/18 業務檔（`runs/RUN-20260918-012`、`013`，`executions/2026-09/EXE-20260918-001`、`002`，`evidence/testrun-6`）
   - 以 rsync 複製，排除 `.git`、`.codex`、`review-handoff`、`.claude`、`AGENTS.md`、admin-ui 的 `node_modules`／`.venv`、快取、`.DS_Store`
@@ -494,42 +494,41 @@
 | 附錄 A 6-38 baseline | 以當天資料重算：移轉前 13 檔、移轉後 14 檔，**與清單相同**（ack、cancel 兩份都相同） |
 | 第一份工作複本 8 步 | `tests/p6_rehearsal.py`。acknowledge-idle、cancel-run 各一份，0 項失敗。包含 AC-A-B1-4 逐項（R000 16 個、TC sidecar 96／44／57 共 499、CLR rev 0 42 張、`audit.legacy.log` 94 份、untouched 全部吻合）、AC-09-46、AC-09-63 |
 | 故障演練 | FP-M2（直接 rollback）、FP-M3、FP-R0、FP-W（直接 rollback、續做）、FP-P1，各以同請求重送與 `operation resume` 兩種入口驗收（FP-M2 與 FP-W 的直接 rollback 各一組），共 10 組，每組一份全新子複本，151 項全部 PASS |
-| AC-09-64 | **暫定成立**（依附錄 A 5-16 的 baseline 比對；D-M1-1 待 Oscar 確認）。R1～R4 正常：新程式 rollback、verify；R4 後追蹤檔全部等於 f5188b0。R5 中舊 `validate_phase1` 通過、舊 pytest 59 passed、restore／remove／untouched 全部吻合、R6 之後舊程式照常執行且不讀鎖檔，這些都符合。<br>逐檔舊 `bin/qaos validate` 有兩點不符字面預期：(1) 舊程式＋原資料本來就有 23 檔 INVALID，回復後逐檔結果相同；(2) 回復後保留的 4 個 `runs/_audit.d/*.yaml`（X 1、`maintenance start` 1、R 2）被舊 `schema.infer`（`runs/` → workflow-run）判 INVALID。依 5-16：(1) 的既有檔案逐檔相同、(2) 的保留稽核與控制紀錄不在範圍，所以成立 |
-| AC-09-20 | 當天資料不具備（沒有 WAITING_HUMAN 的 testcase-revision run）。同機制以 RUN-20261002-001 的複本驗證派發包帶 sidecar R000（AC-09-3），PASS |
-| AC-09-24 | 新 regression-generation run 不綁 revision、沒有 sidecar，PASS。既有 run 的部分：當天資料不具備 |
-| AC-09-66、67 | 當天資料不具備（所有 run 都有 `audit.log`；所有 CLR 都有 `.md`） |
+| AC-09-64 | **通過**（依附錄 A 5-16 的 baseline 比對；Oscar 決定 D-M1-1）。R1～R4 正常：新程式 rollback、verify；R4 後追蹤檔全部等於 f5188b0。R5 中舊 `validate_phase1` 通過、舊 pytest 59 passed、restore／remove／untouched 全部吻合、R6 之後舊程式照常執行且不讀鎖檔，這些都符合。<br>逐檔舊 `bin/qaos validate` 有兩點不符字面預期：(1) 舊程式＋原資料本來就有 23 檔 INVALID，回復後逐檔結果相同；(2) 回復後保留的 4 個 `runs/_audit.d/*.yaml`（X 1、`maintenance start` 1、R 2）被舊 `schema.infer`（`runs/` → workflow-run）判 INVALID。依 5-16：(1) 的既有檔案逐檔相同、(2) 的保留稽核與控制紀錄不在範圍，所以成立 |
+| AC-09-20 | 當天資料不具備（沒有 WAITING_HUMAN 的 testcase-revision run）→ 以隔離測試補驗，通過（見下表） |
+| AC-09-24 | 新 regression-generation run 不綁 revision、沒有 sidecar，PASS。既有 run 的部分：當天資料不具備 → 以隔離測試補驗，通過（見下表） |
+| AC-09-66、67 | 當天資料不具備（所有 run 都有 `audit.log`；所有 CLR 都有 `.md`）→ 以隔離測試補驗，通過（見下表） |
 | AC-08-4 | CLR-CASHFLOW-005 rev 0 的 SourceRef 本身驗證 PASS（函式層；不宣稱 Draft 或 G-SPEC 有效）；X16 依 6-35 FAIL |
-| AC-08-16 | 實際對象：CLR-DAILYREPORT-010 自身是 REQ-DAILYREPORT-011；它的 APPLIED 紀錄也涵蓋 REQ-012（現金淨收）。AC 的 REQ-012 是 applicability 的目標，與資料不矛盾（D-M1-3）。0.3 部分：當天資料不具備 |
-| AC-08-32 | CLR-010 rev 0 的 legacy basis（0.1、`target_decl_rev` 0、閉包空）PASS。0.3 部分：當天資料不具備 |
-| AC-09-27 | 真實 `RUN-20260914-001` 移轉後的 sidecar 綁 DAILYREPORT 0.1 R000，PASS。manual-test-to-regression 對 DAILYREPORT 有條件式 RR（ADR-009，T2 之後插入 T2RR），但這個既有 run 的 task graph 只有 T1～T6、沒有 T2RR；T1、T2 移轉前已 DONE，T4（Curator）依附錄 A 1-6 不需要派發包（dispatch 拒絕）。本次只驗證 sidecar 綁定與 T4 的 dispatch 行為，沒有實際完成 T4 或整個 run。RR／Validator 派發包的部分：當天資料不具備 |
-| AC-09-31 | 96 條＝0.1 R000 48＋0.2 R000 48，g_impact PASS；只判 0.2 → G2、G5 FAIL。0.2→0.3：當天資料不具備 |
+| AC-08-16 | 實際對象：CLR-DAILYREPORT-010 自身是 REQ-DAILYREPORT-011；它的 APPLIED 紀錄也涵蓋 REQ-012（現金淨收）。AC 的 REQ-012 是 applicability 的目標，與資料不矛盾（D-M1-3）。0.3 部分：已接受的缺口（見下方） |
+| AC-08-32 | CLR-010 rev 0 的 legacy basis（0.1、`target_decl_rev` 0、閉包空）PASS。0.3 部分：已接受的缺口（見下方） |
+| AC-09-27 | 真實 `RUN-20260914-001` 移轉後的 sidecar 綁 DAILYREPORT 0.1 R000，PASS。manual-test-to-regression 對 DAILYREPORT 有條件式 RR（ADR-009，T2 之後插入 T2RR），但這個既有 run 的 task graph 只有 T1～T6、沒有 T2RR；T1、T2 移轉前已 DONE，T4（Curator）依附錄 A 1-6 不需要派發包（dispatch 拒絕）。本次只驗證 sidecar 綁定與 T4 的 dispatch 行為，沒有實際完成 T4 或整個 run。RR／Validator 派發包的部分：當天資料不具備 → 以隔離測試補驗，通過（見下表） |
+| AC-09-31 | 96 條＝0.1 R000 48＋0.2 R000 48，g_impact PASS；只判 0.2 → G2、G5 FAIL（函式層）。0.2→0.3 跨版本：當天資料不具備 → 以隔離測試補驗，通過（見下表） |
 | 真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA | 當天資料不具備。移轉後 16 個 R000 的 `rm.outdated` 三旗標（newer_available、declaration_changed、decision_revised）都是 false，另以 `rm.decision_applied` 逐一判定也都是 false（M1 補充輸出 `w4-decision-applied.json`；PLATFORMRULE 0.2 另經獨立抽查確認），所以沒有適用的同版本 CIA 觸發條件；沒有 DAILYREPORT 0.3 |
 | 附錄 A 5-10 | 真實 ID 以當天資料核對（RUN-20260914-001、RUN-20261002-001、APR-0006／0007／0192、CLR-CASHFLOW-005、CLR-DAILYREPORT-010、CLR-CASHOUT-001） |
 | 附錄 A 6-35 | 現存 ANSWERED 的舊格式 CLR：0 張。之後會遇到的 OPEN／ASKED 舊格式單 10 張（CLR-CASHFLOW-001、002、007，CLR-DAILYREPORT-011、014，CLR-SITELIST-013～017），與 P6 快照相同 |
-| M3 模式（D10） | 兩種模式都全部通過。Oscar 2026-10-08 決定 M3 用 acknowledge-idle；RUN-20260914-001 是否取消，部署後另外決定 |
+| M3 模式（D10） | 兩種模式都全部通過。Oscar 2026-10-08 決定 M3 用 acknowledge-idle；M3 第一步由 Oscar 確認 RUN-20260914-001 為 idle；是否取消部署後另外決定 |
 
-「當天資料不具備」的項目，依 Oscar 2026-10-08 的初步決定（D-M1-2）標為「M1：當天資料不具備」。下表逐項區分證據種類：
-- 「既有 fixture 實測」欄只列直接驗到該情境的測試。
-- 共用機制的推論另列一欄，不以籠統的「P3～P6 測試」代替。
+「當天資料不具備」的項目依 Oscar 2026-10-08 的決定（D-M1-2）處理：
+- AC-09-66、67、20、24（既有 run）、27（RR）、31（跨版本）選 **(a) 補隔離測試**，結果見下表。
+- AC-08-16／32 的 0.3 部分選 **(b) 接受缺口**，見下方「已接受的缺口」。
+- 補測之前的證據分類（真實資料、直接測試、推論）保留在交接區的 M1 文件中。
 
-本表**暫定，待 Oscar 確認**。
+下表的補測測試都以 legacy fixture 建構情境，也就是用需求 A 之前的程式（base `2e01d4b`），在暫存 root 跑它自己的正式流程。之後的步驟一律以新程式的正式 CLI／API 執行。每個測試都做過突變對照：在 `git archive` 的乾淨匯出目錄改動對應的程式，測試都會失敗。
 
-| 項目 | M1 真實資料結果 | 既有 fixture 實測（直接） | 程式檢視／共用機制推論 | 之後再以真實資料驗證 |
-|---|---|---|---|---|
-| AC-09-20（WAITING_HUMAN 的 testcase-revision run） | 當天資料不具備 | **沒有**對題測試 | 兩項證據驗的都是同一個 sidecar 解析（`rm.run_pin`），推論同樣適用於 testcase-revision：<br>• `test_p3_migrate.py::test_old_running_run_resumes_on_its_sidecar_revision`：RUNNING 的 spec-to-testcase run，G-DESIGN 讀 sidecar 的 R000<br>• M1 w1-ack 的 AC-09-3：WAITING_HUMAN 的 spec-change-impact 複本，派發包帶 sidecar 的 R000 | 出現這類 run 時 |
-| AC-09-24（既有的 regression-generation run） | 當天資料不具備。新 run 的部分已驗：不綁 revision、沒有 sidecar | **沒有**對題測試 | `tools/qaos/migrate.py` 的 sidecar 規則對 regression-generation 回傳 None（第 63～67 行） | 出現既有 run 時 |
-| AC-09-27（RR／Validator 派發包） | 真實 run 只驗了 sidecar 與 T4 的 dispatch；RR／Validator 派發包當天資料不具備 | • Designer／Validator：`test_old_running_run_resumes_on_its_sidecar_revision`（spec-to-testcase run，不是 manual run）<br>• RR：**沒有**對題測試 | RR 與 Designer／Validator 的派發包都由同一個 `dispatch.build` 以 `rm.run_pin` 取得 pin（`tools/qaos/dispatch.py:126-131`），推論 RR 也會帶相同的 R000 | 出現有 T2RR 的既有 run 時 |
-| AC-09-66（原本沒有 `audit.log` 的 run） | 當天資料不具備（93 個 run 都有 `audit.log`） | **沒有**對題測試（legacy fixture 也都有 `audit.log`） | • 移轉標記把不存在的 `audit.log` 記為 `legacy: absent`（`migrate.py` 第 98～100 行）<br>• 清單依步驟的 `expected_before` 是否為 None，分成 restore 或 remove（第 166～170 行）<br>• rollback 會刪除 remove 類。P6 的 rollback 測試涵蓋 remove 類，但不是這個情境 | 出現時 |
-| AC-09-67（原本沒有 `.md` 的 CLR） | 當天資料不具備（54 張 CLR 都有 `.md`） | **沒有**對題測試 | 同 AC-09-66：CLR render 的步驟也依 `expected_before` 分類 | 出現時 |
-| AC-08-16／32 的 0.3 部分 | legacy basis 已驗（0.1、`target_decl_rev` 0、閉包空）；0.3 當天資料不具備 | **沒有**對題測試（AC 要驗的是跨需求：CLR 自身範圍 REQ-011、目標 REQ-012；跨版本：basis 從 0.1 legacy 到 0.3＋閉包；以及人核對 0.3 那一次的 basis） | `test_p2_sources.py::test_ac_08_17_and_38_legacy_clr_needs_applicability` 以合成的 legacy CLR 驗同版本、同需求的 applicability 機制（沒有 applicability → X16 FAIL；有相符的 applicability → PASS），推論同一機制適用於跨需求、跨版本 | DAILYREPORT 0.3 匯入時 |
-| AC-09-31 的 0.2→0.3 | 函式層：96 條＝0.1 R000 48＋0.2 R000 48 → g_impact PASS；只判一組 → G2、G5 FAIL。to 端以 0.2 R000 代替 | • 同版本的分組：`test_p3_cia_groups.py`（G1～G8）、`test_p6_cia_manual_flows.py::test_ac_09_28_29_30_two_rounds_same_version_cia_with_legacy_sidecar`<br>• 跨版本：**沒有**對題測試 | g_impact 的分組不依 spec_version 區分（推論） | DAILYREPORT 0.3 匯入時 |
-| 真實 PLATFORMRULE 0.2 的正式 CIA（AC-09-15） | 沒有適用的觸發條件：outdated 三旗標與 decision_applied 都是 false | `test_p6_cia_manual_flows.py::test_ac_09_15_platformrule_shape_same_version_cia`（以 PLATFORMRULE 形狀的測試 spec 驗證） | — | 有裁決變更時 |
-| 真實 DAILYREPORT 0.3 的正式 CIA | 沒有 0.3 | 見 AC-09-31 列 | — | DAILYREPORT 0.3 匯入時 |
+| AC | 補測的測試（tests/…） | 驗收內容 | 結果 |
+|---|---|---|---|
+| AC-09-66 | `test_m1_migrate_absent.py::test_ac_09_66_run_without_audit_log_is_remove_and_absent` | **fixture 建構**：在 S_pre 以檔案操作刪除一個完成 run 的 `audit.log`，模擬原本就沒有 render 的資料。<br>移轉後：該 log 由 render 新建；標記為 `{"legacy": "absent"}`；它列在清單的 `remove`，不在 `restore`；其他 log 照常是 frozen。<br>rollback 後：該 log 不存在，其他 log 回到原位元組。<br>兩種 verify 都通過 | 通過 |
+| AC-09-67 | `test_m1_migrate_absent.py::test_ac_09_67_clr_without_md_render_is_remove` | **fixture 建構**：以檔案操作刪除已回答 CLR 的 `.md`。<br>移轉後：`.md` 被產生，列在 `remove`；CLR 的 yaml 在 `restore`。<br>rollback 後：`.md` 不存在，yaml 回到原位元組 | 通過 |
+| AC-09-24 | `test_m1_migrate_absent.py::test_ac_09_24_legacy_regression_generation_run_unchanged` | 舊程式建立一個停在 T1 的 regression-generation run。<br>移轉後：沒有 sidecar；`run.yaml` 列在 untouched，sha 不變。<br>**行為不變**：同一份 legacy 資料做兩份複本，一份用舊程式（不移轉）、一份用新程式（移轉並 maintenance end 後），以相同的正式 API 推進（提交 RegressionProposal → G-REG → approve）。逐步比較 run 與 task 的狀態、gate 結果與 issues、核准單類型與狀態、套件結果，全部相同（id、時間戳不比較） | 通過 |
+| AC-09-20 | `test_m1_resume_pins.py::test_ac_09_20_waiting_human_testcase_revision_resumes_on_sidecar_r000` | 舊程式把 testcase-revision run 推進到 T3 ACTIVATE_TESTCASE 等待核准（WAITING_HUMAN）。<br>移轉後，以重新分析做出拿掉 REQ-AUTH-004 的 R001，再以 reject 讓 Designer 重做。<br>結果：T1 派發包的 `rm_pins.target` 等於 sidecar 的 R000，不是 R001；引用 REQ-AUTH-004 的 Draft 通過 G-DESIGN。<br>對照：同一份 Draft 改用 R001 評估會 FAIL。run.yaml 沒有 pin | 通過 |
+| AC-09-27 | `test_m1_resume_pins.py::test_ac_09_27_old_manual_run_rr_and_validator_packets_share_sidecar_r000` | 舊程式以高風險 area（CASHFLOW）建立 manual-test-to-regression run，task graph 含 T2RR，停在 T2 READY。<br>移轉（acknowledge-idle）並做出 R001 之後，T2（Validator）與 T2RR（RR）的派發包 `rm_pins` 完全相同，target 都等於 sidecar 的 R000（revision 與 sha256 都相同），不是 R001 | 通過 |
+| AC-09-31（跨版本） | `test_m1_cross_version_cia.py` 的 6 個測試 | 舊程式產生兩個版本的 ACTIVE TC：v1.0 3 張；v1.1 2 張，由舊程式的 1.0→1.1 CIA 產生。這對應真實資料的 DAILYREPORT 0.1、0.2。<br>移轉後每張 TC 以 legacy sidecar 綁自己版本的 R000。新程式匯入 v1.2（測試用合成檔 `tests/fixtures/SPEC-AUTH-001-v1.2.md`），以正式流程跑 spec-change-impact 1.1→1.2。<br>結果：候選＝兩個版本全部的 ACTIVE TC；只判 1.1 那組 → G-IMPACT FAIL，訊息含 G2、G5，T1 回 READY；兩組恰好分割 → PASS；T1 派發包的 `pin_groups` 含兩組 | 通過 |
 
-**待 Oscar 決定**：上表標「沒有對題測試」的項目要怎麼處理。這些項目是 AC-09-20、AC-09-24 的既有 run、AC-09-27 的 RR、AC-09-66、67、AC-09-31 的跨版本、AC-08-16／32 的 0.3 部分。
+### 已接受的缺口（Oscar 2026-10-08 決定 (b)）
 
-注意：AC-09-20、31、66、67 在規格中本身就定義為 fixture 情境（AC-09-20「（fixture）」、AC-09-31「DAILYREPORT 現況的 fixture」、AC-09-66、67 是情境描述），不是只能等真實資料。對這幾條選 (b) 等於讓它們永久沒有被驗證，「資料出現時再驗」也不是它們自然的結案路徑。
-- (a) 補隔離測試。這是 tests 的變更，需要授權，也要重新審查。
-- (b) 明確接受「只有程式檢視或共用機制推論」的證據缺口。
+| 項目 | 接受的缺口 | 現有證據與保證界限 | 之後的驗證 |
+|---|---|---|---|
+| AC-08-16 的 0.3 部分 | 沒有驗證「REQ-DAILYREPORT-012（v0.3）以 CLR-010 rev 0 作 resolution，且有一筆人建立的 applicability（scope `{SPEC-DAILYREPORT-001, REQ-DAILYREPORT-012, report.cash_net.semantics, ["*"], {}}`）→ PASS」的真實情境 | **有保證**：<br>• CLR-010 rev 0 的 legacy basis 正確：0.1、`target_decl_rev` 0、閉包空，basis_hash 可重算（M1 真實資料）。<br>• applicability 的機制本身：沒有 applicability 時 X16 FAIL；有相符的 applicability 時 PASS（`test_p2_sources.py::test_ac_08_17_and_38_legacy_clr_needs_applicability`，以合成的 legacy CLR 驗同版本、同需求）。<br>**沒有保證**：<br>• 跨需求（CLR 自身範圍是 REQ-011，目標是 REQ-012）與跨版本（basis 從 0.1 到 0.3＋閉包）的組合，在真實 DAILYREPORT 資料上成立。<br>• 人核對的是 0.3 那一次的 basis。 | DAILYREPORT 0.3 匯入時，以真實資料執行 AC-08-16 |
+| AC-08-32 的 0.3 部分 | 沒有驗證「REQ-012 在 0.3 的 basis 為 0.3＋閉包；人建立的 applicability 帶 0.3 本次的 basis_hash → E1，並記錄人核對的是 0.3 那一次的 basis」 | **有保證**：同上，加上 basis_hash 的計算與比對機制（P2 測試）。<br>**沒有保證**：0.3 的 basis_hash 與 E1 推導在真實資料上成立 | 同上 |
 
-不論選哪一個，「資料出現時再以真實資料驗證」的承諾都保留，但它不代替目前的證據。
+兩項都標「M1：當天資料不具備（已接受缺口）」。它們**不算通過的對題測試**。
