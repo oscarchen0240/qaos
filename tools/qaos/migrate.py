@@ -321,7 +321,12 @@ def feasibility(manifest: dict, xplan: dict) -> tuple[list, list, list]:
     return todo, nochange, bad
 
 def _report(title: str, items: list[dict]) -> str:
-    return title + "\n" + "\n".join(f"- {i.get('path')}［{i.get('category', i.get('reason', ''))}］記錄值 {i.get('recorded')}，目前值 {i.get('current')}" for i in items)
+    """每列：步驟（有 step_id 時，AC-09-73）、路徑、原因；有記錄值或目前值才列出（T5 的證據衝突沒有這兩個值，P6-G2-01）。"""
+    def line(i):
+        step = f"步驟 {i['step_id']}（seq {i.get('seq')}）：" if i.get("step_id") else ""
+        vals = f"記錄值 {i.get('recorded')}，目前值 {i.get('current')}" if (i.get("recorded"), i.get("current")) != (None, None) else ""
+        return f"- {step}{i.get('path')}［{i.get('category', i.get('reason', ''))}］{vals}"
+    return title + "\n" + "\n".join(line(i) for i in items)
 
 # ---------------------------------------------------------------- rollback：建立計畫（planner）
 def plan_rollback(x: str, allow_later: bool):
