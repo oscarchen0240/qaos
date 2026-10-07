@@ -1,5 +1,5 @@
 """ApprovalRequest → 人可讀 Markdown（approvals/<id>.md）。"""
-from . import store, operation
+from . import store, operation, sources
 
 def _run_pin(a: dict):
     """核准單所屬 run 綁定的 revision（需求 A 第 5 章 §4.1；唯讀）。只有移轉前的 legacy run 可回傳 None（顯示改用最新 revision）；移轉後缺 pin → 錯誤。"""
@@ -13,7 +13,7 @@ def render(apr_id: str) -> str:
         from . import refs as _refs, clarification as clr
         answered = {}
         for c in clr.list_(open_only=False):
-            if c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+            if c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
         pin = _run_pin(a)
         def req_title(rid):
             r, _ = _refs.find_requirement(rid, pin=pin); return (f"{rid} {r.get('title', '')}".strip(), r) if r else (rid, None)
@@ -72,7 +72,7 @@ def render_html(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml")
     answered = {}
     for c in clr.list_(open_only=False):
-        if c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+        if c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
     css = """<style>
 :root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}

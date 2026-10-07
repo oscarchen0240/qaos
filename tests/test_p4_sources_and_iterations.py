@@ -21,7 +21,7 @@ def rr_root(tmp_path):
 def test_tc_source_refs_are_validated_in_full(tmp_path):
     root = mkroot(tmp_path)
     out = py(root, f"""
-c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "oscar", requirement_id="REQ-DEMO-001", new_request=True)   # 入口 D
+c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True)   # 入口 D
 clr.answer(c["clarification_id"], "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
 rid = F.new_run(); g = F.analyze(rid, [{OKQ}])
 good = F.sref("任何站台都不能刪除。")
@@ -120,9 +120,9 @@ def test_risk_review_spec_basis_source_ref_types(tmp_path):
     root = rr_root(tmp_path)
     out = py(root, f"""
 from tests.test_p4_sources_and_iterations import review
-c = clr.new("demo", "DEMO", F.SPEC, F.VER, "站長能否刪除他站子站台？", "oscar", requirement_id="REQ-DEMO-001", new_request=True)   # 入口 D
+c = clr.new("demo", "DEMO", F.SPEC, F.VER, "站長能否刪除他站子站台？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True)   # 入口 D
 clr.answer(c["clarification_id"], "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
-z = clr.new("demo", "ZONE", "SPEC-OTHER-001", "1.0", "其他功能區的已回答問題", "oscar", new_request=True)            # 入口 D：不在派發包的 area
+z = clr.new("demo", "ZONE", "SPEC-OTHER-001", "1.0", "其他功能區的已回答問題", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", new_request=True)            # 入口 D：不在派發包的 area
 clr.answer(z["clarification_id"], "其他功能區的規則：一律保留紀錄。", "pm", "requirement_clarified", "oscar", new_request=True)
 rid0 = F.new_run(); F.analyze(rid0, [{EXAMPLE_A}]); apr = F.waiting(rid0)
 F.approve(apr, resolutions=[{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "select_interpretation", "source": None, "rationale": "以刪除規則為準：任何站台都不能刪除"}}])

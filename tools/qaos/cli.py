@@ -4,7 +4,7 @@
 要刻意再執行一次相同內容的請求請加 --new-request。唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，
 也不保證跨檔一致的快照。"""
 import argparse, json, sys, pathlib
-from . import store, schema, ids, engine, trace, operation, spec_ops, rm, dispatch, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
+from . import store, schema, ids, engine, trace, operation, spec_ops, rm, dispatch, clr_lifecycle, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
 from .engine import EngineError
 from .state import TransitionError
 
@@ -166,17 +166,42 @@ def cmd_execution_import(a):
 
 def cmd_bug_transition(a): print(bug_transition(a.bug_id, a.to, a.by, trigger=a.trigger, note=a.note, **_nr(a)))
 
+def _params_kv(values):
+    out = {}
+    for x in values or []:
+        if "=" not in x: raise ValueError(f"--param 格式是 key=value：{x!r}")
+        k, v = x.split("=", 1); out.setdefault(k, []).append(v)
+    return {k: (v[0] if len(v) == 1 else v) for k, v in out.items()}
+
 def cmd_clr_new(a):
-    c = clr.new(a.product, a.area, a.spec_id, a.spec_version, a.question, a.by, context=a.context or "", options=a.option or [], requirement_id=a.requirement_id, impact=a.impact, **_nr(a))
+    if a.no_source_check and not (a.reason or "").strip(): raise ValueError("--no-source-check 必須附 --reason")
+    if a.reason and not a.no_source_check: raise ValueError("--reason 只和 --no-source-check 一起使用")
+    decision = {k: v for k, v in {"kind": a.kind, "question_id": a.question_id, "topic": a.topic, "subject": a.subject, "level": a.level,
+                "role_scope": _role_scope(a.role_scope) if a.role_scope else None, "params": _params_kv(a.param) if (a.param or a.no_params) else None,
+                "known_rules": [_json_arg(x, "--known-rule") for x in a.known_rule] if a.known_rule else None}.items() if v is not None}
+    c = clr.new(a.product, a.area, a.spec_id, a.spec_version, a.question, a.by, context=a.context or "", options=a.option or [], requirement_id=a.requirement_id, impact=a.impact,
+                consulted=a.consulted or None, no_source_check_reason=a.reason if a.no_source_check else None, **decision, **_nr(a))
+    if c.get("_linked"): print(f"{c['clarification_id']}（issue key 相同，已連結既有單，沒有新開）"); return
     print(f"{c['clarification_id']} → clarifications/{a.product}/{a.area}/{c['clarification_id']}.md")
-def cmd_clr_ask(a): c = clr.ask(a.id, a.to, a.by, **_nr(a)); print(f"{c['clarification_id']} ASKED → {a.to}")
-def cmd_clr_answer(a): c = clr.answer(a.id, a.answer, a.answered_by, a.resolution, a.by, a.spec_version, **_nr(a)); print(f"{c['clarification_id']} ANSWERED ({a.resolution})")
+def cmd_clr_ask(a): c = clr.ask(a.id, a.to, a.by, sent_at=a.sent_at, channel=a.channel, **_nr(a)); print(f"{c['clarification_id']} ASKED → {a.to}")
+def cmd_clr_answer(a):
+    srcs = [_json_arg(x, "--answer-source") for x in a.answer_source] if a.answer_source else None
+    c = clr.answer(a.id, a.answer, a.answered_by, a.resolution, a.by, a.spec_version, answer_sources=srcs, **_nr(a)); print(f"{c['clarification_id']} ANSWERED ({a.resolution})")
 def cmd_clr_impact(a):
-    cands = clr.impact(a.id, a.keyword or [])
-    for x in cands: print(f"{x['testcase_id']} v{x['version']} [{', '.join(x['reasons'])}] {x['title']}")
-    print(f"({len(cands)} 條候選；逐條判定後以 --impact-reviewed 寫入 apply)")
-def cmd_clr_apply(a): clr.apply_(a.id, a.by, a.note or "", impact_reviewed=a.impact_reviewed, keywords=a.keyword or [], **_nr(a)); print(f"{a.id} APPLIED")
-def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.note or "", **_nr(a)); print(f"{a.id} WITHDRAWN")
+    r = clr_lifecycle.impact(a.id, a.keyword or [], a.target or [], a.by, **_nr(a))
+    print(f"{r['scan_id']}：{len(r['candidates'])} 張候選、掃描單位 {[(u['product'], u['area']) for u in r['scan_units']]}")
+    for x in r["candidates"]: print(f"  {x['tc_id']} v{x['active_version']}  {', '.join(x['reasons'])}")
+def cmd_clr_apply(a):
+    r = clr_lifecycle.apply(a.id, a.path, a.by, landed_in=a.landed_in or [], targets=a.target or [], defer_targets=a.defer_target or [], keywords=a.keyword or [],
+                            scan_id=a.scan, no_keyword_reason=a.no_keyword_reason, tc_conclusions=a.tc_conclusion or [], impact_reviewed=a.impact_reviewed, **_nr(a))
+    if r.get("scan_reused") == "keywords_only": print("（scan 屬於舊答案修訂或規則版本不同：只沿用關鍵字，目標已重新解析）")
+    if r.get("scan_diff"): print(f"（重新掃描的候選和 scan 不同：{r['scan_diff']}；以重新掃描的結果為準）")
+    print(f"{a.id} APPLIED（--path {a.path}，{len(r['candidates'])} 張候選）")
+def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.reason, **_nr(a)); print(f"{a.id} WITHDRAWN")
+def cmd_clr_fulfill(a): c = clr_lifecycle.fulfill(a.id, a.item, a.document, a.by, mapping_reason=a.mapping_reason, **_nr(a)); print(f"{a.id} {a.item} fulfilled → {c['status']}")
+def cmd_clr_waive_item(a): c = clr_lifecycle.waive_item(a.id, a.item, a.reason, a.by, **_nr(a)); print(f"{a.id} {a.item} waived → {c['status']}")
+def cmd_clr_show(a): _print(clr_lifecycle.show(a.id))
+def cmd_clr_stale(a): _print(clr_lifecycle.stale_tcs(a.id))
 def cmd_clr_list(a):
     for c in clr.list_(open_only=not a.all): print(f"{c['clarification_id']} [{c['status']}] {c['product']}/{c['functional_area']} {c['spec_id']}@{c['spec_version']} — {c['question']}")
 def cmd_req_accept(a): _print(rm.accept_declaration(a.target, a.rev, a.reason, a.by, **_nr(a)))
@@ -290,12 +315,31 @@ def main(argv=None):
     p = bs.add_parser("close", parents=[W], help="結案（= done）"); p.add_argument("bug_id"); p.add_argument("--rationale"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_bug_close)
     c = sp.add_parser("clarification", help="問 PM 的單子"); cs = c.add_subparsers(dest="sub", required=True)
     p = cs.add_parser("new", parents=[W]); p.add_argument("--product", required=True); p.add_argument("--area", required=True); p.add_argument("--spec-id", required=True); p.add_argument("--spec-version", required=True)
-    p.add_argument("--question", required=True); p.add_argument("--context"); p.add_argument("--option", action="append"); p.add_argument("--requirement-id"); p.add_argument("--impact"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_new)
-    p = cs.add_parser("ask", parents=[W]); p.add_argument("id"); p.add_argument("--to", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_ask)
-    p = cs.add_parser("answer", parents=[W]); p.add_argument("id"); p.add_argument("--answer", required=True); p.add_argument("--answered-by", required=True); p.add_argument("--resolution", required=True, choices=["spec_updated", "requirement_clarified", "no_change", "out_of_scope"]); p.add_argument("--spec-version"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_answer)
-    p = cs.add_parser("impact", help="ADR-008：apply 前的影響掃描"); p.add_argument("id"); p.add_argument("--keyword", action="append"); p.set_defaults(f=cmd_clr_impact)
-    p = cs.add_parser("apply", parents=[W]); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.add_argument("--impact-reviewed", help="ADR-008：對 impact 候選 TC 的逐條結論（必填）"); p.add_argument("--keyword", action="append"); p.set_defaults(f=cmd_clr_apply)
-    p = cs.add_parser("withdraw", parents=[W]); p.add_argument("id"); p.add_argument("--by", required=True); p.add_argument("--note"); p.set_defaults(f=cmd_clr_withdraw)
+    p.add_argument("--question", required=True); p.add_argument("--context"); p.add_argument("--option", action="append"); p.add_argument("--requirement-id"); p.add_argument("--impact"); p.add_argument("--by", required=True)
+    p.add_argument("--consulted", action="append", metavar="SPEC_ID@VER", help="查閱過的 spec（可重複）；和 --no-source-check 擇一（開單關卡）")
+    p.add_argument("--no-source-check", action="store_true", help="不附查閱證據；必須附 --reason，理由寫入 history"); p.add_argument("--reason")
+    p.add_argument("--kind", choices=["spec_question", "conflict_resolution", "document_request"]); p.add_argument("--question-id"); p.add_argument("--topic"); p.add_argument("--subject")
+    p.add_argument("--role-scope", action="append", help="可重複；與角色無關時只給一個 *"); p.add_argument("--param", action="append", metavar="key=value", help="可重複；同一個 key 給多次為陣列")
+    p.add_argument("--no-params", action="store_true", help="params 明寫為 {}"); p.add_argument("--level", choices=["none", "minor", "major", "critical"])
+    p.add_argument("--known-rule", action="append", metavar="JSON", help="SourceRef，可重複"); p.set_defaults(f=cmd_clr_new)
+    p = cs.add_parser("ask", parents=[W]); p.add_argument("id"); p.add_argument("--to", required=True); p.add_argument("--by", required=True)
+    p.add_argument("--sent-at", help="實際送出時間（補記用）"); p.add_argument("--channel"); p.set_defaults(f=cmd_clr_ask)
+    p = cs.add_parser("answer", parents=[W]); p.add_argument("id"); p.add_argument("--answer", required=True); p.add_argument("--answered-by", required=True); p.add_argument("--resolution", required=True, choices=["spec_updated", "requirement_clarified", "no_change", "out_of_scope"]); p.add_argument("--spec-version"); p.add_argument("--by", required=True)
+    p.add_argument("--answer-source", action="append", metavar="JSON", help="答案出處（spec／document／message 型），可重複"); p.set_defaults(f=cmd_clr_answer)
+    p = cs.add_parser("impact", parents=[W], help="保存影響掃描紀錄（寫入指令；ADR-010）"); p.add_argument("id"); p.add_argument("--keyword", action="append")
+    p.add_argument("--target", action="append", metavar="SPEC_ID@VER:REQ#Q", help="掃描輸入；不給時自動解析採用目標"); p.add_argument("--by", default="system"); p.set_defaults(f=cmd_clr_impact)
+    p = cs.add_parser("apply", parents=[W], help="人工確認結案（ADR-010）"); p.add_argument("id"); p.add_argument("--path", required=True, choices=["a6", "a6b", "a7"])
+    p.add_argument("--landed-in", action="append", metavar="RUN_ID"); p.add_argument("--target", action="append", metavar="SPEC_ID@VER:REQ#Q 或 APR#索引")
+    p.add_argument("--defer-target", action="append", metavar="SPEC_ID@VER:REQ#Q=理由"); p.add_argument("--keyword", action="append"); p.add_argument("--scan", metavar="SCAN_ID")
+    p.add_argument("--no-keyword-reason"); p.add_argument("--tc-conclusion", action="append", metavar="TC-ID=updated|not_affected|retire_planned|deferred:理由")
+    p.add_argument("--impact-reviewed", required=True, help="整體說明"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_apply)
+    p = cs.add_parser("withdraw", parents=[W]); p.add_argument("id"); p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_withdraw)
+    p = cs.add_parser("fulfill", parents=[W], help="文件索取單：以已匯入並宣告的文件補一項"); p.add_argument("id"); p.add_argument("--item", required=True)
+    p.add_argument("--document", required=True, metavar="SPEC_ID@VER"); p.add_argument("--mapping-reason"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_fulfill)
+    p = cs.add_parser("waive-item", parents=[W], help="文件索取單：豁免一項"); p.add_argument("id"); p.add_argument("--item", required=True); p.add_argument("--reason", required=True)
+    p.add_argument("--by", required=True); p.set_defaults(f=cmd_clr_waive_item)
+    p = cs.add_parser("show", help="唯讀：狀態、答案修訂、落地紀錄、待追蹤事項、文件項目"); p.add_argument("id"); p.set_defaults(f=cmd_clr_show)
+    p = cs.add_parser("stale-tcs", help="唯讀：依賴本 CLR、但尚未依最新答案處理的 TC（不保證完整）"); p.add_argument("id"); p.set_defaults(f=cmd_clr_stale)
     p = cs.add_parser("list", help="唯讀：列出 CLR"); p.add_argument("--all", action="store_true"); p.set_defaults(f=cmd_clr_list)
     p = cs.add_parser("index", parents=[W], help="寫檔：重建 clarifications/index.md"); p.set_defaults(f=cmd_clr_index)
     ap_ = cs.add_parser("applicability", help="人工適用紀錄（只能由人執行）"); aps = ap_.add_subparsers(dest="sub2", required=True)

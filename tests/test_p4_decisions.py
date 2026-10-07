@@ -66,7 +66,7 @@ print(json.dumps({{"g": g["result"], "issues": g["issues"], "rev": rev, "clr_sta
     dp = b["rev"]["decision_points"][0]
     assert dp["derived"]["state"] == "E1" and dp["derived"]["effective_level"] == "none" and dp["derived"]["resolved_conflict"] is True
     assert b["rev"]["status"] == "ACTIVE" and (b["rev"]["ambiguity"]["level"], b["rev"]["ambiguity"]["raised_level"]) == ("none", "critical")
-    assert b["clr_status"] == "ANSWERED"                                   # 新資料：核准不再 apply CLR（第 6 章 §3.4）
+    assert b["clr_status"] == "INCORPORATED"                               # 核准不再 apply CLR（第 6 章 §3.4）；重新分析以 approval 包裝明確引用最新答案 → A4（P5）
     assert b["n_clrs"] == 1                                                # E1 不開單
     assert b["d"] == "PASS", b["d_issues"]                                 # 引用 resolution、被採用的 side 1 → PASS
     assert any("未被採用" in i for i in b["f0"]), b["f0"]                  # 引用 side 0 → FAIL
@@ -137,7 +137,7 @@ def test_ac_05_4_x_combinations_each_fail(tmp_path):
     root = mkroot(tmp_path)
     cases = ",\n".join(f"{k!r}: {v}" for k, v in X_CASES.items())
     out = py(root, f"""
-c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "oscar", requirement_id="REQ-DEMO-001", new_request=True,
+c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True,
             kind="spec_question", question_id="Q01", subject="site.child.delete", role_scope=["admin"], params={{}})   # 入口 D
 clr.answer(c["clarification_id"], "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
 CID = c["clarification_id"]
@@ -227,7 +227,7 @@ print(json.dumps([g["result"], [(c["kind"], c["status"]) for c in F.clrs(require
 def test_ac_05_7_example_d_unverified(tmp_path):
     root = mkroot(tmp_path, refs=())
     out = py(root, """
-bg = clr.new("demo", "DEMO", F.SPEC, F.VER, "操作員越權要怎麼擋？", "oscar", requirement_id="REQ-DEMO-001", new_request=True,
+bg = clr.new("demo", "DEMO", F.SPEC, F.VER, "操作員越權要怎麼擋？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True,
              kind="spec_question", question_id="Q09", subject="report.venue_scope.out_of_scope_query", role_scope=["operator"], params={})   # 入口 D
 clr.answer(bg["clarification_id"], "操作員越權前後端皆擋。", "pm", "requirement_clarified", "oscar", new_request=True)
 k = F.cref(bg["clarification_id"], "操作員越權前後端皆擋")
@@ -247,7 +247,7 @@ def test_ac_05_7_background_clr_as_resolution_is_x16(tmp_path):
     """範例 D 的延伸：把範圍不涵蓋（operator）的 CLR 當成 resolution → X16 FAIL，不會成為 E1。"""
     root = mkroot(tmp_path, refs=())
     out = py(root, """
-bg = clr.new("demo", "DEMO", F.SPEC, F.VER, "操作員越權要怎麼擋？", "oscar", requirement_id="REQ-DEMO-001", new_request=True,
+bg = clr.new("demo", "DEMO", F.SPEC, F.VER, "操作員越權要怎麼擋？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True,
              kind="spec_question", question_id="Q09", subject="report.venue_scope.out_of_scope_query", role_scope=["operator"], params={})
 clr.answer(bg["clarification_id"], "操作員越權前後端皆擋。", "pm", "requirement_clarified", "oscar", new_request=True)
 k = F.cref(bg["clarification_id"], "操作員越權前後端皆擋"); rid = F.new_run()
@@ -277,7 +277,7 @@ print(json.dumps({{"g": g["result"], "issues": g["issues"], "rev": F.revision_re
 def test_ac_05_9_example_f_applicability(tmp_path):
     root = mkroot(tmp_path)
     a = py(root, """
-c = clr.new("demo", "DEMO", F.SPEC, F.VER, "現金淨收的語意？", "oscar", requirement_id="REQ-DEMO-002", new_request=True,
+c = clr.new("demo", "DEMO", F.SPEC, F.VER, "現金淨收的語意？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-002", new_request=True,
             kind="spec_question", question_id="Q01", subject="report.cash_net.semantics", role_scope=["*"], params={})   # 入口 D（屬於另一條需求）
 clr.answer(c["clarification_id"], "現金淨收不是當日實際現金增減。", "pm", "requirement_clarified", "oscar", new_request=True)
 print(json.dumps([c["clarification_id"], sources.basis_hash(sources.basis(F.SPEC, F.VER))]))""")

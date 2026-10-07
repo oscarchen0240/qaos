@@ -1,5 +1,5 @@
 """requirements/<SPEC>-v<ver>.md：某 Spec 版本的 Requirement 人可讀清單（給 Human 檢查 Spec Analyst 的切法）。"""
-from . import store, operation
+from . import store, operation, sources
 
 def build(spec_id: str, spec_version: str) -> str:
     """唯讀：產生內容，不寫檔（`req-export --stdout` 用）。"""
@@ -9,7 +9,7 @@ def build(spec_id: str, spec_version: str) -> str:
     doc = rm.load_revision(pin) if pin else store.load(store.requirements_path(spec_id, spec_version)); reqs = doc["requirements"]
     answered = {}
     for c in clr.list_(open_only=False):
-        if c["spec_id"] == spec_id and c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+        if c["spec_id"] == spec_id and c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
     spec = store.load(store.spec_dir(spec_id) / "spec.yaml")
     tcs = {}
     for ptr in store.glob("testcases/registry/TC-*.yaml"):

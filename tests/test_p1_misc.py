@@ -30,7 +30,7 @@ def test_9m_12_external_modification_stops():
 def _clr(root):
     U.import_auth_spec(root)
     r = U.q(root, "clarification", "new", "--product", "demo", "--area", "AUTH", "--spec-id", "SPEC-AUTH-001", "--spec-version", "1.0",
-            "--question", "全形字元算幾個字？", "--by", "oscar", check=True)
+            "--question", "全形字元算幾個字？", "--consulted", "SPEC-AUTH-001@1.0", "--by", "oscar", check=True)
     return r.stdout.split()[0]
 
 def test_75_answer_rebuilds_derived_in_same_executor():

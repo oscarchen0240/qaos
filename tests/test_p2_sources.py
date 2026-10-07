@@ -38,7 +38,7 @@ def validate(root, ref, target=("SPEC-A-001", "1.0"), at=None):
 def new_clr(root, sid="SPEC-A-001", ver="1.0", **decision):
     """入口 D：腳本呼叫 clarification.new()。"""
     return run(root, f"""
-c = clarification.new("demo", "AUTH", "{sid}", "{ver}", "密碼長度的下限是幾碼？", "oscar", requirement_id="REQ-AUTH-001", new_request=True, **{decision!r})
+c = clarification.new("demo", "AUTH", "{sid}", "{ver}", "密碼長度的下限是幾碼？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-AUTH-001", new_request=True, **{decision!r})
 print(json.dumps(c["clarification_id"]))""")
 
 def answer(root, cid, text, resolution="requirement_clarified", check=True):
@@ -154,7 +154,7 @@ def test_clarification_ref_checks_pinned_rev(tmp_path):
     assert validate(root, {**r0, "answer_sha256": "0" * 64})[0]
     cid2 = new_clr(root); answer(root, cid2, "維持現狀。", resolution="no_change")
     errs, _ = validate(root, cref(root, cid2, 0, "維持現狀")); assert errs and "resolution" in errs[0]
-    cid3 = new_clr(root); U.q(root, "clarification", "withdraw", cid3, "--by", "oscar", check=True)
+    cid3 = new_clr(root); U.q(root, "clarification", "withdraw", cid3, "--reason", "測試撤回", "--by", "oscar", check=True)
     errs, _ = validate(root, {"type": "clarification", "clarification_id": cid3, "answer_rev": 0, "answer_sha256": "0" * 64, "quote": "x"}); assert "撤回" in errs[0]
 
 def test_answer_revisions_are_append_only_and_record_basis(tmp_path):
@@ -185,7 +185,7 @@ def test_ac_08_14_legacy_answer_becomes_rev0(tmp_path):
 
 def test_answer_requires_registered_spec(tmp_path):
     root = mk(tmp_path, refs=False)
-    cid = run(root, 'c = clarification.new("demo", "AUTH", "SPEC-Z-001", "1.0", "不存在的規格？", "oscar"); print(json.dumps(c["clarification_id"]))')
+    cid = run(root, 'c = clarification.new("demo", "AUTH", "SPEC-Z-001", "1.0", "不存在的規格？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）"); print(json.dumps(c["clarification_id"]))')
     before = U.snapshot(root)
     r = answer(root, cid, "x", check=False); assert r.returncode != 0 and "basis" in r.stderr
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
@@ -332,7 +332,7 @@ def test_ac_06_2_known_rule_quote_not_in_source_refuses(tmp_path):
     bad = spec_ref(root, "SPEC-A-001", "密碼長度至少 12 碼")
     r = U.py(root, f"""
 from tools.qaos import clarification
-try: clarification.new("demo", "AUTH", "SPEC-A-001", "1.0", "密碼長度的下限是幾碼？", "agent-spec-analyst", requirement_id="REQ-AUTH-001", known_rules=[{bad!r}], **{SCOPE_KW!r}); print("accepted")
+try: clarification.new("demo", "AUTH", "SPEC-A-001", "1.0", "密碼長度的下限是幾碼？", "agent-spec-analyst", requirement_id="REQ-AUTH-001", known_rules=[{bad!r}], kind="spec_question", level="minor", coverage={{"references_status": "undeclared", "consulted": [], "unconsulted_normative": [], "missing_sources": [], "waivers": []}}, **{SCOPE_KW!r}); print("accepted")
 except clarification.ClarificationError as e: print("refused", e)""")
     assert r.stdout.startswith("refused") and "quote 不在" in r.stdout
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
@@ -348,7 +348,7 @@ def test_ac_06_3_document_request_needs_cited_at_only(tmp_path):
     for cov in ({"missing_sources": [{"name": "操作手冊"}]}, {"missing_sources": []}):
         r = U.py(root, f"""
 from tools.qaos import clarification
-try: clarification.new("demo", "AUTH", "SPEC-A-001", "1.0", "缺操作手冊？", "oscar", requirement_id="REQ-AUTH-001", kind="document_request", coverage={cov!r}, **{SCOPE_KW!r}); print("accepted")
+try: clarification.new("demo", "AUTH", "SPEC-A-001", "1.0", "缺操作手冊？", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-AUTH-001", kind="document_request", coverage={cov!r}, **{SCOPE_KW!r}); print("accepted")
 except clarification.ClarificationError as e: print("refused", e)""")
         assert r.stdout.startswith("refused"), r.stdout
     assert U.diff(before, U.snapshot(root)) == {"added": [], "removed": [], "changed": []}
@@ -380,7 +380,8 @@ def test_ac_06_5_clarification_metadata_upgrade(tmp_path):
 
 def test_ac_08_19_applied_clr_accepts_addenda_but_not_new_answer(tmp_path):
     root = mk(tmp_path, refs=False); cid = scoped_clr(root)
-    U.q(root, "clarification", "apply", cid, "--impact-reviewed", "無受影響 TC", "--by", "oscar", check=True)
+    answer(root, cid, "密碼下限 8 碼；規格不需修改。", resolution="no_change")                     # ADR-010：沒有引用時以 a7 結案
+    U.q(root, "clarification", "apply", cid, "--path", "a7", "--no-keyword-reason", "測試：沒有關鍵字", "--impact-reviewed", "無受影響 TC", "--by", "oscar", check=True)
     before = clr(root, cid); assert before["status"] == "APPLIED"
     src = {"type": "document", "file_name": "PM回覆.pdf", "sha256": "a" * 64, "location": "第 2 段"}
     U.q(root, "clarification", "addenda", "add", cid, "--source", json.dumps(src), "--note", "PM 重申同一決議", "--by", "oscar", check=True)
@@ -409,7 +410,7 @@ def test_p2_01_approval_wrapper_validates_inner_source(tmp_path):
     root = mk(tmp_path, refs=False); at = ("REQ-AUTH-001", "Q01")
     cid = scoped_clr(root); answer(root, cid, "維持現狀。", resolution="no_change")                    # rev 0 requirement_clarified、rev 1 no_change
     cid2 = new_clr(root, **SCOPE_KW); answer(root, cid2, "不在範圍內。", resolution="out_of_scope")
-    cid3 = new_clr(root, **SCOPE_KW); U.q(root, "clarification", "withdraw", cid3, "--by", "oscar", check=True)
+    cid3 = new_clr(root, **SCOPE_KW); U.q(root, "clarification", "withdraw", cid3, "--reason", "測試撤回", "--by", "oscar", check=True)
     good = cref(root, cid, 0, "下限是 8 碼")
     bad = {"no_change": cref(root, cid, 1, "維持現狀"), "out_of_scope": cref(root, cid2, 0, "不在範圍內"),
            "wrong_hash": {**good, "answer_sha256": "0" * 64}, "wrong_quote": {**good, "quote": "下限是 12 碼"},

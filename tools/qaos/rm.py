@@ -184,7 +184,10 @@ def outdated(pin: dict) -> dict:
     revised = False
     for ref in _clarification_refs(load_revision(pin)):
         c = store.find_clarification(ref["clarification_id"])
-        revs = (store.load(c).get("answer_revisions") or []) if c else []
+        doc = store.load(c) if c else {}
+        revs = doc.get("answer_revisions") or []
+        if doc.get("status") == "WITHDRAWN":                                                  # A10：撤回的 CLR → 引用它的 revision 為 decision_revised（附錄 A 6-3）
+            revised = True; details.append(f"{ref['clarification_id']} 已撤回（WITHDRAWN）"); continue
         if revs and ref["answer_rev"] != len(revs) - 1:
             revised = True; details.append(f"{ref['clarification_id']} 的最新答案是 rev {len(revs) - 1}，revision 引用 rev {ref['answer_rev']}")
     return {"newer_available": newer, "declaration_changed": decl, "decision_revised": revised, "details": details}

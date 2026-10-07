@@ -33,7 +33,13 @@ def g_spec(run, task, arts) -> list[str]:
     ctx, more = spec_context(run, task, arts)
     if ctx is None: return issues + more
     issues += more
-    for r in p["requirements"]: issues += decisions.check(r, ctx)[0]
+    for r in p["requirements"]:
+        for i, ref in enumerate(r.get("source_refs") or []):                          # 需求層的有型別依據（第 3 章 §6.3；附錄 A 3-26）
+            if not isinstance(ref, dict) or ref.get("type") != "spec":
+                issues.append(f"X10：{r['requirement_id']} source_refs[{i}] 只接受 spec 型；clarification、approval 型請放在決策點的 known_rules 或 resolution"); continue
+            errs, _ = sources.validate(ref, target=ctx.target)
+            issues += [f"X10：{r['requirement_id']} source_refs[{i}]：{e}" for e in errs]
+        issues += decisions.check(r, ctx)[0]
     return issues
 
 def spec_context(run, task, arts):
@@ -275,6 +281,19 @@ def g_tval(run, task, arts) -> list[str]:
                 issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")
     return issues
 
+def _bugdraft_source_issues(run, p, reqs) -> list[str]:
+    """BugDraft 的明確 SourceRef（第一批選填）：共用驗證；clarification、approval 型必須對應 decision_refs 的決策點，並通過 X16。"""
+    did = p["draft_id"]; out = source_ref_issues({"draft_id": did, "source_refs": p.get("source_refs"), "decision_refs": p.get("decision_refs")}, (p["spec_id"], str(p["spec_version"])))
+    for d in p.get("decision_refs") or []:
+        if d["requirement_id"] != p["requirement_id"]: out.append(f"{did} 的 decision_refs 指向非本 bug 的 requirement {d['requirement_id']}"); continue
+        dp = find_dp(reqs, d["requirement_id"], d["question_id"])
+        if dp is None: out.append(f"{did} 的 decision_refs 指向不存在的決策點 {d['requirement_id']}/{d['question_id']}"); continue
+        for r in p.get("source_refs") or []:
+            if r.get("type") in ("clarification", "approval") and dispatch.basis_ref(r) == d.get("basis_ref"):
+                scope = {"spec_id": p["spec_id"], "requirement_id": d["requirement_id"], "subject": dp["subject"], "role_scope": dp["role_scope"], "params": dp["params"]}
+                out += [f"{did}：{m}" for m in sources.x16(r, scope, dp.get("basis_hash"), at=(d["requirement_id"], d["question_id"]))]
+    return out
+
 def g_bval(run, task, arts) -> list[str]:
     """T1（Bug Analyst 提交 BugDraft）只跑 structural；T2（Validator）跑報告一致性。"""
     issues = []
@@ -290,6 +309,7 @@ def g_bval(run, task, arts) -> list[str]:
         if pin is None: issues.append(reqs)
         elif p["requirement_id"] not in reqs: issues.append(f"requirement {p['requirement_id']} 不在 {p['spec_id']}@{p['spec_version']} {pin['revision']}")
         if not p["reproduction_steps"]: issues.append("reproduction_steps 為空")
+        if p.get("source_refs") or p.get("decision_refs"): issues += _bugdraft_source_issues(run, p, reqs if pin is not None else {})
     if rep:
         p = _payload(rep)
         if p["result"] == "FAIL" and not p["issues"]: issues.append("FAIL 但 issues 為空")

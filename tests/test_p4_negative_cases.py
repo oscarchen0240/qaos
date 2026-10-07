@@ -31,7 +31,8 @@ print(json.dumps([g["result"], d["result"], d.get("issues")]))""")
     assert out[0] == "PASS" and out[1] == "FAIL" and any("必須以 decision_refs 標明" in i for i in out[2]), out[2]
 
 def test_mixed_revision_keeps_legacy_clr_rule(tmp_path):
-    """同一 revision 同時有舊格式 critical 需求與新資料 critical 決策點：舊需求掛的 CLR 照舊規則（必須已回答、核准後 apply），新資料走新規則。"""
+    """同一 revision 同時有舊格式 critical 需求與新資料 critical 決策點：舊需求掛的 CLR 照舊規則（核准前必須已回答），新資料走新規則；
+    核准都不再 apply CLR（ADR-010，P5 起）。"""
     root = mkroot(tmp_path)
     out = py(root, f"""
 rid = F.new_run()
@@ -46,7 +47,7 @@ clr.answer(old, "總站台不能停用。", "pm", "requirement_clarified", "osca
 F.approve(apr, resolutions=res)
 print(json.dumps([first, clr.load(old)["status"], clr.load(new)["status"]]))""")
     assert "尚未有 PM 回答" in out[0]
-    assert out[1] == "APPLIED" and out[2] == "OPEN"
+    assert out[1] == "ANSWERED" and out[2] == "OPEN"                       # ADR-010（P5）：核准不再 apply 任何 CLR，舊格式的 CLR 也一樣；舊規則只剩「核准前必須已回答」
 
 def test_short_decision_needed_still_opens_clarification(tmp_path):
     root = mkroot(tmp_path)
@@ -61,7 +62,7 @@ def test_preflight_checks_every_entry(tmp_path):
     """非 critical 決策點的條目、同一決策點兩筆、source 型別、source 未回答、E1 決策點的條目都拒絕，核准單維持 PENDING。"""
     root = mkroot(tmp_path)
     out = py(root, f"""
-open_ = clr.new("demo", "DEMO", F.SPEC, F.VER, "尚未回答的問題", "oscar", requirement_id="REQ-DEMO-001", new_request=True)
+open_ = clr.new("demo", "DEMO", F.SPEC, F.VER, "尚未回答的問題", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True)
 rid = F.new_run()
 q1 = F.dp("Q01", "conflict", "critical", {CONFLICT_SIDES})
 q2 = F.dp("Q02", "conflict", "major", subject="site.child.edit", {CONFLICT_SIDES})
@@ -99,7 +100,7 @@ def test_system_withdraw_only_for_document_request():
 def test_gspec_coverage_and_x_subconditions(tmp_path):
     root = mkroot(tmp_path)
     out = py(root, f"""
-open_ = clr.new("demo", "DEMO", F.SPEC, F.VER, "尚未回答的問題", "oscar", requirement_id="REQ-DEMO-001", new_request=True)
+open_ = clr.new("demo", "DEMO", F.SPEC, F.VER, "尚未回答的問題", "oscar", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-DEMO-001", new_request=True)
 rid = F.new_run(); F.analyze(rid, [{E3}]); apr = F.waiting(rid)
 F.approve(apr, resolutions=[{{"requirement_id": "REQ-DEMO-002", "question_id": "Q01", "outcome": "waive_missing", "waived": [{ITEM}], "rationale": "文件短期內無法取得"}}])
 dsha = sources.chash(store.load(f"approvals/{{apr}}.yaml")["decision"])

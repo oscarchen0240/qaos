@@ -1,7 +1,7 @@
 """Clarification（問 PM 的單）：手動生命週期、與 RESOLVE_AMBIGUITY 的自動接線；bug index。"""
 import pytest
 from tests.helpers import raw_save
-from tools.qaos import store, engine, clarification as clr, bugindex
+from tools.qaos import store, engine, clarification as clr, clr_lifecycle, bugindex
 from tools.qaos.cli import main as cli
 from tools.qaos.engine import EngineError
 from tools.qaos.state import TransitionError
@@ -9,17 +9,21 @@ from tests import helpers as H
 
 def test_20_manual_clarification_lifecycle(capsys):
     cli(["clarification", "new", "--product", "demo", "--area", "AUTH", "--spec-id", "SPEC-AUTH-001", "--spec-version", "1.1",
-         "--question", "密碼長度 12 是否含全形字元？", "--context", "R1 未定義字元計數方式", "--option", "以 Unicode code point 計", "--option", "以 byte 計", "--by", "oscar@example.com"])
+         "--question", "密碼長度 12 是否含全形字元？", "--context", "R1 未定義字元計數方式", "--option", "以 Unicode code point 計", "--option", "以 byte 計", "--no-source-check", "--reason", "手動補問，未附查閱證據", "--by", "oscar@example.com"])
     cid = capsys.readouterr().out.split()[0]; assert cid.startswith("CLR-AUTH-")
     c = clr.load(cid); assert c["status"] == "OPEN" and (store.ROOT / "clarifications/demo/AUTH" / f"{cid}.md").exists()
-    with pytest.raises(TransitionError): clr.apply_(cid, "oscar@example.com")            # OPEN → APPLIED 不存在
+    with pytest.raises(ValueError, match="需要 CLR 狀態"):                                      # ADR-010：OPEN 不能 apply（三條路徑都不接受 OPEN）
+        clr_lifecycle.apply(cid, "a7", "oscar@example.com", no_keyword_reason="x", impact_reviewed="x")
     with pytest.raises(TransitionError): clr.ask(cid, "pm@example.com", "agent-spec-analyst")  # Agent 不能送單
     clr.ask(cid, "pm@example.com", "oscar@example.com"); assert clr.load(cid)["status"] == "ASKED"
-    clr.answer(cid, "以 Unicode code point 計", "pm@example.com", "requirement_clarified", "oscar@example.com")
+    clr.answer(cid, "以 Unicode code point 計；規格本身不需修改", "pm@example.com", "no_change", "oscar@example.com")
     c = clr.load(cid); assert c["status"] == "ANSWERED" and "PM 回覆" in (store.ROOT / "clarifications/demo/AUTH" / f"{cid}.md").read_text()
-    with pytest.raises(ValueError, match="impact-reviewed"): clr.apply_(cid, "oscar@example.com")   # ADR-008：未做影響掃描判定不得 apply
-    clr.apply_(cid, "oscar@example.com", impact_reviewed="無 ACTIVE TC 受影響"); assert clr.load(cid)["status"] == "APPLIED"
-    assert "impact-scan[" in clr.load(cid)["history"][-1]["note"] and "reviewed: 無 ACTIVE TC 受影響" in clr.load(cid)["history"][-1]["note"]
+    with pytest.raises(ValueError, match="INCORPORATED"): clr_lifecycle.apply(cid, "a6", "oscar@example.com", landed_in=["RUN-X"], no_keyword_reason="x", impact_reviewed="x")   # 路徑和狀態不符
+    with pytest.raises(ValueError, match="--impact-reviewed"): clr_lifecycle.apply(cid, "a7", "oscar@example.com", no_keyword_reason="x", impact_reviewed=" ")
+    cands = clr_lifecycle.impact(cid, [], [], "oscar@example.com")["candidates"]                 # 背景候選（原題需求）與關鍵字候選
+    clr_lifecycle.apply(cid, "a7", "oscar@example.com", no_keyword_reason="答案不改變規格，原題沒有掛需求", tc_conclusions=[f"{x['tc_id']}=not_affected" for x in cands],
+                        impact_reviewed="無 ACTIVE TC 受影響")
+    c = clr.load(cid); assert c["status"] == "APPLIED" and c["landings"][-1]["path"] == "a7" and c["landings"][-1]["no_keyword_reason"].startswith("答案不改變")
     cli(["clarification", "list", "--all"]); assert cid in capsys.readouterr().out   # list 是唯讀指令，不寫檔
     cli(["clarification", "index"]); assert (store.ROOT / "clarifications/index.md").exists()
 
@@ -41,15 +45,23 @@ def test_20b_clarification_impact_scan_lists_requirement_and_keyword_hits(capsys
     ptr = store.load(store.tc_pointer_path("TC-IMP-004")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; raw_save(store.tc_pointer_path("TC-IMP-004"), ptr)
     _fake_active_tc("TC-IMP-006", "IMP", "REQ-IMP-002", "已退役但提到進行中", ["進行中"], "x")
     ptr = store.load(store.tc_pointer_path("TC-IMP-006")); ptr["status"] = "RETIRED"; ptr["active_version"] = None; raw_save(store.tc_pointer_path("TC-IMP-006"), ptr)
-    c = clr.new("demo", "IMP", "SPEC-IMP-001", "1.0", "明細是否列進行中？", "oscar@example.com", requirement_id="REQ-IMP-001")
-    cands = {x["testcase_id"]: x["reasons"] for x in clr.impact(c["clarification_id"], ["進行中", "新場次"])}
-    assert cands == {"TC-IMP-001": ["requirement"], "TC-IMP-002": ["keyword:進行中"], "TC-IMP-003": ["keyword:新場次"]}
-    cli(["clarification", "impact", c["clarification_id"], "--keyword", "進行中"]); out = capsys.readouterr().out
+    c = clr.new("demo", "IMP", "SPEC-IMP-001", "1.0", "明細是否列進行中？", "oscar@example.com", no_source_check_reason="測試 fixture（入口 D，未附查閱證據）", requirement_id="REQ-IMP-001")
+    clr.ask(c["clarification_id"], "pm@example.com", "oscar@example.com"); clr.answer(c["clarification_id"], "不列", "pm@example.com", "out_of_scope", "oscar@example.com")
+    scan = clr_lifecycle.impact(c["clarification_id"], ["進行中", "新場次"], [], "oscar@example.com")     # ADR-010：impact 保存掃描紀錄
+    cands = {x["tc_id"]: x["reasons"] for x in scan["candidates"]}
+    assert cands == {"TC-IMP-001": ["clr_requirement"], "TC-IMP-002": ["keyword:進行中"], "TC-IMP-003": ["keyword:新場次"]}
+    assert scan["scan_units"] == [{"product": "demo", "area": "IMP"}] and (store.ROOT / f"clarifications/demo/IMP/scans/{c['clarification_id']}-{scan['scan_id']}.yaml").exists()
+    cli(["clarification", "impact", c["clarification_id"], "--keyword", "進行中", "--by", "oscar@example.com"]); out = capsys.readouterr().out
     assert "TC-IMP-002" in out and "TC-IMP-001" in out and "TC-IMP-005" not in out and "TC-IMP-006" not in out
-    clr.ask(c["clarification_id"], "pm@example.com", "oscar@example.com"); clr.answer(c["clarification_id"], "不列", "pm@example.com", "requirement_clarified", "oscar@example.com")
-    clr.apply_(c["clarification_id"], "oscar@example.com", impact_reviewed="001 不受影響；002 需修訂；003 需修訂", keywords=["進行中", "新場次"])
-    note = clr.load(c["clarification_id"])["history"][-1]["note"]
-    assert "impact-scan[3]" in note and "TC-IMP-002(keyword:進行中)" in note and "reviewed: 001 不受影響" in note
+    with pytest.raises(ValueError, match="缺少 --tc-conclusion"):                                  # 每張候選都要有結論
+        clr_lifecycle.apply(c["clarification_id"], "a7", "oscar@example.com", scan_id=scan["scan_id"], tc_conclusions=["TC-IMP-001=not_affected"], impact_reviewed="x")
+    clr_lifecycle.apply(c["clarification_id"], "a7", "oscar@example.com", scan_id=scan["scan_id"],
+                        tc_conclusions=["TC-IMP-001=not_affected", "TC-IMP-002=updated", "TC-IMP-003=deferred:等 PM 補充畫面"], impact_reviewed="001 不受影響；002 已修訂；003 延後")
+    l = clr.load(c["clarification_id"])["landings"][-1]
+    assert l["path"] == "a7" and l["final_keywords"] == ["新場次", "進行中"] and l["scan_id"] == scan["scan_id"] and l["scan_reused"] == "full"
+    assert {x["tc_id"] for x in l["candidates"]} == {"TC-IMP-001", "TC-IMP-002", "TC-IMP-003"} and all(x["tc_version_sha256"] for x in l["candidates"])
+    show = clr_lifecycle.show(c["clarification_id"])
+    assert {"tc_id": "TC-IMP-003", "conclusion": "deferred:等 PM 補充畫面"} in show["follow_ups"]
 
 def test_21_critical_ambiguity_opens_clarification_and_blocks_approve(fixtures):
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-PAY-001", "--version", "1.0", "--product", "demo", "--area", "PAY", "--by", "oscar@example.com"])
@@ -79,7 +91,7 @@ def test_21_critical_ambiguity_opens_clarification_and_blocks_approve(fixtures):
     assert store.load(f"approvals/{apr['approval_id']}.yaml")["status"] == "PENDING"
     clr.answer(clrs[0], "以 code point 計", "pm@example.com", "requirement_clarified", "oscar@example.com")
     engine.approve(apr["approval_id"], "approve", "oscar@example.com", selected_option="resolved")
-    assert clr.load(clrs[0])["status"] == "APPLIED"
+    assert clr.load(clrs[0])["status"] == "ANSWERED"                                       # ADR-010：核准不再 apply CLR（由人以 apply 確認結案）
     run = engine.load_run(rid); assert run["status"] == "RUNNING" and run["current_task_id"] == "T1" and run["tasks"][0]["iteration"] == 1  # T1 重開讓 Spec Analyst 帶答案重產
 
 def test_22_bug_index():
