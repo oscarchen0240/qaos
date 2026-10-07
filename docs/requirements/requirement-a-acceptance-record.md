@@ -467,4 +467,4 @@
 - `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q tests`：**610 passed**（17:29）。P5 收斂時 461 → merge MR !7 後 462 → P6 新增 148
 - `python3 tools/validate_phase1.py`：**ALL CHECKS PASSED**（含 [4] fork 使用為零）
 - 中途紀錄：`e761727`（merge 後）462 passed、`7ef07ee`（F1、F5 後）467 passed、`7279e29`（收尾測試後）609 passed，validate 都通過
-- 自審（S00，模型 fable）：`review-handoff/clr-spec-investigation/requirement-a-p6-self-review-00.md`（交接區，不進 MR），P6-S00-04～07 已修正
+- 自審：交審前以獨立 agent 找反例，提出 4 項（AC-A-B1-5 缺執行結果、AC-08-10 證據不對題、一條永遠成立的測試斷言、F5 拒絕訊息對確認重複的 run 提示 a6b），都已修正（見「P6 的修正」）
