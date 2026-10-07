@@ -54,6 +54,8 @@ def config_flags(definition: dict) -> list[str]:
 
 def _cd_target(args: list[str]) -> str:
     for i, a in enumerate(args):
+        if a == "--":                       # 選項終止符：之後是提示文字，不是選項
+            break
         if a in ("-C", "--cd") and i + 1 < len(args):
             return args[i + 1]
         if a.startswith("--cd="):
@@ -71,6 +73,11 @@ def _git_toplevel(path: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+def _is_runnable_file(p: Path) -> bool:
+    """os.access(X_OK) 對目錄也是 True（代表可進入），所以必須同時是一般檔案（符號連結指向一般檔案可以）。"""
+    return p.is_file() and os.access(p, os.X_OK)
+
+
 def resolve_project_dir(args: list[str], env) -> Path:
     override = env.get("QAOS_PROJECT_DIR")
     if override:
@@ -84,7 +91,7 @@ def resolve_project_dir(args: list[str], env) -> Path:
             raise LauncherError(f"找不到 QAOS 專案根：{target} 不在 git repo 內（可用 QAOS_PROJECT_DIR 或 -C 指定）")
         root = Path(top)
     root = root.resolve()
-    missing = [s for s in HOOK_SCRIPTS if not os.access(root / "admin-ui" / "hooks" / s, os.X_OK)]
+    missing = [s for s in HOOK_SCRIPTS if not _is_runnable_file(root / "admin-ui" / "hooks" / s)]
     if missing:
         raise LauncherError(f"{root} 的 admin-ui/hooks 缺少或不可執行：{', '.join(missing)}；為避免啟動沒有守門的 QAOS session，已中止")
     return root

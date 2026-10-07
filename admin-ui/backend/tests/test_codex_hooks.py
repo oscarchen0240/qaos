@@ -279,6 +279,54 @@ def test_launcher_refuses_when_root_cannot_be_verified(tmp_path, tmp_path_factor
         L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(hooked_repo)})              # 守門腳本不可執行
 
 
+def test_launcher_rejects_directory_posing_as_hook_script(hooked_repo, tmp_path_factory):
+    """Codex review R2-01：os.access(X_OK) 對目錄也是 True，守門入口是目錄時不可通過驗證，也不可啟動 codex。"""
+    L = _load(LAUNCHER, "qaos_codex_launcher3")
+    guard = hooked_repo / "admin-ui" / "hooks" / "guard_qaos.sh"
+    guard.unlink()
+    guard.mkdir(mode=0o755)
+    with pytest.raises(L.LauncherError, match="guard_qaos.sh"):
+        L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(hooked_repo)})
+    work = tmp_path_factory.mktemp("fake")
+    marker = work / "ran"
+    env = _codex_env(CODEX_BIN=str(_fake_codex(work)), FAKE_CODEX_MARKER=str(marker))
+    r = subprocess.run([sys.executable, str(LAUNCHER), "exec", "-C", str(hooked_repo), "hi"], capture_output=True, text=True, env=env, cwd=work, timeout=20)
+    assert r.returncode != 0 and not marker.exists() and "guard_qaos.sh" in r.stderr
+
+
+def test_launcher_accepts_symlinked_hook_script(hooked_repo):
+    L = _load(LAUNCHER, "qaos_codex_launcher4")
+    real = hooked_repo / "real_guard.sh"
+    shutil.copy2(HOOKS_DIR / "guard_qaos.sh", real)
+    guard = hooked_repo / "admin-ui" / "hooks" / "guard_qaos.sh"
+    guard.unlink()
+    guard.symlink_to(real)
+    assert L.resolve_project_dir([], {"QAOS_PROJECT_DIR": str(hooked_repo)}) == hooked_repo
+
+
+def test_launcher_cd_scan_stops_at_double_dash(hooked_repo, monkeypatch):
+    """Codex review R2-02：`--` 之後是提示文字，以 -C／--cd= 開頭也不是選項；專案根仍由目前目錄決定，參數原樣傳給 codex。"""
+    L = _load(LAUNCHER, "qaos_codex_launcher5")
+    monkeypatch.chdir(hooked_repo / "sub")
+    monkeypatch.delenv("QAOS_PROJECT_DIR", raising=False)
+    assert L._cd_target(["exec", "--", "-C/no/such/qaos-directory"]) == os.getcwd()
+    assert L._cd_target(["exec", "--", "--cd=/no/such/qaos-directory"]) == os.getcwd()
+    assert L.resolve_project_dir(["exec", "--", "-C/no/such/qaos-directory"], {}) == hooked_repo
+    assert L._cd_target(["-C", "/x", "--", "-C/y"]) == "/x"                    # `--` 之前的仍照常解析
+
+
+def test_launcher_passes_prompt_after_double_dash_through_untouched(hooked_repo, tmp_path_factory):
+    work = tmp_path_factory.mktemp("fake")
+    marker = work / "ran"
+    env = _codex_env(CODEX_BIN=str(_fake_codex(work)), FAKE_CODEX_MARKER=str(marker))
+    r = subprocess.run([sys.executable, str(LAUNCHER), "exec", "--", "-C/no/such/qaos-directory"], capture_output=True, text=True,
+                       env=env, cwd=hooked_repo / "sub", timeout=20)
+    assert r.returncode == 0 and marker.exists()
+    args = [l[4:] for l in r.stdout.splitlines() if l.startswith("ARG:")]
+    assert args[16:] == ["exec", "--", "-C/no/such/qaos-directory"]
+    assert r.stdout.splitlines()[0] == f"ROOT={hooked_repo}"
+
+
 def _fake_codex(tmp_path: pathlib.Path) -> pathlib.Path:
     f = tmp_path / "fake-codex"
     f.write_text('#!/bin/bash\necho "ROOT=$QAOS_PROJECT_DIR"\nprintf "ARG:%s\\n" "$@"\ntouch "$FAKE_CODEX_MARKER"\n')
