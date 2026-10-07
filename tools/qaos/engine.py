@@ -109,6 +109,18 @@ def _target_of(workflow_id: str, inputs: dict) -> tuple[str, str] | None:
         if h.get("spec_id") and h.get("spec_version"): return h["spec_id"], str(h["spec_version"])
     return None
 
+def _tc_target(inputs: dict) -> tuple[str, str]:
+    """testcase-revision 的目標由被修訂 TC 的 ACTIVE 版本推得（第 5 章 §4.2、§4.3）；inputs 的 spec 和它不符 → 拒絕（跨版本改動走 CIA）。"""
+    tc = inputs.get("testcase_id")
+    if not tc or not store.exists(store.tc_pointer_path(tc)): raise EngineError(f"testcase-revision 找不到被修訂的 TC：{tc!r}")
+    ptr = store.load(store.tc_pointer_path(tc))
+    if not ptr.get("active_version"): raise EngineError(f"{tc} 沒有 ACTIVE 版本，不能 testcase-revision")
+    v = store.load(store.tc_version_path(tc, ptr["active_version"]))
+    tgt = (v["spec_id"], str(v["spec_version"]))
+    given = (inputs.get("spec_id"), str(inputs.get("spec_version")) if inputs.get("spec_version") is not None else None)
+    if given != tgt: raise EngineError(f"testcase-revision 的 spec 必須是 {tc} v{ptr['active_version']} 自己的 {tgt[0]}@{tgt[1]}（inputs 是 {given[0]}@{given[1]}）；跨版本改動請走 spec-change-impact")
+    return tgt
+
 def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
     """new_run 時就要綁定的 revision（第 5 章 §4.2）：spec-change-impact 的 from 端；沒有 T0 的 testcase-revision、manual 綁目標版本的最新 revision。"""
     out = {}
@@ -127,7 +139,7 @@ def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
             pin = rm.latest_pin(inputs["spec_id"], inputs["from_version"])
             if pin: out["from_requirement_model_revision"] = pin
     elif workflow_id in ("testcase-revision", "manual-test-to-regression"):
-        tgt = _target_of(workflow_id, inputs)
+        tgt = _tc_target(inputs) if workflow_id == "testcase-revision" else _target_of(workflow_id, inputs)
         if tgt is None: raise EngineError("沒有可分析的 spec：先在 manual record 補 spec_hint（spec_id、spec_version），或以 inputs 指定 spec")
         pin = rm.latest_pin(*tgt)
         if pin is None: raise EngineError(f"{tgt[0]}@{tgt[1]} 還沒有需求模型 revision；先以 spec-to-testcase 分析")
@@ -216,14 +228,21 @@ def _submit_request(run_id, task_id, artifact_path):
     return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_id": aid}}
 
 def _run_pins(run) -> list[dict]:
-    """run 綁定的 RMPin（to／目標端在前，spec-change-impact 另有 from 端）；還沒綁定時為空。"""
-    return [run[f] for f in ("requirement_model_revision", "from_requirement_model_revision") if run.get(f)]
+    """run 綁定的 RMPin（目標／to 端在前，spec-change-impact 另有 from 端），依 run 欄位 → run sidecar 解析（第 5 章 §4.1）。"""
+    out = []
+    for end in ("target", "from"):
+        try: out.append(rm.run_pin(run, end))
+        except rm.RMError: pass
+    return out
 
 def _resolve_in_run(ref, run) -> str | None:
-    """artifact 引用的 Requirement／AC 只在 run 綁定的 revision 中找（不讀可變的檢視）；run 還沒綁定時依最新 revision。"""
+    """artifact 引用的 Requirement／AC 只在 run 綁定的 revision 中找（不讀可變的檢視、不改查最新）。
+    run 沒有任何綁定 → 錯誤；只有本來就不綁 spec 的 regression-generation 例外（第 5 章 §4.2）。"""
     if ref["entity_type"] not in ("Requirement", "AcceptanceCriterion"): return refs.resolve(ref)
     pins = _run_pins(run)
-    if not pins: return refs.resolve(ref)
+    if not pins:
+        if run["workflow_id"] == "regression-generation": return refs.resolve(ref)
+        return f"{ref['entity_type']} {ref['id']}：run {run['run_id']} 還沒有綁定需求模型 revision，不能解析需求引用"
     errs = [refs.resolve(ref, pin=p) for p in pins]
     return None if any(e is None for e in errs) else errs[0]
 

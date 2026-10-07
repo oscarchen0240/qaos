@@ -19,8 +19,7 @@ def _req_index(tcs):
     from . import rm, refs
     idx = {}
     for t in tcs:                                                             # TC 的依據：版本檔 pin → TC sidecar（需求 A 第 5 章 §4.1）
-        try: pin = rm.tc_pin(t["testcase_id"], t["version"])
-        except rm.RMError: pin = None                                         # 尚未移轉的 legacy TC：顯示用，退回最新 revision／legacy 檢視
+        pin = rm.tc_pin_for_display(t["testcase_id"], t["version"])            # 移轉前的 legacy TC 才可退回最新 revision／legacy 檢視
         for rid in t.get("requirement_ids", []):
             if rid not in idx:
                 r, _ = refs.find_requirement(rid, t["spec_id"], t["spec_version"], pin=pin)

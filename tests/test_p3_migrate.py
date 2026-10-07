@@ -75,7 +75,9 @@ def test_migrate_acknowledge_idle_results():
         sc = U.load(root, f"testcases/_bindings/{tc}-v1.yaml")                                                   # AC-09-13
         assert sc["requirement_model_revision"]["revision"] == "R000" and sc["legacy_binding"] is True
     c = U.load(root, f"clarifications/demo/AUTH/{info['clr']}.yaml"); r0 = c["answer_revisions"][0]
-    assert r0["sha256"] == U.sha_text("密碼下限 8 碼。") if hasattr(U, "sha_text") else True
+    import hashlib
+    assert r0["sha256"] == hashlib.sha256("密碼下限 8 碼。".encode()).hexdigest() and r0["rev"] == 0
+    assert r0["basis_hash"] == U.py(root, f"from tools.qaos import sources\nprint(sources.chash({r0['basis']!r}))").stdout.strip()
     assert r0["basis"] == {"target": {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "content_hash": U.load(root, "specs/demo/AUTH/SPEC-AUTH-001/spec.yaml")["versions"][0]["content_hash"]},
                            "target_decl_rev": 0, "closure": []}
     assert "answer_revisions" not in U.load(root, f"clarifications/demo/AUTH/{info['open_clr']}.yaml")
@@ -102,8 +104,13 @@ def test_ac_09_88_legacy_r000_skip_rule_and_89_declaration():
     assert (pathlib.Path(root) / "artifacts/requirements/SPEC-AUTH-001/v1.0/revisions/R000.meta.yaml").read_text().count("target_decl_rev: 0") == 1   # meta 不改寫
 
 def test_old_running_run_resumes_on_its_sidecar_revision():
-    """移轉前就在跑的 run（T2 READY）移轉後繼續：G-DESIGN 讀 sidecar 的 R000；新 TC 版本綁 R000。"""
+    """移轉前就在跑的 run（T2 READY）移轉後繼續：引用解析與 G-DESIGN 讀 sidecar 的 R000，不讀最新 revision；新 TC 版本綁 R000。
+    P3 審查 P3-04：先以另一個新 run 重新分析產生內容不同的 R001（拿掉 REQ-AUTH-004），舊 run 仍要能引用 REQ-AUTH-004。"""
     root, info = migrated(); ok(U.q(root, "maintenance", "end", "--by", "m")); rid = info["running"]
+    ok(U.q(root, "spec", "reference", "declare-empty", "SPEC-AUTH-001@1.0", "--reason", "x", "--by", "o"))
+    U.py(root, "from tests import p3_flow as F\nr = F.new_run(); F.analyze(r, drop=('REQ-AUTH-004',))")
+    r001 = U.load(root, "artifacts/requirements/SPEC-AUTH-001/v1.0/revisions/R001.yaml")
+    assert "REQ-AUTH-004" not in {q["requirement_id"] for q in r001["requirements"]}                                  # 最新 revision 已沒有它
     code = f"""
 import json
 from tools.qaos import engine, store
@@ -216,17 +223,78 @@ def test_ac_09_60_61_later_ops():
 def _r_plan(root):
     return next(U.plan_of(root, o) for o in plans(root) if (U.plan_of(root, o) or {}).get("action") == "migrate_rollback")
 
-@pytest.mark.parametrize("fault", ["after_register", "after_output:1", "after_progress:2", "after_progress:5", "after_check_a", "before_check_b", "after_output:19"])
+POINTS = ["R_saved", "takeover_tail", "restore_mid", "check_a_passed", "marker_tail", "before_check_b", "rt1_tail"]
+
+def _prog(root, plan, st):
+    return (pathlib.Path(root) / f"operations/_global/{plan['op_id']}/progress.d/{st['seq']:04d}-{st['step_id']}.yaml").exists()
+
+def _out_after(root, st):
+    p = pathlib.Path(root) / st["path"]
+    return (not p.exists()) if st["expected_after"] is None else (p.exists() and U.sha(p) == st["expected_after"])
+
+@pytest.mark.parametrize("point", POINTS)
 @pytest.mark.parametrize("entry", ["resend", "resume"])
-def test_rollback_abort_points_then_resume(fault, entry):
+def test_rollback_abort_points_then_resume(point, entry):
+    """R 的各中止點（FP-R0～R5、FP-W）：依不可變的 R 計畫找出各群組的步驟，先斷言中止時各群組的實際狀態，再以兩種入口續做完成。"""
     root, info = migrated(); x = x_of(root); args = ["migrate", "rollback", "--op", x, "--by", "m"]
-    r = U.q(root, *args, fault=fault); assert r.returncode == 86, (fault, r.stderr)
-    rp = _r_plan(root); rid = rp["op_id"]
+    assert U.q(root, *args, fault="after_register").returncode == 86                                                 # FP-R0：R 已建立，第一步還沒執行
+    rp = _r_plan(root); rid = rp["op_id"]; G = {g: [st for st in rp["steps"] if st.get("group") == g] for g in ("takeover", "restore", "marker", "terminal")}
+    rt1 = G["terminal"][0]; marker = G["marker"][0]; restore = G["restore"]
+    assert rt1["step_id"] == "Rt1" and marker["path"].endswith("_migration.yaml") and len(restore) >= 3
+    fault = {"R_saved": None, "takeover_tail": f"after_output:{G['takeover'][0]['seq']}", "restore_mid": f"after_progress:{restore[1]['seq']}",
+             "check_a_passed": "after_check_a", "marker_tail": f"after_output:{marker['seq']}", "before_check_b": "before_check_b", "rt1_tail": f"after_output:{rt1['seq']}"}[point]
+    if fault: assert U.q(root, "operation", "resume", rid, fault=fault).returncode == 86
+    done = lambda st: _out_after(root, st) and _prog(root, rp, st)
+    if point == "R_saved": assert not any(_out_after(root, st) for st in G["takeover"]) and (pathlib.Path(root) / marker["path"]).exists()
+    if point == "takeover_tail": assert _out_after(root, G["takeover"][0]) and not _prog(root, rp, G["takeover"][0])
+    if point == "restore_mid": assert done(restore[0]) and done(restore[1]) and not _out_after(root, restore[2])
+    if point in ("check_a_passed", "marker_tail", "before_check_b", "rt1_tail"): assert all(done(st) for st in G["takeover"] + restore)
+    if point == "check_a_passed": assert (pathlib.Path(root) / marker["path"]).exists() and not _prog(root, rp, marker)
+    if point == "marker_tail": assert not (pathlib.Path(root) / marker["path"]).exists() and not _prog(root, rp, marker)
+    if point in ("before_check_b", "rt1_tail"): assert done(marker)
+    if point == "rt1_tail": assert _out_after(root, rt1) and not _prog(root, rp, rt1)
+    if point != "rt1_tail": assert not (pathlib.Path(root) / rt1["path"]).exists()
+    assert not (pathlib.Path(root) / G["terminal"][-1]["path"]).exists()                                             # Rt2 都還沒寫
     assert U.q(root, "maintenance", "end", "--by", "m").returncode != 0                                               # R 未完成：維護窗口持續
     assert U.q(root, "operation", "resume", x).returncode != 0                                                        # X 已被 R 接管
     ok(U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", rid))
     ok(U.q(root, "migrate", "verify", "--rolled-back"))
     assert status_files(root, x) == ["completed", "rolled_back"] and status_files(root, rid) == ["completed"]
+
+# ---------------------------------------------------------------- P3 審查 P3-01～03：X 的證據
+def test_p3_01_completed_x_missing_last_progress_is_refused():
+    for variant in ("last_progress", "completed_status"):
+        root, info = migrated(); x = x_of(root); xp = U.plan_of(root, x)
+        if variant == "last_progress":                                                                               # 竄改：只刪 X 最後一個非最終步驟的完成紀錄
+            last = xp["steps"][-2]; (pathlib.Path(root) / f"operations/_global/{x}/progress.d/{last['seq']:04d}-{last['step_id']}.yaml").unlink()
+        else:
+            f = pathlib.Path(root) / f"operations/_global/status.d/{x}-completed.yaml"; f.write_text(f.read_text() + "x: 1\n")
+        before = U.snapshot(root); n = len(plans(root))
+        r = U.q(root, "migrate", "rollback", "--op", x, "--by", "m")
+        assert r.returncode != 0 and ("T5" if variant == "last_progress" else "completed 狀態紀錄內容不符") in r.stderr, (variant, r.stderr)   # completed 紀錄竄改在 T2 的登錄核對就被拒
+        assert U.diff(before, U.snapshot(root)) == NOTHING and len(plans(root)) == n
+
+@pytest.mark.parametrize("entry", ["resend", "resume"])
+def test_p3_02_frozen_x_progress_deleted_stops_checks(entry):
+    root, info = migrated(); x = x_of(root); args = ["migrate", "rollback", "--op", x, "--by", "m"]
+    assert U.q(root, *args, fault="after_register").returncode == 86
+    rid = _r_plan(root)["op_id"]; xp = U.plan_of(root, x)
+    (pathlib.Path(root) / f"operations/_global/{x}/progress.d/0001-{xp['steps'][0]['step_id']}.yaml").unlink()          # 竄改：刪掉 R 已凍結為 proof=progress 的 X 完成紀錄
+    r = U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", rid)
+    assert r.returncode != 0 and "檢查 A" in r.stderr and "完成紀錄" in r.stderr, r.stderr
+    assert status_files(root, rid) == [] and status_files(root, x) == ["completed"] and (pathlib.Path(root) / "artifacts/requirements/_migration.yaml").exists()
+
+def test_p3_03_verify_detects_missing_or_tampered_evidence():
+    root, info = migrated(); x = x_of(root); xp = U.plan_of(root, x)
+    f = pathlib.Path(root) / f"operations/_global/{x}/progress.d/0001-{xp['steps'][0]['step_id']}.yaml"; data = f.read_bytes(); f.unlink()   # 竄改
+    r = U.q(root, "migrate", "verify"); assert r.returncode != 0 and "0001-manifest" in r.stdout, r.stdout
+    f.write_bytes(data); ok(U.q(root, "migrate", "verify"))
+    ok(U.q(root, "migrate", "rollback", "--op", x, "--by", "m")); rp = _r_plan(root)
+    ev = next(st for st in rp["steps"] if st["kind"] == "event"); p = pathlib.Path(root) / ev["path"]; p.write_bytes(p.read_bytes() + b"# tampered\n")
+    r = U.q(root, "migrate", "verify", "--rolled-back"); assert r.returncode != 0 and ev["path"] in r.stdout, r.stdout
+    p.write_bytes(p.read_bytes()[:-len(b"# tampered\n")]); ok(U.q(root, "migrate", "verify", "--rolled-back"))
+    xprog = pathlib.Path(root) / f"operations/_global/{x}/progress.d/0001-{xp['steps'][0]['step_id']}.yaml"; xprog.unlink()
+    r = U.q(root, "migrate", "verify", "--rolled-back"); assert r.returncode != 0 and "0001-manifest" in r.stdout
 
 def test_check_a_and_b_stop_on_external_change_then_repair():
     """FP-R4：③ 檢查 A 前改動 untouched 路徑 → 檢查 A 停止、標記保留；④ 標記刪除後改動 → 檢查 B 停止、沒有終態紀錄；恢復記錄值後續做完成。"""
@@ -274,3 +342,28 @@ def test_ac_09_63_90_remigrate_after_rollback():
     keys = ("revision", "legacy", "revision_sha256", "target_decl_rev", "reference_pins")
     assert {k: meta2[k] for k in keys} == {k: meta1[k] for k in keys} and meta2["created_by_op"] == y != meta1["created_by_op"]
     assert U.load(root, f"clarifications/demo/AUTH/{info['clr']}.yaml")["answer_revisions"][0]["basis"] == rev0_1
+
+# ---------------------------------------------------------------- P3 審查 P3-05、P3-06
+def test_p3_05_testcase_revision_target_comes_from_the_tc(tmp_path):
+    root = U.mkroot(); U.import_auth_spec(root)
+    U.py(root, "from tests import p3_flow as F\nF.full()")
+    U.q(root, "spec", "import", U.FIXTURES / "SPEC-AUTH-001-v1.1.md", "--spec-id", "SPEC-AUTH-001", "--version", "1.1", "--product", "demo", "--area", "AUTH", "--by", "o", check=True)
+    before = U.snapshot(root)
+    for ver in ("1.1",):
+        r = U.q(root, "run", "new", "testcase-revision", "--input", "testcase_id=TC-AUTH-001", "--input", "reason=x", "--input", "spec_id=SPEC-AUTH-001", "--input", f"spec_version={ver}", "--by", "o")
+        assert r.returncode != 0 and "必須是 TC-AUTH-001" in r.stderr, r.stderr
+    r = U.q(root, "run", "new", "testcase-revision", "--input", "testcase_id=TC-AUTH-999", "--input", "reason=x", "--input", "spec_id=SPEC-AUTH-001", "--input", "spec_version=1.0", "--by", "o")
+    assert r.returncode != 0 and "找不到被修訂的 TC" in r.stderr
+    assert U.diff(before, U.snapshot(root)) == NOTHING                                                                 # 不留下 run、計數器不前進
+    ok(U.q(root, "run", "new", "testcase-revision", "--input", "testcase_id=TC-AUTH-001", "--input", "reason=x", "--input", "spec_id=SPEC-AUTH-001", "--input", "spec_version=1.0", "--by", "o"))
+
+def test_p3_06_approval_render_direct_api_and_nested():
+    root = U.mkroot(); U.import_auth_spec(root)
+    apr = U.py(root, "from tests import p3_flow as F\nfrom tools.qaos import engine\nr = F.new_run(); m = F.analyze(r); F.design_and_validate(r, m); print(engine.load_run(r)['waiting_on_approval_id'])").stdout.strip().splitlines()[-1]
+    md = pathlib.Path(root) / f"approvals/{apr}.md"; md.unlink(missing_ok=True)
+    n = len(U.op_list(root))
+    U.py(root, f"from tools.qaos import approval_render\napproval_render.render('{apr}', new_request=True)")                 # 直接 Python API：自己是一個操作
+    assert md.exists() and len(U.op_list(root)) == n + 1 and U.op_list(root)[-1]["action"] == "approval_render"
+    md.unlink()
+    U.py(root, f"from tools.qaos import approval_render, operation\noperation.run_operation('test_internal', lambda: approval_render.render('{apr}'), new_request=True)")   # 巢狀：併入外層操作
+    assert md.exists() and len(U.op_list(root)) == n + 2 and U.op_list(root)[-1]["action"] == "test_internal"

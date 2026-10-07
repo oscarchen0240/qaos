@@ -9,9 +9,12 @@ SPEC, VER = "SPEC-AUTH-001", "1.0"
 def new_run(**extra) -> str:
     return engine.new_run("spec-to-testcase", {"spec_id": SPEC, "spec_version": VER, **extra}, BY, new_request=True)["run_id"]
 
-def analyze(rid: str, crit: bool = False) -> str:
-    """T1：提交 SpecAnalysis＋RequirementModel 並跑 gate。crit=True 時 REQ-AUTH-002 帶未解決的 critical ambiguity（會持久化為 DRAFT）。回傳 RM artifact_id。"""
+def analyze(rid: str, crit: bool = False, drop: tuple = ()) -> str:
+    """T1：提交 SpecAnalysis＋RequirementModel 並跑 gate。crit=True 時 REQ-AUTH-002 帶未解決的 critical ambiguity（會持久化為 DRAFT）；
+    drop 列出要從這次分析拿掉的需求（產生內容不同的 revision）。回傳 RM artifact_id。"""
     rm = H.requirement_model()
+    rm["requirements"] = [r for r in rm["requirements"] if r["requirement_id"] not in drop]
+    rm["traceability"] = [t for t in rm["traceability"] if t["requirement_id"] not in drop]
     if crit: rm["requirements"][1]["ambiguity"] = {"level": "critical", "description": "數字要不要含全形？", "options": ["含", "不含"]}
     refs_ = [{"entity_type": "SpecVersion", "id": SPEC, "version": VER}]
     ch = store.load(store.spec_dir(SPEC) / "spec.yaml")["versions"][0]["content_hash"]

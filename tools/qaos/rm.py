@@ -120,6 +120,22 @@ def tc_pin(tc_id: str, version: int) -> dict:
     if store.exists(sc): return store.load(sc)["requirement_model_revision"]
     raise RMError(f"{tc_id} v{version} 沒有綁定需求模型 revision（版本檔沒有、也沒有 sidecar）")
 
+def _premigration() -> bool:
+    return not store.exists(operation.MARKER_PATH)
+
+def run_pin_for_display(run: dict) -> dict | None:
+    """顯示用（核准單渲染等）：移轉前的 legacy run 沒有 pin 時回傳 None；移轉後缺 pin 一律錯誤，不以「顯示用」換依據。"""
+    try: return run_pin(run)
+    except RMError:
+        if _premigration(): return None
+        raise
+
+def tc_pin_for_display(tc_id: str, version: int) -> dict | None:
+    try: return tc_pin(tc_id, version)
+    except RMError:
+        if _premigration(): return None
+        raise
+
 def find_requirement_latest(req_id: str):
     """run 外的查詢（trace、匯出標題等）：依各版本的最新 revision 找需求；回傳 (requirement, RMPin)。"""
     for p in store.glob("artifacts/requirements/*/*/revisions/index.yaml"):

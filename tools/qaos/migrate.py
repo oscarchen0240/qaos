@@ -242,6 +242,17 @@ def x_progress(xplan: dict) -> dict:
     steps_out.append({"seq": final["seq"], "step_id": final["step_id"], "kind": "status", "status": "done" if final_present else "not_executed",
                       "proof": "completed_status" if final_present else None, "evidence": {"path": final["path"], "sha256": final["expected_after"]} if final_present else None})
     conflicts = [dict(c, step_id=next((s["step_id"] for s in xplan["steps"] if s["seq"] == c.get("seq")), None)) for c in cls.conflicts]
+    if status_x == "completed":                                                  # §13.4：X 已完成時不跑尾端推導
+        tail = None
+        for s, row in zip(xplan["steps"][:-1], steps_out):
+            pp = store.ROOT / op.progress_path(xplan, s)
+            if not pp.is_file() or pp.read_bytes() != op.progress_bytes(xplan, s):
+                conflicts.append({"seq": s["seq"], "step_id": s["step_id"], "path": op.progress_path(xplan, s), "reason": "X 已完成，但這一步的完成紀錄缺失或不符"})
+            elif row["status"] == "done": row["proof"] = "progress"
+            if s["kind"] in op.AUDIT_KINDS and _sha(s["path"]) != s["expected_after"]:
+                conflicts.append({"seq": s["seq"], "step_id": s["step_id"], "path": s["path"], "reason": "X 已完成，但稽核物不等於計畫值"})
+        if _sha(final["path"]) != final["expected_after"]:
+            conflicts.append({"seq": final["seq"], "step_id": "completed", "path": final["path"], "reason": "X 的 completed 紀錄內容不符"})
     # not_executed 的步驟：預定事件、完成紀錄必須不存在
     for s in xplan["steps"][:-1]:
         if cls.status.get(s["seq"]) == "not_executed" and (store.ROOT / op.progress_path(xplan, s)).exists():
@@ -398,9 +409,7 @@ def _check_common(plan: dict, xplan: dict, manifest: dict, label: str):
         if _sha(u["path"]) != u["pre_sha256"]: bad.append(f"untouched {u['path']} 被改動")
     try: op.verify_registration(plan["op_id"])
     except OperationError as e: bad.append(str(e))
-    for s in plan["x_progress"]["steps"]:
-        if s["status"] == "done" and s["evidence"] and _sha(s["evidence"]["path"]) != s["evidence"]["sha256"] and s["kind"] in op.AUDIT_KINDS | {"status"}:
-            bad.append(f"X 的稽核證據 {s['evidence']['path']} 缺失或被改動")
+    bad += x_evidence_issues(plan, xplan)
     xsteps = {s["seq"]: s for s in xplan["steps"]}
     for s in plan["x_progress"]["steps"]:
         if s["status"] == "not_executed" and s["seq"] in xsteps:
@@ -409,6 +418,35 @@ def _check_common(plan: dict, xplan: dict, manifest: dict, label: str):
             if xs["kind"] != "status_final" and (store.ROOT / op.progress_path(xplan, xs)).exists(): bad.append(f"X 未執行步驟的完成紀錄 {op.progress_path(xplan, xs)} 出現了")
     if not (store.ROOT / op.LOCK_PATH).exists(): bad.append("鎖檔不存在")
     if bad: raise EvidenceConflict(f"{label}停止，R 保持 in_progress：\n" + "\n".join(f"- {b}" for b in bad))
+
+def x_evidence_issues(rplan: dict, xplan: dict) -> list[str]:
+    """依 R 凍結的 x_progress 核對 X 已證實的證據（§13.5、§13.7）：done 的稽核物等於凍結值；proof=progress 的完成紀錄存在且相符；
+    content_tail 的完成紀錄不得被補寫；completed_status 存在且相符。"""
+    bad = []; xsteps = {s["seq"]: s for s in xplan["steps"]}
+    for row in rplan["x_progress"]["steps"]:
+        s = xsteps.get(row["seq"])
+        if s is None or row["status"] != "done": continue
+        if row["evidence"] and (row["kind"] in op.AUDIT_KINDS or row["kind"] == "status") and _sha(row["evidence"]["path"]) != row["evidence"]["sha256"]:
+            bad.append(f"X 的稽核證據 {row['evidence']['path']} 缺失或被改動")
+        if s["kind"] == "status_final": continue
+        pp = store.ROOT / op.progress_path(xplan, s)
+        if row["proof"] == "progress" and (not pp.is_file() or pp.read_bytes() != op.progress_bytes(xplan, s)):
+            bad.append(f"X 已證實的完成紀錄 {op.progress_path(xplan, s)} 缺失或被改動")
+        if row["proof"] == "content_tail" and pp.exists():
+            bad.append(f"X 合法尾端的完成紀錄 {op.progress_path(xplan, s)} 不應存在（R 不替 X 補寫）")
+    return bad
+
+def plan_evidence_issues(plan: dict) -> list[str]:
+    """已完成的計畫：每一步的輸出等於計畫值（刪除步驟則不存在）、每個非最終步驟的完成紀錄存在且位元組相符、completed 紀錄相符、登錄紀錄相符。"""
+    bad = []
+    try: op.verify_registration(plan["op_id"])
+    except OperationError as e: bad.append(str(e))
+    for s in plan["steps"]:
+        if _sha(s["path"]) != s["expected_after"]: bad.append(f"{plan['op_id'][:12]}… 的 {s['path']} 不等於計畫值")
+        if s["kind"] == "status_final": continue
+        pp = store.ROOT / op.progress_path(plan, s)
+        if not pp.is_file() or pp.read_bytes() != op.progress_bytes(plan, s): bad.append(f"{plan['op_id'][:12]}… 的完成紀錄 {op.progress_path(plan, s)} 缺失或不符")
+    return bad
 
 def _after(plan, s) -> bool:
     return _sha(s["path"]) == s["expected_after"] and (store.ROOT / op.progress_path(plan, s)).exists()
@@ -474,6 +512,8 @@ def execute_rollback(plan: dict):
 
 # ---------------------------------------------------------------- migrate verify（唯讀）
 def verify(rolled_back: bool = False) -> list[str]:
+    """唯讀（第 5 章 §12）。移轉後：X 的計畫逐步核對（含清單、backup、事件、完成紀錄、completed、登錄）與清單各類；
+    回復後：R 的計畫逐步核對、X 依凍結的 x_progress 核對、清單各類回到移轉前、X 恰好一個終態。"""
     issues = []
     if not rolled_back:
         mk = op.marker()
@@ -481,42 +521,36 @@ def verify(rolled_back: bool = False) -> list[str]:
         x = mk["migrate_op_id"]; xplan = op.load_plan(x)
         if xplan is None: return [f"移轉標記指向的 {x} 沒有計畫"]
         if op.plan_state(x) != "completed": issues.append(f"{x} 不是 completed（{op.plan_state(x)}）")
-        manifest = load_manifest(x)
+        issues += plan_evidence_issues(xplan)
+        manifest = planned_manifest(xplan)
+        if mk.get("manifest_sha256") != xplan.get("manifest_sha256") or _sha(manifest_path(x)) != xplan.get("manifest_sha256"): issues.append("移轉清單檔或標記中的 manifest_sha256 和計畫不符")
         for e in manifest["restore"]:
             if _sha(e["path"]) != e["planned_post_sha256"]: issues.append(f"restore {e['path']} 不等於移轉後的值")
-        for e in manifest["remove"]:
-            planned = e["planned_post_sha256"] or next(s["expected_after"] for s in xplan["steps"] if s["path"] == e["path"])
-            if _sha(e["path"]) != planned: issues.append(f"remove {e['path']} 不等於移轉後的值")
-        for a in manifest["planned_audit"] + manifest["retain_audit"]:
-            if a["kind"] == "index" or a["planned_sha256"] is None and a["kind"] in ("control", "progress"): continue
-            if _sha(a["path"]) != a["planned_sha256"]: issues.append(f"稽核物 {a['path']} 缺失或不符")
-        if mk.get("manifest_sha256") != xplan.get("manifest_sha256"): issues.append("移轉標記的 manifest_sha256 和計畫不符")
+            if _sha(e["backup_path"]) != e["backup_sha256"]: issues.append(f"backup {e['backup_path']} 缺失或不符")
     else:
         regs = op.registrations()
         rs = [o for o, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]) if reg["action"] == "migrate_rollback"]
         if not rs: return ["沒有 rollback 計畫"]
         r = rs[-1]; plan = op.load_plan(r); x = plan["takeover_of"]; xplan = op.load_plan(x); manifest = planned_manifest(xplan)
         if op.plan_state(r) != "completed": issues.append(f"rollback {r} 不是 completed（{op.plan_state(r)}）")
+        issues += plan_evidence_issues(plan)
         for e in manifest["restore"]:
             if _sha(e["path"]) != e["pre_sha256"]: issues.append(f"restore {e['path']} 不等於移轉前的值")
         for e in manifest["remove"]:
             if _sha(e["path"]) is not None: issues.append(f"remove {e['path']} 仍存在")
-        for s in plan["x_progress"]["steps"]:
-            if s["status"] == "done" and s["evidence"] and s["kind"] in op.AUDIT_KINDS | {"status"} and _sha(s["evidence"]["path"]) != s["evidence"]["sha256"]:
-                issues.append(f"證據衝突：X 的稽核證據 {s['evidence']['path']} 缺失或被改動")
+        issues += [f"證據衝突：{b}" for b in x_evidence_issues(plan, xplan)]
         xsteps = {s["seq"]: s for s in xplan["steps"]}
         for s in plan["x_progress"]["steps"]:
             xs = xsteps.get(s["seq"])
             if s["status"] == "not_executed" and xs is not None:
                 if xs["kind"] == "event" and (store.ROOT / xs["path"]).exists(): issues.append(f"證據衝突：X 未執行的事件 {xs['path']} 出現了")
                 if xs["kind"] == "status_final" and (store.ROOT / xs["path"]).exists(): issues.append(f"證據衝突：X 未完成卻有 {xs['path']}")
-        for s in plan["steps"]:
-            if not (store.ROOT / s["path"]).exists() and s["expected_after"] is not None: issues.append(f"R 的紀錄 {s['path']} 缺失")
+                if xs["kind"] != "status_final" and (store.ROOT / op.progress_path(xplan, xs)).exists(): issues.append(f"證據衝突：X 未執行步驟的完成紀錄 {op.progress_path(xplan, xs)} 出現了")
         terms = [t for t in ("rolled_back", "aborted_for_rollback") if (store.ROOT / op.status_path(x, t)).exists()]
         if len(terms) != 1: issues.append(f"X 的終態紀錄應恰好一個（目前 {terms}）")
         if op.marker() is not None: issues.append("移轉標記仍存在")
         if op.incomplete_plans(): issues.append(f"仍有未完成的計畫 {op.incomplete_plans()}")
-    for u in (manifest or {}).get("untouched", []):
+    for u in manifest.get("untouched", []):
         if _sha(u["path"]) != u["pre_sha256"]: issues.append(f"untouched {u['path']} 被改動")
     if not (store.ROOT / op.LOCK_PATH).exists(): issues.append("鎖檔不存在")
     return issues

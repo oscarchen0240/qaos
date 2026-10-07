@@ -192,12 +192,11 @@ def g_impact(run, task, arts) -> list[str]:
     to_pin, to_reqs = _pinned(run, p["spec_id"], p["to_version"])
     if to_pin is None: return issues + [to_reqs]
     if p["to_rm_revision"] != to_pin: issues.append(f"to_rm_revision 不是 run 綁定的 {to_pin['revision']}")
-    if run.get("from_requirement_model_revision"):
-        from_pin, from_reqs = _pinned(run, p["spec_id"], p["from_version"], end="from")
-        if from_pin is None: return issues + [from_reqs]
-        if p["from_rm_revision"] != from_pin: issues.append(f"from_rm_revision 不是 run 綁定的 {from_pin['revision']}")
-    else:
-        from_reqs = {}
+    from_pin, from_reqs = _pinned(run, p["spec_id"], p["from_version"], end="from")   # run 欄位 → run sidecar
+    if from_pin is None:
+        if rm.latest_pin(p["spec_id"], p["from_version"]) is not None: return issues + [from_reqs]   # from 端有需求模型，run 卻沒有綁定 → 錯誤
+        from_reqs = {}                                                                             # from 端本來就沒有需求模型
+    elif p["from_rm_revision"] != from_pin: issues.append(f"from_rm_revision 不是 run 綁定的 {from_pin['revision']}")
     judged = {d["requirement_id"] for d in p["requirement_diff"]}
     for rid in set(from_reqs) | set(to_reqs):
         if rid not in judged: issues.append(f"requirement {rid} 未出現在 requirement_diff")

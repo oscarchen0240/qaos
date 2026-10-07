@@ -1,13 +1,12 @@
 """ApprovalRequest → 人可讀 Markdown（approvals/<id>.md）。"""
 from . import store, operation
 
-@operation.operation("approval_render")
 def _run_pin(a: dict):
-    """核准單所屬 run 綁定的 revision（需求 A 第 5 章 §4.1）；run 沒有綁定（例如尚未移轉的 legacy run）時為 None，顯示改用最新 revision。"""
+    """核准單所屬 run 綁定的 revision（需求 A 第 5 章 §4.1；唯讀）。只有移轉前的 legacy run 可回傳 None（顯示改用最新 revision）；移轉後缺 pin → 錯誤。"""
     from . import rm
-    try: return rm.run_pin(store.load(f"runs/{a['run_id']}/run.yaml"))
-    except (rm.RMError, FileNotFoundError): return None
+    return rm.run_pin_for_display(store.load(f"runs/{a['run_id']}/run.yaml"))
 
+@operation.operation("approval_render")
 def render(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml"); lines = [f"# {apr_id} · {a['type']}", "", f"- Run：{a['run_id']}  · 狀態：{a['status']}  · 提出：{a['requested_at'][:10]}", f"- **{a['summary']}**", ""]
     if a["type"] in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and a.get("batch_items"):
