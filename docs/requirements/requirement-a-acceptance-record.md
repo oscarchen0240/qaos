@@ -371,3 +371,100 @@
 **移到 P6（2026-10-07 Oscar 決定）**：
 - 自審 F1：G-BVAL／G-TVAL 不檢查 Validator 報告審查的 Draft 是否為產生者本輪產出；agent 送審舊稿時 `_final_draft` 為 None（fail-closed，不會讓舊稿成為落地證據，但正式 Bug／TC 與落地判定所看的 Draft 不一致）。P6 在 gate 加檢查並補正式流程測試。
 - 自審 F5：spec-to-bug 的 Bug 被 REJECTED（CONFIRM_DUPLICATE、RESOLVE_AMBIGUITY reject）但 run COMPLETED 時，最終 BugDraft 仍可作為 a6 的 landed-in。決定：排除，這類情況改走 a6b 或其他 run；P6 補附錄 A 定案、程式與測試。
+
+## P6：整合驗收
+
+- **執行 commit**：`b1983279d6c55f2077d29edf0aaadcd4720388de`（分支 `qaos/requirement-a`；階段基準 `1e1ca11`；`7abf703` 併入 `origin/main` `f5188b0`，含 MR !7 與 2026-10-02～05 的業務資料 commit）。本紀錄所在的 commit 只改文件
+- **環境**：同 P1
+- **資料**：測試 root 一律以正式流程建立（legacy 資料由 base `2e01d4b` 的舊程式以自己的正式流程產生）；故障以 `QAOS_FAULT` 注入、同步以 `QAOS_PAUSE`。AC-A-B1-4 的預演用 `tests/p6_rehearsal.py`，資料來源是 `git archive 7ef07ee`（tree `cb9e6258`，4617 檔，唯讀，執行前後逐檔 shasum 相同），**不是正式 M1**（M1 用部署當天主資料夾的資料、含第二份工作複本的故障演練，需 Oscar 授權）
+- **結果**：見本段最後「執行結果」
+- **突變檢查**：在 scratchpad 的複本上逐一套用、跑對應測試——F1、F5 共 2 組，G1 15 組（14 組抓到；未抓到的「拿掉已有標記就拒絕 migrate」另有准入的兩道防護，屬多重防護），G2 24 組、G3 10 組、G4 16 組全部抓到
+
+### P6 的修正
+
+| 編號 | 問題 | 修正 | 測試 |
+|---|---|---|---|
+| F1（附錄 A 6-36） | G-TVAL／G-BVAL 不核對 Validator 報告審查的 Draft 是否為產生者本輪產出；語意 FAIL 退回不清空產生者的 `output_artifact_ids`（舊稿改 SUPERSEDED 留在清單），submit 的引用檢查只看 `references`，payload 指向舊稿的報告可以通過 | `gates.reviewed_draft_issues`：必須在產生者本輪 `output_artifact_ids` 中、型別相符、VALID；否則 Structural FAIL | `test_p6_f1_f5.py::test_f1_*`（TC：references 指新稿、payload 審舊稿；Bug：OPEN_BUG reject 後舊稿仍 VALID；函式層：非 Draft、沒有產生者） |
+| F5（附錄 A 6-37） | Bug 已 REJECTED 的 spec-to-bug run 仍可作為 a6 的 landed-in | `clr_lifecycle.bug_rejected`；最終 BugDraft 為 None；a6 明確拒絕並提示 a6b | `test_f5_*`（CONFIRM_DUPLICATE、RESOLVE_AMBIGUITY reject；對照組 Bug 成立的 run → APPLIED） |
+| P6-S00-01 | spec-change-impact 判定 NO_IMPACT 時，`_advance` 對已標 DONE 的 T2 做 DONE → READY 而崩潰（base 就有；需求 A 的同版本 CIA 最常走到） | NO_IMPACT 分支從最後一個略過的 task 之後推進 | `test_p6_cia_manual_flows.py::test_p6_g3_same_version_cia_no_impact_completes` |
+| P6-S00-02 | T5 證據衝突報告沒有列出步驟，每列印「記錄值 None，目前值 None」 | `migrate._report` 列出步驟與 seq；沒有記錄值時不印 | `test_p6_migrate_residual.py::test_ac_09_73_t5_report_names_the_step` |
+| P6-S00-03（附錄 A 5-15） | AC-09-85 ⑤「不執行檢查 A」與 §13.7 續做表矛盾 | AC 依續做表更正 | `test_ac_09_85_terminal_phase[partial_after_check_b-*]` |
+| P6-S00-05 | AC-08-10 原本只有函式層與派發包快照的證據 | 補正式流程測試 | `test_p6_s00_fixes.py::test_ac_08_10_*` |
+| P6-S00-06 | `test_ac_09_73_74_t5_refuses_with_report` 有永遠成立的替代斷言 | 改為斷言「步驟 <step_id>」 | 同左 |
+| P6-S00-07 | F5 的拒絕訊息對 CONFIRM_DUPLICATE 的 run 也提示 a6b（a6b 對它必拒） | 依 `duplicate_of` 分兩種提示；`resolve_targets` 也略過 REJECTED 的 run（防禦性，正式入口由 a6 的拒絕先擋下） | `test_f5_*` |
+| merge | MR !7 的獨立 root 測試在需求 A 下是 `S_pre`，spec import 被拒 | 子程序內先走 maintenance start → migrate → maintenance end | `test_wf_zzzz_bug_override.py` |
+
+### 前面階段「部分」「待」項目的結清
+
+| AC | P6 測試（tests/…） | 結果 |
+|---|---|---|
+| AC-07-9e～9j、9x、9y、9aa、9ab | `test_p6_resume_matrix.py::test_9e_to_9j_*`、`test_9h_*`、`test_apply_a6_every_point`、`test_apply_a6b_every_point`、`test_9y_*`、`test_9aa_*`、`test_9ab_*` | 通過 |
+| AC-07-10、1～7、11、101～104 | P5 已通過（見 P5 段） | 通過 |
+| AC-07-13～18（op-P1／P2、op-N1～N6） | `test_op_p1_p2_*`、`test_op_n1_n2_*`、`test_op_n3_n4_n5_apply`、`test_op_n6_*` | 通過 |
+| AC-07-22～29（每種操作 × 兩種入口 × 每個中止點） | `test_p6_resume_matrix.py`（submit_gate 含 A4、approve 含 A9、impact、apply a6／a6b／a7、fulfill、waive-item、spec 與 clarification 的 metadata upgrade、applicability_add、migrate FP-M0～M6）；其餘見 P1、P3 | 通過 |
+| AC-07-44 | `test_p6_clr_residual.py::test_ac_07_44_*`、`test_p6_migrate_residual.py::test_ac_09_50_*`（逐位元比對 render） | 通過 |
+| AC-07-80、82、83 | `test_p6_migrate_residual.py::test_ac_07_80_82_*`；83 已由 `test_p3_migrate.py::test_rollback_abort_points_then_resume` 涵蓋 | 通過 |
+| AC-07-90～93 | `test_p6_resume_matrix.py::test_migrate_x_abort_points_then_resume`、`test_ac_07_92_*`、`test_ac_07_93_*` | 通過 |
+| AC-08-4、16、32 | 快照預演：CLR-CASHFLOW-005 rev 0 的 SourceRef 驗證通過、X16 依 6-35 FAIL（函式層）；CLR-DAILYREPORT-010 rev 0 的 basis | 部分；完整驗證需 DAILYREPORT 0.3（M1）。AC-08-16 寫 REQ-DAILYREPORT-012，資料中為 011，待 Oscar 確認 |
+| AC-08-10 | `test_p6_s00_fixes.py::test_ac_08_10_old_run_keeps_pinned_answer_rev_after_new_answer`（revision 以 rev 0 為 resolution → PM 再回答追加 rev 1 → 舊 run 以釘選的 rev 0 設計、驗證、ACTIVATE → COMPLETED；改引用 rev 1 → G-DESIGN FAIL） | 通過 |
+| AC-09-27 | 快照預演：RUN-20261002-001 續做的派發包仍帶 sidecar 的 R000（AC-09-3／20） | 通過（manual 與 RR 的真實組合待 M1） |
+| AC-09-3、20 | 快照預演（work1） | 通過；AC-09-20 的 WAITING_HUMAN testcase-revision run 快照中不存在，待 M1 |
+| AC-09-11 | 快照預演：SITELIST 0.6 不跳過；DAILYREPORT 0.2 跳過並 WARN_LEGACY_SKIP | 通過 |
+| AC-09-14 | `test_p6_migrate_residual.py::test_ac_09_14_*` | 通過 |
+| AC-09-15 | `test_p6_cia_manual_flows.py::test_ac_09_15_*`（PLATFORMRULE 形狀的測試 spec） | 通過（真實 PLATFORMRULE 0.2 未驗） |
+| AC-09-17、32 | `test_ac_09_17_32_cancel_run_with_several_pending_approvals`（第二張 PENDING 以故障注入建立）；快照預演：RUN-20261002-001 cancel、新 0.4→0.7 run 不綁 0.6 | 通過 |
+| AC-09-18、19 | P5 RA 流程（`test_p5_lifecycle.py`） | 通過 |
+| AC-09-24、66、67 | 快照預演：新 regression-generation run 不綁 revision（24） | 部分；快照沒有既有 regression-generation run、沒有缺 audit.log 的 run 與缺 render 的 CLR，待 M1 |
+| AC-09-28～31、AC-A-B1-7 | `test_ac_09_28_29_30_two_rounds_*`（含 legacy R000 混合、G2＋G5、G4 反例）；快照預演：DAILYREPORT 96 條分 0.1／0.2 各 48 → PASS、只判一組 → G2、G5 FAIL（函式層 g_impact） | 通過（真實 0.3 的正式 CIA 待 M1） |
+| AC-09-45、47、48、50 | `test_p6_migrate_residual.py::test_ac_09_45_*`、`_47_*`、`_48_*`、`_50_*` | 通過 |
+| AC-09-58、79、81 | `test_ac_09_81_58_*`、`test_ac_09_79_*` | 通過 |
+| AC-09-73、74、76 | `test_ac_09_73_74_*`、`test_ac_09_73_t5_report_names_the_step`、`test_ac_09_74_3_*`、`test_ac_09_76_*` | 通過 |
+| AC-09-82 ④ | `test_ac_09_82_4_*` | 通過 |
+| AC-09-83、84、85 | `test_ac_09_83_*`、`test_ac_09_84_*`、`test_ac_09_85_*`（84 ⑥ 為函式層，屬防禦性） | 通過 |
+| migrate verify（§12） | `test_verify_after_migrate_each_category`、`test_verify_after_rollback_each_category`、`test_verify_after_partial_rollback_*` | 通過 |
+| AC-09-89 (b) | `test_ac_09_89_b_*` | 通過 |
+| AC-09-64 | — | 待 M1（以舊程式驗證 R5） |
+| AC-10A-14、47 | `test_p6_clr_residual.py::test_ac_10a_14_47_same_product_cross_area` | 通過 |
+| AC-10A-15 | `test_ac_10a_15_confirmed_second_target_stale_tc` | 通過 |
+| AC-10A-28 | `test_ac_10a_28_candidate_revised_after_scan` | 通過 |
+| AC-10A-39 | `test_ac_10a_39_superseded_version_counts_as_history`（正式流程中 SUPERSEDED 版本無法成為唯一引用處，以拒絕訊息列出 SUPERSEDED 版本並以突變驗證） | 通過 |
+| 附錄 A 6-31（manual 的完整 apply）、AC-A-B1-8 | `test_p6_cia_manual_flows.py::test_ac_a_b1_8_manual_full_flow_then_a6_landed_in` | 通過 |
+| 附錄 A 1-39（CIA compare 重做） | `test_appendix_a_1_39_cia_compare_redo_iterations_and_packets` | 通過 |
+| 附錄 A 6-35（現存舊格式 CLR） | 快照預演：現存 ANSWERED 的舊格式 CLR 為 0 張；之後回答時會遇到的 OPEN／ASKED 舊格式單 10 張（CLR-CASHFLOW-001、002、007，CLR-DAILYREPORT-011、014，CLR-SITELIST-013～017） | 通過（M1 依當天資料重列） |
+
+### 第一批整體驗收 AC-A-B1-1～17
+
+| AC | 測試 | 結果 |
+|---|---|---|
+| 1 | `test_p5_lifecycle.py::test_ra_end_to_end_*`、`test_p6_clr_residual.py::test_ac_a_b1_1_every_stop_asserts_clr_state` | 通過 |
+| 2 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_*` | 通過 |
+| 3 | `test_p6_resume_matrix.py`（矩陣）＋ P1、P3、P5 的恢復測試 | 通過 |
+| 4 | `tests/p6_rehearsal.py`（三種處理方式各一份工作複本）：R000 hash、`_skip`（SITELIST 0.6 false）、RUN-20261002-001 sidecar、RUN-20260914-001 三種處理方式、TC sidecar 96／44／57、CLR rev 0（42 張）、`audit.legacy.log`（92 份）、untouched 全部吻合；rollback、`--new-request` 重新移轉、verify 都通過 | **部分**：「全部 schema PASS」照字面不成立——嚴格驗證 4271 檔有 14 檔失敗，全部是移轉前既有的資料（11 檔連舊程式的 schema 也不通過；TXLOG 0.1 的 R000 是原檔複本；2 個歷史 CIR 因新 schema 新增必填的 `from_rm_revision`、`to_rm_revision`、`pin_groups` 而失敗）；移轉新增或修改的檔案全部通過。待 Oscar 決定 AC 的寫法或 CIR schema 是否接受 legacy 形狀 |
+| 5 | 本段「執行結果」（610 passed、validate_phase1 ALL CHECKS PASSED） | 通過 |
+| 6 | `test_ac_a_b1_6_s1_q_to_s3_first_batch_commands_only` | 通過 |
+| 7 | 見 AC-09-28～31 列 | 通過 |
+| 8 | 見附錄 A 6-31 列 | 通過 |
+| 9 | `test_p2_sources.py::test_ac_08_27_28_*`、`test_ac_08_30_*`、`test_p6_clr_residual.py::test_ac_a_b1_9_effective_basis_in_formal_flow` | 通過（AC-08-32 真實資料見上） |
+| 10 | `test_p1_audit.py` 各案例、AC-07-44 列 | 通過 |
+| 11 | `test_p1_lock_fork.py`、`validate_phase1` [4] | 通過 |
+| 12 | AC-10A-1～69（P5 段＋本段）、`test_ac_10a_36_ra_p7_background_candidates` | 通過 |
+| 13 | `test_ac_a_b1_13_approval_table_activate[1,2,3,4a,4b]`、`test_ac_a_b1_13_row3_apply_change` | 通過 |
+| 14 | `test_p1_lock_fork.py::test_64_70_72_*`、`test_p1_misc.py::test_75_*`、`test_76_*` | 通過 |
+| 15 | AC-10A-33～35 | 通過 |
+| 16 | `test_ra_end_to_end_*`、`test_a6b_bug_reject_path`、`test_a7_paths`、`test_ac_10a_36_*` | 通過 |
+| 17 | `test_p5_cross_product.py::test_r1102_cross_product` | 通過 |
+
+### 仍需正式 M1 或 Oscar 決定的項目
+
+- **M1**：部署當天重新讀取主資料夾的業務現況（含 9/18 未追蹤的 run、執行紀錄與證據）後重做預演；第二份工作複本的故障演練（FP-M2、M3、R0、W、P1）；AC-09-20、24、64、66、67；AC-08-16、32 的完整驗證（需 DAILYREPORT 0.3）；真實 PLATFORMRULE 0.2 與 DAILYREPORT 0.3 的正式 CIA；依附錄 A 5-10 以當天真實 ID 驗收
+- **Oscar 決定**：AC-A-B1-4 的 schema 條件；ARCADE 0.7 有 1 條 RETIRED 需求，依「最新 revision 有非 ACTIVE 需求」規則，移轉後 9 條 ACTIVE TC 不能直接 testcase-revision（符合字面，原意可能只指 DRAFT）；AC-08-16 的需求 ID
+- **觀察**（不是本階段缺陷，列給審查參考）：G7 不檢查 `requirement_diff` 的 change 標記是否正確；G-COMPARE 不檢查 `new_draft_id` 是否為本輪 Draft、是否每張 affected TC 都有比對（與 6-36 同類）
+
+### 執行結果
+
+2026-10-08，於 `b198327` 以 `git archive` 匯出的乾淨目錄執行：
+
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q tests`：**610 passed**（17:29）。P5 收斂時 461 → merge MR !7 後 462 → P6 新增 148
+- `python3 tools/validate_phase1.py`：**ALL CHECKS PASSED**（含 [4] fork 使用為零）
+- 中途紀錄：`e761727`（merge 後）462 passed、`7ef07ee`（F1、F5 後）467 passed、`7279e29`（收尾測試後）609 passed，validate 都通過
+- 自審（S00，模型 fable）：`review-handoff/clr-spec-investigation/requirement-a-p6-self-review-00.md`（交接區，不進 MR），P6-S00-04～07 已修正
