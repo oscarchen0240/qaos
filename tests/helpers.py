@@ -8,11 +8,38 @@ def raw_save(path, obj):
     p = store.ROOT / store.rel(path); p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=120), encoding="utf-8"); return p
 
-def write_artifact(run_id, task_id, agent, artifact_type, payload, references, source, subdir, iteration=0, requires_approval=None):
+def packet_sha(run_id, task_id, auto=True):
+    """task 本次 iteration 的派發包 sha256。auto=True 且還沒派發時，以正式指令 dispatch 產生（模擬 orchestrator 在派工前執行 qaos dispatch）；
+    task 不存在、不需要派發包或狀態不允許時回傳 None（讓刻意送錯的反例照原本的方式失敗）。"""
+    from tools.qaos import engine, dispatch
+    try: run = engine.load_run(run_id); task = engine._task(run, task_id)
+    except (FileNotFoundError, StopIteration): return None
+    if not dispatch.needs_packet(task): return None
+    e = dispatch.current_entry(task)
+    if e is None and auto and task["status"] in ("READY", "RUNNING") and run["status"] == "RUNNING":
+        try: e = dispatch.dispatch(run_id, task_id)
+        except dispatch.DispatchError: return None
+    return e["sha256"] if e else None
+
+def consulted_all(run_id, task_id, sha):
+    """模擬 Spec Analyst 讀完目標與派發包（sha 指定的那一份）中的全部必讀參考（read_scope: full）。"""
+    from tools.qaos import engine, dispatch
+    e = next((x for x in engine._task(engine.load_run(run_id), task_id).get("dispatch_packets") or [] if x["sha256"] == sha), None)
+    if e is None: return []
+    pk = dispatch.load_packet(e)
+    pins = [pk["target"]] + [n for n in pk["closure"] if n["required"]]
+    return [{"spec_id": p["spec_id"], "spec_version": p["spec_version"], "content_hash": p["content_hash"], "read_scope": "full"} for p in pins]
+
+def write_artifact(run_id, task_id, agent, artifact_type, payload, references, source, subdir, iteration=0, requires_approval=None, packet="auto"):
+    """packet：'auto' 自動派發並填入本次 iteration 的派發包 sha；None 不填；字串則直接填入（反例用）。"""
     aid = ids.artifact_id(artifact_type)
     art = {"artifact_id": aid, "artifact_type": artifact_type, "schema_version": "1.0", "version": 1, "run_id": run_id, "task_id": task_id,
            "iteration": iteration, "created_by": agent, "created_at": store.now(), "status": "DRAFT",
            "source": source, "references": references, "requires_approval": requires_approval, "payload": payload}
+    sha = packet_sha(run_id, task_id) if packet == "auto" else packet
+    if sha: art["dispatch_packet_sha256"] = sha
+    if artifact_type == "SpecAnalysis" and "consulted_sources" not in payload and sha:
+        payload["consulted_sources"] = consulted_all(run_id, task_id, sha)
     p = store.ROOT / "artifacts" / subdir / run_id / f"{aid}.yaml"
     raw_save(p, art); return aid, p
 

@@ -128,6 +128,10 @@ print(json.dumps(g["result"]))"""
     assert U.py(root, code).stdout.strip().splitlines()[-1] == '"PASS"'
     newest = max(pathlib.Path(root).glob("testcases/versions/*/v1.yaml"), key=lambda p: p.parent.name)
     assert yaml.safe_load(newest.read_text())["requirement_model_revision"]["revision"] == "R000"
+    run = U.load(root, f"runs/{rid}/run.yaml")                                                                       # AC-09-27（部分）：舊 run 移轉後的派發包
+    for tid in ("T2", "T3"):                                                                                           # （Designer、Validator）都使用 sidecar 的 R000
+        e = next(t for t in run["tasks"] if t["task_id"] == tid)["dispatch_packets"][-1]
+        assert U.load(root, e["path"])["rm_pins"]["target"]["revision"] == "R000"
 
 # ---------------------------------------------------------------- rollback：完整回復（AC-09-55、56、68）
 @pytest.mark.parametrize("cancel", [False, True])

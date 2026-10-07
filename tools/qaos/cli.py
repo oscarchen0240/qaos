@@ -4,7 +4,7 @@
 要刻意再執行一次相同內容的請求請加 --new-request。唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，
 也不保證跨檔一致的快照。"""
 import argparse, json, sys, pathlib
-from . import store, schema, ids, engine, trace, operation, spec_ops, rm, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
+from . import store, schema, ids, engine, trace, operation, spec_ops, rm, dispatch, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
 from .engine import EngineError
 from .state import TransitionError
 
@@ -89,6 +89,12 @@ def cmd_submit(a):
     if ok: print("VALID"); return
     print("INVALID"); [print(" -", p) for p in problems]; sys.exit(1)
 
+def cmd_dispatch(a):
+    extras, reasons = a.extra or [], a.reason or []
+    if len(reasons) != len(extras): raise ValueError(f"每個 --extra 都要附一個 --reason（--extra {len(extras)} 個、--reason {len(reasons)} 個）")
+    e = dispatch.dispatch(a.run_id, a.task_id, [{"ref": x, "reason": r} for x, r in zip(extras, reasons)], a.by, **_nr(a))
+    print(f"{e['path']} sha256={e['sha256']}")
+
 def cmd_gate(a):
     r = engine.evaluate_gate(a.run_id, a.task_id, **_nr(a))
     print(f"{r['gate']} {r['layer']} {r['result']}")
@@ -99,7 +105,9 @@ def cmd_gate(a):
 def cmd_approve(a):
     per = [{"id": x.split(":")[0], "decision": x.split(":")[1]} for x in (a.per_item or [])] or None
     adj = json.loads(a.adjustments) if a.adjustments else None
-    apr = engine.approve(a.approval_id, a.decision, a.by, a.rationale or "", a.option, adj, per, **_nr(a))
+    res = [_json_arg(x, "--resolution") for x in (a.resolution or [])]
+    if a.resolutions_file: res += json.loads(pathlib.Path(a.resolutions_file).read_text(encoding="utf-8"))
+    apr = engine.approve(a.approval_id, a.decision, a.by, a.rationale or "", a.option, adj, per, resolutions=res or None, **_nr(a))
     run = engine.load_run(apr["run_id"]); print(f"{apr['approval_id']} {apr['type']} → {a.decision}; run={run['status']} current_task={run.get('current_task_id')}")
 
 def cmd_approval_show(a):
@@ -224,8 +232,13 @@ def main(argv=None):
     p = rs.add_parser("cancel", parents=[W]); p.add_argument("run_id"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_run_cancel)
     p = sp.add_parser("submit", parents=[W]); p.add_argument("run_id"); p.add_argument("task_id"); p.add_argument("artifact"); p.set_defaults(f=cmd_submit)
     p = sp.add_parser("gate", parents=[W]); p.add_argument("run_id"); p.add_argument("task_id"); p.set_defaults(f=cmd_gate)
+    p = sp.add_parser("dispatch", parents=[W], help="產生 task 本次 iteration 的派發包（同一 iteration 只能一次）"); p.add_argument("run_id"); p.add_argument("task_id")
+    p.add_argument("--extra", action="append", metavar="PATH|SPEC_ID@VER", help="額外來源，可重複；每個都要附 --reason"); p.add_argument("--reason", action="append")
+    p.add_argument("--by", default="system"); p.set_defaults(f=cmd_dispatch)
     p = sp.add_parser("approve", parents=[W]); p.add_argument("approval_id"); p.add_argument("--decision", required=True, choices=["approve", "reject", "override"]); p.add_argument("--by", required=True)
-    p.add_argument("--rationale"); p.add_argument("--option"); p.add_argument("--adjustments", help='JSON，如 {"severity":"critical"}'); p.add_argument("--per-item", action="append", metavar="ID:decision"); p.set_defaults(f=cmd_approve)
+    p.add_argument("--rationale"); p.add_argument("--option"); p.add_argument("--adjustments", help='JSON，如 {"severity":"critical"}'); p.add_argument("--per-item", action="append", metavar="ID:decision")
+    p.add_argument("--resolution", action="append", metavar="JSON", help="RESOLVE_AMBIGUITY 的決議條目 {requirement_id, question_id, outcome, source?, rationale, waived?}，可重複")
+    p.add_argument("--resolutions-file", help="決議條目的 JSON 陣列檔"); p.set_defaults(f=cmd_approve)
     p = sp.add_parser("approvals"); p.add_argument("--all", action="store_true"); p.set_defaults(f=cmd_approvals)
     p = sp.add_parser("approval", parents=[W]); p.add_argument("approval_id"); p.set_defaults(f=cmd_approval_show)
     p = sp.add_parser("tc-export", parents=[W]); p.add_argument("area"); p.add_argument("--stdout", action="store_true", help="唯讀：輸出到 stdout，不寫檔、不取鎖"); p.set_defaults(f=cmd_tc_export)

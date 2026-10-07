@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/workflow/dispatch-packet.schema.json",
+  "title": "DispatchPacket",
+  "description": "runtime 為某個 run 的某個 task 的某次 iteration 產生的不可變輸入包（需求 A 第 1 章 §2.2、§2.3）",
+  "type": "object",
+  "required": ["packet_version", "run_id", "task_id", "iteration", "agent_id", "workflow_id", "created_at", "target", "target_decl_rev", "closure", "basis_hash",
+               "rm_pins", "resolutions", "run_decisions", "open_questions", "decision_sources", "extra_inputs"],
+  "properties": {
+    "packet_version": {"const": 1},
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "task_id": {"$ref": "../common/defs.schema.json#/$defs/TaskId"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "agent_id": {"$ref": "../common/defs.schema.json#/$defs/AgentId"},
+    "workflow_id": {"type": "string"},
+    "created_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "target": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/SpecPin"}]},
+    "target_decl_rev": {"oneOf": [{"type": "null"}, {"type": "integer", "minimum": 0}]},
+    "references_status": {"type": "string", "enum": ["undeclared", "declared_empty", "declared"]},
+    "closure": {"type": "array", "items": {"type": "object", "required": ["spec_id", "spec_version", "content_hash", "decl_rev", "role", "depth", "required"],
+      "properties": {"spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"}, "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+                     "content_hash": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "decl_rev": {"type": "integer", "minimum": 0},
+                     "role": {"$ref": "../common/defs.schema.json#/$defs/ReferenceRole"}, "depth": {"type": "integer", "minimum": 1},
+                     "required": {"type": "boolean", "description": "depth=1 的 normative 參考為必讀"}}, "additionalProperties": false}},
+    "basis_hash": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/Sha256"}]},
+    "rm_pins": {"type": "object", "required": ["target", "from", "pin_groups"], "properties": {
+      "target": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/RMPin"}]},
+      "from": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/RMPin"}]},
+      "pin_groups": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/RMPin"}}}, "additionalProperties": false},
+    "resolutions": {"type": "array", "description": "同 area 與直接參考所屬 area 中 ANSWERED、INCORPORATED、APPLIED 的 CLR（最新答案修訂）",
+      "items": {"type": "object", "required": ["clarification_id", "status", "answer_rev", "answer_sha256", "answer", "basis_hash", "scope", "applicability"]}},
+    "run_decisions": {"type": "array", "items": {"type": "object", "required": ["approval_id", "decision", "decision_sha256", "resolutions"]}},
+    "open_questions": {"type": "array", "items": {"type": "object", "required": ["clarification_id", "status", "question"]}},
+    "decision_sources": {"type": "array", "description": "綁定 revision 中決策點已使用的 SourceRef 身分（basis_ref）", "items": {"type": "object", "required": ["type"]}},
+    "extra_inputs": {"type": "array", "items": {"type": "object", "required": ["kind", "ref", "sha256", "reason"], "properties": {
+      "kind": {"type": "string", "enum": ["path", "spec_pin"]}, "ref": {"type": "string"}, "pin": {"$ref": "../common/defs.schema.json#/$defs/SpecPin"},
+      "sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "reason": {"type": "string", "minLength": 1}}, "additionalProperties": false}}
+  },
+  "additionalProperties": false
+}

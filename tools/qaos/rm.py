@@ -148,9 +148,13 @@ def find_requirement_latest(req_id: str):
 
 # ---------------------------------------------------------------- 過時判定（§6；衍生查詢，不寫入）
 def _clarification_refs(obj):
-    """revision 內容中所有 clarification 型 SourceRef（決策點的依據、resolution 等）。"""
+    """revision 內容中所有 clarification 型 SourceRef（決策點的依據、resolution 等）；approval 型包裝展開為條目內部的 clarification 來源。"""
     if isinstance(obj, dict):
         if obj.get("type") == "clarification" and "clarification_id" in obj and "answer_rev" in obj: yield obj
+        if obj.get("type") == "approval" and "approval_id" in obj and type(obj.get("resolution_index")) is int:
+            p = f"approvals/{obj['approval_id']}.yaml"
+            res = ((store.load(p).get("decision") or {}).get("resolutions") or []) if store.exists(p) else []
+            if obj["resolution_index"] < len(res): yield from _clarification_refs(res[obj["resolution_index"]].get("source"))
         for v in obj.values(): yield from _clarification_refs(v)
     elif isinstance(obj, list):
         for v in obj: yield from _clarification_refs(v)

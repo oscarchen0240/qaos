@@ -69,7 +69,7 @@ def _check_decision_fields(c: dict):
             errs, _ = sources.validate(r, target=target, at=at)
             if errs: raise ClarificationError(f"{field}[{i}] 驗證失敗：{'; '.join(errs)}")
     cov = c.get("coverage") or {}
-    for p in cov.get("consulted", []) + cov.get("unconsulted_normative", []):
+    for p in cov.get("consulted", []) + [u["pin"] for u in cov.get("unconsulted_normative", [])]:
         spec_ops.verify_pin(p["spec_id"], p["spec_version"], p["content_hash"])
     if c.get("kind") == "document_request":
         ms = cov.get("missing_sources") or []
@@ -81,13 +81,14 @@ def _check_decision_fields(c: dict):
 
 @operation.operation("clarification_new")
 def new(product, area, spec_id, spec_version, question, by, context="", options=None, requirement_id=None, spec_reference=None, run_id=None, approval_id=None, impact=None,
-        **decision) -> dict:
+        related=None, **decision) -> dict:
     """建立 CLR。decision 為決策點欄位（DECISION_FIELDS，入口 A、B、D 提供）；給了就驗證，舊呼叫端不受影響。"""
     unknown = set(decision) - set(DECISION_FIELDS)
     if unknown: raise ClarificationError(f"不認得的欄位：{sorted(unknown)}")
     c = {"clarification_id": ids.alloc("CLR", area), "product": product, "functional_area": area, "spec_id": spec_id, "spec_version": spec_version,
          "question": question, "context": context, "options": options or [], "raised_by": by, "raised_at": store.now(), "status": None, "history": []}
-    for k, v in {"requirement_id": requirement_id, "spec_reference": spec_reference, "run_id": run_id, "approval_id": approval_id, "impact_if_unanswered": impact}.items():
+    for k, v in {"requirement_id": requirement_id, "spec_reference": spec_reference, "run_id": run_id, "approval_id": approval_id, "impact_if_unanswered": impact,
+                 "related_clarifications": related}.items():
         if v: c[k] = v
     c.update({k: v for k, v in decision.items() if v is not None})
     if any(k in c for k in DECISION_FIELDS): _check_decision_fields(c)
@@ -174,6 +175,28 @@ def apply_(clr_id, by, note="", impact_reviewed=None, keywords=None):
     full = f"{note + '；' if note else ''}impact-scan[{len(cands)}]: {scan}；reviewed: {impact_reviewed}"
     state.apply("clarification", c, "APPLIED", by, "applied", c.get("run_id"), note=full); save(c)
     store.audit(c.get("run_id"), by, "APPLY_CLARIFICATION", f"{clr_id} impact-scan {len(cands)} candidates")
+    return c
+
+def valid_fulfillment(c: dict, item: dict) -> bool:
+    """項目最新一筆 fulfillment 的重新驗證（第 6 章 §6.6）。fulfill 指令在 P5；P4 沒有任何 fulfillment，一律不成立。"""
+    return False
+
+def document_final_judgment(c: dict, by: str, note: str, waived_by_approval: bool):
+    """文件索取單的最後判定（第 6 章 §6.6、§6.7）。A9：核准的 waive_missing 涵蓋全部項目、而且沒有任何有效 fulfillment → WITHDRAWN。
+    A8（全部項目都是有效 fulfillment 或 waived → APPLIED）依賴 fulfill／waive-item，在 P5。其他情況不轉換。"""
+    items = c.get("document_items") or []
+    if waived_by_approval and items and all(it["status"] == "waived" for it in items) and not any(valid_fulfillment(c, it) for it in items):
+        state.apply("clarification", c, "WITHDRAWN", "system", "A9 waive_missing", note=note)
+
+def waive_items_by_approval(clr_id, item_ids, approval_id, by):
+    """核准操作套用 waive_missing：列出的項目標為 waived，再做最後判定。由 approve 呼叫（已在操作中）。"""
+    c = load(clr_id); hit = False
+    for it in c.get("document_items") or []:
+        if it["item_id"] in item_ids and it["status"] != "waived": it["status"] = "waived"; hit = True
+    if not hit and not item_ids: return c
+    c["history"].append({"at": store.now(), "from_status": c["status"], "to_status": c["status"], "by": by, "trigger": f"waive_missing {approval_id}", "note": f"豁免項目 {sorted(item_ids)}"})
+    document_final_judgment(c, by, f"{approval_id} 的 waive_missing 涵蓋全部項目", waived_by_approval=True)
+    save(c); store.audit(c.get("run_id"), by, "WAIVE_DOCUMENT_ITEMS", f"{clr_id} {sorted(item_ids)} by {approval_id} → {c['status']}")
     return c
 
 @operation.operation("clarification_withdraw")

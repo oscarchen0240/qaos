@@ -1,7 +1,7 @@
 """Workflow 引擎：Run 建立、Artifact 提交（Permission Guard + Structural Gate）、Gate 評估與效果、Approval、Commit。
 Agent 永遠不呼叫這裡的 commit；只有 approve() 在 Human 決定後觸發。"""
 import pathlib
-from . import store, schema, ids, state, refs, gates, operation, rm, clarification as clr
+from . import store, schema, ids, state, refs, gates, operation, rm, dispatch, decisions, sources, clarification as clr
 from .state import TransitionError
 
 SYSTEM = "system"
@@ -268,6 +268,21 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     if art["run_id"] != run_id or art["task_id"] != task_id: problems.append("artifact 的 run_id/task_id 與提交目標不符")
     if p.stem != art["artifact_id"]: problems.append(f"檔名 {p.name} 必須等於 artifact_id")
     if art["status"] not in ("DRAFT", "SUBMITTED"): problems.append(f"artifact 狀態 {art['status']} 不可提交")
+    # 派發包（第 1 章 §2.2、附錄 A 1-6）：產出必須指向 task 本次 iteration 的派發包
+    if dispatch.needs_packet(task):
+        e = dispatch.current_entry(task)
+        if e is None: problems.append(f"{task_id} iteration {task['iteration']} 還沒有派發包；先執行 qaos dispatch {run_id} {task_id}")
+        elif art.get("dispatch_packet_sha256") != e["sha256"]:
+            problems.append(f"dispatch_packet_sha256 不是 {task_id} 本次 iteration {task['iteration']} 的派發包 {e['path']}（沿用舊 iteration 的派發包不能提交）")
+        else:
+            try: dispatch.load_packet(e)
+            except dispatch.DispatchError as ex: problems.append(str(ex))
+    # 推導欄位不在 agent 的產出中（附錄 A 1-11）
+    if art["artifact_type"] == "RequirementModel":
+        for r in art["payload"].get("requirements") or []:
+            for dp in r.get("decision_points") or []:
+                bad = [k for k in ("basis_hash", "derived") if k in dp]
+                if bad: problems.append(f"{r['requirement_id']}/{dp.get('question_id')} 帶了 runtime 推導的欄位 {bad}（agent 不能填寫）")
     # 引用逐一存在
     for r in art["references"]:
         err = _resolve_in_run(r, run)
@@ -365,13 +380,25 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
 def _apply_effects(run, task, wf, wt, arts, sem):
     run_id = run["run_id"]; gate = task.get("gate")
     if gate == "G-SPEC":
-        _persist_requirements(run, task, arts["RequirementModel"])
-        _open_rejection_clarifications(run, arts["RequirementModel"])
-        if _has_unresolved_critical(arts["RequirementModel"]):
+        rm_art = arts["RequirementModel"]
+        ctx, _ = gates.spec_context(run, task, arts)
+        derived = {r["requirement_id"]: decisions.check(r, ctx)[1] for r in rm_art["payload"]["requirements"]}
+        reqs = _persist_requirements(run, task, rm_art, ctx, derived)
+        legacy = {**rm_art, "payload": {**rm_art["payload"], "requirements": [r for r in rm_art["payload"]["requirements"] if derived[r["requirement_id"]] is None]}}
+        _open_rejection_clarifications(run, legacy)                          # 舊資料（E6）維持現行行為（R0）
+        new_reqs = [r for r in reqs if derived[r["requirement_id"]] is not None]
+        drafts = [(r, dp) for r in new_reqs for dp in r["decision_points"] if dp["derived"]["route"] in decisions.DRAFT_ROUTES]
+        apr = None
+        if _has_unresolved_critical(legacy) or drafts:
             state.apply("task", task, "DONE", SYSTEM, "G-SPEC PASS (critical ambiguity)")
-            apr = _create_approval(run, task, "RESOLVE_AMBIGUITY", "Spec 有 critical ambiguity，需 Human 決定解讀", [], [arts["RequirementModel"]["artifact_id"]],
-                             options=[{"key": "resolved", "label": "已選定解讀（於 requirements.yaml 填 resolved_by_approval）"}, {"key": "return_to_author", "label": "退回 Spec 作者"}], reopen_task=task["task_id"])
-            _open_clarifications(run, apr, arts["RequirementModel"]); _save_run(run); return
+            waiting_doc = any(dp["derived"]["state"] == "E3" for _, dp in drafts)
+            summary = "Spec 有 critical 的未決事項，需 Human 逐決策點決議" + ("（含缺文件：等文件或豁免）" if waiting_doc else "") if drafts else "Spec 有 critical ambiguity，需 Human 決定解讀"
+            apr = _create_approval(run, task, "RESOLVE_AMBIGUITY", summary, [], [rm_art["artifact_id"]],
+                             options=[{"key": "resolved", "label": "已選定解讀（新資料以 resolutions[] 逐決策點填寫；舊資料於 requirements.yaml 填 resolved_by_approval）"}, {"key": "return_to_author", "label": "退回 Spec 作者"}],
+                             reopen_task=task["task_id"], rm_pin=run["requirement_model_revision"])
+            _open_clarifications(run, apr, legacy)
+        _route_decisions(run, new_reqs, apr, rm_art["created_by"])
+        if apr is not None: _save_run(run); return
     elif gate == "G-DESIGN":
         tcs = arts["TestCaseDraft"]["payload"]["testcases"]; n_exp = sum(1 for tc in tcs if gates.is_exploratory(tc))
         if arts["TestCaseDraft"]["payload"]["mode"] == "spec" and len(tcs) >= 5 and n_exp / len(tcs) > 0.5:   # 佔比規則只對整包 spec 設計有意義
@@ -462,25 +489,67 @@ def _open_clarifications(run, apr, rm):
     if made:
         apr["impact"] = apr.get("impact", []) + made; store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _has_unresolved_critical(rm) -> bool:
-    return any((r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval") for r in rm["payload"]["requirements"])
+def _route_decisions(run, reqs, apr, by):
+    """新資料：依路由表為每個 E2～E5 的決策點開單（第 1 章 §3.5；第 3 章 §3.2、§3.3 入口 A、B 逐欄抄寫）。
+    DRAFT 路由（critical）的單掛在 RESOLVE_AMBIGUITY 核准單上。P4 的去重：同 spec 版本、需求、question_id、kind 已有未撤回的 CLR 就連結、不重開
+    （issue key 去重在 P5）。"""
+    if not reqs: return
+    spec = store.load(store.spec_dir(reqs[0]["spec_id"]) / "spec.yaml"); made = []
+    existing = clr.list_(open_only=False)
+    for r in reqs:
+        for dp in r["decision_points"]:
+            d = dp["derived"]
+            if d["state"] == "E1": continue
+            kind = decisions.KIND[d["state"]]; crit = d["route"] in decisions.DRAFT_ROUTES
+            key = (r["spec_id"], str(r["spec_version"]), r["requirement_id"], dp["question_id"], kind)
+            hit = next((c for c in existing if c["status"] != "WITHDRAWN" and (c["spec_id"], str(c["spec_version"]), c.get("requirement_id"), c.get("question_id"), c.get("kind", "spec_question")) == key), None)
+            if hit is None:
+                related = [{"id": c["clarification_id"], "relation": "waived_document_request"} for c in existing
+                           if c.get("kind") == "document_request" and (c["spec_id"], str(c["spec_version"]), c.get("requirement_id"), c.get("question_id")) == key[:4]
+                           and kind != "document_request" and dp["coverage"]["waivers"]]
+                fields = {k: dp[k] for k in ("question_id", "topic", "subject", "params", "role_scope", "level", "known_rules", "conflict_sides", "conflict_note",
+                                             "coverage", "decision_needed", "detail_gaps") if k in dp}
+                hit = clr.new(spec["product"], spec["functional_area"], r["spec_id"], r["spec_version"],
+                              dn if len(dn := (dp.get("decision_needed") or "").strip()) >= 5 else f"{r['requirement_id']} {dp['question_id']}（{dp['subject']}）需要決定" + (f"：{dn}" if dn else ""), by,
+                              context=f"{r['requirement_id']}：{r['statement']}", requirement_id=r["requirement_id"], spec_reference=r.get("spec_reference"), run_id=run["run_id"],
+                              approval_id=apr["approval_id"] if (crit and apr) else None, related=related or None,
+                              impact=("此 Requirement 停留 DRAFT，Test Designer 不得為它設計 Test Case" if crit else "依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側"),
+                              kind=kind, possible_source_missing=True if d["state"] == "E5" else None, **fields)
+                existing.append(hit)
+            if crit and apr is not None: made.append({"entity_type": "Clarification", "id": hit["clarification_id"]})
+    if made and apr is not None:
+        apr["impact"] = apr.get("impact", []) + [m for m in made if m not in apr.get("impact", [])]; store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _persist_requirements(run, task, rm_art):
-    p = rm_art["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"])
+def _has_unresolved_critical(rm) -> bool:
+    """舊資料（E6）的 critical 判斷；新資料改讀推導出的有效等級（見 _apply_effects）。"""
+    return any((r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
+               for r in rm["payload"]["requirements"] if not decisions.is_new(r))
+
+def _persist_requirements(run, task, rm_art, ctx=None, derived=None):
+    p = rm_art["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"]); derived = derived or {}
     reqs = []
     for r in p["requirements"]:
-        r = dict(r); r["status"] = None; r.pop("history", None); r["history"] = []
-        crit = (r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
+        d = derived.get(r["requirement_id"])
+        r = decisions.stamp(dict(r), d, ctx); r["status"] = None; r.pop("history", None); r["history"] = []
+        if d is not None: crit = d["status"] == "DRAFT"                       # 新資料：任一決策點落在 DRAFT 路由
+        else: crit = (r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
         state.apply("requirement", r, "DRAFT", SYSTEM, rm_art["artifact_id"], run["run_id"])
         if not crit: state.apply("requirement", r, "ACTIVE", SYSTEM, "G-SPEC PASS", run["run_id"])
         reqs.append(r)
-    pin = rm.save_requirements(p["spec_id"], p["spec_version"], reqs, reason="analysis", by=SYSTEM, run_id=run["run_id"], source_artifact_id=rm_art["artifact_id"])
+    extra = None
+    e = dispatch.current_entry(task) if dispatch.needs_packet(task) else None
+    if e is not None:                                                      # 這次分析所用的派發包與決議快照（附錄 A 5-14）
+        pk = dispatch.load_packet(e)
+        extra = {"dispatch_packet_sha256": e["sha256"],
+                 "decision_snapshot_hashes": {"resolutions": sources.chash(pk["resolutions"]), "run_decisions": sources.chash(pk["run_decisions"])}}
+    pin = rm.save_requirements(p["spec_id"], p["spec_version"], reqs, reason="analysis", by=SYSTEM, run_id=run["run_id"], source_artifact_id=rm_art["artifact_id"], extra=extra)
     run["requirement_model_revision"] = pin                                  # 本 run 自己的分析：綁定（重新分析時改綁本 run 新產生的 revision）
     d = store.spec_dir(p["spec_id"]); spec = store.load(d / "spec.yaml")
     for v in spec["versions"]:
         if v["spec_version"] == p["spec_version"] and v["status"] == "IMPORTED": v["status"] = "ANALYZED"
     store.save(d / "spec.yaml", spec)
     store.audit(run["run_id"], SYSTEM, "PERSIST_REQUIREMENTS", f"{path} {pin['revision']} ({len(reqs)} reqs)")
+    return reqs
 
 def _materialize_testcases(run, task, report):
     """G-TVAL PASS：Draft → 正式 ID → versions/ (VALIDATED) → pointer；回傳 EntityRefs 供 approval。"""
@@ -577,13 +646,14 @@ def _create_approval_for_task(run, task, approval_type):
     if approval_type in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and exp_lines:
         apr["diff_summary"] = "\n".join(exp_lines); store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _create_approval(run, task, approval_type, summary, impact, art_ids, options, batch_items=None, reopen_task=None):
+def _create_approval(run, task, approval_type, summary, impact, art_ids, options, batch_items=None, reopen_task=None, rm_pin=None):
     apr_id = ids.alloc("APR")
     apr = {"approval_id": apr_id, "type": approval_type, "run_id": run["run_id"], "task_id": task["task_id"], "status": "PENDING",
            "summary": summary, "impact": [{k: v for k, v in i.items() if not k.startswith("_")} for i in impact], "artifact_ids": art_ids,
            "trace": [], "options": options, "batch_items": [{k: v for k, v in i.items() if not k.startswith("_")} for i in (batch_items or [])],
            "requested_by": "agent-supervisor", "requested_at": store.now()}
     if reopen_task: apr["diff_summary"] = f"reopen_task={reopen_task}"
+    if rm_pin: apr["requirement_model_revision"] = rm_pin
     errs = schema.errors(apr, "approval/approval-request.schema.json")
     if errs: raise EngineError("ApprovalRequest 不符 schema：" + "; ".join(errs[:3]))
     store.save(f"approvals/{apr_id}.yaml", apr)
@@ -593,14 +663,15 @@ def _create_approval(run, task, approval_type, summary, impact, art_ids, options
     return apr
 
 @operation.operation("approve")
-def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_option: str | None = None, adjustments: dict | None = None, per_item: list | None = None) -> dict:
+def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_option: str | None = None, adjustments: dict | None = None, per_item: list | None = None,
+            resolutions: list | None = None) -> dict:
     if by.startswith("agent-") or by == SYSTEM: raise EngineError("RECORD_APPROVAL 只能由 Human 執行")
     if decision == "override" and not rationale.strip(): raise EngineError("override 必須提供 rationale")
     apr = store.load(f"approvals/{apr_id}.yaml")
     if apr["status"] != "PENDING": raise EngineError(f"{apr_id} 狀態 {apr['status']}")
-    _preflight_approval(apr, decision)
+    _preflight_approval(apr, decision, resolutions)
     apr["decision"] = {k: v for k, v in {"decision": decision, "selected_option": selected_option, "decided_by": by, "decided_at": store.now(),
-                       "rationale": rationale or None, "per_item": per_item, "adjustments": adjustments}.items() if v is not None}
+                       "rationale": rationale or None, "per_item": per_item, "adjustments": adjustments, "resolutions": resolutions}.items() if v is not None}
     apr["status"] = "DECIDED"
     errs = schema.errors(apr, "approval/approval-request.schema.json")
     if errs: raise EngineError("ApprovalDecision 不符 schema：" + "; ".join(errs[:3]))
@@ -615,14 +686,65 @@ def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_o
     handler(run, task, apr, decision, by)
     return apr
 
-def _preflight_approval(apr, decision):
-    """寫入 decision 之前的檢查：失敗時 approval 維持 PENDING、run 維持 WAITING_HUMAN。"""
-    if apr["type"] == "RESOLVE_AMBIGUITY" and decision in ("approve", "override"):
-        for ref in apr.get("impact", []):
-            if ref["entity_type"] == "Clarification":
-                c = clr.load(ref["id"])
-                if c["status"] in ("OPEN", "ASKED"):
-                    raise EngineError(f"{ref['id']} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
+def _critical_points(apr) -> list:
+    """核准單綁定的 revision 中，有效等級為 critical 的決策點；舊 revision、沒有 revision（Bug Validator 建立）→ 空（附錄 A 1-9）。"""
+    pin = apr.get("requirement_model_revision")
+    return decisions.critical_points(rm.requirements_of(pin).values()) if pin else []
+
+def _legacy_clr_refs(apr) -> list[str]:
+    """核准單上屬於舊資料的 CLR：沒有綁定 revision，或 CLR 的需求在 revision 中沒有決策點（附錄 A 1-9；混合 revision 時兩套規則並行）。"""
+    pin = apr.get("requirement_model_revision"); reqs = rm.requirements_of(pin) if pin else {}
+    out = []
+    for ref in apr.get("impact", []):
+        if ref["entity_type"] != "Clarification": continue
+        rid = clr.load(ref["id"]).get("requirement_id")
+        if not (rid in reqs and decisions.is_new(reqs[rid])): out.append(ref["id"])
+    return out
+
+def _preflight_approval(apr, decision, resolutions=None):
+    """寫入 decision 之前的檢查（第 1 章 §3.7）：失敗時 approval 維持 PENDING、run 維持 WAITING_HUMAN。"""
+    res = resolutions or []
+    if res and apr["type"] != "RESOLVE_AMBIGUITY": raise EngineError(f"resolutions 只用於 RESOLVE_AMBIGUITY（{apr['approval_id']} 是 {apr['type']}）")
+    if apr["type"] != "RESOLVE_AMBIGUITY" or decision not in ("approve", "override"): return      # reject 不檢查（現行行為）
+    for i, e in enumerate(res):
+        if e.get("outcome") == "defer": raise EngineError(f"resolutions[{i}] 的 outcome 是 defer：核准時不允許（等同沒有做決定）；要延後就不要核准")
+    for cid in _legacy_clr_refs(apr):                                           # 舊資料：所有掛的 CLR 都必須已回答（附錄 A 1-9）
+        c = clr.load(cid)
+        if c["status"] in ("OPEN", "ASKED"):
+            raise EngineError(f"{cid} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
+    pin = apr.get("requirement_model_revision")
+    if not pin:
+        if res: raise EngineError("這張核准單沒有綁定需求模型 revision，不接受 resolutions")
+        return
+    reqs = rm.requirements_of(pin)
+    known = {(rid, dp["question_id"]): (r, dp) for rid, r in reqs.items() for dp in r.get("decision_points") or []}
+    seen = {}
+    for i, e in enumerate(res):
+        at = (e.get("requirement_id"), e.get("question_id"))
+        if at not in known: raise EngineError(f"resolutions[{i}] 指向 {at[0]}/{at[1]}，不是 {pin['revision']} 中的決策點")
+        if at in seen: raise EngineError(f"{at[0]}/{at[1]} 有兩筆 resolutions 條目（resolutions[{seen[at]}]、[{i}]）；每個決策點最多一筆")
+        seen[at] = i
+        r, dp = known[at]; st = dp["derived"]["state"]
+        allowed = decisions.OUTCOMES_FOR.get(st, ())
+        if e["outcome"] not in allowed:
+            raise EngineError(f"resolutions[{i}]：{at[0]}/{at[1]} 是 {st}，outcome 只能是 {'、'.join(allowed) or '（已定，不需要決議）'}（實際 {e['outcome']}）")
+        if e["outcome"] == "select_interpretation" and e.get("source") is not None:
+            src = e["source"]
+            if src.get("type") != "clarification": raise EngineError(f"resolutions[{i}] 的 source 只能是 clarification 型或 null（null 代表這份核准本身就是裁決）")
+            errs, _ = sources.validate(src, target=(r["spec_id"], r["spec_version"]), at=at)
+            if errs: raise EngineError(f"resolutions[{i}] 的 source：{'; '.join(errs)}")
+            if clr.load(src["clarification_id"])["status"] not in decisions.ANSWERED:
+                raise EngineError(f"resolutions[{i}] 的 source {src['clarification_id']} 不是 ANSWERED、INCORPORATED 或 APPLIED")
+        if e["outcome"] == "waive_missing":
+            items = decisions.dp_items(dp)
+            if not e.get("waived"): raise EngineError(f"resolutions[{i}] 的 waive_missing 要逐項列出 waived")
+            for it in e["waived"]:
+                try: k = decisions._wid(it)
+                except (KeyError, TypeError): raise EngineError(f"resolutions[{i}] 的 waived 項目形狀不合法：{it!r}")
+                if k not in items: raise EngineError(f"resolutions[{i}] 的 waived 項目 {it.get('name') or it.get('pin')} 不完全等於 {at[0]}/{at[1]} 的任何缺檔或未查參考")
+    for r, dp in decisions.critical_points(reqs.values()):
+        at = (r["requirement_id"], dp["question_id"])
+        if at not in seen: raise EngineError(f"{at[0]}/{at[1]}（{dp['derived']['state']} critical）必須恰好有一筆 resolutions 條目（實際 0 筆）")
 
 def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, to_agent: str | None = None):
     if task["type"] == "approval":
@@ -737,10 +859,11 @@ def _commit_suite(run, task, apr, decision, by):
 
 def _after_ambiguity(run, task, apr, decision, by):
     reopen = (apr.get("diff_summary") or "").replace("reopen_task=", "") or None
-    for ref in apr.get("impact", []):
-        if ref["entity_type"] == "Clarification":
-            c = clr.load(ref["id"])
-            if decision in ("approve", "override") and c["status"] == "ANSWERED": clr.apply_(ref["id"], by, note=apr["approval_id"], impact_reviewed=f"由 {apr['approval_id']}（RESOLVE_AMBIGUITY）核准者於 run 內判定；候選清單見本 note，run 外 TC 若受影響需另行修訂")
+    if decision in ("approve", "override"):
+        # 新資料（第 6 章 §3.4）：核准不再 apply CLR；文件索取單套用 waive_missing 後做最後判定（A9）。舊資料的 CLR 維持現行行為
+        if apr.get("requirement_model_revision"): _apply_waivers(apr, by)
+        for cid in _legacy_clr_refs(apr):
+            if clr.load(cid)["status"] == "ANSWERED": clr.apply_(cid, by, note=apr["approval_id"], impact_reviewed=f"由 {apr['approval_id']}（RESOLVE_AMBIGUITY）核准者於 run 內判定；候選清單見本 note，run 外 TC 若受影響需另行修訂")
     if run["workflow_id"] == "spec-to-bug":
         if decision == "reject":
             _bug_entity_transition(run, "REJECTED", apr["approval_id"], by=by)
@@ -754,6 +877,19 @@ def _after_ambiguity(run, task, apr, decision, by):
         for later in run["tasks"][[x["task_id"] for x in run["tasks"]].index(reopen) + 1:]:
             if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"): later["status"] = "PENDING"
         _save_run(run)
+
+def _apply_waivers(apr, by):
+    """waive_missing 條目：把同一決策點的文件索取單中被列出的項目標為 waived，再做最後判定（第 6 章 §6.6、§6.7）。"""
+    pin = apr["requirement_model_revision"]
+    for e in apr["decision"].get("resolutions") or []:
+        if e["outcome"] != "waive_missing": continue
+        keys = {decisions._wid(it) for it in e["waived"]}
+        for p in store.glob("clarifications/*/*/CLR-*.yaml"):
+            c = store.load(p)
+            if c.get("kind") != "document_request" or c["status"] not in ("OPEN", "ASKED"): continue
+            if (c["spec_id"], str(c["spec_version"]), c.get("requirement_id"), c.get("question_id")) != (pin["spec_id"], pin["spec_version"], e["requirement_id"], e["question_id"]): continue
+            clr.waive_items_by_approval(c["clarification_id"], [it["item_id"] for it in c.get("document_items") or [] if decisions._wid({"cited_at": it["cited_at"], "name": it["name"]}) in keys],
+                                        apr["approval_id"], by)
 
 def _after_override(run, task, apr, decision, by):
     reopen = (apr.get("diff_summary") or "").replace("reopen_task=", "") or None

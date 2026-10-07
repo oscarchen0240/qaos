@@ -1,6 +1,6 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
 import hashlib, json
-from . import store, refs, rm
+from . import store, refs, rm, dispatch, decisions, sources, spec_ops
 
 def _payload(art): return art["payload"]
 
@@ -29,7 +29,46 @@ def g_spec(run, task, arts) -> list[str]:
     if sa:
         for rid in _payload(sa).get("requirement_ids", []):
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
+    if issues: return issues
+    ctx, more = spec_context(run, task, arts)
+    if ctx is None: return issues + more
+    issues += more
+    for r in p["requirements"]: issues += decisions.check(r, ctx)[0]
     return issues
+
+def spec_context(run, task, arts):
+    """G-SPEC 的派發包檢查（第 1 章 §2.7 第 1～3 點）；回傳 (decisions.Ctx 或 None, issues)。"""
+    rm_art, sa = arts["RequirementModel"], arts.get("SpecAnalysis"); p = _payload(rm_art); issues = []
+    e = dispatch.current_entry(task)
+    if e is None: return None, [f"{task['task_id']} iteration {task['iteration']} 沒有派發包"]
+    try: packet = dispatch.load_packet(e)
+    except dispatch.DispatchError as ex: return None, [str(ex)]
+    for a in (sa, rm_art):
+        if a is not None and a.get("dispatch_packet_sha256") != e["sha256"]:
+            issues.append(f"{a['artifact_type']} 的 dispatch_packet_sha256 不是本 task iteration {task['iteration']} 的派發包")
+    tgt = packet.get("target")
+    if not tgt or (tgt["spec_id"], str(tgt["spec_version"])) != (p["spec_id"], str(p["spec_version"])):
+        return None, issues + [f"派發包的目標不是 {p['spec_id']}@{p['spec_version']}"]
+    try: now = sources.basis_hash(sources.basis(p["spec_id"], p["spec_version"]))
+    except (spec_ops.SpecError, sources.SourceError) as ex: return None, issues + [f"目標 {p['spec_id']}@{p['spec_version']}：{ex}"]
+    if now != packet["basis_hash"]:
+        issues.append("派發包之後目標或引用閉包的宣告已改變（basis_hash 不同）；同一 iteration 不能重新派發，請取消此 run 後重新分析")
+    # 1. consulted_sources 的 hash：派發包、spec.yaml 登記值、實體檔都要相符
+    allowed = {decisions._pk(tgt)} | {decisions._pk(n) for n in packet["closure"]} | {decisions._pk(x["pin"]) for x in packet["extra_inputs"] if x["kind"] == "spec_pin"}
+    consulted = (_payload(sa).get("consulted_sources") if sa else None)
+    if consulted is None: issues.append("SpecAnalysis 缺 consulted_sources（申報實際查閱的來源）")
+    for c in consulted or []:
+        k = decisions._pk(c)
+        if k not in allowed: issues.append(f"consulted_sources 的 {c['spec_id']}@{c['spec_version']} hash 和派發包不符（或不在派發包內）"); continue
+        try: spec_ops.verify_pin(c["spec_id"], c["spec_version"], c["content_hash"])
+        except spec_ops.SpecError as ex: issues.append(f"consulted_sources 的 {c['spec_id']}@{c['spec_version']}：{ex}")
+    # 2. depth=1 的 normative 參考沒有查閱 → 必須列在相關決策點的 unconsulted_normative
+    seen = {decisions._pk(c) for c in consulted or []}
+    listed = {decisions._pk(u["pin"]) for r in p["requirements"] for dp in r.get("decision_points") or [] for u in dp["coverage"]["unconsulted_normative"]}
+    for n in packet["closure"]:
+        if n.get("required") and decisions._pk(n) not in seen and decisions._pk(n) not in listed:
+            issues.append(f"必讀參考 {n['spec_id']}@{n['spec_version']}（depth=1 normative）沒有查閱，也沒有列在任何決策點的 unconsulted_normative")
+    return decisions.Ctx.from_packet(packet), issues
 
 def _pinned(run, spec_id, spec_version, end="target"):
     """run 綁定的 revision（第 5 章 §4.1；不讀可變的檢視）；和本次 artifact 的 spec 版本不符 → 錯誤。回傳 (RMPin, {requirement_id: requirement}) 或 (None, 錯誤訊息)。"""
@@ -79,6 +118,7 @@ def g_design(run, task, arts) -> list[str]:
             if a.get("needs_human_confirmation") is not True and not a.get("resolved_by_approval"):
                 issues.append(f"{did} 的 assumption 未標 needs_human_confirmation: true（exploratory 案例的假設必須外顯；已核准者請填 resolved_by_approval）")
             if a["requirement_id"] not in tc["requirement_ids"]: issues.append(f"{did} 的 assumption 指向非本 TC 的 requirement {a['requirement_id']}")
+        issues += _decision_ref_issues(tc, reqs)
         if p["mode"] == "change" and not tc.get("supersedes_testcase") and not tc.get("source_ref", "").startswith("new_required"):
             issues.append(f"{did} mode=change 但無 supersedes_testcase（新 TC 需 source_ref 以 new_required 開頭）")
         h = hashlib.sha1((tc["title"].strip() + "|" + "|".join(s["action"].strip() for s in tc["steps"])).encode()).hexdigest()
@@ -117,7 +157,7 @@ def g_design(run, task, arts) -> list[str]:
         if r.get("states") and tcs and not any("state_transition" in tc["design_techniques"] for tc in tcs):
             issues.append(f"{rid} 定義了狀態轉換，必須有 state_transition 案例")
         rc = r.get("rejection_contract")
-        if rc and rc.get("defined") is False:
+        if rc and rc.get("defined") is False and not decisions.is_new(r):         # 新資料改逐決策點限制（_decision_ref_issues）
             for tc in tcs:
                 if set(tc["design_techniques"]) & {"negative", "error_guessing"} and not is_exploratory(tc):
                     issues.append(f"{tc['draft_id']}：{rid} 的 rejection_contract 未定義，以 negative / error_guessing 技術寫的案例必須是 exploratory（assumptions + needs_human_confirmation），不得寫成確定規則；若 expected 有條文依據請改用 requirement_based / boundary_value")
@@ -129,6 +169,50 @@ def g_design(run, task, arts) -> list[str]:
     for k, v in sc.items():
         if v is not True: issues.append(f"self_check.{k} 未通過")
     return issues
+
+def _confirmed_assumption(tc, rid) -> bool:
+    return any(a.get("requirement_id") == rid and a.get("needs_human_confirmation") is True for a in tc.get("assumptions") or [])
+
+def _decision_ref_issues(tc, reqs) -> list[str]:
+    """G-DESIGN 逐決策點限制（第 1 章 §3.6）：依決策點的有效狀態限制依賴它的斷言；只作用在依賴該決策點的斷言。"""
+    did = tc["draft_id"]; out = []; drefs = tc.get("decision_refs") or []
+    new_reqs = [rid for rid in tc["requirement_ids"] if rid in reqs and decisions.is_new(reqs[rid])]
+    for rid in new_reqs:                                                    # §3.6 第 1 點：expected 依據與 negative／error_guessing 斷言都要標明依賴的決策點
+        if not any(r["requirement_id"] == rid for r in drefs):
+            out.append(f"{did}：{rid} 有決策點，TC 的 expected 依據必須以 decision_refs 標明依賴的決策點")
+    for ref in drefs:
+        rid, qid, br = ref["requirement_id"], ref["question_id"], ref["basis_ref"]
+        if rid not in tc["requirement_ids"]: out.append(f"{did} 的 decision_refs 指向非本 TC 的 requirement {rid}"); continue
+        r = reqs.get(rid); dp = next((x for x in (r or {}).get("decision_points") or [] if x["question_id"] == qid), None)
+        if dp is None: out.append(f"{did} 的 decision_refs 指向不存在的決策點 {rid}/{qid}"); continue
+        d = dp["derived"]; st = d["state"]; tag = f"{did} 依賴 {rid}/{qid}（{st} {d['effective_level']}）"
+        if d["route"] in decisions.DRAFT_ROUTES: out.append(f"{tag}：critical 的未決事項禁止設計 TC"); continue
+        kr = [dispatch.basis_ref(x) for x in dp.get("known_rules") or []]
+        sides = [dispatch.basis_ref(x) for x in dp.get("conflict_sides") or []]
+        res = dp.get("resolution") or {}; src = dispatch.basis_ref(res["source"]) if res.get("source") else None
+        if br is not None and dp["basis"] == "undefined" and br in kr and br != src:
+            out.append(f"{tag}：basis 為 undefined 的 known_rules 只是背景，不能作為 expected 依據（附錄 A 1-7）"); continue
+        if st == "E1":
+            allowed = ([] if dp["basis"] == "undefined" else kr) + ([src] if src else [])
+            idx = res.get("adopted_side_index")
+            if dp["basis"] == "conflict" and idx is not None: allowed.append(sides[idx])
+            if br is None: out.append(f"{tag}：已定的決策點，斷言必須標明 basis_ref")
+            elif br not in allowed:
+                out.append(f"{tag}：引用了未被採用的衝突一側" if br in sides else f"{tag}：basis_ref 不是該決策點的 known_rules、resolution 或被採用的一側")
+        elif st == "E2":
+            if br is not None and br in sides: out.append(f"{tag}：衝突未決，不能引用該決策點的 conflict_sides")
+        elif not _confirmed_assumption(tc, rid):
+            out.append(f"{tag}：依賴的斷言只能 exploratory（assumptions 標 needs_human_confirmation: true）")
+    return out
+
+def draft_out_of_scope(draft_payload, packet) -> dict:
+    """Draft 用到、但不在派發包範圍內的 SourceRef（第 1 章 §2.6）：{draft_id: [身分]}。"""
+    out = {}
+    for tc in draft_payload["testcases"]:
+        refs_ = list(tc.get("source_refs") or []) + [r["basis_ref"] for r in tc.get("decision_refs") or [] if r.get("basis_ref")]
+        bad = [dispatch.basis_ref(r) for r in refs_ if not dispatch.in_scope(packet, r)]
+        if bad: out[tc["draft_id"]] = bad
+    return out
 
 def g_tval(run, task, arts) -> list[str]:
     rep = arts.get("TestValidationReport")
@@ -142,6 +226,14 @@ def g_tval(run, task, arts) -> list[str]:
         if i["testcase_id"] not in did_set and i["testcase_id"] != "*": issues.append(f"issue 指向不存在的 draft {i['testcase_id']}")
     if p["result"] == "PASS" and any(i["severity"] in ("blocker", "major") for i in p["issues"]):
         issues.append("PASS 但含 blocker/major issue")
+    # 派發包範圍（AC-04-4）：Draft 用到範圍外的來源時，Validator 必須以 missing_reference（blocker／major）回報
+    e = dispatch.current_entry(task) if task is not None else None     # task 為 None：函式層直接呼叫，沒有派發包可核對
+    if e is not None:
+        try: packet = dispatch.load_packet(e)
+        except dispatch.DispatchError as ex: return issues + [str(ex)]
+        for did, bad in draft_out_of_scope(store.load(draft)["payload"], packet).items():
+            if not any(i["issue_type"] == "missing_reference" and i["testcase_id"] in (did, "*") and i["severity"] in ("blocker", "major") for i in p["issues"]):
+                issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")
     return issues
 
 def g_bval(run, task, arts) -> list[str]:

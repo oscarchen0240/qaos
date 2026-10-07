@@ -497,7 +497,8 @@
       ],
       "properties": {
         "level": {
-          "$ref": "#/$defs/AmbiguityLevel"
+          "$ref": "#/$defs/DPLevel",
+          "description": "新資料（有 decision_points）＝所有決策點 effective_level 的最大值（由推導決定）；舊資料沒有 none"
         },
         "description": {
           "type": "string"
@@ -511,6 +512,10 @@
         },
         "resolved_by_approval": {
           "$ref": "#/$defs/ApprovalId"
+        },
+        "raised_level": {
+          "$ref": "#/$defs/DPLevel",
+          "description": "新資料：所有決策點原始 level 的最大值（由推導決定，X9）"
         }
       },
       "additionalProperties": false
@@ -949,6 +954,562 @@
         },
         "sha256": {
           "$ref": "#/$defs/Sha256"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DPLevel": {
+      "type": "string",
+      "enum": [
+        "none",
+        "minor",
+        "major",
+        "critical"
+      ],
+      "description": "決策點的原始等級與有效等級（需求 A 第 1 章 §3.1）"
+    },
+    "CitedAt": {
+      "type": "object",
+      "description": "缺檔的引用處：SpecPin＋行號＋命中文字",
+      "required": [
+        "spec_id",
+        "spec_version",
+        "content_hash",
+        "line",
+        "text"
+      ],
+      "properties": {
+        "spec_id": {
+          "$ref": "#/$defs/SpecId"
+        },
+        "spec_version": {
+          "$ref": "#/$defs/SpecVersion"
+        },
+        "content_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "MissingSource": {
+      "type": "object",
+      "required": [
+        "cited_at",
+        "name"
+      ],
+      "description": "被引用、但沒取得的文件：只需要引用處，不需要缺檔本身的 hash",
+      "properties": {
+        "cited_at": {
+          "$ref": "#/$defs/CitedAt"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "UnconsultedRef": {
+      "type": "object",
+      "required": [
+        "pin",
+        "reason"
+      ],
+      "description": "派發包中 depth=1 的 normative 參考沒有查閱（X5、X17）",
+      "properties": {
+        "pin": {
+          "$ref": "#/$defs/SpecPin"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "out_of_scope"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WaivedItem": {
+      "description": "被豁免的一項：缺檔（cited_at 的 SpecPin＋line，加上 name）或未查參考（pin）",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "cited_at",
+            "name"
+          ],
+          "properties": {
+            "cited_at": {
+              "type": "object",
+              "required": [
+                "spec_id",
+                "spec_version",
+                "content_hash",
+                "line"
+              ],
+              "properties": {
+                "spec_id": {
+                  "$ref": "#/$defs/SpecId"
+                },
+                "spec_version": {
+                  "$ref": "#/$defs/SpecVersion"
+                },
+                "content_hash": {
+                  "$ref": "#/$defs/Sha256"
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "pin"
+          ],
+          "properties": {
+            "pin": {
+              "$ref": "#/$defs/SpecPin"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Waiver": {
+      "type": "object",
+      "required": [
+        "approval_id",
+        "decision_sha256",
+        "resolution_index",
+        "waived"
+      ],
+      "properties": {
+        "approval_id": {
+          "$ref": "#/$defs/ApprovalId"
+        },
+        "decision_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "resolution_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "waived": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/WaivedItem"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Coverage": {
+      "type": "object",
+      "required": [
+        "references_status",
+        "consulted",
+        "unconsulted_normative",
+        "missing_sources",
+        "waivers"
+      ],
+      "properties": {
+        "references_status": {
+          "type": "string",
+          "enum": [
+            "undeclared",
+            "declared_empty",
+            "declared"
+          ]
+        },
+        "consulted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecPin"
+          }
+        },
+        "unconsulted_normative": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnconsultedRef"
+          }
+        },
+        "missing_sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MissingSource"
+          }
+        },
+        "waivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Waiver"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "DPResolution": {
+      "type": "object",
+      "description": "裁決；完整性由 G-SPEC 檢查（X11、X13）",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "decided_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adopted_side_index": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "DecisionPoint": {
+      "type": "object",
+      "description": "需求底下的一個待決或已決事項（需求 A 第 1 章 §2.5、§3.1）。basis_hash、derived 由 runtime 寫入，agent 的產出不得帶（附錄 A 1-11）",
+      "required": [
+        "question_id",
+        "topic",
+        "subject",
+        "role_scope",
+        "params",
+        "level",
+        "basis",
+        "known_rules",
+        "coverage"
+      ],
+      "properties": {
+        "question_id": {
+          "type": "string",
+          "pattern": "^Q[0-9]{2,}$"
+        },
+        "topic": {
+          "$ref": "#/$defs/Topic"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "role_scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([a-z0-9_]+|\\*)$"
+          },
+          "uniqueItems": true,
+          "description": "必須明示；空陣列由 G-SPEC 以 X18 拒絕"
+        },
+        "params": {
+          "$ref": "#/$defs/QuestionParams"
+        },
+        "level": {
+          "$ref": "#/$defs/DPLevel"
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "defined_in_target",
+            "defined_in_reference",
+            "defined_by_decision",
+            "undefined",
+            "conflict"
+          ]
+        },
+        "known_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        },
+        "conflict_sides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          }
+        },
+        "conflict_note": {
+          "type": "string"
+        },
+        "resolution": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/DPResolution"
+            }
+          ]
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage"
+        },
+        "decision_needed": {
+          "type": "string"
+        },
+        "detail_gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prior_clarifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClarificationId"
+          }
+        },
+        "basis_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "derived": {
+          "type": "object",
+          "description": "runtime 推導（第 1 章 §3.2～§3.5）",
+          "required": [
+            "state",
+            "effective_level",
+            "route",
+            "resolved",
+            "gap_missing",
+            "gap_unverified"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ]
+            },
+            "effective_level": {
+              "$ref": "#/$defs/DPLevel"
+            },
+            "route": {
+              "type": "string",
+              "pattern": "^R[1-9]$"
+            },
+            "resolved": {
+              "type": "boolean"
+            },
+            "gap_missing": {
+              "type": "boolean"
+            },
+            "gap_unverified": {
+              "type": "boolean"
+            },
+            "resolved_conflict": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "DocIssue": {
+      "type": "object",
+      "required": [
+        "kind",
+        "location",
+        "note",
+        "status"
+      ],
+      "description": "文件本身的問題；不影響需求狀態，也不自動開單（附錄 A 1-5）",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "wording_conflict",
+            "missing_definition",
+            "inconsistent_reference",
+            "typo"
+          ]
+        },
+        "location": {
+          "type": "object",
+          "required": [
+            "spec_id",
+            "spec_version",
+            "content_hash",
+            "line"
+          ],
+          "properties": {
+            "spec_id": {
+              "$ref": "#/$defs/SpecId"
+            },
+            "spec_version": {
+              "$ref": "#/$defs/SpecVersion"
+            },
+            "content_hash": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "line": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "pending_owner_decision",
+            "resolved"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "BasisRef": {
+      "description": "SourceRef 的身分（不含 quote；第 1 章名詞表）",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "spec_id",
+            "spec_version",
+            "content_hash",
+            "location"
+          ],
+          "properties": {
+            "type": {
+              "const": "spec"
+            },
+            "spec_id": {
+              "$ref": "#/$defs/SpecId"
+            },
+            "spec_version": {
+              "$ref": "#/$defs/SpecVersion"
+            },
+            "content_hash": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "location": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "clarification_id",
+            "answer_rev",
+            "answer_sha256"
+          ],
+          "properties": {
+            "type": {
+              "const": "clarification"
+            },
+            "clarification_id": {
+              "$ref": "#/$defs/ClarificationId"
+            },
+            "answer_rev": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "answer_sha256": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "approval_id",
+            "resolution_index",
+            "decision_sha256"
+          ],
+          "properties": {
+            "type": {
+              "const": "approval"
+            },
+            "approval_id": {
+              "$ref": "#/$defs/ApprovalId"
+            },
+            "resolution_index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "decision_sha256": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DecisionRef": {
+      "type": "object",
+      "required": [
+        "requirement_id",
+        "question_id",
+        "basis_ref"
+      ],
+      "description": "TC 斷言依賴的決策點；basis_ref 為該斷言所用依據的身分，exploratory 斷言沒有依據時為 null",
+      "properties": {
+        "requirement_id": {
+          "$ref": "#/$defs/RequirementId"
+        },
+        "question_id": {
+          "type": "string",
+          "pattern": "^Q[0-9]{2,}$"
+        },
+        "basis_ref": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/BasisRef"
+            }
+          ]
         }
       },
       "additionalProperties": false
