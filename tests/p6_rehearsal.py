@@ -129,7 +129,7 @@ for p in sorted(root.rglob("*.yaml")):
 print(json.dumps(out, ensure_ascii=False))
 """
 
-# 附錄 A 6-38：資料快照 git archive 7ef07ee／3a62d87 移轉後的 schema baseline（M1 以當天資料重新計算，不同時交 Oscar 核對）
+# 附錄 A 6-38：資料快照 git archive 7ef07ee／3a62d87 的「移轉後預期失敗清單」＝移轉前 baseline 13 檔＋繼承失敗的 R000 1 檔（M1 以當天資料重新計算，不同時交 Oscar 核對）
 BASELINE_6_38 = [
     'artifacts/change-impact/RUN-20261001-007/ART-CIR-01M3VNQQ2Q073T4VH6R8C6JHEN.yaml',
     'artifacts/change-impact/RUN-20261002-002/ART-CIR-01M3XJ09X6JYPY1SNA4TAP8H3D.yaml',
@@ -188,10 +188,10 @@ def assert_migrated(rep, src: pathlib.Path, work: pathlib.Path, src_snap: dict, 
         extra = sorted(f["path"] for f in sc["failures"] if f["path"] not in pre and f["path"] not in r000_copy)
         rep.check(ac, f"[{label}] 移轉後的失敗集合 ⊆ baseline ∪ 繼承的 R000（不新增其他失敗；附錄 A 6-38 (3)；{sc['checked']} 檔）", not extra,
                   [{"path": f["path"], "error": f["errors"][0][:160]} for f in sc["failures"] if f["path"] in extra])
-        unchanged = [p_ for p_ in pre if p_ in touched]
-        rep.check(ac, f"[{label}] baseline 的檔案內容不變（附錄 A 6-38 (4)）", not unchanged, unchanged)
+        unchanged = [p_ for p_ in pre if p_ in touched or p_ in set(dd["removed"])]
+        rep.check(ac, f"[{label}] 移轉前 baseline 的檔案沒有被修改或刪除（附錄 A 6-38 (4)）", not unchanged, unchanged)
         got = sorted(f["path"] for f in sc["failures"])
-        rep.check(ac, f"[{label}] 失敗集合等於附錄 A 6-38 的 baseline 清單（{len(BASELINE_6_38)} 檔；資料不同時須交 Oscar 核對）", got == sorted(BASELINE_6_38),
+        rep.check(ac, f"[{label}] 失敗集合等於附錄 A 6-38 的移轉後預期失敗清單（{len(BASELINE_6_38)} 檔；資料不同時須交 Oscar 核對）", got == sorted(BASELINE_6_38),
                   {"多出": sorted(set(got) - set(BASELINE_6_38)), "缺少": sorted(set(BASELINE_6_38) - set(got))})
     # 2. R000 = 原 requirements.yaml；檢視不變；meta
     bad = []; rms = sorted(p.relative_to(work).as_posix() for p in work.glob("artifacts/requirements/*/*/requirements.yaml"))
@@ -602,7 +602,7 @@ def main():
         if a.real_data_checks: sys.exit("--mode ac-b1-7 不和 --real-data-checks 併用")
         return main_ac_b1_7(a, src, work)
     rep = Report(a); t_all = time.time()
-    rep.fact("code_commit", subprocess.run(["git", "-C", str(CODE), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "(非 git 目錄)")
+    rep.fact("code_commit", a.code_commit or subprocess.run(["git", "-C", str(CODE), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "(非 git 目錄)")
     src_snap = snapshot(src)
     rep.fact("src_files", len(src_snap)); rep.fact("inventory", inventory(src))
     # 複製（來源唯讀；複本改成可寫）
