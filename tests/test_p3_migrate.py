@@ -367,3 +367,46 @@ def test_p3_06_approval_render_direct_api_and_nested():
     md.unlink()
     U.py(root, f"from tools.qaos import approval_render, operation\noperation.run_operation('test_internal', lambda: approval_render.render('{apr}'), new_request=True)")   # 巢狀：併入外層操作
     assert md.exists() and len(U.op_list(root)) == n + 2 and U.op_list(root)[-1]["action"] == "test_internal"
+
+# ---------------------------------------------------------------- P3 局部複驗 P3R2-01、P3R2-02
+def _round_trip(root):
+    """正常的維護往返：maintenance end、再以新請求 maintenance start（會正常重新 render 全域 audit.log）。"""
+    ok(U.q(root, "maintenance", "end", "--by", "m")); ok(U.q(root, "maintenance", "start", "--by", "m", "--new-request"))
+
+def _render_step(root, x):
+    xp = U.plan_of(root, x); st = next(st for st in xp["steps"] if st["path"] == "runs/_audit.log")
+    return st, pathlib.Path(root) / f"operations/_global/{x}/progress.d/{st['seq']:04d}-{st['step_id']}.yaml"
+
+@pytest.mark.parametrize("entry", ["resend", "resume"])
+def test_p3r2_01_progress_of_external_change_step_is_frozen_and_checked(entry):
+    root, info = migrated(); x = x_of(root); _round_trip(root); args = ["migrate", "rollback", "--op", x, "--by", "m"]
+    assert U.q(root, *args, fault="after_register").returncode == 86
+    rp = _r_plan(root); rid = rp["op_id"]; st, prog = _render_step(root, x)
+    row = next(r for r in rp["x_progress"]["steps"] if r["seq"] == st["seq"])
+    assert row["status"] == "external_change" and row["proof"] == "progress"                                        # 輸出被正常 render 改過，但完成紀錄已凍結
+    prog.unlink()                                                                                                    # 竄改：刪掉這份已證實存在的完成紀錄
+    r = U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", rid)
+    assert r.returncode != 0 and "檢查 A" in r.stderr and st["step_id"] in r.stderr, r.stderr
+    assert status_files(root, rid) == [] and status_files(root, x) == ["completed"]
+
+def test_p3r2_01_round_trip_rollback_succeeds_and_verify_checks_that_progress():
+    root, info = migrated(); x = x_of(root); _round_trip(root)
+    ok(U.q(root, "migrate", "rollback", "--op", x, "--by", "m")); ok(U.q(root, "migrate", "verify", "--rolled-back"))   # 正例：證據未被改動
+    st, prog = _render_step(root, x); data = prog.read_bytes(); prog.unlink()
+    r = U.q(root, "migrate", "verify", "--rolled-back"); assert r.returncode != 0 and st["step_id"] in r.stdout, r.stdout
+    prog.write_bytes(data + b"x: 1\n")
+    r = U.q(root, "migrate", "verify", "--rolled-back"); assert r.returncode != 0 and st["step_id"] in r.stdout
+    prog.write_bytes(data); ok(U.q(root, "migrate", "verify", "--rolled-back"))
+
+@pytest.mark.parametrize("entry", ["resend", "resume"])
+def test_p3r2_02_x_plan_tamper_stops_r_and_verify(entry):
+    root, info = migrated(); x = x_of(root); args = ["migrate", "rollback", "--op", x, "--by", "m"]
+    assert U.q(root, *args, fault="after_register").returncode == 86
+    rid = _r_plan(root)["op_id"]; xpf = pathlib.Path(root) / f"operations/_global/{x}.yaml"; orig = xpf.read_bytes()
+    xpf.write_bytes(orig + b"tampered_note: x\n")                                                                  # 竄改：只改 X 計畫的 metadata，steps、證據、登錄都不動
+    r = U.q(root, *args) if entry == "resend" else U.q(root, "operation", "resume", rid)
+    assert r.returncode != 0 and ("登錄紀錄" in r.stderr or "plan_sha256" in r.stderr), r.stderr
+    assert status_files(root, rid) == [] and (pathlib.Path(root) / "artifacts/requirements/_migration.yaml").exists()
+    xpf.write_bytes(orig); ok(U.q(root, "operation", "resume", rid)); ok(U.q(root, "migrate", "verify", "--rolled-back"))   # 模擬經授權的人工修復後完成
+    xpf.write_bytes(orig + b"tampered_note: x\n")
+    r = U.q(root, "migrate", "verify", "--rolled-back"); assert r.returncode != 0 and "plan_sha256" in r.stdout, r.stdout

@@ -258,6 +258,10 @@ def x_progress(xplan: dict) -> dict:
         if cls.status.get(s["seq"]) == "not_executed" and (store.ROOT / op.progress_path(xplan, s)).exists():
             conflicts.append({"seq": s["seq"], "step_id": s["step_id"], "path": op.progress_path(xplan, s), "reason": "未執行的步驟卻有完成紀錄"})
     if status_x == "in_progress" and final_present: conflicts.append({"seq": final["seq"], "step_id": "completed", "path": final["path"], "reason": "X 未完成卻有 completed 紀錄"})
+    # 執行證據和業務輸出的現值分開凍結：完成紀錄存在且相符的步驟，不論輸出是 done 還是 external_change（例如 audit.log 被正常重新 render），都記 proof=progress
+    for s, row in zip(xplan["steps"][:-1], steps_out):
+        pp = store.ROOT / op.progress_path(xplan, s)
+        if row["proof"] != "content_tail" and pp.is_file() and pp.read_bytes() == op.progress_bytes(xplan, s): row["proof"] = "progress"
     ncc = [{"path": nc["path"], "ok": op._cur_sha(nc["path"]) == nc["content_sha256"]} for nc in xplan.get("no_change", [])]
     return {"x_status_at_creation": status_x, "tail_step": tail, "steps": steps_out, "conflicts": conflicts, "no_change_check": ncc}
 
@@ -422,11 +426,14 @@ def _check_common(plan: dict, xplan: dict, manifest: dict, label: str):
 def x_evidence_issues(rplan: dict, xplan: dict) -> list[str]:
     """依 R 凍結的 x_progress 核對 X 已證實的證據（§13.5、§13.7）：done 的稽核物等於凍結值；proof=progress 的完成紀錄存在且相符；
     content_tail 的完成紀錄不得被補寫；completed_status 存在且相符。"""
-    bad = []; xsteps = {s["seq"]: s for s in xplan["steps"]}
+    bad = []
+    try: op.verify_registration(xplan["op_id"])                                   # 先確認 X 的不可變計畫與登錄紀錄一致，才用它推導證據（附錄 A 5-14）
+    except OperationError as e: return [f"X 的計畫或登錄紀錄不一致：{e}"]
+    xsteps = {s["seq"]: s for s in xplan["steps"]}
     for row in rplan["x_progress"]["steps"]:
         s = xsteps.get(row["seq"])
-        if s is None or row["status"] != "done": continue
-        if row["evidence"] and (row["kind"] in op.AUDIT_KINDS or row["kind"] == "status") and _sha(row["evidence"]["path"]) != row["evidence"]["sha256"]:
+        if s is None: bad.append(f"X 的計畫沒有凍結時的第 {row['seq']} 步"); continue
+        if row["status"] == "done" and row["evidence"] and (row["kind"] in op.AUDIT_KINDS or row["kind"] == "status") and _sha(row["evidence"]["path"]) != row["evidence"]["sha256"]:
             bad.append(f"X 的稽核證據 {row['evidence']['path']} 缺失或被改動")
         if s["kind"] == "status_final": continue
         pp = store.ROOT / op.progress_path(xplan, s)
