@@ -259,12 +259,32 @@ def draft_out_of_scope(draft_payload, packet) -> dict:
         if bad: out[tc["draft_id"]] = bad
     return out
 
+_DRAFT_PRODUCER = {"TestCaseDraft": "agent-test-designer", "BugDraft": "agent-bug-analyst"}
+
+def reviewed_draft_issues(run, task, art_type, draft_id) -> list[str]:
+    """Validator 報告審查的 Draft 必須是產生者 task 本輪 output_artifact_ids 中、狀態 VALID 的那份（附錄 A 6-36）。
+    人 reject 後重做會清空產生者的本輪產出、但不把舊稿改成 SUPERSEDED；Validator 語意 FAIL 退回則保留清單、把舊稿改成 SUPERSEDED。
+    報告指向舊稿（或別的 artifact）時，正式 TC／Bug 與落地判定所看的 Draft 會不一致，所以 Structural FAIL。
+    task 為 None：函式層直接呼叫，沒有 run 的輪次可核對。"""
+    if task is None: return []
+    gen = next((t for t in run.get("tasks") or [] if t.get("agent_id") == _DRAFT_PRODUCER[art_type]), None)
+    if gen is None: return [f"run 沒有產生 {art_type} 的 task（{_DRAFT_PRODUCER[art_type]}）"]
+    current = gen.get("output_artifact_ids") or []
+    if draft_id not in current:
+        return [f"報告審查的 {draft_id} 不是 {gen['task_id']} 本輪的產出（本輪產出：{', '.join(current) or '無'}）"]
+    path = store.find_artifact(draft_id); a = store.load(path) if path else None
+    if not a or a["artifact_type"] != art_type: return [f"報告審查的 {draft_id} 不是 {art_type}"]
+    if a["status"] != "VALID": return [f"報告審查的 {draft_id} 狀態是 {a['status']}，不是本輪有效的 Draft"]
+    return []
+
 def g_tval(run, task, arts) -> list[str]:
     rep = arts.get("TestValidationReport")
     if not rep: return ["缺 TestValidationReport"]
     p = _payload(rep); issues = []
     draft = store.find_artifact(p["testcase_draft_artifact_id"])
     if not draft: return [f"報告指向的 draft {p['testcase_draft_artifact_id']} 不存在"]
+    stale = reviewed_draft_issues(run, task, "TestCaseDraft", p["testcase_draft_artifact_id"])
+    if stale: return stale
     did_set = {tc["draft_id"] for tc in store.load(draft)["payload"]["testcases"]}
     if p["result"] == "FAIL" and not p["issues"]: issues.append("FAIL 但 issues 為空")
     for i in p["issues"] + p["advisories"]:
@@ -312,6 +332,7 @@ def g_bval(run, task, arts) -> list[str]:
         if p.get("source_refs") or p.get("decision_refs"): issues += _bugdraft_source_issues(run, p, reqs if pin is not None else {})
     if rep:
         p = _payload(rep)
+        issues += reviewed_draft_issues(run, task, "BugDraft", p["bug_draft_artifact_id"])
         if p["result"] == "FAIL" and not p["issues"]: issues.append("FAIL 但 issues 為空")
         if p["result"] == "PASS":
             for ev in p["evidence_verification"]:
