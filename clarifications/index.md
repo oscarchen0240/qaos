@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-10-01
+- 更新：2026-10-07
 
 ## ba-admin / ACCOUNT
 
@@ -29,12 +29,13 @@
 | [CLR-CASHFLOW-004](ba-admin/CASHFLOW/CLR-CASHFLOW-004.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 交易紀錄查詢頁的「手動取消」操作，2026-09-14的確認（REQ-TXLOG-028：此操作不存在）能否請RD重新核實實際畫面？ | 交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分 |
 | [CLR-CASHFLOW-005](ba-admin/CASHFLOW/CLR-CASHFLOW-005.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 入金額度上限的判定時機：req-cashin 階段判定（spec v07 定案文字）還是 end-cashin 階段判定（RD 2026-09-23 確認的實際開發流程）？ | A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-ca |
 | [CLR-CASHFLOW-006](ba-admin/CASHFLOW/CLR-CASHFLOW-006.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 額度上限被拒絕（1-OVER LIMIT）是否比照餘額不足（1-NO CREDITS），不寫入交易紀錄？ | B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種 |
+| [CLR-CASHFLOW-007](ba-admin/CASHFLOW/CLR-CASHFLOW-007.md) | OPEN | SPEC-CASHFLOW-001 v0.1 | 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？ |  |
 
 ## ba-admin / CASHOUT
 
 | ID | 狀態 | 規格 | 問題 | PM 回覆 |
 |---|---|---|---|---|
-| [CLR-CASHOUT-001](ba-admin/CASHOUT/CLR-CASHOUT-001.md) | APPLIED | SPEC-CASHOUT-001 v1.0 | TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？ | 操作員無權限切換至其他場館，切換場館的設定在後台管理員系統，此權限只有站長跟admin有權限，這是過去就規劃好的權限事宜 |
+| [CLR-CASHOUT-001](ba-admin/CASHOUT/CLR-CASHOUT-001.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？ | 操作員無權限切換至其他場館，切換場館的設定在後台管理員系統，此權限只有站長跟admin有權限，這是過去就規劃好的權限事宜 |
 | [CLR-CASHOUT-002](ba-admin/CASHOUT/CLR-CASHOUT-002.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | 機台洗分（單階段交易）實際上會不會出現「待處理／等待中」（＝spec 概念的待確認）狀態？若不會，TC-CASHOUT-044「尚未完成的洗分不會出現在核實頁」如何驗證？ | A：洗分一送出就完成，不會有中間狀態。機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待 |
 
 ## ba-admin / DAILYREPORT
@@ -63,6 +64,7 @@
 | [CLR-PLATFORMRULE-001](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-001.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 「站長＝最高權限」的定義是否仍有效？三份 spec 的權限層級互相矛盾 | 以功能 spec 三層模型為準：管理員（最高）＞站長＞操作員。原則：可見範圍由所屬站台決定、權限層級由角色決定，兩者分開 |
 | [CLR-PLATFORMRULE-002](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-002.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | REQ-PLATFORMRULE-011 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 此為架構層要求（選單顯示規則需與排除規則同一來源，不得各自寫死），非使用者可觀察行為，且目前無任何排除項目被實際解除、無 |
 | [CLR-PLATFORMRULE-003](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-003.md) | APPLIED | SPEC-PLATFORMRULE-001 v0.1 | 操作員角色是否可見「注單查詢」與「稽核明細」頁面？權限表未列此兩項，請補列定案 | 新需求：操作員有權限進入「注單查詢」與「稽核明細」（可見範圍比照其他報表頁限自身場館）。→ 權限表須補兩列（操作員：自身 |
+| [CLR-PLATFORMRULE-004](ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-004.md) | WITHDRAWN | SPEC-PLATFORMRULE-001 v0.2 | REQ-PLATFORMRULE-011 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
 
 ## ba-admin / SCREENMGMT
 
@@ -87,6 +89,11 @@
 | [CLR-SITELIST-010](ba-admin/SITELIST/CLR-SITELIST-010.md) | APPLIED | SPEC-SITELIST-001 v0.4 | REQ-SITELIST-002「子站台強制跟隨主站台型別」規則，是否對根層站台（無上層站台，隱含上層為 admin）有例外？ | admin 例外規則為 PM 最終決定，非資料錯誤或臆測：根層站台（無上層站台）建立時，型別可自由選擇（機台或線上），核 |
 | [CLR-SITELIST-011](ba-admin/SITELIST/CLR-SITELIST-011.md) | APPLIED | SPEC-SITELIST-001 v0.4 | AC-SITELIST-0023「核心貨幣依所選類型連動建立，不需admin自身的鏈上錢包管理預先啟用該幣別」這句話裡，鏈上錢包管理跟站台核心貨幣是什麼關係？ | 鏈上錢包管理與站台核心貨幣是兩個完全不同、互不相依的概念。鏈上錢包管理管理的是「此平台整體能使用的幣種有哪些」，啟用/禁 |
 | [CLR-SITELIST-012](ba-admin/SITELIST/CLR-SITELIST-012.md) | APPLIED | SPEC-SITELIST-001 v0.4 | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣的精確關係為何？ | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣不是「完全無關」，而是「性質不同但有連動關係」。(1)鏈 |
+| [CLR-SITELIST-013](ba-admin/SITELIST/CLR-SITELIST-013.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-035 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-014](ba-admin/SITELIST/CLR-SITELIST-014.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-036 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-015](ba-admin/SITELIST/CLR-SITELIST-015.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-037 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-SITELIST-016](ba-admin/SITELIST/CLR-SITELIST-016.md) | OPEN | SPEC-SITELIST-001 v0.6 | v0.6 原文與已落地的 CLR 定案直接牴觸，本 RM 不自行裁定。v0.6（版本日期 2026-09-04）§角色與權限「子站台：刪除｜可操作｜可操作」、§列表欄位「操作｜編輯、刪除」、§操作/刪除站台（確認彈窗、二次確認、不可復原）、§業務規則/刪除確認，皆定義管理員與站長可刪除管轄範圍內的子站台（僅自身站台與根站台不可刪除）；CLR-SITELIST-008／009（2026-09-14，PM 與後端共同確認，晚於 v0.6 版本日期）定案「任何類型的站台皆不提供刪除操作，前後端皆拒絕，只能暫停／關閉」，原因是刪除會影響站台樹狀結構。v0.6 取自 ba-spec main 2026-09-29 快照仍保留刪除敘述，QA 增補草稿要求移除該節亦未合入正本，無法判斷是 spec 未同步 CLR，還是產品方向已改回可刪除。 |  |
+| [CLR-SITELIST-017](ba-admin/SITELIST/CLR-SITELIST-017.md) | OPEN | SPEC-SITELIST-001 v0.6 | 與 REQ-SITELIST-022 同一衝突（v0.6 原文可刪除子站台 vs CLR-SITELIST-008／009 任何站台皆不可刪除），應一併裁定；若採 v0.6 原文，刪除仍有子站台的站台時子樹如何處理 v0.6 亦未定義。 |  |
 
 ## ba-admin / TXLOG
 

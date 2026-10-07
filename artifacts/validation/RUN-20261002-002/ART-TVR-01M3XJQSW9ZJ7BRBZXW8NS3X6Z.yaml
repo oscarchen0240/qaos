@@ -1,0 +1,213 @@
+artifact_id: ART-TVR-01M3XJQSW9ZJ7BRBZXW8NS3X6Z
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261002-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-02T05:52:33Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M3XJEKT5W77DV00S2JPMVVFP
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M3XJEKT5W77DV00S2JPMVVFP
+- entity_type: Artifact
+  id: ART-RM-01M3XGY20C2C01QSM6N88FR6EE
+- entity_type: Artifact
+  id: ART-CIR-01M3XJ09X6JYPY1SNA4TAP8H3D
+requires_approval: null
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M3XJEKT5W77DV00S2JPMVVFP
+  validated_against:
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M3XGY20C2C01QSM6N88FR6EE
+  issues:
+  - testcase_id: TC-DRAFT-01M3XJEKZ9QSTSPPK43GTF896K
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference: &id001
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明 L27（REQ-PLATFORMRULE-015 statement 指明頁面即 SPEC-TXLOG-001）
+      quote: 頁面資料範圍跟隨頁面標題下方的**站台切換下拉選單**（後台各頁皆有，一次僅顯示所選站台），不另設「場館」篩選欄位。
+    evidence: Draft expected_result：「可查得全平台各場館的機台交易：步驟 2 的結果同時含 S1、S2（P1 子樹）與 T1（P2 子樹）的機台交易；步驟 3 三個會員編號皆查得各自的交易」；steps 1～3
+      全程未提站台切換下拉選單的選取。v0.2 依據 quote 只有「| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |」，未寫單次查詢跨場館彙總；SPEC-TXLOG-001 v0.1 L27 明文「一次僅顯示所選站台」，且根站台
+      admin 依 SPEC-SITELIST-001 v0.6「根站台」為線上類型站台。
+    explanation: 本 TC 是 AC-PLATFORMRULE-0153（根站台管理員可查全平台）唯一對應的案例。預期寫的是「同一次查詢結果同時含三個場館的交易」，但 v0.2 沒有這條依據，機台交易紀錄查詢頁的正式規格（SPEC-TXLOG-001）又規定頁面資料範圍跟隨站台切換、一次只顯示所選站台。照步驟執行時，切換選單停在根站台
+      admin（線上站台）或任一單一場館，步驟 2 都不會同時出現 S1、S2、T1 的交易，實作正確時反而判 FAIL（偽失敗）。步驟 3 也未說明要切到哪個站台再查，結果取決於執行者當下選的站台。
+    recommended_change: 改寫步驟與預期：(1) 展開站台切換下拉選單，確認含 P1、S1、S1a、S2、P2、T1（或註明此點由 N3 案例負責，本案不重複）；(2) 依序將站台切換至 S1、S2、T1，各自以涵蓋已知交易的日期範圍及對應會員編號（MS1／MS2／MT1）查詢；預期改為「切換至
+      S1／S2／T1 時，分別查得 MS1／MS2／MT1 的機台交易（跨兩個平行主站台皆可切換、可查得）」。移除「步驟 2 的結果同時含 S1、S2、T1」的單次彙總斷言。expected_result_spec_reference
+      維持 v0.2 權限表列即可，必要時於 location 註明頁面範圍依 SPEC-TXLOG-001「站台切換」。
+  - testcase_id: TC-DRAFT-01M3XJEKZ6SNAXNQYJN7TXFHNA
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference: *id001
+    evidence: steps 1～5 均未指定站台切換下拉選單選哪個站台；步驟 3「分別以 MS1、MS2 的會員編號查詢」，預期「步驟 3 查得 MS1、MS2 的交易」；步驟 2「不限定會員編號，檢視結果中的交易所屬場館」，預期「步驟
+      2 的結果不含 MT1 的交易」；步驟 4「以 MT1 查詢結果為空」；步驟 5「若頁面提供場館或站台篩選欄位，嘗試選取 T1…若無此欄位則略過本步」。SPEC-TXLOG-001 v0.1 L27「一次僅顯示所選站台…不另設『場館』篩選欄位」、L70「場館名稱不顯示」。
+    explanation: 這是 TC-PLATFORMRULE-051 的修訂版（P1 站長的機台交易紀錄管轄範圍），也是站長管轄範圍唯一的機台交易紀錄查詢 UI 案例。頁面一次只顯示所選站台：站長登入後若停在自身站台 P1，MS1（S1）、MS2（S2）的交易不會出現在
+      P1 的查詢結果中，步驟 3 會偽失敗；要查得就必須先切到 S1、S2，步驟卻沒寫。反向斷言（步驟 2 不含 MT1、步驟 4 MT1 查無）只要切換選單停在 P1 子樹內任一站台就必然成立，與管轄範圍是否正確無關，無法驗出越權。真正的邊界在站台切換選單是否提供
+      T1／P2，但步驟 5 以「場館或站台篩選欄位」為條件，TXLOG 已明定不另設場館篩選欄位，執行者很可能直接略過。另外，步驟 2「檢視結果中的交易所屬場館」在列表上看不到（TXLOG 不顯示場館名稱）。
+    recommended_change: 改寫為以站台切換下拉選單為驗證主軸：步驟 A 以 P1 站長登入，展開站台切換下拉選單，記錄全部選項；步驟 B 切換至 S1，以日期範圍及 MS1 查詢；步驟 C 切換至 S2，以 MS2 查詢；預期改為「站台切換選單僅含
+      P1、S1、S1a、S2，不含 P2、T1（無法切換至 T1 查詢）；切至 S1／S2 時分別查得 MS1／MS2 的交易」。刪除步驟 2 的「檢視交易所屬場館」，或改為以「機台帳號（來源機台）」欄位辨識。步驟 5 不要寫成條件式略過，直接以站台切換選單為檢查對象。API
+      越權仍由 N8（TC-DRAFT-01M3XJEKZ93MZZ228YZTPA38EG）負責。
+  advisories:
+  - testcase_id: TC-DRAFT-01M3XJEKZ98Y7J1MHRWHTZD018
+    issue_type: missing_negative_coverage
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference: *id001
+    evidence: AC-PLATFORMRULE-0152 when：「於機台交易紀錄查詢頁查詢（含嘗試選擇所屬站台子樹以外的場館）」。Draft 步驟 2／4 的反向預期「結果不含 MS2、MT1」「以 MS2、MT1 查詢結果皆為空」；步驟
+      5「若頁面提供場館或站台篩選欄位，嘗試選取 S2 或 T1；若無此欄位則略過本步」。
+    explanation: 本案與 TC-051 修訂版同一個根本問題：頁面一次只顯示所選站台，步驟 2／4 的反向斷言只要停在 S1 就必然成立，驗不到越權；AC-0152 要求的「嘗試選擇子樹以外的場館」卡在步驟 5 的條件式，可能被略過。正向步驟
+      3（MS1）在預設停於自身站台 S1 時仍可執行，而且同一角色、同一站台樹的切換選單已由 N2 覆蓋，API 越權由 N7 覆蓋，REQ-015 仍有實質的反向覆蓋，所以列為 minor。
+    recommended_change: 比照 TC-051 修訂版的修正方式：明寫「展開站台切換下拉選單，確認不含 S2、P1、P2、T1（無法切換至 S2／T1 查詢）」，取代條件式步驟 5；步驟 3 前加「站台切換停在 S1」。步驟
+      2 的「檢視交易所屬場館」改用「機台帳號（來源機台）」欄位辨識。
+  - testcase_id: TC-DRAFT-01M3XJEKZ9R1QXC5JE6WZSERR0
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-025
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明）
+      quote: 與站長的可見範圍相同、差別在操作深度
+    evidence: 'expected_result：「…且皆不含平行主站台 P2 與其底下的 T1」；test_types: [functional, security]，未含 negative。'
+    explanation: 預期含有「不含」這類反向斷言，依契約 test_types 應含 negative。REQ-025 另有 N1、N2 承擔反向覆蓋，不影響實質覆蓋，所以列為 minor。
+    recommended_change: test_types 補上 negative。
+  - testcase_id: TC-DRAFT-01M3XJEKZ93MZZ228YZTPA38EG
+    issue_type: requirement_mismatch
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-025
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明）
+      quote: 「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台）
+    evidence: 'requirement_ids: [REQ-PLATFORMRULE-025, REQ-PLATFORMRULE-015]；title 與 steps 全程只以「P1 站台的站長」執行，未涉及任何管理員；assumptions
+      1、2 的 requirement_id 亦標 REQ-PLATFORMRULE-025。'
+    explanation: REQ-025 是管理員的可見場館範圍需求，本案只驗站長，對 REQ-025 沒有驗證作用，會讓 REQ-025 的覆蓋看起來比實際多。站長的機台交易紀錄範圍屬 REQ-015。
+    recommended_change: requirement_ids 只留 REQ-PLATFORMRULE-015；assumptions 的 requirement_id 一併改為 REQ-PLATFORMRULE-015（越權反應待
+      CLR-DAILYREPORT-014 的內容不變）。
+  - testcase_id: TC-DRAFT-01M3XJEKZ6SNAXNQYJN7TXFHNA
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-015
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: 'acceptance_criteria_ids: []。RM v0.2 REQ-PLATFORMRULE-015 的 AC 只有 0151（操作員）、0152（非根站台管理員）、0153（根站台管理員），沒有站長的
+      AC。'
+    explanation: TC-051 v1 掛 AC-0151 是錯誤的（CIR 已指出），修訂版拿掉是對的；但站長的管轄範圍在 RM 沒有對應的 AC，本案只能追溯到 requirement 層級。這是 RM 的缺口，不是 Draft
+      的錯。
+    recommended_change: 下次 RM 修訂時，在 REQ-PLATFORMRULE-015 補一條站長的 AC（站長僅能查得自身站台及所有子站台下場館的機台交易），再把本案掛上去；在此之前維持 requirement 層級追溯即可。
+  - testcase_id: '*'
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-025
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+    evidence: 'N7（TC-DRAFT-01M3XJEKZ9623AQDE7RE73VM81）與 N8（TC-DRAFT-01M3XJEKZ93MZZ228YZTPA38EG）各有 3 條 needs_human_confirmation:
+      true 的假設：越權反應待 CLR-DAILYREPORT-014（OPEN）、後端是否強制可見範圍、請求是否帶可改寫的場館參數。expected 只斷言「回應不含範圍外場館的交易」，不斷言狀態碼。'
+    explanation: 這兩條是合規的 exploratory：未定義的行為都已明列假設並標為需人工確認，預期也刻意避開未定義的回應形態。SPEC-TXLOG-001 規定頁面範圍跟隨站台切換，請求帶站台參數的可能性高，假設 3 合理。核准時須由
+      Human 逐條確認這些假設；CLR-DAILYREPORT-014 回覆後應回頭收斂預期。
+    recommended_change: 不需修改 Draft。核准時在 approval 註記這 6 條假設由 Human 確認；CLR-DAILYREPORT-014 回覆後，依 ADR-008 做 impact 掃描，更新這兩條 TC
+      的預期（例如明訂 4xx 或空結果）。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明）
+      quote: 根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。
+    evidence: 31 條不修訂的 affected TC（TC-PLATFORMRULE-001～017、019～032，現行皆 v1）前置條件都寫「以 Admin 登入後台」；v0.2 已無「Admin」這個角色名稱。逐條抽查結果：31
+      條的 expected_result_spec_reference 都沒有 quote，location（§既有功能對機台帳號的排除規則／§機台場館的後台選單／§角色與權限／§Free Spin 例外／§機台場館的遊戲更新）在 v0.2
+      仍存在；預期都不依賴管理員的可見範圍。其中 016、017、019～026、030 的 Admin 前置條件形同虛設（實際以操作員或站長執行）。TC-PLATFORMRULE-028 步驟 2「檢視該遊戲於各機台場館的預設狀態」、預期「所有機台場館皆預設停用」，以及
+      TC-PLATFORMRULE-007（兩個機台場館互切）隱含需要看得到多個或全部場館。
+    explanation: 按 QA 的判斷（Admin＝根站台 admin 的管理員），31 條在 v0.2 下步驟與預期都仍成立；沒有任何一條的預期改變，也沒有引用已不存在的原文，所以不列 issue。剩下的風險只在用詞：執行者若把「Admin」理解成任一站台的管理員（v0.2
+      規定每個站台都有管理員），TC-028 只看得到自己子樹內的場館，「所有機台場館」的驗證範圍會變小（不會變成錯誤的預期，只會覆蓋不完整）。
+    recommended_change: 核准時在 approval 註記「舊稱 Admin＝根站台 admin 的管理員」的對應；之後這些 TC 因其他原因改版時，順手把前置條件改為「以根站台 admin 的管理員登入後台」（TC-028、TC-007
+      優先）。
+  - testcase_id: '*'
+    issue_type: missing_reference
+    severity: minor
+    violated_requirement: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 額度上限（場館層級） | 可設定 | 可設定 | 唯讀 |'
+    evidence: TC-PLATFORMRULE-018 v3（CIR 判 unaffected，不在本 Draft 範圍）的 expected_result_spec_reference.quote 為「額度上限（場館層級） | 可設定
+      | 可設定 | 唯讀（本spec原文欄位，經 Oscar 2026-09-15 選單截圖確認…）…出處見 SPEC-ARCADE-001 §場館設定」，混入了註解文字，不是逐字原文。
+    explanation: 這是既有的問題，跟本次 v0.1→v0.2 的變更無關（該列表格原文在兩版之間沒有變動），只是做 duplicate／registry 掃描時順帶發現的，不影響本 Draft 的判定。
+    recommended_change: TC-018 下次改版時，quote 只留表格原文「| 額度上限（場館層級） | 可設定 | 可設定 | 唯讀 |」，截圖確認與 SPEC-ARCADE-001 的說明移到 location 或
+      assumptions。
+  coverage_summary:
+    requirements_total: 25
+    requirements_covered: 24
+    ac_total: 38
+    ac_covered: 37
+    uncovered_accepted:
+    - REQ-PLATFORMRULE-011／AC-PLATFORMRULE-0111：架構層要求（選單顯示與排除規則同源），依 CLR-PLATFORMRULE-002（APPLIED）維持 rejection_contract.defined=false、不強行設計
+      TC；本次 v0.2 未變動
+    - 計算口徑：RM v0.2 全部 ACTIVE requirement／AC，覆蓋來源為本 Draft 11 條加上 Registry ACTIVE TC（被本 Draft 取代的 048／051／066 v1 不計）。AC-PLATFORMRULE-0153
+      名義上已覆蓋，但唯一對應的案例 N6 預期無效（major），修正前不算實質覆蓋
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    quotes_verbatim_in_spec_v02: true
+    revisions_match_cir_reasons: true
+    cir_new_required_ac_covered: true
+    assumptions_all_flagged: true
+    unrevised_affected_tcs_hold_under_v02: true
+    high_risk_non_happy_coverage: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M3XJEKZ4V6XQDC76SB91RG39
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ6SNAXNQYJN7TXFHNA
+    verdict: issue
+  - draft_id: TC-DRAFT-01M3XJEKZ9JZDBA9WJSZ7Y3W4E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ9B4SYP6A9D9FSWC58
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ9N6HTBVMNZEF3P08C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ900STJYASCJP60PRN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ9R1QXC5JE6WZSERR0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ98Y7J1MHRWHTZD018
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ9QSTSPPK43GTF896K
+    verdict: issue
+  - draft_id: TC-DRAFT-01M3XJEKZ9623AQDE7RE73VM81
+    verdict: ok
+  - draft_id: TC-DRAFT-01M3XJEKZ93MZZ228YZTPA38EG
+    verdict: ok
+history:
+- at: '2026-10-02T05:54:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261002-002

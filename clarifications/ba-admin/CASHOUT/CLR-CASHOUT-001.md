@@ -1,7 +1,7 @@
 # CLR-CASHOUT-001：TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？
 
 - 產品 / 功能：ba-admin / CASHOUT
-- 規格：SPEC-CASHOUT-001 v1.0
+- 規格：SPEC-CASHOUT-001 v0.1
 - 相關需求：REQ-CASHOUT-025
 - 提出者：oscarchen@blockaction.tech（2026-09-17）
 - 狀態：APPLIED

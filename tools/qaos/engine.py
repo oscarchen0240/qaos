@@ -635,8 +635,8 @@ def _after_override(run, task, apr, decision, by):
         vt = _task(run, task["task_id"]); arts = _valid_outputs(vt)
         if "TestValidationReport" in arts:
             _materialize_testcases(run, vt, arts["TestValidationReport"])
-        elif "BugValidationReport" in arts:
-            _bug_entity_transition(run, "DRAFT", "override"); _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM)
+        elif "BugValidationReport" in arts:   # _route_back 已把 bug 退回 DRAFT；由 _bug_entity_transition 走 DRAFT → VALIDATING → VALIDATED（與 TC override 相同，validated_by／report 取最後一份報告）
+            _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM, validator=vt["agent_id"], report_id=arts["BugValidationReport"]["artifact_id"])
         vt["status"] = "DONE"; _advance(run, vt["task_id"]); return
     if decision == "reject" and reopen:
         t = _task(run, reopen); t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen
