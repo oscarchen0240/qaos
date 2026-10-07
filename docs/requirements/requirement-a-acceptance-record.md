@@ -394,6 +394,7 @@
 | P6-S00-07 | F5 的拒絕訊息對 CONFIRM_DUPLICATE 的 run 也提示 a6b（a6b 對它必拒） | 依 `duplicate_of` 分兩種提示；`resolve_targets` 也略過 REJECTED 的 run（防禦性，正式入口由 a6 的拒絕先擋下） | `test_f5_*` |
 | P6-C01-01 | G-COMPARE 只檢查逐列欄位，不核對比較範圍與 Draft 身分：漏列 affected TC、引用非本輪 draft_id 的報告仍 PASS，APPLY_CHANGE 會啟用沒有被比較的版本 | `gates._compare_coverage_issues`：以本 run 本輪有效的 CIR 與 G-TVAL 審過的 Draft 核對——affected／obsolete 的 TC 恰好比較一次且 `old_version` 等於 `active_version`；`new_draft_id` 屬於該 Draft、Draft 的每張 TC 恰好比較一次；取代關係與版本相符、新 TC 為 added；`change_impact_id` 相符。只核對身分與集合，不判斷 diff 語意 | `test_p6_c01_fixes.py::test_c01_01_*`（漏列、非本輪 draft_id、取代關係錯、old_version 錯 → Structural FAIL、不建立 APPLY_CHANGE；合法 → PASS） |
 | P6-C01-03（附錄 A 6-38） | AC-A-B1-4「全部 schema PASS」照字面不成立（14 檔失敗，全部是移轉前既有資料或其逐位元複本） | Oscar 2026-10-08 決定：AC 改為 baseline 比對（新增修改檔 PASS、R000 只繼承原檔失敗、不新增其他失敗），附錄 A 6-38 列出 14 檔清單與規則，2 個歷史 CIR 列入 baseline、不放寬 CIR schema；預演腳本依此檢查 | `tests/p6_rehearsal.py`（三種模式） |
+| P6-C02-01 | 附錄 A 6-38 (4) 的「（屬 untouched）」與移轉清單的正式分類不符（12 個歷史 artifact 不在 `untouched` 清單，實際以逐檔內容比對確認） | 改為「以移轉前後逐檔內容比對確認；不要求列在 `untouched` 類別」 | — |
 | P6-S02-01～03 | 預演報告沒記錄程式版本；6-38 的「baseline」同時指移轉前與移轉後兩個集合；(4) 抓不到 baseline 檔被刪除 | 報告記錄 `--code-commit`；6-38 區分「移轉前 baseline」與「移轉後預期失敗清單」並註明只涵蓋有 schema 的檔案；(4) 納入刪除 | `tests/p6_rehearsal.py`（三種模式重跑） |
 | P6-S01-01 | G-COMPARE 仍放行「本輪 Draft 取代 CIR 判定 unaffected 的 TC」，APPLY_CHANGE 會含未被判定受影響的 TC | Draft 取代的 TC 必須在 CIR 的 affected／obsolete 中；G-TVAL 審過的 Draft 檔不存在時直接 FAIL | `test_c01_01_*[extra_unaffected]` |
 | P6-S01-02 | AC-A-B1-7 列記錄的程式 commit 不含所用的腳本 | 改記實際組成，並記乾淨匯出目錄的重跑結果 | — |
