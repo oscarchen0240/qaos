@@ -778,10 +778,24 @@ def _after_needs_decision(run, task, apr, decision, by):
         _advance(run, cont); return
     t = _task(run, apr["task_id"]); t["status"] = "READY"; t["output_artifact_ids"] = []; _save_run(run)   # structural retry 不計入 semantic 迭代
 
+def cancel_body(run_id: str, by: str, reason: str = "cancel") -> list[str]:
+    """run 轉 CANCELLED，並把該 run **所有** PENDING 的核准單轉 CANCELLED（不只 waiting_on_approval_id）；每張的 ID 與理由寫進 run 的 audit 事件。
+    已綁定的 revision 與 sidecar 保留（第 5 章 §10）。`migrate --cancel-run` 在同一個移轉操作中呼叫這裡。回傳被取消的核准單。"""
+    from . import approval_render
+    run = load_run(run_id); state.apply("workflow_run", run, "CANCELLED", by, reason, run_id); _save_run(run)
+    store.audit(run_id, by, "CANCEL_RUN", reason)
+    cancelled = []
+    for p in store.glob("approvals/APR-*.yaml"):
+        a = store.load(p)
+        if a.get("run_id") != run_id or a.get("status") != "PENDING": continue
+        a["status"] = "CANCELLED"; store.save(p, a); cancelled.append(a["approval_id"])
+        store.audit(run_id, by, "CANCEL_APPROVAL", f"{a['approval_id']}：run {run_id} 取消（{reason}）")
+        approval_render.render(a["approval_id"]); approval_render.render_html(a["approval_id"])
+    return cancelled
+
 @operation.operation("run_cancel", scope=lambda run_id, *a, **k: run_id)
 def cancel(run_id: str, by: str):
-    run = load_run(run_id); state.apply("workflow_run", run, "CANCELLED", by, "cancel", run_id); _save_run(run)
-    store.audit(run_id, by, "CANCEL_RUN", "")
+    return cancel_body(run_id, by)
 
 # ---------- Summary ----------
 def _summarize(run, task):

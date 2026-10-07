@@ -683,6 +683,13 @@ def execute(plan: dict):
     fault("before_completed")
     _write_step(plan, final)
 
+def execute_plan(plan: dict):
+    """rollback 計畫有群組與兩次檢查（第 5 章 §13.6、§13.7），由 migrate 模組執行；其他計畫依序執行。"""
+    if plan["action"] == "migrate_rollback":
+        from . import migrate
+        return migrate.execute_rollback(plan)
+    return execute(plan)
+
 # ---------------------------------------------------------------- 主流程（§6）
 def check_plan_structure(plan: dict):
     """每個 path 在一個計畫中最多一步（AC-07-19）；違反 → 計畫產生失敗，沒有任何寫入。"""
@@ -733,7 +740,7 @@ def _resume(plan: dict, *, request_hash: str | None):
     others = [o for o in incomplete_plans() if o not in (plan["op_id"], plan.get("takeover_of"))]
     if others: raise Refused(f"V3：存在其他未完成的計畫 {others}（不合法狀態），需人工處理")
     check_resume_state(plan)
-    execute(plan)
+    execute_plan(plan)
     LAST_OUTCOME.update(kind="resumed", op_id=plan["op_id"])
     return plan.get("result")
 
@@ -799,8 +806,11 @@ def _check_diagnostic(cap: store.Capture):
             if tb.get("started_at") != ta.get("started_at") and not _same_ts(ta.get("started_at"), cap.clock):
                 bad("started_at 只能設為本次時間（task 重新進入 RUNNING）")
 
-def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, resume_op: str | None = None):
-    """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。"""
+def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, resume_op: str | None = None,
+                  post_plan=None, planner=None):
+    """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。
+    post_plan(plan, blobs) → (plan, blobs)：保存計畫前補充步驟（migrate 的清單與 backup）。
+    planner(op_id, request, state, clock) → (plan, blobs)：不經擷取、直接建立計畫（migrate rollback）。"""
     LAST_OUTCOME.clear()
     ctx = acquire()
     pause("after_lock")
@@ -818,10 +828,17 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
         op = op_id_of(req); ctx.op_id = op; _write_owner(ctx)
         plan = load_plan(op)
         if plan is not None: return _existing(plan, request_hash=op)          # 第 2 步
-        if incomplete_plans():                                                 # 3b
+        if incomplete_plans() and planner is None:                             # 3b（rollback 接管在 planner 中以 T2、T3 判斷：3a）
             raise Refused(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`")
         state = system_state(); admit(action, state)                           # 3c
         clock = store.real_now(); today = store.real_today()
+        if planner is not None:
+            plan, blobs = planner(op, req, state, clock)
+            data = _save_plan(plan, blobs)
+            _register(plan, data); fault("after_register")
+            execute_plan(plan)
+            LAST_OUTCOME.update(kind="new", op_id=op)
+            return plan.get("result")
         cap = store.begin_capture(clock, today, op, owner_token=ctx.token)
         try: result = fn()
         finally: store.end_capture()
@@ -829,9 +846,10 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
             _check_diagnostic(cap)
             _write_diagnostics(cap); LAST_OUTCOME.update(kind="diagnostic", op_id=None); return result
         plan, blobs = build_plan(cap, op_id=op, request=req, action=action, scope=scope, state=state, result=result)
+        if post_plan is not None: plan, blobs = post_plan(plan, blobs)
         data = _save_plan(plan, blobs)
         _register(plan, data); fault("after_register")
-        execute(plan)
+        execute_plan(plan)
         LAST_OUTCOME.update(kind="new", op_id=op)
         return result
     finally:
@@ -840,12 +858,12 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
 def _existing(plan: dict, *, request_hash: str | None):
     op = plan["op_id"]
     st = plan_state(op)
+    if st in TERMINAL: raise Refused(f"op {op} 已終結（{st}）；要重做請以 --new-request 建立新 op")
+    r = _takeover_target(op)                                       # 被未完成的 R 接管：不論 X 是否已完成都拒絕（第 5 章 §13.10）
+    if r: raise Refused(f"op {op} 已被 rollback 計畫 {r} 接管；請續做 {r}")
     if st == "completed":
         verify_registration(op)
         LAST_OUTCOME.update(kind="completed", op_id=op); return plan.get("result")
-    if st in TERMINAL: raise Refused(f"op {op} 已終結（{st}）；要重做請以 --new-request 建立新 op")
-    r = _takeover_target(op)
-    if r: raise Refused(f"op {op} 已被 rollback 計畫 {r} 接管；請續做 {r}")
     return _resume(plan, request_hash=request_hash)
 
 def in_operation() -> bool:
@@ -898,33 +916,10 @@ def maintenance_start(by: str, new_request: bool = False):
 def maintenance_end(by: str, new_request: bool = False):
     return run_operation("maintenance_end", _maint_end, request=lambda: {"params": {"by": by}}, new_request=new_request)
 
-def _migrate(by: str, acknowledge_idle: list[str]):
-    """P1：凍結 legacy audit、寫移轉標記、第一次 render。資料轉換（R000、sidecar、CLR rev 0 等）與 rollback 在 P3。"""
-    running = []
-    for p in store.glob("runs/*/run.yaml"):
-        r = store.load(p)
-        if r.get("status") == "RUNNING": running.append(r["run_id"])
-    missing = [r for r in running if r not in acknowledge_idle]
-    if missing:
-        raise Refused(f"RUNNING 的 run 必須逐一指定處理方式：{missing}（--acknowledge-idle <run_id>；--cancel-run 在 P3 提供）")
-    logs, runs = {}, sorted(p.parent.name for p in store.glob("runs/*/run.yaml"))
-    for lg in sorted({store.rel(p) for p in store.glob("runs/*/audit.log")} | ({"runs/_audit.log"} if store.exists("runs/_audit.log") else set())):
-        legacy = lg.replace("audit.log", "audit.legacy.log")
-        if store.exists(legacy): raise Refused(f"{legacy} 已存在，移轉拒絕")
-        data = store.read_bytes(lg)
-        store.write_bytes(legacy, data)
-        logs[lg] = {"legacy": "frozen", "sha256": store.sha256_bytes(data)}
-    if "runs/_audit.log" not in logs: logs["runs/_audit.log"] = {"legacy": "absent"}
-    for r in runs:
-        if f"runs/{r}/audit.log" not in logs: logs[f"runs/{r}/audit.log"] = {"legacy": "absent"}
-    store.save(MARKER_PATH, {"migrate_op_id": store.capturing().op_id, "migrated_at": store.now(), "migrated_by": by,
-                             "mode_per_run": {r: "acknowledge_idle" for r in acknowledge_idle}, "runs": runs, "logs": logs})
-    store.audit(None, by, "MIGRATE", f"{len(logs)} logs; runs={len(runs)}")
-    return {"logs": len(logs), "runs": len(runs)}
-
-def migrate(by: str, acknowledge_idle: list[str] | None = None, new_request: bool = False):
-    ack = sorted(acknowledge_idle or [])
-    return run_operation("migrate", lambda: _migrate(by, ack), request=lambda: {"params": {"by": by, "acknowledge_idle": ack}}, new_request=new_request)
+def migrate(by: str, acknowledge_idle: list[str] | None = None, cancel_run: list[str] | None = None, new_request: bool = False):
+    """移轉（實作在 tools/qaos/migrate.py）。"""
+    from . import migrate as m
+    return m.migrate(by, acknowledge_idle or [], cancel_run or [], new_request=new_request)
 
 def _audit_render(target: str | None):
     mk = marker()

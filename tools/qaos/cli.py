@@ -197,7 +197,18 @@ def cmd_op_list(a):
 def cmd_op_resume(a): _print(operation.resume(a.op_id)); print(f"{a.op_id} 已完成")
 def cmd_maint_start(a): _print(operation.maintenance_start(a.by, **_nr(a)))
 def cmd_maint_end(a): _print(operation.maintenance_end(a.by, **_nr(a)))
-def cmd_migrate(a): _print(operation.migrate(a.by, a.acknowledge_idle or [], **_nr(a)))
+def cmd_migrate(a):
+    from . import migrate as m
+    if a.action == "verify":
+        print("（唯讀：不取鎖；讀取期間如果有寫入，結果可能不一致。在維護窗口中執行時結果一致）")
+        issues = m.verify(rolled_back=a.rolled_back)
+        for i in issues: print(f"- {i}")
+        print("verify 通過" if not issues else f"verify 失敗（{len(issues)} 項）"); sys.exit(1 if issues else 0)
+    if not a.by: sys.exit("qaos: migrate 與 migrate rollback 需要 --by")
+    if a.action == "rollback":
+        if not a.op: sys.exit("qaos: migrate rollback 需要 --op <migrate 的 op_id>")
+        _print(m.rollback(a.op, a.by, allow_later_ops=a.allow_later_ops, **_nr(a))); return
+    _print(operation.migrate(a.by, a.acknowledge_idle or [], a.cancel_run or [], **_nr(a)))
 def cmd_audit_render(a):
     if a.target and a.global_: sys.exit("audit render：<run_id> 和 --global 只能擇一")
     _print(operation.audit_render(None if a.global_ else a.target, **_nr(a)))
@@ -293,7 +304,11 @@ def main(argv=None):
     m = sp.add_parser("maintenance", help="維護模式"); mss = m.add_subparsers(dest="sub", required=True)
     p = mss.add_parser("start", parents=[W]); p.add_argument("--by", required=True); p.set_defaults(f=cmd_maint_start)
     p = mss.add_parser("end", parents=[W]); p.add_argument("--by", required=True); p.set_defaults(f=cmd_maint_end)
-    p = sp.add_parser("migrate", parents=[W], help="移轉既有資料（維護中執行）"); p.add_argument("--by", required=True); p.add_argument("--acknowledge-idle", action="append", metavar="RUN_ID"); p.set_defaults(f=cmd_migrate)
+    p = sp.add_parser("migrate", parents=[W], help="移轉既有資料（維護中執行）；migrate verify [--rolled-back]；migrate rollback --op X [--allow-later-ops]")
+    p.add_argument("action", nargs="?", choices=["verify", "rollback"], help="不給：執行移轉")
+    p.add_argument("--by"); p.add_argument("--acknowledge-idle", action="append", metavar="RUN_ID"); p.add_argument("--cancel-run", action="append", metavar="RUN_ID")
+    p.add_argument("--rolled-back", action="store_true", help="verify：核對回復後的狀態"); p.add_argument("--op", help="rollback：要回復的 migrate op_id")
+    p.add_argument("--allow-later-ops", action="store_true", help="rollback：解除「有後續操作」的前置拒絕（不授權覆寫內容衝突）"); p.set_defaults(f=cmd_migrate)
     au = sp.add_parser("audit"); aus = au.add_subparsers(dest="sub", required=True)
     p = aus.add_parser("render", parents=[W], help="重建 audit.log（<run_id>；不給或 --global 為全域 runs/_audit.log）")
     p.add_argument("target", nargs="?", metavar="RUN_ID"); p.add_argument("--global", dest="global_", action="store_true"); p.set_defaults(f=cmd_audit_render)
