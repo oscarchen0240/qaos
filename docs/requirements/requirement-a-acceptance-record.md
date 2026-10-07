@@ -394,6 +394,7 @@
 | P6-S00-07 | F5 的拒絕訊息對 CONFIRM_DUPLICATE 的 run 也提示 a6b（a6b 對它必拒） | 依 `duplicate_of` 分兩種提示；`resolve_targets` 也略過 REJECTED 的 run（防禦性，正式入口由 a6 的拒絕先擋下） | `test_f5_*` |
 | P6-C01-01 | G-COMPARE 只檢查逐列欄位，不核對比較範圍與 Draft 身分：漏列 affected TC、引用非本輪 draft_id 的報告仍 PASS，APPLY_CHANGE 會啟用沒有被比較的版本 | `gates._compare_coverage_issues`：以本 run 本輪有效的 CIR 與 G-TVAL 審過的 Draft 核對——affected／obsolete 的 TC 恰好比較一次且 `old_version` 等於 `active_version`；`new_draft_id` 屬於該 Draft、Draft 的每張 TC 恰好比較一次；取代關係與版本相符、新 TC 為 added；`change_impact_id` 相符。只核對身分與集合，不判斷 diff 語意 | `test_p6_c01_fixes.py::test_c01_01_*`（漏列、非本輪 draft_id、取代關係錯、old_version 錯 → Structural FAIL、不建立 APPLY_CHANGE；合法 → PASS） |
 | P6-C01-03（附錄 A 6-38） | AC-A-B1-4「全部 schema PASS」照字面不成立（14 檔失敗，全部是移轉前既有資料或其逐位元複本） | Oscar 2026-10-08 決定：AC 改為 baseline 比對（新增修改檔 PASS、R000 只繼承原檔失敗、不新增其他失敗），附錄 A 6-38 列出 14 檔清單與規則，2 個歷史 CIR 列入 baseline、不放寬 CIR schema；預演腳本依此檢查 | `tests/p6_rehearsal.py`（三種模式） |
+| P6-S02-01～03 | 預演報告沒記錄程式版本；6-38 的「baseline」同時指移轉前與移轉後兩個集合；(4) 抓不到 baseline 檔被刪除 | 報告記錄 `--code-commit`；6-38 區分「移轉前 baseline」與「移轉後預期失敗清單」並註明只涵蓋有 schema 的檔案；(4) 納入刪除 | `tests/p6_rehearsal.py`（三種模式重跑） |
 | P6-S01-01 | G-COMPARE 仍放行「本輪 Draft 取代 CIR 判定 unaffected 的 TC」，APPLY_CHANGE 會含未被判定受影響的 TC | Draft 取代的 TC 必須在 CIR 的 affected／obsolete 中；G-TVAL 審過的 Draft 檔不存在時直接 FAIL | `test_c01_01_*[extra_unaffected]` |
 | P6-S01-02 | AC-A-B1-7 列記錄的程式 commit 不含所用的腳本 | 改記實際組成，並記乾淨匯出目錄的重跑結果 | — |
 | P6-C01-02 | AC-A-B1-7 規定在同一個 root 依序驗收，原本的證據分散在三個不同的 root | 補同一份工作複本的連續流程（見 AC-A-B1-7 列） | `tests/p6_rehearsal.py --mode ac-b1-7` |
@@ -445,7 +446,7 @@
 | 1 | `test_p5_lifecycle.py::test_ra_end_to_end_*`、`test_p6_clr_residual.py::test_ac_a_b1_1_every_stop_asserts_clr_state` | 通過 |
 | 2 | `test_p1_resume.py::test_validation_failure_writes_only_diagnostics`、`test_p1_review_fixes.py::test_p1_05_*` | 通過 |
 | 3 | `test_p6_resume_matrix.py`（逐點循環、兩種入口交替分擔 FP-W、指定代表點，範圍見 AC-07-22～29 列）＋ P1、P3、P5 的恢復測試 | 通過 |
-| 4 | `tests/p6_rehearsal.py`（三種處理方式各一份工作複本）：R000 hash、`_skip`（SITELIST 0.6 false）、RUN-20261002-001 sidecar、RUN-20260914-001 三種處理方式、TC sidecar 96／44／57、CLR rev 0（42 張）、`audit.legacy.log`（92 份）、untouched 全部吻合；rollback、`--new-request` 重新移轉、verify 都通過；schema 依附錄 A 6-38：移轉新增或修改的檔案（R000 除外）全部 PASS、失敗的 R000 都是原檔逐位元複本、失敗集合 ⊆ baseline、baseline 檔案不變、失敗集合等於 6-38 的 14 檔清單。程式 `2f2983f`（`git archive` 匯出），資料快照 `git archive 3a62d87`（來源前後 sha256 相同）；acknowledge-idle 36 項、cancel-run 31 項、pre-cancel 28 項全部 PASS | 通過 |
+| 4 | `tests/p6_rehearsal.py`（三種處理方式各一份工作複本）：R000 hash、`_skip`（SITELIST 0.6 false）、RUN-20261002-001 sidecar、RUN-20260914-001 三種處理方式、TC sidecar 96／44／57、CLR rev 0（42 張）、`audit.legacy.log`（92 份）、untouched 全部吻合；rollback、`--new-request` 重新移轉、verify 都通過；schema 依附錄 A 6-38：移轉新增或修改的檔案（R000 除外）全部 PASS、失敗的 R000 都是原檔逐位元複本、失敗集合 ⊆ 移轉前 baseline ∪ 繼承的 R000、移轉前 baseline 的檔案沒有被修改或刪除、失敗集合等於 6-38 的移轉後預期失敗清單（14 檔；只涵蓋有 schema 的檔案）。程式 `1b9c1e4`（`git archive` 匯出；報告的 `code_commit` 記錄此值），資料快照 `git archive 3a62d87`（來源前後 sha256 相同）；acknowledge-idle 36 項、cancel-run 31 項、pre-cancel 28 項全部 PASS | 通過 |
 | 5 | 本段「執行結果」（610 passed、validate_phase1 ALL CHECKS PASSED） | 通過 |
 | 6 | `test_ac_a_b1_6_s1_q_to_s3_first_batch_commands_only` | 通過 |
 | 7 | `tests/p6_rehearsal.py --mode ac-b1-7`（`tests/p6_acb17_flow.py`）：在**同一份工作複本**依序執行——移轉（acknowledge-idle）後 DAILYREPORT 96 張候選＝0.1 R000 48＋0.2 R000 48（legacy sidecar）；第 1 輪 0.2 R000→R001（declare-empty 造成 declaration_changed）：G-IMPACT 兩組 48／48 PASS，affected 3 張走 T2、T3、T3RR、T4 → APPLY_CHANGE → APPLIED、COMPLETED，unaffected 的版本與 sidecar 逐位元不變；第 2 輪 R001→R002（from 為第 1 輪的 R001）：只判 from 端一組 → G2、G5 FAIL，正確 CIR 三組（0.1 R000、0.2 R000、0.2 R001）PASS、R000 組的 diff 涵蓋 R001 的變更 → APPLIED；第 3 輪以 AC-09-35～41（另加 G7、G8）各一份錯誤 CIR 送同一個 T1，各自 FAIL 在對應檢查、task 回 READY，最後正確 CIR → NO_IMPACT → COMPLETED。40 項檢查全部 PASS（程式為 `0271c69` 的 `tools/` 加上之後於 `d49a2af` commit 的兩個腳本；另於 `git archive cb8ce05` 的乾淨匯出目錄重跑 40／40 PASS；資料快照 `git archive 3a62d87`，來源前後 sha256 相同）；突變對照：G2、G4 失效時對應步驟失敗 | 通過（同版本 CIA；快照沒有 0.3，AC-09-31 的 0.2→0.3 跨版本情境待 M1） |
@@ -462,9 +463,8 @@
 
 ### 仍需正式 M1 或 Oscar 決定的項目
 
-- **M1**：部署當天重新讀取主資料夾的業務現況（含 9/18 未追蹤的 run、執行紀錄與證據）後重做預演；第二份工作複本的故障演練（FP-M2、M3、R0、W、P1）；AC-09-20、24、64、66、67；AC-08-16、32 的完整驗證（需 DAILYREPORT 0.3）；真實 PLATFORMRULE 0.2 與 DAILYREPORT 0.3 的正式 CIA；依附錄 A 5-10 以當天真實 ID 驗收
+- **M1**：部署當天重新讀取主資料夾的業務現況（含 9/18 未追蹤的 run、執行紀錄與證據）後重做預演；第二份工作複本的故障演練（FP-M2、M3、R0、W、P1）；AC-09-20、24、64、66、67；AC-08-16、32 的完整驗證（需 DAILYREPORT 0.3）；真實 PLATFORMRULE 0.2 與 DAILYREPORT 0.3 的正式 CIA；依附錄 A 5-10 以當天真實 ID 驗收；AC-08-16 的需求 ID（AC 寫 REQ-DAILYREPORT-012，資料中為 011）以 M1 的實際對象驗證；M1 以當天資料重新計算附錄 A 6-38 的 baseline，與清單不同時停下交 Oscar
 - **之後的需求議題**（Oscar 2026-10-08：先維持現行做法）：ARCADE 0.7 有 1 條 RETIRED 需求，依「最新 revision 有非 ACTIVE 需求」規則，移轉後 9 條 ACTIVE TC 不能直接 testcase-revision；是否改為只擋 DRAFT 另議
-- **M1**：AC-08-16 的需求 ID（AC 寫 REQ-DAILYREPORT-012，資料中為 011）以 M1 的實際對象驗證；M1 以當天資料重新計算附錄 A 6-38 的 baseline，與清單不同時停下交 Oscar
 - **觀察**（不是本階段缺陷，列給審查參考）：G7 不檢查 `requirement_diff` 的 change 標記是否正確；G-COMPARE 不檢查 `new_draft_id` 是否為本輪 Draft、是否每張 affected TC 都有比對（與 6-36 同類）
 
 ### 執行結果
