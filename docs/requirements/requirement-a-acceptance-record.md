@@ -352,7 +352,7 @@
 5. **掃描紀錄**（附錄 A 6-24）：`impact` 是寫入操作，掃描紀錄以全域 `SCAN-<ULID>` 命名；`--scan` 不能指向別張 CLR 的紀錄。
 6. **撤回**（附錄 A 6-30）：A10 只能由人執行、`--reason` 必填；被撤回的 CLR 讓引用它的 revision 成為 `decision_revised`。
 7. **自審修正**：landed-in 的 run 範圍（6-31）、A9 只計本張核准（6-32）、`req-export` 與審批頁改用 `ANSWERED_STATES`、未結案清單（`clarification list`、舊路徑的開單去重）含 INCORPORATED、`legacy_e6` 與 agent coverage 的驗證（3-25、3-30）、apply 輸入重複（6-33）、stale-tcs 的目標（6-34）。
-8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。
+8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。前置：舊格式單沒有自身範圍，要先由人以 metadata upgrade 補齊；basis 不同時另以 applicability 確認（P5-R2-04 補充，見下方「Codex 審查修正」）。
 9. **已知限制**：見 ADR-010。
 
 ### P5 Codex 審查修正
@@ -364,3 +364,4 @@
 | P5-01／P5-R2-01：最終 BugDraft／manual TestCaseDraft 以檔名排序挑選，退回重做後會選到仍為 VALID 的舊稿 | `_final_draft`：取產生者 task 本輪 `output_artifact_ids` 中的 VALID Draft，而且必須是本 run 最後一份 VALID 驗證報告審查的那份；對不上視為沒有最終稿。`_final_bugdraft`（spec-to-bug）與 `_run_scope`（manual）共用 | `test_p5_01_final_bugdraft_is_this_round_output`（正式流程：OPEN_BUG reject 重做、舊稿 ID 較大；只有舊稿採用 → a6 拒絕、CLR 不變；反方向新稿採用 → APPLIED）、`test_p5_01_manual_run_scope_after_override_reject`（函式層：FAIL ×3 → HUMAN_OVERRIDE reject 重做後，run 範圍取本輪 Draft）、`test_p5_01_final_draft_must_match_validator`（函式層：產出與報告對不上 → 沒有最終稿） |
 | P5-02／P5-R2-03：去重命中時在 schema 驗證之前返回，無效的決策點欄位（level、coverage 的 enum 等）會變成連結 | `_check_request_shape`：去重之前以 schema 驗證完整的待開單輸入（ID、狀態以合法佔位值代入，不配號、不寫檔）；連結仍不寫回既有 CLR | `test_p5_02_dedupe_hit_still_validates_input`（同 key＋無效 level、無效 references_status、不同 key＋無效 level 都拒絕；沒有 LINK audit、既有 CLR hash 不變；同 key 合法輸入照常連結） |
 | P5-03：無關鍵字結案後，stale-tcs 仍退回舊掃描的關鍵字 | 關鍵字取最近一次 applied landing（無關鍵字結案時為空集合）；完全沒有 applied landing 時才取最近一次掃描（6-19） | `test_p5_03_stale_tcs_keywords_follow_latest_applied_landing`（a7 以 no_keyword_reason 結案 → stale-tcs 不列背景命中的 TC；只有 impact、沒有 applied landing → 仍以掃描關鍵字列出） |
+| P5-R2-04：6-35 的舊格式結案方案漏列 X16 的前置（自身範圍、basis） | 附錄 A 6-35 補明前置：(1) 範圍一致 → metadata upgrade 補齊；(2) basis 不同 → applicability `--confirm-basis`；(3) 都不能確認 → 重新詢問或 A10；M1 逐單記錄。程式不變，X16 不放寬 | `test_p5_r2_04_legacy_e6_close_requires_scope`（E6 自動單 → 核准仍 ANSWERED → 直接引用 X16 FAIL → metadata upgrade → PASS、INCORPORATED → a6 APPLIED）、`test_p5_r2_04_legacy_e6_basis_change_requires_applicability`（答案之後新增 normative 引用 → 只補 metadata 仍 X16 FAIL → applicability 後 PASS）。移轉 rev 0 的現存資料在 M1 預演 |

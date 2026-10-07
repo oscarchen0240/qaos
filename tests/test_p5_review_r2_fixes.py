@@ -1,6 +1,7 @@
 """P5 Codex 審查（requirement-a-p5-code-review.md 的 P5-01～03、-r2.md 的 P5-R2-01、03、04）的修正與補測。
 狀態都以正式流程建立；標明「函式層」的子例直接呼叫內部函式。"""
 import json
+from tests import p1_util as U
 from tests.test_p4_dispatch import mkroot, py
 from tests.test_p5_paths import BUG, HDR
 
@@ -157,3 +158,53 @@ print(json.dumps({"scan": [x["tc_id"] for x in s["candidates"]], "ok": ok, "a": 
     assert out["scan"] and out["a"] == "APPLIED" and "final_keywords" not in out["land"], out
     assert out["stale_a"] == []                                                              # 不再以舊 scan 的「刪除」列出 TC
     assert {x["tc_id"] for x in out["stale_b"]} == set(out["scan"]) and all(r == "keyword:刪除" for x in out["stale_b"] for r in x["reasons"])
+
+E6 = HDR + """
+def e6_answered():
+    '''G-SPEC 對沒有決策點的舊格式 critical 需求自動開單（E6）→ 回答 → 核准（不再 apply，CLR 維持 ANSWERED）。'''
+    rid = F.new_run()
+    F.analyze(rid, [F.req(1, ambiguity={"level": "critical", "description": "站長能否刪除子站台未定義（舊格式）"})])
+    cid = F.clrs(requirement_id="REQ-DEMO-001")[0]["clarification_id"]
+    clr.answer(cid, "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
+    F.approve(F.waiting(rid)); return rid, cid
+def upgrade(cid):
+    clr.metadata_upgrade(cid, "oscar", "舊格式 E6 單轉新格式：人工核對自身範圍與新決策點一致", question_id="Q01", subject="site.child.delete", role_scope=["admin"], params={}, new_request=True)
+def res(cid): return {"source": F.cref(cid, "任何站台都不能刪除"), "decided_at": "2026-10-07", "adopted_side_index": 1}
+"""
+
+def test_p5_r2_04_legacy_e6_close_requires_scope(tmp_path):
+    """P5-R2-04（附錄 A 6-35）：舊格式 E6 單沒有自身範圍，直接以新格式 resolution.source 引用 → G-SPEC X16 FAIL、CLR 維持 ANSWERED；
+    人以 metadata upgrade 補齊自身範圍後，同一份分析 PASS → A4（INCORPORATED）→ Designer／Validator／核准 → a6 APPLIED。不放寬 X16。"""
+    root = mkroot(tmp_path)
+    out = py(root, E6 + """
+rid, cid = e6_answered(); c0 = clr.load(cid); s0 = c0["status"]
+g1 = F.analyze(rid, [P.conflict_req(1, res(cid))]); s1 = clr.load(cid)["status"]
+upgrade(cid)
+g2 = F.analyze(rid, [P.conflict_req(1, res(cid))]); s2 = clr.load(cid)["status"]
+tcs = P.ra_p3_design(rid, cid, g2)
+ok = P.apply_(cid, landed_in=[rid], targets=["SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01"], keywords=["刪除"], tc_conclusions=[f"{t}=updated" for t in tcs])
+print(json.dumps({"c0": [c0.get(k) for k in ("subject", "role_scope", "params", "question_id")], "s0": s0, "g1": [g1["result"], g1.get("issues")], "s1": s1,
+                  "g2": g2["result"], "s2": s2, "ok": ok, "s3": clr.load(cid)["status"]}, default=str))""")
+    assert out["c0"] == [None, None, None, None] and out["s0"] == "ANSWERED"                       # E6 自動單沒有自身範圍；核准不再 apply
+    assert out["g1"][0] == "FAIL" and any("X16" in i and "沒有自身的答案範圍" in i for i in out["g1"][1]) and out["s1"] == "ANSWERED", out["g1"]
+    assert out["g2"] == "PASS" and out["s2"] == "INCORPORATED"
+    assert "error" not in out["ok"] and out["s3"] == "APPLIED", out["ok"]
+
+def test_p5_r2_04_legacy_e6_basis_change_requires_applicability(tmp_path):
+    """P5-R2-04（附錄 A 6-35）：舊答案之後目標新增 normative 引用宣告（basis 改變）→ 只補 metadata 仍 X16 FAIL；
+    人以 applicability（--confirm-basis 帶入目前 basis_hash）確認舊答案仍適用後才 PASS → INCORPORATED。"""
+    root = mkroot(tmp_path)
+    a = py(root, E6 + """
+rid, cid = e6_answered(); engine.cancel(rid, F.BY, new_request=True)
+print(json.dumps({"cid": cid}))""")
+    U.q(root, "spec", "reference", "add", "SPEC-DEMO-001@1.0", "--ref", "SPEC-REFB-001@1.0", "--role", "normative", "--by", "oscar", "--new-request", check=True)
+    out = py(root, E6 + f"""
+from tools.qaos import sources
+cid = "{a['cid']}"; upgrade(cid)
+rid = F.new_run(); g1 = F.analyze(rid, [P.conflict_req(1, res(cid))]); s1 = clr.load(cid)["status"]
+bh = sources.basis_hash(sources.basis(F.SPEC, F.VER))
+clr.applicability_add(cid, 0, "REQ-DEMO-001", "site.child.delete", ["admin"], {{}}, "SPEC-DEMO-001@1.0", "引用宣告變更後人工確認答案仍適用", "oscar", confirm_basis=bh, new_request=True)
+g2 = F.analyze(rid, [P.conflict_req(1, res(cid))])
+print(json.dumps({{"g1": [g1["result"], g1.get("issues")], "s1": s1, "g2": g2["result"], "s2": clr.load(cid)["status"]}}, default=str))""")
+    assert out["g1"][0] == "FAIL" and any("X16" in i and "basis_hash 不同" in i for i in out["g1"][1]) and out["s1"] == "ANSWERED", out["g1"]
+    assert out["g2"] == "PASS" and out["s2"] == "INCORPORATED"
