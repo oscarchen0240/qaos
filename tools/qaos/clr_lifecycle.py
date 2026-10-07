@@ -99,7 +99,14 @@ def _final_draft(run: dict, art_type: str) -> dict | None:
     if draft is None or rep is None or rep["payload"].get(key) != draft["artifact_id"]: return None
     return draft
 
+def bug_rejected(run_id: str) -> bool:
+    """spec-to-bug run 的 Bug 已 REJECTED（CONFIRM_DUPLICATE 確認重複、RESOLVE_AMBIGUITY reject）。"""
+    p = f"runs/{run_id}/entities/bug.yaml"
+    return store.exists(p) and store.load(p)["status"] == "REJECTED"
+
 def _final_bugdraft(run_id: str) -> dict | None:
+    """最終 BugDraft；Bug 已 REJECTED 的 run 沒有可作為落地證據的最終稿（附錄 A 6-37：改走 a6b 或其他 run）。"""
+    if bug_rejected(run_id): return None
     return _final_draft(store.load(f"runs/{run_id}/run.yaml"), "BugDraft")
 
 def _targets_in_bugdraft(c: dict, run: dict, art: dict) -> list:
@@ -391,6 +398,7 @@ def apply(clr_id: str, path: str, by: str, landed_in=(), targets=(), defer_targe
             if not store.exists(f"runs/{rid}/run.yaml"): raise LifecycleError(f"--landed-in {rid} 不存在")
             st = store.load(f"runs/{rid}/run.yaml")["status"]
             if st != "COMPLETED": raise LifecycleError(f"--landed-in {rid} 的狀態是 {st}，不是 COMPLETED")
+            if path == "a6" and bug_rejected(rid): raise LifecycleError(f"--landed-in {rid} 的 Bug 已 REJECTED，不能作為 a6 的落地證據；答案只經 bug reject 路徑落地時改用 --path a6b，否則以其他 run 落地（附錄 A 6-37）")
     if path == "a6":
         resolved = {target_id(t): t for t in resolve_targets(c, landed_in)}
         unknown = [t for t in list(targets) + list(defer) if t not in resolved]
