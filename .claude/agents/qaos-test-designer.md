@@ -98,5 +98,5 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
   - **E2（major）**：不能引用該決策點的 `conflict_sides`。
   - **E3、E4、E5（minor、major）**：依賴的斷言只能 exploratory（`assumptions` 標 `needs_human_confirmation: true`）。
 - basis 為 undefined 的 `known_rules` 只是背景，不能當 expected 依據。
-- 限制只作用在依賴該決策點的斷言：同一需求中已定的其他決策點不受影響。
+- 限制只作用在依賴該決策點的斷言：同一需求中已定的其他決策點不受影響。舊格式的「ambiguity.level=major 的需求，TC 一律加需人工確認的 assumption」只用於舊格式需求；新格式需求只依賴 E1 的 TC 不要加 assumption（否則會誤觸每條需求 exploratory 最多 3 條的上限）。
 - expected 的依據寫在 `source_refs`（SourceRef），只能是派發包範圍內的來源。

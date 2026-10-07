@@ -125,10 +125,13 @@ def test_ac_04_3_tampered_reference_file_fails_gate(tmp_path):
 def test_ac_04_4_out_of_scope_source_needs_missing_reference(tmp_path):
     root = mkroot(tmp_path)
     out = py(root, f"""
+zone = clr.new("demo", "ZONE", "SPEC-OTHER-001", "1.0", "其他功能區的已回答問題", "oscar", new_request=True)   # 入口 D：不屬於目標或引用的 area
+clr.answer(zone["clarification_id"], "其他功能區的規則：一律保留紀錄。", "pm", "requirement_clarified", "oscar", new_request=True)
 rid = F.new_run(); g = F.analyze(rid, [{OK_REQ.strip()}])
 k = F.ident(F.sref("任何站台都不能刪除。"))
 dref = [{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": k}}]
-t1 = F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=dref, srcs=[F.sref("與站台無關的規則。", sid="SPEC-OTHER-001", loc="§無關")])
+outside = F.cref(zone["clarification_id"], "一律保留紀錄")                # 合法的 SourceRef（hash、quote 都對），但不在 Validator 的派發包範圍內
+t1 = F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=dref, srcs=[outside])
 t2 = F.tc(2, "REQ-DEMO-001", "站台列表沒有刪除按鈕", drefs=dref, srcs=[F.sref("任何站台都不能刪除。")])
 d = F.design(rid, [t1, t2])
 v1 = F.validate(rid, d["did"], g["rmid"], "PASS")

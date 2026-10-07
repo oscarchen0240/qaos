@@ -139,3 +139,19 @@ print(json.dumps([rid, fl]))""")
     U.q(root, "spec", "reference", "add", "SPEC-DEMO-001@1.0", "--ref", "SPEC-REFB-001@1.0", "--role", "normative", "--by", "oscar", check=True)   # 派發之後改宣告
     out2 = py(root, f"""g = F.analyze("{rid}", [F.req(1, [F.dp("Q01", "defined_in_target", "none", known=[F.sref("任何站台都不能刪除。")])])]); print(json.dumps([g["result"], g["issues"]]))""")
     assert out2[0] == "FAIL" and any("basis_hash 不同" in i for i in out2[1]), out2[1]
+
+def test_unavailable_reference_without_citation_stops_the_run(tmp_path):
+    """附錄 A 1-19（Oscar 2026-10-07 確認）：缺文件只由 unavailable 的必讀參考構成、又沒有正文引用處 → G-SPEC FAIL，需求不持久化、不開文件索取單；
+    列出正文引用處（目標中真的有那一行）→ 正常推導為 E3、開文件索取單。"""
+    root = mkroot(tmp_path)
+    out = py(root, """
+rid = F.new_run(); un = [{"pin": F.pin("SPEC-REF-001"), "reason": "unavailable", "note": "讀取失敗"}]
+g1 = F.analyze(rid, [F.req(1, [F.dp("Q01", "undefined", "minor", coverage=F.cov(consulted=[F.pin()], unconsulted=un))], ambiguity=F.amb("minor", "minor"))])
+n_rev = len((store.load("artifacts/requirements/SPEC-DEMO-001/v1.0/revisions/index.yaml") if store.exists("artifacts/requirements/SPEC-DEMO-001/v1.0/revisions/index.yaml") else {}).get("revisions") or [])
+g2 = F.analyze(rid, [F.req(1, [F.dp("Q01", "undefined", "minor", coverage=F.cov(consulted=[F.pin()], unconsulted=un,
+                                    missing=[F.missing(13, "手冊 v01 的角色模型（見 7.1.1 角色說明）", "權限參考文件")]))], ambiguity=F.amb("minor", "minor"))])
+print(json.dumps([g1["result"], g1["issues"], n_rev, g2["result"], g2["issues"], [c["kind"] for c in F.clrs(requirement_id="REQ-DEMO-001")]]))""")
+    assert out[0] == "FAIL" and any("附錄 A 1-19" in i and "不得捏造引用處" in i for i in out[1]), out[1]
+    assert out[2] == 0
+    assert out[3] == "PASS", out[4]
+    assert out[5] == ["document_request"]

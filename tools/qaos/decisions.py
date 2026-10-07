@@ -53,7 +53,22 @@ def dp_items(dp: dict) -> set:
     cov = dp["coverage"]
     return {_wid(m) for m in cov.get("missing_sources") or []} | {_wid(u) for u in cov.get("unconsulted_normative") or []}
 
+def is_index(v) -> bool:
+    """索引與行號只接受整數表示且不小於 0（附錄 A 3-24、1-37）：bool、0.0 這類浮點寫法都是形狀錯誤（不轉換、不截斷）。"""
+    return type(v) is int and v >= 0
+
+def waived_shape_errors(items) -> list[str]:
+    errs = []
+    for it in items or []:
+        c = it.get("cited_at") if isinstance(it, dict) else None
+        if c is not None and not (is_index(c.get("line")) and c["line"] >= 1):
+            errs.append(f"豁免項目 {it.get('name')!r} 的 cited_at.line 必須是正整數表示（實際 {c.get('line')!r}）")
+    return errs
+
 def waiver_errors(w: dict, req: dict, dp: dict, loader) -> list[str]:
+    if not is_index(w.get("resolution_index")): return [f"resolution_index 必須是整數表示（實際 {w.get('resolution_index')!r}）"]
+    shape = waived_shape_errors(w.get("waived"))
+    if shape: return shape
     a = loader.approval(w["approval_id"])
     if a is None: return [f"{w['approval_id']} 不存在"]
     d = a.get("decision") or {}
@@ -128,6 +143,7 @@ def check_dp(req: dict, dp: dict, ctx: Ctx) -> list[str]:
     if res is not None and "source" not in res: x(13, "resolution 沒有 source" + ("，卻帶有其他子欄位" if res else ""))
     if res is not None and not defined:
         idx = res.get("adopted_side_index")
+        if idx is not None and not is_index(idx): x(11, f"adopted_side_index 必須是 null 或整數表示（實際 {idx!r}）"); idx = None
         if b == "undefined" and idx is not None: x(11, "basis 為 undefined 時 adopted_side_index 必須是 null")
         if b == "conflict" and idx is not None and not (0 <= idx < len(sides)): x(11, f"adopted_side_index {idx} 超出 conflict_sides 範圍（{len(sides)} 筆）")
     for u in cov["unconsulted_normative"]:
@@ -138,6 +154,8 @@ def check_dp(req: dict, dp: dict, ctx: Ctx) -> list[str]:
         if _pk(p) != _pk(ctx.target_pin) and _pk(p) not in ctx.closure_pins: out.append(f"G-SPEC：{tag} coverage.consulted 的 {p['spec_id']}@{p['spec_version']} 不是目標，也不在派發包的閉包內")
     for m in cov["missing_sources"]:
         c = m["cited_at"]
+        if not (is_index(c["line"]) and c["line"] >= 1):
+            out.append(f"G-SPEC：{tag} 缺檔 {m['name']!r} 的 cited_at.line 必須是正整數表示（實際 {c['line']!r}）"); continue
         try:
             spec_ops.verify_pin(c["spec_id"], c["spec_version"], c["content_hash"])
             p_, _, e = spec_ops.find_entry(c["spec_id"], c["spec_version"]); lines = store.read_text(p_.parent / e["file"]).split("\n")
@@ -203,7 +221,9 @@ def check(req: dict, ctx: Ctx) -> tuple[list[str], dict | None]:
     der = {dp["question_id"]: derive_dp(req, dp, ctx) for dp in dps}
     for dp in dps:
         if der[dp["question_id"]]["state"] == "E3" and not dp["coverage"]["missing_sources"]:
-            errs.append(f"附錄 A 1-19：{rid}/{dp['question_id']} 推導為缺文件（E3），但沒有 missing_sources；文件索取單至少要有一個引用處（未查參考為 unavailable 時，也要列出它在目標中的引用處）")
+            errs.append(f"附錄 A 1-19：{rid}/{dp['question_id']} 推導為缺文件（E3），但沒有 missing_sources；文件索取單至少要有一個正文引用處。"
+                        "未查參考標為 unavailable 時：目標正文有提到它，就把該行列入 missing_sources；正文沒有提到它，不得捏造引用處——"
+                        "已宣告的參考一定已匯入，請停下由人處理（重新讀取後取消此 run 重新分析，或移除該引用宣告）")
     eff_max = lmax(d["effective_level"] for d in der.values()); raised = lmax(dp["level"] for dp in dps)
     rr = [dp for dp in dps if dp["topic"] == "rejection_response"]
     rej = all(der[dp["question_id"]]["state"] == "E1" for dp in rr) if rr else None

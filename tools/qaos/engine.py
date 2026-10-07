@@ -446,6 +446,12 @@ def _apply_effects(run, task, wf, wt, arts, sem):
     store.audit(run_id, SYSTEM, "GATE_PASS", f"{task['task_id']} {gate}")
     _advance(run, task["task_id"])
 
+def _reopen_downstream(t):
+    """被退回而失效的下游 task 重設為 PENDING：清空本輪產出；agent task 進入下一個 iteration，下次執行要用新的派發包
+    （舊派發紀錄保留供追溯，舊 iteration 的產出被拒；附錄 A 1-39）。"""
+    t["status"] = "PENDING"; t["output_artifact_ids"] = []
+    if t["type"] == "agent": t["iteration"] += 1
+
 def _route_back(run, task, wf, report):
     """Validator FAIL → 前一個 agent task 重新 READY（iteration+1），報告成為其 input；超限 → HUMAN_OVERRIDE。"""
     state.apply("task", task, "DONE", SYSTEM, f"validator FAIL ({report['artifact_id']})")
@@ -458,7 +464,7 @@ def _route_back(run, task, wf, report):
         _create_approval(run, task, "HUMAN_OVERRIDE", f"{gen['task_id']} 已迭代 {gen['iteration']} 次仍 FAIL", [], [report["artifact_id"]],
                          options=[{"key": "override", "label": "強制通過（需 rationale）"}, {"key": "reject", "label": "再給一次迭代"}, {"key": "cancel", "label": "取消 run"}], reopen_task=gen["task_id"])
         _save_run(run); return
-    gen["status"] = "READY"; task["status"] = "PENDING"; task["output_artifact_ids"] = []
+    gen["status"] = "READY"; _reopen_downstream(task)
     gen.setdefault("history", None); gen.pop("history", None)
     run["current_task_id"] = gen["task_id"]; _save_run(run)
     store.audit(run["run_id"], SYSTEM, "ROUTE_BACK", f"{task['task_id']} → {gen['task_id']} iteration {gen['iteration']}")
@@ -738,6 +744,8 @@ def _preflight_approval(apr, decision, resolutions=None):
         if e["outcome"] == "waive_missing":
             items = decisions.dp_items(dp)
             if not e.get("waived"): raise EngineError(f"resolutions[{i}] 的 waive_missing 要逐項列出 waived")
+            shape = decisions.waived_shape_errors(e["waived"])
+            if shape: raise EngineError(f"resolutions[{i}]：{'; '.join(shape)}")
             for it in e["waived"]:
                 try: k = decisions._wid(it)
                 except (KeyError, TypeError): raise EngineError(f"resolutions[{i}] 的 waived 項目形狀不合法：{it!r}")
@@ -762,7 +770,7 @@ def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, 
         gen["iteration"] += 1; gen["status"] = "READY"; gen["output_artifact_ids"] = []
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
             if t["task_id"] != task["task_id"] and t["status"] in ("DONE",) and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"):
-                t["status"] = "PENDING"; t["output_artifact_ids"] = []
+                _reopen_downstream(t)
             if t["type"] == "approval": t["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到本輪 reject 前的殘留資料
         task["status"] = "PENDING"; task["input_entity_refs"] = []
         run["current_task_id"] = gen["task_id"]
@@ -875,7 +883,7 @@ def _after_ambiguity(run, task, apr, decision, by):
     if reopen:
         t = _task(run, reopen); t["iteration"] += 1; t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen
         for later in run["tasks"][[x["task_id"] for x in run["tasks"]].index(reopen) + 1:]:
-            if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"): later["status"] = "PENDING"
+            if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"): _reopen_downstream(later)
         _save_run(run)
 
 def _apply_waivers(apr, by):
@@ -902,11 +910,11 @@ def _after_override(run, task, apr, decision, by):
             _bug_entity_transition(run, "DRAFT", "override"); _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM)
         vt["status"] = "DONE"; _advance(run, vt["task_id"]); return
     if decision == "reject" and reopen:
-        t = _task(run, reopen); t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen
+        t = _task(run, reopen); t["iteration"] += 1; t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen   # 「再給一次迭代」：新的 iteration、新的派發包
         ids_ = [x["task_id"] for x in run["tasks"]]
         for later in run["tasks"][ids_.index(reopen) + 1:]:   # 下游已 DONE 的 task 重設，讓 Validator 可再跑
             if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"):
-                later["status"] = "PENDING"; later["output_artifact_ids"] = []; later.pop("history", None)
+                _reopen_downstream(later); later.pop("history", None)
             if later["type"] == "approval": later["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到殘留資料
         _save_run(run); return
     state.apply("workflow_run", run, "CANCELLED", by, apr["approval_id"], run["run_id"]); _save_run(run)
