@@ -450,7 +450,9 @@ def _apply_effects(run, task, wf, wt, arts, sem):
             state.apply("task", task, "DONE", SYSTEM, "NO_IMPACT")
             for t in run["tasks"]:
                 if t["status"] == "PENDING" and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"): t["status"] = "DONE"
-            _advance(run, task["task_id"]); return
+            ids_ = [t["task_id"] for t in run["tasks"]]; i = ids_.index(task["task_id"])
+            while i + 1 < len(ids_) and run["tasks"][i + 1]["status"] == "DONE": i += 1
+            _advance(run, ids_[i]); return                                             # no_impact: goto 總結（從最後一個略過的 task 之後推進，P6-G3-01）
     state.apply("task", task, "DONE", SYSTEM, f"{gate or 'no-gate'} PASS"); task["ended_at"] = store.now()
     store.audit(run_id, SYSTEM, "GATE_PASS", f"{task['task_id']} {gate}")
     _advance(run, task["task_id"])
