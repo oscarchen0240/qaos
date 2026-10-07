@@ -1,0 +1,93 @@
+product: ba-admin
+functional_area: PLATFORMRULE
+requirement_ids:
+- REQ-PLATFORMRULE-024
+- REQ-PLATFORMRULE-013
+acceptance_criteria_ids:
+- AC-PLATFORMRULE-0242
+- AC-PLATFORMRULE-0131
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: high
+risk: high
+execution_mode: manual
+title: 操作員於注單查詢與稽核明細僅能查得自身所屬場館的資料
+preconditions:
+- 以操作員身分登入後台，其所屬場館為 A
+- 另一機台場館 B 有已知的注單與機台交易（會員編號已知）
+steps:
+- n: 1
+  action: 於注單查詢以場館 B 的會員編號查詢；若頁面提供站台／場館切換入口則嘗試切至 B
+- n: 2
+  action: 於稽核明細以涵蓋場館 B 交易的日期範圍查詢；同上嘗試切換
+- n: 3
+  action: 檢視兩頁查詢結果
+expected_result: 兩頁皆查無場館 B 的資料，僅能查得場館 A 範圍內的注單與稽核明細；若切換入口存在且可選 B，選擇後應查無資料或被系統阻擋（Spec 只定義資料層可見範圍，切換入口是否隱藏屬實作細節）
+test_data: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: medium
+stability: unknown
+critical_path: true
+spec_id: SPEC-PLATFORMRULE-001
+spec_version: '0.2'
+assumptions: []
+source: change_workflow
+source_ref: change_impact:CI-SPEC-PLATFORMRULE-001-0.1-0.2
+expected_result_spec_reference:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  location: §角色與權限（角色層級依 CLR-PLATFORMRULE-001；注單查詢／稽核明細頁面存取依 CLR-PLATFORMRULE-003，v0.2 原文未載）
+  quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+testcase_id: TC-PLATFORMRULE-066
+version: 2
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+created_at: '2026-10-02T05:57:55Z'
+updated_at: '2026-10-02T06:05:56Z'
+history:
+- at: '2026-10-02T05:57:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M3XJW8S546KRTR4RPED1N0T6
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:57:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M3XJZPXYG1CKA6D6VY1HZSTW
+  run_id: RUN-20261002-002
+- at: '2026-10-02T05:58:51Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261002-002
+- at: '2026-10-02T06:05:56Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0193
+  run_id: RUN-20261002-002
+- at: '2026-10-02T06:05:56Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261002-002
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0193

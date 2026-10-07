@@ -5,11 +5,16 @@
 import os, shutil, pathlib, tempfile, pytest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
-TMP = pathlib.Path(tempfile.mkdtemp(prefix="qaos-test-"))
-for d in ("schemas", "agents", "workflows", "permissions"):
-    shutil.copytree(REPO / d, TMP / d)
-for d in ("specs", "testcases/registry", "testcases/versions", "testsuites", "bugs", "artifacts", "executions", "evidence", "approvals", "runs"):
-    (TMP / d).mkdir(parents=True, exist_ok=True)
+
+def make_root(base: pathlib.Path) -> pathlib.Path:
+    """在 base 建立一份乾淨的 QAOS root（定義層副本 + 空的資料目錄）。"""
+    for d in ("schemas", "agents", "workflows", "permissions"):
+        shutil.copytree(REPO / d, base / d)
+    for d in ("specs", "testcases/registry", "testcases/versions", "testsuites", "bugs", "artifacts", "executions", "evidence", "approvals", "runs"):
+        (base / d).mkdir(parents=True, exist_ok=True)
+    return base
+
+TMP = make_root(pathlib.Path(tempfile.mkdtemp(prefix="qaos-test-")))
 os.environ["QAOS_ROOT"] = str(TMP)
 
 from tools.qaos import operation as _op   # noqa: E402  （QAOS_ROOT 設定之後才 import）

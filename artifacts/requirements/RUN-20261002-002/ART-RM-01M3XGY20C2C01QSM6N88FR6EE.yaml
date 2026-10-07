@@ -1,0 +1,1026 @@
+artifact_id: ART-RM-01M3XGY20C2C01QSM6N88FR6EE
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261002-002
+task_id: T0
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-10-02T05:24:12Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-PLATFORMRULE-001@0.2
+  - ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+references:
+- entity_type: SpecVersion
+  id: SPEC-PLATFORMRULE-001
+  version: '0.2'
+- entity_type: Artifact
+  id: ART-RM-01M2G36NQCPQX2T3X2J841RYJC
+- entity_type: Clarification
+  id: CLR-PLATFORMRULE-001
+- entity_type: Clarification
+  id: CLR-PLATFORMRULE-002
+- entity_type: Clarification
+  id: CLR-PLATFORMRULE-003
+requires_approval: null
+payload:
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  requirements:
+  - requirement_id: REQ-PLATFORMRULE-001
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台出金不進入出金審核流程
+    statement: 機台出金為現場即時核可並印出收據，不需經過後台的出金審核流程
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0011
+      given: 一筆機台出金交易完成
+      when: 檢視出金審核頁面
+      then: 查無該筆機台出金的審核項目，本頁僅列出線上會員的出金審核
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則 + §對既有章節的影響
+      quote: '| 3.2 | 出金審核 | **不進入本流程**。機台出金為現場即時核可並印出收據，不需後台審核 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §既有功能對機台帳號的排除規則
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-002
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: 機台開分與入金的稽核明細照常寫入
+    statement: 開分與入金比照既有的出金設定，可依幣種設定稽核倍數，稽核明細照常寫入稽核明細頁面；機台預設為 0 倍
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0021
+      given: 一筆機台開分或機台入金交易完成
+      when: 至稽核明細頁面查詢
+      then: 該筆交易正常出現在稽核明細頁面，類型標示為機台開分或機台入金
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則
+      quote: '| 4.4 | 稽核明細 | **照常寫入**。開分與入金比照既有的出金設定，可依幣種設定稽核倍數，**機台預設為 0 倍**（等同不設稽核門檻）'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義；稽核倍數規則本身已由 SPEC-CASHFLOW-001 驗證，本條只測稽核明細頁面的顯示
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §既有功能對機台帳號的排除規則
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-003
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: Free Spin 為排除規則的既有例外，機台帳號可被指定加入
+    statement: Free Spin 適用機台帳號，同一般會員；可將機台帳號指定加入 Free Spin 活動，免費旋轉由後台直接派發不需玩家領取，共用帳號收得到；幣種依主站台核心貨幣
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0031
+      given: 於 Free Spin 管理選擇會員時
+      when: 嘗試指定一個機台帳號
+      then: 系統允許選擇機台帳號加入活動，不因帳號類型為機台而被排除
+    - ac_id: AC-PLATFORMRULE-0032
+      given: 後台對機台帳號派發一筆 Free Spin
+      when: 檢視該機台帳號
+      then: 免費旋轉直接到帳，不需要玩家額外操作領取
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則 + §Free Spin 例外
+      quote: '| 6.8 | Free Spin 管理 | **適用，同一般會員**。可將機台帳號指定加入 Free Spin 活動；免費旋轉由後台直接派發、不需玩家領取，共用帳號收得到。幣種依主站台核心貨幣（機台場館即 TWD）'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且是排除規則政策層的刻意例外
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §Free Spin 例外
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-004
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: 站台切換至機台場館時，後台選單依規則隱藏不適用頁面；切回線上站台恢復完整選單
+    statement: 站台切換下拉選單選到機台場館時，後台選單隱藏不適用的頁面；同一操作者切回線上站台即恢復完整選單
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0041
+      given: 站台切換選單切至一個機台場館站台
+      when: 檢視後台選單整體結構
+      then: 選單依隱藏規則調整，不適用頁面消失
+    - ac_id: AC-PLATFORMRULE-0042
+      given: 再將站台切換選單切回線上站台
+      when: 檢視後台選單
+      then: 選單恢復完整，先前隱藏的頁面全部重新出現
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: 站台切換下拉選單選到**機台場館**時，後台選單隱藏不適用的頁面（這些頁面的功能已由排除規則排除，**現階段**留著只會是空白頁）。顯示與否**跟著站台切換走**：同一操作者切回線上站台即恢復完整選單。
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-005
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：資訊看板分類整個隱藏
+    statement: 站台切換至機台場館時，資訊看板這個分類整個隱藏
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0051
+      given: 站台切換至機台場館
+      when: 檢視左側選單分類
+      then: 不存在「資訊看板」這個分類
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 資訊看板 | —（整個分類隱藏） | 資訊看板 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-006
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：會員與加盟商分類僅顯示會員列表
+    statement: 站台切換至機台場館時，會員與加盟商分類僅顯示會員列表，加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定皆隱藏
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0061
+      given: 站台切換至機台場館，展開會員與加盟商分類
+      when: 檢視可見項目
+      then: 僅顯示會員列表；加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定皆不顯示
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 會員與加盟商 | 會員列表 | 加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-007
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：帳務管理分類顯示鏈上錢包管理（僅TWD頁籤）與洗分出金核實
+    statement: 站台切換至機台場館時，帳務管理分類顯示鏈上錢包管理（僅法幣TWD頁籤，區塊鏈頁籤隱藏）與洗分出金核實；出金審核、優惠彩金審核隱藏
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0071
+      given: 站台切換至機台場館，展開帳務管理分類
+      when: 檢視可見項目
+      then: 顯示鏈上錢包管理與洗分出金核實；不顯示出金審核與優惠彩金審核
+    - ac_id: AC-PLATFORMRULE-0072
+      given: 開啟鏈上錢包管理頁面
+      when: 檢視頁籤
+      then: 僅顯示法幣 TWD 頁籤，區塊鏈幣別頁籤隱藏
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 帳務管理 | 鏈上錢包管理（**僅顯示法幣 TWD 頁籤**，區塊鏈頁籤隱藏——稽核倍數設定在此）、洗分出金核實 | 出金審核、優惠彩金審核 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-008
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：各式報表分類顯示交易紀錄查詢等四項
+    statement: 站台切換至機台場館時，各式報表分類顯示交易紀錄查詢、注單查詢、稽核明細、場館日結報表；返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄隱藏
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0081
+      given: 站台切換至機台場館，展開各式報表分類
+      when: 檢視可見項目
+      then: 顯示交易紀錄查詢、注單查詢、稽核明細、場館日結報表；不顯示返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 各式報表 | 交易紀錄查詢、注單查詢、稽核明細、場館日結報表 | 返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-009
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：系統管理分類顯示公告等四項，隱藏KYC等六項
+    statement: 站台切換至機台場館時，系統管理分類顯示公告設定、Free Spin 管理、橫幅管理、消稽核設定；KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理隱藏
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0091
+      given: 站台切換至機台場館，展開系統管理分類
+      when: 檢視可見項目
+      then: 顯示公告設定、Free Spin 管理、橫幅管理、消稽核設定；不顯示 KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 系統管理 | 公告設定、Free Spin 管理、橫幅管理、消稽核設定 | KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-010
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 機台場館選單：遊戲商管理與後台管理員系統分類全部顯示
+    statement: 站台切換至機台場館時，遊戲商管理分類（遊戲商管理、遊戲貢獻值設定）與後台管理員系統分類全部顯示，不隱藏任何項目
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0101
+      given: 站台切換至機台場館，展開遊戲商管理與後台管理員系統分類
+      when: 檢視可見項目
+      then: 兩個分類的所有項目皆顯示，沒有任何一項被隱藏
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單（遊戲商管理列；後台管理員系統列為「| 後台管理員系統 | 全部 | — |」）
+      quote: '| 遊戲商管理 | 遊戲商管理、遊戲貢獻值設定 | — |'
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的後台選單
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-011
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 選單隱藏跟著排除規則走，排除解除時對應頁面隨之恢復顯示
+    statement: 選單顯示規則應與排除規則同一來源設定；未來某項功能對機台帳號恢復適用時，對應頁面隨之恢復顯示，不應各自寫死
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0111
+      given: 某項目前被排除、選單隱藏的功能未來對機台帳號恢復適用
+      when: 檢視機台場館的後台選單
+      then: 對應頁面應隨排除規則解除而自動恢復顯示（此為架構要求，實際驗證需待有排除項目被解除時才能真正測試，暫列為待未來實際案例驗證的規則）
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單（拒絕行為處理依 CLR-PLATFORMRULE-002 PM 定案）
+      quote: '**隱藏跟著排除規則走**：排除為現階段營運決策（見「既有功能對機台帳號的排除規則」），未來某項功能對機台帳號恢復適用時，對應頁面隨之恢復顯示——選單顯示規則應與排除規則同一來源設定，不要各自寫死'
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: false
+      description: 此為架構/實作方式的要求（集中政策層、不得各自硬編碼），非可獨立驗證的使用者可觀察行為；目前沒有任何排除項目被解除。依 CLR-PLATFORMRULE-002 PM 定案（2026-09-14；v0.2
+        原文未載）：維持 defined=false，Test Design 不強行湊負向 TC，於 TestDesignReport 註記「架構要求，待未來有排除項目實際解除時再補測試」；未來驗證走「先解除某排除項目→驗證對應頁面恢復顯示」的真實案例
+  - requirement_id: REQ-PLATFORMRULE-012
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 操作員為本功能新增角色，權限小於站長，供場館現場人員使用
+    statement: 操作員是本功能新增的後台帳號權限角色，權限小於站長；與正本名詞「Operator（店員）」是不同概念——店員要執行核實等後台操作，須另持有操作員角色的後台帳號
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0121
+      given: 後台新增使用者時檢視角色選項
+      when: 確認是否包含操作員
+      then: 角色選項包含操作員，可指派給後台帳號並指定所屬場館
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限 + §對既有章節的影響（7.1.1、7.x 列）
+      quote: 「操作員」為本功能**新增角色**，權限小於站長，供場館現場人員使用。
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-013
+    version: 2
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 操作員可見場館範圍僅自身所屬場館
+    statement: 操作員的可見場館範圍僅限自身所屬場館。（v0.2 修訂：v0.1 本條所記「Admin 可見全部場館」已不成立——v0.2 將 Admin 改名「管理員」，可見範圍改為自身站台及所有子站台下的場館（根站台 admin
+      的管理員＝全部場館），另立 REQ-PLATFORMRULE-025；站長維持自身站台及所有子站台下的場館。角色層級 管理員＞站長＞操作員、可見範圍由所屬站台決定，依 CLR-PLATFORMRULE-001，與 v0.2 一致）
+    rationale: 操作員語意與 AC-PLATFORMRULE-0131 不變；版本升為 2 是因 v0.1 statement 內含的 Admin＝全部場館已被 v0.2 推翻並移至 REQ-PLATFORMRULE-025
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0131
+      given: 以操作員身分登入後台
+      when: 檢視可操作/可見的場館範圍（跨頁通用規則）
+      then: 僅能見到自身所屬的單一場館，看不到其他場館的資料
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（角色層級依 CLR-PLATFORMRULE-001）
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+    ambiguity: null
+    related_requirement_ids:
+    - REQ-PLATFORMRULE-025
+    risk: high
+    status: DRAFT
+    supersedes_version: 1
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，是本包角色模型的核心規則
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-014
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 操作員後台選單無「站台列表」項目，無法進入場館設定頁面，額度上限等欄位無從檢視或修改
+    statement: 操作員角色的後台選單完全沒有「站台列表」這個項目，因此無法進入場館設定頁面，額度上限等欄位無從檢視或修改。（2026-09-15 實機截圖確認操作員選單含：會員與加盟商>會員列表、帳務管理>洗分出金核實、各式報表>交易紀錄查詢/場館日結報表；依
+      CLR-PLATFORMRULE-003 PM 回覆 2026-09-22，各式報表另須含注單查詢與稽核明細，見 REQ-PLATFORMRULE-024）
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0141
+      given: 以操作員身分登入後台，站台切換選單已選定自身所屬的機台場館
+      when: 檢視後台左側選單
+      then: 選單中沒有「站台列表」這個項目，因此無法進入場館設定頁面，該頁面內的額度上限（SPEC-PLATFORMRULE-001原文欄位）、場次逾時時間（SPEC-ARCADE-001正本定義的欄位，本spec原文未提及）皆無從檢視或修改；會員列表、洗分出金核實、交易紀錄查詢、注單查詢、稽核明細、場館日結報表等操作員可操作項目正常存在於選單中
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（原文操作員欄為「唯讀」；經 Oscar 2026-09-15 選單截圖確認整頁無法進入，非可檢視唯讀；選單列舉依 CLR-PLATFORMRULE-003，v0.2 原文未載；場次逾時時間出處見 SPEC-ARCADE-001
+        §場館設定）
+      quote: '| 額度上限（場館層級） | 可設定 | 可設定 | 唯讀 |'
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接影響金流風控
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-015
+    version: 2
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 機台交易紀錄查詢的可見範圍依角色不同：管理員與站長為管轄範圍、操作員自身場館
+    statement: 機台交易紀錄查詢頁面（SPEC-TXLOG-001）的可見範圍依角色不同：管理員與站長皆為管轄範圍（自身站台及其所有子站台下的場館；根站台 admin 的管理員因子樹即全平台，等同全部場館），操作員僅能查自身所屬場館。（v0.2
+      修訂：管理員由 v0.1 的「全部」改為「管轄範圍」）
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0151
+      given: 以操作員身分登入，於機台交易紀錄查詢頁嘗試查詢自身場館以外的交易
+      when: 檢視查詢結果
+      then: 查無其他場館的交易紀錄，僅能查得自身所屬場館範圍內的交易
+    - ac_id: AC-PLATFORMRULE-0152
+      given: 以非根站台的管理員身分登入（所屬站台為某主站台或其下子站台），平行的其他主站台下另有場館產生機台交易
+      when: 於機台交易紀錄查詢頁查詢（含嘗試選擇所屬站台子樹以外的場館）
+      then: 僅能查得自身站台及其所有子站台下場館的機台交易；平行或上層站台下場館的交易查無
+    - ac_id: AC-PLATFORMRULE-0153
+      given: 以根站台 admin 的管理員身分登入
+      when: 於機台交易紀錄查詢頁查詢
+      then: 可查得全平台各場館的機台交易紀錄
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（「管轄範圍」定義見同節管理員說明；角色層級依 CLR-PLATFORMRULE-001）
+      quote: '| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    ambiguity: null
+    related_requirement_ids:
+    - REQ-PLATFORMRULE-025
+    risk: high
+    status: DRAFT
+    supersedes_version: 1
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義：範圍外場館的交易查無；越權直接呼叫 API 的系統反應未定義，列為 edge case
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-016
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: 場館現場的人工入金／出金操作，管理員、站長、操作員皆可執行
+    statement: 人工入金／出金（櫃檯）操作，管理員、站長、操作員皆可執行
+    rationale: v0.2 術語：v0.1 的「Admin」改名「管理員」，本條權限值未變、語意不變。
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0161
+      given: 以操作員身分登入後台
+      when: 嘗試對一個機台帳號執行人工入金或人工出金
+      then: 系統允許執行，操作員具備此權限
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 人工入金／出金（櫃檯） | 可操作 | 可操作 | 可操作 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-017
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 重設密碼操作站長需二次確認，操作員不可執行
+    statement: 重設密碼（所有會員帳號）管理員可直接操作，站長操作須二次確認，操作員不可執行此操作
+    rationale: v0.2 術語：v0.1 的「Admin」改名「管理員」，本條權限值未變、語意不變。
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0171
+      given: 以站長身分執行重設密碼操作
+      when: 檢視流程
+      then: 須經過二次確認才會生效
+    - ac_id: AC-PLATFORMRULE-0172
+      given: 以操作員身分嘗試執行重設密碼操作
+      when: 觀察系統反應
+      then: 操作員不具備此權限，無法執行
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 重設密碼（所有會員帳號） | 可操作 | 可操作（須二次確認） | 不可 |'
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-015 未涵蓋的角色維度
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-018
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 編輯機台基本資料操作員僅唯讀，發放/重置機台憑證操作員不可執行
+    statement: 編輯機台基本資料操作員僅能檢視（唯讀）；發放／重置機台憑證操作員不可執行
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0181
+      given: 以操作員身分檢視機台基本資料編輯畫面
+      when: 嘗試修改內容
+      then: 欄位僅供檢視，無法儲存修改
+    - ac_id: AC-PLATFORMRULE-0182
+      given: 以操作員身分嘗試發放或重置機台憑證
+      when: 觀察系統反應
+      then: 操作員不具備此權限，無法執行
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 編輯機台基本資料 | 可操作 | 可操作 | 唯讀 |
+
+        | 發放／重置機台憑證 | 可操作 | 可操作（重置須二次確認） | 不可 |'
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-011 未涵蓋的操作員權限
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-019
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 新增機台操作員不可執行
+    statement: 新增機台操作員不可執行此操作
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0191
+      given: 以操作員身分登入後台，尋找或嘗試執行新增機台操作
+      when: 觀察系統反應
+      then: 操作員不具備此權限，無法執行
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 新增機台 | 可操作 | 可操作 | 不可 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，補充 SPEC-ACCOUNT-001 REQ-ACCOUNT-010 未涵蓋的完整權限對照
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-020
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: 機台停用/啟用三種角色皆可操作
+    statement: 機台停用／啟用操作，管理員、站長、操作員皆可執行
+    rationale: v0.2 術語：v0.1 的「Admin」改名「管理員」，本條權限值未變、語意不變。
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0201
+      given: 以操作員身分登入後台
+      when: 對一台機台執行停用或啟用操作
+      then: 系統允許執行，操作員具備此權限
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 機台停用／啟用 | 可操作 | 可操作 | 可操作 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-021
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: functional
+    title: 平台新增或更新遊戲後，機台場館一律預設停用（含更新前已啟用者）
+    statement: 平台新增任何遊戲、或對既有遊戲發佈更新後，該遊戲在所有機台場館一律預設為停用，包含更新前原已啟用的遊戲
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0211
+      given: 一款遊戲原已在某機台場館啟用
+      when: 平台對該遊戲發佈更新
+      then: 更新後，該遊戲在此機台場館被重新設為停用，需重新手動開啟
+    - ac_id: AC-PLATFORMRULE-0212
+      given: 平台新增一款全新遊戲
+      when: 檢視該遊戲於各機台場館的預設狀態
+      then: 所有機台場館皆預設停用
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 預設停用 | 平台**新增**任何遊戲、或對既有遊戲發佈**更新**後，該遊戲在所有機台場館一律**預設為停用**——包含更新前原已啟用的遊戲（更新視同內容變動，須重新決定是否開放） |'
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接關係法規合規
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的遊戲更新
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-022
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 遊戲新增或更新僅由站長於遊戲商管理開啟，操作員不可操作，平台不代為開啟
+    statement: 遊戲的開啟方式：由站長自行於遊戲商管理啟用該遊戲；操作員不可操作；平台不代為開啟
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0221
+      given: 一款遊戲於某機台場館因更新被設為停用
+      when: 以站長身分至遊戲商管理手動開啟該遊戲
+      then: 系統允許站長執行開啟操作
+    - ac_id: AC-PLATFORMRULE-0222
+      given: 以操作員身分嘗試開啟一款被停用的遊戲
+      when: 觀察系統反應
+      then: 操作員不具備此權限，無法執行
+    - ac_id: AC-PLATFORMRULE-0223
+      given: 遊戲被平台新增或更新後
+      when: 檢視是否有任何自動開啟機制
+      then: 平台不會主動代為開啟，需人工由站長執行
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 開啟方式 | 由**站長**自行於 遊戲商管理 啟用該遊戲；**操作員不可操作**；平台不代為開啟 |'
+    ambiguity:
+      level: minor
+      description: §機台場館的遊戲更新「開啟方式」與§業務規則「遊戲更新預設停用」只寫由站長啟用（操作員不可），但§角色與權限表「| 機台場館遊戲啟用（遊戲商管理） | 可操作 | 可操作 | 不可 |」管理員欄為「可操作」；v0.2
+        明定管理員每個站台皆有，管理員能否於遊戲商管理啟用因新增／更新而停用的遊戲，兩處寫法不一致（v0.1 已存在，v0.2 未修）。不影響現有三條 AC（站長可、操作員不可、平台不代開），只影響是否另需管理員視角的 AC
+      options:
+      - 依權限表：管理員與站長皆可啟用（CLR-PLATFORMRULE-001 管理員層級高於站長亦支持此讀法）；「開啟方式」的「站長」為相對於平台／操作員的寫法
+      - 依遊戲更新章節：僅站長可啟用，管理員不可（權限表管理員欄需修正）
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的遊戲更新
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-023
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: constraint
+    title: 遊戲更新預設停用規則僅適用機台類型場館，線上站台不受影響
+    statement: 遊戲更新預設停用的規則僅適用站台類型為「機台」的場館；線上站台維持既有行為，不受本規則影響
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0231
+      given: 平台對一款遊戲發佈更新，此遊戲原已在一個線上站台啟用
+      when: 檢視該遊戲於此線上站台的狀態
+      then: 維持啟用狀態不變，不受機台場館的預設停用規則影響
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 適用範圍 | 僅站台類型「機台」的場館；線上站台維持既有行為，不受本規則影響 |'
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    history: []
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §機台場館的遊戲更新
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-024
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 操作員可進入注單查詢與稽核明細，可見範圍限自身場館
+    statement: 操作員角色的後台選單含「各式報表 > 注單查詢」與「各式報表 > 稽核明細」，可進入並查詢；資料範圍依 REQ-PLATFORMRULE-013 限自身所屬場館。（CLR-PLATFORMRULE-003 PM 回覆
+      2026-09-22：新需求；v0.2 權限表仍未補列此兩列，現行實機操作員選單無此兩頁，屬未實作）
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0241
+      given: 以操作員身分登入後台，站台切換選單已選定自身所屬的機台場館
+      when: 展開各式報表分類
+      then: 選單含「注單查詢」與「稽核明細」，可進入並執行查詢
+    - ac_id: AC-PLATFORMRULE-0242
+      given: 以操作員身分於注單查詢或稽核明細頁查詢
+      when: 檢視查詢結果（含嘗試指定自身場館以外的範圍）
+      then: 僅能查得自身所屬場館範圍內的資料
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（v0.2 權限表仍未列「注單查詢」「稽核明細」；頁面存取權依 CLR-PLATFORMRULE-003 PM 回覆 2026-09-22 新增，v0.2 原文未載）
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+    ambiguity: null
+    related_requirement_ids:
+    - REQ-PLATFORMRULE-013
+    - REQ-PLATFORMRULE-014
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 可見範圍規則由 REQ-PLATFORMRULE-013 定義（僅自身所屬場館）；頁面存取權由 CLR-PLATFORMRULE-003 定案（v0.2 原文未載）
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限（依 CLR-PLATFORMRULE-003）
+        quote: ''
+  - requirement_id: REQ-PLATFORMRULE-025
+    version: 1
+    spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    type: security
+    title: 管理員可見場館範圍為自身站台及所有子站台下的場館（根站台 admin 的管理員＝全部場館）
+    statement: 管理員每個站台皆有，可見場館範圍跟著所屬站台走：自身站台及其所有子站台下的場館，與同站台站長的可見範圍相同（差別在操作深度）；根站台 admin 的管理員因其子樹即全平台，等同可見全部場館；非根站台的管理員看不到平行或上層站台下的場館。（v0.2
+      新增：v0.1 為 Admin＝全部場館。角色層級 管理員＞站長＞操作員、可見範圍由所屬站台決定，依 CLR-PLATFORMRULE-001，與 v0.2 一致）
+    acceptance_criteria:
+    - ac_id: AC-PLATFORMRULE-0251
+      given: 以非根站台的管理員身分登入（所屬站台為某機台主站台），其子樹內有場館 A，平行的另一機台主站台下有場館 B
+      when: 檢視可見／可切換的場館範圍（站台切換選單等跨頁通用範圍）
+      then: 可見自身站台及所有子站台下的場館（含場館 A）；場館 B 及上層站台下的場館皆不可見
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+    - ac_id: AC-PLATFORMRULE-0252
+      given: 以根站台 admin 的管理員身分登入
+      when: 檢視可見／可切換的場館範圍
+      then: 可見全平台所有場館
+    - ac_id: AC-PLATFORMRULE-0253
+      given: 同一站台各有一位管理員與一位站長
+      when: 分別登入檢視可見場館範圍
+      then: 兩者可見的場館範圍相同（自身站台及所有子站台下的場館）
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明；角色層級依 CLR-PLATFORMRULE-001）
+      quote: 「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台），與站長的可見範圍相同、差別在操作深度；根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。
+    ambiguity: null
+    related_requirement_ids:
+    - REQ-PLATFORMRULE-013
+    - REQ-PLATFORMRULE-015
+    risk: high
+    status: DRAFT
+    history: []
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 可見範圍規則已明確定義（範圍外場館不可見）；越權直接呼叫 API 帶範圍外場館參數時的系統反應 v0.2 未定義，列為 edge case（同類問題已開 CLR-DAILYREPORT-014，待 PM 回覆）
+      spec_reference:
+        spec_id: SPEC-PLATFORMRULE-001
+        spec_version: '0.2'
+        location: §角色與權限
+        quote: ''
+  traceability:
+  - requirement_id: REQ-PLATFORMRULE-001
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則 + §對既有章節的影響
+      quote: '| 3.2 | 出金審核 | **不進入本流程**。機台出金為現場即時核可並印出收據，不需後台審核 |'
+  - requirement_id: REQ-PLATFORMRULE-002
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則
+      quote: '| 4.4 | 稽核明細 | **照常寫入**。開分與入金比照既有的出金設定，可依幣種設定稽核倍數，**機台預設為 0 倍**（等同不設稽核門檻）'
+  - requirement_id: REQ-PLATFORMRULE-003
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §既有功能對機台帳號的排除規則 + §Free Spin 例外
+      quote: '| 6.8 | Free Spin 管理 | **適用，同一般會員**。可將機台帳號指定加入 Free Spin 活動；免費旋轉由後台直接派發、不需玩家領取，共用帳號收得到。幣種依主站台核心貨幣（機台場館即 TWD）'
+  - requirement_id: REQ-PLATFORMRULE-004
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: 站台切換下拉選單選到**機台場館**時，後台選單隱藏不適用的頁面（這些頁面的功能已由排除規則排除，**現階段**留著只會是空白頁）。顯示與否**跟著站台切換走**：同一操作者切回線上站台即恢復完整選單。
+  - requirement_id: REQ-PLATFORMRULE-005
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 資訊看板 | —（整個分類隱藏） | 資訊看板 |'
+  - requirement_id: REQ-PLATFORMRULE-006
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 會員與加盟商 | 會員列表 | 加盟列表、登入網域查詢、推薦註冊金設定、暱稱禁用詞設定 |'
+  - requirement_id: REQ-PLATFORMRULE-007
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 帳務管理 | 鏈上錢包管理（**僅顯示法幣 TWD 頁籤**，區塊鏈頁籤隱藏——稽核倍數設定在此）、洗分出金核實 | 出金審核、優惠彩金審核 |'
+  - requirement_id: REQ-PLATFORMRULE-008
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 各式報表 | 交易紀錄查詢、注單查詢、稽核明細、場館日結報表 | 返水明細、加盟傭金發放紀錄、代理返傭發放紀錄、會員等級異動紀錄 |'
+  - requirement_id: REQ-PLATFORMRULE-009
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單
+      quote: '| 系統管理 | 公告設定、Free Spin 管理、橫幅管理、消稽核設定 | KYC 設定、會員等級設定、代理設定、加盟商設定、優惠活動管理、畫面管理 |'
+  - requirement_id: REQ-PLATFORMRULE-010
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單（遊戲商管理列；後台管理員系統列為「| 後台管理員系統 | 全部 | — |」）
+      quote: '| 遊戲商管理 | 遊戲商管理、遊戲貢獻值設定 | — |'
+  - requirement_id: REQ-PLATFORMRULE-011
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的後台選單（拒絕行為處理依 CLR-PLATFORMRULE-002 PM 定案）
+      quote: '**隱藏跟著排除規則走**：排除為現階段營運決策（見「既有功能對機台帳號的排除規則」），未來某項功能對機台帳號恢復適用時，對應頁面隨之恢復顯示——選單顯示規則應與排除規則同一來源設定，不要各自寫死'
+  - requirement_id: REQ-PLATFORMRULE-012
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限 + §對既有章節的影響（7.1.1、7.x 列）
+      quote: 「操作員」為本功能**新增角色**，權限小於站長，供場館現場人員使用。
+  - requirement_id: REQ-PLATFORMRULE-013
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（角色層級依 CLR-PLATFORMRULE-001）
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+  - requirement_id: REQ-PLATFORMRULE-014
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（原文操作員欄為「唯讀」；經 Oscar 2026-09-15 選單截圖確認整頁無法進入，非可檢視唯讀；選單列舉依 CLR-PLATFORMRULE-003，v0.2 原文未載；場次逾時時間出處見 SPEC-ARCADE-001
+        §場館設定）
+      quote: '| 額度上限（場館層級） | 可設定 | 可設定 | 唯讀 |'
+  - requirement_id: REQ-PLATFORMRULE-015
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（「管轄範圍」定義見同節管理員說明；角色層級依 CLR-PLATFORMRULE-001）
+      quote: '| 機台交易紀錄查詢 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+  - requirement_id: REQ-PLATFORMRULE-016
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 人工入金／出金（櫃檯） | 可操作 | 可操作 | 可操作 |'
+  - requirement_id: REQ-PLATFORMRULE-017
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 重設密碼（所有會員帳號） | 可操作 | 可操作（須二次確認） | 不可 |'
+  - requirement_id: REQ-PLATFORMRULE-018
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 編輯機台基本資料 | 可操作 | 可操作 | 唯讀 |
+
+        | 發放／重置機台憑證 | 可操作 | 可操作（重置須二次確認） | 不可 |'
+  - requirement_id: REQ-PLATFORMRULE-019
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 新增機台 | 可操作 | 可操作 | 不可 |'
+  - requirement_id: REQ-PLATFORMRULE-020
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限
+      quote: '| 機台停用／啟用 | 可操作 | 可操作 | 可操作 |'
+  - requirement_id: REQ-PLATFORMRULE-021
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 預設停用 | 平台**新增**任何遊戲、或對既有遊戲發佈**更新**後，該遊戲在所有機台場館一律**預設為停用**——包含更新前原已啟用的遊戲（更新視同內容變動，須重新決定是否開放） |'
+  - requirement_id: REQ-PLATFORMRULE-022
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 開啟方式 | 由**站長**自行於 遊戲商管理 啟用該遊戲；**操作員不可操作**；平台不代為開啟 |'
+  - requirement_id: REQ-PLATFORMRULE-023
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §機台場館的遊戲更新
+      quote: '| 適用範圍 | 僅站台類型「機台」的場館；線上站台維持既有行為，不受本規則影響 |'
+  - requirement_id: REQ-PLATFORMRULE-024
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（v0.2 權限表仍未列「注單查詢」「稽核明細」；頁面存取權依 CLR-PLATFORMRULE-003 PM 回覆 2026-09-22 新增，v0.2 原文未載）
+      quote: '| 可見場館範圍 | 自身站台及所有子站台下的場館（根站台 `admin` 的管理員＝全部場館） | 自身站台及所有子站台下的場館 | 僅自身所屬場館 |'
+  - requirement_id: REQ-PLATFORMRULE-025
+    spec_reference:
+      spec_id: SPEC-PLATFORMRULE-001
+      spec_version: '0.2'
+      location: §角色與權限（管理員說明；角色層級依 CLR-PLATFORMRULE-001）
+      quote: 「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台），與站長的可見範圍相同、差別在操作深度；根站台 `admin` 的管理員因其子樹即全平台，故等同看到全部場館。
+history:
+- at: '2026-10-02T05:24:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261002-002
