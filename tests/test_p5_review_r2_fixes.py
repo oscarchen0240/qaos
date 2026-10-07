@@ -231,3 +231,22 @@ print(json.dumps({"st": engine.load_run(b)["status"], "bad": bad, "h": [h0, h1],
     assert "沒有通過 X16" in out["bad"].get("error", ""), out["bad"]
     assert out["h"][0] == out["h"][1]
     assert "error" not in out["ok"] and out["s"] == "APPLIED", out["ok"]
+
+def test_p5_02_shape_checked_before_source_validation(tmp_path):
+    """P5-02 自審補充：形狀錯的輸入在來源與 pin 驗證之前就由開單關卡拒絕（ClarificationError），不會以 KeyError／TypeError 崩潰；
+    functional_area 不合 CLR ID 格式時，訊息指向 area 而不是佔位 ID。"""
+    root = mkroot(tmp_path)
+    out = py(root, GATE + """
+def human(area="DEMO", **kw):
+    try: clr.new("demo", area, F.SPEC, F.VER, "子站台能否刪除？", "oscar", requirement_id="REQ-DEMO-001", new_request=True, **kw); return "accepted"
+    except clr.ClarificationError as e: return "gate: " + str(e)
+    except Exception as e: return f"crash: {type(e).__name__}: {e}"
+pin = F.cov()["consulted"][0]
+r = {"no_hash": human(coverage={**F.cov(), "consulted": [{"spec_id": pin["spec_id"], "spec_version": pin["spec_version"]}]}),
+     "str_consulted": human(coverage={**F.cov(), "consulted": "x"}),
+     "bad_area": human(area="demo-x", consulted=["SPEC-DEMO-001@1.0"]),
+     "ok": human(consulted=["SPEC-DEMO-001@1.0"])}
+print(json.dumps(r))""")
+    for k in ("no_hash", "str_consulted"): assert out[k].startswith("gate: 開單關卡：輸入不符 schema"), (k, out[k])
+    assert out["bad_area"].startswith("gate: 開單關卡：functional_area 必須是大寫英數"), out["bad_area"]
+    assert out["ok"] == "accepted"

@@ -2,7 +2,7 @@
 
 需求 A（第 3 章 FIX-06、FIX-08）：決策點欄位、不可變答案修訂（answer_revisions）與 basis、人工適用紀錄（applicability）、
 補充佐證（evidence_addenda）、舊 CLR 的 metadata 升級。開單關卡與 issue key 去重（第 3 章 §4、§5）。生命週期的納入、apply、文件項目在 tools/qaos/clr_lifecycle.py。"""
-import json
+import json, re
 from . import store, ids, schema, state, operation, sources, spec_ops
 
 class ClarificationError(ValueError):
@@ -61,6 +61,8 @@ def save(c: dict):
 def _check_request_shape(c: dict):
     """開單關卡（第 3 章 §5；附錄 A 3-29）：在去重之前以 schema 驗證完整的待開單輸入，連結既有單與新開單受同一個關卡約束。
     尚未配發的 ID 與狀態以合法的佔位值代入，不配號、不寫檔。"""
+    if not re.fullmatch(r"[A-Z0-9]+", str(c.get("functional_area") or "")):
+        raise ClarificationError(f"開單關卡：functional_area 必須是大寫英數（CLR ID 的一段）：{c.get('functional_area')!r}")
     errs = schema.errors({**c, "clarification_id": f"CLR-{c['functional_area']}-000", "status": "OPEN"}, "spec/clarification.schema.json")
     if errs: raise ClarificationError("開單關卡：輸入不符 schema：" + "; ".join(errs[:3]))
 
@@ -169,11 +171,12 @@ def new(product, area, spec_id, spec_version, question, by, context="", options=
     if pins:
         cov = dict(c.get("coverage") or {}); seen = {(p["spec_id"], p["spec_version"]) for p in cov.get("consulted", [])}
         cov["consulted"] = list(cov.get("consulted", [])) + [p for p in pins if (p["spec_id"], p["spec_version"]) not in seen]; c["coverage"] = cov
+    _check_request_shape(c)                                                  # 先驗形狀，後面的來源與 pin 驗證才不會因型別錯誤崩潰
     if any(k in c for k in DECISION_FIELDS): _check_decision_fields(c)
     if key_material(c) is not None:
         try: c["issue_key"] = issue_key(c, sources.basis(spec_id, spec_version))
         except (spec_ops.SpecError, sources.SourceError) as e: raise ClarificationError(f"無法建立 issue key 的 basis：{e}")
-    _check_request_shape(c)
+    _check_request_shape(c)                                                  # 補上 document_items、issue_key 後再驗一次，然後才去重
     hit, rel, warns = _dedupe(c, list_(open_only=False))
     if hit is not None:
         store.audit(run_id, by, "LINK_CLARIFICATION", f"{hit['clarification_id']}（issue key 相同，不新開）: {question}")
