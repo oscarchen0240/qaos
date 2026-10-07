@@ -216,7 +216,7 @@
 ### P3 的實作說明（審查時請一併確認）
 
 1. **模組**：revision 與綁定在新模組 `tools/qaos/rm.py`（第 5 章 §16 原寫 `store.py`）；移轉、回復、verify 在新模組 `tools/qaos/migrate.py`。
-2. **附錄 A 5-12（R，待 Oscar 確認）**：CLR 的 spec 版本沒有匯入時跳過 rev 0 並記為例外。
+2. **附錄 A 5-12（R）**：CLR 的 spec 版本沒有匯入時跳過 rev 0 並記為例外。2026-10-07 更新：規則保留作為安全網；唯一會遇到的 `CLR-CASHOUT-001` 由 Oscar 決定以資料更正處理（spec_version 1.0 → 0.1，主資料夾 main `e312a00`）。
 3. **附錄 A 5-13（R）**：T7 接受 `audit.log` 的正常重新 render，否則回復點之後任何操作（含維護開關）都會讓回復永遠被拒。
 4. **附錄 A 5-14（I）**：實作補充的定義（revision 編號、run 欄位、`legacy_binding`、清單中的循環項目、`untouched` 範圍、R 的事件等）。
 5. **既有測試配合新規則**：manual run 必須有 spec（第 5 章 §4.3），兩個 ADR-009 的 manual 測試改為有 spec 或驗證拒絕；gate 單元測試的需求模型改經 `save_requirements` 建立（需求 ID 改成符合 schema 的格式）；test_15 的 CIR 加上兩端 revision 與 pin_groups。
@@ -228,12 +228,12 @@
 
 ## P4：派發包、決策點、狀態推導與路由、G-DESIGN、preflight、agent 契約
 
-- **執行 commit**：`865f28781a3f114db831ece75cc53cb772c0d221`（分支 `qaos/requirement-a`；程式、schema、agent 契約與測試）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`1654b0b26e8efc1a8a7766009270b7c1c598e918`（分支 `qaos/requirement-a`；P4 程式、schema、agent 契約與測試為 `865f287`，P4 程式碼審查 P4-01～05 的修正為 `9403628`，下游 iteration 與舊輪產出的重評修正為 `ff21296`、`1654b0b`）。本紀錄所在的 commit 只改文件
 - **環境**：同 P1
 - **資料**：每個案例使用獨立的暫存 root。spec 以 `spec import`、引用以 `spec reference add` 建立；run、派發、提交、gate、核准、CLR 的回答與適用紀錄都走正式 API（`tests/p4_flow.py`）。CLR 的入口 D（腳本呼叫 `clarification.new()`）另外標示。範例 A～F 以測試 root 中的小型 spec（`SPEC-DEMO-001`、`SPEC-REF-001` 等）重現同樣的資料形狀與推導，**不是** SITELIST、DAILYREPORT 的真實資料；真實資料的重現在 M1 預演時驗收。標明「函式層」的子例直接呼叫內部函式（64 組合路由表、狀態機的 kind 限制、G-SPEC 的派發包 sha 核對）；標明「竄改」的子例才在流程後修改檔案
 - **既有測試的配合**：需要派發包的 task，測試 helper（`tests/helpers.write_artifact`）在寫入 artifact 前以正式指令 `dispatch` 產生派發包並填入 `dispatch_packet_sha256`（模擬 orchestrator 在派工前執行 `qaos dispatch`）；SpecAnalysis 沒有給 `consulted_sources` 時，helper 以派發包中的目標與全部必讀參考填入（模擬讀完必讀來源）
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 398 passed（快照與 commit 的程式、測試內容逐檔相同）；`tools/validate_phase1.py` ALL CHECKS PASSED
-- **突變檢查**（在 scratchpad 的複本上逐一套用、跑對應測試，worktree 不變）：31 項全部被對應測試抓到——派發（沒有派發包、沿用舊派發包、同一 iteration 重複派發、額外來源不附理由）、G-SPEC（consulted hash、必讀參考、派發包 sha、派發後宣告改變、references_status、引用處文字、consulted 不在閉包、X14、X15 的 CLR 狀態、X16、X18 的 `*` 混用、3-18、approval 依據的 outcome、agent 自填推導欄位）、推導（豁免不影響 gap_missing）、G-DESIGN（E1 引用未採用的一側、背景 known_rules、E3～E5 的 exploratory、每個 TC 的 decision_refs）、G-TVAL（派發包範圍）、preflight（defer、重複條目、混合 revision 的舊規則）、開單（去重、短問題文字）、A9 與狀態機的 kind 限制
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 405 passed（快照與 commit 的程式、測試內容逐檔相同）；`tools/validate_phase1.py` ALL CHECKS PASSED
+- **突變檢查**（在 scratchpad 的複本上逐一套用、跑對應測試，worktree 不變）：P4 原有 31 項、審查修正 12 項（TC 的 source_refs 不驗、額外來源也套目標限制、下游不加 iteration、5 個索引欄位不查整數表示、RR 不驗 SourceRef／不查範圍／接受舊形狀、Designer 契約回到舊規則）全部被對應測試抓到——派發（沒有派發包、沿用舊派發包、同一 iteration 重複派發、額外來源不附理由）、G-SPEC（consulted hash、必讀參考、派發包 sha、派發後宣告改變、references_status、引用處文字、consulted 不在閉包、X14、X15 的 CLR 狀態、X16、X18 的 `*` 混用、3-18、approval 依據的 outcome、agent 自填推導欄位）、推導（豁免不影響 gap_missing）、G-DESIGN（E1 引用未採用的一側、背景 known_rules、E3～E5 的 exploratory、每個 TC 的 decision_refs）、G-TVAL（派發包範圍）、preflight（defer、重複條目、混合 revision 的舊規則）、開單（去重、短問題文字）、A9 與狀態機的 kind 限制
 - **自審**：交 Codex 前以獨立 agent 找反例，發現 9 項（1 項 blocker：`withdraw` 的操作裝飾器被移位；4 項 major：approval 型依據未限 `select_interpretation`、只有 negative TC 要求 decision_refs、混合 revision 時略過舊規則、附錄 A 1-19 需要審查確認；4 項 minor）。除 1-19 交審查確認外都已修正並補反例
 
 ### AC 對照
@@ -243,7 +243,12 @@
 | AC-04-1 | 通過 | `test_p4_dispatch.py::test_ac_04_1_*`（第二次拒絕、快照不變、sha 和 task 紀錄一致；approval task 不需要派發包） | — |
 | AC-04-2 | 通過 | `test_ac_04_2_*`（核准後 iteration 1：還沒派發 → 拒絕；已派發新包、產出沿用舊包 → 拒絕；新包 → PASS） | — |
 | AC-04-3 | 通過 | `test_ac_04_3_*`（hash 不符、不在派發包內、必讀參考沒查也沒列 → FAIL；列為 out_of_scope → PASS；竄改參考檔 → FAIL）、`test_p4_negative_cases.py::test_gspec_packet_sha_*` | — |
-| AC-04-4 | 通過 | `test_ac_04_4_*`（Validator 沒報 missing_reference → G-TVAL Structural FAIL；有報 → 依 Validator FAIL 退回 Designer） | Risk Reviewer 只有契約要求（不擋關） |
+| AC-04-4 | 通過 | `test_ac_04_4_*`（合法但不在派發包範圍內的來源（別的 area 的 CLR）：Validator 沒報 missing_reference → G-TVAL Structural FAIL；有報 → 依 Validator FAIL 退回 Designer）、`test_p4_sources_and_iterations.py::test_downstream_*`（Designer 登記額外來源後，Validator 以新派發包登記同一來源 → PASS） | — |
+| 第 3 章 §6（TC 的 SourceRef） | 通過 | `test_tc_source_refs_are_validated_in_full`（quote、hash、不存在的答案修訂、不存在的核准單 → G-DESIGN FAIL、沒有 materialize；合法 spec＋CLR 來源 → ACTIVE） | — |
+| 第 3 章 §6.3（RR 的 SourceRef） | 通過 | `test_risk_review_spec_basis_source_ref_types`（錯 quote、舊形狀、範圍外 CLR → FAIL；spec 型正式流程 PASS 並建立 ACTIVATE 核准單；clarification、approval 型與 null＋needs_clarification 以函式層對同一 task 核對 PASS） | — |
+| 附錄 A 1-39（下游新 iteration） | 通過 | `test_downstream_tasks_get_new_iteration_after_route_back_and_reject`（semantic FAIL 退回、整批 reject；Validator、RR 在被推進時進入新 iteration、舊包拒絕、舊派發紀錄保留）、`test_wf_x_gate_rejection_branches.py::test_62*`（舊輪產出不能在新輪重評；同一輪內可重評）、`test_p1_review_fixes.py::test_p1_01_*`（Validator FAIL 的 gate 中止後兩種入口續做） | CIA compare 的重做在 P6 的整合流程 |
+| 附錄 A 1-37（索引表示） | 通過 | `test_new_index_fields_reject_float_representation`（waiver index、豁免項目行號、cited line、adopted side、basis_ref 索引的浮點寫法 → 結構錯誤、不拋例外、沒有錯誤 revision；bool、負數在 schema 層拒絕） | — |
+| 附錄 A 1-19 | 通過 | `test_unavailable_reference_without_citation_stops_the_run`（沒有正文引用處 → G-SPEC FAIL、不持久化；列出正文引用處 → E3、開文件索取單） | — |
 | AC-04-5 | 通過 | `test_ac_04_5_*`（CLI 與 API 都拒絕；附理由後記錄 kind、hash、理由） | — |
 | AC-05-1 | 通過 | `test_p4_decisions.py::test_ac_05_1_2_*`（E2 critical、R3、DRAFT、conflict_resolution、核准單綁 revision、G-DESIGN 拒絕） | 真實 REQ-SITELIST-022 在 M1 |
 | AC-05-2 | 通過 | 同上（核准 → 重新分析 → E1 none；ACTIVE；none／critical；resolution 與 side 1 PASS、side 0 FAIL；`adopted_side_index: null` 兩側都不能引用（函式層）） | 同上；CLR A4（INCORPORATED）在 P5 |
@@ -281,3 +286,5 @@
 5. **既有測試**：helper 自動派發與填 `consulted_sources`（見上）。舊格式需求（沒有決策點）的行為不變，既有 WF 測試沒有改動斷言。
 6. **agent 契約與指示**：spec-analyst、test-designer、test-validator、tc-risk-reviewer、change-impact-analyst 的契約版本升級，並更新對應的 `.claude/agents/qaos-*.md`（派發包、決策點、decision_refs、派發包範圍、pin_groups）。
 7. **狀態機**：CLR 的 OPEN／ASKED → WITHDRAWN 拆成人（A10）與 system（A9，`kinds: [document_request]`）兩條；`state.check` 支援以 `kinds` 限定轉換。
+8. **下游 iteration 的時點**（`1654b0b`）：被退回的下游 task 在下一次推進成 READY 時才進入新 iteration，不在自己的 gate 操作中改變，gate 的請求身分仍含 iteration（`ff21296` 曾把它拿掉，造成退回後對同一組 artifact 的重評被當成「已完成」，已還原）。需要派發包的 task，上一輪的產出不能在新一輪重新評估：`test_62` 的契約因此改變（原本固定「退回後不重新提交、直接 gate 舊 artifact 也會推進」），同一 iteration 內的重評另以 `test_62b` 固定。
+9. **審查修正（P4-01～05）**：附錄 A 1-37～1-40；1-19 經 Oscar 確認（停下由人處理，不新增 pin 型文件項目）。AC-04-4 的測試改用「合法但範圍外」的來源（別的 area 的 CLR）：閉包外的 spec 現在在 G-DESIGN 就因 SourceRef 驗證失敗，不會走到 Validator。
