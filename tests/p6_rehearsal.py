@@ -435,14 +435,145 @@ def _real_cancel(rep, src, work):
               rid is not None and (run.get("from_requirement_model_revision") or {}).get("revision") == "R000" and (run.get("from_requirement_model_revision") or {}).get("spec_version") == "0.4" and not bound_06,
               {"bound_06": bound_06})
 
+# ---------------------------------------------------------------- AC-A-B1-7：同一個 root 依序驗收（--mode ac-b1-7）
+DR = "SPEC-DAILYREPORT-001"
+R1_CHANGES = {"REQ-DAILYREPORT-013": "P6 預演：重新分析後的 REQ-013 敘述（第 1 輪）"}
+R2_CHANGES = {**R1_CHANGES, "REQ-DAILYREPORT-012": "P6 預演：重新分析後的 REQ-012 敘述（第 2 輪）"}
+
+def flow(work, body: str):
+    """在子程序以 tests/p6_acb17_flow 的正式流程 helper 執行；body 的最後一行印出 JSON。"""
+    return py(work, "import json\nfrom tests import p6_acb17_flow as F\n" + body)
+
+def ac_b1_7(rep, src, work):
+    """移轉（acknowledge-idle）、maintenance end 之後，在同一份工作複本依序：
+    ① 第 1 輪同版本 CIA（0.2 R000→R001，declaration_changed）：96 張候選分兩組（0.1 R000、0.2 R000 各 48，legacy sidecar）→ G-IMPACT PASS，
+       REQ-013 改變 → 3 張 affected，正式走完 T2～T5 → APPLIED；
+    ② 第 2 輪（R001→R002，再一次 declaration_changed）：AC-09-28、29——三組（0.1 R000、0.2 R000、0.2 R001），R000 組的 diff 涵蓋 R001 的變更；
+       先送只判 from 端那組的反例 → FAIL（G2、G5），再送正確 CIR → PASS → T2～T5 → APPLIED；
+    ③ 第 3 輪（R002→R003）的 T1：AC-09-35～41 各一份錯誤 CIR（另加 G7、G8）各自 FAIL 在對應檢查，FAIL 後 T1 回 READY；最後正確 CIR → NO_IMPACT → COMPLETED。"""
+    AC = "AC-A-B1-7"
+    # ⓪ 起點：96 張 legacy sidecar R000
+    r = flow(work, r"""
+from tools.qaos import rm, gates, store
+cand, errs = gates._cia_candidates(F.SPEC)
+p01, p02 = rm.pin_of(F.SPEC, "0.1", "R000"), rm.pin_of(F.SPEC, "0.2", "R000")
+leg = {t: store.load(rm.tc_sidecar_path(t, v)).get("legacy_binding") if store.exists(rm.tc_sidecar_path(t, v)) else None for t, v, _ in F.active()}
+inver = [t for t, v, d in F.active() if d.get("requirement_model_revision")]
+print(json.dumps({"candidates": len(cand), "errs": errs, "g01": sum(1 for t in cand if cand[t] == p01), "g02": sum(1 for t in cand if cand[t] == p02),
+                  "legacy_sidecar": sum(1 for x in leg.values() if x is True), "pin_in_version_file": inver}))""")
+    rep.fact("B1-7.start", r)
+    rep.check(AC, "⓪ 移轉後起點：DAILYREPORT 候選 96 張＝0.1 R000 48＋0.2 R000 48，全部以 legacy sidecar 綁定（版本檔沒有 pin）",
+              r["candidates"] == 96 and r["g01"] == 48 and r["g02"] == 48 and r["legacy_sidecar"] == 96 and not r["pin_in_version_file"] and not r["errs"], r)
+    # ① 第 1 輪
+    q(rep, work, "B1-7 ① spec reference declare-empty DAILYREPORT 0.2（製造 declaration_changed）", "spec", "reference", "declare-empty", f"{DR}@0.2", "--reason", "P6 AC-A-B1-7 預演：移轉後補宣告", "--by", BY)
+    r = flow(work, f"from tools.qaos import rm\nprint(json.dumps(rm.outdated(rm.pin_of(F.SPEC, '0.2', 'R000'))))")
+    rep.check(AC, "① 0.2 R000 判定為 declaration_changed（同版本 CIA 的觸發條件，第 5 章 §8）", r["declaration_changed"] is True, r)
+    r1 = flow(work, f"print(json.dumps(F.full_round('R000', {R1_CHANGES!r}, 1)))"); rep.fact("B1-7.round1", r1)
+    st = {s["stop"]: s for s in r1["stops"]}; g = {x["from_pin"]: x for x in r1["groups"]}
+    rep.check(AC, f"① run new（{r1['run_id']}）：from 綁 0.2 R000、T0 READY", st["run new"]["from_pin"] == "0.2 R000" and st["run new"]["T0"] == "READY", st["run new"])
+    rep.check(AC, "① T0 G-SPEC PASS → run 的 to 綁 0.2 R001、T1 READY", st["T0 G-SPEC"]["gate"] == "PASS" and st["T0 G-SPEC"]["to_pin"] == "0.2 R001" and st["T0 G-SPEC"]["T1"] == "READY", st["T0 G-SPEC"])
+    rep.check(AC, "① T1 CIR：96 張候選分兩組（0.1 R000 48、0.2 R000 48）→ G-IMPACT PASS；派發包帶兩端與兩組 pin",
+              sorted(g) == ["0.1 R000", "0.2 R000"] and g["0.1 R000"]["n"] == 48 and g["0.2 R000"]["n"] == 48 and st["T1 G-IMPACT"]["gate"] == "PASS" and not st["T1 G-IMPACT"]["issues"]
+              and r1["packet_T1"] == {"from": "0.2 R000", "target": "0.2 R001", "pin_groups": ["0.1 R000", "0.2 R000"]},
+              {"groups": [{k: v for k, v in x.items() if k != "testcase_ids"} for x in r1["groups"]], "gate": st["T1 G-IMPACT"], "packet": r1["packet_T1"]})
+    rep.check(AC, "① 0.2 R000 組的 diff 只有 REQ-013 改變；affected＝引用 REQ-013 的 3 張（TC-040、105 在 0.2，TC-041 在 0.1）；change_impact TEST_UPDATE_REQUIRED、T2 READY",
+              g["0.2 R000"]["diff_changed"] == ["REQ-DAILYREPORT-013"] and sorted(r1["affected"]) == ["TC-DAILYREPORT-040", "TC-DAILYREPORT-041", "TC-DAILYREPORT-105"]
+              and st["T1 G-IMPACT"]["change_impact"] == "TEST_UPDATE_REQUIRED" and st["T1 G-IMPACT"]["T2"] == "READY", {"affected": r1["affected"], "ci": st["T1 G-IMPACT"]["change_impact"]})
+    _round_tail(rep, r1, "①", "0.2 R001")
+    # ② 第 2 輪（AC-09-28、29）
+    ref = work.parent / f"{work.name}-synthetic-DAILYREPORTREF-1.0.md"
+    ref.write_text("# 場館日結報表補充參考（P6 預演合成檔，不是真實文件）\n\n## 說明\n\n只用來在工作複本製造第二次 declaration_changed。\n", encoding="utf-8")
+    q(rep, work, "B1-7 ② spec import 合成參考 SPEC-DAILYREPORTREF-001@1.0", "spec", "import", ref, "--spec-id", "SPEC-DAILYREPORTREF-001", "--version", "1.0", "--product", "ba-admin", "--area", "DAILYREPORT", "--by", BY)
+    q(rep, work, "B1-7 ② spec reference add（informative）→ declaration_changed", "spec", "reference", "add", f"{DR}@0.2", "--ref", "SPEC-DAILYREPORTREF-001@1.0", "--role", "informative", "--by", BY)
+    r2 = flow(work, f"print(json.dumps(F.full_round('R001', {R2_CHANGES!r}, 2, negative_only_from_group=True)))"); rep.fact("B1-7.round2", r2)
+    st = {s["stop"]: s for s in r2["stops"]}; g = {x["from_pin"]: x for x in r2["groups"]}
+    rep.check("AC-09-28", f"② run new（{r2['run_id']}）：from 是第 1 輪產生的 0.2 R001；T0 PASS → to 0.2 R002",
+              st["run new"]["from_pin"] == "0.2 R001" and st["T0 G-SPEC"]["gate"] == "PASS" and st["T0 G-SPEC"]["to_pin"] == "0.2 R002", [st["run new"], st["T0 G-SPEC"]])
+    ob = r2["only_from_group"]
+    if r2.get("aborted"):
+        rep.check("AC-09-28", "② 反例：只判 run 的 from 端那組 → G-IMPACT FAIL（G2、G5）", False, ob); return
+    rep.check("AC-09-28", "② 反例：只判 run 的 from 端那組（0.2 R001，3 張），缺少 TC-B（R000）的判定 → G-IMPACT FAIL（G2、G5）；T1 回 READY、change_impact 不前進",
+              ob["result"] == "FAIL" and any(i.startswith("G2") for i in ob["issues"]) and any(i.startswith("G5") for i in ob["issues"]) and ob["T1_after"]["status"] == "READY"
+              and ob["ci_after"] not in ("TEST_UPDATE_REQUIRED", "NO_IMPACT", "IMPACTED"), ob)
+    rep.check("AC-09-28／30", "② 正確 CIR：三組（0.1 R000 47、0.2 R000 46、0.2 R001 3，共 96）——legacy sidecar 與版本檔 pin 混合 → G-IMPACT PASS；派發包帶三組",
+              sorted(g) == ["0.1 R000", "0.2 R000", "0.2 R001"] and (g["0.1 R000"]["n"], g["0.2 R000"]["n"], g["0.2 R001"]["n"]) == (47, 46, 3)
+              and sorted(g["0.2 R001"]["testcase_ids"]) == ["TC-DAILYREPORT-040", "TC-DAILYREPORT-041", "TC-DAILYREPORT-105"] and st["T1 G-IMPACT"]["gate"] == "PASS"
+              and r2["packet_T1"] == {"from": "0.2 R001", "target": "0.2 R002", "pin_groups": ["0.1 R000", "0.2 R000", "0.2 R001"]},
+              {"groups": [{k: v for k, v in x.items() if k != "testcase_ids"} for x in r2["groups"]], "gate": st["T1 G-IMPACT"], "packet": r2["packet_T1"]})
+    rep.check("AC-09-29", "② TC-B（0.2 R000）那組的 requirement_diff 是 R000→R002：含第 1 輪的 REQ-013 與本輪的 REQ-012；R001 組只有 REQ-012",
+              g["0.2 R000"]["diff_changed"] == ["REQ-DAILYREPORT-012", "REQ-DAILYREPORT-013"] and g["0.2 R001"]["diff_changed"] == ["REQ-DAILYREPORT-012"]
+              and g["0.2 R000"]["diff_n"] == g["0.2 R001"]["diff_n"] == 26, {k: g[k]["diff_changed"] for k in g if k != "0.1 R000"})
+    rep.check("AC-09-28", "② 本輪影響 TC-B：affected＝引用 REQ-012 的 TC-038、039（0.1 R000 組，第 1 輪時 unaffected）",
+              sorted(r2["affected"]) == ["TC-DAILYREPORT-038", "TC-DAILYREPORT-039"], r2["affected"])
+    _round_tail(rep, r2, "②", "0.2 R002")
+    rep.check("AC-09-28", "② 結束後 pin 分佈：0.1 R000 45、0.2 R000 46、0.2 R001 3、0.2 R002 2（共 96）",
+              r2["final"]["pins_by_group"] == {"0.1 R000": 45, "0.2 R000": 46, "0.2 R001": 3, "0.2 R002": 2}, r2["final"]["pins_by_group"])
+    # ③ 反例（AC-09-35～41；另加 G7、G8）
+    ref2 = work.parent / f"{work.name}-synthetic-DAILYREPORTREF-2.0.md"
+    ref2.write_text("# 場館日結報表補充參考二（P6 預演合成檔，不是真實文件）\n\n## 說明\n\n只用來在工作複本製造第三次 declaration_changed。\n", encoding="utf-8")
+    q(rep, work, "B1-7 ③ spec import 合成參考 SPEC-DAILYREPORTREF-002@1.0", "spec", "import", ref2, "--spec-id", "SPEC-DAILYREPORTREF-002", "--version", "1.0", "--product", "ba-admin", "--area", "DAILYREPORT", "--by", BY)
+    q(rep, work, "B1-7 ③ spec reference add（informative）→ declaration_changed", "spec", "reference", "add", f"{DR}@0.2", "--ref", "SPEC-DAILYREPORTREF-002@1.0", "--role", "informative", "--by", BY)
+    r3 = flow(work, "print(json.dumps(F.negatives_round('R002')))"); rep.fact("B1-7.round3", r3)
+    rep.check(AC, f"③ run new（{r3['run_id']}）：from 0.2 R002；T0 PASS → to 0.2 R003（內容同 R002）；A＝{r3['A']}（{r3['A_pin']}）、B＝{r3['B']}（{r3['B_pin']}）、TC-Z＝{r3['Z']}",
+              r3["T0"] == "PASS" and r3["from_pin"] == "0.2 R002" and r3["to_pin"] == "0.2 R003" and r3["A_pin"] == "0.2 R001" and r3["B_pin"] == "0.2 R000"
+              and sum(x["n"] for x in r3["groups"]) == 96 and len(r3["groups"]) == 4, {k: r3[k] for k in ("T0", "from_pin", "to_pin", "A", "B", "Z")})
+    for c in r3["cases"]:
+        rep.check(c["case"].split(" ")[0] if c["case"].startswith("AC-") else "G7／G8（附加）", f"③ {c['case']} → G-IMPACT FAIL 在 {c['expect']}；FAIL 後 T1 回 READY、iteration 不變、run 仍 RUNNING",
+                  c["result"] == "FAIL" and c["expect"] in c["codes"] and c["T1_after"]["status"] == "READY" and c["T1_after"]["iteration"] == c["T1_before"]["iteration"] and c["run_status"] == "RUNNING"
+                  and c["change_impact"] not in ("TEST_UPDATE_REQUIRED", "NO_IMPACT", "IMPACTED"),
+                  {k: c[k] for k in ("run_id", "result", "codes", "issues", "error", "T1_after", "change_impact", "run_status")})
+    rep.fact("B1-7.round3.recovery_runs", r3["recovery_runs"])
+    gd = r3["good"]
+    rep.check(AC, "③ 全部反例都在同一個 run 的 T1 提交（沒有任何反例逃脫而需要重開 run）", not r3["recovery_runs"], r3["recovery_runs"])
+    rep.check(AC, "③ 反例之後同一個 T1 提交正確 CIR → G-IMPACT PASS → 全部 unaffected → NO_IMPACT、T6 DONE、run COMPLETED（反例沒有留下影響）",
+              gd["result"] == "PASS" and not gd["affected"] and gd["change_impact"] == "NO_IMPACT" and gd["status"] == "COMPLETED" and gd["tasks"]["T6"]["status"] == "DONE", gd)
+
+def _round_tail(rep, r, tag, new_pin):
+    st = {s["stop"]: s for s in r["stops"]}; f = r["final"]
+    for k in ("T2 G-DESIGN", "T3 G-TVAL", "T3RR G-RISK", "T4 G-COMPARE"):
+        rep.check("AC-A-B1-7", f"{tag} {k} PASS", st[k]["gate"] == "PASS", st[k])
+    rep.check("AC-A-B1-7", f"{tag} T4 之後 run WAITING_HUMAN、核准單 {r['approval']} 為 APPLY_CHANGE；T4 派發包帶與 T1 相同的兩端與 pin_groups",
+              st["T4 G-COMPARE"]["run_status"] == "WAITING_HUMAN" and st["T4 G-COMPARE"]["approval_type"] == "APPLY_CHANGE" and r["packet_T4"] == r["packet_T1"], [st["T4 G-COMPARE"], r["packet_T4"]])
+    rep.check("AC-A-B1-7", f"{tag} T5 approve → APPLIED、run COMPLETED、T6 DONE", f["status"] == "COMPLETED" and f["change_impact"] == "APPLIED" and f["tasks"]["T6"]["status"] == "DONE", {k: f[k] for k in ("status", "change_impact")})
+    bad = {t: x for t, x in f["affected_after"].items() if not (x["version"] == x["old_version"] + 1 and x["pin"] == new_pin and x["pin_in_version_file"] == new_pin)}
+    rep.check("AC-A-B1-7", f"{tag} affected 的 TC 升版、新版本檔綁 {new_pin}；unaffected 的 TC 版本不變、sidecar 逐位元不變、沒有新增 sidecar；候選仍 96",
+              not bad and not f["unaffected_version_changed"] and not f["sidecars_changed"] and not f["sidecars_added"] and f["candidates"] == 96,
+              {"affected_after": f["affected_after"], "bad": bad, "unaffected_version_changed": f["unaffected_version_changed"], "sidecars_changed": f["sidecars_changed"], "sidecars_added": f["sidecars_added"]})
+
+def main_ac_b1_7(a, src, work):
+    rep = Report(a); t_all = time.time()
+    rep.fact("code_commit", a.code_commit or subprocess.run(["git", "-C", str(CODE), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "(非 git 目錄)")
+    rep.fact("code_files_sha256", {p: sha_file(CODE / p) for p in ("tests/p6_rehearsal.py", "tests/p6_acb17_flow.py", "tools/qaos/gates.py", "tools/qaos/engine.py")})
+    src_snap = snapshot(src); rep.fact("src_files", len(src_snap)); rep.fact("src_tree_sha256", hashlib.sha256(json.dumps(src_snap, sort_keys=True).encode()).hexdigest())
+    shutil.copytree(src, work, symlinks=True, dirs_exist_ok=True)
+    for p in [work, *work.rglob("*")]:
+        if not p.is_symlink(): p.chmod(p.stat().st_mode | stat.S_IWUSR)
+    q(rep, work, "maintenance start", "maintenance", "start", "--by", BY)
+    q(rep, work, f"migrate --acknowledge-idle {RUN_IDLE}", "migrate", "--by", BY, "--acknowledge-idle", RUN_IDLE)
+    q(rep, work, "migrate verify", "migrate", "verify")
+    q(rep, work, "maintenance end", "maintenance", "end", "--by", BY)
+    try: ac_b1_7(rep, src, work)
+    except Exception as e: rep.check("AC-A-B1-7", "AC-A-B1-7 依序驗收執行", False, repr(e)[-3000:])
+    rep.check("來源", "來源目錄執行前後逐檔 sha256 相同", snapshot(src) == src_snap, None)
+    rep.data["finished_at"] = now(); rep.data["seconds"] = round(time.time() - t_all, 1); rep.data["failed"] = rep.failed
+    a.report.write_text(json.dumps(rep.data, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    for s in rep.data["steps"]: print(f"{'OK ' if s['ok'] else 'NG '} rc={s['rc']:<3} {s['seconds']:>7}s  {s['step']}")
+    for c in rep.data["checks"]: print(f"{c['result']}  {c['ac']}  {c['check']}")
+    print(f"失敗 {rep.failed} 項；報告：{a.report}")
+    sys.exit(1 if rep.failed else 0)
+
 # ---------------------------------------------------------------- 主流程
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--src", required=True, type=pathlib.Path); ap.add_argument("--work", required=True, type=pathlib.Path)
-    ap.add_argument("--mode", required=True, choices=["acknowledge-idle", "cancel-run", "pre-cancel"]); ap.add_argument("--real-data-checks", choices=["ack", "cancel"])
+    ap.add_argument("--mode", required=True, choices=["acknowledge-idle", "cancel-run", "pre-cancel", "ac-b1-7"]); ap.add_argument("--real-data-checks", choices=["ack", "cancel"])
+    ap.add_argument("--code-commit", help="程式不是 git 目錄（例如 git archive 匯出）時，記在報告中的程式版本")
     ap.add_argument("--report", required=True, type=pathlib.Path); a = ap.parse_args()
     src, work = a.src.resolve(), a.work.resolve()
     if work == src or src in work.parents or work in src.parents: sys.exit("工作目錄不能和來源目錄重疊")
     if work.exists() and any(work.iterdir()): sys.exit(f"工作目錄必須不存在或是空的：{work}")
+    if a.mode == "ac-b1-7":
+        if a.real_data_checks: sys.exit("--mode ac-b1-7 不和 --real-data-checks 併用")
+        return main_ac_b1_7(a, src, work)
     rep = Report(a); t_all = time.time()
     rep.fact("code_commit", subprocess.run(["git", "-C", str(CODE), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "(非 git 目錄)")
     src_snap = snapshot(src)
