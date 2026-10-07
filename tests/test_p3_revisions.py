@@ -180,3 +180,16 @@ def test_ac_09_16_same_version_cia_requires_revision_and_matching_reason():
     r = U.q(root, *base, "--input", "from_revision=R001", "--input", "reason=decision_revised"); assert r.returncode != 0
     rid = U.q(root, *base, "--input", "from_revision=R001", "--input", "reason=declaration_changed", check=True).stdout.split()[0]
     assert pin_of(root, rid, "from_requirement_model_revision") == "R001" and current(root, rid) == "T0"   # 同版本時 T0 一定執行
+
+# ---------------------------------------------------------------- run cancel（§10；AC-09-17、32）
+def test_ac_09_17_32_run_cancel_cancels_all_pending_approvals_once():
+    root = root_with_auth()
+    rid = py(root, "rid = F.new_run(); rmid = F.analyze(rid); F.design_and_validate(rid, rmid); print(json.dumps(rid))")   # T4 核准單 PENDING
+    apr = U.load(root, f"runs/{rid}/run.yaml")["waiting_on_approval_id"]; assert U.load(root, f"approvals/{apr}.yaml")["status"] == "PENDING"
+    pin = U.load(root, f"runs/{rid}/run.yaml")["requirement_model_revision"]
+    for _ in range(2): U.q(root, "run", "cancel", rid, "--by", "oscar", check=True)                      # 重送兩次
+    run = U.load(root, f"runs/{rid}/run.yaml")
+    assert run["status"] == "CANCELLED" and run["requirement_model_revision"] == pin                       # 已綁定的 revision 保留
+    assert U.load(root, f"approvals/{apr}.yaml")["status"] == "CANCELLED"
+    log = (pathlib.Path(root) / f"runs/{rid}/audit.log").read_text()
+    assert log.count("CANCEL_RUN") == 1 and log.count(f"CANCEL_APPROVAL\t{apr}") == 1                      # 核准單只轉換一次、audit 不重複
