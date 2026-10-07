@@ -156,11 +156,11 @@
 
 ## P3：RM revision、綁定、過時判定、CIA 候選、移轉與回復
 
-- **執行 commit**：`4a84069b86d805829509e215d5e6e97e2833fba2`（分支 `qaos/requirement-a`；P3 程式為 `7430b7d`、`282b401`、`982ffe2`、`74de040`，P3 程式碼審查 P3-01～06 的修正為 `4a84069`）。本紀錄所在的 commit 只改文件
+- **執行 commit**：`f72ecf6526150866b15ae0d54f9ebf1f291423da`（分支 `qaos/requirement-a`；P3 程式為 `7430b7d`、`282b401`、`982ffe2`、`74de040`，P3 程式碼審查 P3-01～06 的修正為 `4a84069`，局部複驗 P3R2-01、02 的修正為 `f72ecf6`）。本紀錄所在的 commit 只改文件
 - **環境**：同 P1
 - **資料**：每個案例使用獨立的暫存 root。新程式的狀態以正式流程建立（`tests/p3_flow.py`：new_run、submit、gate、approve）；移轉用的 legacy 資料由**需求 A 之前的程式**（base `2e01d4b`，以 `git archive` 匯出到系統暫存目錄，唯讀）以它自己的正式流程產生（`tests/p3_legacy.py`）。標明「竄改」「故障注入」「模擬經授權的人工修復」的子例才在流程後修改檔案。CIA 的 G1～G8 以正式流程產生的兩批候選 TC（分屬 R001、R002）搭配記憶體中的 run 與 CIR 驗證（CIA agent 新契約在 P4）
-- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 366 passed；`tools/validate_phase1.py` ALL CHECKS PASSED
-- **突變檢查**：拿掉 `_skip` 的第 2、3 條與無 T0 流程的過時檢查時，5 個相關測試失敗；把 P3-01～06 的修正退回時，對應的 7 個反例全部失敗；之後都還原
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 371 passed；`tools/validate_phase1.py` ALL CHECKS PASSED
+- **突變檢查**：拿掉 `_skip` 的第 2、3 條與無 T0 流程的過時檢查時，5 個相關測試失敗；把 P3-01～06 的修正退回時，對應的 7 個反例全部失敗；把 P3R2-01、02 的修正退回時，新增的 5 個反例全部失敗；之後都還原
 
 ### AC 對照
 
@@ -204,9 +204,9 @@
 | AC-09-65 | 通過 | `test_ac_09_65_rollback_requires_maintenance` | — |
 | AC-09-68 | 通過 | `test_ac_09_55_56_*`（回復後沒有任何既有檔案被改動或刪除；鎖檔保留） | — |
 | AC-09-73 | 部分 | `test_ac_09_73_t5_evidence_conflict`（刪除尾端前的完成紀錄 → T5 拒絕、不寫入）、`test_p3_01_*`（已完成的 X 缺最後一個完成紀錄、completed 竄改 → 拒絕） | 刪除事件、改事件內容（AC-09-74）、續做 X（AC-09-76）在 P6 |
-| AC-09-83、84 | 部分 | `test_check_a_and_b_stop_on_external_change_then_repair`（③ 檢查 A、④ 檢查 B，含修復後完成）、`test_p3_02_*`（R 已凍結的 X 完成紀錄被刪 → 檢查 A 停止，兩種入口） | ①②、⑤～⑦ 在 P6 |
+| AC-09-83、84 | 部分 | `test_check_a_and_b_stop_on_external_change_then_repair`（③ 檢查 A、④ 檢查 B，含修復後完成）、`test_p3_02_*`（R 已凍結的 X 完成紀錄被刪 → 檢查 A 停止，兩種入口）、`test_p3r2_01_*`（維護往返後 audit.log 被正常 render 的步驟，完成紀錄仍凍結並核對）、`test_p3r2_02_*`（X 計畫被竄改 → 停止；修復後完成） | ①②、⑤～⑦ 在 P6 |
 | AC-09-85 | 部分 | `test_ac_09_85_terminal_inconsistency_blocks_all_writes`（⑥ 防禦性） | ①～⑤ 的逐點斷言在 P6 |
-| migrate verify（§12） | 部分 | `test_p3_03_verify_detects_missing_or_tampered_evidence`（移轉後缺 X 完成紀錄、回復後 R 事件竄改、回復後缺 X 完成紀錄 → 失敗並列出路徑；恢復後通過） | 其餘各類的逐項負例在 P6 |
+| migrate verify（§12） | 部分 | `test_p3_03_verify_detects_missing_or_tampered_evidence`（移轉後缺 X 完成紀錄、回復後 R 事件竄改、回復後缺 X 完成紀錄 → 失敗並列出路徑；恢復後通過）、`test_p3r2_01_round_trip_*`、`test_p3r2_02_*`（回復後 X 完成紀錄被刪或改、X 計畫被改 → 失敗） | 其餘各類的逐項負例在 P6 |
 | AC-09-88 | 通過 | `test_migrate_acknowledge_idle_results`、`test_ac_09_88_legacy_r000_skip_rule_and_89_declaration` | — |
 | AC-09-89 | 部分 | 同上（a） | (b) 舊 run 依固定 pin 續做在 P6 |
 | AC-09-91 | 通過 | `test_ac_09_91_declarations_before_migration_refuse`（兩例，防禦性） | — |
