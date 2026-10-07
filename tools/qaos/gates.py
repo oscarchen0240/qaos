@@ -176,6 +176,19 @@ def g_design(run, task, arts) -> list[str]:
 def _confirmed_assumption(tc, rid) -> bool:
     return any(a.get("requirement_id") == rid and a.get("needs_human_confirmation") is True for a in tc.get("assumptions") or [])
 
+def usable_sources(dp) -> list:
+    """E1 決策點可以作為依據的來源身分：known_rules（basis 為 undefined 時除外）、resolution.source、adopted_side_index 指定的一側（§3.6）。"""
+    kr = [dispatch.basis_ref(x) for x in dp.get("known_rules") or []]
+    sides = [dispatch.basis_ref(x) for x in dp.get("conflict_sides") or []]
+    res = dp.get("resolution") or {}
+    allowed = ([] if dp["basis"] == "undefined" else kr) + ([dispatch.basis_ref(res["source"])] if res.get("source") else [])
+    idx = res.get("adopted_side_index")
+    if dp["basis"] == "conflict" and decisions.is_index(idx) and idx < len(sides): allowed.append(sides[idx])
+    return allowed
+
+def find_dp(reqs, rid, qid):
+    return next((x for x in (reqs.get(rid) or {}).get("decision_points") or [] if x["question_id"] == qid), None)
+
 def _decision_ref_issues(tc, reqs) -> list[str]:
     """G-DESIGN 逐決策點限制（第 1 章 §3.6）：依決策點的有效狀態限制依賴它的斷言；只作用在依賴該決策點的斷言。"""
     did = tc["draft_id"]; out = []; drefs = tc.get("decision_refs") or []
@@ -198,9 +211,7 @@ def _decision_ref_issues(tc, reqs) -> list[str]:
         if br is not None and dp["basis"] == "undefined" and br in kr and br != src:
             out.append(f"{tag}：basis 為 undefined 的 known_rules 只是背景，不能作為 expected 依據（附錄 A 1-7）"); continue
         if st == "E1":
-            allowed = ([] if dp["basis"] == "undefined" else kr) + ([src] if src else [])
-            idx = res.get("adopted_side_index")
-            if dp["basis"] == "conflict" and idx is not None: allowed.append(sides[idx])
+            allowed = usable_sources(dp)
             if br is None: out.append(f"{tag}：已定的決策點，斷言必須標明 basis_ref")
             elif br not in allowed:
                 out.append(f"{tag}：引用了未被採用的衝突一側" if br in sides else f"{tag}：basis_ref 不是該決策點的 known_rules、resolution 或被採用的一側")
@@ -212,13 +223,25 @@ def _decision_ref_issues(tc, reqs) -> list[str]:
 
 def source_ref_issues(tc, target, packet=None) -> list[str]:
     """TC 的 source_refs 逐筆以共用驗證核對（hash、quote、答案修訂、核准條目；第 3 章 §6）。派發時登記的額外 spec 不受「目標或閉包內」限制，
-    只核對 hash 與 quote（附錄 A 1-38）。範圍是否在派發包內由 G-TVAL／Validator 判定。"""
+    只核對 hash 與 quote（附錄 A 1-38）。clarification、approval 型必須是本 TC 某筆 decision_refs 的 basis_ref，並以那個決策點作為引用處驗證
+    （核准條目的 requirement／question 必須相符；該 basis_ref 是否為決策點可用的來源由 _decision_ref_issues 核對）。範圍是否在派發包內由 G-TVAL 判定。"""
     extras = {decisions._pk(x["pin"]) for x in (packet or {}).get("extra_inputs") or [] if x["kind"] == "spec_pin"}
     out = []
     for i, r in enumerate(tc.get("source_refs") or []):
-        tgt = None if (r.get("type") == "spec" and r.get("content_hash") and decisions._pk(r) in extras) else target
+        tag = f"{tc['draft_id']} 的 source_refs[{i}]"
+        if isinstance(r, dict) and r.get("type") in ("clarification", "approval"):
+            try: ident = dispatch.basis_ref(r)
+            except (KeyError, TypeError): ident = None
+            ats = sorted({(d["requirement_id"], d["question_id"]) for d in tc.get("decision_refs") or [] if ident is not None and d.get("basis_ref") == ident})
+            if not ats:
+                out.append(f"{tag}：{r['type']} 型來源必須對應本 TC 的某筆 decision_refs（basis_ref 相同），以決策點作為引用處（附錄 A 1-38）"); continue
+            for at in ats:
+                errs, _ = sources.validate(r, target=target, at=at)
+                out += [f"{tag}（引用處 {at[0]}/{at[1]}）：{e}" for e in errs]
+            continue
+        tgt = None if (isinstance(r, dict) and r.get("type") == "spec" and r.get("content_hash") and decisions._pk(r) in extras) else target
         errs, _ = sources.validate(r, target=tgt)
-        out += [f"{tc['draft_id']} 的 source_refs[{i}]：{e}" for e in errs]
+        out += [f"{tag}：{e}" for e in errs]
     return out
 
 def draft_out_of_scope(draft_payload, packet) -> dict:
@@ -419,9 +442,8 @@ def g_risk(run, task, arts) -> list[str]:
         seen.add(f["finding_id"])
         sb = f["spec_basis"]
         if sb is not None and "type" in sb:                                  # 型別化 SourceRef（第 3 章 §6.3；附錄 A 1-40）
-            errs, _ = sources.validate(sb, target=(rv["spec_id"], str(rv["spec_version"])))
-            issues += [f"{f['finding_id']} 的 spec_basis：{e}" for e in errs]
-            if not errs and rr_packet is not None and not dispatch.in_scope(rr_packet, sb):
+            issues += _rr_basis_issues(run, rv, f, sb)
+            if rr_packet is not None and not dispatch.in_scope(rr_packet, sb):
                 issues.append(f"{f['finding_id']} 的 spec_basis 不在本 task 派發包的範圍內")
         elif sb is not None and rr_packet is not None:
             issues.append(f"{f['finding_id']} 的 spec_basis 必須是型別化的 SourceRef（spec／clarification／approval）；舊的 {{location, quote}} 只保留給派發包之前的舊產出")
@@ -438,6 +460,29 @@ def g_risk(run, task, arts) -> list[str]:
             if not _active_tc_in_area(tid, rv["functional_area"]):
                 issues.append(f"{f['finding_id']} 引用的 {tid} 既不是本次 draft，也不是同 area 的 ACTIVE TC")
     return issues
+
+def _rr_basis_issues(run, rv, f, sb) -> list[str]:
+    """RR finding 的型別化依據（附錄 A 1-40）：clarification、approval 型必須以 spec_basis_decision 指定引用處——
+    需求在 finding 的關聯需求內、決策點存在且已定（E1）、依據是該決策點可用的來源；再以該引用處做共用驗證。spec 型只做共用驗證。"""
+    fid = f["finding_id"]; target = (rv["spec_id"], str(rv["spec_version"])); at = None
+    if sb["type"] in ("clarification", "approval"):
+        sd = f.get("spec_basis_decision")
+        if not sd: return [f"{fid}：{sb['type']} 型依據必須以 spec_basis_decision 指定對應的需求與決策點"]
+        at = (sd["requirement_id"], sd["question_id"])
+        if at[0] not in f["related_requirement_ids"]: return [f"{fid}：spec_basis_decision 的 {at[0]} 不在 related_requirement_ids"]
+        pin, reqs = _pinned(run, *target)
+        if pin is None: return [reqs]
+        dp = find_dp(reqs, *at)
+        if dp is None: return [f"{fid}：spec_basis_decision 指向不存在的決策點 {at[0]}/{at[1]}"]
+        if dp["derived"]["state"] != "E1": return [f"{fid}：{at[0]}/{at[1]} 尚未定案（{dp['derived']['state']}），沒有可引用的裁決；請填 null 並標 needs_clarification"]
+        try: ident = dispatch.basis_ref(sb)
+        except (KeyError, TypeError): ident = None
+        if ident not in usable_sources(dp): return [f"{fid}：spec_basis 不是 {at[0]}/{at[1]} 可用的依據（known_rules、resolution 或被採用的一側）"]
+    elif f.get("spec_basis_decision"):
+        sd = f["spec_basis_decision"]
+        if sd["requirement_id"] not in f["related_requirement_ids"]: return [f"{fid}：spec_basis_decision 的 {sd['requirement_id']} 不在 related_requirement_ids"]
+    errs, _ = sources.validate(sb, target=target, at=at)
+    return [f"{fid} 的 spec_basis：{e}" for e in errs]
 
 def _active_tc_in_area(tc_id, area) -> bool:
     """看 pointer 指向的 ACTIVE 版本本身：狀態 ACTIVE 且 functional_area 相符（不只看 ID 前綴）。"""

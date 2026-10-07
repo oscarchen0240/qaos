@@ -37,3 +37,4 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 ## 派發包範圍
 
 - Draft 用到派發包範圍外的來源時列為 finding（`needs_clarification: true`）；你自己的 `spec_basis` 也只能取自派發包範圍內的來源。
+- `spec_basis` 用型別化 SourceRef。引用 PM 答案（clarification 型）或核准決議（approval 型）時，必須加 `spec_basis_decision: {requirement_id, question_id}` 指定它裁決的是哪個需求的哪個決策點：需求要在 `related_requirement_ids` 內、決策點已定（`derived.state` 為 E1），且依據是該決策點的 known_rules、resolution 或被採用的一側。決策點還沒定案時，`spec_basis` 填 null 並標 `needs_clarification: true`。

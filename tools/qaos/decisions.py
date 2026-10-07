@@ -58,11 +58,24 @@ def is_index(v) -> bool:
     return type(v) is int and v >= 0
 
 def waived_shape_errors(items) -> list[str]:
+    """豁免項目的形狀（附錄 A 1-37）：每項是物件，二選一——{cited_at: {spec_id, spec_version, content_hash, line（正整數）, text?}, name}
+    或 {pin: SpecPin}。形狀錯誤回報為結構錯誤，不拋例外。"""
+    if not isinstance(items, list): return ["waived 必須是清單"]
     errs = []
-    for it in items or []:
-        c = it.get("cited_at") if isinstance(it, dict) else None
-        if c is not None and not (is_index(c.get("line")) and c["line"] >= 1):
-            errs.append(f"豁免項目 {it.get('name')!r} 的 cited_at.line 必須是正整數表示（實際 {c.get('line')!r}）")
+    for k, it in enumerate(items):
+        if not isinstance(it, dict): errs.append(f"waived[{k}] 必須是物件"); continue
+        if "cited_at" in it:
+            c = it["cited_at"]
+            if not isinstance(c, dict) or not all(isinstance(c.get(x), str) for x in ("spec_id", "spec_version", "content_hash")):
+                errs.append(f"waived[{k}] 的 cited_at 必須是含 spec_id、spec_version、content_hash、line 的物件"); continue
+            if not (is_index(c.get("line")) and c["line"] >= 1):
+                errs.append(f"waived[{k}]（{it.get('name')!r}）的 cited_at.line 必須是正整數表示（實際 {c.get('line')!r}）")
+            if not isinstance(it.get("name"), str) or not it["name"].strip(): errs.append(f"waived[{k}] 的 cited_at 項目必須有 name")
+        elif "pin" in it:
+            pn = it["pin"]
+            if not isinstance(pn, dict) or not all(isinstance(pn.get(x), str) for x in ("spec_id", "spec_version", "content_hash")):
+                errs.append(f"waived[{k}] 的 pin 必須是 SpecPin 物件")
+        else: errs.append(f"waived[{k}] 必須有 cited_at＋name 或 pin")
     return errs
 
 def waiver_errors(w: dict, req: dict, dp: dict, loader) -> list[str]:

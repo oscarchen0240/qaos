@@ -289,15 +289,28 @@ def test_62_gate_on_ready_task_reuses_existing_valid_artifacts_and_advances(auth
     run = engine.load_run(rid)
     assert run["tasks"][1]["status"] == "DONE" and run["current_task_id"] == "T3" and run["tasks"][2]["iteration"] == 1
 
-def test_62b_gate_reevaluation_within_same_iteration_still_allowed(auth_ready):
-    """同一 iteration：G-DESIGN FAIL 之後 task 回到 READY，不重新提交、直接再 gate，仍以同一組 artifact 重評（規則修正後重評的用途）。"""
+def test_62b_gate_reevaluation_within_same_iteration_still_allowed(auth_ready, monkeypatch):
+    """同一 iteration：G-DESIGN Structural FAIL 之後 task 回到 READY，不重新提交、直接再 gate，以同一組 artifact 重評；
+    不會被「舊 iteration 的產出」擋下，iteration 與派發包不變。最後以標明的規則替身（gates.GATES 的 G-DESIGN 換成一律 PASS）
+    模擬「gate 規則修正後重評」，同一組 artifact 推進到 T3。"""
+    from tools.qaos import gates
     rid = _new_run_at_t2()
     did, p, tcs, ids_ = _submit_draft(rid, "01GATERDY2000000000000000")
     assert engine.submit(rid, "T2", str(p))[0]
-    trid, p_rep = _submit_report(rid, did, tcs)
-    assert engine.submit(rid, "T2", str(p_rep))[0] and engine.evaluate_gate(rid, "T2")["result"] == "PASS"
-    run = engine.load_run(rid); assert run["tasks"][1]["iteration"] == 0 and run["current_task_id"] == "T3"
-
+    rep = H.design_report(did, tcs); rep["technique_summary"][0]["count"] += 1          # 宣告和 Draft 實際統計不一致 → G-DESIGN FAIL
+    trid, p_rep = H.write_artifact(rid, "T2", "agent-test-designer", "TestDesignReport", rep, [{"entity_type": "Artifact", "id": did}], {"type": "TestCaseDraft", "ids": [did]}, "test-design")
+    assert engine.submit(rid, "T2", str(p_rep))[0]
+    packets = engine._task(engine.load_run(rid), "T2")["dispatch_packets"]
+    for _ in range(2):                                                                    # 第一次 FAIL，第二次不重新提交、直接重評
+        r = engine.evaluate_gate(rid, "T2")
+        assert r["result"] == "FAIL" and any("technique_summary" in i for i in r["issues"]), r
+        t2 = engine._task(engine.load_run(rid), "T2")
+        assert t2["status"] == "READY" and t2["iteration"] == 0 and t2["dispatch_packets"] == packets
+    monkeypatch.setitem(gates.GATES, "G-DESIGN", lambda run, task, arts: [])             # 規則替身：模擬 gate 規則修正
+    assert engine.evaluate_gate(rid, "T2")["result"] == "PASS"
+    run = engine.load_run(rid); t2 = engine._task(run, "T2")
+    assert t2["status"] == "DONE" and t2["iteration"] == 0 and run["current_task_id"] == "T3" and {did, trid} <= set(t2["output_artifact_ids"])
+    engine.cancel(rid, "oscar@example.com")
 
 # ---------- D. Evidence 完整性偵測 ----------
 

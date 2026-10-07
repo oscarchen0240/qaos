@@ -25,26 +25,30 @@ c = clr.new("demo", "DEMO", F.SPEC, F.VER, "子站台能否刪除？", "oscar", 
 clr.answer(c["clarification_id"], "任何站台都不能刪除。", "pm", "requirement_clarified", "oscar", new_request=True)
 rid = F.new_run(); g = F.analyze(rid, [{OKQ}])
 good = F.sref("任何站台都不能刪除。")
+bad_clr = dict(F.cref(c["clarification_id"], "任何站台都不能刪除"), answer_rev=5)
+bad_apr = {{"type": "approval", "approval_id": "APR-9999", "decision_sha256": "0" * 64, "resolution_index": 0, "quote": "x"}}
+bound = lambda ref: {DREF} + [{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": F.ident(ref)}}]   # 綁定到決策點，讓來源驗證真的跑到
 cases = {{
-  "quote": dict(good, quote="任何管理員都可以刪除任何站台。"),
-  "hash": dict(good, content_hash="0" * 64),
-  "clr_rev": dict(F.cref(c["clarification_id"], "任何站台都不能刪除"), answer_rev=5),
-  "apr_missing": {{"type": "approval", "approval_id": "APR-9999", "decision_sha256": "0" * 64, "resolution_index": 0, "quote": "x"}},
+  "quote": (dict(good, quote="任何管理員都可以刪除任何站台。"), {DREF}),
+  "hash": (dict(good, content_hash="0" * 64), {DREF}),
+  "clr_rev": (bad_clr, bound(bad_clr)),
+  "apr_missing": (bad_apr, bound(bad_apr)),
+  "unbound": (F.cref(c["clarification_id"], "任何站台都不能刪除"), {DREF}),
 }}
 res = {{}}
-for n, ref in cases.items():
-    d = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs={DREF}, srcs=[ref])])
+for n, (ref, drefs) in cases.items():
+    d = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=drefs, srcs=[ref])])
     res[n] = [d["result"], d.get("issues")]
-ok = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs={DREF}, srcs=[good, F.cref(c["clarification_id"], "任何站台都不能刪除")])])
+ok = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs={DREF}, srcs=[good])])
 res["ok"] = [ok["result"], ok.get("issues")]
 v = F.validate(rid, ok["did"], g["rmid"]); F.approve(F.waiting(rid))
 res["tcs"] = [store.load(p)["status"] for p in store.glob("testcases/registry/TC-DEMO-*.yaml")]
 print(json.dumps(res))""")
-    for n, needle in (("quote", "quote 不在"), ("hash", "SPEC-DEMO-001"), ("clr_rev", "沒有 answer_rev 5"), ("apr_missing", "APR-9999 不存在")):
+    for n, needle in (("quote", "quote 不在"), ("hash", "SPEC-DEMO-001"), ("clr_rev", "沒有 answer_rev 5"), ("apr_missing", "APR-9999 不存在"), ("unbound", "必須對應本 TC 的某筆 decision_refs")):
         r, issues = out[n]
         assert r == "FAIL" and any("source_refs[0]" in i and needle in i for i in issues), (n, issues)
     assert out["ok"][0] == "PASS", out["ok"]
-    assert out["tcs"] == ["ACTIVE"]                                   # 只有合法來源的那一版成為 ACTIVE；失敗的版本沒有 materialize
+    assert out["tcs"] == ["ACTIVE"]                                   # 只有合法來源的那一版成為 ACTIVE；失敗的版本沒有 materialize（核准型與 CLR 型的正例見 test_approval_source_bound_to_its_decision_point）
 
 # ---------------------------------------------------------------- P4-02：退回後下游 task 進入新 iteration，可以重新派發
 def test_downstream_tasks_get_new_iteration_after_route_back_and_reject(tmp_path):
@@ -92,16 +96,16 @@ print(json.dumps({{"f1": f1["result"], "it": it, "it3_after_design": it3_after_d
     assert out["st2"]["T2"] == "READY" and out["st2"]["T3"] == "PENDING" and out["st2"]["T3RR"] == "PENDING"
     assert out["t3_packets"] == [0, 1]                                                      # 舊派發紀錄保留
 
-def review(rid, d, g, spec_basis=None, needs_clarification=True):
+def review(rid, d, g, spec_basis=None, needs_clarification=True, spec_basis_decision=None, related=("REQ-DEMO-001",)):
     """RR 提交（在子程序中呼叫）：五面向；一筆 finding 帶指定的 spec_basis。"""
     from tests import p4_flow as F
     from tests import helpers as H
     from tools.qaos import engine, store
     run = engine.load_run(rid); t3 = engine._task(run, "T3"); tvr = t3["output_artifact_ids"][-1]
     draft = store.load(store.find_artifact(d["did"]))["payload"]
-    finding = {"finding_id": "RF-01", "dimension": "permission", "severity": "high", "related_testcase_ids": [], "related_requirement_ids": ["REQ-DEMO-001"],
+    finding = {"finding_id": "RF-01", "dimension": "permission", "severity": "high", "related_testcase_ids": [], "related_requirement_ids": list(related),
                "gap": "跨站台管理員是否能刪除他站的子站台尚未覆蓋", "suggested_scenario": "以站長身分嘗試刪除其他站台的子站台，確認被拒且不留下紀錄",
-               "spec_basis": spec_basis, "needs_clarification": needs_clarification}
+               "spec_basis": spec_basis, "needs_clarification": needs_clarification, **({"spec_basis_decision": spec_basis_decision} if spec_basis_decision else {})}
     payload = {"reviewed": {"testcase_draft_artifact_id": d["did"], "validation_report_artifact_id": tvr, "functional_area": "DEMO", "spec_id": F.SPEC, "spec_version": F.VER,
                             "testcase_draft_ids": [t["draft_id"] for t in draft["testcases"]]},
                "dimension_results": [{"dimension": x, "status": "gaps_found" if x == "permission" else "covered", "rationale": f"{x} 已逐條檢視"} for x in DIMS],
@@ -128,14 +132,19 @@ dref = [{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": F
 d = F.design(rid0, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=dref)])
 F.validate(rid0, d["did"], g["rmid"])
 out = {{}}
-for n, sb, nc in (("bad_quote", dict(F.sref("任何站台都不能刪除。"), quote="站長可以刪除他站"), False),
-                  ("legacy", {{"location": "§刪除規則", "quote": "任何站台都不能刪除。"}}, False),
-                  ("clr_outside", F.cref(z["clarification_id"], "一律保留紀錄"), False)):
-    r = review(rid0, d, g, sb, nc); out[n] = [r["result"], r.get("issues")]
+Q = {{"requirement_id": "REQ-DEMO-001", "question_id": "Q01"}}
+for n, sb, nc, sd in (("bad_quote", dict(F.sref("任何站台都不能刪除。"), quote="站長可以刪除他站"), False, None),
+                      ("legacy", {{"location": "§刪除規則", "quote": "任何站台都不能刪除。"}}, False, None),
+                      ("clr_outside", F.cref(z["clarification_id"], "一律保留紀錄"), False, Q),
+                      ("approval_no_decision", F.aref(apr, 0, "任何站台都不能刪除"), False, None),
+                      ("clr_not_usable", F.cref(c["clarification_id"], "任何站台都不能刪除"), False, Q)):
+    r = review(rid0, d, g, sb, nc, sd); out[n] = [r["result"], r.get("issues")]
 run = engine.load_run(rid0); t = engine._task(run, "T3RR")                 # 函式層：同一個 task、同一份派發包，只換 finding 的 spec_basis
 base = store.load(store.find_artifact(t["output_artifact_ids"][-1]))
-for n, sb, nc in (("clr", F.cref(c["clarification_id"], "任何站台都不能刪除"), False), ("approval", F.aref(apr, 0, "任何站台都不能刪除"), False), ("null", None, True)):
+for n, sb, nc, sd in (("approval", F.aref(apr, 0, "任何站台都不能刪除"), False, Q), ("null", None, True, None)):
     a = json.loads(json.dumps(base)); a["payload"]["findings"][0].update(spec_basis=sb, needs_clarification=nc)
+    a["payload"]["findings"][0].pop("spec_basis_decision", None)
+    if sd: a["payload"]["findings"][0]["spec_basis_decision"] = sd
     issues = gates.g_risk(run, t, {{"TCRiskReview": a}}); out[n] = ["PASS" if not issues else "FAIL", issues]
 r = review(rid0, d, g, F.sref("任何站台都不能刪除。"), False); out["spec"] = [r["result"], r.get("issues")]   # 正式流程 PASS
 out["waiting"] = store.load(f"approvals/{{F.waiting(rid0)}}.yaml")["type"]
@@ -143,7 +152,9 @@ print(json.dumps(out))""")
     assert out["bad_quote"][0] == "FAIL" and any("quote 不在" in i for i in out["bad_quote"][1]), out["bad_quote"]
     assert out["legacy"][0] == "FAIL" and any("必須是型別化的 SourceRef" in i for i in out["legacy"][1]), out["legacy"]
     assert out["clr_outside"][0] == "FAIL" and any("不在本 task 派發包的範圍內" in i for i in out["clr_outside"][1]), out["clr_outside"]
-    for n in ("clr", "approval", "null", "spec"):
+    assert out["approval_no_decision"][0] == "FAIL" and any("spec_basis_decision" in i for i in out["approval_no_decision"][1]), out["approval_no_decision"]
+    assert out["clr_not_usable"][0] == "FAIL" and any("不是 REQ-DEMO-001/Q01 可用的依據" in i for i in out["clr_not_usable"][1]), out["clr_not_usable"]
+    for n in ("approval", "null", "spec"):
         assert out[n][0] == "PASS", (n, out[n])
     assert out["waiting"] == "ACTIVATE_TESTCASE"
 
@@ -198,3 +209,72 @@ def test_designer_contract_scopes_major_rule_to_legacy():
     assert major and all(r.startswith("舊格式需求（沒有 decision_points）") and "新格式需求不套用" in r for r in major)
     md = (repo / ".claude/agents/qaos-test-designer.md").read_text(encoding="utf-8")
     assert "只依賴 E1 的 TC 不要加 assumption" in md
+
+# ---------------------------------------------------------------- P4R2-01：核准型來源必須以實際依賴的決策點為引用處（TC 與 RR）
+TWO = ('F.req(1, [F.dp("Q01", "defined_in_target", "none", known=[F.sref("任何站台都不能刪除。")])]), '
+       'F.req(2, [F.dp("Q01", "defined_in_target", "none", subject="site.child.view", known=[F.sref("任何站台都不能刪除。")]), '
+       'F.dp("Q02", "conflict", "critical", subject="site.child.delete", {SIDES}{RES})], ambiguity=F.amb("{L}", "critical"), statement="子站台規則")')
+
+def test_approval_source_bound_to_its_decision_point(tmp_path):
+    root = rr_root(tmp_path)
+    out = py(root, f"""
+from tests.test_p4_sources_and_iterations import review
+rid = F.new_run()
+F.analyze(rid, [{TWO.format(SIDES=CONFLICT_SIDES, RES="", L="critical")}]); apr = F.waiting(rid)
+F.approve(apr, resolutions=[{{"requirement_id": "REQ-DEMO-002", "question_id": "Q02", "outcome": "select_interpretation", "source": None, "rationale": "以刪除規則為準：任何站台都不能刪除"}}])
+src = F.aref(apr, 0, "任何站台都不能刪除")
+RES = {{"source": src, "decided_at": "2026-10-07", "adopted_side_index": 1}}
+g = F.analyze(rid, [{TWO.format(SIDES=CONFLICT_SIDES, RES=", resolution=RES", L="none")}])
+k = F.ident(F.sref("任何站台都不能刪除。"))
+d1 = lambda rid_, q, br: {{"requirement_id": rid_, "question_id": q, "basis_ref": br}}
+ok2 = F.tc(2, "REQ-DEMO-002", "刪除子站台被拒（依核准決議）", techs=["negative"], types=["negative"], drefs=[d1("REQ-DEMO-002", "Q02", F.ident(src))], srcs=[src])
+cases = {{
+  "other_req_unbound": F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=[d1("REQ-DEMO-001", "Q01", k)], srcs=[src]),
+  "other_req_bound":   F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=[d1("REQ-DEMO-001", "Q01", F.ident(src))], srcs=[src]),
+  "same_req_other_q":  F.tc(3, "REQ-DEMO-002", "檢視子站台", techs=["negative"], types=["negative"], drefs=[d1("REQ-DEMO-002", "Q01", F.ident(src))], srcs=[src]),
+}}
+out = {{"g": [g["result"], g["issues"]]}}
+for n, t in cases.items():
+    r = F.design(rid, [t, ok2]); out[n] = [r["result"], r.get("issues")]
+ok1 = F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs=[d1("REQ-DEMO-001", "Q01", k)], srcs=[F.sref("任何站台都不能刪除。")])
+okd = F.design(rid, [ok1, ok2]); out["ok"] = [okd["result"], okd.get("issues")]
+F.validate(rid, okd["did"], g["rmid"])
+d = {{"did": okd["did"]}}
+for n, sd, rel in (("rr_other_req", {{"requirement_id": "REQ-DEMO-002", "question_id": "Q02"}}, ("REQ-DEMO-001",)),
+                   ("rr_same_req_other_q", {{"requirement_id": "REQ-DEMO-002", "question_id": "Q01"}}, ("REQ-DEMO-002",))):
+    r = review(rid, d, g, src, False, sd, rel); out[n] = [r["result"], r.get("issues")]
+r = review(rid, d, g, src, False, {{"requirement_id": "REQ-DEMO-002", "question_id": "Q02"}}, ("REQ-DEMO-002",)); out["rr_ok"] = [r["result"], r.get("issues")]
+print(json.dumps(out))""")
+    assert out["g"][0] == "PASS", out["g"]
+    assert out["other_req_unbound"][0] == "FAIL" and any("必須對應本 TC 的某筆 decision_refs" in i for i in out["other_req_unbound"][1]), out["other_req_unbound"]
+    for n in ("other_req_bound", "same_req_other_q"):
+        r, issues = out[n]
+        assert r == "FAIL" and any("和引用處" in i and "不符" in i for i in issues) and any("不是該決策點的" in i for i in issues), (n, issues)
+    assert out["ok"][0] == "PASS", out["ok"]
+    assert out["rr_other_req"][0] == "FAIL" and any("不在 related_requirement_ids" in i for i in out["rr_other_req"][1]), out["rr_other_req"]
+    assert out["rr_same_req_other_q"][0] == "FAIL" and any("不是 REQ-DEMO-002/Q01 可用的依據" in i for i in out["rr_same_req_other_q"][1]), out["rr_same_req_other_q"]
+    assert out["rr_ok"][0] == "PASS", out["rr_ok"]
+
+# ---------------------------------------------------------------- P4R2-02：豁免項目形狀錯誤 → 結構錯誤，不拋例外
+def test_waived_item_shape_errors_are_reported(tmp_path):
+    root = mkroot(tmp_path)
+    out = py(root, """
+rid = F.new_run()
+F.analyze(rid, [F.req(1, [F.dp("Q01", "undefined", "critical", coverage=F.cov(missing=[F.missing(13, "手冊 v01 的角色模型（見 7.1.1 角色說明）", "手冊 7.1.1 角色說明")]))],
+                      ambiguity=F.amb("critical", "critical"))])
+apr = F.waiting(rid)
+def tryit(waived):
+    try: F.approve(apr, resolutions=[{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "waive_missing", "waived": waived, "rationale": "文件暫時無法取得"}]); return "accepted"
+    except engine.EngineError as e: return "EngineError: " + str(e)
+res = {n: tryit(w) for n, w in (("list", [{"cited_at": [], "name": "手冊 7.1.1 角色說明"}]), ("str", [{"cited_at": "第 13 行", "name": "x"}]), ("scalar", [5]),
+                                  ("no_key", [{"name": "手冊 7.1.1 角色說明"}]), ("pin_bad", [{"pin": "SPEC-REF-001@1.0"}]), ("not_list", "x"))}
+res["status"] = [store.load(f"approvals/{apr}.yaml")["status"], engine.load_run(rid)["status"]]
+res["ok"] = tryit([{"cited_at": {**F.pin(), "line": 13}, "name": "手冊 7.1.1 角色說明"}])
+print(json.dumps(res))""")
+    for n in ("list", "str", "scalar", "no_key", "pin_bad", "not_list"):
+        assert out[n].startswith("EngineError: ") and "waived" in out[n], (n, out[n])
+    assert out["status"] == ["PENDING", "WAITING_HUMAN"]
+    assert out["ok"] == "accepted"
+    r = U.q(root, "approve", "APR-0001", "--decision", "approve", "--by", "oscar", "--resolution",
+            json.dumps({"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "waive_missing", "waived": [{"cited_at": [], "name": "x"}], "rationale": "r"}))
+    assert "Traceback" not in r.stderr                                   # CLI：已核准過的單被拒，且沒有 traceback
