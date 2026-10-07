@@ -150,6 +150,16 @@ def test_15_change_impact_v1_1_supersedes_testcase(fixtures):
            "testcase_impact": [{"testcase_id": t[0], "active_version": t[1], "impact": "affected" if t in affected else "unaffected", "reason": "邊界值變更" if t in affected else "-", "affected_requirement_ids": ["REQ-AUTH-001"] if t in affected else []} for t in active],
            "summary": {"requirements_changed": 1, "requirements_added": 0, "requirements_removed": 0, "testcases_affected": 2, "testcases_obsolete": 0, "testcases_unaffected": 2},
            "completeness": {"all_active_requirements_judged": True, "all_referencing_testcases_judged": True}}
+    # 需求 A 第 5 章 §8、§9：CIR 帶兩端 revision，候選 TC 依各自的 pin 分組（G1～G8）
+    import json as _json
+    from tools.qaos import rm
+    r = engine.load_run(rid); groups = {}
+    for t in active: groups.setdefault(_json.dumps(rm.tc_pin(t[0], t[1]), sort_keys=True), []).append(t[0])
+    pin_groups = [{"from_pin": _json.loads(k), "testcase_ids": v, "requirement_diff": cir["requirement_diff"]} for k, v in groups.items()]
+    gidx = {t: k for k, g in enumerate(pin_groups) for t in g["testcase_ids"]}
+    cir.update(from_rm_revision=r["from_requirement_model_revision"], to_rm_revision=r["requirement_model_revision"], pin_groups=pin_groups)
+    for ti in cir["testcase_impact"]: ti["pin_group_index"] = gidx[ti["testcase_id"]]
+    assert len(pin_groups) == 1 and cir["to_rm_revision"]["spec_version"] == "1.1"
     # 漏判一個 TC → G-IMPACT FAIL
     bad = dict(cir, testcase_impact=cir["testcase_impact"][:-1], completeness={"all_active_requirements_judged": True, "all_referencing_testcases_judged": False})
     _, p = H.write_artifact(rid, "T1", "agent-change-impact-analyst", "ChangeImpactReport", bad, refs_, {"type": "SpecVersion", "ids": []}, "change-impact")

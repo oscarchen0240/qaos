@@ -1,5 +1,5 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
-import hashlib
+import hashlib, json
 from . import store, refs, rm
 
 def _payload(art): return art["payload"]
@@ -169,7 +169,20 @@ def g_bval(run, task, arts) -> list[str]:
         if p["result"] == "DUPLICATE" and not p["duplicate_check"]["duplicate_of"]: issues.append("DUPLICATE 但無 duplicate_of")
     return issues
 
+def _cia_candidates(spec_id) -> tuple[dict, list[str]]:
+    """候選 C：spec_id 等於 CIR、狀態 ACTIVE 的全部 TC（不論 spec_version、revision），各自依 §4.1 解析 pin。回傳 ({tc_id: RMPin}, 錯誤)。"""
+    out, errs = {}, []
+    for ptr in store.glob("testcases/registry/TC-*.yaml"):
+        d = store.load(ptr)
+        if d.get("status") != "ACTIVE" or d.get("active_version") is None: continue
+        v = store.load(store.tc_version_path(d["testcase_id"], d["active_version"]))
+        if v["spec_id"] != spec_id: continue
+        try: out[d["testcase_id"]] = rm.tc_pin(d["testcase_id"], d["active_version"])
+        except rm.RMError as e: errs.append(str(e))
+    return out, errs
+
 def g_impact(run, task, arts) -> list[str]:
+    """CIA 候選完整性與 pin_groups 的恰好分割（需求 A 第 5 章 §9，G1～G8）；依 revision 讀需求，不讀檢視。"""
     cir = arts.get("ChangeImpactReport")
     if not cir: return ["缺 ChangeImpactReport"]
     p = _payload(cir); issues = []
@@ -178,18 +191,44 @@ def g_impact(run, task, arts) -> list[str]:
         if err: issues.append(err)
     to_pin, to_reqs = _pinned(run, p["spec_id"], p["to_version"])
     if to_pin is None: return issues + [to_reqs]
-    from_pin, from_reqs = _pinned(run, p["spec_id"], p["from_version"], end="from") if run.get("from_requirement_model_revision") else (None, {})
-    if from_pin is None and isinstance(from_reqs, str): return issues + [from_reqs]
+    if p["to_rm_revision"] != to_pin: issues.append(f"to_rm_revision 不是 run 綁定的 {to_pin['revision']}")
+    if run.get("from_requirement_model_revision"):
+        from_pin, from_reqs = _pinned(run, p["spec_id"], p["from_version"], end="from")
+        if from_pin is None: return issues + [from_reqs]
+        if p["from_rm_revision"] != from_pin: issues.append(f"from_rm_revision 不是 run 綁定的 {from_pin['revision']}")
+    else:
+        from_reqs = {}
     judged = {d["requirement_id"] for d in p["requirement_diff"]}
     for rid in set(from_reqs) | set(to_reqs):
         if rid not in judged: issues.append(f"requirement {rid} 未出現在 requirement_diff")
-    judged_tc = {t["testcase_id"] for t in p["testcase_impact"]}
-    for ptr in store.glob("testcases/registry/TC-*.yaml"):
-        d = store.load(ptr)
-        if d["active_version"] is None: continue
-        v = store.load(store.tc_version_path(d["testcase_id"], d["active_version"]))
-        if v["spec_id"] == p["spec_id"] and v["spec_version"] == p["from_version"] and d["testcase_id"] not in judged_tc:
-            issues.append(f"ACTIVE TC {d['testcase_id']}（引用 {p['from_version']}）未出現在 testcase_impact")
+    # 候選與分組（G1～G8）
+    cand, errs = _cia_candidates(p["spec_id"]); issues += errs
+    C = set(cand); groups = p["pin_groups"]; I = [t["testcase_id"] for t in p["testcase_impact"]]
+    member_of = {}
+    for k, g in enumerate(groups):
+        ids_ = g["testcase_ids"]
+        if not ids_ or len(ids_) != len(set(ids_)): issues.append(f"G1：pin_groups[{k}] 是空組或組內有重複")
+        for t in ids_: member_of.setdefault(t, []).append(k)
+    all_ids = [t for g in groups for t in g["testcase_ids"]]
+    if set(all_ids) != C or len(all_ids) != len(C):
+        issues.append(f"G2：pin_groups 不是候選的恰好分割（缺 {sorted(C - set(all_ids))}、多 {sorted(set(all_ids) - C)}、重複 {sorted(t for t in member_of if len(member_of[t]) > 1)}）")
+    pins = [json.dumps(g["from_pin"], sort_keys=True) for g in groups]
+    if len(pins) != len(set(pins)): issues.append("G3：pin_groups 的 from_pin 有重複")
+    for k, g in enumerate(groups):
+        for t in g["testcase_ids"]:
+            if t in cand and cand[t] != g["from_pin"]: issues.append(f"G4：{t} 自己的 pin 是 {cand[t]['revision']}，不是 pin_groups[{k}] 的 {g['from_pin']['revision']}")
+    if set(I) != C or len(I) != len(C):
+        issues.append(f"G5：testcase_impact 必須恰好等於候選（缺 {sorted(C - set(I))}、未知 {sorted(set(I) - C)}、重複 {sorted({t for t in I if I.count(t) > 1})}）")
+    for t in p["testcase_impact"]:
+        k = t.get("pin_group_index")
+        if t["testcase_id"] in member_of and (k is None or member_of[t["testcase_id"]] != [k]):
+            issues.append(f"G6：{t['testcase_id']} 的 pin_group_index {k} 不等於所屬組 {member_of[t['testcase_id']]}")
+    for k, g in enumerate(groups):
+        try: rm.verify_pin(g["from_pin"]); g_from = rm.requirements_of(g["from_pin"])
+        except rm.RMError as e: issues.append(f"G8：pin_groups[{k}] 的 from_pin 無法解析：{e}"); continue
+        rids = [d["requirement_id"] for d in g["requirement_diff"]]
+        if sorted(rids) != sorted(set(g_from) | set(to_reqs)) or len(rids) != len(set(rids)):
+            issues.append(f"G7：pin_groups[{k}] 的 requirement_diff 必須恰好涵蓋 {g['from_pin']['revision']} 與 {to_pin['revision']} 的需求各一次")
     if not (p["completeness"]["all_active_requirements_judged"] and p["completeness"]["all_referencing_testcases_judged"]):
         issues.append("completeness 自我宣告未通過")
     return issues
