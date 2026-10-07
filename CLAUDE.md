@@ -8,4 +8,10 @@
 - 發現不是自己改的未 commit 變更：停下來回報，不修改、不 commit、不 stash
 - 跑完整測試時用 `git archive HEAD` 匯出乾淨目錄，或確認工作區乾淨後再跑
 - Codex 複審只針對已 commit 的 SHA，不審工作區
+- 例外：主目錄的 `review-handoff/`（未進版控）是 Claude／Codex 交接區，可讀寫，但每個任務只寫自己的子目錄
 - 任務完成並 merge 回 main 後，用 `git worktree remove` 收掉該 worktree
+
+## Merge 前必經 Codex code review
+- 程式變更 merge 回 main 前，必須以 `codex exec` 送 Codex code review，審查對象為已 commit 的 SHA，結果寫入 `review-handoff/<任務子目錄>/`
+- Codex 提出的問題須全部修正並再送複審，直到問題清零才可 merge；Oscar 明確決定延後的項目需記錄在交接區，不算未清零
+- 未經 Oscar 確認，不得自行 merge 回 main
