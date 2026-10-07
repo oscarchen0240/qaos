@@ -1,7 +1,7 @@
 """Workflow 引擎：Run 建立、Artifact 提交（Permission Guard + Structural Gate）、Gate 評估與效果、Approval、Commit。
 Agent 永遠不呼叫這裡的 commit；只有 approve() 在 Human 決定後觸發。"""
 import pathlib
-from . import store, schema, ids, state, refs, gates, operation, clarification as clr
+from . import store, schema, ids, state, refs, gates, operation, rm, clarification as clr
 from .state import TransitionError
 
 SYSTEM = "system"
@@ -55,14 +55,31 @@ def _wf_task(wf: dict, task_id: str) -> dict:
         return {"id": task_id, "agent": wf["risk_review"]["agent"], "outputs": ["TCRiskReview"], "gate": "G-RISK"}
     return next(t for t in wf["tasks"] if t["id"] == task_id)
 
+def _skip_decision(wf: dict, wt: dict, inputs: dict) -> tuple[bool, str | None]:
+    """分析 task（有 run_if／skip_if 的 T0、T1）是否跳過，依第 5 章 §7 的優先序；回傳 (是否跳過, 要記入 audit 的警告)。"""
+    if not (wt.get("skip_if") or wt.get("run_if")): return False, None
+    sid, ver = inputs.get("spec_id"), inputs.get("spec_version") or inputs.get("to_version")
+    if not (sid and ver): return False, None
+    if wf["workflow_id"] == "spec-change-impact" and str(inputs.get("from_version")) == str(inputs.get("to_version")): return False, None   # 同版本 CIA：T0 一定執行（§8）
+    pin = rm.latest_pin(sid, ver)
+    if pin is None: return False, None                                       # 1. 沒有 RM
+    if rm.has_non_active(pin): return False, None                            # 2. 最新 revision 有非 ACTIVE 的需求（優先於 legacy 例外）
+    o = rm.outdated(pin)
+    if o["declaration_changed"] or o["decision_revised"]: return False, None # 3.
+    from . import spec_ops
+    _, _, e = spec_ops.find_entry(sid, ver)
+    if pin["revision"] == "R000" and spec_ops.references_status(e) == "undeclared":   # 4. 只有 legacy R000、未宣告引用、全部 ACTIVE
+        return True, f"沿用 legacy {sid}@{ver} R000（引用未宣告）跳過分析"
+    return True, None                                                         # 5.
+
 def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
-    """run_if / skip_if 的機械判斷（Phase 2 只支援 RequirementModel 存在性）。"""
-    cond = wt.get("skip_if") or (f"NOT({wt['run_if']})" if wt.get("run_if") else None)
-    if not cond: return False
-    ver = inputs.get("spec_version") or inputs.get("to_version")
-    exists = store.exists(store.requirements_path(inputs["spec_id"], ver)) if inputs.get("spec_id") and ver else False
-    if wt.get("skip_if"): return exists
-    return exists  # run_if "NOT exists" → skip when exists
+    return _skip_decision(wf, wt, inputs)[0]
+
+def _require_fresh(pin: dict, label: str):
+    """沒有 T0 的流程（testcase-revision、manual）在 run new 時凍結 revision：過時或有非 ACTIVE 需求 → 拒絕，提示先重新分析（§4.3）。"""
+    o = rm.outdated(pin); why = [k for k in ("declaration_changed", "decision_revised") if o[k]]
+    if rm.has_non_active(pin): why.append("最新 revision 有非 ACTIVE 的需求")
+    if why: raise EngineError(f"{label} 的 {pin['spec_id']}@{pin['spec_version']} {pin['revision']} 不能直接沿用（{', '.join(why)}）；請先重新分析。" + ("；".join(o["details"]) and f" 細節：{'；'.join(o['details'])}"))
 
 def _require_analyzable(workflow_id: str, inputs: dict):
     """reference_only 的 spec 版本不能當任何 run 的分析目標（需求 A 第 2 章 §3.4 的 7 個入口）。"""
@@ -84,6 +101,43 @@ def _require_analyzable(workflow_id: str, inputs: dict):
         try: spec_ops.require_analyzable(sid, str(ver), label)
         except spec_ops.SpecError as e: raise EngineError(str(e))
 
+def _target_of(workflow_id: str, inputs: dict) -> tuple[str, str] | None:
+    """manual-test-to-regression 的目標 spec：inputs 優先，其次 manual record 的 spec_hint（第 5 章 §4.2）。"""
+    if inputs.get("spec_id") and inputs.get("spec_version"): return inputs["spec_id"], str(inputs["spec_version"])
+    if workflow_id == "manual-test-to-regression" and inputs.get("manual_record_id") and store.exists(f"testcases/manual/{inputs['manual_record_id']}.yaml"):
+        h = store.load(f"testcases/manual/{inputs['manual_record_id']}.yaml").get("spec_hint") or {}
+        if h.get("spec_id") and h.get("spec_version"): return h["spec_id"], str(h["spec_version"])
+    return None
+
+def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
+    """new_run 時就要綁定的 revision（第 5 章 §4.2）：spec-change-impact 的 from 端；沒有 T0 的 testcase-revision、manual 綁目標版本的最新 revision。"""
+    out = {}
+    if workflow_id == "spec-change-impact":
+        if str(inputs["from_version"]) == str(inputs["to_version"]):         # 同版本 CIA（§8）
+            if not inputs.get("from_revision") or not inputs.get("reason"):
+                raise EngineError("同版本的 spec-change-impact 必須帶 --input from_revision=R<NNN> 與 --input reason=declaration_changed|decision_revised|decision_applied")
+            try: pin = rm.pin_of(inputs["spec_id"], str(inputs["from_version"]), inputs["from_revision"])
+            except rm.RMError as e: raise EngineError(str(e))
+            reason = inputs["reason"]
+            if reason not in ("declaration_changed", "decision_revised", "decision_applied"): raise EngineError(f"reason 只能是 declaration_changed、decision_revised 或 decision_applied：{reason!r}")
+            actual = rm.decision_applied(pin) if reason == "decision_applied" else rm.outdated(pin)[reason]
+            if not actual: raise EngineError(f"{inputs['from_revision']} 的判定結果不是 {reason}；不能以這個理由做同版本 CIA")
+            out["from_requirement_model_revision"] = pin
+        else:
+            pin = rm.latest_pin(inputs["spec_id"], inputs["from_version"])
+            if pin: out["from_requirement_model_revision"] = pin
+    elif workflow_id in ("testcase-revision", "manual-test-to-regression"):
+        tgt = _target_of(workflow_id, inputs)
+        if tgt is None: raise EngineError("沒有可分析的 spec：先在 manual record 補 spec_hint（spec_id、spec_version），或以 inputs 指定 spec")
+        pin = rm.latest_pin(*tgt)
+        if pin is None: raise EngineError(f"{tgt[0]}@{tgt[1]} 還沒有需求模型 revision；先以 spec-to-testcase 分析")
+        _require_fresh(pin, workflow_id)
+        out["requirement_model_revision"] = pin
+        if workflow_id == "testcase-revision" and inputs.get("testcase_id") and store.exists(store.tc_pointer_path(inputs["testcase_id"])):
+            ptr = store.load(store.tc_pointer_path(inputs["testcase_id"]))
+            if ptr.get("active_version"): out["testcase_pin"] = rm.tc_pin(inputs["testcase_id"], ptr["active_version"])   # 被修訂 TC 自己的舊 pin，供 diff
+    return out
+
 @operation.operation("run_new")
 def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
@@ -102,10 +156,11 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
                 err = refs.resolve({"entity_type": "SpecVersion", "id": inputs["spec_id"], "version": inputs[k]})
                 if err: raise EngineError(err)
     _require_analyzable(workflow_id, inputs)
+    pins = _bind_at_new_run(workflow_id, inputs)
     run_id = ids.alloc("RUN")
     run = {"run_id": run_id, "workflow_id": workflow_id, "workflow_version": wf["version"], "status": None,
            "input": {**inputs, "initiated_by": by}, "initiated_by": by, "created_at": store.now(), "updated_at": store.now(),
-           "tasks": _expand_tasks(wf, inputs), "history": []}
+           "tasks": _expand_tasks(wf, inputs), "history": [], **pins}
     state.apply("workflow_run", run, "CREATED", SYSTEM, f"new_run by {by}", run_id)
     state.apply("workflow_run", run, "RUNNING", SYSTEM, "task graph expanded", run_id)
     _save_run(run)
@@ -136,7 +191,12 @@ def _advance(run: dict, after: str | None = None):
     t = _next_task(run, after)
     while t is not None:
         wt = _wf_task(wf, t["task_id"])
-        if t["type"] == "agent" and _skip(wf, wt, run["input"]):
+        skip, warn = _skip_decision(wf, wt, run["input"]) if t["type"] == "agent" else (False, None)
+        if skip:
+            inp = run["input"]
+            if warn: store.audit(run["run_id"], SYSTEM, "WARN_LEGACY_SKIP", warn)
+            if not run.get("requirement_model_revision"):                    # 跳過分析時，run 綁定最新 revision（第 5 章 §4.2、§7）
+                rm.bind_run(run, rm.latest_pin(inp["spec_id"], inp.get("spec_version") or inp.get("to_version")))
             t["status"] = "DONE"; store.audit(run["run_id"], SYSTEM, "SKIP_TASK", t["task_id"]); t = _next_task(run, t["task_id"]); continue
         if t["type"] == "approval":
             state.apply("task", t, "READY", SYSTEM, "advance"); state.apply("task", t, "RUNNING", SYSTEM, "advance")
@@ -154,6 +214,18 @@ def _submit_request(run_id, task_id, artifact_path):
     r = store.rel(artifact_path)
     aid = store.load(r).get("artifact_id") if store.exists(r) else None
     return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_id": aid}}
+
+def _run_pins(run) -> list[dict]:
+    """run 綁定的 RMPin（to／目標端在前，spec-change-impact 另有 from 端）；還沒綁定時為空。"""
+    return [run[f] for f in ("requirement_model_revision", "from_requirement_model_revision") if run.get(f)]
+
+def _resolve_in_run(ref, run) -> str | None:
+    """artifact 引用的 Requirement／AC 只在 run 綁定的 revision 中找（不讀可變的檢視）；run 還沒綁定時依最新 revision。"""
+    if ref["entity_type"] not in ("Requirement", "AcceptanceCriterion"): return refs.resolve(ref)
+    pins = _run_pins(run)
+    if not pins: return refs.resolve(ref)
+    errs = [refs.resolve(ref, pin=p) for p in pins]
+    return None if any(e is None for e in errs) else errs[0]
 
 @operation.operation("submit", request=_submit_request, scope=lambda run_id, *a, **k: run_id)
 def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[str]]:
@@ -179,7 +251,7 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     if art["status"] not in ("DRAFT", "SUBMITTED"): problems.append(f"artifact 狀態 {art['status']} 不可提交")
     # 引用逐一存在
     for r in art["references"]:
-        err = refs.resolve(r)
+        err = _resolve_in_run(r, run)
         if err: problems.append(f"reference: {err}")
     # 輸入 artifact 必須是 dispatch 指定的（Phase 2：必須屬於本 run 且 VALID）
     for r in art["references"]:
@@ -374,28 +446,27 @@ def _open_clarifications(run, apr, rm):
 def _has_unresolved_critical(rm) -> bool:
     return any((r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval") for r in rm["payload"]["requirements"])
 
-def _persist_requirements(run, task, rm):
-    p = rm["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"])
+def _persist_requirements(run, task, rm_art):
+    p = rm_art["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"])
     reqs = []
     for r in p["requirements"]:
         r = dict(r); r["status"] = None; r.pop("history", None); r["history"] = []
         crit = (r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
-        state.apply("requirement", r, "DRAFT", SYSTEM, rm["artifact_id"], run["run_id"])
+        state.apply("requirement", r, "DRAFT", SYSTEM, rm_art["artifact_id"], run["run_id"])
         if not crit: state.apply("requirement", r, "ACTIVE", SYSTEM, "G-SPEC PASS", run["run_id"])
         reqs.append(r)
-    doc = {"spec_id": p["spec_id"], "spec_version": p["spec_version"], "source_artifact_id": rm["artifact_id"], "persisted_at": store.now(), "requirements": reqs}
-    errs = schema.errors(doc, "spec/requirements-file.schema.json")
-    if errs: raise EngineError("requirements.yaml 不符 schema：" + "; ".join(errs[:3]))
-    store.save(path, doc)
+    pin = rm.save_requirements(p["spec_id"], p["spec_version"], reqs, reason="analysis", by=SYSTEM, run_id=run["run_id"], source_artifact_id=rm_art["artifact_id"])
+    run["requirement_model_revision"] = pin                                  # 本 run 自己的分析：綁定（重新分析時改綁本 run 新產生的 revision）
     d = store.spec_dir(p["spec_id"]); spec = store.load(d / "spec.yaml")
     for v in spec["versions"]:
         if v["spec_version"] == p["spec_version"] and v["status"] == "IMPORTED": v["status"] = "ANALYZED"
     store.save(d / "spec.yaml", spec)
-    store.audit(run["run_id"], SYSTEM, "PERSIST_REQUIREMENTS", f"{path} ({len(reqs)} reqs)")
+    store.audit(run["run_id"], SYSTEM, "PERSIST_REQUIREMENTS", f"{path} {pin['revision']} ({len(reqs)} reqs)")
 
 def _materialize_testcases(run, task, report):
     """G-TVAL PASS：Draft → 正式 ID → versions/ (VALIDATED) → pointer；回傳 EntityRefs 供 approval。"""
     draft = store.load(store.find_artifact(report["payload"]["testcase_draft_artifact_id"]))
+    pin = rm.run_pin(run)                                                    # TC 版本綁定 run 的依據（第 5 章 §4.1）
     created = []
     for tc in draft["payload"]["testcases"]:
         sup = tc.get("supersedes_testcase")
@@ -406,7 +477,7 @@ def _materialize_testcases(run, task, report):
         v = {k: tc[k] for k in tc if k not in ("draft_id", "supersedes_testcase", "design_rationale")}
         v.update({"testcase_id": tc_id, "version": version, "supersedes": sup["version"] if sup else None, "status": None,
                   "created_by": draft["created_by"], "validated_by": report["created_by"], "validation_report_id": report["artifact_id"],
-                  "created_at": store.now(), "updated_at": store.now(), "history": []})
+                  "created_at": store.now(), "updated_at": store.now(), "history": [], "requirement_model_revision": pin})
         v["assumptions"] = [dict(a) for a in tc.get("assumptions", [])]   # 保留 needs_human_confirmation，ACTIVATE 時由 Human 逐項確認
         state.apply("testcase", v, "DRAFT", SYSTEM, draft["artifact_id"], run["run_id"])
         state.apply("testcase", v, "VALIDATING", SYSTEM, "dispatch validator", run["run_id"])

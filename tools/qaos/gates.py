@@ -1,6 +1,6 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
 import hashlib
-from . import store, refs
+from . import store, refs, rm
 
 def _payload(art): return art["payload"]
 
@@ -31,10 +31,13 @@ def g_spec(run, task, arts) -> list[str]:
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
     return issues
 
-def _active_requirements(spec_id, spec_version):
-    path = store.requirements_path(spec_id, spec_version)
-    if not store.exists(path): return None
-    return {r["requirement_id"]: r for r in store.load(path)["requirements"]}
+def _pinned(run, spec_id, spec_version, end="target"):
+    """run 綁定的 revision（第 5 章 §4.1；不讀可變的檢視）；和本次 artifact 的 spec 版本不符 → 錯誤。回傳 (RMPin, {requirement_id: requirement}) 或 (None, 錯誤訊息)。"""
+    try: pin = rm.run_pin(run, end)
+    except rm.RMError as e: return None, str(e)
+    if (pin["spec_id"], pin["spec_version"]) != (spec_id, str(spec_version)):
+        return None, f"artifact 的 {spec_id}@{spec_version} 和 run 綁定的 {pin['spec_id']}@{pin['spec_version']} {pin['revision']} 不符"
+    return pin, rm.requirements_of(pin)
 
 NON_HAPPY_TYPES = {"negative", "boundary"}
 NON_HAPPY_TECH = {"negative", "error_guessing", "boundary_value"}
@@ -48,8 +51,8 @@ def g_design(run, task, arts) -> list[str]:
     tcd = arts.get("TestCaseDraft"); tdr = arts.get("TestDesignReport")
     if not tcd or not tdr: return ["缺 TestCaseDraft 或 TestDesignReport"]
     p = _payload(tcd); rep = _payload(tdr)
-    reqs = _active_requirements(p["spec_id"], p["spec_version"])
-    if reqs is None: return [f"RequirementModel {p['spec_id']}@{p['spec_version']} 尚未持久化"]
+    _, reqs = _pinned(run, p["spec_id"], p["spec_version"])
+    if isinstance(reqs, str): return [reqs]
     ac_owner = {}   # ac_id → 所屬 requirement_id 集合（AC 嵌在 requirement 底下，正常只有一個）
     for rid, r in reqs.items():
         for ac in r.get("acceptance_criteria", []): ac_owner.setdefault(ac["ac_id"], set()).add(rid)
@@ -152,8 +155,9 @@ def g_bval(run, task, arts) -> list[str]:
             if err: issues.append(err)
         for m in p["actual_result_evidence_map"]:
             if m["evidence_id"] not in p["evidence_ids"]: issues.append(f"actual_result_evidence_map 引用未列入 evidence_ids 的 {m['evidence_id']}")
-        r, _ = refs.find_requirement(p["requirement_id"], p["spec_id"], p["spec_version"])
-        if not r: issues.append(f"requirement {p['requirement_id']} 不在 {p['spec_id']}@{p['spec_version']} 的 RequirementModel")
+        pin, reqs = _pinned(run, p["spec_id"], p["spec_version"])
+        if pin is None: issues.append(reqs)
+        elif p["requirement_id"] not in reqs: issues.append(f"requirement {p['requirement_id']} 不在 {p['spec_id']}@{p['spec_version']} {pin['revision']}")
         if not p["reproduction_steps"]: issues.append("reproduction_steps 為空")
     if rep:
         p = _payload(rep)
@@ -172,8 +176,10 @@ def g_impact(run, task, arts) -> list[str]:
     for v in (p["from_version"], p["to_version"]):
         err = refs.resolve({"entity_type": "SpecVersion", "id": p["spec_id"], "version": v})
         if err: issues.append(err)
-    to_reqs = _active_requirements(p["spec_id"], p["to_version"]) or {}
-    from_reqs = _active_requirements(p["spec_id"], p["from_version"]) or {}
+    to_pin, to_reqs = _pinned(run, p["spec_id"], p["to_version"])
+    if to_pin is None: return issues + [to_reqs]
+    from_pin, from_reqs = _pinned(run, p["spec_id"], p["from_version"], end="from") if run.get("from_requirement_model_revision") else (None, {})
+    if from_pin is None and isinstance(from_reqs, str): return issues + [from_reqs]
     judged = {d["requirement_id"] for d in p["requirement_diff"]}
     for rid in set(from_reqs) | set(to_reqs):
         if rid not in judged: issues.append(f"requirement {rid} 未出現在 requirement_diff")
@@ -268,8 +274,10 @@ def g_risk(run, task, arts) -> list[str]:
             issues.append(f"{f['finding_id']} 的 spec_basis 只有空白；沒有依據請填 null 並標 needs_clarification")
         elif sb is None and not f["needs_clarification"]:
             issues.append(f"{f['finding_id']} 沒有 spec 依據卻未標 needs_clarification（不得自行寫出預期行為）")
+        pin, reqs = _pinned(run, rv["spec_id"], rv["spec_version"])
         for rid in f["related_requirement_ids"]:
-            if not refs.find_requirement(rid, rv["spec_id"], rv["spec_version"])[0]: issues.append(f"{f['finding_id']} 引用的 {rid} 不在 {rv['spec_id']}@{rv['spec_version']}")
+            if pin is None: issues.append(reqs); break
+            if rid not in reqs: issues.append(f"{f['finding_id']} 引用的 {rid} 不在 {rv['spec_id']}@{rv['spec_version']} {pin['revision']}")
         for tid in f["related_testcase_ids"]:
             if tid in did_set: continue
             if not _active_tc_in_area(tid, rv["functional_area"]):

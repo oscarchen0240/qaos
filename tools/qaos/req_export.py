@@ -4,7 +4,9 @@ from . import store, operation
 def build(spec_id: str, spec_version: str) -> str:
     """唯讀：產生內容，不寫檔（`req-export --stdout` 用）。"""
     from . import clarification as clr
-    doc = store.load(store.requirements_path(spec_id, spec_version)); reqs = doc["requirements"]
+    from . import rm
+    pin = rm.latest_pin(spec_id, spec_version)                               # run 外的輸出：最新 revision（需求 A 第 5 章 §4.1），並在輸出中標明
+    doc = rm.load_revision(pin) if pin else store.load(store.requirements_path(spec_id, spec_version)); reqs = doc["requirements"]
     answered = {}
     for c in clr.list_(open_only=False):
         if c["spec_id"] == spec_id and c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
@@ -16,7 +18,7 @@ def build(spec_id: str, spec_version: str) -> str:
             t = store.load(store.tc_version_path(d["testcase_id"], v["version"]))
             if t["spec_id"] == spec_id:
                 for r in t["requirement_ids"]: tcs.setdefault(r, []).append(f"{d['testcase_id']} v{v['version']}")
-    lines = [f"# Requirements — {spec_id} v{spec_version}（{spec['title']}）", "", f"- 共 {len(reqs)} 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理", "- 事實來源：`" + store.requirements_path(spec_id, spec_version) + "`", ""]
+    lines = [f"# Requirements — {spec_id} v{spec_version}（{spec['title']}）", "", f"- 共 {len(reqs)} 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理", "- 事實來源：`" + (rm.rev_path(spec_id, spec_version, pin["revision"]) + f"`（revision {pin['revision']}）" if pin else store.requirements_path(spec_id, spec_version) + "`（尚未移轉的 legacy 檢視）"), ""]
     for r in reqs:
         amb = r.get("ambiguity") or {}; rc = r.get("rejection_contract") or {}
         lines += [f"## {r['requirement_id']} {r.get('title', '')}", "", f"**需求**：{r['statement']}", "",

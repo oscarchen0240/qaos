@@ -2,6 +2,12 @@
 from . import store, operation
 
 @operation.operation("approval_render")
+def _run_pin(a: dict):
+    """核准單所屬 run 綁定的 revision（需求 A 第 5 章 §4.1）；run 沒有綁定（例如尚未移轉的 legacy run）時為 None，顯示改用最新 revision。"""
+    from . import rm
+    try: return rm.run_pin(store.load(f"runs/{a['run_id']}/run.yaml"))
+    except (rm.RMError, FileNotFoundError): return None
+
 def render(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml"); lines = [f"# {apr_id} · {a['type']}", "", f"- Run：{a['run_id']}  · 狀態：{a['status']}  · 提出：{a['requested_at'][:10]}", f"- **{a['summary']}**", ""]
     if a["type"] in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and a.get("batch_items"):
@@ -9,8 +15,9 @@ def render(apr_id: str) -> str:
         answered = {}
         for c in clr.list_(open_only=False):
             if c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+        pin = _run_pin(a)
         def req_title(rid):
-            r, _ = _refs.find_requirement(rid); return (f"{rid} {r.get('title', '')}".strip(), r) if r else (rid, None)
+            r, _ = _refs.find_requirement(rid, pin=pin); return (f"{rid} {r.get('title', '')}".strip(), r) if r else (rid, None)
         groups = {}; exp = []
         for it in a["batch_items"]:
             v = store.load(store.tc_version_path(it["id"], it["version"])); groups.setdefault(v["requirement_ids"][0], []).append((it, v))
@@ -89,8 +96,9 @@ ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:
         for it in a["batch_items"]:
             v = store.load(store.tc_version_path(it["id"], it["version"])); groups.setdefault(v["requirement_ids"][0], []).append((it, v)); n_exp += bool(v.get("assumptions"))
         out.append(f"<p>共 {len(a['batch_items'])} 條：grounded {len(a['batch_items']) - n_exp} 條（預期結果有 spec 條文依據）、<b>exploratory {n_exp} 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>")
+        pin = _run_pin(a)
         for rid, items in groups.items():
-            r, _ = _refs.find_requirement(rid)
+            r, _ = _refs.find_requirement(rid, pin=pin)
             out.append(f"<h2>{H.escape(rid)} {H.escape(r.get('title', '') if r else '')}</h2>")
             if r: out.append(f"<blockquote>spec：{H.escape(r['spec_reference']['location'])}" + (f"　「{H.escape(r['spec_reference']['quote'])}」" if r['spec_reference'].get('quote') else "") + f"　· 風險 {r.get('risk', '—')}</blockquote>")
             out.append('<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>')

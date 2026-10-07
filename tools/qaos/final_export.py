@@ -16,11 +16,15 @@ def _active_tcs(area):
 
 def _req_index(tcs):
     """requirement_id → {title, statement}，依 TC 所掛的 spec 載入 RM。"""
+    from . import rm, refs
     idx = {}
-    for sid, sv in {(t["spec_id"], t["spec_version"]) for t in tcs}:
-        rp = store.requirements_path(sid, sv)
-        if not store.exists(rp): continue
-        for r in store.load(rp)["requirements"]: idx[r["requirement_id"]] = r
+    for t in tcs:                                                             # TC 的依據：版本檔 pin → TC sidecar（需求 A 第 5 章 §4.1）
+        try: pin = rm.tc_pin(t["testcase_id"], t["version"])
+        except rm.RMError: pin = None                                         # 尚未移轉的 legacy TC：顯示用，退回最新 revision／legacy 檢視
+        for rid in t.get("requirement_ids", []):
+            if rid not in idx:
+                r, _ = refs.find_requirement(rid, t["spec_id"], t["spec_version"], pin=pin)
+                if r: idx[rid] = r
     return idx
 
 def _existing_head(area):

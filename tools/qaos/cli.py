@@ -4,7 +4,7 @@
 要刻意再執行一次相同內容的請求請加 --new-request。唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，
 也不保證跨檔一致的快照。"""
 import argparse, json, sys, pathlib
-from . import store, schema, ids, engine, trace, operation, spec_ops, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
+from . import store, schema, ids, engine, trace, operation, spec_ops, rm, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
 from .engine import EngineError
 from .state import TransitionError
 
@@ -171,6 +171,7 @@ def cmd_clr_apply(a): clr.apply_(a.id, a.by, a.note or "", impact_reviewed=a.imp
 def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.note or "", **_nr(a)); print(f"{a.id} WITHDRAWN")
 def cmd_clr_list(a):
     for c in clr.list_(open_only=not a.all): print(f"{c['clarification_id']} [{c['status']}] {c['product']}/{c['functional_area']} {c['spec_id']}@{c['spec_version']} — {c['question']}")
+def cmd_req_accept(a): _print(rm.accept_declaration(a.target, a.rev, a.reason, a.by, **_nr(a)))
 def cmd_clr_index(a): n = clr.build_index(**_nr(a)); print(f"clarifications/index.md（{n} 張）")
 def _json_arg(text, name):
     try: return json.loads(text)
@@ -226,6 +227,9 @@ def main(argv=None):
     p.add_argument("--observed", required=True); p.add_argument("--outcome", required=True, choices=["pass", "fail", "blocked"]); p.add_argument("--spec-id"); p.add_argument("--spec-version"); p.add_argument("--requirement-id", action="append")
     p.add_argument("--environment"); p.add_argument("--precondition", action="append"); p.add_argument("--evidence", action="append"); p.add_argument("--notes"); p.add_argument("--by", required=True); p.set_defaults(f=cmd_manual_new)
     p = sp.add_parser("req-export", parents=[W]); p.add_argument("spec_id"); p.add_argument("spec_version"); p.add_argument("--stdout", action="store_true", help="唯讀：輸出到 stdout，不寫檔、不取鎖"); p.set_defaults(f=cmd_req_export)
+    rq = sp.add_parser("req", help="需求模型 revision"); rqs = rq.add_subparsers(dest="sub", required=True)
+    p = rqs.add_parser("accept-declaration", parents=[W], help="接受宣告變動：需求內容不變、pins 更新（沒有經過分析）"); p.add_argument("target", metavar="SPEC_ID@VER")
+    p.add_argument("--rev", required=True, help="目前最新的 revision"); p.add_argument("--reason", required=True); p.add_argument("--by", required=True); p.set_defaults(f=cmd_req_accept)
     p = sp.add_parser("trace"); p.add_argument("id"); p.set_defaults(f=cmd_trace)
     p = sp.add_parser("suites-of"); p.add_argument("tc_id"); p.set_defaults(f=cmd_suites_of)
     s = sp.add_parser("spec"); ss = s.add_subparsers(dest="sub", required=True)

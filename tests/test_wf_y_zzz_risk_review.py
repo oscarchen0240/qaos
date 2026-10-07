@@ -152,14 +152,15 @@ def test_76_change_impact_reject_returns_to_designer_and_resets_risk_task(monkey
     engine.cancel(rid, "oscar@example.com")
 
 def test_77_manual_run_area_comes_from_record_and_unknown_area_is_rejected(monkeypatch):
-    """MR !1 review：manual-test-to-regression 可不填 spec_id；area 改看 manual record，判定不了就拒絕建 run，不默默跳過抽查。"""
+    """MR !1 review：area 看 manual record，判定不了就拒絕建 run，不默默跳過抽查。
+    需求 A 第 5 章 §4.3 之後，manual run 必須有 spec（inputs 或 spec_hint）：沒有 spec 的 record 仍以 record 的 area 決定是否抽查，但 run new 拒絕。"""
     from tools.qaos import tc_ops
     rr = engine.agents()["agent-tc-risk-reviewer"]
     monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
     rec = tc_ops.manual_new("提款連點測試", "demo", "NEG", ["連點送出"], "產生兩筆", "fail", "oscar@example.com")
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
-    assert "T2RR" in [t["task_id"] for t in run["tasks"]]
-    engine.cancel(run["run_id"], "oscar@example.com")
+    assert engine._risk_review_task_id(engine.workflow("manual-test-to-regression"), {"manual_record_id": rec}) == "T2RR"
+    with pytest.raises(engine.EngineError, match="沒有可分析的 spec"):
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
     with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
         engine.new_run("manual-test-to-regression", {"manual_record_id": "MAN-19990101-001"}, "oscar@example.com", new_request=True)
 
@@ -186,9 +187,9 @@ def test_78_risk_reviewer_input_schema_binds_validation_report():
 def test_79_suite_membership_reject_still_returns_to_curator():
     """回歸：退回 Designer 只限 TC 核准單。manual-test-to-regression 的 T5 suite 成員核准被 reject，必須退回 T4 curator，不可退到 T1 Designer。"""
     from tools.qaos import tc_ops
-    rec = tc_ops.manual_new("suite 退回測試", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com")
+    rec = tc_ops.manual_new("suite 退回測試", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com", spec_id="SPEC-AUTH-001", spec_version="1.0")   # manual run 需要 spec（需求 A 第 5 章 §4.3）
     run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True); rid = run["run_id"]
-    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5", "T6"]   # NEG 非高風險，不插 RR
+    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5", "T6"]   # area 取 spec 的 AUTH，非高風險，不插 RR
     for t in run["tasks"]:
         if t["task_id"] in ("T1", "T2", "T3", "T4"): t["status"] = "DONE"
     t5 = next(t for t in run["tasks"] if t["task_id"] == "T5"); t5["status"] = "RUNNING"
@@ -222,16 +223,19 @@ def test_80_manual_run_area_sources_and_validation(monkeypatch, fixtures):
     # 只有 spec_hint（沒有 functional_area）→ 取 spec 目錄，高風險就插 RR
     rec = _manual(spec_hint=hint, drop_area=True)
     assert store.run_area({"manual_record_id": rec}) == "HINTRISK"
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
-    assert "T2RR" in [t["task_id"] for t in run["tasks"]]; engine.cancel(run["run_id"], "oscar@example.com")
+    wf = engine.workflow("manual-test-to-regression")
+    assert engine._risk_review_task_id(wf, {"manual_record_id": rec}) == "T2RR"
+    with pytest.raises(engine.EngineError, match="還沒有需求模型 revision"):                  # 需求 A 第 5 章 §4.3：spec 還沒分析 → 拒絕
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
     # spec_hint 可解析時優先於手填 area；不存在的 spec_hint → 退回有效的手填 area（strip 後）
     assert store.run_area({"manual_record_id": _manual(area="AUTH", spec_hint=hint)}) == "HINTRISK"
     assert store.run_area({"manual_record_id": _manual(area=" CASHOUT ", spec_hint={"spec_id": "SPEC-NOPE-001", "spec_version": "1.0"})}) == "CASHOUT"
     # 含數字的合法 area（R4-01）：可建 run、非高風險不插 RR
     rec2 = _manual(area="AUTH2")
     assert store.run_area({"manual_record_id": rec2}) == "AUTH2"
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec2}, "oscar@example.com", new_request=True)
-    assert "T2RR" not in [t["task_id"] for t in run["tasks"]]; engine.cancel(run["run_id"], "oscar@example.com")
+    assert engine._risk_review_task_id(wf, {"manual_record_id": rec2}) is None
+    with pytest.raises(engine.EngineError, match="沒有可分析的 spec"):
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec2}, "oscar@example.com", new_request=True)
     # 同一個 area 從三種來源取得結果一致
     assert store.run_area({"spec_id": "SPEC-HINT2-001"}) == store.run_area({"manual_record_id": _manual(spec_hint={"spec_id": "SPEC-HINT2-001", "spec_version": "1.0"}, drop_area=True)}) \
         == store.run_area({"manual_record_id": _manual(area="AREA2")}) == "AREA2"
