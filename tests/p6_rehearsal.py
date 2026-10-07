@@ -129,6 +129,24 @@ for p in sorted(root.rglob("*.yaml")):
 print(json.dumps(out, ensure_ascii=False))
 """
 
+# 附錄 A 6-38：資料快照 git archive 7ef07ee／3a62d87 移轉後的 schema baseline（M1 以當天資料重新計算，不同時交 Oscar 核對）
+BASELINE_6_38 = [
+    'artifacts/change-impact/RUN-20261001-007/ART-CIR-01M3VNQQ2Q073T4VH6R8C6JHEN.yaml',
+    'artifacts/change-impact/RUN-20261002-002/ART-CIR-01M3XJ09X6JYPY1SNA4TAP8H3D.yaml',
+    'artifacts/requirements/SPEC-TXLOG-001/v0.1/requirements.yaml',
+    'artifacts/requirements/SPEC-TXLOG-001/v0.1/revisions/R000.yaml',
+    'artifacts/test-design/RUN-20260916-002/ART-TCD-01M2MBGVMK0N543JTJY81T0GSP.yaml',
+    'artifacts/test-design/RUN-20260916-002/ART-TCD-01M2ME3944YP3RRJ94T1RXVXTQ.yaml',
+    'artifacts/test-design/RUN-20260916-002/ART-TDR-01M2MCQZYJH4YZXYH70BXC6SFM.yaml',
+    'artifacts/validation/RUN-20260915-003/ART-TVR-01M2GGKWE2V1THXS6S8F99TTVK.yaml',
+    'artifacts/validation/RUN-20260915-004/ART-TVR-01M2GJM8F0Z29M0TPCTBCEASDF.yaml',
+    'artifacts/validation/RUN-20260915-006/ART-TVR-01M2GMZE38WR4JYJ3GYKSN8TDA.yaml',
+    'artifacts/validation/RUN-20260915-016/ART-TVR-01M2J9XT2E2GMNJP4BYX3JZQ4Z.yaml',
+    'artifacts/validation/RUN-20260915-016/ART-TVR-01M2JAJE9Y2D8YZDJ4NAP42RYT.yaml',
+    'artifacts/validation/RUN-20260915-022/ART-TVR-01M2JHHJG7TQ2B9E3JESWWE38A.yaml',
+    'artifacts/validation/RUN-20260916-007/ART-TVR-01M2QZ9R2PSGJHC14CMQDNYGD6.yaml',
+]
+
 def schema_check(work):
     return py(work, SCHEMA_CODE % (DEF_LAYER,))
 
@@ -161,11 +179,20 @@ def assert_migrated(rep, src: pathlib.Path, work: pathlib.Path, src_snap: dict, 
         new_bad = [f for f in sc["failures"] if f["path"] in touched and not f["path"].endswith("/revisions/R000.yaml")]
         r000_bad = [f for f in sc["failures"] if f["path"].endswith("/revisions/R000.yaml")]
         pre = {f["path"] for f in (base_failures or [])}
-        rep.check(ac, f"[{label}] 移轉新增或修改的檔案 schema 全部 PASS（R000 是原檔逐位元複本，另列）", not new_bad, new_bad[:20])
+        rep.check(ac, f"[{label}] 移轉新增或修改的檔案 schema 全部 PASS（R000 除外，見下一項；附錄 A 6-38 (1)）", not new_bad, new_bad[:20])
         rep.check(ac, f"[{label}] R000 的 schema 結果與原 requirements.yaml 相同（逐位元複本，不新增失敗）",
                   all(f["path"].replace("/revisions/R000.yaml", "/requirements.yaml") in pre for f in r000_bad), [f["path"] for f in r000_bad])
-        rep.check(ac, f"[{label}] 全部業務資料 schema PASS（嚴格；{sc['checked']} 檔）", not sc["failures"],
-                  [{"path": f["path"], "pre_existing": f["path"] in pre or f["path"].replace("/revisions/R000.yaml", "/requirements.yaml") in pre, "error": f["errors"][0][:160]} for f in sc["failures"]])
+        r000_copy = {f["path"] for f in r000_bad if (work / f["path"]).exists() and (work / f["path"].replace("/revisions/R000.yaml", "/requirements.yaml")).exists()
+                     and sha_file(work / f["path"]) == sha_file(work / f["path"].replace("/revisions/R000.yaml", "/requirements.yaml"))}
+        rep.check(ac, f"[{label}] 失敗的 R000 都是原 requirements.yaml 的逐位元複本（附錄 A 6-38 (2)）", {f["path"] for f in r000_bad} <= r000_copy, sorted({f["path"] for f in r000_bad} - r000_copy))
+        extra = sorted(f["path"] for f in sc["failures"] if f["path"] not in pre and f["path"] not in r000_copy)
+        rep.check(ac, f"[{label}] 移轉後的失敗集合 ⊆ baseline ∪ 繼承的 R000（不新增其他失敗；附錄 A 6-38 (3)；{sc['checked']} 檔）", not extra,
+                  [{"path": f["path"], "error": f["errors"][0][:160]} for f in sc["failures"] if f["path"] in extra])
+        unchanged = [p_ for p_ in pre if p_ in touched]
+        rep.check(ac, f"[{label}] baseline 的檔案內容不變（附錄 A 6-38 (4)）", not unchanged, unchanged)
+        got = sorted(f["path"] for f in sc["failures"])
+        rep.check(ac, f"[{label}] 失敗集合等於附錄 A 6-38 的 baseline 清單（{len(BASELINE_6_38)} 檔；資料不同時須交 Oscar 核對）", got == sorted(BASELINE_6_38),
+                  {"多出": sorted(set(got) - set(BASELINE_6_38)), "缺少": sorted(set(BASELINE_6_38) - set(got))})
     # 2. R000 = 原 requirements.yaml；檢視不變；meta
     bad = []; rms = sorted(p.relative_to(work).as_posix() for p in work.glob("artifacts/requirements/*/*/requirements.yaml"))
     for view in rms:
