@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-10-02
+- 更新：2026-10-07
 
 ## ba-admin / ACCOUNT
 
@@ -35,7 +35,7 @@
 
 | ID | 狀態 | 規格 | 問題 | PM 回覆 |
 |---|---|---|---|---|
-| [CLR-CASHOUT-001](ba-admin/CASHOUT/CLR-CASHOUT-001.md) | APPLIED | SPEC-CASHOUT-001 v1.0 | TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？ | 操作員無權限切換至其他場館，切換場館的設定在後台管理員系統，此權限只有站長跟admin有權限，這是過去就規劃好的權限事宜 |
+| [CLR-CASHOUT-001](ba-admin/CASHOUT/CLR-CASHOUT-001.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？ | 操作員無權限切換至其他場館，切換場館的設定在後台管理員系統，此權限只有站長跟admin有權限，這是過去就規劃好的權限事宜 |
 | [CLR-CASHOUT-002](ba-admin/CASHOUT/CLR-CASHOUT-002.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | 機台洗分（單階段交易）實際上會不會出現「待處理／等待中」（＝spec 概念的待確認）狀態？若不會，TC-CASHOUT-044「尚未完成的洗分不會出現在核實頁」如何驗證？ | A：洗分一送出就完成，不會有中間狀態。機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待 |
 
 ## ba-admin / DAILYREPORT
