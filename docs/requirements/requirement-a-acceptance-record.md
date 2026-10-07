@@ -352,7 +352,7 @@
 5. **掃描紀錄**（附錄 A 6-24）：`impact` 是寫入操作，掃描紀錄以全域 `SCAN-<ULID>` 命名；`--scan` 不能指向別張 CLR 的紀錄。
 6. **撤回**（附錄 A 6-30）：A10 只能由人執行、`--reason` 必填；被撤回的 CLR 讓引用它的 revision 成為 `decision_revised`。
 7. **自審修正**：landed-in 的 run 範圍（6-31）、A9 只計本張核准（6-32）、`req-export` 與審批頁改用 `ANSWERED_STATES`、未結案清單（`clarification list`、舊路徑的開單去重）含 INCORPORATED、`legacy_e6` 與 agent coverage 的驗證（3-25、3-30）、apply 輸入重複（6-33）、stale-tcs 的目標（6-34）。
-8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。前置：舊格式單沒有自身範圍，要先由人以 metadata upgrade 補齊；basis 不同時另以 applicability 確認（P5-R2-04 補充，見下方「Codex 審查修正」）。
+8. **舊格式 CLR 的結案路徑**（附錄 A 6-35，R，請審查確認）：核准不再 apply 後，舊格式需求的 CLR 經重新分析轉為新格式並以 resolution 引用 → A4 → a6；系統不另開路徑。現存資料在 M1 預演確認。前置（二擇一，讓 X16 成立）：有 requirement_id、basis 相同、範圍一致 → 以 metadata upgrade 補齊自身範圍；basis 不同或沒有 requirement_id → 以 applicability `--confirm-basis` 確認（自帶範圍，不需要先補 metadata）；都不能確認 → 重新詢問或 A10（P5-R2-04 補充，見下方「Codex 審查修正」）。
 9. **已知限制**：見 ADR-010。
 
 ### P5 Codex 審查修正
