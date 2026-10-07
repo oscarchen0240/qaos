@@ -153,3 +153,71 @@
 4. **第 6 章 A3 提前**：狀態機加入 ANSWERED → ANSWERED（追加答案修訂），讓「答案修訂只能追加」可以實際運作；第 6 章其餘轉換（INCORPORATED、新的 apply 檢查等）仍在 P5。
 5. **SourceRef 在需求、TC、RR、bug schema 中的位置**（第 3 章 §6.3、§14）沒有在 P2 加入：這些位置要配合 G-SPEC、G-DESIGN 的新檢查才有意義，移到 P4 一起做。P2 只提供 defs 的 SourceRef 與驗證函式。
 6. **開單關卡與去重**（入口 C 的 `--consulted`、issue key）屬 P5；P2 的 `clarification.new()` 只在給了決策點欄位時驗證，舊的呼叫端不受影響。
+
+## P3：RM revision、綁定、過時判定、CIA 候選、移轉與回復
+
+- **執行 commit**：`74de0406d6dcfd38038ef4bfae4010a5b0fc4109`（分支 `qaos/requirement-a`；P3 程式為 `7430b7d`、`282b401`、`982ffe2`、`74de040`）。本紀錄所在的 commit 只改文件
+- **環境**：同 P1
+- **資料**：每個案例使用獨立的暫存 root。新程式的狀態以正式流程建立（`tests/p3_flow.py`：new_run、submit、gate、approve）；移轉用的 legacy 資料由**需求 A 之前的程式**（base `2e01d4b`，以 `git archive` 匯出到系統暫存目錄，唯讀）以它自己的正式流程產生（`tests/p3_legacy.py`）。標明「竄改」「故障注入」「模擬經授權的人工修復」的子例才在流程後修改檔案。CIA 的 G1～G8 以正式流程產生的兩批候選 TC（分屬 R001、R002）搭配記憶體中的 run 與 CIR 驗證（CIA agent 新契約在 P4）
+- **結果**（2026-10-07，於上述 commit 執行）：`pytest tests/` 360 passed；`tools/validate_phase1.py` ALL CHECKS PASSED
+- **突變檢查**：拿掉 `_skip` 的第 2、3 條與無 T0 流程的過時檢查時，5 個相關測試失敗；之後還原
+
+### AC 對照
+
+| AC | 狀態 | 測試（tests/…） | 待 |
+|---|---|---|---|
+| AC-09-1、2 | 通過 | `test_p3_revisions.py::test_ac_09_1_2_*`、`test_revision_files_are_immutable_and_indexed` | — |
+| AC-09-3、20 | 部分 | `test_p3_migrate.py::test_old_running_run_resumes_on_its_sidecar_revision`（移轉前就在跑的 run，移轉後依 sidecar 的 R000 繼續） | 真實 RUN-20261002-001 複本與派發包（P4）在 M1 預演時驗收 |
+| AC-09-4 | 通過 | `test_migrate_acknowledge_idle_results`、`test_ac_09_55_56_*`（cancel-run 的 run 屬 restore） | — |
+| AC-09-5 | 通過 | P1 的白名單測試、`test_ac_09_26_*`（標記寫入前業務寫入被拒） | — |
+| AC-09-6、42、46 | 通過 | `test_ac_09_6_42_46_running_run_needs_a_mode`（含附錄 A 5-6 的衝突與非 RUNNING） | — |
+| AC-09-7、86 | 通過 | `test_skip_binds_latest_and_declaration_change_blocks_until_accepted` | — |
+| AC-09-8、9 | 通過 | `test_closure_changes_and_newer_versions` | — |
+| AC-09-10 | 通過 | P2 `test_closure_cycle_and_limit`（revision 的 reference_pins 用同一函式） | — |
+| AC-09-11 | 部分 | `test_ac_09_1_2_*`（有 DRAFT 需求時不跳過） | SITELIST 實際資料在 P6 |
+| AC-09-12 | 待 P4 | — | revision 中的 clarification 型 SourceRef 要等需求 schema 加入 SourceRef（P4） |
+| AC-09-13 | 通過 | `test_migrate_acknowledge_idle_results` | — |
+| AC-09-14 | 部分 | 各案例分別斷言 run.yaml、R(n)、TC 版本不變 | P6 彙整 |
+| AC-09-15 | 待 P4／P6 | — | PLATFORMRULE fixture 與完整 CIA agent 流程 |
+| AC-09-16 | 通過 | `test_ac_09_16_*` | — |
+| AC-09-17、32 | 通過 | `test_ac_09_17_32_*` | AC-09-17「之後的新 run 不會綁到 0.6」以真實資料在 P6 |
+| AC-09-18、19 | 待 P5 | — | RESOLVE_AMBIGUITY 的決議與 CLR 生命週期 |
+| AC-09-21、22 | 通過 | `test_testcase_revision_binds_latest_and_refuses_when_outdated` | 派發包的 RMPin 在 P4 |
+| AC-09-23 | 通過 | `test_ac_09_23_manual_without_spec_is_refused`、`test_manual_with_spec_hint_binds_latest` | — |
+| AC-09-24、66、67 | 部分 | 程式有明確分支（regression-generation 不產生 sidecar；沒有 audit.log 的 run、沒有 render 的 CLR 屬 remove） | legacy fixture 沒有這三種資料，M1 預演時驗收 |
+| AC-09-25、34 | 通過 | P2 `test_ac_01_4_*` | — |
+| AC-09-26 | 通過 | `test_ac_09_26_x_resumes_after_partial_migration` | — |
+| AC-09-27、33 | 待 P4 | — | 派發包、decision_refs |
+| AC-09-28～30 | 部分 | `test_p3_cia_groups.py`（兩個 pin 的分組與 G1～G8） | 兩輪完整 CIA 與 legacy sidecar 混合在 P4／P6 |
+| AC-09-31 | 部分 | `test_candidates_include_every_active_tc_of_the_spec`（只判一組 → G2、G5 FAIL） | DAILYREPORT 實際資料在 P6 |
+| AC-09-35～41 | 通過 | `test_p3_cia_groups.py::test_partition_violations_fail`（G1～G8 各例） | — |
+| AC-09-43、44 | 通過 | `test_migrate_acknowledge_idle_results`、`test_ac_09_44_cancel_run_in_same_operation`（fixture 的 run ID） | 真實 ID 依附錄 A 5-10 在 M1 |
+| AC-09-45、47、48、50 | 待 | — | 本輪沒有對應測試（S_pre 先 cancel 再移轉；cancel 步驟後中止；未完成的 cancel 計畫；有 PENDING APR 的 RUNNING run） |
+| AC-09-55、56 | 通過 | `test_ac_09_55_56_rollback_after_completed_migration`（兩種模式） | — |
+| AC-09-57、71、72、75 | 通過 | `test_rollback_after_partial_migration`（FP-M0、M1、M2、FP-W） | — |
+| AC-09-58、79、81 | 部分 | `test_rollback_abort_points_then_resume`（R 的 7 個中止點 × 兩種入口） | 逐點斷言 `no_change` 不被選為 L 等細項在 P6 |
+| AC-09-59、82 | 通過 | `test_ac_09_59_82_*`、`test_ac_09_82_t7_other_categories`（restore、remove、untouched、audit.log 竄改） | X 的 no_change 業務檔一例未單獨測 |
+| AC-09-60、61 | 通過 | `test_ac_09_60_61_later_ops`（預設拒絕與報告；① T7 拒絕；② 回復並保留清單外的新檔） | — |
+| AC-09-63、90 | 通過 | `test_ac_09_63_90_remigrate_after_rollback` | — |
+| AC-09-64 | 待 M1 | — | 以舊程式驗證 R5 |
+| AC-09-65 | 通過 | `test_ac_09_65_rollback_requires_maintenance` | — |
+| AC-09-68 | 通過 | `test_ac_09_55_56_*`（回復後沒有任何既有檔案被改動或刪除；鎖檔保留） | — |
+| AC-09-73 | 部分 | `test_ac_09_73_t5_evidence_conflict`（刪除尾端前的完成紀錄 → T5 拒絕、不寫入） | 刪除事件、改事件內容（AC-09-74）、續做 X（AC-09-76）在 P6 |
+| AC-09-83、84 | 部分 | `test_check_a_and_b_stop_on_external_change_then_repair`（③ 檢查 A、④ 檢查 B，含修復後完成） | ①②、⑤～⑦ 在 P6 |
+| AC-09-85 | 部分 | `test_ac_09_85_terminal_inconsistency_blocks_all_writes`（⑥ 防禦性） | ①～⑤ 的逐點斷言在 P6 |
+| AC-09-88 | 通過 | `test_migrate_acknowledge_idle_results`、`test_ac_09_88_legacy_r000_skip_rule_and_89_declaration` | — |
+| AC-09-89 | 部分 | 同上（a） | (b) 舊 run 依固定 pin 續做在 P6 |
+| AC-09-91 | 通過 | `test_ac_09_91_declarations_before_migration_refuse`（兩例，防禦性） | — |
+| AC-07-90～93 | 部分 | `test_rollback_after_partial_migration`、`test_rollback_abort_points_then_resume` | FP 表逐點彙整在 P6 |
+| AC-07-28（migrate、rollback 的中止加續做） | 部分 | 同上 | metadata upgrade 的中止續做在 P6 |
+
+### P3 的實作說明（審查時請一併確認）
+
+1. **模組**：revision 與綁定在新模組 `tools/qaos/rm.py`（第 5 章 §16 原寫 `store.py`）；移轉、回復、verify 在新模組 `tools/qaos/migrate.py`。
+2. **附錄 A 5-12（R，待 Oscar 確認）**：CLR 的 spec 版本沒有匯入時跳過 rev 0 並記為例外。
+3. **附錄 A 5-13（R）**：T7 接受 `audit.log` 的正常重新 render，否則回復點之後任何操作（含維護開關）都會讓回復永遠被拒。
+4. **附錄 A 5-14（I）**：實作補充的定義（revision 編號、run 欄位、`legacy_binding`、清單中的循環項目、`untouched` 範圍、R 的事件等）。
+5. **既有測試配合新規則**：manual run 必須有 spec（第 5 章 §4.3），兩個 ADR-009 的 manual 測試改為有 spec 或驗證拒絕；gate 單元測試的需求模型改經 `save_requirements` 建立（需求 ID 改成符合 schema 的格式）；test_15 的 CIR 加上兩端 revision 與 pin_groups。
+6. **被接管的計畫**：被未完成 R 接管的 X，即使已完成，對它的請求（重送、`operation resume`）也拒絕並提示續做 R（第 5 章 §13.10）。
+7. **agent 指示**：CIA 的 pin_groups 只改了 schema 與 gate；change-impact-analyst 的契約與指示依 D7 在 P4 更新。整個需求 A 是同一個 MR，P3 與 P4 之間沒有部署空窗。
+8. **AC-09-50 等未測項目**：舊程式的 legacy fixture 沒有「有 PENDING APR 的 RUNNING run」等資料；這些在 M1 預演（真實資料的唯讀複本）或 P6 驗收，已在上表標「待」。
