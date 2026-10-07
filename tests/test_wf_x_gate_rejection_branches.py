@@ -257,9 +257,10 @@ def test_61_submit_rejects_testcase_draft_whose_source_mismatches_mode(auth_read
 # ---------- C. READY + 既有 VALID artifact 重新 gate ----------
 
 def test_62_gate_on_ready_task_reuses_existing_valid_artifacts_and_advances(auth_ready):
-    """engine.evaluate_gate L202：T3 FAIL 把 T2 route back 成 READY，但 T2 的 output_artifact_ids 仍留著舊的 VALID artifact；
-    此時「不重新 submit、直接 gate T2」會拿舊 artifact 重新評估並推進到 T3。
-    這正是 BONUSCCY-002 踩過的坑（新 submit 失敗卻以為修正已生效）。本測試把它固定成契約，並斷言推進用的確實是舊 artifact。"""
+    """engine.evaluate_gate：T3 FAIL 把 T2 route back 成 READY（iteration 1），T2 的 output_artifact_ids 仍留著舊的 VALID artifact。
+    需求 A 之前，「不重新 submit、直接 gate T2」會拿舊 artifact 重新評估並推進（BONUSCCY-002 踩過的坑）。
+    需求 A 第 1 章 §2.2 第 4 點：舊 artifact 是用 iteration 0 的派發包產出的，在 iteration 1 重新評估等同沿用舊派發包 → 拒絕，
+    不推進、不改 artifact；要以新派發包重新提交。同一 iteration 內的重評（gate 規則修正後直接重評）不受影響（test_62b）。"""
     rid = _new_run_at_t2()
     did, p, tcs, ids_ = _submit_draft(rid, "01GATERDY0000000000000000")
     assert engine.submit(rid, "T2", str(p))[0]
@@ -275,12 +276,27 @@ def test_62_gate_on_ready_task_reuses_existing_valid_artifacts_and_advances(auth
     run = engine.load_run(rid); t2 = run["tasks"][1]
     assert run["current_task_id"] == "T2" and t2["status"] == "READY" and t2["iteration"] == 1
     assert set(t2["output_artifact_ids"]) >= {did, trid}  # route back 沒有清掉舊 artifact
-    # 不重新 submit，直接 gate → 用舊 artifact 重評並推進
-    r = engine.evaluate_gate(rid, "T2")
-    assert r["result"] == "PASS"
+    # 不重新 submit，直接 gate → 舊 iteration 的產出不能重新評估
+    with pytest.raises(engine.EngineError, match="不能重新評估"):
+        engine.evaluate_gate(rid, "T2")
     run = engine.load_run(rid); t2 = run["tasks"][1]
-    assert t2["status"] == "DONE" and run["current_task_id"] == "T3"
-    assert set(t2["output_artifact_ids"]) >= {did, trid} and store.load(store.find_artifact(did))["status"] == "VALID"
+    assert t2["status"] == "READY" and run["current_task_id"] == "T2" and store.load(store.find_artifact(did))["status"] == "VALID"
+    # 以新派發包重新提交 → PASS 並推進；T3 被推進時進入新的 iteration
+    did2, p2, tcs2, _ = _submit_draft(rid, "01GATERDY1000000000000000")
+    assert engine.submit(rid, "T2", str(p2))[0]
+    _, p_rep2 = _submit_report(rid, did2, tcs2)
+    assert engine.submit(rid, "T2", str(p_rep2))[0] and engine.evaluate_gate(rid, "T2")["result"] == "PASS"
+    run = engine.load_run(rid)
+    assert run["tasks"][1]["status"] == "DONE" and run["current_task_id"] == "T3" and run["tasks"][2]["iteration"] == 1
+
+def test_62b_gate_reevaluation_within_same_iteration_still_allowed(auth_ready):
+    """同一 iteration：G-DESIGN FAIL 之後 task 回到 READY，不重新提交、直接再 gate，仍以同一組 artifact 重評（規則修正後重評的用途）。"""
+    rid = _new_run_at_t2()
+    did, p, tcs, ids_ = _submit_draft(rid, "01GATERDY2000000000000000")
+    assert engine.submit(rid, "T2", str(p))[0]
+    trid, p_rep = _submit_report(rid, did, tcs)
+    assert engine.submit(rid, "T2", str(p_rep))[0] and engine.evaluate_gate(rid, "T2")["result"] == "PASS"
+    run = engine.load_run(rid); assert run["tasks"][1]["iteration"] == 0 and run["current_task_id"] == "T3"
 
 
 # ---------- D. Evidence 完整性偵測 ----------

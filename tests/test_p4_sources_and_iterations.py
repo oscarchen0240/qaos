@@ -62,6 +62,7 @@ other = F.sref("與站台無關的規則。", sid="SPEC-OTHER-001", loc="§無�
 dispatch.dispatch(rid, "T2", [{{"ref": "SPEC-OTHER-001@1.0", "reason": "補充其他功能區的規則"}}], new_request=True)
 d2 = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs={DREF}, srcs=[other]),
                     F.tc(2, "REQ-DEMO-001", "列表頁沒有刪除按鈕", drefs={DREF})])
+it3_after_design = engine._task(engine.load_run(rid), "T3")["iteration"]
 _, pv = H.write_artifact(rid, "T3", "agent-test-validator", "TestValidationReport", H.validation_report(d2["did"], g["rmid"], "PASS"),
                          [{{"entity_type": "Artifact", "id": d2["did"]}}], {{"type": "TestCaseDraft", "ids": [d2["did"]]}}, "validation", packet=v0_sha)
 no_pkg = engine.submit(rid, "T3", str(pv))                            # iteration 1 還沒派發
@@ -74,15 +75,20 @@ rr1 = review(rid, d2, g)
 run = engine.load_run(rid); apr = F.waiting(rid)
 F.approve(apr, decision="reject", rationale="整批重做")
 run2 = engine.load_run(rid); it2 = {{t["task_id"]: t["iteration"] for t in run2["tasks"]}}; st2 = {{t["task_id"]: t["status"] for t in run2["tasks"]}}
-print(json.dumps({{"f1": f1["result"], "it": it, "d2": d2["result"], "d2_issues": d2.get("issues"), "no_pkg": no_pkg[1], "old_pkg": old_pkg[1], "v2": v2["result"], "v2_issues": v2.get("issues"),
-                  "rr1": rr1["result"], "it2": it2, "st2": st2, "t3_packets": [e["iteration"] for e in engine._task(run2, "T3")["dispatch_packets"]]}}))""")
-    assert out["f1"] == "FAIL" and out["it"]["T2"] == 1 and out["it"]["T3"] == 1          # semantic FAIL 退回：Designer、Validator 都進入 iteration 1
+d3 = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒", techs=["negative"], types=["negative"], drefs={DREF}), F.tc(2, "REQ-DEMO-001", "列表頁沒有刪除按鈕", drefs={DREF})])
+v3 = F.validate(rid, d3["did"], g["rmid"], "PASS")
+run3 = engine.load_run(rid); it3_rr_after = [engine._task(run3, "T3")["iteration"], engine._task(run3, "T3RR")["iteration"]]
+print(json.dumps({{"f1": f1["result"], "it": it, "it3_after_design": it3_after_design, "d2": d2["result"], "d2_issues": d2.get("issues"), "no_pkg": no_pkg[1], "old_pkg": old_pkg[1], "v2": v2["result"], "v2_issues": v2.get("issues"),
+                  "rr1": rr1["result"], "it2": it2, "st2": st2, "t3_packets": [e["iteration"] for e in engine._task(run2, "T3")["dispatch_packets"]], "it3_rr_after": it3_rr_after}}))""")
+    assert out["f1"] == "FAIL" and out["it"]["T2"] == 1 and out["it"]["T3"] == 0          # semantic FAIL 退回：Designer 進入 iteration 1；Validator 自己的 gate 操作中不改它的 iteration
+    assert out["it3_after_design"] == 1                                                      # Designer 重做 PASS、Validator 被推進成 READY 時才進入 iteration 1
     assert out["d2"] == "PASS", out["d2_issues"]                                             # Designer 登記的額外來源通過 G-DESIGN
     assert any("iteration 1 還沒有派發包" in p for p in out["no_pkg"]), out["no_pkg"]
     assert any("沿用舊 iteration 的派發包不能提交" in p for p in out["old_pkg"]), out["old_pkg"]
     assert out["v2"] == "PASS", out["v2_issues"]                                             # Validator 以新派發包登記同一來源 → 範圍內
     assert out["rr1"] == "PASS"
-    assert out["it2"]["T2"] == 2 and out["it2"]["T3"] == 2 and out["it2"]["T3RR"] == 1        # 整批 reject：Designer 與下游都進入新 iteration
+    assert out["it2"]["T2"] == 2 and out["it2"]["T3"] == 1 and out["it2"]["T3RR"] == 0        # 整批 reject：Designer 進入新 iteration；下游在被推進時才進入
+    assert out["it3_rr_after"] == [2, 1]                                                     # Designer 第三輪 PASS、Validator PASS 之後，T3、T3RR 都進入新的 iteration
     assert out["st2"]["T2"] == "READY" and out["st2"]["T3"] == "PENDING" and out["st2"]["T3RR"] == "PENDING"
     assert out["t3_packets"] == [0, 1]                                                      # 舊派發紀錄保留
 

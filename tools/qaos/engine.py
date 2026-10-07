@@ -216,6 +216,8 @@ def _advance(run: dict, after: str | None = None):
         if t["type"] == "agent" and t["agent_id"] == "agent-supervisor" and "WorkflowSummary" in (wt.get("outputs") or []):
             state.apply("task", t, "READY", SYSTEM, "advance"); state.apply("task", t, "RUNNING", SYSTEM, "advance")
             _summarize(run, t); return
+        if dispatch.needs_packet(t) and dispatch.current_entry(t):           # 這個 iteration 已派發過（被退回後重做）→ 進入新的 iteration（附錄 A 1-39）
+            t["iteration"] += 1
         state.apply("task", t, "READY", SYSTEM, "advance"); run["current_task_id"] = t["task_id"]; _save_run(run); return
     if run["status"] == "RUNNING":
         state.apply("workflow_run", run, "COMPLETED", SYSTEM, "all tasks done", run["run_id"]); _save_run(run)
@@ -343,13 +345,14 @@ def _valid_outputs(task) -> dict:
 
 def _gate_request(run_id, task_id):
     """gate 請求的身分：這個 task 目前所有 VALID 的 artifact（gate 不改寫 artifact 檔）。
-    不用 task.output_artifact_ids、也不用 task.iteration：Validator FAIL 的退回會在同一個操作中清空前者、讓後者加 1（附錄 A 1-39），
-    中止後重送就會變成另一個 op。不同輪次提交的 artifact 不同，所以 VALID artifact 的集合已足以區分。"""
+    不用 task.output_artifact_ids：Validator FAIL 的退回會在同一個操作中清空它，中止後重送就會變成另一個 op。
+    task 的 iteration 留在身分中，用來區分退回前後對同一組 artifact 的評估；被 gate 的 task 自己的 iteration 不會在本操作中改變（附錄 A 1-39）。"""
+    task = _task(load_run(run_id), task_id)
     valid = []
     for p in store.glob(f"artifacts/*/{run_id}/*.yaml"):
         a = store.load(p)
         if a.get("task_id") == task_id and a.get("status") == "VALID": valid.append(a["artifact_id"])
-    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"valid_artifacts": sorted(valid)}}
+    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"valid_artifacts": sorted(valid)}}
 
 @operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:
@@ -359,6 +362,10 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
         state.apply("task", task, "RUNNING", SYSTEM, "gate re-evaluation on existing VALID artifacts")   # Gate 規則修正後可直接重評
     if task["status"] != "RUNNING": raise EngineError(f"{task_id} 狀態 {task['status']}，需先 submit artifact")
     arts = _valid_outputs(task)
+    if dispatch.needs_packet(task):                                         # §2.2 第 4 點：上一輪（舊派發包）的產出不能在新一輪重新評估
+        e = dispatch.current_entry(task)
+        stale = sorted(a["artifact_id"] for a in arts.values() if a.get("dispatch_packet_sha256") != (e or {}).get("sha256"))
+        if stale: raise EngineError(f"{task_id} 目前是 iteration {task['iteration']}，{', '.join(stale)} 是用其他 iteration 的派發包產出的，不能重新評估；請 dispatch 後重新提交")
     expected = wt.get("outputs") or []
     missing = [o for o in expected if o not in arts]
     if missing: raise EngineError(f"尚缺 VALID artifact：{missing}")
@@ -447,10 +454,9 @@ def _apply_effects(run, task, wf, wt, arts, sem):
     _advance(run, task["task_id"])
 
 def _reopen_downstream(t):
-    """被退回而失效的下游 task 重設為 PENDING：清空本輪產出；agent task 進入下一個 iteration，下次執行要用新的派發包
-    （舊派發紀錄保留供追溯，舊 iteration 的產出被拒；附錄 A 1-39）。"""
+    """被退回而失效的下游 task 重設為 PENDING、清空本輪產出。它在下一次被推進成 READY 時進入新的 iteration（見 _advance），
+    要用新的派發包；舊派發紀錄保留供追溯，舊 iteration 的產出被拒（附錄 A 1-39）。"""
     t["status"] = "PENDING"; t["output_artifact_ids"] = []
-    if t["type"] == "agent": t["iteration"] += 1
 
 def _route_back(run, task, wf, report):
     """Validator FAIL → 前一個 agent task 重新 READY（iteration+1），報告成為其 input；超限 → HUMAN_OVERRIDE。"""
