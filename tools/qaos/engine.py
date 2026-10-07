@@ -343,13 +343,13 @@ def _valid_outputs(task) -> dict:
 
 def _gate_request(run_id, task_id):
     """gate 請求的身分：這個 task 目前所有 VALID 的 artifact（gate 不改寫 artifact 檔）。
-    不用 task.output_artifact_ids：Validator FAIL 的退回會在同一個操作中清空它，中止後重送就會變成另一個 op。"""
-    task = _task(load_run(run_id), task_id)
+    不用 task.output_artifact_ids、也不用 task.iteration：Validator FAIL 的退回會在同一個操作中清空前者、讓後者加 1（附錄 A 1-39），
+    中止後重送就會變成另一個 op。不同輪次提交的 artifact 不同，所以 VALID artifact 的集合已足以區分。"""
     valid = []
     for p in store.glob(f"artifacts/*/{run_id}/*.yaml"):
         a = store.load(p)
         if a.get("task_id") == task_id and a.get("status") == "VALID": valid.append(a["artifact_id"])
-    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"valid_artifacts": sorted(valid)}}
+    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"valid_artifacts": sorted(valid)}}
 
 @operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:
