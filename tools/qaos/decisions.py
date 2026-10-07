@@ -64,6 +64,7 @@ def waived_shape_errors(items) -> list[str]:
     errs = []
     for k, it in enumerate(items):
         if not isinstance(it, dict): errs.append(f"waived[{k}] 必須是物件"); continue
+        if "cited_at" in it and "pin" in it: errs.append(f"waived[{k}] 只能是 cited_at＋name 或 pin 其中一種，不能兩者都有"); continue
         if "cited_at" in it:
             c = it["cited_at"]
             if not isinstance(c, dict) or not all(isinstance(c.get(x), str) for x in ("spec_id", "spec_version", "content_hash")):

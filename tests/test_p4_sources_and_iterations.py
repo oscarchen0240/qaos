@@ -48,7 +48,7 @@ print(json.dumps(res))""")
         r, issues = out[n]
         assert r == "FAIL" and any("source_refs[0]" in i and needle in i for i in issues), (n, issues)
     assert out["ok"][0] == "PASS", out["ok"]
-    assert out["tcs"] == ["ACTIVE"]                                   # 只有合法來源的那一版成為 ACTIVE；失敗的版本沒有 materialize（核准型與 CLR 型的正例見 test_approval_source_bound_to_its_decision_point）
+    assert out["tcs"] == ["ACTIVE"]                                   # 只有合法來源的那一版成為 ACTIVE；失敗的版本沒有 materialize（核准型的正例見 test_approval_source_bound_to_its_decision_point，CLR 型的正例見 test_clarification_source_full_flow）
 
 # ---------------------------------------------------------------- P4-02：退回後下游 task 進入新 iteration，可以重新派發
 def test_downstream_tasks_get_new_iteration_after_route_back_and_reject(tmp_path):
@@ -257,24 +257,74 @@ print(json.dumps(out))""")
 
 # ---------------------------------------------------------------- P4R2-02：豁免項目形狀錯誤 → 結構錯誤，不拋例外
 def test_waived_item_shape_errors_are_reported(tmp_path):
-    root = mkroot(tmp_path)
-    out = py(root, """
-rid = F.new_run()
-F.analyze(rid, [F.req(1, [F.dp("Q01", "undefined", "critical", coverage=F.cov(missing=[F.missing(13, "手冊 v01 的角色模型（見 7.1.1 角色說明）", "手冊 7.1.1 角色說明")]))],
-                      ambiguity=F.amb("critical", "critical"))])
-apr = F.waiting(rid)
-def tryit(waived):
-    try: F.approve(apr, resolutions=[{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "waive_missing", "waived": waived, "rationale": "文件暫時無法取得"}]); return "accepted"
+    """豁免項目的形狀錯誤（含 cited_at 與 pin 同時存在）在核准前回報為結構錯誤：API 是 EngineError，CLI 非零結束、訊息指出 waived、沒有 traceback；
+    核准單維持 PENDING、run 維持 WAITING_HUMAN。兩種合法形狀仍可核准（各用一張仍 PENDING 的核准單）。"""
+    root = mkroot(tmp_path, ref2=True)
+    E3 = ('F.req({N}, [F.dp("Q01", "undefined", "critical", coverage=F.cov(consulted=[F.pin(), F.pin("SPEC-REF-001")], '
+          'unconsulted=[{{"pin": F.pin("SPEC-REFB-001"), "reason": "unavailable", "note": "讀取失敗"}}], '
+          'missing=[F.missing(13, "手冊 v01 的角色模型（見 7.1.1 角色說明）", "手冊 7.1.1 角色說明")]))], ambiguity=F.amb("critical", "critical"))')
+    out = py(root, f"""
+def pending(n):
+    rid = F.new_run(); F.analyze(rid, [{E3.format(N="n")}]); return rid, F.waiting(rid)
+rid, apr = pending(1)
+cited = {{"cited_at": {{**F.pin(), "line": 13}}, "name": "手冊 7.1.1 角色說明"}}
+both = dict(cited, pin={{**F.pin(), "content_hash": []}})
+def tryit(apr_, waived):
+    try: F.approve(apr_, resolutions=[{{"requirement_id": "REQ-DEMO-00" + apr_[-1], "question_id": "Q01", "outcome": "waive_missing", "waived": waived, "rationale": "文件暫時無法取得"}}]); return "accepted"
     except engine.EngineError as e: return "EngineError: " + str(e)
-res = {n: tryit(w) for n, w in (("list", [{"cited_at": [], "name": "手冊 7.1.1 角色說明"}]), ("str", [{"cited_at": "第 13 行", "name": "x"}]), ("scalar", [5]),
-                                  ("no_key", [{"name": "手冊 7.1.1 角色說明"}]), ("pin_bad", [{"pin": "SPEC-REF-001@1.0"}]), ("not_list", "x"))}
-res["status"] = [store.load(f"approvals/{apr}.yaml")["status"], engine.load_run(rid)["status"]]
-res["ok"] = tryit([{"cited_at": {**F.pin(), "line": 13}, "name": "手冊 7.1.1 角色說明"}])
+res = {{n: tryit(apr, w) for n, w in (("list", [{{"cited_at": [], "name": "手冊 7.1.1 角色說明"}}]), ("str", [{{"cited_at": "第 13 行", "name": "x"}}]), ("scalar", [5]),
+                                     ("no_key", [{{"name": "手冊 7.1.1 角色說明"}}]), ("pin_bad", [{{"pin": "SPEC-REF-001@1.0"}}]), ("pin_hash_list", [{{"pin": {{**F.pin(), "content_hash": []}}}}]),
+                                     ("both", [both]), ("not_list", "x"))}}
+res["apr"] = apr; res["rid"] = rid; res["status"] = [store.load(f"approvals/{{apr}}.yaml")["status"], engine.load_run(rid)["status"]]
+rid2, apr2 = pending(2)
+res["apr2"] = apr2; res["rid2"] = rid2
 print(json.dumps(res))""")
-    for n in ("list", "str", "scalar", "no_key", "pin_bad", "not_list"):
+    for n in ("list", "str", "scalar", "no_key", "pin_bad", "pin_hash_list", "both", "not_list"):
         assert out[n].startswith("EngineError: ") and "waived" in out[n], (n, out[n])
+    assert "只能是 cited_at＋name 或 pin 其中一種" in out["both"]
     assert out["status"] == ["PENDING", "WAITING_HUMAN"]
-    assert out["ok"] == "accepted"
-    r = U.q(root, "approve", "APR-0001", "--decision", "approve", "--by", "oscar", "--resolution",
-            json.dumps({"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "waive_missing", "waived": [{"cited_at": [], "name": "x"}], "rationale": "r"}))
-    assert "Traceback" not in r.stderr                                   # CLI：已核准過的單被拒，且沒有 traceback
+    before = U.snapshot(root, exclude=("locks/qaos-operation.owner", "locks/qaos-operation.lock"))
+    bad = {"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "waive_missing", "rationale": "r",
+           "waived": [{"cited_at": {**_pin(root), "line": 13}, "name": "手冊 7.1.1 角色說明", "pin": {**_pin(root), "content_hash": []}}]}
+    r = U.q(root, "approve", out["apr"], "--decision", "approve", "--by", "oscar", "--resolution", json.dumps(bad, ensure_ascii=False))
+    assert r.returncode != 0 and "waived" in r.stderr and "Traceback" not in r.stderr, r.stderr         # 仍 PENDING 的核准單：CLI 回結構錯誤
+    d = U.diff(before, U.snapshot(root, exclude=("locks/qaos-operation.owner", "locks/qaos-operation.lock")))
+    assert not d["changed"] and not d["removed"] and not [p for p in d["added"] if not p.startswith(("operations/", "locks/"))], d
+    assert U.load(root, f"approvals/{out['apr']}.yaml")["status"] == "PENDING" and U.load(root, f"runs/{out['rid']}/run.yaml")["status"] == "WAITING_HUMAN"
+    ok = py(root, f"""
+def tryit(apr_, rid_n, waived):
+    try: F.approve(apr_, resolutions=[{{"requirement_id": "REQ-DEMO-00" + rid_n, "question_id": "Q01", "outcome": "waive_missing", "waived": waived, "rationale": "文件暫時無法取得"}}]); return "accepted"
+    except engine.EngineError as e: return "EngineError: " + str(e)
+print(json.dumps([tryit("{out['apr']}", "1", [{{"cited_at": {{**F.pin(), "line": 13}}, "name": "手冊 7.1.1 角色說明"}}]),
+                  tryit("{out['apr2']}", "2", [{{"pin": F.pin("SPEC-REFB-001")}}])]))""")
+    assert ok == ["accepted", "accepted"], ok                                                     # 兩種合法形狀
+
+def _pin(root):
+    spec = U.load(root, "specs/demo/DEMO/SPEC-DEMO-001/spec.yaml")
+    return {"spec_id": "SPEC-DEMO-001", "spec_version": "1.0", "content_hash": spec["versions"][0]["content_hash"]}
+
+# ---------------------------------------------------------------- 合法 CLR 來源的完整正式流程（P4R2-01 的正例）
+def test_clarification_source_full_flow(tmp_path):
+    """G-SPEC 自動開衝突 CLR → PM 回答 → 核准選定該答案 → 重新分析以 CLR 為 resolution → TC 同題 decision_refs／source_refs →
+    G-DESIGN → G-TVAL → RR 同題 spec_basis_decision → ACTIVATE 核准，TC 成為 ACTIVE。"""
+    root = rr_root(tmp_path)
+    out = py(root, f"""
+from tests.test_p4_sources_and_iterations import review
+rid = F.new_run(); F.analyze(rid, [{EXAMPLE_A}]); apr = F.waiting(rid)
+cid = F.clrs(requirement_id="REQ-DEMO-001")[0]["clarification_id"]
+clr.answer(cid, "任何站台都不能刪除，表格的「可操作」是舊文案。", "pm", "requirement_clarified", "oscar", new_request=True)
+src = F.cref(cid, "任何站台都不能刪除")
+F.approve(apr, resolutions=[{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "outcome": "select_interpretation", "source": src, "rationale": "依 PM 回答：任何站台都不能刪除"}}])
+g = F.analyze(rid, [F.req(1, [F.dp("Q01", "conflict", "critical", {CONFLICT_SIDES}, resolution={{"source": src, "decided_at": "2026-10-07", "adopted_side_index": 1}})],
+                          ambiguity=F.amb("none", "critical"))])
+dref = [{{"requirement_id": "REQ-DEMO-001", "question_id": "Q01", "basis_ref": F.ident(src)}}]
+d = F.design(rid, [F.tc(1, "REQ-DEMO-001", "刪除子站台被拒（依 PM 回答）", techs=["negative"], types=["negative"], drefs=dref, srcs=[src])])
+v = F.validate(rid, d["did"], g["rmid"])
+r = review(rid, d, g, src, False, {{"requirement_id": "REQ-DEMO-001", "question_id": "Q01"}})
+F.approve(F.waiting(rid))
+print(json.dumps({{"g": [g["result"], g["issues"]], "d": [d["result"], d.get("issues")], "v": v["result"], "rr": [r["result"], r.get("issues")],
+                  "tcs": [store.load(p)["status"] for p in store.glob("testcases/registry/TC-DEMO-*.yaml")]}}))""")
+    assert out["g"][0] == "PASS", out["g"]
+    assert out["d"][0] == "PASS", out["d"]
+    assert out["v"] == "PASS" and out["rr"][0] == "PASS", out
+    assert out["tcs"] == ["ACTIVE"]
