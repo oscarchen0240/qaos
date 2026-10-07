@@ -268,3 +268,29 @@ clr.applicability_add(cid, 0, "REQ-DEMO-001", "site.child.delete", ["admin"], {{
 g2 = F.analyze(rid, [P.conflict_req(1, res(cid))]); c = clr.load(cid)
 print(json.dumps({{"g1": g1["result"], "g2": g2["result"], "s": c["status"], "subject": c.get("subject")}}, default=str))""")
     assert out == {"g1": "FAIL", "g2": "PASS", "s": "INCORPORATED", "subject": None}, out
+
+def test_p5_r2_02_keyword_matches_step_expected(tmp_path):
+    """P5-R2-02（第 6 章 §5.10(d)、附錄 A 6-16 改列 R，2026-10-07 Oscar 決定採納）：關鍵字只出現在 steps[].expected 的 TC 也是 (d) 候選；
+    沒給它結論 → 拒絕、CLR 不變；補結論 → APPLIED。landing 的 rule_version 為 "2"。"""
+    root = mkroot(tmp_path)
+    out = py(root, HDR + """
+rid, cid, apr = P.ra_p1()
+res = {"source": F.cref(cid, "任何站台都不能刪除"), "decided_at": "2026-10-07", "adopted_side_index": 1}
+sr = F.sref("任何站台都不能刪除。")
+g = F.analyze(rid, [P.conflict_req(1, res), F.req(2, [F.dp("Q01", "defined_in_target", "none", known=[sr], subject="site.child.rename")])])
+t2 = F.tc(2, "REQ-DEMO-002", "子站台改名", expected="改名成功並顯示新名稱", drefs=[{"requirement_id": "REQ-DEMO-002", "question_id": "Q01", "basis_ref": F.ident(sr)}], srcs=[sr])
+t2["steps"][0]["expected"] = "畫面出現唯一關鍵字XYZ"
+tcs = P.ra_p3_design(rid, cid, g, extra_tcs=[t2])
+cands = {x["tc_id"]: x["reasons"] for x in L.impact(cid, ["唯一關鍵字XYZ"], [], "oscar", new_request=True)["candidates"]}
+only_kw = [t for t, r in cands.items() if r == ["keyword:唯一關鍵字XYZ"]]
+T = "SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01"
+h0 = P.clr_sha(cid)
+miss = P.apply_(cid, landed_in=[rid], targets=[T], keywords=["唯一關鍵字XYZ"], tc_conclusions=[f"{t}=updated" for t in cands if t not in only_kw])
+h1 = P.clr_sha(cid)
+ok = P.apply_(cid, landed_in=[rid], targets=[T], keywords=["唯一關鍵字XYZ"], tc_conclusions=[f"{t}=updated" if t not in only_kw else f"{t}=not_affected" for t in cands])
+c = clr.load(cid)
+print(json.dumps({"cands": cands, "only_kw": only_kw, "miss": miss, "h": [h0, h1], "ok": ok, "s": c["status"], "rv": c["landings"][-1].get("rule_version")}, default=str))""")
+    assert len(out["only_kw"]) == 1, out["cands"]                                   # 只由 steps[].expected 命中的那張
+    assert "error" in out["miss"] and out["only_kw"][0] in out["miss"]["error"], out["miss"]
+    assert out["h"][0] == out["h"][1]
+    assert "error" not in out["ok"] and out["s"] == "APPLIED" and out["rv"] == "2", out["ok"]

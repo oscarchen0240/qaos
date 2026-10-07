@@ -6,7 +6,7 @@
 import re, pathlib
 from . import store, state, operation, sources, spec_ops, rm, schema, clarification as clr
 
-RULE_VERSION = "1"
+RULE_VERSION = "2"   # 2：(d) 關鍵字也比對 steps[].expected（附錄 A 6-16）；1 的 scan 只沿用關鍵字
 APPLIED_RESOLUTIONS = ("requirement_clarified", "spec_updated")
 QUIET_RESOLUTIONS = ("no_change", "out_of_scope")
 CONCLUSIONS = ("updated", "not_affected", "retire_planned")
@@ -225,7 +225,7 @@ def scan_candidates(c: dict, targets: list, keywords: list, units: list, path: s
                 br = d.get("basis_ref"); eb = _eb({**br, "quote": "x"}, (d["requirement_id"], d["question_id"])) if br else None
                 if eb != latest_eb: reasons.append(f"stale_decision_ref:{d['requirement_id']}#{d['question_id']}")
         if unit == own and c.get("requirement_id") and c["requirement_id"] in tc.get("requirement_ids", []): reasons.append("clr_requirement")   # (c)
-        blob = " ".join([tc.get("title", ""), *tc.get("preconditions", []), *(s.get("action", "") for s in tc.get("steps", [])), tc.get("expected_result", "")])
+        blob = " ".join([tc.get("title", ""), *tc.get("preconditions", []), *(s.get(k) or "" for s in tc.get("steps", []) for k in ("action", "expected")), tc.get("expected_result", "")])
         reasons += [f"keyword:{k}" for k in keywords if k in blob]                                                              # (d)
         if reasons: out.append({"tc_id": tc_id, "active_version": ver, "tc_version_sha256": sha, "reasons": sorted(set(reasons))})
     return sorted(out, key=lambda x: x["tc_id"])

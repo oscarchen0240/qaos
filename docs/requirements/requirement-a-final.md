@@ -4037,7 +4037,7 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 6-13 | A10 的指令 | `clarification withdraw <CLR> --reason <文字> --by <人>`（reason 必填） | I |
 | 6-14 | AC-A-B1-4 的「三種處理方式」 | `--acknowledge-idle`、`--cancel-run`、事先在 `S_pre` 以 `run cancel` 取消（第 5 章 §11.2） | I |
 | 6-15 | S0～S7 沿用的業務資料（版本對照、引用表、SITELIST 處理、現金淨收 AC-R7-1～3） | 屬實際 revise 時的作業資料，不是程式實作或驗收的內容；在 S0 時另備作業清單 | O |
-| 6-16 | (d) 關鍵字比對欄位 | title、preconditions、steps 的 action、expected_result（沿用 ADR-008 現行規則） | I |
+| 6-16 | (d) 關鍵字比對欄位 | title、preconditions、steps 的 `action` 與 `expected`、expected_result（第 6 章 §5.10(d) 的「steps」指步驟的全部文字欄位）。ADR-008 原實作只比對 `action`，本條起改為兩者都比對，掃描規則版本 `rule_version` 由 "1" 升為 "2"（"1" 的掃描紀錄依 §5.10 只沿用關鍵字）。2026-10-07 由 Oscar 決定（P5-R2-02），原列 I 類，因影響候選範圍改列 R | R |
 | 6-17 | 給不在候選中的 TC 下結論 | 拒絕（避免打錯 ID） （拒絕條件，實作時補對應測試） | R |
 | 6-18 | 恢復表「核准決議寫入之後、A9 之前中止」 | 保留 | I |
 | 6-19 | `stale-tcs` 沒有 applied landing 時的關鍵字 | 用最近一次掃描紀錄的關鍵字；沒有掃描紀錄時只做 requirement 與 decision_refs 規則 | I |
