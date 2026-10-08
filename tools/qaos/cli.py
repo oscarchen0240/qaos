@@ -96,8 +96,9 @@ def cmd_run_cancel(a): engine.cancel(a.run_id, a.by, **_nr(a)); print("CANCELLED
 
 def cmd_submit(a):
     ok, problems = engine.submit(a.run_id, a.task_id, a.artifact, **_nr(a))
-    if ok: print("VALID"); return
-    print("INVALID"); [print(" -", p) for p in problems]; sys.exit(1)
+    pre = "先前提交結果（未重新驗證）：" if _replayed() else ""
+    if ok: print(f"{pre}VALID"); return
+    print(f"{pre}INVALID"); [print(" -", p) for p in problems]; sys.exit(1)
 
 def cmd_dispatch(a):
     extras, reasons = a.extra or [], a.reason or []
@@ -131,6 +132,8 @@ def cmd_req_export(a):
 
 def cmd_tc_retire(a):
     apr, suites = tc_ops.retire(a.tc_id, a.by, a.rationale, **_nr(a))
+    if _replayed():   # 重送：suite 清單是退役當時的快照，不代表目前
+        print(f"{a.tc_id} 先前已退役（via {apr}）" + (f"；退役當時仍在 suite {[s['suite_id'] for s in suites]}，目前是否已移除請用 suites-of 查詢" if suites else "")); return
     print(f"{a.tc_id} → RETIRED via {apr}" + (f"；仍在 suite {[s['suite_id'] for s in suites]}，請另跑 regression-generation 移除" if suites else ""))
 def cmd_tc_revise(a):
     run = tc_ops.revise(a.tc_id, a.reason, a.by, **_nr(a))
@@ -180,7 +183,10 @@ def cmd_execution_import(a):
     print(execution_import(a.result, a.environment, a.by, testcase_id=a.testcase_id, testcase_version=a.testcase_version, executor_type=a.executor_type,
                            build=a.build, executed_at=a.executed_at, actual_result=a.actual_result, evidence=a.evidence, notes=a.notes, **_nr(a)))
 
-def cmd_bug_transition(a): print(bug_transition(a.bug_id, a.to, a.by, trigger=a.trigger, note=a.note, **_nr(a)))
+def cmd_bug_transition(a):
+    out = bug_transition(a.bug_id, a.to, a.by, trigger=a.trigger, note=a.note, **_nr(a))
+    if _replayed(): _bug_result(a.bug_id, None); return
+    print(out)
 
 def _params_kv(values):
     out = {}
@@ -199,10 +205,17 @@ def cmd_clr_new(a):
                 consulted=a.consulted or None, no_source_check_reason=a.reason if a.no_source_check else None, **decision, **_nr(a))
     if c.get("_linked"): print(f"{c['clarification_id']}（issue key 相同，已連結既有單，沒有新開）"); return
     print(f"{c['clarification_id']} → clarifications/{a.product}/{a.area}/{c['clarification_id']}.md")
-def cmd_clr_ask(a): c = clr.ask(a.id, a.to, a.by, sent_at=a.sent_at, channel=a.channel, **_nr(a)); print(f"{c['clarification_id']} ASKED → {a.to}")
+def _clr_replayed(clr_id) -> bool:
+    """重送：CLR 狀態可能已被後續操作改變，顯示目前狀態，不顯示當時的結果。"""
+    if not _replayed(): return False
+    print(f"{clr_id} 先前已處理，目前狀態 {clr.load(clr_id)['status']}"); return True
+def cmd_clr_ask(a):
+    c = clr.ask(a.id, a.to, a.by, sent_at=a.sent_at, channel=a.channel, **_nr(a))
+    if not _clr_replayed(a.id): print(f"{c['clarification_id']} ASKED → {a.to}")
 def cmd_clr_answer(a):
     srcs = [_json_arg(x, "--answer-source") for x in a.answer_source] if a.answer_source else None
-    c = clr.answer(a.id, a.answer, a.answered_by, a.resolution, a.by, a.spec_version, answer_sources=srcs, **_nr(a)); print(f"{c['clarification_id']} ANSWERED ({a.resolution})")
+    c = clr.answer(a.id, a.answer, a.answered_by, a.resolution, a.by, a.spec_version, answer_sources=srcs, **_nr(a))
+    if not _clr_replayed(a.id): print(f"{c['clarification_id']} ANSWERED ({a.resolution})")
 def cmd_clr_impact(a):
     r = clr_lifecycle.impact(a.id, a.keyword or [], a.target or [], a.by, **_nr(a))
     print(f"{r['scan_id']}：{len(r['candidates'])} 張候選、掃描單位 {[(u['product'], u['area']) for u in r['scan_units']]}")
@@ -210,12 +223,20 @@ def cmd_clr_impact(a):
 def cmd_clr_apply(a):
     r = clr_lifecycle.apply(a.id, a.path, a.by, landed_in=a.landed_in or [], targets=a.target or [], defer_targets=a.defer_target or [], keywords=a.keyword or [],
                             scan_id=a.scan, no_keyword_reason=a.no_keyword_reason, tc_conclusions=a.tc_conclusion or [], impact_reviewed=a.impact_reviewed, **_nr(a))
+    if _replayed():   # 重送：沒有重新掃描，候選數是當時的結果
+        print(f"{a.id} 先前已套用（未重新掃描；當時 --path {a.path}，{len(r['candidates'])} 張候選），目前狀態 {clr.load(a.id)['status']}"); return
     if r.get("scan_reused") == "keywords_only": print("（scan 屬於舊答案修訂或規則版本不同：只沿用關鍵字，目標已重新解析）")
     if r.get("scan_diff"): print(f"（重新掃描的候選和 scan 不同：{r['scan_diff']}；以重新掃描的結果為準）")
     print(f"{a.id} APPLIED（--path {a.path}，{len(r['candidates'])} 張候選）")
-def cmd_clr_withdraw(a): clr.withdraw(a.id, a.by, a.reason, **_nr(a)); print(f"{a.id} WITHDRAWN")
-def cmd_clr_fulfill(a): c = clr_lifecycle.fulfill(a.id, a.item, a.document, a.by, mapping_reason=a.mapping_reason, **_nr(a)); print(f"{a.id} {a.item} fulfilled → {c['status']}")
-def cmd_clr_waive_item(a): c = clr_lifecycle.waive_item(a.id, a.item, a.reason, a.by, **_nr(a)); print(f"{a.id} {a.item} waived → {c['status']}")
+def cmd_clr_withdraw(a):
+    clr.withdraw(a.id, a.by, a.reason, **_nr(a))
+    if not _clr_replayed(a.id): print(f"{a.id} WITHDRAWN")
+def cmd_clr_fulfill(a):
+    c = clr_lifecycle.fulfill(a.id, a.item, a.document, a.by, mapping_reason=a.mapping_reason, **_nr(a))
+    if not _clr_replayed(a.id): print(f"{a.id} {a.item} fulfilled → {c['status']}")
+def cmd_clr_waive_item(a):
+    c = clr_lifecycle.waive_item(a.id, a.item, a.reason, a.by, **_nr(a))
+    if not _clr_replayed(a.id): print(f"{a.id} {a.item} waived → {c['status']}")
 def cmd_clr_show(a): _print(clr_lifecycle.show(a.id))
 def cmd_clr_stale(a): _print(clr_lifecycle.stale_tcs(a.id))
 def cmd_clr_list(a):
