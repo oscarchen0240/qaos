@@ -242,7 +242,7 @@ def cmd_clr_stale(a): _print(clr_lifecycle.stale_tcs(a.id))
 def cmd_clr_list(a):
     for c in clr.list_(open_only=not a.all): print(f"{c['clarification_id']} [{c['status']}] {c['product']}/{c['functional_area']} {c['spec_id']}@{c['spec_version']} — {c['question']}")
 def cmd_req_accept(a): _print(rm.accept_declaration(a.target, a.rev, a.reason, a.by, **_nr(a)))
-def cmd_clr_index(a): n = clr.build_index(**_nr(a)); print(f"clarifications/index.md（{n} 張）")
+def cmd_clr_index(a): n = clr.build_index(**_nr(a)); print(("先前已重建（未重新列舉；資料有變動時請加 --new-request）：" if _replayed() else "") + f"clarifications/index.md（{n} 張）")
 def _json_arg(text, name):
     try: return json.loads(text)
     except json.JSONDecodeError as e: raise ValueError(f"{name} 必須是 JSON：{e}")
@@ -250,7 +250,9 @@ def _role_scope(values): return ["*"] if values == ["*"] else values
 def cmd_clr_applicability_add(a):
     _print(clr.applicability_add(a.id, a.answer_rev, a.requirement, a.subject, _role_scope(a.role_scope), _json_arg(a.params, "--params"), a.target, a.rationale, a.by,
                                  confirm_basis=a.confirm_basis, **_nr(a)))
-def cmd_clr_addenda_add(a): clr.addenda_add(a.id, _json_arg(a.source, "--source"), a.note, a.by, **_nr(a)); print(f"{a.id} evidence_addenda +1")
+def cmd_clr_addenda_add(a):
+    clr.addenda_add(a.id, _json_arg(a.source, "--source"), a.note, a.by, **_nr(a))
+    print(f"{a.id} evidence_addenda 先前已追加（這次沒有再追加）" if _replayed() else f"{a.id} evidence_addenda +1")
 def cmd_clr_meta_upgrade(a):
     c = clr.metadata_upgrade(a.id, a.by, a.reason, kind=a.kind, question_id=a.question_id, subject=a.subject,
                              role_scope=_role_scope(a.role_scope) if a.role_scope else None, params=_json_arg(a.params, "--params") if a.params else None, **_nr(a))
@@ -261,7 +263,7 @@ def _bug_result(bug_id, b, suffix=""):
 def cmd_bug_resolve(a): _bug_result(a.bug_id, bug_lifecycle.resolve(a.bug_id, a.by, a.external_ref, a.note or "", a.fixed_by or "", **_nr(a)))
 def cmd_bug_verify(a): _bug_result(a.bug_id, bug_lifecycle.verify(a.bug_id, a.execution, a.by, **_nr(a)))
 def cmd_bug_close(a): _bug_result(a.bug_id, bug_lifecycle.close(a.bug_id, a.by, a.rationale or "", **_nr(a)), " (done)")
-def cmd_bug_index(a): print(f"{bugindex.build(**_nr(a))} bugs indexed → bugs/index.md + bugs/<product>/<area>/index.md")
+def cmd_bug_index(a): n = bugindex.build(**_nr(a)); print(("先前已重建（未重新列舉；資料有變動時請加 --new-request）：" if _replayed() else "") + f"{n} bugs indexed → bugs/index.md + bugs/<product>/<area>/index.md")
 
 def cmd_op_list(a):
     print(READONLY_NOTE)

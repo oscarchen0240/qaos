@@ -168,3 +168,13 @@ def test_clr_apply_replay_marks_no_rescan(monkeypatch, capsys):
     cli.main(["clarification", "apply", "CLR-X-001", "--path", "a6", "--impact-reviewed", "SCAN-1", "--by", BY])
     out = capsys.readouterr().out.strip()
     assert out == "CLR-X-001 先前已套用（未重新掃描；當時 --path a6，2 張候選），目前狀態 APPLIED" and "重新掃描的候選" not in out and ok()
+
+def test_index_and_addenda_replay_marks_previous(monkeypatch, capsys):
+    pre = "先前已重建（未重新列舉；資料有變動時請加 --new-request）："
+    _completed(monkeypatch, clr, "build_index", 2)
+    cli.main(["clarification", "index"]); assert capsys.readouterr().out.strip() == pre + "clarifications/index.md（2 張）"
+    _completed(monkeypatch, cli.bugindex, "build", 3)
+    cli.main(["bug", "index"]); assert capsys.readouterr().out.strip().startswith(pre + "3 bugs indexed")
+    ok = _completed_checked(monkeypatch, clr, "addenda_add", None, "CLR-X-001")
+    cli.main(["clarification", "addenda", "add", "CLR-X-001", "--source", "{}", "--note", "n", "--by", BY])
+    assert capsys.readouterr().out.strip() == "CLR-X-001 evidence_addenda 先前已追加（這次沒有再追加）" and ok()
