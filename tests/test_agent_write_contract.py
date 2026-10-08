@@ -50,6 +50,43 @@ def test_validator_assumption_rule_matches_3_6():
     gates_doc = (REPO / "docs/architecture/04-quality-gates.md").read_text(encoding="utf-8")
     assert "Validator 必須 FAIL 除非 Human 已決定" not in gates_doc and "§3.6" in gates_doc
 
+# ---- 歷史核准例外的情境：以契約描述的三步核對（直接前版 → 沿 supersedes 鏈追溯原始核准 → 核准種類／狀態／逐項有效決定）
+#      對照 repo 內 Runtime 實際產生的資料，確認合法傳承會通過、改寫內容或逐項 reject 會被擋（不模擬模型本身）
+def _load(rel): return yaml.safe_load((REPO / rel).read_text(encoding="utf-8"))
+
+def _resolved_assumption_ok(supersedes: dict, a: dict, load=_load) -> bool:
+    key = lambda x: (x["text"], x["requirement_id"], x.get("resolved_by_approval"))
+    tc, ver, apr_id = supersedes["testcase_id"], supersedes["version"], a.get("resolved_by_approval")
+    apr = load(f"approvals/{apr_id}.yaml")
+    if apr["type"] not in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") or apr["status"] != "DECIDED": return False
+    covered = {i["version"] for i in apr["batch_items"] if i["id"] == tc}
+    while ver is not None:                                    # 1、2：直接前版起沿 supersedes 鏈，每一版都要保有同一筆
+        v = load(f"testcases/versions/{tc}/v{ver}.yaml")
+        if key(a) not in {key(x) for x in v.get("assumptions") or []}: return False
+        if ver in covered: break
+        ver = v.get("supersedes")
+    else:
+        return False
+    per = {i["id"]: i["decision"] for i in apr["decision"].get("per_item") or []}   # 3：per_item 優先
+    return per.get(tc, apr["decision"]["decision"]) in ("approve", "override")
+
+def test_resolved_assumption_chain_rule_against_runtime_data():
+    a054 = _load("testcases/versions/TC-DAILYREPORT-054/v3.yaml")["assumptions"][0]
+    assert _resolved_assumption_ok({"testcase_id": "TC-DAILYREPORT-054", "version": 3}, a054)        # 第二次沿用，核准只涵蓋 v1
+    a073 = _load("testcases/versions/TC-PLATFORMRULE-073/v1.yaml")["assumptions"][0]
+    assert _resolved_assumption_ok({"testcase_id": "TC-PLATFORMRULE-073", "version": 1}, a073)       # APPLY_CHANGE 核准
+    assert not _resolved_assumption_ok({"testcase_id": "TC-DAILYREPORT-054", "version": 3}, dict(a054, text="改寫過的假設"))
+    # 整批 approve、逐項 reject：讓版本內容與核准 ID 都相符，只剩逐項決定不同
+    v011 = _load("testcases/versions/TC-REDPACKET-011/v1.yaml")
+    a011 = dict(v011["assumptions"][0], needs_human_confirmation=False, resolved_by_approval="APR-0194")
+    patched = lambda rel: dict(v011, assumptions=[a011]) if rel == "testcases/versions/TC-REDPACKET-011/v1.yaml" else _load(rel)
+    assert not _resolved_assumption_ok({"testcase_id": "TC-REDPACKET-011", "version": 1}, a011, patched)
+    apr = _load("approvals/APR-0194.yaml")                                                          # 對照：拿掉逐項 reject 就會通過
+    no_reject = lambda rel: dict(apr, decision=dict(apr["decision"], per_item=[])) if rel == "approvals/APR-0194.yaml" else patched(rel)
+    assert _resolved_assumption_ok({"testcase_id": "TC-REDPACKET-011", "version": 1}, a011, no_reject)
+    md = _md("test-validator")
+    assert "APPLY_CHANGE" in md and "supersedes` 鏈" in md
+
 # ---- REDPACKET 的 spec-to-testcase run 會插入風險抽查 task
 def test_redpacket_run_gets_risk_review(monkeypatch):
     assert "REDPACKET" in _contract("tc-risk-reviewer")["applies_to_areas"]
