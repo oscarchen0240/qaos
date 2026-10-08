@@ -1,15 +1,22 @@
 """ApprovalRequest → 人可讀 Markdown（approvals/<id>.md）。"""
-from . import store
+from . import store, operation, sources
 
+def _run_pin(a: dict):
+    """核准單所屬 run 綁定的 revision（需求 A 第 5 章 §4.1；唯讀）。只有移轉前的 legacy run 可回傳 None（顯示改用最新 revision）；移轉後缺 pin → 錯誤。"""
+    from . import rm
+    return rm.run_pin_for_display(store.load(f"runs/{a['run_id']}/run.yaml"))
+
+@operation.operation("approval_render")
 def render(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml"); lines = [f"# {apr_id} · {a['type']}", "", f"- Run：{a['run_id']}  · 狀態：{a['status']}  · 提出：{a['requested_at'][:10]}", f"- **{a['summary']}**", ""]
     if a["type"] in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and a.get("batch_items"):
         from . import refs as _refs, clarification as clr
         answered = {}
         for c in clr.list_(open_only=False):
-            if c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+            if c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
+        pin = _run_pin(a)
         def req_title(rid):
-            r, _ = _refs.find_requirement(rid); return (f"{rid} {r.get('title', '')}".strip(), r) if r else (rid, None)
+            r, _ = _refs.find_requirement(rid, pin=pin); return (f"{rid} {r.get('title', '')}".strip(), r) if r else (rid, None)
         groups = {}; exp = []
         for it in a["batch_items"]:
             v = store.load(store.tc_version_path(it["id"], it["version"])); groups.setdefault(v["requirement_ids"][0], []).append((it, v))
@@ -54,9 +61,10 @@ def render(apr_id: str) -> str:
         lines += ["", "## 依據 artifact", ""] + [f"- {x}" for x in a["artifact_ids"]]
     lines += ["", "## 決定", "", f"```bash", f"bin/qaos approve {apr_id} --decision approve --by <you>", f"bin/qaos approve {apr_id} --decision approve --by <you> --per-item TC-xxx-001:reject", f"bin/qaos approve {apr_id} --decision reject --by <you> --rationale \"...\"", "```"]
     if a.get("decision"): lines += ["", f"**已決定：{a['decision']['decision']}** by {a['decision']['decided_by']} @ {a['decision']['decided_at']}"]
-    out = "\n".join(lines) + "\n"; (store.ROOT / "approvals" / f"{apr_id}.md").write_text(out, encoding="utf-8"); return out
+    out = "\n".join(lines) + "\n"; store.write_derived(f"approvals/{apr_id}.md", out); return out
 
 
+@operation.operation("approval_render_html")
 def render_html(apr_id: str) -> str:
     """approvals/<id>.html：固定欄寬、統一字級的審批頁（給人看；md 仍是文字版）。"""
     import html as H
@@ -64,7 +72,7 @@ def render_html(apr_id: str) -> str:
     a = store.load(f"approvals/{apr_id}.yaml")
     answered = {}
     for c in clr.list_(open_only=False):
-        if c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+        if c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
     css = """<style>
 :root{--ink:#1c2326;--muted:#6b7674;--line:#d9dfdc;--bg:#f7f8f7;--head:#eef2f0;--exp:#fff7e0;--acc:#0e6b5f}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e4e9e7;--muted:#98a4a1;--line:#2c3538;--bg:#141819;--head:#1e2527;--exp:#3a3012;--acc:#4fb9a9}}
@@ -87,8 +95,9 @@ ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:
         for it in a["batch_items"]:
             v = store.load(store.tc_version_path(it["id"], it["version"])); groups.setdefault(v["requirement_ids"][0], []).append((it, v)); n_exp += bool(v.get("assumptions"))
         out.append(f"<p>共 {len(a['batch_items'])} 條：grounded {len(a['batch_items']) - n_exp} 條（預期結果有 spec 條文依據）、<b>exploratory {n_exp} 條</b>（黃底；預期結果含假設，approve 即接受該假設，假設下附 PM 回答）。依需求分組。</p>")
+        pin = _run_pin(a)
         for rid, items in groups.items():
-            r, _ = _refs.find_requirement(rid)
+            r, _ = _refs.find_requirement(rid, pin=pin)
             out.append(f"<h2>{H.escape(rid)} {H.escape(r.get('title', '') if r else '')}</h2>")
             if r: out.append(f"<blockquote>spec：{H.escape(r['spec_reference']['location'])}" + (f"　「{H.escape(r['spec_reference']['quote'])}」" if r['spec_reference'].get('quote') else "") + f"　· 風險 {r.get('risk', '—')}</blockquote>")
             out.append('<table><colgroup><col class=c-id><col class=c-cls><col class=c-title><col class=c-pre><col class=c-steps><col class=c-exp><col class=c-pr></colgroup><tr><th>TC</th><th>類別</th><th>標題</th><th>前置條件</th><th>步驟</th><th>預期結果</th><th>優先/風險</th></tr>')
@@ -125,4 +134,4 @@ ol{margin:0;padding-left:18px}.assume{margin-top:6px;padding-top:6px;border-top:
         out.append("<h2>內容</h2><div class=summary style='white-space:pre-wrap'>" + H.escape(a["diff_summary"]) + "</div>")
     out.append(f"<h2>決定</h2><div class=cmd>bin/qaos approve {apr_id} --decision approve --by &lt;you&gt;\nbin/qaos approve {apr_id} --decision approve --by &lt;you&gt; --per-item TC-xxx-001:reject\nbin/qaos approve {apr_id} --decision reject --by &lt;you&gt; --rationale \"...\"</div>")
     if a.get("decision"): out.append(f"<p><b>已決定：{a['decision']['decision']}</b> by {H.escape(a['decision']['decided_by'])} @ {a['decision']['decided_at']}</p>")
-    html = "\n".join(out); (store.ROOT / "approvals" / f"{apr_id}.html").write_text(html, encoding="utf-8"); return html
+    html = "\n".join(out); store.write_derived(f"approvals/{apr_id}.html", html); return html

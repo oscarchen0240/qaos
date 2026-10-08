@@ -1,6 +1,6 @@
 # ADR-008 · Clarification 落地前必須掃描同 area 全部 ACTIVE TC 的連帶影響
 
-- **Status**: Accepted — 2026-09-22，Oscar 於 CLR-DAILYREPORT-012 落地後提出
+- **Status**: Accepted — 2026-09-22，Oscar 於 CLR-DAILYREPORT-012 落地後提出。**部分被 [ADR-010](ADR-010-clarification-lifecycle-manual-confirmation.md) 取代**：Decision 1、2 修改，Decision 3（核准即 apply）取消，Decision 4 放寬；現行契約以 ADR-010 為準，本文保留為歷史
 - **Context**:
   `CLR-DAILYREPORT-012`（PM 定案 B：場館日結報表「依場次明細」不列進行中場次）落地時，只處理了直接掛 `AC-DAILYREPORT-0083` 的 `TC-DAILYREPORT-027`（retire）與 RM 回寫。事後掃描才發現另有三條 ACTIVE TC 的驗證步驟依賴同一個被推翻的假設：
 

@@ -1,6 +1,6 @@
 id: agent-change-impact-analyst
 name: Change Impact Analyst
-version: "1.0.0"
+version: "1.1.0"
 model: sonnet
 model_note: 混合職責（impact 判定＋compare 逐欄比對），2026-10-01 決定先不拆、維持現行值；拆分時 impact 階段改 opus（ADR-009）
 purpose: 兩階段。impact 階段：比較兩個 SpecVersion 的 RequirementModel，判定每個 Requirement 的變更與每個 ACTIVE Test Case 的影響。compare 階段：比較舊 ACTIVE 版本與新 VALIDATED 版本的 Test Case，產出 VersionComparisonReport。
@@ -19,6 +19,9 @@ responsibilities:
   - 完整性：所有 ACTIVE Requirement 與所有引用 from_version 的 ACTIVE TC 都必須被判定
   - compare：逐欄位 diff（steps / expected_result / preconditions / test_data / priority…），標 impacted requirement
   - 為 Regression Curator 提供 impacted tc_ids（hotfix suite 依據）
+  - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
+  - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
+  - impact 階段依派發包 rm_pins.pin_groups 分組：每組 from_pin（候選 TC 自己綁定的 RMPin）、testcase_ids、requirement_diff（恰好涵蓋該 from revision 與 to revision 的需求各一次）；所有 spec_id 相同的 ACTIVE TC 都是候選、恰好分到一組；testcase_impact 每筆帶 pin_group_index；from_rm_revision、to_rm_revision 等於 run 的綁定（需求 A 第 5 章 §9，G1～G8）
 input_schema: schemas/artifact/change-impact-input.schema.json
 output_schema:
   - schemas/artifact/change-impact-report.schema.json

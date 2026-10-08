@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/spec/requirements-revision.schema.json",
+  "title": "RequirementsRevision",
+  "description": "artifacts/requirements/<spec_id>/v<ver>/revisions/R<NNN>.yaml — 不可變的需求模型修訂版（R001 起；R000 是移轉時 legacy requirements.yaml 的逐位元複本，不受此 schema 約束，其輔助資料在 R000.meta.yaml）",
+  "type": "object",
+  "required": ["spec_id", "spec_version", "revision", "parent", "reason", "created_at", "created_by", "op_id", "target_decl_rev", "reference_pins", "requirements"],
+  "properties": {
+    "spec_id": {"$ref": "../common/defs.schema.json#/$defs/SpecId"},
+    "spec_version": {"$ref": "../common/defs.schema.json#/$defs/SpecVersion"},
+    "revision": {"type": "string", "pattern": "^R[0-9]{3,}$"},
+    "parent": {"type": ["string", "null"], "pattern": "^R[0-9]{3,}$"},
+    "reason": {"type": "string", "minLength": 1},
+    "run_id": {"$ref": "../common/defs.schema.json#/$defs/RunId"},
+    "source_artifact_id": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"},
+    "created_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+    "created_by": {"type": "string", "minLength": 1},
+    "op_id": {"type": "string"},
+    "target_decl_rev": {"type": "integer", "minimum": 0},
+    "reference_pins": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/RefNode"}},
+    "accepted_without_analysis": {"const": true},
+    "dispatch_packet_sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256", "description": "這次分析所用的派發包（需求 A 第 1 章 §2.4）"},
+    "decision_snapshot_hashes": {"type": "object", "description": "派發包中決議快照的 canonical sha256（附錄 A 5-14）：resolutions＝CLR 決議快照、run_decisions＝本 run 已決的裁決", "required": ["resolutions", "run_decisions"], "properties": {"resolutions": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}, "run_decisions": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}}, "additionalProperties": false},
+    "accepted_diff": {"type": "object", "properties": {"added": {"type": "array"}, "removed": {"type": "array"}, "changed": {"type": "array"}}, "additionalProperties": false},
+    "requirements": {"type": "array", "minItems": 1, "items": {"$ref": "requirement.schema.json"}}
+  },
+  "additionalProperties": false
+}

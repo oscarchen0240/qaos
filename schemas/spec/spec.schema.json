@@ -25,7 +25,58 @@
           "imported_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
           "effective_at": {"type": "string", "format": "date"},
           "status": {"type": "string", "enum": ["IMPORTED", "ANALYZED", "SUPERSEDED"]},
-          "change_summary": {"type": "string"}
+          "change_summary": {"type": "string"},
+          "references_status": {"type": "string", "enum": ["undeclared", "declared_empty", "declared"], "description": "缺少時視為 undeclared（不等於沒有引用）"},
+          "references": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SpecReferenceDecl"}, "description": "最新 decl_rev 的直接層引用"},
+          "reference_declarations": {
+            "type": "array", "description": "引用宣告的修訂歷史，只能追加（需求 A 附錄 A 2-3）",
+            "items": {
+              "type": "object",
+              "required": ["decl_rev", "action", "references", "references_status", "by", "at", "op_id"],
+              "properties": {
+                "decl_rev": {"type": "integer", "minimum": 1},
+                "action": {"type": "string", "enum": ["add", "remove", "declare_empty"]},
+                "references": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/SpecReferenceDecl"}},
+                "references_status": {"type": "string", "enum": ["declared_empty", "declared"]},
+                "reason": {"type": "string", "minLength": 1},
+                "by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+                "at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+                "op_id": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "analysis_policy": {"type": "string", "enum": ["analyze", "reference_only"], "description": "缺少時視為 analyze"},
+          "source": {
+            "type": "object", "description": "結構化外部來源（需求 A 第 2 章 §4.1）；沒有 source 的條目是 legacy 條目",
+            "required": ["source_bytes_sha256"],
+            "properties": {
+              "package_name": {"type": "string", "minLength": 1},
+              "package_sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+              "external_filename": {"type": "string", "minLength": 1},
+              "external_version_label": {"type": "string", "minLength": 1},
+              "external_effective_date": {"type": "string", "minLength": 1, "description": "外部文件自己宣告的生效日；由人輸入，只當參考資訊"},
+              "external_commit": {"type": "object", "required": ["value", "claimed"], "properties": {"value": {"type": "string", "minLength": 1}, "claimed": {"const": true}}, "additionalProperties": false},
+              "source_bytes_sha256": {"$ref": "../common/defs.schema.json#/$defs/Sha256"}
+            },
+            "additionalProperties": false
+          },
+          "metadata_history": {
+            "type": "array", "description": "spec metadata upgrade 的紀錄，只能追加",
+            "items": {
+              "type": "object",
+              "required": ["at", "by", "reason", "op_id", "changes"],
+              "properties": {
+                "at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
+                "by": {"$ref": "../common/defs.schema.json#/$defs/HumanId"},
+                "reason": {"type": "string", "minLength": 1},
+                "note": {"type": "string", "minLength": 1},
+                "op_id": {"$ref": "../common/defs.schema.json#/$defs/Sha256"},
+                "changes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "required": ["old", "new"], "properties": {"old": {}, "new": {}}, "additionalProperties": false}}
+              },
+              "additionalProperties": false
+            }
+          }
         },
         "additionalProperties": false
       }
