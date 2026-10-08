@@ -60,3 +60,43 @@
 - REQ-011 缺「日結時間修改後何時生效」決策點。
 - REQ-027／028「洗分進行中」與 ARCADE 單階段洗分的潛在衝突。
 - 匯入 proto 作為引用來源，處理 6 張 proto 類 document_request。
+
+---
+
+# 續：proto／開發包③ 引用與同版本 CIA（RUN-20261008-003）
+
+- **Run**：RUN-20261008-003（spec-change-impact，同版本 CIA：SPEC-REDPACKET-001 0.1，R001 → R002，reason=declaration_changed）—— COMPLETED
+- **結果**：G-SPEC、G-IMPACT、G-DESIGN、G-TVAL、G-COMPARE 皆首輪 PASS（G-TVAL 0 major）。APR-0195 核准 15 條改版（v2）、17 條新增（TC-REDPACKET-077～093），Registry **89 條 ACTIVE**，R002 的 123 個 AC 全有案例掛載（AC-0286 僅部分覆蓋）。
+
+## 引用來源補齊
+
+- 外部分析指出 6 張「缺互動原型」的 document_request 不成立：proto 就在開發包 `proto/`。匯入為 **SPEC-REDPACKET-002@0.1**（reference_only，HTML 原文存為 v0.1.md），Oscar 決定 **normative**（proto 有定義的細節視為規則依據）；decl_rev 8。CLR-002、012、013、014、021、024 以 `clarification fulfill` 補件，CLR-017 以 `waive-item` 豁免（目標 spec L252–257 已定義），7 張 APPLIED。
+- 第一次重新分析（RUN-20261008-002）時發現**開發包③ 已匯入為 SPEC-CASHFLOW-001** 但未宣告。為避免 CLR 重開兩輪，在 G-SPEC 前取消 002、宣告 CASHFLOW 為 normative（decl_rev 9）後重開 003。
+
+## R002 重新分析
+
+- 33 需求、AC 103 → 123、決策點 70 → 84；ID 全數沿用。原 25 個未定：3 個全定（活動狀態、試算格式、差異百分比，依 proto）、9 個拆分（已定部分另立 E1 決策點）、其餘仍未定。
+- 修正 R001 已知問題：AC-0191 改 19／263、補 known_rules 第 56／87／106 行、新增 REQ-011/Q04（日結時間修改生效時點，E4）；洗分判定與 ARCADE 可並存（非衝突）。
+- 新衝突 2 個（E2 major，不擋流程）：REQ-022/Q04（spec L222 vs proto 規則篩選顯示條件）、REQ-028/Q04（spec「Admin 可手動取消待確認出金」vs 已落地 CLR-CASHFLOW-004「無手動取消」）。
+- CLR：因 basis 改變（decl_rev、閉包），issue key 全部不同，新開 CLR-REDPACKET-026～050（25 張，17 張以 prior_version 指回舊單）；舊 OPEN 18 張經 Oscar 確認後撤回（附對應新單編號或「已由 proto 定義」）。
+
+## 本輪經驗
+
+1. **引用宣告要一次補齊再分析**：每改一次宣告，basis 就變，所有未決 CLR 會以新單重開、舊單須人工撤回。匯入新 spec 前應先盤點開發包附檔與 Registry 既有 spec（含別名，如「開發包③」＝CASHFLOW）。
+2. **Designer 依前一輪教訓（未定事項一律 exploratory 或刪除）後，G-TVAL 首輪即 0 major**；Validator 逐一核對 25 個非 E1 決策點無隱含依賴。
+3. **CIA 只看 AC／預期，漏掉共用前置條件**：57 條 unaffected 的「逐一取消排程直到列表沒有」在 R002（已結束／已取消會留在列表）下不可執行。Oscar 決定延到下一次 decision_applied CIA 一併修正；final 檔已加執行提示。
+4. Change Impact Analyst 曾把 envelope status 自填 VALID、created_at 手填未來時間，submit 正確拒絕；以新 ID 重產。
+
+## 新增待辦（程式／規則，走 MR）
+
+12. 同版本 CIA 宣告改變時，所有未決 CLR 以新單重開、舊單不會自動結案（設計行為，但造成大量重複單；可考慮自動標記被取代）。
+13. G-IMPACT／CIA 不檢查共用前置條件受需求變更的影響。
+14. `run new`、`tc-export`、`tc-final` 等以參數判定重送：參數相同時只回放舊輸出（含過時狀態，如 run 已 CANCELLED 仍顯示 RUNNING）、不重新產生；匯出類指令資料變更後必須加 `--new-request`。
+15. `bin/qaos tc-final` 產出的 html 缺樣式（只有 `body{font-family:sans-serif}`），與既有 final 版不一致。
+16. agent 可自填 envelope status 與 created_at（submit 有擋 status，但 created_at 未驗）。
+
+## 待處理
+
+- CLR-REDPACKET-026～050（25 張 OPEN）待 PM 回覆；衝突單 038、047 待裁決（047 牽涉 CASHFLOW／TXLOG）。
+- 回覆並 apply 後走 decision_applied 同版本 CIA，屆時一併修正 57 條前置條件、補 AC-0286「恢復可開啟」。
+- TC-REDPACKET-011、043、067、069 為 DRAFT（無 active 版本）；067、069 已被 TC-088、089 取代（AC-0282／0287、0283／0285 的確定版），011、043 待 CLR-027、035。
