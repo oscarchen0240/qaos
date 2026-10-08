@@ -27,3 +27,24 @@ def test_degraded_existing_head_is_replaced_and_subtitle_kept(monkeypatch):
     head, s = _export(monkeypatch, "ZZHEADOLD")
     assert "body{font-family:sans-serif}" not in head and "--font-ui" in head
     assert '<div class="brand-sub">紅包 &amp; 活動 · 最終整合版</div>' in s          # 副標沿用既有檔，跳脫不重複
+
+def _rules(css_head: str) -> set:
+    """<style> 內的 CSS 規則集合（去除空白後以 } 切分），用來比較語意而不是排版。"""
+    import re
+    css = re.search(r"<style>(.*)</style>", css_head, re.S).group(1)
+    norm = re.sub(r"\s+", "", css)
+    return {r + "}" for r in norm.split("}") if r}
+
+def test_template_covers_every_existing_final_head():
+    """既有 final.html（repo 內）的每一條 CSS 規則，範本都要有；重新匯出不會讓任何功能區失去樣式（例如 MEMBER／CASHFLOW 的 .brand、.page-head 間距）。"""
+    repo = pathlib.Path(__file__).resolve().parents[1]
+    tpl = _rules(pathlib.Path(final_export.HEAD_TEMPLATE).read_text(encoding="utf-8"))
+    files = sorted((repo / "testcases" / "final").glob("*-final.html"))
+    checked = 0
+    for f in files:
+        s = f.read_text(encoding="utf-8"); head = s[:s.find("<body>")]
+        if "<style>" not in head or "--font-ui" not in head: continue   # 已退化的檔（無完整樣式）不作為基準
+        missing = _rules(head) - tpl
+        assert not missing, f"{f.name} 有範本沒有的規則：{sorted(missing)[:5]}"
+        checked += 1
+    assert checked >= 1 or not files
