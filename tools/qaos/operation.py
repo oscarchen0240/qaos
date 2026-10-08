@@ -230,7 +230,9 @@ def registrations() -> dict[str, dict]:
     if not d.is_dir(): return out
     for p in sorted(d.glob("*.yaml")):
         if p.name.startswith(".qaos-tmp"): continue
-        rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        try: rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        except (yaml.YAMLError, UnicodeDecodeError) as e: raise EvidenceConflict(f"登錄紀錄 {p.name} 無法解析：{e}")
+        if not isinstance(rec, dict): raise EvidenceConflict(f"登錄紀錄 {p.name} 的內容不是 mapping")
         op = rec.get("op_id")
         if set(rec) != REG_FIELDS or not isinstance(rec.get("plan_seq"), int) or p.name != f"{rec['plan_seq']:08d}-{op}.yaml":
             raise EvidenceConflict(f"登錄紀錄 {p.name} 的欄位或檔名不符")
@@ -243,16 +245,19 @@ def registrations() -> dict[str, dict]:
 
 REG_FIELDS = {"plan_seq", "op_id", "action", "plan_sha256", "registered_at"}
 
-def verify_registration(op: str, reg: dict | None = None) -> dict:
-    """涉及某個 op 的續做、已完成回報與盤點時，核對登錄紀錄與不可變計畫的一致性（附錄 A 4-11）。回傳計畫。"""
+_UNSET = object()
+
+def verify_registration(op: str, reg: dict | None = None, *, plan_file=_UNSET, status_set: set | None = None) -> dict:
+    """涉及某個 op 的續做、已完成回報與盤點時，核對登錄紀錄與不可變計畫的一致性（附錄 A 4-11）。回傳計畫。
+    plan_file、status_set：呼叫端已一次載入時傳入（migrate verify 逐一核對全部操作），避免逐 op 重掃目錄。"""
     reg = reg or registrations().get(op)
-    p = plan_files().get(op)
+    p = plan_files().get(op) if plan_file is _UNSET else plan_file
     if reg is None or p is None: raise EvidenceConflict(f"op {op} 缺少登錄紀錄或計畫檔")
     data = p.read_bytes(); plan = yaml.safe_load(data.decode("utf-8")) or {}
     bad = [k for k, ok in (("plan_sha256", reg["plan_sha256"] == store.sha256_bytes(data)), ("action", reg["action"] == plan.get("action")),
                            ("registered_at", reg["registered_at"] == plan.get("clock")), ("op_id", plan.get("op_id") == op)) if not ok]
     if bad: raise EvidenceConflict(f"V1：op {op} 的登錄紀錄和計畫不符（{', '.join(bad)}）")
-    st = statuses(op)
+    st = statuses(op) if status_set is None else status_set
     if "completed" in st:
         expect = store.dump({"op_id": op, "status": "completed", "at": plan["clock"]})
         if (store.ROOT / status_path(op, "completed")).read_bytes() != expect:
@@ -276,8 +281,18 @@ def statuses(op_id: str) -> set[str]:
     if not d.is_dir(): return set()
     return {p.name[len(op_id) + 1:-5] for p in d.glob(f"{op_id}-*.yaml")}
 
-def plan_state(op_id: str) -> str:
-    st = statuses(op_id)
+def all_statuses() -> dict[str, set[str]]:
+    """一次讀取 status.d：op_id → 狀態集合（檔名 <op_id>-<status>.yaml，op_id 為 64 位 hex）。"""
+    out: dict[str, set[str]] = {}
+    d = store.ROOT / STATUS_DIR
+    if not d.is_dir(): return out
+    for p in d.glob("*.yaml"):
+        m = re.fullmatch(r"([0-9a-f]{64})-(.+)\.yaml", p.name)
+        if m: out.setdefault(m.group(1), set()).add(m.group(2))
+    return out
+
+def plan_state(op_id: str, st: set[str] | None = None) -> str:
+    st = statuses(op_id) if st is None else st
     for t in TERMINAL:
         if t in st: return t
     return "completed" if "completed" in st else "in_progress"

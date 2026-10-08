@@ -603,9 +603,12 @@ def _diag_event(path: str, data: bytes) -> dict | None:
 def _plan_events(plan: dict) -> tuple[list[tuple[dict, dict]], list[str]]:
     """計畫事件 → [(payload, 事件步驟)]；路徑由 (op_id, step, run_id) 推導，必須恰好對應一個 kind: event 步驟且 payload 序列化 sha 相符（§12.1）。"""
     out, bad = [], []
+    by_path = {}
+    for s in plan["steps"]:
+        if s["kind"] == "event": by_path.setdefault(s["path"], []).append(s)
     for ev in plan.get("audit_events") or []:
         path = op._event_path(ev.get("op_id"), ev.get("run_id"), ev.get("step"))
-        st = [s for s in plan["steps"] if s["kind"] == "event" and s["path"] == path]
+        st = by_path.get(path, [])
         if ev.get("op_id") != plan["op_id"] or len(st) != 1 or st[0]["expected_after"] != store.sha256_bytes(store.dump(ev)):
             bad.append(f"{plan['op_id'][:12]}… 的計畫事件與事件步驟不一致（{path}）"); continue
         out.append((ev, st[0]))
@@ -619,11 +622,12 @@ def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
     """操作證據核對（§12.1 失敗傳播）。回傳 (事件路徑 → {ev, sha, op, seq, state, ok_for_group}, op → plan, issues)。
     任何不符都列入 issues（整次 verify 失敗），不以排除事件代替。"""
     known, plans, bad = {}, {}, []
+    files, sts = op.plan_files(), op.all_statuses()                           # 一次載入，避免逐 op 重掃目錄
     for o, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]):
-        try: plans[o] = op.verify_registration(o, reg)
+        try: plans[o] = op.verify_registration(o, reg, plan_file=files.get(o), status_set=sts.get(o, set()))
         except Exception as e: bad.append(f"op {o} 的登錄紀錄或計畫檔無法核對：{e}")      # 計畫檔損壞（例如非法 YAML）也是失敗，不中止 verify
     for o, plan in plans.items():
-        state = op.plan_state(o); evs, b = _plan_events(plan); bad += b
+        state = op.plan_state(o, sts.get(o, set())); evs, b = _plan_events(plan); bad += b
         done_seqs = None                                                       # None：全部事件都應存在
         if state == "completed":
             for s in plan["steps"][:-1]:
@@ -639,7 +643,8 @@ def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
                     xs = xsteps.get(row["seq"])
                     if xs is None: continue
                     if row["status"] == "done": done_seqs.add(xs["seq"]); continue
-                    if xs["kind"] == "event" and (store.ROOT / xs["path"]).exists(): bad.append(f"證據衝突：{o[:12]}… 未執行的事件 {xs['path']} 出現了")
+                    if row["status"] != "not_executed": continue                   # 例如 external_change：依凍結的 proof 由 x_evidence_issues 核對
+                    if xs["kind"] in ("event", "status_final") and (store.ROOT / xs["path"]).exists(): bad.append(f"證據衝突：{o[:12]}… 未執行步驟的輸出 {xs['path']} 出現了")
                     if xs["kind"] != "status_final" and (store.ROOT / op.progress_path(plan, xs)).exists(): bad.append(f"證據衝突：{o[:12]}… 未執行步驟的完成紀錄 {op.progress_path(plan, xs)} 出現了")
         else:                                                                  # 未完成（§12.4）：只要求已有完成紀錄的事件
             bad.append(f"未完成的操作 {o} {plan.get('action')}：這是合法中斷，不是竄改；請以 `operation resume {o}` 完成後再執行 migrate verify")

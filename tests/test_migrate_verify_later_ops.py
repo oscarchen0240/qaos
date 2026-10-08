@@ -287,14 +287,51 @@ def test_ac_09_93_17_tmp_file_ignored():
     vok_but(root, COUNTERS)
 
 # ---------------------------------------------------------------- AC-09-94a：診斷事件的時間倒退（預期失敗，不誤放行）
+def _sparse_x1_diag_rollback():
+    """全新 root（X1 時沒有 _counters.yaml，之後配發 ID 不改寫 untouched）：X1 → maintenance end → 新建 run → 正式診斷事件
+    → maintenance start → rollback（--allow-later-ops）。回傳 (root, 新 run, 診斷事件的 at)。"""
+    root = U.mkroot(migrated=False)
+    ok(U.q(root, "maintenance", "start", "--by", "m")); ok(U.q(root, "migrate", "--by", "m")); x1 = x_of(root)
+    ok(U.q(root, "maintenance", "end", "--by", "m"))
+    rid = new_run(root); at = yaml.safe_load(diagnose(root, rid).read_text())["at"]
+    ok(U.q(root, "maintenance", "start", "--by", "m", "--new-request"))
+    ok(U.q(root, "migrate", "rollback", "--op", x1, "--by", "m", "--allow-later-ops"))
+    ok(U.q(root, "migrate", "verify", "--rolled-back"))
+    return root, rid, at
+
 def test_ac_09_94a_remigrate_with_earlier_clock():
-    """X1 → rollback → 寫入診斷事件（at 較晚）→ 以較早的 clock 重新移轉 X2：X2 第一次 render 已包含它，但依 at 被分到後段 → 判定 1 失敗（§18 第 11 點 (b)）。"""
-    root, info = migrated(); x1 = x_of(root)
+    """AC-09-94a：X1 → 新建 run → 正式診斷事件 → R → 以較早的 clock 重新移轉 X2：X2 第一次 render 已包含該診斷事件，
+    但依 at 被分到後段 → 只因判定 1 失敗（§18 第 11 點 (b)），不混入證據衝突。正常 clock 為對照組（通過）。"""
+    root, rid, at = _sparse_x1_diag_rollback()
+    ok(U.q(root, "migrate", "--by", "m", "--acknowledge-idle", rid, "--new-request")); vok(root)        # 對照：正常 clock
+    root, rid, at = _sparse_x1_diag_rollback()
+    U.q(root, "migrate", "--by", "m", "--acknowledge-idle", rid, "--new-request", check=True, extra_env={"QAOS_TEST_CLOCK": "2001-01-01T00:00:00Z"})
+    assert at > "2001-01-01T00:00:00Z"
+    r = vfail(root, f"audit 檢視 {GLOBAL}：X 時的內容無法由前段事件重建", f"audit 檢視 runs/{rid}/audit.log：X 時的內容無法由前段事件重建")
+    issues = [l for l in r.stdout.splitlines() if l.startswith("- ")]
+    assert all("X 時的內容無法由前段事件重建" in i for i in issues), r.stdout
+
+def test_c01_injected_completed_of_aborted_x1_fails():
+    """竄改：部分移轉 X1 → R → X2 之後，補寫 X1 未執行的 completed（內容等於計畫值）→ 失敗；刪除後通過。"""
+    root, info = legacy()
+    assert L.migrate(root, "--acknowledge-idle", info["running"], check=False, fault="after_progress:6").returncode == 86
+    x1 = U.incomplete(root)[0]["op_id"]
     ok(U.q(root, "migrate", "rollback", "--op", x1, "--by", "m"))
-    d = diag_file(root, at="2099-01-01T00:00:00Z")
-    U.q(root, "migrate", "--by", "m", "--acknowledge-idle", info["running"], "--new-request", check=True, extra_env={"QAOS_TEST_CLOCK": "2001-01-01T00:00:00Z"})
-    assert b"2099-01-01T00:00:00Z" in P(root, GLOBAL).read_bytes()
-    vfail(root, "X 時的內容無法由前段事件重建")
+    ok(U.q(root, "migrate", "--by", "m", "--acknowledge-idle", info["running"], "--new-request")); vok(root)
+    xp = U.plan_of(root, x1); st = xp["steps"][-1]; assert st["kind"] == "status_final"
+    P(root, st["path"]).write_bytes(blob(root, xp, st))
+    vfail(root, f"證據衝突：{x1[:12]}… 未執行步驟的輸出 {st['path']}")
+    P(root, st["path"]).unlink(); vok(root)
+
+def test_c02_rollback_after_later_render_then_remigrate():
+    """正式流程：X1 → maintenance end（render 改寫 X1 的 audit 檢視）→ R（該步凍結為 external_change, proof: progress）→ X2 → 通過。"""
+    root, info = migrated(); x1 = x_of(root)
+    ok(U.q(root, "maintenance", "end", "--by", "m")); ok(U.q(root, "maintenance", "start", "--by", "m", "--new-request"))
+    ok(U.q(root, "migrate", "rollback", "--op", x1, "--by", "m")); ok(U.q(root, "migrate", "verify", "--rolled-back"))
+    rp = next(U.plan_of(root, o) for o in plans(root) if (U.plan_of(root, o) or {}).get("action") == "migrate_rollback")
+    assert any(r["status"] == "external_change" and r["proof"] == "progress" for r in rp["x_progress"]["steps"])
+    ok(U.q(root, "migrate", "--by", "m", "--acknowledge-idle", info["running"], "--new-request")); vok(root)
+    ok(U.q(root, "maintenance", "end", "--by", "m")); vok(root)
 
 # ---------------------------------------------------------------- AC-09-94：合法中斷（明確失敗並提示續做）
 def test_ac_09_94_interrupted_operations():
@@ -353,3 +390,9 @@ def test_too_many_same_second_diagnostics_need_manual_check():
     root, _ = rich(); xc = clock(root, x_of(root))
     for _ in range(11): diag_file(root, at=xc)
     vfail(root, "與 X 同秒的診斷事件太多（11）")
+
+def test_c04_malformed_registration_reports_instead_of_crashing():
+    root, _ = rich(); o = _end_op(root)
+    f = next(P(root, "operations/_global/index.d").glob(f"*-{o}.yaml")); f.write_text("plan_seq: [\n")    # 竄改：登錄紀錄變成非法 YAML
+    r = vfail(root, f"登錄紀錄 {f.name} 無法解析"); assert "Traceback" not in r.stdout + r.stderr
+    f.write_text("- a\n"); r = vfail(root, f"登錄紀錄 {f.name} 的內容不是 mapping"); assert "Traceback" not in r.stdout + r.stderr
