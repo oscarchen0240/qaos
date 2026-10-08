@@ -5,6 +5,7 @@ R01、R07 依 evaluation-02 刻意不做暫時擋法；R10 刻意不改 HTTP 狀
 """
 import contextlib
 import json
+import pathlib
 import sqlite3
 import subprocess
 import threading
@@ -712,15 +713,73 @@ def test_b2_03_ticket_partial_handoff_write_is_repaired_on_retry(sandbox, fake_q
     assert qe.handoff_recorded(res["handoff_id"]) and [h["id"] for h in qe.handoff_tail()] == [res["handoff_id"]]
 
 
-def test_b2_03_append_leaves_each_record_on_its_own_line_after_a_torn_tail(sandbox):
+def test_b2_03_append_quarantines_a_torn_tail_and_keeps_every_record_on_its_own_line(sandbox):
     qe = sandbox.qaos_exec
     qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
-    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"torn', encoding="utf-8")
+    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"ok1","ts":"t"}\n{"kind":"handoff","id":"torn', encoding="utf-8")
     qe._append_handoff({"kind": "handoff", "id": "abc123", "ts": "t"})
     lines = qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()
-    assert len(lines) == 2 and json.loads(lines[1])["id"] == "abc123"
-    qe._append_handoff({"kind": "handoff", "id": "def456", "ts": "t"})              # 正常尾端不多補空行
+    assert [json.loads(l)["id"] for l in lines] == ["ok1", "abc123"]                 # 殘行不在主檔裡
+    assert b'"id":"torn' in pathlib.Path(str(qe.HANDOFF_FILE) + ".torn").read_bytes()  # 但沒有丟：搬到 .torn 留存
+    qe._append_handoff({"kind": "handoff", "id": "def456", "ts": "t"})              # 正常尾端不多補空行、不產生 .torn 新內容
     assert len(qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()) == 3
+
+
+def test_b2_03_complete_json_without_trailing_newline_is_kept_not_quarantined(sandbox):
+    qe = sandbox.qaos_exec
+    qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"nolf","ts":"t"}', encoding="utf-8")
+    qe._append_handoff({"kind": "handoff", "id": "next", "ts": "t"})
+    assert [json.loads(l)["id"] for l in qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()] == ["nolf", "next"]
+    assert not pathlib.Path(str(qe.HANDOFF_FILE) + ".torn").exists()
+
+
+def _utf8_torn_write_then_fail(sb):
+    """寫到一半、切在多位元組字元中間（「中」只留前兩個位元組）後失敗。"""
+    def partial(rec):
+        sb.qaos_exec.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(sb.qaos_exec.HANDOFF_FILE, "ab") as f:
+            f.write(b'{"hint":"' + "中".encode("utf-8")[:2])
+        raise OSError("disk full after partial write")
+    return partial
+
+
+def test_b2_03_bug_utf8_torn_handoff_is_recoverable_and_leaves_a_strictly_readable_file(bug_sandbox, write_registry_tc, fake_qaos, write_run, monkeypatch):
+    sb = bug_sandbox
+    rid, res_id = _make_result(sb, write_registry_tc)
+    _fake_cli(sb, fake_qaos["calls"], write_run)
+    real = sb.qaos_exec._append_handoff
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", _utf8_torn_write_then_fail(sb))
+    with pytest.raises(sb.qaos_bug.BugFileError):
+        sb.qaos_bug.execute(rid, res_id)
+    n = len(fake_qaos["calls"])
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", real)
+    res = sb.qaos_bug.execute(rid, res_id)                       # 舊程式：在 handoff_recorded 就因 UnicodeDecodeError 失敗
+    assert res["ok"] and len(fake_qaos["calls"]) == n
+    text = sb.qaos_exec.HANDOFF_FILE.read_text(encoding="utf-8")   # 嚴格解碼（relay 的讀法）不會丟例外
+    assert [json.loads(l)["id"] for l in text.splitlines()] == [res["handoff_id"]]
+    assert [h["id"] for h in sb.qaos_exec.handoff_tail()] == [res["handoff_id"]]
+
+
+def test_b2_03_ticket_utf8_torn_handoff_is_recoverable(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    qe = sandbox.qaos_exec
+    real = qe._append_handoff
+    monkeypatch.setattr(qe, "_append_handoff", _utf8_torn_write_then_fail(sandbox))
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    monkeypatch.setattr(qe, "_append_handoff", real)
+    res = qe.execute("APR-0100")
+    assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
+    assert [json.loads(l)["id"] for l in qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()] == [res["handoff_id"]]
+
+
+def test_b2_03_readers_skip_undecodable_lines_in_the_middle_of_the_file(sandbox):
+    qe = sandbox.qaos_exec
+    qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    qe.HANDOFF_FILE.write_bytes(b'{"kind":"handoff","id":"a","ts":"t"}\n{"x":"' + "中".encode("utf-8")[:2] + b'\n{"kind":"handoff","id":"b","ts":"t"}\n')
+    assert qe.handoff_recorded("a") and qe.handoff_recorded("b") and not qe.handoff_recorded("c")
+    assert [h["id"] for h in qe.handoff_tail()] == ["a", "b"]
 
 
 def test_b2_03_completion_is_not_recorded_when_the_handoff_cannot_be_read_back(bug_sandbox, write_registry_tc, fake_qaos, write_run, monkeypatch):
@@ -776,3 +835,30 @@ def test_b2_04_new_draft_is_refused_while_a_pending_completion_exists_and_not_ma
     d = sandbox.tickets.get_draft("APR-0100")
     assert d["decision"] == "approve" and d["sent_command"] == res["command"]
     sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "補完後再改", None, None)  # 補完後解除
+
+
+def test_b2_04_draft_stays_locked_when_the_known_success_has_not_been_saved_yet(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+    """CLI 成功、成功結果寫進 DB 失敗（同 process 還握有 _unsaved）：INFLIGHT 不能放掉，否則使用者可先存新決定、補做又把它標成已送出。"""
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    qe = sandbox.qaos_exec
+    real = qe._record_outcome
+    state = {"fail": True}
+
+    def flaky(row_id, res, post, ended, completion, hint="", handoff_id=None):
+        if completion == "pending" and state["fail"]:
+            raise sqlite3.OperationalError("failed result commit")
+        return real(row_id, res, post, ended, completion, hint, handoff_id)
+    monkeypatch.setattr(qe, "_record_outcome", flaky)
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    state["fail"] = False                                                      # DB 恢復
+    from backend.routers import tickets as router
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as hi:
+        router.DraftIn(decision="reject").save("APR-0100", "approval")
+    assert hi.value.status_code == 409
+    res = qe.execute("APR-0100")                                               # 補完的是原決定
+    assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
+    d = sandbox.tickets.get_draft("APR-0100")
+    assert d["decision"] == "approve" and d["sent_command"] == res["command"]
+    sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "補完後再改", None, None)

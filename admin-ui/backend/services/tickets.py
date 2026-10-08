@@ -106,7 +106,7 @@ def save_draft(ticket_id: str, kind: str, decision: str | None, option: str | No
 
 def _assert_draft_unlocked(ticket_id: str):
     if ticket_id in INFLIGHT:
-        raise DraftLocked(f"{ticket_id} 的指令正在執行，執行結束前不能改決定；請稍後再試")
+        raise DraftLocked(f"{ticket_id} 的指令正在執行，或上一次已成功執行（QAOS 已改變）但交接與紀錄還沒補齊；執行中請稍候，否則請先按「執行」補完，再改決定")
     with db.connect() as con:
         pending = con.execute("SELECT 1 FROM ticket_executions WHERE ticket_id=? AND completion='pending'", (ticket_id,)).fetchone()
     if pending:

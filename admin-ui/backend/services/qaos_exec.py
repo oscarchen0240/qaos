@@ -181,28 +181,73 @@ def _owner_session(run_id: str | None) -> str | None:
         return None
 
 
+def _repair_torn_tail():
+    """handoff.jsonl 是 append-only 的逐行 JSON。上一次寫到一半失敗會留下沒有換行的殘行（可能還切在多位元組字元中間，是非法 UTF-8）：
+    之後任何 append 都會接在殘行後面、整行讀不出來，嚴格解碼的 reader（relay hook）還會整檔失敗。
+    殘行本身若是完整的 JSON 物件，只補換行；否則把殘行搬到旁邊的 .torn 檔留存（不丟資料），主檔截回最後一個換行，讓主檔永遠是完整的行。"""
+    if not HANDOFF_FILE.exists():
+        return
+    with open(HANDOFF_FILE, "r+b") as f:
+        size = f.seek(0, os.SEEK_END)
+        if size == 0:
+            return
+        f.seek(size - 1)
+        if f.read(1) == b"\n":
+            return
+        pos, chunk = size, b""
+        while pos > 0:                                   # 往回找最後一個換行
+            step = min(65536, pos)
+            pos -= step
+            f.seek(pos)
+            chunk = f.read(step) + chunk
+            if b"\n" in chunk:
+                break
+        cut = pos + chunk.rfind(b"\n") + 1 if b"\n" in chunk else 0
+        f.seek(cut)
+        frag = f.read()
+        try:
+            ok = isinstance(json.loads(frag.decode("utf-8")), dict)
+        except (UnicodeDecodeError, ValueError):
+            ok = False
+        if ok:
+            f.seek(0, os.SEEK_END)
+            f.write(b"\n")
+            return
+        with open(str(HANDOFF_FILE) + ".torn", "ab") as t:
+            t.write(frag + b"\n")
+        if os.fstat(f.fileno()).st_size == size:         # 期間沒有別人又寫入才截；否則留著殘行，由下面的 append 補換行
+            f.truncate(cut)
+        else:
+            f.seek(0, os.SEEK_END)
+            f.write(b"\n")
+
+
 def _append_handoff(rec: dict):
     WARROOM_DIR.mkdir(parents=True, exist_ok=True)
-    line = (json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8")
+    _repair_torn_tail()
     with open(HANDOFF_FILE, "ab") as f:
-        # 上一次寫到一半失敗會留下沒有換行的殘行；新紀錄接在殘行後面會變成同一行、整行都讀不出來。先補行界線，讓新紀錄獨立成行
-        if f.tell() > 0:
-            with open(HANDOFF_FILE, "rb") as r:
-                r.seek(-1, os.SEEK_END)
-                if r.read(1) != b"\n":
-                    f.write(b"\n")
-        f.write(line)
+        f.write((json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
-def handoff_tail(n: int = 50) -> list[dict]:
+def _handoff_records() -> list[dict]:
+    """逐行（位元組）解碼並解析，壞行（非法 UTF-8、殘缺 JSON）略過，不讓一行壞資料拖垮整份。"""
     if not HANDOFF_FILE.exists():
         return []
     out = []
-    for line in HANDOFF_FILE.read_text(encoding="utf-8").splitlines()[-n * 3:]:
-        try:
-            out.append(json.loads(line))
-        except ValueError:
+    for raw in HANDOFF_FILE.read_bytes().split(b"\n"):
+        if not raw.strip():
             continue
+        try:
+            r = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            continue
+        if isinstance(r, dict):
+            out.append(r)
+    return out
+
+
+def handoff_tail(n: int = 50) -> list[dict]:
+    out = _handoff_records()[-n * 3:]
     consumed = {r.get("handoff_id") for r in out if r.get("kind") == "consumed"}
     items = [r for r in out if r.get("kind") == "handoff"]
     for r in items:
@@ -216,18 +261,7 @@ def stable_handoff_id(*parts: str) -> str:
 
 
 def handoff_recorded(handoff_id: str) -> bool:
-    if not HANDOFF_FILE.exists():
-        return False
-    for line in HANDOFF_FILE.read_text(encoding="utf-8").splitlines():
-        if handoff_id not in line:
-            continue
-        try:
-            r = json.loads(line)
-        except ValueError:
-            continue
-        if r.get("kind") == "handoff" and r.get("id") == handoff_id:
-            return True
-    return False
+    return any(r.get("kind") == "handoff" and r.get("id") == handoff_id for r in _handoff_records())
 
 
 def append_handoff_once(rec: dict):
@@ -322,12 +356,14 @@ def execute(ticket_id: str) -> dict:
         try:
             _record_outcome(row_id, res, [], ended, "pending", "", hid)
         except (OSError, sqlite3.Error) as e:
-            _unsaved[row_id] = {"res": res, "post": [], "ended": ended, "handoff_id": hid}
+            _unsaved[row_id] = {"res": res, "post": [], "ended": ended, "handoff_id": hid, "ticket_id": ticket_id}
             raise ExecError(500, f"指令已成功執行（QAOS 已改變），但執行紀錄寫入失敗：{e}。再按一次「執行」會補寫紀錄並完成交接，不會重跑指令。") from e
         return _finish_success(row_id, ticket_id, kind, action, cmd_out["command"], run_id, res, [], started, ended, hid, resumed=False)
     finally:
         with tk.draft_lock:
-            tk.INFLIGHT.discard(ticket_id)
+            # 同 process 已知 CLI 成功、但結果還沒寫進 DB（_unsaved）時，草稿要繼續鎖著直到補做完成，否則補做會標到後來的新決定
+            if not any(c["ticket_id"] == ticket_id for c in _unsaved.values()):
+                tk.INFLIGHT.discard(ticket_id)
         _lock.release()
 
 
