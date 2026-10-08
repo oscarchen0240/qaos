@@ -107,6 +107,9 @@ def test_key_survives_rollback_takeover(point):
     assert same_key_rb["error_kind"] == "key_conflict"
     U.q(root, "migrate", "rollback", "--op", x, "--by", "t", "--request-key", "r1", check=True)
     assert key_index(root, "m1")["op_id"] == x
+    r = key_index(root, "r1")["op_id"]; assert r != x                                # rollback（planner 計畫）自己的 key 也綁定
+    rb2 = js(U.q(root, "migrate", "rollback", "--op", x, "--by", "other", "--request-key", "r1", "--json"))
+    assert rb2["error_kind"] == "key_conflict"
     changed = js(U.q(root, "migrate", "--by", "changed", "--request-key", "m1", "--json"))
     assert changed["ok"] is False and changed["error_kind"] == "key_conflict"
     same = js(U.q(root, "migrate", "--by", "t", "--request-key", "m1", "--json"))  # 同內容：X 已終結 → 拒絕
