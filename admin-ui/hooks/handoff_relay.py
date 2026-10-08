@@ -1,4 +1,5 @@
-"""Claude Code hook（Stop / UserPromptSubmit）：把平台的交接紀錄接回 QA session。
+"""Claude Code／Codex hook（Stop / UserPromptSubmit）：把平台的交接紀錄接回 QA session。
+（Codex 的 Stop 同樣支援 decision=block；UserPromptSubmit 的純文字 stdout 同樣會進本回合上下文，兩邊輸出格式不用分開。）
 
 讀 .warroom/handoff.jsonl（只有 admin-ui 後端會寫），找「給這個 session、尚未消費」的紀錄：
 - Stop：若 run.yaml 確認該 run 仍 RUNNING 且 current task 為 READY（resume_agent），輸出 {"decision":"block","reason":...}
@@ -13,6 +14,8 @@ import json
 import os
 import sys
 import time
+
+from _hostenv import project_dir
 
 MAX_LINES_SCAN = 500
 
@@ -71,7 +74,7 @@ def main():
     sid = p.get("session_id") or ""
     if ev not in ("Stop", "UserPromptSubmit") or not sid:
         return
-    project = os.environ.get("CLAUDE_PROJECT_DIR") or p.get("cwd") or os.getcwd()
+    project = project_dir(p)
     hpath = os.path.join(project, ".warroom", "handoff.jsonl")
     recs = _read(hpath)
     consumed = {r.get("handoff_id") for r in recs if r.get("kind") == "consumed"}

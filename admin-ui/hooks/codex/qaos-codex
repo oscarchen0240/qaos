@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""以 QAOS hooks 啟動 Codex——只給需要指揮台守門／紀錄／交接的 QAOS 產品流程用。
+
+一般 Codex 與審查 session 直接跑 `codex` 即可：repo 裡刻意沒有 `.codex/hooks.json`，
+所以不會載入任何 QAOS hook，也不會跳「Hooks need review」。
+
+用法（參數原樣轉給 codex，hooks 以 -c 傳入，來源為 sessionFlags）：
+  admin-ui/hooks/codex/qaos-codex [codex 的參數／子命令／提示…]
+  admin-ui/hooks/codex/qaos-codex --qaos-print-flags    只印出會加上的 -c 參數（JSON），不啟動
+
+專案根：啟動前先解析並驗證——QAOS_PROJECT_DIR（若有設）或 `-C/--cd`（沒有就是目前目錄）所在 git repo 的 toplevel，
+且 admin-ui/hooks 的三支 hook 腳本都要存在、可執行；否則直接中止，不啟動沒有守門的 QAOS session。
+驗證過的絕對路徑以 QAOS_PROJECT_DIR 傳給 codex，hook 指令就不必在執行時才靠 cwd 去猜（Codex 不會設 CLAUDE_PROJECT_DIR）。
+
+信任：第一次啟動 Codex 會跳「Hooks need review」，選 Trust all and continue 一次即可。
+sessionFlags hook 的信任 key 與路徑無關（/<session-flags>/config.toml:...），所以各 worktree 共用同一份信任；
+hook 內容（command／timeout／matcher）有改動才需要重新確認。本腳本不會寫入你的 Codex 信任設定。
+"""
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+DEFAULT_CODEX = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
+HOOK_SCRIPTS = ("guard_qaos.sh", "log_event.sh", "handoff_relay.sh")
+
+
+class LauncherError(Exception):
+    pass
+
+
+def _toml(v) -> str:
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    if isinstance(v, str):
+        return json.dumps(v, ensure_ascii=False)
+    if isinstance(v, list):
+        return "[" + ",".join(_toml(x) for x in v) + "]"
+    if isinstance(v, dict):
+        return "{" + ",".join(f"{k}={_toml(x)}" for k, x in v.items()) + "}"
+    raise TypeError(type(v))
+
+
+def config_flags(definition: dict) -> list[str]:
+    flags: list[str] = []
+    for event, groups in definition["hooks"].items():
+        flags += ["-c", f"hooks.{event}={_toml(groups)}"]
+    return flags
+
+
+def _cd_target(args: list[str]) -> str:
+    for i, a in enumerate(args):
+        if a == "--":                       # 選項終止符：之後是提示文字，不是選項
+            break
+        if a in ("-C", "--cd") and i + 1 < len(args):
+            return args[i + 1]
+        if a.startswith("--cd="):
+            return a[len("--cd="):]
+        if a.startswith("-C") and len(a) > 2:
+            return a[2:]
+    return os.getcwd()
+
+
+def _git_toplevel(path: str) -> str:
+    try:
+        r = subprocess.run(["git", "-C", path, "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=5)
+    except Exception:  # noqa: BLE001
+        return ""
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _is_runnable_file(p: Path) -> bool:
+    """os.access(X_OK) 對目錄也是 True（代表可進入），所以必須同時是一般檔案（符號連結指向一般檔案可以）。"""
+    return p.is_file() and os.access(p, os.X_OK)
+
+
+def resolve_project_dir(args: list[str], env) -> Path:
+    override = env.get("QAOS_PROJECT_DIR")
+    if override:
+        root = Path(override).expanduser()
+        if not root.is_dir():
+            raise LauncherError(f"QAOS_PROJECT_DIR={override} 不是目錄")
+    else:
+        target = Path(_cd_target(args)).expanduser()
+        top = _git_toplevel(str(target)) if target.is_dir() else ""
+        if not top:
+            raise LauncherError(f"找不到 QAOS 專案根：{target} 不在 git repo 內（可用 QAOS_PROJECT_DIR 或 -C 指定）")
+        root = Path(top)
+    root = root.resolve()
+    missing = [s for s in HOOK_SCRIPTS if not _is_runnable_file(root / "admin-ui" / "hooks" / s)]
+    if missing:
+        raise LauncherError(f"{root} 的 admin-ui/hooks 缺少或不可執行：{', '.join(missing)}；為避免啟動沒有守門的 QAOS session，已中止")
+    return root
+
+
+def find_codex() -> str:
+    for cand in (os.environ.get("CODEX_BIN"), shutil.which("codex"), os.environ.get("CODEX_CLI_PATH"), DEFAULT_CODEX):
+        if cand and os.access(cand, os.X_OK):
+            return cand
+    raise LauncherError("找不到 codex 執行檔（可用 CODEX_BIN 指定）")
+
+
+def main() -> None:
+    definition = json.loads(Path(__file__).resolve().with_name("qaos-hooks.json").read_text(encoding="utf-8"))
+    flags = config_flags(definition)
+    args = sys.argv[1:]
+    if args[:1] == ["--qaos-print-flags"]:
+        print(json.dumps(flags, ensure_ascii=False))
+        return
+    try:
+        root = resolve_project_dir(args, os.environ)
+        codex = find_codex()
+    except LauncherError as e:
+        sys.exit(f"qaos-codex：{e}")
+    os.execve(codex, [codex, *flags, *args], {**os.environ, "QAOS_PROJECT_DIR": str(root)})
+
+
+if __name__ == "__main__":
+    main()

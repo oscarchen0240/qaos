@@ -6,10 +6,15 @@
 
 命中的指令：bin/qaos approve / clarification ask|answer|apply|withdraw / bug resolve|verify|close|transition。
 其他指令不輸出任何東西。不打網路、不寫檔、無論如何 exit 0。
+
+Codex 的 PreToolUse 不支援 permissionDecision=ask（回 ask 只會顯示 hook 失敗、指令照跑，守門等於沒作用），
+所以 Codex 下改回 deny 並附上理由：人工決定類指令一律擋下，改由指揮台「單據」頁送出，或由 Oscar 自己執行。
 """
 import json
 import re
 import sys
+
+from _hostenv import detect_host
 
 PATTERN = re.compile(r"bin/qaos\s+(approve\b|clarification\s+(ask|answer|apply|withdraw)\b|bug\s+(resolve|verify|close|transition)\b)")
 
@@ -25,11 +30,17 @@ def main():
     m = PATTERN.search(cmd)
     if not m:
         return
+    if detect_host(p) == "codex":
+        decision = "deny"
+        reason = f"[QAOS 指揮台守門] `{m.group(0)}` 是人工決定，Codex 無法彈出確認，已擋下。請改在指揮台「單據」頁送出，或請 Oscar 自行在終端機執行。"
+    else:
+        decision = "ask"
+        reason = f"[QAOS 指揮台守門] `{m.group(0)}` 是人工決定，請 Oscar 確認後才執行（或改在指揮台「單據」頁送出）。"
     print(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
-            "permissionDecision": "ask",
-            "permissionDecisionReason": f"[QAOS 指揮台守門] `{m.group(0)}` 是人工決定，請 Oscar 確認後才執行（或改在指揮台「單據」頁送出）。",
+            "permissionDecision": decision,
+            "permissionDecisionReason": reason,
         }
     }, ensure_ascii=False))
 
