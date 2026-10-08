@@ -59,15 +59,21 @@ def alloc_req_ids(payload):
 # requirement_model() 的 AC 是推導格式（docs/architecture/02-data-model.md §5）；需求 A 之前的舊程式產生的 legacy RM（R000）用的是舊的 3 位數 AC。
 LEGACY_AC = {"AC-AUTH-0011": "AC-AUTH-001", "AC-AUTH-0012": "AC-AUTH-002", "AC-AUTH-0021": "AC-AUTH-003", "AC-AUTH-0031": "AC-AUTH-004", "AC-AUTH-0041": "AC-AUTH-005"}
 
-def legacy_acs(tcs):
-    """綁定 legacy R000 的 run 用：把 draft_set() 產生的 TC 稿改引用舊程式 RM 中實際存在的 3 位數 AC（只用於刻意測舊資料沿用的測試）。"""
-    for t in tcs: t["acceptance_criteria_ids"] = [LEGACY_AC.get(a, a) for a in t["acceptance_criteria_ids"]]
+def _to_legacy(ac, existing):
+    old = LEGACY_AC.get(ac)
+    return old if old and (existing is None or old in existing) else ac
+
+def legacy_acs(tcs, existing=None):
+    """綁定 legacy R000 的 run 用：把 draft_set() 產生的 TC 稿改引用舊程式 RM 中實際存在的 3 位數 AC（只用於刻意測舊資料沿用的測試）。
+    existing：已持久化的 ac_id 集合；給了就只換成其中確實存在的舊 ID（共用 helper 同時服務 legacy 與非 legacy 的 root 時用）。"""
+    for t in tcs: t["acceptance_criteria_ids"] = [_to_legacy(a, existing) for a in t["acceptance_criteria_ids"]]
     return tcs
 
-def legacy_rm(m):
-    """重新分析 legacy RM（R000）時，既有 AC 要沿用 R000 中的原 ID（不重編號）：把 requirement_model() 的推導格式 AC 換回舊 ID。"""
+def legacy_rm(m, existing=None):
+    """重新分析 legacy RM（R000）時，既有 AC 要沿用 R000 中的原 ID（不重編號）：把 requirement_model() 的推導格式 AC 換回舊 ID。
+    existing 的意義同 legacy_acs。"""
     for r in m["requirements"]:
-        for a in r["acceptance_criteria"]: a["ac_id"] = LEGACY_AC.get(a["ac_id"], a["ac_id"])
+        for a in r["acceptance_criteria"]: a["ac_id"] = _to_legacy(a["ac_id"], existing)
     return m
 
 def spec_ref(loc, quote=""): return {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "location": loc, "quote": quote}

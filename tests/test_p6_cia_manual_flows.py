@@ -117,7 +117,7 @@ def cia_new(from_rev, reason, ver="1.0"):
     return engine.new_run("spec-change-impact", {"spec_id": SPEC, "from_version": ver, "to_version": ver, "from_revision": from_rev, "reason": reason}, BY, new_request=True)["run_id"]
 def t0(rid, changes, ver="1.0"):
     '''T0 Spec Analyst：重新分析同一版本；changes = {requirement_id: 新 statement}（spec 內容相同、分析結論改變）。'''
-    m = H.legacy_rm(H.requirement_model(ver))                                   # legacy R000 的既有 AC 沿用原 ID
+    m = H.legacy_rm(H.requirement_model(ver), set(rm.ac_history(SPEC)["owners"]))   # 既有 AC 沿用原 ID（legacy R000 為舊 3 位數）
     for r in m["requirements"]:
         if r["requirement_id"] in changes: r["statement"] = changes[r["requirement_id"]]
     ch = next(v for v in store.load(store.spec_dir(SPEC) / "spec.yaml")["versions"] if v["spec_version"] == ver)["content_hash"]
@@ -165,7 +165,7 @@ def impact(rid, cir):
     return cid, engine.evaluate_gate(rid, "T1")
 def design(rid, cid, cir, prefix, it=0, extra=()):
     '''T2 Designer（change）：只重產 affected 的 TC，supersedes 舊 ACTIVE 版本；extra 為 new_required 的新 TC。回傳 (draft artifact, 新稿)。'''
-    base, _ = H.draft_set(prefix=prefix); H.legacy_acs(base); new = []
+    base, _ = H.draft_set(prefix=prefix); H.legacy_acs(base, set(rm.ac_history(SPEC)["owners"])); new = []
     for i in cir["testcase_impact"]:
         if i["impact"] != "affected": continue
         old = store.load(store.tc_version_path(i["testcase_id"], i["active_version"]))
