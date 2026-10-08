@@ -269,9 +269,16 @@ def cmd_op_list(a):
     print(READONLY_NOTE)
     for o in operation.list_operations(a.incomplete):
         print(f"{o['plan_seq'] if o['plan_seq'] is not None else '-':>5} {o['state']:<20} {str(o['action'] or '?'):<22} {o['op_id']}")
-def cmd_op_resume(a): _print(operation.resume(a.op_id)); print(f"{a.op_id} 已完成")
-def cmd_maint_start(a): _print(operation.maintenance_start(a.by, **_nr(a)))
-def cmd_maint_end(a): _print(operation.maintenance_end(a.by, **_nr(a)))
+def cmd_op_resume(a):
+    r = operation.resume(a.op_id)
+    if _replayed():   # 計畫早已完成：印的是當時存下的結果，不是重新執行，也不是實體目前的狀態
+        print("先前計畫結果（未重新執行，也不是實體目前的狀態）："); _print(r); print(f"{a.op_id} 先前已完成"); return
+    _print(r); print(f"{a.op_id} 已完成")
+def _maint_result(r):
+    if _replayed(): print(f"先前的維護操作結果（未重新執行）；目前系統狀態 {operation.system_state()}：")
+    _print(r)
+def cmd_maint_start(a): _maint_result(operation.maintenance_start(a.by, **_nr(a)))
+def cmd_maint_end(a): _maint_result(operation.maintenance_end(a.by, **_nr(a)))
 def cmd_migrate(a):
     from . import migrate as m
     if a.action == "verify":

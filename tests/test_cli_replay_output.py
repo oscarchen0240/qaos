@@ -169,12 +169,47 @@ def test_clr_apply_replay_marks_no_rescan(monkeypatch, capsys):
     out = capsys.readouterr().out.strip()
     assert out == "CLR-X-001 先前已套用（未重新掃描；當時 --path a6，2 張候選），目前狀態 APPLIED" and "重新掃描的候選" not in out and ok()
 
-def test_index_and_addenda_replay_marks_previous(monkeypatch, capsys):
-    pre = "先前已重建（未重新列舉；資料有變動時請加 --new-request）："
+PRE_INDEX = "先前已重建（未重新列舉；資料有變動時請加 --new-request）："
+
+def test_clr_index_replay_marks_previous(monkeypatch, capsys):
     _completed(monkeypatch, clr, "build_index", 2)
-    cli.main(["clarification", "index"]); assert capsys.readouterr().out.strip() == pre + "clarifications/index.md（2 張）"
+    cli.main(["clarification", "index"]); assert capsys.readouterr().out.strip() == PRE_INDEX + "clarifications/index.md（2 張）"
+
+def test_bug_index_replay_marks_previous(monkeypatch, capsys):
     _completed(monkeypatch, cli.bugindex, "build", 3)
-    cli.main(["bug", "index"]); assert capsys.readouterr().out.strip().startswith(pre + "3 bugs indexed")
+    cli.main(["bug", "index"])
+    assert capsys.readouterr().out.strip() == PRE_INDEX + "3 bugs indexed → bugs/index.md + bugs/<product>/<area>/index.md"
+
+def test_addenda_replay_marks_no_append(monkeypatch, capsys):
     ok = _completed_checked(monkeypatch, clr, "addenda_add", None, "CLR-X-001")
     cli.main(["clarification", "addenda", "add", "CLR-X-001", "--source", "{}", "--note", "n", "--by", BY])
     assert capsys.readouterr().out.strip() == "CLR-X-001 evidence_addenda 先前已追加（這次沒有再追加）" and ok()
+
+# ---------------------------------------------------------------- 子程序：maintenance、operation resume
+def test_maintenance_start_replay_shows_current_state():
+    root = U.mkroot()                                                  # mkroot 已以 --by t 做過 start → migrate → end
+    before = snapshot(root)
+    r = U.q(root, "maintenance", "start", "--by", "t", check=True)
+    assert r.stdout.splitlines()[0] == "先前的維護操作結果（未重新執行）；目前系統狀態 S_post："
+    assert '"S_maint"' in r.stdout and snapshot(root) == before         # 沒有重新進入維護
+
+def test_maintenance_end_replay_shows_current_state():
+    root = U.mkroot()
+    U.q(root, "maintenance", "start", "--by", "other", check=True)     # 另一次維護（新請求）
+    before = snapshot(root)
+    r = U.q(root, "maintenance", "end", "--by", "t", check=True)       # 重送 mkroot 那次已完成的 end
+    assert r.stdout.splitlines()[0] == "先前的維護操作結果（未重新執行）；目前系統狀態 S_maint："
+    assert snapshot(root) == before                                    # 沒有結束這次維護
+
+def test_operation_resume_completed_marks_previous_result():
+    root = U.mkroot()
+    run_id = U.q(root, *RUN_ARGS, check=True).stdout.split()[0]
+    U.q(root, "run", "cancel", run_id, "--by", BY, check=True)
+    ops = [l.split() for l in U.q(root, "operation", "list", check=True).stdout.splitlines() if "run_new" in l]
+    assert len(ops) == 1
+    op = ops[0][-1]
+    before = snapshot(root)
+    r = U.q(root, "operation", "resume", op, check=True)
+    lines = r.stdout.splitlines()
+    assert lines[0] == "先前計畫結果（未重新執行，也不是實體目前的狀態）：" and lines[-1] == f"{op} 先前已完成"
+    assert snapshot(root) == before
