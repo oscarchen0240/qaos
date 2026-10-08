@@ -65,7 +65,7 @@ def _shadow_docs() -> list[dict]:
         run_ids = []
         try:
             head = p.read_text(encoding="utf-8")[:4000]
-            run_ids = re.findall(r"RUN-\d{8}-\d{3}", head)
+            run_ids = re.findall(r"\bRUN-\d{8}-\d{3,}\b", head)   # 流水號是最小三位，單日第 1000 筆起四位
         except OSError:
             pass
         out.append({"path": str(p.relative_to(PROJECT_ROOT)), "date": m.group(1), "slug": m.group(2), "mtime": p.stat().st_mtime, "run_ids": run_ids})

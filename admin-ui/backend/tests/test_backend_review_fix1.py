@@ -1,12 +1,16 @@
 """admin-ui 後端 code review（review-handoff/admin-ui-backend-review）第 1 批的回歸測試。
 
-每條都對應 review-01.md 的一項（R02、R05、R06、R09、R11～R17），以舊程式執行應失敗。全部在假根，bin/qaos 換成假的。
+每項（R02、R05、R06、R09、R11～R17，以及第 1 輪複審的 F1-01～F1-03）至少有一條測試在舊程式上會失敗；
+標「控制案例」的是確認修正沒有誤擋正常情況，舊程式本來就會通過。全部在假根，bin/qaos 換成假的。
 """
-import argparse
 import asyncio
 import io
 import json
+import os
+import pathlib
 import shlex
+import subprocess
+import sys
 import typing
 
 import pytest
@@ -105,6 +109,8 @@ def test_r13_long_output_keeps_history_parseable(bug_sandbox, write_registry_tc,
     hist = bug_sandbox.qaos_exec.executions(f"TESTRUN-{rid}/{res_id}")
     assert len(hist) == 1 and hist[0]["post"] and hist[0]["post"][0]["what"] == "匯入執行紀錄"
     assert "post_error" not in hist[0]
+    cmd = hist[0]["post"][0]["command"]
+    assert len(cmd) <= bug_sandbox.qaos_bug.LOG_FIELD_MAX + 20 and "已截斷" in cmd
 
 
 def test_r13_previously_corrupted_history_is_reported_not_raised(sandbox):
@@ -116,23 +122,49 @@ def test_r13_previously_corrupted_history_is_reported_not_raised(sandbox):
 
 
 # ---------------------------------------------------------------- R12：以連字號開頭的文字
-def _answer_parser():
-    """與 bin/qaos clarification answer 相同的 argparse 選項定義（必填、帶值）。"""
-    p = argparse.ArgumentParser(exit_on_error=False)
-    p.add_argument("id")
-    for f in ("--answer", "--answered-by", "--resolution", "--by"):
-        p.add_argument(f, required=True)
-    p.add_argument("--spec-version")
-    p.add_argument("--new-request", action="store_true")
-    return p
+REPO = pathlib.Path(__file__).resolve().parents[3]
+_PARSE = """
+import json, sys
+from tools.qaos import cli
+got = []
+for name in dir(cli):
+    if name.startswith("cmd_"):
+        setattr(cli, name, lambda a: got.append({k: v for k, v in vars(a).items() if k != "f"}))
+cli._notice = lambda: None
+for argv in json.loads(sys.stdin.read()):
+    cli.main(argv)
+print(json.dumps(got, ensure_ascii=False))
+"""
 
 
-def test_r12_dash_leading_text_is_passed_as_a_value(sandbox):
-    out = sandbox.tickets.clarification_command("CLR-T-9", {"decision": "answer", "rationale": "--verbose", "extra": {"answered_by": "-PM"}})
-    argv = shlex.split(out["command"])
-    assert "--answer=--verbose" in argv and "--answered-by=-PM" in argv
-    ns = _answer_parser().parse_args(argv[3:])
-    assert ns.answer == "--verbose" and ns.answered_by == "-PM" and ns.new_request
+def _parse_with_real_cli(commands: list[str]) -> list[dict]:
+    """用正式 bin/qaos 的 argparse 解析（所有 cmd_* 換成只記錄參數，不執行、不寫入）；在子行程裡跑，不污染本行程的模組狀態。"""
+    argvs = [shlex.split(c)[1:] for c in commands]
+    r = subprocess.run([sys.executable, "-c", _PARSE], input=json.dumps(argvs), capture_output=True, text=True, cwd=REPO,
+                       env={**os.environ, "QAOS_ROOT": str(REPO), "PYTHONPATH": str(REPO)}, timeout=60)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+def test_r12_dash_leading_text_is_parsed_by_the_real_cli(sandbox, write_run, write_approval):
+    ans = sandbox.tickets.clarification_command("CLR-T-9", {"decision": "answer", "rationale": "--verbose", "extra": {"answered_by": "-PM"}})["command"]
+    assert "--answer=--verbose" in shlex.split(ans) and "--answered-by=-PM" in shlex.split(ans)
+    write_run("RUN-P", "WAITING_HUMAN", "T4", [("T4", "RUNNING", None)])
+    write_approval("APR-P", "RUN-P", batch_items=[{"id": "TC-X-001", "version": 1}, {"id": "TC-X-002", "version": 1}])
+    apr = sandbox.tickets.approval_command("APR-P", {"decision": "approve", "rationale": "-整批核准",
+                                                    "per_item": {"TC-X-001": {"decision": "reject", "reason": "-缺前置"}}})["command"]
+    a, b = _parse_with_real_cli([ans, apr])
+    assert a["answer"] == "--verbose" and a["answered_by"] == "-PM" and a["new_request"] is True
+    assert b["per_item"] == ["TC-X-001:reject"] and b["rationale"].startswith("-整批核准")
+
+
+def test_r12_append_options_mix_both_forms_in_the_real_cli(bug_sandbox, write_registry_tc):
+    rid, res_id = _make_result(bug_sandbox, write_registry_tc, actual="-1 卡住", notes="--literal")
+    run = bug_sandbox.testruns.get_run(rid); r = _result_row(bug_sandbox, rid, res_id)
+    meta = bug_sandbox.qaos_bug._tc_meta(r["testcase_id"], r["testcase_version"])
+    argv = bug_sandbox.qaos_bug._execution_argv(run, r, meta, "me") + ["--evidence", "EVD-0001", "--evidence=-weird"]
+    (ex,) = _parse_with_real_cli([bug_sandbox.qaos_bug._cmd(argv)])
+    assert ex["actual_result"] == "-1 卡住" and ex["notes"] == "--literal" and ex["evidence"] == ["EVD-0001", "-weird"] and ex["testcase_version"] == 1
 
 
 def test_r12_plain_values_keep_the_readable_form(sandbox):
@@ -193,7 +225,8 @@ def test_r15_oversized_upload_stops_reading_at_the_limit(bug_sandbox, write_regi
     assert _result_row(bug_sandbox, rid, res_id)["evidence"] == []
 
 
-def test_r15_upload_within_the_limit_is_stored(bug_sandbox, write_registry_tc):
+def test_r15_upload_within_the_limit_is_stored(  # 控制案例
+bug_sandbox, write_registry_tc):
     from backend.routers import testruns as rt
     rid, res_id = _make_result(bug_sandbox, write_registry_tc, with_evidence=False)
     rec = asyncio.run(rt.add_evidence(rid, res_id, _CountingFile(2 * 1024 * 1024 + 7), "log", ""))
@@ -213,7 +246,8 @@ def test_r09_plan_and_snapshot_are_read_while_holding_the_lock(bug_sandbox, writ
     assert seen and all(locked for _, locked in seen), seen
 
 
-def test_r09_second_request_after_first_completes_is_rejected_without_handoff(bug_sandbox, write_registry_tc, fake_qaos, write_run, read_handoff):
+def test_r09_second_request_after_first_completes_is_rejected_without_handoff(  # 控制案例（循序；鎖內時序由上一條驗證）
+bug_sandbox, write_registry_tc, fake_qaos, write_run, read_handoff):
     rid, res_id = _make_result(bug_sandbox, write_registry_tc)
     _fake_cli(bug_sandbox, fake_qaos["calls"], {"execution": "EXE-20261008-004", "run": "RUN-20261008-004 RUNNING current_task=T1"}, write_run)
     bug_sandbox.qaos_bug.execute(rid, res_id)
@@ -255,7 +289,8 @@ def test_r06_pinned_resolve_ambiguity_approve_warns_and_is_not_executed(sandbox,
     assert ei.value.status == 409 and fake_qaos["calls"] == []
 
 
-def test_r06_reject_and_legacy_resolve_ambiguity_are_unaffected(sandbox, write_run, write_approval):
+def test_r06_reject_and_legacy_resolve_ambiguity_are_unaffected(  # 控制案例
+sandbox, write_run, write_approval):
     _pinned_resolve_ambiguity(sandbox, write_run, write_approval)
     assert sandbox.tickets.approval_command("APR-RA", {"decision": "reject", "rationale": "退回作者"})["warnings"] == []
     write_run("RUN-OLD", "WAITING_HUMAN", "T4", [("T4", "RUNNING", None)])
@@ -264,12 +299,34 @@ def test_r06_reject_and_legacy_resolve_ambiguity_are_unaffected(sandbox, write_r
 
 
 # ---------------------------------------------------------------- R02：同內容匯入的暫時擋法
+def _canonical_cli(sb, calls):
+    """假 CLI 依請求內容配發 EXE：完全相同的 argv 回同一個 EXE（= CLI 對同一 CanonicalRequest 的重送），不同就配新號。"""
+    seen: dict[str, str] = {}
+
+    def fake(cmd):
+        calls.append(cmd)
+        if " evidence add " in cmd:
+            out = f"EVD-{len(calls):04d}"
+        else:
+            out = seen.setdefault(cmd, f"EXE-20261008-{len(seen) + 1:03d}")
+        return {"command": cmd, "exit_code": 0, "stdout": out, "stderr": ""}
+    sb.qaos_exec._run = fake
+    return seen
+
+
+def _set_version(sb, res_id, version):
+    with sb.db.connect() as con:
+        con.execute("UPDATE test_results SET testcase_version=? WHERE id=?", (version, res_id))
+
+
+PASS_OK = dict(result="pass", actual="ok", with_evidence=False)
+
+
 def test_r02_identical_import_from_another_result_is_blocked(bug_sandbox, write_registry_tc, fake_qaos):
-    kw = dict(result="pass", actual="ok", with_evidence=False)
-    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, **kw)
-    _fake_cli(bug_sandbox, fake_qaos["calls"], {"execution": "EXE-20261008-001"})
+    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    _canonical_cli(bug_sandbox, fake_qaos["calls"])
     bug_sandbox.qaos_bug.execute(rid1, res1, "execution")
-    rid2, res2 = _make_result(bug_sandbox, write_registry_tc, **kw)
+    rid2, res2 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
     p = bug_sandbox.qaos_bug.plan(rid2, res2, "execution")
     assert any("EXE-20261008-001" in w and f"#{rid1}" in w for w in p["warnings"])
     fake_qaos["calls"].clear()
@@ -279,9 +336,41 @@ def test_r02_identical_import_from_another_result_is_blocked(bug_sandbox, write_
     assert _result_row(bug_sandbox, rid2, res2)["qaos_execution_id"] is None
 
 
-def test_r02_different_content_or_evidence_is_not_blocked(bug_sandbox, write_registry_tc, fake_qaos):
-    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, result="pass", actual="ok", with_evidence=False)
-    _fake_cli(bug_sandbox, fake_qaos["calls"], {"execution": "EXE-20261008-001"})
+def test_r02_uses_the_request_actually_sent_not_the_editable_run_settings(bug_sandbox, write_registry_tc, fake_qaos):
+    """F1-01：匯入後改回合的 build，原內容（b1）的新結果仍要擋；改後的內容（b2）從沒匯入過，不能誤擋。"""
+    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    issued = _canonical_cli(bug_sandbox, fake_qaos["calls"])
+    bug_sandbox.qaos_bug.execute(rid1, res1, "execution")
+    bug_sandbox.testruns.patch_run(rid1, {"build": "b2"})
+    rid2, res2 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)               # 與 A 當時送出的 b1 請求相同
+    with pytest.raises(bug_sandbox.qaos_bug.BugFileError) as ei:
+        bug_sandbox.qaos_bug.execute(rid2, res2, "execution")
+    assert ei.value.status == 409
+    rid3, res3 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    bug_sandbox.testruns.patch_run(rid3, {"build": "b2"})
+    assert bug_sandbox.qaos_bug.plan(rid3, res3, "execution")["warnings"] == []
+    res = bug_sandbox.qaos_bug.execute(rid3, res3, "execution")
+    assert res["execution_id"] == "EXE-20261008-002" and len(issued) == 2
+
+
+def test_r02_compares_the_effective_testcase_version(bug_sandbox, write_registry_tc, fake_qaos):
+    """F1-02：DB 版本為 NULL 時 argv 用 registry active 版本；與明確寫 1 的請求相同就要擋。
+    active 版本換成 2 之後，NULL 解析成 2，與當時送出的 v1 請求不同，不能誤擋。"""
+    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    _canonical_cli(bug_sandbox, fake_qaos["calls"])
+    bug_sandbox.qaos_bug.execute(rid1, res1, "execution")
+    rid2, res2 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    _set_version(bug_sandbox, res2, None)
+    with pytest.raises(bug_sandbox.qaos_bug.BugFileError) as ei:
+        bug_sandbox.qaos_bug.execute(rid2, res2, "execution")
+    assert ei.value.status == 409 and not any(" execution import " in c for c in fake_qaos["calls"][1:])
+    write_registry_tc("TC-AREA-042", 2, "SPEC-AREA-001", spec_version="0.4")
+    assert bug_sandbox.qaos_bug.plan(rid2, res2, "execution")["warnings"] == []
+
+
+def test_r02_different_content_or_evidence_is_not_blocked(bug_sandbox, write_registry_tc, fake_qaos):  # 控制案例
+    rid1, res1 = _make_result(bug_sandbox, write_registry_tc, **PASS_OK)
+    _canonical_cli(bug_sandbox, fake_qaos["calls"])
     bug_sandbox.qaos_bug.execute(rid1, res1, "execution")
     rid2, res2 = _make_result(bug_sandbox, write_registry_tc, result="pass", actual="ok", notes="第二次複測", with_evidence=False)
     assert bug_sandbox.qaos_bug.plan(rid2, res2, "execution")["warnings"] == []
@@ -289,3 +378,10 @@ def test_r02_different_content_or_evidence_is_not_blocked(bug_sandbox, write_reg
     assert bug_sandbox.qaos_bug.plan(rid3, res3, "execution")["warnings"] == []
     # 自己已匯入：只提示「已經匯過」，不誤報成另一筆
     assert not any("另一筆結果" in w for w in bug_sandbox.qaos_bug.plan(rid1, res1, "execution")["warnings"])
+
+
+# ---------------------------------------------------------------- F1-03：影子測試索引的 RUN 編號
+def test_f1_03_shadow_doc_keeps_four_digit_run_ids(full_sandbox, write_shadow_doc):
+    write_shadow_doc("AREA-001", ["RUN-20261008-1000"], "內文提到 RUN-20261008-0999X 不算")
+    docs = full_sandbox.specflow._shadow_docs()
+    assert docs[0]["run_ids"] == ["RUN-20261008-1000"]

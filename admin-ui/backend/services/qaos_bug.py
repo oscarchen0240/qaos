@@ -79,22 +79,18 @@ def _execution_argv(run: dict, r: dict, meta: dict, who: str) -> list[str]:
     return parts
 
 
-def _same_import_elsewhere(run: dict, r: dict) -> dict | None:
+def _same_import_elsewhere(r: dict, request: str) -> dict | None:
     """暫時擋法（R02，第 3 批 --request-key 上線後移除）：execution import 的請求內容沒有 admin 結果的身分，
-    另一筆沒有證據、匯入欄位完全相同的結果已匯入過時，CLI 會把這次當成同一請求的重送、回傳舊的 EXE。
-    只比對平台自己匯入過的結果；QA session 在終端機匯入的同參數紀錄擋不到。"""
+    兩筆結果送出完全相同的 argv 時，CLI 會把第二次當成同一請求的重送、回傳第一筆的 EXE。
+
+    比對的是「當時實際送出的指令」（匯入成功時存進 qaos_import_request）與這次要送的指令，兩邊都用同一個 argv builder 組出
+    （有效 TC 版本、操作者等都已解析），不從可修改的回合／結果欄位回推過去的請求。
+    限制：只比對平台自己匯入過、且有存請求的結果；QA session 在終端機匯入的同參數紀錄擋不到。"""
     if r.get("evidence"):
         return None                      # 有證據時 --evidence 帶的是新登記的 EVD，請求內容必然不同
-    key = lambda x: (x["testcase_id"], x["testcase_version"], x["result"], x["environment"] or "", x["build"] or "", x["executed_at"],
-                     (x["actual_result"] or "").strip(), (x["notes"] or "").strip())
-    mine = key({**r, "environment": run.get("environment"), "build": run.get("build")})
     with db.connect() as con:
-        rows = db.rows(con.execute(
-            """SELECT r.id, r.run_id, r.testcase_id, r.testcase_version, r.result, r.executed_at, r.actual_result, r.notes, r.evidence, r.qaos_execution_id,
-                      t.environment, t.build
-               FROM test_results r JOIN test_runs t ON t.id = r.run_id
-               WHERE r.testcase_id=? AND r.qaos_execution_id IS NOT NULL AND r.id<>?""", (r["testcase_id"], r["id"])))
-    return next((x for x in rows if not json.loads(x["evidence"] or "[]") and key(x) == mine), None)
+        return db.one(con.execute("SELECT id, run_id, qaos_execution_id FROM test_results WHERE qaos_import_request=? AND id<>? AND qaos_execution_id IS NOT NULL",
+                                  (request, r["id"])))
 
 
 def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
@@ -133,7 +129,7 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
         steps.append({"kind": "evidence", "label": f"登記證據 {e['filename']}", "command": _cmd(["bin/qaos", "evidence", "add", *_opt("--type", e["type"]), *_opt("--file", str(path)), *_opt("--owner", owner),
                                                                                               *_opt("--description", e.get("description") or e["filename"]), *_opt("--captured-at", e["added_at"]), *_opt("--by", who)])})
     if not r.get("qaos_execution_id"):
-        dup = _same_import_elsewhere(run, r)
+        dup = _same_import_elsewhere(r, _cmd(_execution_argv(run, r, meta, who)))
         if dup:
             warnings.append(f"另一筆結果（回合 #{dup['run_id']}）已用完全相同的內容匯入為 {dup['qaos_execution_id']}；QAOS 會把這次當成同一筆重送、不會新增 execution。"
                             "請補一段備註或實際結果，讓兩筆內容不同後再送")
@@ -203,12 +199,13 @@ def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
             ex_parts = _execution_argv(run, r, meta, who)
             for e in evd_ids:
                 ex_parts += _opt("--evidence", e)
-            out = _run_or_raise(_cmd(ex_parts), "匯入執行紀錄", log)
+            ex_cmd = _cmd(ex_parts)
+            out = _run_or_raise(ex_cmd, "匯入執行紀錄", log)
             m = EXE_RE.search(out)
             if not m:
                 raise BugFileError(502, f"execution import 沒有回傳 EXE 編號：{out[-200:]}")
             exe_id = m.group(0)
-            _save(result_id, qaos_execution_id=exe_id)
+            _save(result_id, qaos_execution_id=exe_id, qaos_import_request=ex_cmd)
         bug_run = None; hint = f"已匯入 QAOS：{exe_id}"
         if mode == "bug":
             bug_cmd = _cmd(["bin/qaos", "run", "new", "spec-to-bug", *_opt("--input", f"spec_id={meta['spec_id']}"), *_opt("--input", f"spec_version={meta['spec_version']}"),
