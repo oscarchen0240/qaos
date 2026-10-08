@@ -127,7 +127,10 @@ def _target_session() -> str | None:
 
 
 def _run_or_raise(cmd: str, what: str, log: list[dict]) -> str:
-    res = qaos_exec._run(cmd)
+    try:
+        res = qaos_exec._run(cmd)
+    except qaos_exec.ExecError as e:      # 例如 PROJECT_ROOT 是 git worktree → 拒絕執行
+        raise BugFileError(e.status, str(e)) from e
     log.append({"what": what, **res})
     if res["exit_code"] != 0:
         raise BugFileError(502, f"{what} 失敗（exit {res['exit_code']}）：{(res['stderr'] or res['stdout'])[-300:]}")
