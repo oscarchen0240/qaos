@@ -1,0 +1,189 @@
+title: 機台出金請求已受理、交易停在『待確認』：紅包不可開啟並顯示『交易處理中』；出金完成後作廢
+description: 出金請求送出後、完成前（待確認）紅包按鈕停用且不可開啟，直到該筆出金完成（AC-0283、AC-0285）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-028
+- REQ-REDPACKET-027
+acceptance_criteria_ids:
+- AC-REDPACKET-0283
+- AC-REDPACKET-0285
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，spec 未定義，需環境負責人／工程確認可行】過渡期出金由前台依序送 req-cashout、end-cashout，一般操作沒有人工可觀察的『已受理、尚未完成』空窗；本案需要借助測試手段（例如可暫緩送出 end-cashout
+  的機台模擬器／代理）讓出金請求停在『待確認』。若環境沒有此手段，本案無法執行，應回報，不要改以別的方式推斷
+- 機台帳號 M1（自行從環境中選定，本週期無注單；分數餘額可在『會員與加盟商 > 會員列表』帳號類型篩「機台」、所屬站台選該場館時，由 M1 的餘額欄查看；結算出金前餘額須大於 0，若為 0 先由店員對 M1 開分補足）
+test_data:
+- name: 活動規則
+  value: 門檻 100 / 上限 5 / 固定 20 / 稽核 0
+- name: 下注
+  value: M1 結算有效流水貢獻 100
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-LOCKC』（活動時間『永久』）：每日重置；預設規則門檻 100／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 100（當局結束後彈出紅包時關閉彈窗，不開啟）
+  expected: 紅包明細有 1 筆 M1 的紅包 P1，狀態『待開啟』
+- n: 3
+  action: 玩家在 M1 前台打開錢包彈窗，按『結算』鍵，並透過環境手段讓該筆出金請求停在已受理、尚未完成（不送出完成回報）；依畫面繼續到不需再操作為止
+  expected: 出金請求已送出、尚未完成
+- n: 4
+  action: 後台『各式報表 > 交易紀錄查詢』（機台場館視角），以 M1、交易類型『機台出金』查詢最新一筆；並到會員列表檢視 M1 的餘額欄
+  expected: 該筆交易狀態『待確認』；M1 分數餘額尚未異動
+- n: 5
+  action: 玩家在 M1 前台打開錢包彈窗，檢視 P1 的按鈕並嘗試點擊
+  expected: 紅包按鈕停用並顯示『交易處理中』；P1 無法開啟；後台紅包明細 P1 仍為『待開啟』
+- n: 6
+  action: 讓環境手段送出完成回報，使該筆出金完成
+  expected: 該筆交易狀態『已完成』；M1 分數餘額扣除；後台紅包明細 P1 狀態『已作廢』
+- n: 7
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 出金請求已送出、交易停在『待確認』（尚未收到完成回報）期間，紅包按鈕停用並顯示『交易處理中』，紅包不可開啟；該筆出金完成後待開啟紅包作廢。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 329 行）
+  quote: 紅包入帳與機台洗分／出金使用同一把帳號鎖：洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上列作廢，交易取消或未成立則恢復可開啟
+decision_refs:
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 329 行）
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 329 行）
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+    location: §交易狀態（第 576 行）
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+    location: §出金（第 461 行）
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 174 行）
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 328 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 329 行）
+  quote: 紅包入帳與機台洗分／出金使用同一把帳號鎖：洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上列作廢，交易取消或未成立則恢復可開啟
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 329 行）
+  quote: 洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上列作廢，交易取消或未成立則恢復可開啟
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  location: §交易狀態（第 576 行）
+  quote: '| 待確認 | 交易已受理，但尚未收到機台的完成回報；**分數尚未異動** |'
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  location: §出金（第 461 行）
+  quote: '**扣分時點＝前台回報完成、平台扣分成功當下**'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 174 行）
+  quote: 洗分或出金請求送出後、交易完成前，紅包按鈕停用並顯示「交易處理中」；交易取消或未成立即恢復可開啟
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 328 行）
+  quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢；累計進度不歸零
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-028/AC-0283,AC-0285'
+testcase_id: TC-REDPACKET-089
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

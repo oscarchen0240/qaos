@@ -1,0 +1,207 @@
+title: 每規則成本試算：期望金額、單週期最高成本、成本占比 1.90%、預算約可發放 263 個（含顯示格式）
+description: 每規則成本試算：期望金額、單週期最高成本、成本占比 1.90%、預算約可發放 263 個（含顯示格式）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-019
+acceptance_criteria_ids:
+- AC-REDPACKET-0191
+- AC-REDPACKET-0192
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+test_data:
+- name: 權重表
+  value: 8/60%, 18/30%, 88/10%
+- name: 門檻/上限/總預算
+  value: 1000 / 5 / 5000
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』；預設規則：累積門檻 1000、單週期發放上限 5、獎勵方式『隨機金額』，權重表 8（60%）／18（30%）／88（10%）；總預算 5000（先不儲存）
+  expected: 規則區塊內顯示『成本試算』（唯讀）
+- n: 2
+  action: 檢視預設規則區塊的成本試算
+  expected: 單個紅包期望金額顯示 19（8×0.6＋18×0.3＋88×0.1；最多兩位小數、不補尾零，所以是 19 不是 19.00）；每帳號單週期最高成本顯示 440（88×5）；成本占比顯示 1.90%（19÷1000，百分比、兩位小數）；預算約可發放顯示
+    263 個（5000÷19＝263.15… 無條件捨去，整數加『個』）
+- n: 3
+  action: 獎勵方式改『固定金額』10
+  expected: 期望金額 10；最高成本 50（10×5）；成本占比 1.00%（10÷1000）；預算約可發放 500 個（5000÷10）
+- n: 4
+  action: 清空總預算
+  expected: 預算約可發放顯示『不限』
+- n: 5
+  action: 嘗試編輯試算欄位
+  expected: 不可編輯（唯讀）
+expected_result: 成本試算按 spec 公式與顯示格式：隨機金額（8/18/88，60/30/10）→ 期望 19、最高成本 440、成本占比 1.90%、預算約可發放 263 個；固定金額 10 → 期望 10、最高成本 50、成本占比
+  1.00%、預算約可發放 500 個；未設總預算顯示『不限』；欄位不可編輯。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §新增優惠活動 — 紅包（第 123 行）
+  quote: '| 單個紅包期望金額 | Σ（各獎項金額 × 中獎機率）；固定金額時即紅包金額 |'
+decision_refs:
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 123 行）
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 124 行）
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 125 行）
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 126 行）
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L807 costHtml() 單個紅包期望金額
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L808 costHtml() 每帳號單週期最高成本
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L809 costHtml() 成本占比
+- requirement_id: REQ-REDPACKET-019
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L810 costHtml() 預算約可發放
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 123 行）
+  quote: '| 單個紅包期望金額 | Σ（各獎項金額 × 中獎機率）；固定金額時即紅包金額 |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 124 行）
+  quote: 權重表最大獎項金額（或固定金額）× 單週期發放上限
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 125 行）
+  quote: 單個紅包期望金額 ÷ 累積門檻
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 126 行）
+  quote: 活動總預算 ÷ 該規則單個紅包期望金額（無條件捨去）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L807 costHtml() 單個紅包期望金額
+  quote: ${+k.exp.toFixed(2)}
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L808 costHtml() 每帳號單週期最高成本
+  quote: ${+k.maxCycle.toFixed(2)}
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L809 costHtml() 成本占比
+  quote: ${k.ratio===null?'—':k.ratio.toFixed(2)+'%'}
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L810 costHtml() 預算約可發放
+  quote: ${k.issuable==='unlimited'?'不限':k.issuable===null?'—':k.issuable.toLocaleString()+' <span style="font-size:11px;color:var(--text-muted);">個</span>'}
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-048 v1（CI-SPEC-REDPACKET-001-0.1-0.1，R001→R002）'
+testcase_id: TC-REDPACKET-048
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

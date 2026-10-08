@@ -1,0 +1,151 @@
+title: 場館日結報表總計列與 CSV：紅包金額總計為各列合計（整個查詢結果），CSV 含紅包金額欄並匯出整個查詢結果
+description: 日結報表列表超過一頁時，總計列的紅包金額等於所有列合計且不隨分頁／排序改變；CSV 含紅包金額欄、匯出整個查詢結果（AC-0324）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-032
+acceptance_criteria_ids:
+- AC-REDPACKET-0324
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【環境資料前提，spec 未定義如何產生】環境中已有一個結算日期範圍 R：含至少 11 個營業日（使『按日、依場館彙總』列表超過一頁，每頁固定 10 筆），且 R 內至少兩個已結束的營業日的『紅包金額』大於 0（有已入帳紅包，入帳時間避開營業日邊界，同
+  TC-074 的做法）；若環境沒有這樣的資料，由環境負責人佈置，不在本案內造數
+test_data:
+- name: 結算日期範圍
+  value: R（≥ 11 個營業日，其中 ≥ 2 日紅包金額 > 0）
+- name: 統計條件
+  value: 統計週期按日、統計維度依場館彙總
+steps:
+- n: 1
+  action: 進入『各式報表 > 場館日結報表』，結算日期選 R，統計週期『按日』，統計維度『依場館彙總』，搜尋
+  expected: 列表分頁列顯示總筆數 ≥ 11，至少兩頁；有『紅包金額』欄
+- n: 2
+  action: 由第 1 頁到最後一頁，逐頁記錄每一列的『紅包金額』，加總得 S
+  expected: 已記錄 S（S > 0）
+- n: 3
+  action: 檢視列表底部總計列的『紅包金額』，並切換頁碼
+  expected: 總計列『紅包金額』＝S；切換頁碼後數值不變
+- n: 4
+  action: 改變排序（例如點『紅包金額』欄標題排序）後再檢視總計列
+  expected: 總計列『紅包金額』仍為 S（不隨排序與分頁改變）
+- n: 5
+  action: 點右上角『匯出 CSV』，開啟下載的檔案
+  expected: CSV 有『紅包金額』欄；資料列數＝步驟 1 分頁列顯示的總筆數（排除標題列；若有總計列也排除，是否有總計列只記錄），即不受每頁 10 筆限制
+- n: 6
+  action: 把 CSV 資料列的『紅包金額』加總，並抽查兩個紅包金額大於 0 的營業日在 CSV 與列表上的數值
+  expected: 加總＝S；抽查的營業日數值與列表相同
+expected_result: 日結報表總計列的『紅包金額』為整個查詢結果各列的合計（不隨排序與分頁改變）；匯出 CSV 匯出整個查詢結果（不受分頁限制）並含『紅包金額』欄。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §列表欄位（第 64 行）
+  quote: 餘額以外的金額與筆數欄則照常為各列合計
+decision_refs:
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+    location: §列表欄位（第 64 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+    location: §列表欄位（第 60 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 350 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 350 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  location: §列表欄位（第 64 行）
+  quote: 餘額以外的金額與筆數欄則照常為各列合計
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  location: §列表欄位（第 60 行）
+  quote: 列表底部顯示**整個查詢結果**的各欄總計（不隨排序與分頁改變）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  location: §列表欄位（第 60 行）
+  quote: 頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制。
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 350 行）
+  quote: 新增「紅包金額」欄（當日已入帳紅包合計）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-032/AC-0324'
+testcase_id: TC-REDPACKET-093
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

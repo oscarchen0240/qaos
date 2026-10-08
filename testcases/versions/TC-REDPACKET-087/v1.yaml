@@ -1,0 +1,151 @@
+title: 紅包明細實際平均低於期望：差異為負數（一位小數）、綠色（權重表 10 90%／100 10%，期望 19）
+description: 實際平均低於期望金額時的差異文字與綠色色標，依公式逐次驗算（AC-0215）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-021
+acceptance_criteria_ids:
+- AC-REDPACKET-0215
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；玩家 A 需有足夠的 USDT 有效流水可結算 2000
+test_data:
+- name: 權重表
+  value: 10（90%）/ 100（10%），期望金額 19
+- name: 門檻/上限
+  value: 100 / 20
+- name: 下注
+  value: 有效流水貢獻 2000（產生 20 個紅包）
+steps:
+- n: 1
+  action: 建立活動『RP-DIFF-NEG』（活動時間『永久』）：活動幣種 USDT；預設規則門檻 100／上限 20／獎勵方式『隨機金額』，權重表 10（90%）／100（10%）／稽核 1；不設總預算；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 於前台結算有效流水貢獻 2000
+  expected: 產生 20 個待開啟紅包；進入紅包明細，頂部『建立時成本試算』的單個紅包期望金額為 19（10×0.9＋100×0.1）
+- n: 3
+  action: 玩家 A 於前台每次開啟 1 個紅包；每開啟一個，就到紅包明細記下目前所有『已入帳』紅包的金額，計算 n＝已入帳個數、實際平均＝Σ金額÷n、差異＝(實際平均－19)÷19×100，並與頂部『實際平均紅包金額』比對
+  expected: 每一次都符合：實際平均（最多兩位小數）與計算相同；下方顯示『已入帳 n 個；較期望 {差異}%』，差異取一位小數、非負值前加『+』；實際平均高於 19 時差異為紅色、低於 19 時為綠色
+- n: 4
+  action: 持續開啟並驗算，直到至少驗算過一次『實際平均低於 19』的狀態為止（例：第 1 個開出 10 → 實際平均 10、『較期望 -47.4%』、綠色）
+  expected: 低於期望的狀態顯示負的一位小數差異（前面不加『+』），並以綠色標示
+expected_result: 實際平均低於期望金額時，差異文字顯示負的一位小數（不加『+』）並以綠色標示；每次開啟後的實際平均與差異皆符合公式。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  location: L818 actualHtml() 差異百分比
+  quote: const diff=exp>0?(avg-exp)/exp*100:0;
+decision_refs:
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L818 actualHtml() 差異百分比
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L819 actualHtml() 色標
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L820 actualHtml() 顯示格式
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 214 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L818 actualHtml() 差異百分比
+  quote: const diff=exp>0?(avg-exp)/exp*100:0;
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L819 actualHtml() 色標
+  quote: const col=Math.abs(diff)<0.005?'var(--text-secondary)':diff>0?'var(--red-text)':'var(--green-text)';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L820 actualHtml() 顯示格式
+  quote: ${diff>=0?'+':''}${diff.toFixed(1)}%
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 214 行）
+  quote: 該規則已入帳金額合計 ÷ 已入帳紅包數（僅計已入帳，不含待開啟與已作廢）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-021/AC-0215'
+testcase_id: TC-REDPACKET-087
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

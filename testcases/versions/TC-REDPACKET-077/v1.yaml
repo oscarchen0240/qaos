@@ -1,0 +1,141 @@
+title: 新增紅包活動必填欄位決策表：活動幣種未勾選 × 活動名稱留空 → 欄位紅框與訊息、不建立活動
+description: 線上站台新增紅包活動，活動幣種與活動名稱兩個必填欄位各自缺漏／補齊的 2×2 組合，驗證各欄位訊息與不建立活動（AC-0036）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-003
+acceptance_criteria_ids:
+- AC-REDPACKET-0036
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- decision_table
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 記下『活動排程 > 紅包活動』列表（狀態篩選『全部』）目前的活動筆數 n0（步驟 6 比對用）
+test_data:
+- name: 活動名稱(有)
+  value: RP-REQ
+- name: 預設規則
+  value: 門檻 1000 / 上限 5 / 固定 10 / 稽核 1
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』；活動時間選『永久』，預設規則填：累積門檻 1000、單週期發放上限 5、固定金額 10、稽核倍數 1；其餘保持預設
+  expected: 表單可編輯；活動幣種預設勾選 USDT
+- n: 2
+  action: 【格 1：幣種未勾 × 名稱空】取消勾選所有活動幣種（取消 USDT），活動名稱欄（各語系）皆留空，點『儲存』
+  expected: 不建立活動；活動幣種欄顯示『請至少勾選一個幣種』、活動名稱欄顯示『請填寫活動名稱』，兩欄皆以紅框標示，並提示『請修正標示紅框的欄位』
+- n: 3
+  action: 【格 2：幣種未勾 × 名稱有】於預設語系的活動名稱欄填『RP-REQ』，活動幣種仍不勾任何項目，點『儲存』
+  expected: 不建立活動；僅活動幣種欄顯示『請至少勾選一個幣種』並以紅框標示；活動名稱欄沒有紅框與錯誤訊息；提示『請修正標示紅框的欄位』
+- n: 4
+  action: 【格 3：幣種有 × 名稱空】勾選 USDT，活動名稱清空，點『儲存』
+  expected: 不建立活動；僅活動名稱欄顯示『請填寫活動名稱』並以紅框標示；活動幣種欄沒有紅框與錯誤訊息；提示『請修正標示紅框的欄位』
+- n: 5
+  action: 【格 4：幣種有 × 名稱有】勾選 USDT，於預設語系的活動名稱欄填『RP-REQ』，點『儲存』
+  expected: 儲存成功；活動排程『紅包活動』出現『RP-REQ』（對照：其餘欄位本身合法）
+- n: 6
+  action: 檢視『活動排程 > 紅包活動』列表（狀態篩選『全部』）筆數
+  expected: 筆數＝n0＋1（只有格 4 建立了活動；格 1～3 沒有建立任何活動，包括沒有名稱為空的活動）
+- n: 7
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 活動幣種未勾選或活動名稱留空時不建立活動，缺漏的欄位各自以紅框標示並顯示『請至少勾選一個幣種』『請填寫活動名稱』，並提示『請修正標示紅框的欄位』；兩欄都補齊時可建立。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  location: L317 活動幣種錯誤訊息
+  quote: 請至少勾選一個幣種
+decision_refs:
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L317 活動幣種錯誤訊息
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L380 活動名稱錯誤訊息
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L891 saveAdd() 有錯即不儲存
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L317 活動幣種錯誤訊息
+  quote: 請至少勾選一個幣種
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L380 活動名稱錯誤訊息
+  quote: 請填寫活動名稱
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L891 saveAdd() 有錯即不儲存
+  quote: if(bad){showToast('請修正標示紅框的欄位');return;}
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-003/AC-0036'
+testcase_id: TC-REDPACKET-077
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

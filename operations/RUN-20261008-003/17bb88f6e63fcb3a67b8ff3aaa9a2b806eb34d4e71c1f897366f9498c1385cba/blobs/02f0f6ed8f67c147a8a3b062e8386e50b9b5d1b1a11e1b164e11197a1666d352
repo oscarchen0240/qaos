@@ -1,0 +1,150 @@
+title: 追加預算金額須大於目前總預算：等於／低於不允許、高 1 可行
+description: 追加預算金額須大於目前總預算：等於／低於不允許、高 1 可行
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-016
+acceptance_criteria_ids:
+- AC-REDPACKET-0163
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 【清空後依序佈置】建立活動『RP-TOPUP-INV』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後於『活動排程 > 紅包活動』確認該活動出現（若狀態欄顯示『排程中』，等其變為『進行中』）
+test_data:
+- name: 原總預算
+  value: 5000
+- name: 測試輸入
+  value: 5000 / 4000 / 5001
+steps:
+- n: 1
+  action: 該活動列點『追加預算』
+  expected: 視窗顯示目前總預算 5000
+- n: 2
+  action: 輸入 5000（等於目前總預算），點『確認』
+  expected: 不生效：『新的總預算』欄顯示『須大於目前總預算（只能調高、不能調低）』；關閉視窗後活動列的預算使用仍為 0 ／ 5,000（總預算維持 5,000）
+- n: 3
+  action: 重新開啟『追加預算』，輸入 4000（低於目前總預算），點『確認』
+  expected: 不生效：『新的總預算』欄顯示『須大於目前總預算（只能調高、不能調低）』；總預算維持 5,000
+- n: 4
+  action: 重新開啟『追加預算』，輸入 5001，點『確認』
+  expected: 成功；總預算變為 5001
+- n: 5
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 新總預算等於（5000）或低於（4000）目前總預算時不生效，『新的總預算』欄顯示『須大於目前總預算（只能調高、不能調低）』且總預算維持 5,000；只比目前高 1（5001）時允許。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §活動排程（第 193 行）
+  quote: 輸入新的總預算（須大於目前總預算）
+decision_refs:
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §活動排程（第 193 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §活動排程（第 196 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L454 新的總預算錯誤訊息
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L987 confirmBudget()
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §活動排程（第 193 行）
+  quote: 輸入新的總預算（須大於目前總預算）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §活動排程（第 196 行）
+  quote: 只能調高、不能調低；未設總預算（不限）的活動不提供此操作
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L454 新的總預算錯誤訊息
+  quote: 須大於目前總預算（只能調高、不能調低）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L987 confirmBudget()
+  quote: if(!(v>a.budget)){setErr('field-newbudget');return;}
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-041 v1（CI-SPEC-REDPACKET-001-0.1-0.1，R001→R002）'
+testcase_id: TC-REDPACKET-041
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

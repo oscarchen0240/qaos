@@ -1,0 +1,119 @@
+title: 機台店員洗分且尚有待開啟紅包：前台提示『尚有紅包未開啟，交易完成後將作廢』
+description: 店員對帳號洗分時，若尚有待開啟紅包，機台前台出現提示文字（REQ-027 statement 新增的『店員洗分時』觸發時點）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-027
+acceptance_criteria_ids: []
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 機台帳號 M1（自行從環境中選定，本週期無注單）；場館店員（持鑰匙）可對 M1 洗分；M1 洗分門檻已知（機台端設定）
+test_data:
+- name: 活動規則
+  value: 門檻 100 / 上限 5 / 固定 20 / 稽核 0
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-CLERK』（活動時間『永久』）：每日重置；預設規則門檻 100／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 100，並確保機台餘額大於洗分門檻；當局結束後彈出紅包時關閉彈窗，不開啟
+  expected: 紅包明細有 1 筆 M1 的紅包 P1，狀態『待開啟』
+- n: 3
+  action: 店員以鑰匙選單對 M1 以『指定金額』洗分（金額不超過核可上限），觀察 M1 的機台前台畫面
+  expected: M1 的機台前台出現提示『尚有紅包未開啟，交易完成後將作廢』（提示出現的確切時點、可否返回取消、提示後的操作選項只記錄，不判定）
+- n: 4
+  action: 依店員流程完成洗分
+  expected: 洗分完成（本案不判定 P1 之後的狀態，洗分完成後的作廢由 TC-REDPACKET-066 驗證）
+- n: 5
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 店員對機台帳號洗分時，若該帳號尚有待開啟紅包，機台前台提示『尚有紅包未開啟，交易完成後將作廢』。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §前台呈現說明（第 173 行）
+  quote: 玩家於錢包彈窗按結算鍵、或店員洗分時，若尚有待開啟紅包，前台提示「尚有紅包未開啟，交易完成後將作廢」
+decision_refs:
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 173 行）
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 176 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 173 行）
+  quote: 玩家於錢包彈窗按結算鍵、或店員洗分時，若尚有待開啟紅包，前台提示「尚有紅包未開啟，交易完成後將作廢」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 176 行）
+  quote: 前台動畫與版面細節由前台設計另定，本 spec 僅定義觸發時點與資料。
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-027/statement（店員洗分時提示）'
+testcase_id: TC-REDPACKET-092
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

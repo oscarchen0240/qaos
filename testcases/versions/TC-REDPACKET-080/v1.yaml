@@ -1,0 +1,123 @@
+title: 所有會員等級皆已被等級規則勾選時，點『+ 新增等級規則』提示並不新增（對照：尚有未指定等級時可新增）
+description: 生效會員等級方案的所有等級都已被等級規則勾選後再新增等級規則，驗證提示與不新增（AC-0045）；對照組為尚有一個等級未指定時可新增
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-004
+acceptance_criteria_ids:
+- AC-REDPACKET-0045
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 前往『系統管理 > 會員等級設定』，記下生效會員等級方案的等級個數 N（本案需 N ≥ 2）與各等級的『序號・名稱』
+test_data:
+- name: 等級個數 N
+  value: 由環境既有方案決定（≥ 2）
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』；規則設定區維持預設規則開啟
+  expected: 規則設定區只有『預設規則』
+- n: 2
+  action: 點『+ 新增等級規則』
+  expected: 新增『等級規則 1』
+- n: 3
+  action: 在『等級規則 1』勾選 N−1 個等級，留下 1 個等級 s 不勾
+  expected: 該 N−1 個等級已勾選；等級 s 尚未被任何規則指定
+- n: 4
+  action: 【對照】點『+ 新增等級規則』（此時等級 s 尚未被指定）
+  expected: 新增『等級規則 2』
+- n: 5
+  action: 在『等級規則 2』勾選等級 s
+  expected: 生效方案的所有 N 個等級都已被等級規則勾選
+- n: 6
+  action: 點『+ 新增等級規則』
+  expected: 不新增等級規則（規則區仍是預設規則、等級規則 1、等級規則 2 三個區塊）；提示『所有會員等級皆已指定規則』
+- n: 7
+  action: 離開此表單，不儲存
+  expected: 未建立任何活動
+expected_result: 生效會員等級方案的所有等級皆已被等級規則勾選時，點『+ 新增等級規則』不新增等級規則並提示『所有會員等級皆已指定規則』；尚有等級未指定時（對照）可以新增。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  location: L776 addPlan()
+  quote: if(LEVELS.every(l=>ownerOf(l)!==-1)){showToast('所有會員等級皆已指定規則');return;}
+decision_refs:
+- requirement_id: REQ-REDPACKET-004
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L776 addPlan()
+- requirement_id: REQ-REDPACKET-004
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 77 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L776 addPlan()
+  quote: if(LEVELS.every(l=>ownerOf(l)!==-1)){showToast('所有會員等級皆已指定規則');return;}
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 77 行）
+  quote: 適用等級的選項讀取 6.2 會員等級設定中生效的會員等級方案，顯示為「VIP 等級序號・等級名稱」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-004/AC-0045'
+testcase_id: TC-REDPACKET-080
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

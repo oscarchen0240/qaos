@@ -1,0 +1,187 @@
+title: 活動到期：活動轉『已結束』仍列於列表；待開啟作廢（原因活動結束、釋放預算）、已入帳維持
+description: 活動到期：活動轉『已結束』仍列於列表；待開啟作廢（原因活動結束、釋放預算）、已入帳維持
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-013
+- REQ-REDPACKET-016
+acceptance_criteria_ids:
+- AC-REDPACKET-0131
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；此案需等待活動結束（約 15 分鐘），且不得橫跨 UTC+0 00:00
+test_data:
+- name: 活動時間
+  value: 區間：+2 分鐘～+14 分鐘（UTC+0）
+- name: 總預算/固定金額
+  value: 5000 / 18
+steps:
+- n: 1
+  action: 建立活動『RP-EXPIRE』：活動幣種 USDT；活動時間選『區間』，起＝約 2 分鐘後、迄＝約 14 分鐘後（UTC+0）；預設規則門檻 100／上限 5／固定 18／稽核 1；總預算 5000；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 等活動進入進行中後，玩家 A 結算有效流水貢獻 300
+  expected: 產生 3 個紅包 P1、P2、P3；紅包明細狀態皆『待開啟』（黃色）；『已占用／總預算』顯示 54 ／ 5000
+- n: 3
+  action: 玩家 A 於前台開啟 P1
+  expected: P1 狀態『已入帳』（綠色）；占用仍為 54
+- n: 4
+  action: 等待活動結束時間通過；進入『活動排程 > 紅包活動』檢視該活動列
+  expected: 活動仍列在列表，狀態欄顯示『已結束』
+- n: 5
+  action: 點活動名稱（或操作欄的『紅包明細』）進入該活動的紅包明細
+  expected: P2、P3 狀態『已作廢』（灰色），作廢原因『活動結束』；P1 仍為『已入帳』
+- n: 6
+  action: 檢視紅包明細頂部『總預算（已占用／總預算）』
+  expected: 已占用變為 18 ／ 5000（P2、P3 的 36 已釋放，僅剩已入帳的 18）
+- n: 7
+  action: 玩家 A 於前台嘗試開啟 P2
+  expected: 不可開啟
+expected_result: 活動到期後：活動轉為『已結束』且仍列於活動排程列表、可進入紅包明細；待開啟的 P2、P3 轉為『已作廢』（灰色，原因『活動結束』），預算占用由 54 釋放為 18；已入帳的 P1 不被作廢。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §紅包狀態（第 156 行）
+  quote: '| 待開啟 | 黃色 | 累計達門檻時系統產生 |'
+decision_refs:
+- requirement_id: REQ-REDPACKET-013
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包狀態（第 156 行）
+- requirement_id: REQ-REDPACKET-013
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包狀態（第 157 行）
+- requirement_id: REQ-REDPACKET-013
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包狀態（第 158 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L581 getStatus()
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L584 狀態文字
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L291 列表欄位
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包狀態（第 156 行）
+  quote: '| 待開啟 | 黃色 | 累計達門檻時系統產生 |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包狀態（第 157 行）
+  quote: '| 已入帳 | 綠色 | 玩家於前台開啟 |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包狀態（第 158 行）
+  quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢。不可復原、不補發；作廢釋放所占用的預算
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L581 getStatus()
+  quote: if(!a.forever&&a.end&&new Date(a.end+':00Z')<NOW)return 'expired';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L584 狀態文字
+  quote: const SL={active:'進行中',scheduled:'排程中',expired:'已結束',cancelled:'已取消'};
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L291 列表欄位
+  quote: <span>活動時間 (UTC+0)</span><span>狀態</span><span>操作</span>
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-034 v1（CI-SPEC-REDPACKET-001-0.1-0.1，R001→R002）'
+testcase_id: TC-REDPACKET-034
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

@@ -1,0 +1,231 @@
+title: 活動排程狀態欄與狀態篩選（排程中／已結束／已取消）；已結束與已取消的活動只提供『紅包明細』
+description: 三個不同狀態的紅包活動（皆設有總預算）於列表的狀態文字、狀態篩選與操作欄（AC-0165、AC-0166、AC-0185）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-016
+- REQ-REDPACKET-018
+acceptance_criteria_ids:
+- AC-REDPACKET-0165
+- AC-REDPACKET-0166
+- AC-REDPACKET-0185
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+- 以執行當天（UTC+0）為 D；本案需等待約 6 分鐘讓活動 B 結束，且不得橫跨 UTC+0 00:00
+test_data:
+- name: 活動 C（已取消）
+  value: RP-ST-C：永久、總預算 5000，建立後取消排程
+- name: 活動 B（已結束）
+  value: RP-ST-B：區間 現在+2 分鐘～現在+5 分鐘（UTC+0）、總預算 5000
+- name: 活動 A（排程中）
+  value: RP-ST-A：區間 D+7 00:00～D+14 00:00、總預算 5000
+steps:
+- n: 1
+  action: 建立活動『RP-ST-C』：活動幣種 USDT、活動時間『永久』、預設規則門檻 1000／上限 5／固定 10／稽核 1、總預算 5000，儲存；接著於活動排程該列點『取消排程』並於確認視窗點『確認取消』
+  expected: RP-ST-C 建立成功，並已取消排程
+- n: 2
+  action: 建立活動『RP-ST-B』：活動時間選『區間』，開始＝現在＋2 分鐘、結束＝現在＋5 分鐘（UTC+0），其餘同上（總預算 5000），儲存
+  expected: 建立成功（RP-ST-C 已取消，不列入重疊判斷）
+- n: 3
+  action: 建立活動『RP-ST-A』：活動時間選『區間』，開始＝D+7 00:00、結束＝D+14 00:00，其餘同上（總預算 5000），儲存
+  expected: 建立成功（時段不與 RP-ST-B 重疊）
+- n: 4
+  action: 等現在時間超過 RP-ST-B 的結束時間後，進入『活動排程 > 紅包活動』，狀態篩選『全部』，檢視三個活動的『狀態』欄
+  expected: RP-ST-A『排程中』、RP-ST-B『已結束』、RP-ST-C『已取消』；三者都仍列在列表
+- n: 5
+  action: 依序切換狀態篩選『排程中』『已結束』『已取消』
+  expected: 『排程中』篩選結果含 RP-ST-A、不含 RP-ST-B 與 RP-ST-C；『已結束』含 RP-ST-B、不含另兩者；『已取消』含 RP-ST-C、不含另兩者（列表中另有其他案例留下的同狀態活動時不影響此判斷）
+- n: 6
+  action: 檢視三個活動各自的操作欄
+  expected: RP-ST-A（排程中、有總預算，對照組）：有『追加預算』『取消排程』；RP-ST-B（已結束）與 RP-ST-C（已取消）：只有『紅包明細』，沒有『追加預算』也沒有『取消排程』
+- n: 7
+  action: 清理：對 RP-ST-A 點『取消排程』，於確認視窗點『確認取消』
+  expected: 已取消排程
+expected_result: 列表狀態欄依規則顯示：未開始為『排程中』、區間結束時間已過為『已結束』、已取消排程為『已取消』，三者仍列於列表並可用狀態篩選篩出；設有總預算且為已結束或已取消的活動只提供『紅包明細』，不提供『追加預算』與『取消排程』（排程中的活動則提供，為對照）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  location: L584 狀態文字
+  quote: const SL={active:'進行中',scheduled:'排程中',expired:'已結束',cancelled:'已取消'};
+decision_refs:
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L578 getStatus()
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L580 getStatus()
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L581 getStatus()
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L584 狀態文字
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L285 狀態篩選
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L286 狀態篩選
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L630 render()
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L648 render() 追加預算按鈕
+- requirement_id: REQ-REDPACKET-018
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L649 render() 取消排程按鈕
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L578 getStatus()
+  quote: if(a.cancelled)return 'cancelled';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L580 getStatus()
+  quote: if(s>NOW)return 'scheduled';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L581 getStatus()
+  quote: if(!a.forever&&a.end&&new Date(a.end+':00Z')<NOW)return 'expired';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L584 狀態文字
+  quote: const SL={active:'進行中',scheduled:'排程中',expired:'已結束',cancelled:'已取消'};
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L285 狀態篩選
+  quote: onclick="setStatus('expired')">已結束</button>
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L286 狀態篩選
+  quote: onclick="setStatus('cancelled')">已取消</button>
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L630 render()
+  quote: const canCancel=st==='active'||st==='scheduled';
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L648 render() 追加預算按鈕
+  quote: ${canCancel&&a.budget?`<button class="btn-sm" onclick="openBudget(${a.id})">追加預算</button>`:''}
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L649 render() 取消排程按鈕
+  quote: ${canCancel?`<button class="btn-sm danger" onclick="askCancel(${a.id})">取消排程</button>`:''}
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-016/AC-0165,AC-0166; REQ-REDPACKET-018/AC-0185'
+testcase_id: TC-REDPACKET-081
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b

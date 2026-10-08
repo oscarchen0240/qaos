@@ -1,0 +1,137 @@
+title: 活動名稱 25／26 字元邊界：輸入欄最多 25 字元，第 26 字元無法輸入
+description: 活動名稱 25／26 字元邊界：輸入欄最多 25 字元，第 26 字元無法輸入
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-003
+- REQ-REDPACKET-033
+acceptance_criteria_ids:
+- AC-REDPACKET-0035
+- AC-REDPACKET-0332
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動是否立即生效
+  spec 未明講）
+test_data:
+- name: 26字元名稱
+  value: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+- name: 25字元名稱
+  value: ABCDEFGHIJKLMNOPQRSTUVWXY
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』、活動時間選『永久』；預設語系選一個語系，於『活動名稱／說明欄』選該語系
+  expected: 名稱輸入框可輸入
+- n: 2
+  action: 於活動名稱輸入框輸入（逐字鍵入或貼上）26 個 ASCII 字元『ABCDEFGHIJKLMNOPQRSTUVWXYZ』
+  expected: 輸入框內只留前 25 字元『ABCDEFGHIJKLMNOPQRSTUVWXY』，第 26 字元『Z』無法輸入
+- n: 3
+  action: 清空輸入框，改輸入恰 25 個 ASCII 字元『ABCDEFGHIJKLMNOPQRSTUVWXY』
+  expected: 25 字元全部可輸入，輸入框顯示完整 25 字元
+- n: 4
+  action: 保持活動幣種預設勾選 USDT、活動時間『永久』，預設規則填：累積門檻 1000、單週期發放上限 5、固定金額 10、稽核倍數 1，其餘保持預設；點『儲存』
+  expected: 儲存成功；活動排程『紅包活動』列表該活動名稱完整顯示為 25 字元『ABCDEFGHIJKLMNOPQRSTUVWXY』，列表上沒有 26 字元名稱的活動
+- n: 5
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 活動名稱輸入欄最多只能輸入 25 字元（第 26 字元無法輸入），儲存的名稱不超過 25 字元；恰 25 字元的名稱可完整輸入並儲存，顯示完整。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 338 行）
+  quote: '| 活動名稱字數 | 最多 25 字元 |'
+decision_refs:
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 338 行）
+- requirement_id: REQ-REDPACKET-033
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 149 行）
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q05
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+    location: L379 活動名稱輸入上限
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 338 行）
+  quote: '| 活動名稱字數 | 最多 25 字元 |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 149 行）
+  quote: 最多 25 字元；前台紅包入口與機台彈窗顯示
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L379 活動名稱輸入上限
+  quote: maxlength="25"
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-010 v1（CI-SPEC-REDPACKET-001-0.1-0.1，R001→R002）'
+testcase_id: TC-REDPACKET-010
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+created_at: '2026-10-08T10:30:02Z'
+updated_at: '2026-10-08T10:30:02Z'
+history:
+- at: '2026-10-08T10:30:02Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4DGA0XS53F29VB0M6N0QW0X
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-003
+- at: '2026-10-08T10:30:02Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4DGVWSZD2CCV2RS1G8YYFMB
+  run_id: RUN-20261008-003
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R002
+  sha256: 225079fd0ec524de13b479136bdd7d2d0e337a57340d85a3820d8dd0cc593f2b
