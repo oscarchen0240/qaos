@@ -43,6 +43,6 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 
 - 你只負責把產出的 artifact 檔寫進 `write_paths`，寫完回報檔案路徑就結束。**不得自己執行 `bin/qaos submit`、`bin/qaos gate`，也不得 `git add`／`git commit`**；其他會寫入的 `bin/qaos` 指令（`dispatch`、`id`、`approve`、`clarification` 的寫入子指令等）同樣不可執行。提交、關卡、ID 配發與版控一律由主 session 經 `bin/qaos` 執行。唯讀查詢（`bin/qaos validate`、`run show`、`trace` 等）可以用。
 - artifact 檔用 Write 工具，或在腳本中以一般檔案寫入（例如 `pathlib.Path(path).write_bytes(store.dump(artifact))`；`store.dump` 只做序列化、不寫檔，格式與 Runtime 相同）。**不要呼叫 `tools.qaos.store` 的寫入函式（`store.save`、`store.write_text`、`store.audit` 等）**：Runtime 的所有寫入都必須經過持鎖的 executor，agent 環境沒有 executor context，呼叫一定丟 `NoExecutorContext`。這是防止繞過 executor 直接寫檔的保護，不是環境故障，不要嘗試繞過；`store.dump` 與讀取函式（`store.load` 等）可以用。
-- artifact_id 用 `tools.qaos.ids.artifact_id("<ArtifactType>")` 產生（`ART-` 前綴只用 ULID、不寫計數器，agent 環境可以呼叫），檔名必須等於 artifact_id。經計數器配發的正式 ID（REQ、AC、TC、BUG 等）不要自己執行 `bin/qaos id`；派發訊息沒有提供時，照既有編號規則填寫並在回報中列出，由主 session 送出前以 `bin/qaos id` 對齊計數器。
+- artifact_id 用 `tools.qaos.ids.artifact_id("<ArtifactType>")` 產生（`ART-` 前綴只用 ULID、不寫計數器，agent 環境可以呼叫），檔名必須等於 artifact_id。經計數器配發的正式 ID（REQ、AC 等）不得自行編號，也不要自己執行 `bin/qaos id`：同語意需求沿用既有 ID；需要新的正式 ID 時，只用派發訊息中主 session 已以 `bin/qaos id` 配發的 ID。沒有提供或不夠用時，先不要寫出 artifact，回報需要的種類與數量，由主 session 配發後再繼續。TC 草稿一律用 `TC-DRAFT-<ulid>`，正式 TC、BUG 等編號由 Runtime 在核准／開單時配發，不在此列。
 - envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間；由 Runtime 決定的狀態（如 `VALID`）不要自填。
 - 主 session 送出或關卡失敗時，會把錯誤訊息交回給你；修正時用新的 artifact_id 產生新檔，不要刪除或覆寫已寫出的檔案。
