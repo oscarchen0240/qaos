@@ -286,8 +286,9 @@ Runtime 提供 `qaos trace <id>` 由任一節點向上下游展開；Regression 
 - ID 一經配發永不重用；序號由 `registry/_counters.yaml` 管理，Runtime 配發，Agent 不得自行編號（Draft 階段使用 `TC-DRAFT-<ulid>` 暫時 ID，commit 時由 Runtime 換為正式 ID）。REQ 由主 session 以 `bin/qaos id` 配發後交給 Spec Analyst。
 - AcceptanceCriterion 例外，不經計數器，從所屬 REQ 推導：`AC-<AREA>-<REQ 序號><AC 序號>`。
   - REQ 序號照抄所屬 REQ 的序號（目前固定 3 位數）；AC 序號從 1 開始、不補 0，第 10 個以後直接往上加（REQ-001 的第 10 個 AC 是 `AC-<AREA>-00110`）。REQ 序號固定 3 位數，拆解沒有歧義。
-  - 不重編號：既有 AC 一律沿用原 ID；刪掉的序號不重用，中間插入的 AC 不把後面的往後推。新增 AC 取該 REQ 在所有 revision、所有 spec_version 用過的最大序號 + 1。
+  - 不重編號：既有 AC 一律沿用原 ID；刪掉的序號不重用，中間插入的 AC 不把後面的往後推。新增 AC 取該 REQ 在所有 revision、所有 spec_version 用過的最大序號 + 1（Spec Analyst 的派發包以 `ac_seq_high_water` 提供這個值）。
   - MEMBER、BONUSCCY、ARCADE 既有的 3 位數 AC（如 `AC-MEMBER-025`，來自舊的 `AC-<AREA>` 計數器）照樣沿用、不遷移；這三區新增的 AC 改用推導格式，舊計數器不再使用。3 位數與 4 位數以上的字串不會撞號。
-  - 一條 REQ 有 10 個以上 AC 時，視為需求可能太大的訊號（程式檢查另案處理）。
+  - 一條 REQ 有 10 個以上 AC 時，視為需求可能太大的訊號：G-SPEC 不擋，structural PASS 時寫 audit（`GATE_ADVISORY`），並在 task 的 `gate_results` 加一筆 `layer: advisory`、`result: WARN` 的紀錄（排在同次 structural 結果之前）。
+  - `bin/qaos id AC` 一律拒絕；G-SPEC 以 `gates.ac_id_issues()` 檢查上述規則（同一 spec 各版本最新 revision 中的 AC 可沿用，但必須掛在同一個 REQ，不論格式；只出現在較舊 revision 的 AC 視為已刪除，不得再用；新 AC 必須是推導格式、序號大於歷史最大值；同一份 model 內不得重複）。
 - TestCase 新版本 = 新 `versions/<tc_id>/v<n>.yaml`；舊版狀態改 `SUPERSEDED`，檔案不刪。
 - Spec 版本採 `major.minor`；Requirement 綁 SpecVersion；TC 綁 `spec_id@spec_version`。

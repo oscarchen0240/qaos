@@ -34,15 +34,17 @@ def test_agent_forbids_self_submit_gate_commit(name):
     assert "寫完後用 `bin/qaos submit" not in md and "然後 `bin/qaos gate" not in md, name
 
 def test_req_ids_come_from_main_session_and_ac_ids_are_derived():
-    forbidden = _contract("spec-analyst")["forbidden_actions"]
-    assert any("REQ 正式 ID" in f and "不得猜號" in f for f in forbidden)
-    assert any("bin/qaos id AC" in f and "推導" in f for f in forbidden)
+    c = _contract("spec-analyst")
+    assert any("REQ 正式 ID" in f for f in c["forbidden_actions"]) and any("bin/qaos id AC" in f for f in c["forbidden_actions"])
+    rules = " ".join(c["responsibilities"])
+    assert "bin/qaos id REQ" in rules and "回報需要的數量" in rules and "ac_seq_high_water" in rules and "推導" in rules
     for name in AGENTS:
         md = _md(name)
         assert "照既有編號規則填寫" not in md and "正式 ID（REQ、AC" not in md, name
         assert "不得執行 `bin/qaos id AC`" in md, name
     sa = _md("spec-analyst")
-    assert all(k in sa for k in ("AC-<AREA>-<REQ 序號><AC 序號>", "不重編號", "歷史最大序號 + 1", "考慮拆分需求"))
+    assert all(k in sa for k in ("AC-<AREA>-<REQ 序號><AC 序號>", "不重編號", "歷史最大序號 + 1", "ac_seq_high_water", "考慮拆分需求"))
+    assert sa.count("G-SPEC 會擋") == 1                                                    # REQ 規則只有一段（gate-integrity 與 !15 的說法已合併）
     for name in set(AGENTS) - {"spec-analyst"}:
         assert "不產生、不配發、不重編 AC ID" in _md(name), name
 
@@ -53,16 +55,19 @@ def _req_ac_pairs():
             yield f, r.get("requirement_id", ""), [a["ac_id"] for a in r.get("acceptance_criteria") or []]
 
 def test_existing_ac_ids_follow_derivation_rule():
-    """4 位數以上的 AC 一律是「所屬 REQ 序號＋從 1 起的序號」；3 位數為舊計數器格式，沿用不檢查。"""
+    """4 位數以上的 AC 一律是「所屬 REQ 序號＋從 1 起的序號」；3 位數為舊計數器格式，沿用不檢查。
+    同一份 revision 中，同一個 REQ 底下的 AC 序號不得重複。"""
     import re
     bad, checked = [], 0
     for f, rid, acs in _req_ac_pairs():
-        m = re.fullmatch(r"REQ-([A-Z0-9]+)-(\d{3})", rid)
+        m = re.fullmatch(r"REQ-([A-Z0-9]+)-(\d{3})", rid); seqs = []
         for ac in acs:
             if re.fullmatch(r"AC-[A-Z0-9]+-\d{3}", ac): continue
             checked += 1
             am = m and re.fullmatch(rf"AC-{m.group(1)}-{m.group(2)}([1-9]\d*)", ac)
-            if not am: bad.append(f"{f.relative_to(REPO)} {rid} {ac}")
+            if not am: bad.append(f"{f.relative_to(REPO)} {rid} {ac}"); continue
+            seqs.append(int(am.group(1)))
+        if len(seqs) != len(set(seqs)): bad.append(f"{f.relative_to(REPO)} {rid} AC 序號重複 {sorted(seqs)}")
     assert checked > 0 and not bad, bad[:10]
 
 # ---- Validator：E3～E5 的 exploratory 合法；已核准的 assumption 例外；舊 blanket blocker 不再出現

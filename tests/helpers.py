@@ -56,6 +56,20 @@ def alloc_req_ids(payload):
     for area, n in want.items():
         while ids._load()["counters"].get(f"REQ-{area}", 0) < n: ids.alloc_cmd("REQ", area, new_request=True)
 
+# requirement_model() 的 AC 是推導格式（docs/architecture/02-data-model.md §5）；需求 A 之前的舊程式產生的 legacy RM（R000）用的是舊的 3 位數 AC。
+LEGACY_AC = {"AC-AUTH-0011": "AC-AUTH-001", "AC-AUTH-0012": "AC-AUTH-002", "AC-AUTH-0021": "AC-AUTH-003", "AC-AUTH-0031": "AC-AUTH-004", "AC-AUTH-0041": "AC-AUTH-005"}
+
+def legacy_acs(tcs):
+    """綁定 legacy R000 的 run 用：把 draft_set() 產生的 TC 稿改引用舊程式 RM 中實際存在的 3 位數 AC（只用於刻意測舊資料沿用的測試）。"""
+    for t in tcs: t["acceptance_criteria_ids"] = [LEGACY_AC.get(a, a) for a in t["acceptance_criteria_ids"]]
+    return tcs
+
+def legacy_rm(m):
+    """重新分析 legacy RM（R000）時，既有 AC 要沿用 R000 中的原 ID（不重編號）：把 requirement_model() 的推導格式 AC 換回舊 ID。"""
+    for r in m["requirements"]:
+        for a in r["acceptance_criteria"]: a["ac_id"] = LEGACY_AC.get(a["ac_id"], a["ac_id"])
+    return m
+
 def spec_ref(loc, quote=""): return {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "location": loc, "quote": quote}
 
 def requirement_model(spec_version="1.0", min_len="8"):
@@ -63,20 +77,20 @@ def requirement_model(spec_version="1.0", min_len="8"):
     reqs = [
         {"requirement_id": "REQ-AUTH-001", "version": 1, "spec_id": "SPEC-AUTH-001", "spec_version": spec_version, "type": "functional", "title": "密碼最小長度",
          "statement": f"密碼長度必須大於或等於 {min_len} 個字元", "acceptance_criteria": [
-             {"ac_id": "AC-AUTH-001", "given": "使用者在設定密碼", "when": f"輸入長度為 {min_len} 的密碼", "then": "系統接受"},
-             {"ac_id": "AC-AUTH-002", "given": "使用者在設定密碼", "when": f"輸入長度為 {int(min_len)-1} 的密碼", "then": "系統拒絕並提示長度不足"}],
+             {"ac_id": "AC-AUTH-0011", "given": "使用者在設定密碼", "when": f"輸入長度為 {min_len} 的密碼", "then": "系統接受"},
+             {"ac_id": "AC-AUTH-0012", "given": "使用者在設定密碼", "when": f"輸入長度為 {int(min_len)-1} 的密碼", "then": "系統拒絕並提示長度不足"}],
          "spec_reference": sr("§3.1 R1", f"密碼長度必須大於或等於 {min_len} 個字元"), "ambiguity": None, "risk": "high", "status": "DRAFT", "history": []},
         {"requirement_id": "REQ-AUTH-002", "version": 1, "spec_id": "SPEC-AUTH-001", "spec_version": spec_version, "type": "functional", "title": "密碼需含數字",
          "statement": "密碼必須包含至少一個數字", "acceptance_criteria": [
-             {"ac_id": "AC-AUTH-003", "given": "使用者在設定密碼", "when": "輸入不含數字的密碼", "then": "系統拒絕並提示需含數字"}],
+             {"ac_id": "AC-AUTH-0021", "given": "使用者在設定密碼", "when": "輸入不含數字的密碼", "then": "系統拒絕並提示需含數字"}],
          "spec_reference": sr("§3.1 R2"), "ambiguity": None, "risk": "medium", "status": "DRAFT", "history": []},
         {"requirement_id": "REQ-AUTH-003", "version": 1, "spec_id": "SPEC-AUTH-001", "spec_version": spec_version, "type": "functional", "title": "連續失敗鎖定",
          "statement": "同一帳號連續 5 次密碼錯誤後鎖定 15 分鐘", "acceptance_criteria": [
-             {"ac_id": "AC-AUTH-004", "given": "帳號已連續錯 4 次", "when": "第 5 次輸入錯誤密碼", "then": "帳號鎖定 15 分鐘，後續登入回「帳號已鎖定」"}],
+             {"ac_id": "AC-AUTH-0031", "given": "帳號已連續錯 4 次", "when": "第 5 次輸入錯誤密碼", "then": "帳號鎖定 15 分鐘，後續登入回「帳號已鎖定」"}],
          "spec_reference": sr("§3.2 R3"), "ambiguity": None, "risk": "high", "status": "DRAFT", "history": []},
         {"requirement_id": "REQ-AUTH-004", "version": 1, "spec_id": "SPEC-AUTH-001", "spec_version": spec_version, "type": "functional", "title": "登入成功",
          "statement": "帳號密碼正確時導向首頁並顯示使用者名稱", "acceptance_criteria": [
-             {"ac_id": "AC-AUTH-005", "given": "帳號存在且啟用", "when": "輸入正確帳密", "then": "導向首頁並顯示使用者名稱"}],
+             {"ac_id": "AC-AUTH-0041", "given": "帳號存在且啟用", "when": "輸入正確帳密", "then": "導向首頁並顯示使用者名稱"}],
          "spec_reference": sr("§3.3 R4"), "ambiguity": None, "risk": "medium", "status": "DRAFT", "history": []},
     ]
     return {"spec_id": "SPEC-AUTH-001", "spec_version": spec_version, "requirements": reqs,
@@ -96,16 +110,16 @@ def tc(draft_id, title, req, ac, level, types, techs, steps, expected, loc, prio
 def draft_set(min_len=8, prefix="01ARZ3NDEKTSV4RRFFQ69G5FA"):
     ids_ = [f"TC-DRAFT-{prefix}{c}" for c in "ABCDE"]
     return [
-        tc(ids_[0], f"密碼長度恰為 {min_len} 時接受", "REQ-AUTH-001", "AC-AUTH-001", "api", ["functional", "boundary"], ["boundary_value"],
+        tc(ids_[0], f"密碼長度恰為 {min_len} 時接受", "REQ-AUTH-001", "AC-AUTH-0011", "api", ["functional", "boundary"], ["boundary_value"],
            [f"輸入長度 {min_len} 且含數字的密碼", "送出"], "系統接受密碼", "§3.1 R1", critical_path=True),
-        tc(ids_[1], f"密碼長度為 {min_len-1} 時拒絕", "REQ-AUTH-001", "AC-AUTH-002", "api", ["negative", "boundary"], ["boundary_value", "negative"],
+        tc(ids_[1], f"密碼長度為 {min_len-1} 時拒絕", "REQ-AUTH-001", "AC-AUTH-0012", "api", ["negative", "boundary"], ["boundary_value", "negative"],
            [f"輸入長度 {min_len-1} 且含數字的密碼", "送出"], "系統拒絕，提示長度不足", "§3.1 R1"),
-        tc(ids_[2], "密碼不含數字時拒絕", "REQ-AUTH-002", "AC-AUTH-003", "api", ["negative"], ["equivalence_partitioning", "negative"],
+        tc(ids_[2], "密碼不含數字時拒絕", "REQ-AUTH-002", "AC-AUTH-0021", "api", ["negative"], ["equivalence_partitioning", "negative"],
            ["輸入長度 12 但不含數字的密碼", "送出"], "系統拒絕，提示需含數字", "§3.1 R2", prio="medium", risk="medium"),
-        tc(ids_[3], "連續 5 次錯誤後鎖定 15 分鐘", "REQ-AUTH-003", "AC-AUTH-004", "ui_e2e", ["functional", "negative"], ["state_transition"],
+        tc(ids_[3], "連續 5 次錯誤後鎖定 15 分鐘", "REQ-AUTH-003", "AC-AUTH-0031", "ui_e2e", ["functional", "negative"], ["state_transition"],
            ["以錯誤密碼登入 4 次", "第 5 次以錯誤密碼登入", "立即以正確密碼登入"], "第 5 次後顯示帳號已鎖定；正確密碼亦被拒絕", "§3.2 R3",
            preconditions=["帳號存在且未鎖定"], execution_mode="manual", ci_eligible=False),
-        tc(ids_[4], "正確帳密登入成功", "REQ-AUTH-004", "AC-AUTH-005", "ui_e2e", ["functional"], ["scenario"],
+        tc(ids_[4], "正確帳密登入成功", "REQ-AUTH-004", "AC-AUTH-0041", "ui_e2e", ["functional"], ["scenario"],
            ["輸入正確帳密", "點擊登入"], "導向首頁並顯示使用者名稱", "§3.3 R4", prio="medium", risk="medium", preconditions=["帳號存在且啟用"], critical_path=True),
     ], ids_
 

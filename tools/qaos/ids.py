@@ -13,12 +13,17 @@ def ulid() -> str:
 def _load():
     return store.load(COUNTERS) if store.exists(COUNTERS) else {"schema_version": "1.0", "counters": {}}
 
+AC_REJECTED = "AC 不由計數器配發：AC ID 依所屬 REQ 推導為 AC-<AREA>-<REQ 序號><AC 序號>（AC 序號從 1 起、不補 0），見 docs/architecture/02-data-model.md §5"
+
 def alloc(kind: str, area: str | None = None, width: int = 3) -> str:
-    """kind ∈ TC REQ AC BUG (需 area) | EXE RUN (日期) | EVD APR (全域) | ART-<TYPE>
-    計數器的更新是操作計畫的一步（ID 由計畫固定）；ART- 用 ULID，不寫計數器。"""
+    """kind ∈ TC REQ BUG CLR (需 area) | EXE RUN (日期) | EVD APR (全域) | ART-<TYPE>
+    計數器的更新是操作計畫的一步（ID 由計畫固定）；ART- 用 ULID，不寫計數器。
+    AC 不經計數器：一律拒絕（由所屬 REQ 推導；既有的 AC-<AREA> 計數器保留不動）。"""
     if kind.startswith("ART-"): return f"{kind}-{ulid()}"
+    if kind == "AC":
+        raise ValueError(AC_REJECTED)
     d = _load(); c = d["counters"]
-    if kind in ("TC", "REQ", "AC", "BUG", "CLR"):
+    if kind in ("TC", "REQ", "BUG", "CLR"):
         if not area: raise ValueError(f"{kind} 需要 area")
         key = f"{kind}-{area}"
         if kind == "REQ":                                                    # 舊 area 的計數器可能落後於已持久化的需求：從已用的最大序號之後配發
