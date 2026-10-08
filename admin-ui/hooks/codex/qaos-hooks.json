@@ -1,0 +1,99 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/handoff_relay.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/guard_qaos.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/log_event.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "QAOS_HOOK_HOST=codex \"${QAOS_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}\"/admin-ui/hooks/handoff_relay.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
