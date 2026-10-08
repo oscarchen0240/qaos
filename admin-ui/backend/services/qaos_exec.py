@@ -58,6 +58,9 @@ def _preflight(ticket_id: str, kind: str, draft: dict) -> tuple[dict, str, str |
         target = {"ask": "ASKED", "answer": "ANSWERED", "apply": "APPLIED", "withdraw": "WITHDRAWN"}.get(action)
         if target not in (d.get("allowed") or []):
             raise ExecError(409, f"{ticket_id} 目前 {d['status']}，狀態機不允許 → {target}")
+        if action == "answer" and _answer_already_registered(d, draft):
+            raise ExecError(409, f"{ticket_id} 已經登記過這個回答（內容、回答者、落地方式都相同），不再追加重複的答案修訂；"
+                                 "要追加新的修訂，請先修改回答內容或落地方式。")
         return tk.clarification_command(ticket_id, draft), action, d.get("run_id")
     if kind == "bug":
         d = tk.bug_detail(ticket_id)
@@ -76,11 +79,45 @@ def _preflight(ticket_id: str, kind: str, draft: dict) -> tuple[dict, str, str |
     raise ExecError(400, f"未知單據類型 {kind}")
 
 
+def _answer_already_registered(d: dict, draft: dict) -> bool:
+    """answer 有合法的自轉換（ANSWERED→ANSWERED 追加修訂、INCORPORATED→ANSWERED 要求重新納入），而且我們對釐清指令帶 --new-request，
+    所以狀態機擋不住「同一份回答再送一次」（HTTP 重送、第一次回應遺失後重試、舊草稿再按一次）。
+    以資料為準：目前登記的最新回答與這份草稿的內容、回答者、落地方式全都相同，就視為重複，不送。"""
+    if d.get("status") not in ("ANSWERED", "INCORPORATED"):
+        return False
+    ex = draft.get("extra") or {}
+    mine = ((draft.get("rationale") or "").strip(), ex.get("answered_by") or ex.get("asked_to") or "PM", ex.get("resolution") or "requirement_clarified")
+    cur = ((d.get("answer") or "").strip(), d.get("answered_by"), d.get("resolution"))
+    return mine == cur
+
+
 # ---------- 執行 ----------
+def _git_dirs(root) -> tuple[str, str] | None:
+    """(這個 checkout 的 git dir, 共同 git dir) 的絕對路徑；不是 git 工作樹或 git 不能執行時回 None。"""
+    try:
+        r = subprocess.run(["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--absolute-git-dir", "--git-common-dir"],
+                           capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    lines = r.stdout.splitlines()
+    return (lines[0], lines[1]) if r.returncode == 0 and len(lines) == 2 else None
+
+
 def _write_guard() -> None:
-    """bin/qaos 只能在主 checkout 執行。linked worktree 的 .git 是「檔案」；在那裡跑寫入指令會落到 worktree 副本，
-    與主資料夾的 QAOS 資料分岔（需求 A 部署後這會讓兩邊各有一份「正式」資料）。"""
-    if (PROJECT_ROOT / ".git").is_file():
+    """bin/qaos 只能在 QAOS 專案根執行，而且不能是 linked worktree（寫入會落到副本，與主資料夾的 QAOS 資料分岔）。
+
+    linked worktree 的判斷看 git 本身：它的 git dir（<共同目錄>/worktrees/<名稱>）不等於共同 git dir。
+    只看 `.git` 是不是檔案不夠——`git init --separate-git-dir` 的主 checkout 與 submodule 的 `.git` 也是檔案。
+    """
+    if not (PROJECT_ROOT / "bin" / "qaos").is_file():
+        raise ExecError(409, f"PROJECT_ROOT（{PROJECT_ROOT}）底下找不到 bin/qaos，不是 QAOS 專案根；請用 QAOS_ADMIN_PROJECT_ROOT 指向主資料夾。")
+    dirs = _git_dirs(PROJECT_ROOT)
+    if dirs is None:
+        if (PROJECT_ROOT / ".git").exists():       # 看起來是 git checkout 卻查不出來：寧可擋下，不要猜
+            raise ExecError(409, f"無法確認 PROJECT_ROOT（{PROJECT_ROOT}）是不是 git worktree（git 指令失敗），為避免寫入落到副本，已拒絕執行 bin/qaos。")
+        return
+    git_dir, common_dir = (os.path.realpath(d) for d in dirs)
+    if git_dir != common_dir:
         raise ExecError(409, f"PROJECT_ROOT（{PROJECT_ROOT}）是 git worktree，不是主資料夾；為避免寫入落到副本，已拒絕執行 bin/qaos。"
                              "請用 QAOS_ADMIN_PROJECT_ROOT 指向主資料夾後重啟指揮台。")
 
