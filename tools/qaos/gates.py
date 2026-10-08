@@ -45,17 +45,16 @@ def g_spec(run, task, arts) -> list[str]:
 
 def requirement_id_issues(spec_id, area, rids) -> list[str]:
     """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
-    格式為計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）；同一 spec 先前已持久化的 ID 可沿用；
-    其餘新 ID 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
+    同一 spec 先前已持久化的 ID 可沿用（不論格式，舊資料可能不同）；其餘新 ID 必須是計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）， 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
     counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
     owners = rm.requirement_owners(area); out = []
     for rid in rids:
+        mine = owners.get(rid, set())
+        if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
+        if spec_id in mine: continue                                         # 沿用同一 spec 已持久化的 ID（舊資料的 ID 格式可能不同，不再檢查）
         m = re.fullmatch(rf"REQ-{re.escape(area)}-(\d+)", rid)
         if m and (int(m.group(1)) < 1 or m.group(1) != f"{int(m.group(1)):03d}"): m = None
         if not m: out.append(f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
-        mine = owners.get(rid, set())
-        if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
-        if spec_id in mine: continue
         if int(m.group(1)) > counter:
             out.append(f"{rid} 未經計數器配發（REQ-{area} 計數器目前為 {counter}）；REQ ID 必須以 bin/qaos id REQ --area {area} 配發，不得自行編號")
     return out
