@@ -15,3 +15,6 @@
 - 程式變更 merge 回 main 前，必須以 `codex exec` 送 Codex code review，審查對象為已 commit 的 SHA，結果寫入 `review-handoff/<任務子目錄>/`
 - Codex 提出的問題須全部修正並再送複審，直到問題清零才可 merge；Oscar 明確決定延後的項目需記錄在交接區，不算未清零
 - 未經 Oscar 確認，不得自行 merge 回 main
+
+## 注意事項
+- 本專案避免用 Codex Desktop 匯入 Claude 對話；若有匯入，事後檢查 `git status` 與 `.codex/`、`AGENTS.md` 是否被重新產生或覆寫
