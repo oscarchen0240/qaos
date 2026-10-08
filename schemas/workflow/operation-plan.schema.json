@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qaos.local/schemas/workflow/operation-plan.schema.json",
+  "title": "OperationPlan",
+  "description": "不可變的操作計畫（最終規格第 4 章 §7）。保存完成即已建立；續做一律依此檔。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plan_schema", "op_id", "action", "scope", "canonical_request", "request_hash", "admitted_state", "resume_states", "clock", "allocated_ids", "steps", "no_change", "audit_events"],
+  "properties": {
+    "plan_schema": {"const": 1},
+    "op_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "action": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "scope": {"type": "string", "pattern": "^(_global|RUN-[0-9]{8}-[0-9]{3})$"},
+    "canonical_request": {"type": "object", "required": ["request_schema", "action"]},
+    "request_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "admitted_state": {"enum": ["S_pre", "S_maint", "S_post"]},
+    "resume_states": {"type": "object", "required": ["kind"]},
+    "clock": {"type": "string"},
+    "allocated_ids": {"type": "array", "items": {"type": "string"}},
+    "steps": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["seq", "step_id", "path", "kind", "expected_before", "expected_after", "blob"],
+        "properties": {
+          "seq": {"type": "integer", "minimum": 1},
+          "step_id": {"type": "string"},
+          "path": {"type": "string"},
+          "kind": {"enum": ["business", "event", "control", "index", "status", "status_final"]},
+          "group": {"enum": ["takeover", "restore", "marker", "terminal"]},
+          "expected_before": {"type": ["string", "null"]},
+          "expected_after": {"type": ["string", "null"]},
+          "blob": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "no_change": {"type": "array", "items": {"type": "object", "required": ["path", "kind", "content_sha256"]}},
+    "audit_events": {"type": "array", "items": {"type": "object", "required": ["at", "actor", "action", "detail", "op_id", "step", "run_id"]}},
+    "takeover_of": {"type": "string"},
+    "x_status_at_creation": {"type": "string", "enum": ["in_progress", "completed"], "description": "rollback：R 建立時 X 的狀態（凍結）"},
+    "x_progress": {"type": "object", "description": "rollback：R 建立時對 X 執行 classify_steps 的凍結結果（需求 A 第 5 章 §13.5）"},
+    "later_ops_snapshot": {"type": "array", "items": {"type": "object"}, "description": "rollback：R 建立時的後續操作盤點（§13.11）"},
+    "manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$", "description": "migrate：移轉清單的 sha256"},
+    "result": {}
+  }
+}

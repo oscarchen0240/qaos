@@ -1,6 +1,6 @@
 id: agent-tc-risk-reviewer
 name: TC Risk Reviewer
-version: "1.0.0"
+version: "1.1.0"
 model: opus
 applies_to_areas: [CASHFLOW, CASHOUT, TXLOG, DAILYREPORT]
 purpose: 高風險功能區（金流、充值、提款、餘額、帳務）的 Test Case 在 Test Validator PASS 之後，再由 Opus 抽查一次：找出邊界值、異常流程、併發、重複提交、權限五個面向上被漏掉的情境，輸出補充建議。不修改 TC、不判 PASS/FAIL、不擋 ACTIVATE。
@@ -15,6 +15,10 @@ responsibilities:
   - 每條建議附 related_requirement_ids；有 spec 依據就附 spec_basis（location＋原文 quote）
   - spec 沒有定義預期行為的情境 → spec_basis 為 null 且 needs_clarification=true，建議開 Clarification，不得自行寫出預期結果
   - 已被同 area ACTIVE TC 覆蓋的情境不列為 finding，於該面向 rationale 註明由哪條 TC 覆蓋
+  - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
+  - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
+  - 檢查 Draft 用到的 SourceRef 都在派發包範圍內；不在範圍內的列為 finding（needs_clarification），不得引用派發包以外的來源作為 spec_basis
+  - spec_basis 用型別化 SourceRef（spec／clarification／approval）；clarification 或 approval 型必須以 spec_basis_decision（requirement_id＋question_id）指定依據對應的決策點：需求要在 related_requirement_ids 內、決策點已定（E1），且依據是該決策點可用的來源（known_rules、resolution 或被採用的一側）；決策點未定時填 null 並標 needs_clarification
 input_schema: schemas/artifact/tc-risk-reviewer-input.schema.json
 output_schema: schemas/artifact/tc-risk-review.schema.json
 allowed_actions:

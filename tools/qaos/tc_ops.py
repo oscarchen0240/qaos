@@ -1,7 +1,8 @@
 """Human 對正式 Test Case 的操作：retire（退役）、revise（發起修訂 run）；以及手動新增人工測試紀錄。"""
-from . import store, state, schema, ids, engine
+from . import store, state, schema, ids, engine, operation
 from .engine import EngineError
 
+@operation.operation("tc_retire")
 def retire(tc_id, by, rationale):
     ptr = store.load(store.tc_pointer_path(tc_id))
     if ptr["status"] != "ACTIVE": raise EngineError(f"{tc_id} 狀態 {ptr['status']}，只有 ACTIVE 可退役")
@@ -20,12 +21,14 @@ def retire(tc_id, by, rationale):
     store.audit(None, by, "RETIRE_TESTCASE", f"{tc_id} via {apr_id}; in suites: {[s['suite_id'] for s in suites]}")
     return apr_id, suites
 
+@operation.operation("tc_revise")
 def revise(tc_id, reason, by):
     ptr = store.load(store.tc_pointer_path(tc_id))
     if ptr["status"] != "ACTIVE": raise EngineError(f"{tc_id} 狀態 {ptr['status']}，只有 ACTIVE 可修訂（草稿請直接在原 run 修）")
     v = store.load(store.tc_version_path(tc_id, ptr["active_version"]))
     return engine.new_run("testcase-revision", {"testcase_id": tc_id, "reason": reason, "spec_id": v["spec_id"], "spec_version": v["spec_version"]}, by)
 
+@operation.operation("manual_new")
 def manual_new(title, product, area, steps, observed, outcome, by, spec_id=None, spec_version=None, requirement_ids=None, environment="", preconditions=None, evidence_ids=None, notes=""):
     rid = ids.alloc("MAN")
     rec = {"record_id": rid, "title": title, "tester": by, "tested_at": store.now(), "product": product, "functional_area": area, "environment": environment or "—",

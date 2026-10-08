@@ -4,11 +4,11 @@
 樣式沿用既有 final.html 的 <head>（第一次產出時從既有檔擷取；若無既有檔則用內建最小樣式）。
 """
 import html, json, re
-from . import store
+from . import store, operation
 
 def _active_tcs(area):
     out = []
-    for p in sorted((store.ROOT / "testcases" / "registry").glob(f"TC-{area}-*.yaml")):
+    for p in store.glob(f"testcases/registry/TC-{area}-*.yaml"):
         ptr = store.load(p)
         if ptr.get("status") != "ACTIVE": continue
         out.append(store.load(store.tc_version_path(p.stem, ptr["active_version"])))
@@ -16,17 +16,20 @@ def _active_tcs(area):
 
 def _req_index(tcs):
     """requirement_id → {title, statement}，依 TC 所掛的 spec 載入 RM。"""
+    from . import rm, refs
     idx = {}
-    for sid, sv in {(t["spec_id"], t["spec_version"]) for t in tcs}:
-        rp = store.requirements_path(sid, sv)
-        if not store.exists(rp): continue
-        for r in store.load(rp)["requirements"]: idx[r["requirement_id"]] = r
+    for t in tcs:                                                             # TC 的依據：版本檔 pin → TC sidecar（需求 A 第 5 章 §4.1）
+        pin = rm.tc_pin_for_display(t["testcase_id"], t["version"])            # 移轉前的 legacy TC 才可退回最新 revision／legacy 檢視
+        for rid in t.get("requirement_ids", []):
+            if rid not in idx:
+                r, _ = refs.find_requirement(rid, t["spec_id"], t["spec_version"], pin=pin)
+                if r: idx[rid] = r
     return idx
 
 def _existing_head(area):
-    p = store.ROOT / "testcases" / "final" / f"{area}-final.html"
-    if p.exists():
-        s = p.read_text(encoding="utf-8"); i = s.find("<body>")
+    p = f"testcases/final/{area}-final.html"
+    if store.exists(p):
+        s = store.read_text(p); i = s.find("<body>")
         if i > 0:
             sub = re.search(r'<div class="brand-sub">([^<]*)</div>', s)
             return s[:i], (sub.group(1).split(" · ")[0] if sub else area)
@@ -81,6 +84,7 @@ def _card(t):
   </div>
 </article>'''
 
+@operation.operation("tc_final")
 def export(area):
     tcs = _active_tcs(area)
     if not tcs: raise SystemExit(f"{area} 沒有 ACTIVE TC")
@@ -170,7 +174,6 @@ chips.forEach(chip => chip.addEventListener('click', () => {{
 </body>
 </html>
 '''
-    out = store.ROOT / "testcases" / "final"; out.mkdir(parents=True, exist_ok=True)
-    (out / f"{area}-final.html").write_text(head + body, encoding="utf-8")
-    (out / f"{area}-final-active.json").write_text(json.dumps([{k: v for k, v in t.items() if k != "history"} for t in tcs], ensure_ascii=False, indent=2), encoding="utf-8")
+    store.write_derived(f"testcases/final/{area}-final.html", head + body)
+    store.write_derived(f"testcases/final/{area}-final-active.json", json.dumps([{k: v for k, v in t.items() if k != "history"} for t in tcs], ensure_ascii=False, indent=2))
     return len(tcs), len(groups)

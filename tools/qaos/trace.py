@@ -3,7 +3,7 @@ from . import store, refs
 
 def suites_of(tc_id: str) -> list[dict]:
     out = []
-    for p in (store.ROOT / "testsuites").rglob("SUITE-*.yaml"):
+    for p in store.rglob("testsuites", "SUITE-*.yaml"):
         if ".v" in p.name: continue
         s = store.load(p)
         for m in s["memberships"]:
@@ -15,10 +15,10 @@ def _tc_versions(tc_id):
     return ptr, [store.load(store.tc_version_path(tc_id, v["version"])) for v in ptr["versions"]]
 
 def _executions_of(tc_id):
-    return [store.load(p) for p in (store.ROOT / "executions").rglob("EXE-*.yaml") if store.load(p).get("testcase_id") == tc_id]
+    return [store.load(p) for p in store.rglob("executions", "EXE-*.yaml") if store.load(p).get("testcase_id") == tc_id]
 
 def _bugs_where(pred):
-    return [store.load(p) for p in (store.ROOT / "bugs").rglob("BUG-*.yaml") if pred(store.load(p))]
+    return [store.load(p) for p in store.rglob("bugs", "BUG-*.yaml") if pred(store.load(p))]
 
 def trace(entity_id: str) -> list[str]:
     lines = []
@@ -50,7 +50,7 @@ def trace(entity_id: str) -> list[str]:
         r, p = refs.find_requirement(entity_id)
         lines.append(f"Requirement {entity_id} [{r['status']}] {r['statement'][:80]}")
         lines.append(f"  ↑ SpecVersion {r['spec_id']}@{r['spec_version']}  ({r['spec_reference']['location']})")
-        for ptr in (store.ROOT / "testcases" / "registry").glob("TC-*.yaml"):
+        for ptr in store.glob("testcases/registry/TC-*.yaml"):
             d = store.load(ptr)
             for v in d["versions"]:
                 tc = store.load(store.tc_version_path(d["testcase_id"], v["version"]))

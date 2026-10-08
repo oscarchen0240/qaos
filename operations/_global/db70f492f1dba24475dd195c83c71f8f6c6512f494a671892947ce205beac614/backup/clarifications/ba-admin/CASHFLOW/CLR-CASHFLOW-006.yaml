@@ -1,0 +1,74 @@
+clarification_id: CLR-CASHFLOW-006
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+question: 額度上限被拒絕（1-OVER LIMIT）是否比照餘額不足（1-NO CREDITS），不寫入交易紀錄？
+context: '【背景】CLR-CASHFLOW-005（已 APPLIED）確認額度上限判定改於 end-cashin（依入鈔機實際清點金額），req-cashin 不判額度、任何金額皆會成功建立 PENDING。
+
+
+  【spec 原文：SPEC-CASHFLOW-001 v0.1 §附錄狀態碼對照】
+
+  「1-OVER LIMIT ｜ 超過額度上限 ｜ 本次金額加計後，全場館機台分數餘額合計將超過場館額度上限」（未標註是否寫入紀錄）
+
+  「1-NO CREDITS ｜ 餘額不足 ｜ …**不寫入交易紀錄**，僅回覆本碼（2026-09-03 定案）」
+
+
+  【spec 原文：SPEC-TXLOG-001 v0.1 §交易狀態】
+
+  「未成立 | 平台拒絕了這筆請求；分數未異動，原因見「未成立原因」欄（**餘額不足不寫入紀錄，故本狀態不含餘額不足**）」——此句排除語的原意是「除餘額不足外，其餘未成立原因皆寫入」，隱含額度上限（1-OVER LIMIT）要寫入紀錄。
+
+
+  【RM 現況】REQ-CASHFLOW-030／AC-CASHFLOW-0301／0302（ACTIVE）明訂：餘額不足不留紀錄；額度上限或其他原因會留下「未成立」紀錄。TC-CASHFLOW-035、TC-CASHFLOW-005（ACTIVE）皆依此設計（斷言額度上限會留紀錄）。BUG-CASHFLOW-002（OPEN，症狀②）正是依此規則判定「額度上限被拒絕未留紀錄」為缺陷。
+
+
+  【2026-09-23 Oscar 確認】額度上限不會保留紀錄，理由與 CLR-CASHFLOW-005 相同的防禦考量：req-cashin 不判額度、任何金額都能建立 PENDING，若 end-cashin 判定超限時都寫入「未成立」紀錄，攻擊者可狂送鉅額入金請求，讓資料庫被大量不需要的未成立紀錄灌爆——這是把
+  DoS 防禦破口從「機台卡在等待中」換成「資料庫被灌爆」，與整體防禦設計矛盾。
+
+
+  【範圍待確認】狀態碼表另有 6-BAD DATA/FORMAT（資料格式錯誤）、7-OUT OF SERVICE（機台停用/場館未開通）、9-OTHER ERROR（憑證失效/系統錯誤）三種未成立原因，這些是否也比照不留紀錄，或僅額度上限（因高頻可攻擊）適用此例外？'
+options:
+- A. 僅額度上限不留紀錄（與餘額不足並列為例外，理由：兩者皆為高頻、客戶端可輕易觸發的拒絕情境）；資料格式錯誤／機台停用／憑證失效三種仍留紀錄（低頻、非典型攻擊手段）
+- B. 所有未成立原因一律不留紀錄，交易紀錄查詢只顯示已完成／待確認／已取消／已逾時
+- C. 其他（請說明範圍）
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-23T10:08:00Z'
+status: APPLIED
+history:
+- at: '2026-09-23T10:08:00Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-23T15:46:30Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked RD/PM
+- at: '2026-09-23T15:50:55Z'
+  from_status: ASKED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by Oscar（QA，2026-09-23）
+- at: '2026-09-23T15:55:56Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 'RM：REQ-CASHFLOW-030（AC-0302 反轉）、REQ-TXLOG-001（AC-0011 移除未成立）、REQ-TXLOG-016（AC-0161 反轉，與 0162 一致）、REQ-TXLOG-023（補充驗證能力缺口）（req_clr006_apply.py）；impact-scan[9]:
+    TC-CASHFLOW-004(keyword:額度上限)；TC-CASHFLOW-005(keyword:未成立,keyword:1-OVER LIMIT,keyword:額度上限)；TC-CASHFLOW-006(keyword:額度上限)；TC-CASHFLOW-008(keyword:1-OVER
+    LIMIT,keyword:額度上限)；TC-CASHFLOW-009(keyword:1-OVER LIMIT,keyword:額度上限)；TC-CASHFLOW-011(keyword:額度上限)；TC-CASHFLOW-034(keyword:1-OVER
+    LIMIT,keyword:額度上限)；TC-CASHFLOW-035(requirement,keyword:未成立,keyword:額度上限,keyword:未成立原因)；TC-CASHFLOW-042(keyword:未成立)；reviewed:
+    跨 area 手動掃描 CASHFLOW/CASHOUT/TXLOG 共 20 條候選：需修訂 5 條——TC-CASHFLOW-005（斷言留紀錄需反轉）、TC-CASHFLOW-035（整條重寫，額度上限與餘額不足現待遇一致）、TC-TXLOG-125（移除未成立、改列三態）、TC-TXLOG-146（整條反轉為查無此筆，比照
+    TXLOG-147）、TC-TXLOG-158（AC-0231 正向分支無法建立前置條件，需標註或調整範圍）；不受影響 15 條——CASHFLOW-004/006/042（斷言與紀錄與否無關）、018/037/049/058/059/060（只斷言狀態碼，未斷言是否留紀錄，技術上未被推翻）、CASHFLOW-008/009/011/034（CLR-005
+    已處理判定時機，未斷言留紀錄）、CASHOUT-045（已符合新規則，未成立查無此筆核實紀錄）、TXLOG-147（餘額不足的子集斷言依然成立，且已是新規則的範例）'
+requirement_id: REQ-CASHFLOW-030
+impact_if_unanswered: REQ-CASHFLOW-030／AC-CASHFLOW-0301/0302 需回寫；TC-CASHFLOW-035、TC-CASHFLOW-005 斷言方向需修訂；BUG-CASHFLOW-002
+  症狀②依此不再成立，整張單需重新檢視；先前依『額度上限會留紀錄』假設凍結的一批 TXLOG TC 需重新檢視
+asked_to: RD/PM
+asked_at: '2026-09-23T15:46:30Z'
+answer: B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種狀態；「未成立」不會有任何紀錄可查，「未成立原因」欄實質上永遠不會顯示內容。理由：req-cashin／req-keyin
+  階段對客戶端輸入的檢核（額度、格式、機台狀態、憑證）若都要在被拒絕時寫入紀錄，等同把資料庫暴露在客戶端可輕易高頻觸發的灌爆風險下，與 CLR-CASHFLOW-005 的整體防禦設計一致（不信任未經驗證的客戶端輸入）。
+answered_by: Oscar（QA，2026-09-23）
+answered_at: '2026-09-23T15:50:55Z'
+resolution: requirement_clarified

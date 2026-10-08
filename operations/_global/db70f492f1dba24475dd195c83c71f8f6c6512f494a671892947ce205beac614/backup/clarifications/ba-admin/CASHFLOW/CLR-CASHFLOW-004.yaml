@@ -1,0 +1,40 @@
+clarification_id: CLR-CASHFLOW-004
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+question: 交易紀錄查詢頁的「手動取消」操作，2026-09-14的確認（REQ-TXLOG-028：此操作不存在）能否請RD重新核實實際畫面？
+context: "完整spec原文（實體機台正本 SPEC-ARCADE-001 §機台交易紀錄／操作小節，609-620行）：\n\n「#### 操作\n  - 查看明細： 點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄。\n  - 手動取消：\
+  \ 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理\n\n> 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 >「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳。\n\
+  \n> ⚠️ 手動取消前務必先與現場確認實體狀況——紙鈔是否已進錢箱、收據是否已印出。取消後平台會告知機台這筆交易不存在，機台就會停止重試；若現場實際上已經收了錢或印了收據，會造成帳實不符。」\n\n這段話清楚區分兩件事：「手動取消」是本頁明確提供的操作（獨立條列）；「本頁不提供核實操作」講的是另一件事（核實，不是取消）。同樣的「手動取消」定義在正本裡至少還出現在616/620/778/809/829/894/913/916/944行，共9處，且\
+  \ SPEC-CASHFLOW-001 的 REQ-CASHFLOW-008（入金額度預留釋放）與 REQ-CASHFLOW-026（出金第一階段15秒逾時死單）都把「Admin/站長於交易紀錄手動取消該筆」列為死單收斂的關鍵風控路徑之一。\n\
+  \n但 SPEC-TXLOG-001 的 REQ-TXLOG-028 標註「已由 Oscar 2026-09-14 依實際畫面確認：此操作不存在，查無可手動取消的交易」。由於 spec 對此功能的定義如此明確且反覆出現、又是關鍵風控機制的收斂路徑，想請RD/實際操作者重新核實一次：交易紀錄查詢頁的「待確認」狀態交易，是否真的完全沒有「手動取消」這個操作入口（例如是否受權限、篩選條件、或該筆交易狀態的顯示方式影響而不容易找到）？"
+options:
+- 重新核實後，確認手動取消操作確實存在，只是先前確認時未找到入口——REQ-TXLOG-028需要撤回/修正
+- 重新核實後，確認手動取消操作真的不存在於現行產品——這是一個真正的功能缺失，需要走Bug流程記錄並排入開發，同時CASHFLOW-008/026依賴的收斂機制需要重新設計
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-15T05:28:52Z'
+status: APPLIED
+history:
+- at: '2026-09-15T05:28:52Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-15T05:48:18Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by oscarchen@blockaction.tech
+- at: '2026-09-15T05:48:38Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 已直接patch REQ-CASHFLOW-008/026的statement，移除不存在的手動取消收斂路徑
+requirement_id: REQ-CASHFLOW-008
+impact_if_unanswered: 若手動取消操作真的不存在，CASHFLOW-008/026與REQ-TXLOG-028都需要修正，且入金額度預留死單、出金15秒逾時死單這兩個風控機制目前沒有收斂路徑，屬於需要優先排開發的問題
+answer: 交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分出金核實」頁操作，但該頁的「作廢」操作僅適用於已完成、已生成收據的出金交易（REQ-CASHOUT-007），不處理待確認狀態的PENDING死單，範圍對不上正本裡「手動取消待確認交易」原本要處理的情境。REQ-CASHFLOW-008（入金預留釋放）與REQ-CASHFLOW-026（出金15秒逾時死單）裡「Admin/站長手動取消」這條收斂路徑需要移除：出金死單仍有「新請求取代」與REQ-CASHFLOW-027「人工出金連動取消」兩條路徑可收斂；入金死單僅剩「PENDING逾時24小時自動釋放」，不是資金卡死風險，只是少了立即處理的手動路徑，直接修正REQ即可，不需開Bug
+answered_by: oscarchen@blockaction.tech
+answered_at: '2026-09-15T05:48:18Z'
+resolution: requirement_clarified

@@ -1,0 +1,42 @@
+clarification_id: CLR-DAILYREPORT-009
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+question: 「未兌現金額不受週期影響、累計至查詢當下」是否也不受結算日期範圍限制？
+context: REQ-015 major ambiguity；TC-DAILYREPORT-046 以假設「不受結算日期限制」處理
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-13T17:26:08Z'
+status: APPLIED
+history:
+- at: '2026-09-13T17:26:08Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-13T17:26:08Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked PM
+- at: '2026-09-13T17:26:08Z'
+  from_status: ASKED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM／QA（2026-09-14，經 Oscar 轉達，附截圖）
+- at: '2026-09-17T20:06:44Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 對應TC-DAILYREPORT-046已依此回覆修正為v2 ACTIVE（RUN-20260918-006, APR-0122），正式落地
+requirement_id: REQ-DAILYREPORT-015
+asked_to: PM
+asked_at: '2026-09-13T17:26:08Z'
+answer: 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200；(a) 結算 09-03～09-09 按週 → 09-07～09-09 列未兌現 1000、09-03～09-06
+  列 0；(b) 結算 09-03～09-10 → 09-07～09-10 列 1200、09-03～09-06 列 0。→ **TC-DAILYREPORT-046 的假設（不受結算日期限制）是錯的**，該案 expected 需改為「不包含範圍外的
+  200」；建議 APR-0003 逐項 reject TC-046，待 spec v0.2 走 WF-C 重寫。
+answered_by: PM／QA（2026-09-14，經 Oscar 轉達，附截圖）
+answered_at: '2026-09-13T17:26:08Z'
+resolution: requirement_clarified

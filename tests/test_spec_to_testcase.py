@@ -18,8 +18,8 @@ def test_00_spec_import(fixtures):
         cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-AUTH-001", "--version", "1.0", "--product", "demo", "--area", "AUTH", "--by", "x"])
 
 def test_01_new_run_requires_valid_spec_version():
-    with pytest.raises(EngineError): engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "9.9"}, "oscar@example.com")
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com")
+    with pytest.raises(EngineError): engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "9.9"}, "oscar@example.com", new_request=True)
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     RUN["id"] = run["run_id"]
     assert run["status"] == "RUNNING" and run["current_task_id"] == "T1"
     assert [t["status"] for t in run["tasks"]] == ["READY", "PENDING", "PENDING", "PENDING", "PENDING"]
@@ -27,21 +27,21 @@ def test_01_new_run_requires_valid_spec_version():
 def test_02_permission_guard_rejects_wrong_agent_and_type():
     rid = RUN["id"]
     # Test Designer 冒充在 T1 提交（created_by 不符）→ permission violation → run FAILED
-    bad = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com")
+    bad = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     aid, p = H.write_artifact(bad["run_id"], "T1", "agent-test-designer", "RequirementModel", H.requirement_model(),
                               [{"entity_type": "SpecVersion", "id": "SPEC-AUTH-001", "version": "1.0"}], {"type": "SpecVersion", "ids": ["SPEC-AUTH-001@1.0"]}, "spec-analysis")
     ok, problems = engine.submit(bad["run_id"], "T1", str(p))
     assert not ok and any("越權" in x for x in problems)
     b = engine.load_run(bad["run_id"]); assert b["status"] == "FAILED" and b["tasks"][0]["permission_violations"]
     # Spec Analyst 產出自己無權產出的 TestCaseDraft → 無權產出
-    bad3 = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com")
+    bad3 = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     tcs, _ = H.draft_set()
     aid, p = H.write_artifact(bad3["run_id"], "T1", "agent-spec-analyst", "TestCaseDraft", {"mode": "spec", "spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "testcases": tcs},
                               [], {"type": "x", "ids": []}, "spec-analysis")
     ok, problems = engine.submit(bad3["run_id"], "T1", str(p))
     assert not ok and any("無權產出" in x for x in problems) and engine.load_run(bad3["run_id"])["status"] == "FAILED"
     # 寫錯目錄（Spec Analyst 寫到 test-design/）→ violation
-    bad2 = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com")
+    bad2 = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     aid, p = H.write_artifact(bad2["run_id"], "T1", "agent-spec-analyst", "RequirementModel", H.requirement_model(),
                               [{"entity_type": "SpecVersion", "id": "SPEC-AUTH-001", "version": "1.0"}], {"type": "SpecVersion", "ids": []}, "test-design")
     ok, problems = engine.submit(bad2["run_id"], "T1", str(p))
@@ -53,7 +53,8 @@ def test_03_T1_spec_analyst_structural_gate():
     # 先提交一份缺 AC 的 RequirementModel → schema INVALID（requirement.acceptance_criteria minItems 1）
     broken = H.requirement_model(); broken["requirements"][0]["acceptance_criteria"] = []
     aid, p = H.write_artifact(rid, "T1", "agent-spec-analyst", "RequirementModel", broken, refs_, {"type": "SpecVersion", "ids": ["SPEC-AUTH-001@1.0"]}, "requirements")
-    ok, problems = engine.submit(rid, "T1", str(p)); assert not ok and store.load(p)["status"] == "INVALID"
+    ok, problems = engine.submit(rid, "T1", str(p)); assert not ok and store.load(p)["status"] == "DRAFT"   # 驗證失敗不改 artifact 檔
+    g = engine.load_run(rid)["tasks"][0]["gate_results"][-1]; assert g["result"] == "FAIL" and g["artifact_id"] == aid   # INVALID 記在 gate_results
     assert engine.load_run(rid)["tasks"][0]["status"] == "READY"  # structural fail 不計迭代、可重試
     # 正確提交 SpecAnalysis + RequirementModel
     sa_payload = {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "content_hash": store.load(store.spec_dir("SPEC-AUTH-001") / "spec.yaml")["versions"][0]["content_hash"],

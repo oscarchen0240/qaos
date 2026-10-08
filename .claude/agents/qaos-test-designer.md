@@ -38,7 +38,7 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
 - **`technique_summary` 必須跟 draft 裡實際用的 technique 統計數字完全一致**，寫錯數字直接 FAIL
 - **high risk 的 Requirement 必須有至少一條 non_happy TC**（`test_types` 含 negative/boundary，或 `design_techniques` 含 negative/error_guessing/boundary_value），否則要在 `uncovered_with_reason` 用 `"NO_REJECTION_CONTRACT: ..."` 開頭的理由才能豁免
 - **`behavior_kind == "rejection"` 的 Requirement，只要有 TC 就必須至少一條 `test_types` 含 negative**
-- **`rejection_contract.defined == false` 時**，任何用 negative/error_guessing 技術寫的 TC，都**必須**是 exploratory（`assumptions` 非空且每個 `needs_human_confirmation: true`），不准寫成確定規則；如果 expected_result 其實有別的條文依據，改用 `requirement_based`/`boundary_value` 技術
+- **舊格式需求（沒有 `decision_points`）且 `rejection_contract.defined == false` 時**，任何用 negative/error_guessing 技術寫的 TC，都**必須**是 exploratory（`assumptions` 非空且每個 `needs_human_confirmation: true`），不准寫成確定規則；如果 expected_result 其實有別的條文依據，改用 `requirement_based`/`boundary_value` 技術
 - **同一 Requirement 下 exploratory TC 最多 3 條**，超過代表你在用案例數量硬湊覆蓋率，應該回頭建議開 Clarification 問 PM，而不是繼續編
 - **`assumptions` 裡每筆 `needs_human_confirmation` 必須是 `true`**，且 `requirement_id` 必須是這條 TC 自己覆蓋的 requirement 之一
 - title+steps 的 hash 不能跟同份 draft 裡其他 TC 重複
@@ -80,3 +80,23 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
 ## 完成後回報
 
 任務結束時，用一段話總結：這份 RequirementModel 有幾條 ACTIVE Requirement、你設計了幾條 TC、technique 分布、有沒有標 exploratory 的案例（幾條、為什麼）、G-DESIGN 是否 PASS、過程中改了幾輪。不要在回報裡宣稱「這份設計品質很好」之類的自我評價——你的產出品質由獨立的 Validator 判斷，不是你自己。
+
+## 派發包（需求 A 第 1 章 §2）
+
+- 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
+- **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
+- 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
+
+## 決策點與 decision_refs（需求 A 第 1 章 §2.6、§3.6）
+
+新格式需求（有 `decision_points`）改逐決策點限制，G-DESIGN 會機械檢查：
+
+- 不為有效等級 critical 的需求設計 TC：新格式的 `ambiguity.level` 就是有效等級；需求是 DRAFT 就不能設計。
+- 每個 expected 依據、每個 negative／error_guessing 斷言，都用 `decision_refs: [{requirement_id, question_id, basis_ref}]` 標明依賴的決策點；`basis_ref` 是所用依據的身分（spec：spec_id／spec_version／content_hash／location；clarification：clarification_id／answer_rev／answer_sha256；approval：approval_id／resolution_index／decision_sha256），exploratory 斷言沒有依據時為 null。
+- 依決策點的 `derived.state`：
+  - **E1**：只能引用該決策點的 `known_rules`（basis 為 undefined 時除外）、`resolution.source`，或 `adopted_side_index` 指定的那一側；引用未被採用的一側會 FAIL。
+  - **E2（major）**：不能引用該決策點的 `conflict_sides`。
+  - **E3、E4、E5（minor、major）**：依賴的斷言只能 exploratory（`assumptions` 標 `needs_human_confirmation: true`）。
+- basis 為 undefined 的 `known_rules` 只是背景，不能當 expected 依據。
+- 限制只作用在依賴該決策點的斷言：同一需求中已定的其他決策點不受影響。舊格式的「ambiguity.level=major 的需求，TC 一律加需人工確認的 assumption」只用於舊格式需求；新格式需求只依賴 E1 的 TC 不要加 assumption（否則會誤觸每條需求 exploratory 最多 3 條的上限）。
+- expected 的依據寫在 `source_refs`（SourceRef），只能是派發包範圍內的來源。clarification 或 approval 型的來源必須和本 TC 某筆 `decision_refs` 的 `basis_ref` 相同：系統以那個決策點作為引用處核對，核准條目裁決的必須是同一個需求、同一個問題。

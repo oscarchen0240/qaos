@@ -1,7 +1,7 @@
 """Workflow 引擎：Run 建立、Artifact 提交（Permission Guard + Structural Gate）、Gate 評估與效果、Approval、Commit。
 Agent 永遠不呼叫這裡的 commit；只有 approve() 在 Human 決定後觸發。"""
 import pathlib
-from . import store, schema, ids, state, refs, gates, clarification as clr
+from . import store, schema, ids, state, refs, gates, operation, rm, dispatch, decisions, sources, clr_lifecycle, clarification as clr
 from .state import TransitionError
 
 SYSTEM = "system"
@@ -14,7 +14,7 @@ def agents():
     global _agents
     if _agents is None:
         _agents = {}
-        for p in (store.ROOT / "agents").glob("*.yaml"):
+        for p in store.glob("agents/*.yaml"):
             a = store.load(p); _agents[a["id"]] = a
     return _agents
 
@@ -55,15 +55,102 @@ def _wf_task(wf: dict, task_id: str) -> dict:
         return {"id": task_id, "agent": wf["risk_review"]["agent"], "outputs": ["TCRiskReview"], "gate": "G-RISK"}
     return next(t for t in wf["tasks"] if t["id"] == task_id)
 
-def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
-    """run_if / skip_if 的機械判斷（Phase 2 只支援 RequirementModel 存在性）。"""
-    cond = wt.get("skip_if") or (f"NOT({wt['run_if']})" if wt.get("run_if") else None)
-    if not cond: return False
-    ver = inputs.get("spec_version") or inputs.get("to_version")
-    exists = store.exists(store.requirements_path(inputs["spec_id"], ver)) if inputs.get("spec_id") and ver else False
-    if wt.get("skip_if"): return exists
-    return exists  # run_if "NOT exists" → skip when exists
+def _skip_decision(wf: dict, wt: dict, inputs: dict) -> tuple[bool, str | None]:
+    """分析 task（有 run_if／skip_if 的 T0、T1）是否跳過，依第 5 章 §7 的優先序；回傳 (是否跳過, 要記入 audit 的警告)。"""
+    if not (wt.get("skip_if") or wt.get("run_if")): return False, None
+    sid, ver = inputs.get("spec_id"), inputs.get("spec_version") or inputs.get("to_version")
+    if not (sid and ver): return False, None
+    if wf["workflow_id"] == "spec-change-impact" and str(inputs.get("from_version")) == str(inputs.get("to_version")): return False, None   # 同版本 CIA：T0 一定執行（§8）
+    pin = rm.latest_pin(sid, ver)
+    if pin is None: return False, None                                       # 1. 沒有 RM
+    if rm.has_non_active(pin): return False, None                            # 2. 最新 revision 有非 ACTIVE 的需求（優先於 legacy 例外）
+    o = rm.outdated(pin)
+    if o["declaration_changed"] or o["decision_revised"]: return False, None # 3.
+    from . import spec_ops
+    _, _, e = spec_ops.find_entry(sid, ver)
+    if pin["revision"] == "R000" and spec_ops.references_status(e) == "undeclared":   # 4. 只有 legacy R000、未宣告引用、全部 ACTIVE
+        return True, f"沿用 legacy {sid}@{ver} R000（引用未宣告）跳過分析"
+    return True, None                                                         # 5.
 
+def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
+    return _skip_decision(wf, wt, inputs)[0]
+
+def _require_fresh(pin: dict, label: str):
+    """沒有 T0 的流程（testcase-revision、manual）在 run new 時凍結 revision：過時或有非 ACTIVE 需求 → 拒絕，提示先重新分析（§4.3）。"""
+    o = rm.outdated(pin); why = [k for k in ("declaration_changed", "decision_revised") if o[k]]
+    if rm.has_non_active(pin): why.append("最新 revision 有非 ACTIVE 的需求")
+    if why: raise EngineError(f"{label} 的 {pin['spec_id']}@{pin['spec_version']} {pin['revision']} 不能直接沿用（{', '.join(why)}）；請先重新分析。" + ("；".join(o["details"]) and f" 細節：{'；'.join(o['details'])}"))
+
+def _require_analyzable(workflow_id: str, inputs: dict):
+    """reference_only 的 spec 版本不能當任何 run 的分析目標（需求 A 第 2 章 §3.4 的 7 個入口）。"""
+    from . import spec_ops
+    checks = []
+    if inputs.get("spec_id"):
+        for k, label in (("spec_version", f"{workflow_id} 的 inputs.spec_id"), ("from_version", "spec-change-impact 的 from 端"), ("to_version", "spec-change-impact 的 to 端")):
+            if inputs.get(k): checks.append((inputs["spec_id"], inputs[k], label))
+    if workflow_id == "testcase-revision" and inputs.get("testcase_id") and store.exists(store.tc_pointer_path(inputs["testcase_id"])):
+        ptr = store.load(store.tc_pointer_path(inputs["testcase_id"]))
+        ver = ptr.get("active_version")
+        if ver and store.exists(store.tc_version_path(inputs["testcase_id"], ver)):
+            tv = store.load(store.tc_version_path(inputs["testcase_id"], ver))
+            if tv.get("spec_id") and tv.get("spec_version"): checks.append((tv["spec_id"], tv["spec_version"], "被修訂 TC 版本的 spec"))
+    if workflow_id == "manual-test-to-regression" and inputs.get("manual_record_id") and store.exists(f"testcases/manual/{inputs['manual_record_id']}.yaml"):
+        h = store.load(f"testcases/manual/{inputs['manual_record_id']}.yaml").get("spec_hint") or {}
+        if h.get("spec_id") and h.get("spec_version"): checks.append((h["spec_id"], h["spec_version"], "manual record 的 spec_hint"))
+    for sid, ver, label in checks:
+        try: spec_ops.require_analyzable(sid, str(ver), label)
+        except spec_ops.SpecError as e: raise EngineError(str(e))
+
+def _target_of(workflow_id: str, inputs: dict) -> tuple[str, str] | None:
+    """manual-test-to-regression 的目標 spec：inputs 優先，其次 manual record 的 spec_hint（第 5 章 §4.2）。"""
+    if inputs.get("spec_id") and inputs.get("spec_version"): return inputs["spec_id"], str(inputs["spec_version"])
+    if workflow_id == "manual-test-to-regression" and inputs.get("manual_record_id") and store.exists(f"testcases/manual/{inputs['manual_record_id']}.yaml"):
+        h = store.load(f"testcases/manual/{inputs['manual_record_id']}.yaml").get("spec_hint") or {}
+        if h.get("spec_id") and h.get("spec_version"): return h["spec_id"], str(h["spec_version"])
+    return None
+
+def _tc_target(inputs: dict) -> tuple[str, str]:
+    """testcase-revision 的目標由被修訂 TC 的 ACTIVE 版本推得（第 5 章 §4.2、§4.3）；inputs 的 spec 和它不符 → 拒絕（跨版本改動走 CIA）。"""
+    tc = inputs.get("testcase_id")
+    if not tc or not store.exists(store.tc_pointer_path(tc)): raise EngineError(f"testcase-revision 找不到被修訂的 TC：{tc!r}")
+    ptr = store.load(store.tc_pointer_path(tc))
+    if not ptr.get("active_version"): raise EngineError(f"{tc} 沒有 ACTIVE 版本，不能 testcase-revision")
+    v = store.load(store.tc_version_path(tc, ptr["active_version"]))
+    tgt = (v["spec_id"], str(v["spec_version"]))
+    given = (inputs.get("spec_id"), str(inputs.get("spec_version")) if inputs.get("spec_version") is not None else None)
+    if given != tgt: raise EngineError(f"testcase-revision 的 spec 必須是 {tc} v{ptr['active_version']} 自己的 {tgt[0]}@{tgt[1]}（inputs 是 {given[0]}@{given[1]}）；跨版本改動請走 spec-change-impact")
+    return tgt
+
+def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
+    """new_run 時就要綁定的 revision（第 5 章 §4.2）：spec-change-impact 的 from 端；沒有 T0 的 testcase-revision、manual 綁目標版本的最新 revision。"""
+    out = {}
+    if workflow_id == "spec-change-impact":
+        if str(inputs["from_version"]) == str(inputs["to_version"]):         # 同版本 CIA（§8）
+            if not inputs.get("from_revision") or not inputs.get("reason"):
+                raise EngineError("同版本的 spec-change-impact 必須帶 --input from_revision=R<NNN> 與 --input reason=declaration_changed|decision_revised|decision_applied")
+            try: pin = rm.pin_of(inputs["spec_id"], str(inputs["from_version"]), inputs["from_revision"])
+            except rm.RMError as e: raise EngineError(str(e))
+            reason = inputs["reason"]
+            if reason not in ("declaration_changed", "decision_revised", "decision_applied"): raise EngineError(f"reason 只能是 declaration_changed、decision_revised 或 decision_applied：{reason!r}")
+            actual = rm.decision_applied(pin) if reason == "decision_applied" else rm.outdated(pin)[reason]
+            if not actual: raise EngineError(f"{inputs['from_revision']} 的判定結果不是 {reason}；不能以這個理由做同版本 CIA")
+            out["from_requirement_model_revision"] = pin
+        else:
+            pin = rm.latest_pin(inputs["spec_id"], inputs["from_version"])
+            if pin: out["from_requirement_model_revision"] = pin
+    elif workflow_id in ("testcase-revision", "manual-test-to-regression"):
+        tgt = _tc_target(inputs) if workflow_id == "testcase-revision" else _target_of(workflow_id, inputs)
+        if tgt is None: raise EngineError("沒有可分析的 spec：先在 manual record 補 spec_hint（spec_id、spec_version），或以 inputs 指定 spec")
+        pin = rm.latest_pin(*tgt)
+        if pin is None: raise EngineError(f"{tgt[0]}@{tgt[1]} 還沒有需求模型 revision；先以 spec-to-testcase 分析")
+        _require_fresh(pin, workflow_id)
+        out["requirement_model_revision"] = pin
+        if workflow_id == "testcase-revision" and inputs.get("testcase_id") and store.exists(store.tc_pointer_path(inputs["testcase_id"])):
+            ptr = store.load(store.tc_pointer_path(inputs["testcase_id"]))
+            if ptr.get("active_version"): out["testcase_pin"] = rm.tc_pin(inputs["testcase_id"], ptr["active_version"])   # 被修訂 TC 自己的舊 pin，供 diff
+    return out
+
+@operation.operation("run_new")
 def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     wf = workflow(workflow_id)
     missing = [k for k, v in wf["input"]["fields"].items() if v.get("required") and k not in inputs and k != "initiated_by"]
@@ -80,10 +167,12 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
             if inputs.get(k):
                 err = refs.resolve({"entity_type": "SpecVersion", "id": inputs["spec_id"], "version": inputs[k]})
                 if err: raise EngineError(err)
+    _require_analyzable(workflow_id, inputs)
+    pins = _bind_at_new_run(workflow_id, inputs)
     run_id = ids.alloc("RUN")
     run = {"run_id": run_id, "workflow_id": workflow_id, "workflow_version": wf["version"], "status": None,
            "input": {**inputs, "initiated_by": by}, "initiated_by": by, "created_at": store.now(), "updated_at": store.now(),
-           "tasks": _expand_tasks(wf, inputs), "history": []}
+           "tasks": _expand_tasks(wf, inputs), "history": [], **pins}
     state.apply("workflow_run", run, "CREATED", SYSTEM, f"new_run by {by}", run_id)
     state.apply("workflow_run", run, "RUNNING", SYSTEM, "task graph expanded", run_id)
     _save_run(run)
@@ -114,7 +203,12 @@ def _advance(run: dict, after: str | None = None):
     t = _next_task(run, after)
     while t is not None:
         wt = _wf_task(wf, t["task_id"])
-        if t["type"] == "agent" and _skip(wf, wt, run["input"]):
+        skip, warn = _skip_decision(wf, wt, run["input"]) if t["type"] == "agent" else (False, None)
+        if skip:
+            inp = run["input"]
+            if warn: store.audit(run["run_id"], SYSTEM, "WARN_LEGACY_SKIP", warn)
+            if not run.get("requirement_model_revision"):                    # 跳過分析時，run 綁定最新 revision（第 5 章 §4.2、§7）
+                rm.bind_run(run, rm.latest_pin(inp["spec_id"], inp.get("spec_version") or inp.get("to_version")))
             t["status"] = "DONE"; store.audit(run["run_id"], SYSTEM, "SKIP_TASK", t["task_id"]); t = _next_task(run, t["task_id"]); continue
         if t["type"] == "approval":
             state.apply("task", t, "READY", SYSTEM, "advance"); state.apply("task", t, "RUNNING", SYSTEM, "advance")
@@ -122,11 +216,39 @@ def _advance(run: dict, after: str | None = None):
         if t["type"] == "agent" and t["agent_id"] == "agent-supervisor" and "WorkflowSummary" in (wt.get("outputs") or []):
             state.apply("task", t, "READY", SYSTEM, "advance"); state.apply("task", t, "RUNNING", SYSTEM, "advance")
             _summarize(run, t); return
+        if dispatch.needs_packet(t) and dispatch.current_entry(t):           # 這個 iteration 已派發過（被退回後重做）→ 進入新的 iteration（附錄 A 1-39）
+            t["iteration"] += 1
         state.apply("task", t, "READY", SYSTEM, "advance"); run["current_task_id"] = t["task_id"]; _save_run(run); return
     if run["status"] == "RUNNING":
         state.apply("workflow_run", run, "COMPLETED", SYSTEM, "all tasks done", run["run_id"]); _save_run(run)
 
 # ---------- Submit（Permission Guard + Structural Gate 第一層） ----------
+def _submit_request(run_id, task_id, artifact_path):
+    # 只用路徑與 artifact_id：提交本身會改寫 artifact 的狀態，內容 hash 不能進 op_id（否則中止後重送會變成另一個 op）
+    r = store.rel(artifact_path)
+    aid = store.load(r).get("artifact_id") if store.exists(r) else None
+    return {"targets": {"run_id": run_id, "task_id": task_id}, "inputs": {"artifact": r, "artifact_id": aid}}
+
+def _run_pins(run) -> list[dict]:
+    """run 綁定的 RMPin（目標／to 端在前，spec-change-impact 另有 from 端），依 run 欄位 → run sidecar 解析（第 5 章 §4.1）。"""
+    out = []
+    for end in ("target", "from"):
+        try: out.append(rm.run_pin(run, end))
+        except rm.RMError: pass
+    return out
+
+def _resolve_in_run(ref, run) -> str | None:
+    """artifact 引用的 Requirement／AC 只在 run 綁定的 revision 中找（不讀可變的檢視、不改查最新）。
+    run 沒有任何綁定 → 錯誤；只有本來就不綁 spec 的 regression-generation 例外（第 5 章 §4.2）。"""
+    if ref["entity_type"] not in ("Requirement", "AcceptanceCriterion"): return refs.resolve(ref)
+    pins = _run_pins(run)
+    if not pins:
+        if run["workflow_id"] == "regression-generation": return refs.resolve(ref)
+        return f"{ref['entity_type']} {ref['id']}：run {run['run_id']} 還沒有綁定需求模型 revision，不能解析需求引用"
+    errs = [refs.resolve(ref, pin=p) for p in pins]
+    return None if any(e is None for e in errs) else errs[0]
+
+@operation.operation("submit", request=_submit_request, scope=lambda run_id, *a, **k: run_id)
 def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[str]]:
     run = load_run(run_id); task = _task(run, task_id); problems = []
     if run["status"] != "RUNNING": raise EngineError(f"Run 狀態 {run['status']}，不接受提交")
@@ -148,9 +270,24 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     if art["run_id"] != run_id or art["task_id"] != task_id: problems.append("artifact 的 run_id/task_id 與提交目標不符")
     if p.stem != art["artifact_id"]: problems.append(f"檔名 {p.name} 必須等於 artifact_id")
     if art["status"] not in ("DRAFT", "SUBMITTED"): problems.append(f"artifact 狀態 {art['status']} 不可提交")
+    # 派發包（第 1 章 §2.2、附錄 A 1-6）：產出必須指向 task 本次 iteration 的派發包
+    if dispatch.needs_packet(task):
+        e = dispatch.current_entry(task)
+        if e is None: problems.append(f"{task_id} iteration {task['iteration']} 還沒有派發包；先執行 qaos dispatch {run_id} {task_id}")
+        elif art.get("dispatch_packet_sha256") != e["sha256"]:
+            problems.append(f"dispatch_packet_sha256 不是 {task_id} 本次 iteration {task['iteration']} 的派發包 {e['path']}（沿用舊 iteration 的派發包不能提交）")
+        else:
+            try: dispatch.load_packet(e)
+            except dispatch.DispatchError as ex: problems.append(str(ex))
+    # 推導欄位不在 agent 的產出中（附錄 A 1-11）
+    if art["artifact_type"] == "RequirementModel":
+        for r in art["payload"].get("requirements") or []:
+            for dp in r.get("decision_points") or []:
+                bad = [k for k in ("basis_hash", "derived") if k in dp]
+                if bad: problems.append(f"{r['requirement_id']}/{dp.get('question_id')} 帶了 runtime 推導的欄位 {bad}（agent 不能填寫）")
     # 引用逐一存在
     for r in art["references"]:
-        err = refs.resolve(r)
+        err = _resolve_in_run(r, run)
         if err: problems.append(f"reference: {err}")
     # 輸入 artifact 必須是 dispatch 指定的（Phase 2：必須屬於本 run 且 VALID）
     for r in art["references"]:
@@ -180,24 +317,19 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     return True, []
 
 def _mark_invalid(run, task, art, p, problems):
-    if isinstance(art, dict) and art.get("artifact_id") and art.get("status") in ("DRAFT", "SUBMITTED"):
-        # 只有本次真正被評估中的 artifact（DRAFT/SUBMITTED）才標 INVALID；
-        # 若問題是「artifact 狀態 X 不可提交」這種 client 端誤用已存在的 VALID/SUPERSEDED artifact，不得覆寫其狀態。
-        art["status"] = "INVALID"; art.setdefault("history", None)
-        art.pop("history", None); store.save(p, art)
-    task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL", "details": problems[:20]})
+    # 驗證失敗不改 artifact 檔（最終規格第 4 章 §13）：INVALID 只記在 task 的 gate_results（含 artifact_id）。
+    aid = art.get("artifact_id") if isinstance(art, dict) else None
+    task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL", "details": problems[:20], **({"artifact_id": aid} if aid else {})})
     if any("越權" in x or "無權" in x or "write_paths" in x for x in problems):
         task.setdefault("permission_violations", []).append({"at": store.now(), "action": "CREATE_ARTIFACT", "detail": "; ".join(problems)[:500]})
         state.apply("task", task, "FAILED", SYSTEM, "permission violation")
         state.apply("workflow_run", run, "FAILED", SYSTEM, f"{task['task_id']} permission violation", run["run_id"])
         store.audit(run["run_id"], task.get("agent_id", "?"), "PERMISSION_VIOLATION", "; ".join(problems)[:300])
     else:
+        # 驗證失敗：只寫允許的診斷（task 欄位與一個事件），不建立計畫、不開核准單；task 維持可重試，要放棄由人 run cancel
+        store.mark_diagnostic()
         state.apply("task", task, "ARTIFACT_INVALID", SYSTEM, "structural fail")
-        n = sum(1 for g in task["gate_results"] if g["layer"] == "structural" and g["result"] == "FAIL")
-        if n >= 3:
-            _create_approval(run, task, "NEEDS_DECISION", f"{task['task_id']} 連續 {n} 次 Structural FAIL", [], [], options=[{"key": "retry", "label": "重新 dispatch"}, {"key": "cancel", "label": "取消 run"}])
-        else:
-            state.apply("task", task, "READY", SYSTEM, "retry allowed")
+        state.apply("task", task, "READY", SYSTEM, "retry allowed")
         store.audit(run["run_id"], task.get("agent_id", "?"), "ARTIFACT_INVALID", "; ".join(problems)[:300])
     _save_run(run)
 
@@ -211,6 +343,18 @@ def _valid_outputs(task) -> dict:
         if a["status"] == "VALID": out[a["artifact_type"]] = a
     return out
 
+def _gate_request(run_id, task_id):
+    """gate 請求的身分：這個 task 目前所有 VALID 的 artifact（gate 不改寫 artifact 檔）。
+    不用 task.output_artifact_ids：Validator FAIL 的退回會在同一個操作中清空它，中止後重送就會變成另一個 op。
+    task 的 iteration 留在身分中，用來區分退回前後對同一組 artifact 的評估；被 gate 的 task 自己的 iteration 不會在本操作中改變（附錄 A 1-39）。"""
+    task = _task(load_run(run_id), task_id)
+    valid = []
+    for p in store.glob(f"artifacts/*/{run_id}/*.yaml"):
+        a = store.load(p)
+        if a.get("task_id") == task_id and a.get("status") == "VALID": valid.append(a["artifact_id"])
+    return {"targets": {"run_id": run_id, "task_id": task_id, "iteration": task.get("iteration")}, "inputs": {"valid_artifacts": sorted(valid)}}
+
+@operation.operation("evaluate_gate", request=_gate_request, scope=lambda run_id, *a, **k: run_id)
 def evaluate_gate(run_id: str, task_id: str) -> dict:
     run = load_run(run_id); task = _task(run, task_id); wf = workflow(run["workflow_id"]); wt = _wf_task(wf, task_id)
     if run["status"] != "RUNNING": raise EngineError(f"Run 狀態 {run['status']}")
@@ -218,6 +362,10 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
         state.apply("task", task, "RUNNING", SYSTEM, "gate re-evaluation on existing VALID artifacts")   # Gate 規則修正後可直接重評
     if task["status"] != "RUNNING": raise EngineError(f"{task_id} 狀態 {task['status']}，需先 submit artifact")
     arts = _valid_outputs(task)
+    if dispatch.needs_packet(task):                                         # §2.2 第 4 點：上一輪（舊派發包）的產出不能在新一輪重新評估
+        e = dispatch.current_entry(task)
+        stale = sorted(a["artifact_id"] for a in arts.values() if a.get("dispatch_packet_sha256") != (e or {}).get("sha256"))
+        if stale: raise EngineError(f"{task_id} 目前是 iteration {task['iteration']}，{', '.join(stale)} 是用其他 iteration 的派發包產出的，不能重新評估；請 dispatch 後重新提交")
     expected = wt.get("outputs") or []
     missing = [o for o in expected if o not in arts]
     if missing: raise EngineError(f"尚缺 VALID artifact：{missing}")
@@ -225,6 +373,7 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
     issues = gates.GATES[gate](run, task, arts) if gate else []
     task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL" if issues else "PASS", "details": issues[:20] or [f"{gate} structural PASS"]})
     if issues:
+        store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫
         state.apply("task", task, "GATE_FAILED", SYSTEM, f"{gate} structural"); state.apply("task", task, "READY", SYSTEM, "revise")
         _save_run(run); store.audit(run_id, SYSTEM, "GATE_FAIL", f"{gate} structural: " + "; ".join(issues)[:300])
         return {"gate": gate, "layer": "structural", "result": "FAIL", "issues": issues}
@@ -238,13 +387,26 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
 def _apply_effects(run, task, wf, wt, arts, sem):
     run_id = run["run_id"]; gate = task.get("gate")
     if gate == "G-SPEC":
-        _persist_requirements(run, task, arts["RequirementModel"])
-        _open_rejection_clarifications(run, arts["RequirementModel"])
-        if _has_unresolved_critical(arts["RequirementModel"]):
+        rm_art = arts["RequirementModel"]
+        ctx, _ = gates.spec_context(run, task, arts)
+        derived = {r["requirement_id"]: decisions.check(r, ctx)[1] for r in rm_art["payload"]["requirements"]}
+        reqs = _persist_requirements(run, task, rm_art, ctx, derived)
+        legacy = {**rm_art, "payload": {**rm_art["payload"], "requirements": [r for r in rm_art["payload"]["requirements"] if derived[r["requirement_id"]] is None]}}
+        _open_rejection_clarifications(run, legacy)                          # 舊資料（E6）維持現行行為（R0）
+        new_reqs = [r for r in reqs if derived[r["requirement_id"]] is not None]
+        drafts = [(r, dp) for r in new_reqs for dp in r["decision_points"] if dp["derived"]["route"] in decisions.DRAFT_ROUTES]
+        apr = None
+        if _has_unresolved_critical(legacy) or drafts:
             state.apply("task", task, "DONE", SYSTEM, "G-SPEC PASS (critical ambiguity)")
-            apr = _create_approval(run, task, "RESOLVE_AMBIGUITY", "Spec 有 critical ambiguity，需 Human 決定解讀", [], [arts["RequirementModel"]["artifact_id"]],
-                             options=[{"key": "resolved", "label": "已選定解讀（於 requirements.yaml 填 resolved_by_approval）"}, {"key": "return_to_author", "label": "退回 Spec 作者"}], reopen_task=task["task_id"])
-            _open_clarifications(run, apr, arts["RequirementModel"]); _save_run(run); return
+            waiting_doc = any(dp["derived"]["state"] == "E3" for _, dp in drafts)
+            summary = "Spec 有 critical 的未決事項，需 Human 逐決策點決議" + ("（含缺文件：等文件或豁免）" if waiting_doc else "") if drafts else "Spec 有 critical ambiguity，需 Human 決定解讀"
+            apr = _create_approval(run, task, "RESOLVE_AMBIGUITY", summary, [], [rm_art["artifact_id"]],
+                             options=[{"key": "resolved", "label": "已選定解讀（新資料以 resolutions[] 逐決策點填寫；舊資料於 requirements.yaml 填 resolved_by_approval）"}, {"key": "return_to_author", "label": "退回 Spec 作者"}],
+                             reopen_task=task["task_id"], rm_pin=run["requirement_model_revision"])
+            _open_clarifications(run, apr, legacy)
+        _route_decisions(run, new_reqs, apr, rm_art["created_by"])
+        clr_lifecycle.incorporate_revision(run, run["requirement_model_revision"])      # A4／A4'：revision 以明確 SourceRef 採用最新答案（第 6 章 §3.2）
+        if apr is not None: _save_run(run); return
     elif gate == "G-DESIGN":
         tcs = arts["TestCaseDraft"]["payload"]["testcases"]; n_exp = sum(1 for tc in tcs if gates.is_exploratory(tc))
         if arts["TestCaseDraft"]["payload"]["mode"] == "spec" and len(tcs) >= 5 and n_exp / len(tcs) > 0.5:   # 佔比規則只對整包 spec 設計有意義
@@ -276,6 +438,7 @@ def _apply_effects(run, task, wf, wt, arts, sem):
         _bug_entity_transition(run, "VALIDATED", arts["BugValidationReport"]["artifact_id"], validator=task["agent_id"], report_id=arts["BugValidationReport"]["artifact_id"])
     elif gate == "G-BVAL" and "BugDraft" in arts:
         _bug_entity_init(run, task, arts["BugDraft"])
+        clr_lifecycle.incorporate_bugdraft(run, arts["BugDraft"])                         # A4／A4'：只認明確的 SourceRef（第一批，第 6 章 §3.3 第 3 點）
     elif gate == "G-IMPACT":
         p = arts["ChangeImpactReport"]["payload"]
         ci = _ci_entity(run, p)
@@ -287,10 +450,17 @@ def _apply_effects(run, task, wf, wt, arts, sem):
             state.apply("task", task, "DONE", SYSTEM, "NO_IMPACT")
             for t in run["tasks"]:
                 if t["status"] == "PENDING" and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"): t["status"] = "DONE"
-            _advance(run, task["task_id"]); return
+            ids_ = [t["task_id"] for t in run["tasks"]]; i = ids_.index(task["task_id"])
+            while i + 1 < len(ids_) and run["tasks"][i + 1]["status"] == "DONE": i += 1
+            _advance(run, ids_[i]); return                                             # no_impact: goto 總結（從最後一個略過的 task 之後推進，P6-G3-01）
     state.apply("task", task, "DONE", SYSTEM, f"{gate or 'no-gate'} PASS"); task["ended_at"] = store.now()
     store.audit(run_id, SYSTEM, "GATE_PASS", f"{task['task_id']} {gate}")
     _advance(run, task["task_id"])
+
+def _reopen_downstream(t):
+    """被退回而失效的下游 task 重設為 PENDING、清空本輪產出。它在下一次被推進成 READY 時進入新的 iteration（見 _advance），
+    要用新的派發包；舊派發紀錄保留供追溯，舊 iteration 的產出被拒（附錄 A 1-39）。"""
+    t["status"] = "PENDING"; t["output_artifact_ids"] = []
 
 def _route_back(run, task, wf, report):
     """Validator FAIL → 前一個 agent task 重新 READY（iteration+1），報告成為其 input；超限 → HUMAN_OVERRIDE。"""
@@ -304,7 +474,7 @@ def _route_back(run, task, wf, report):
         _create_approval(run, task, "HUMAN_OVERRIDE", f"{gen['task_id']} 已迭代 {gen['iteration']} 次仍 FAIL", [], [report["artifact_id"]],
                          options=[{"key": "override", "label": "強制通過（需 rationale）"}, {"key": "reject", "label": "再給一次迭代"}, {"key": "cancel", "label": "取消 run"}], reopen_task=gen["task_id"])
         _save_run(run); return
-    gen["status"] = "READY"; task["status"] = "PENDING"; task["output_artifact_ids"] = []
+    gen["status"] = "READY"; _reopen_downstream(task)
     gen.setdefault("history", None); gen.pop("history", None)
     run["current_task_id"] = gen["task_id"]; _save_run(run)
     store.audit(run["run_id"], SYSTEM, "ROUTE_BACK", f"{task['task_id']} → {gen['task_id']} iteration {gen['iteration']}")
@@ -319,7 +489,7 @@ def _open_rejection_clarifications(run, rm):
             clr.new(spec["product"], spec["functional_area"], p["spec_id"], p["spec_version"],
                     f"{r['requirement_id']} 不符合時系統應如何反應？（Spec 未定義拒絕行為）", rm["created_by"],
                     context=f"{r['statement']}\n{rc.get('description', '')}", requirement_id=r["requirement_id"], spec_reference=r.get("spec_reference"),
-                    run_id=run["run_id"], impact="Test Designer 只能以 exploratory（假設）方式撰寫此需求的負向案例，expected 需 Human 確認")
+                    run_id=run["run_id"], impact="Test Designer 只能以 exploratory（假設）方式撰寫此需求的負向案例，expected 需 Human 確認", legacy_e6=True)
 
 def _open_clarifications(run, apr, rm):
     """每個未解的 critical ambiguity 開一張問 PM 的單，掛在 approval 上。"""
@@ -330,36 +500,74 @@ def _open_clarifications(run, apr, rm):
             c = clr.new(spec["product"], spec["functional_area"], p["spec_id"], p["spec_version"], amb["description"], rm["created_by"],
                         context=f"{r['requirement_id']}：{r['statement']}", options=amb.get("options"), requirement_id=r["requirement_id"],
                         spec_reference=r.get("spec_reference"), run_id=run["run_id"], approval_id=apr["approval_id"],
-                        impact="此 Requirement 停留 DRAFT，Test Designer 不得為其設計 Test Case")
+                        impact="此 Requirement 停留 DRAFT，Test Designer 不得為其設計 Test Case", legacy_e6=True)
             made.append({"entity_type": "Clarification", "id": c["clarification_id"]})
     if made:
         apr["impact"] = apr.get("impact", []) + made; store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _has_unresolved_critical(rm) -> bool:
-    return any((r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval") for r in rm["payload"]["requirements"])
+def _route_decisions(run, reqs, apr, by):
+    """新資料：依路由表為每個 E2～E5 的決策點開單（第 1 章 §3.5；第 3 章 §3.2、§3.3 入口 A、B 逐欄抄寫）。
+    去重由 clarification.new 依 issue key 判斷（第 3 章 §4）：key 相同時連結既有 CLR、不新開；DRAFT 路由（critical）的單，不論新開或連結，
+    都掛到 RESOLVE_AMBIGUITY 核准單的 impact。"""
+    if not reqs: return
+    spec = store.load(store.spec_dir(reqs[0]["spec_id"]) / "spec.yaml"); made = []
+    existing = clr.list_(open_only=False)
+    for r in reqs:
+        for dp in r["decision_points"]:
+            d = dp["derived"]
+            if d["state"] == "E1": continue
+            kind = decisions.KIND[d["state"]]; crit = d["route"] in decisions.DRAFT_ROUTES
+            related = [{"id": c["clarification_id"], "relation": "waived_document_request"} for c in existing     # 豁免後新開的單指回文件索取單（附錄 A 1-25）
+                       if c.get("kind") == "document_request" and kind != "document_request" and dp["coverage"]["waivers"]
+                       and (c["spec_id"], str(c["spec_version"]), c.get("requirement_id"), c.get("question_id")) == (r["spec_id"], str(r["spec_version"]), r["requirement_id"], dp["question_id"])]
+            fields = {k: dp[k] for k in ("question_id", "topic", "subject", "params", "role_scope", "level", "known_rules", "conflict_sides", "conflict_note",
+                                         "coverage", "decision_needed", "detail_gaps") if k in dp}
+            hit = clr.new(spec["product"], spec["functional_area"], r["spec_id"], r["spec_version"],
+                          dn if len(dn := (dp.get("decision_needed") or "").strip()) >= 5 else f"{r['requirement_id']} {dp['question_id']}（{dp['subject']}）需要決定" + (f"：{dn}" if dn else ""), by,
+                          context=f"{r['requirement_id']}：{r['statement']}", requirement_id=r["requirement_id"], spec_reference=r.get("spec_reference"), run_id=run["run_id"],
+                          approval_id=apr["approval_id"] if (crit and apr) else None, related=related or None,
+                          impact=("此 Requirement 停留 DRAFT，Test Designer 不得為它設計 Test Case" if crit else "依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側"),
+                          kind=kind, possible_source_missing=True if d["state"] == "E5" else None, **fields)
+            if not hit.get("_linked"): existing.append(hit)
+            if crit and apr is not None: made.append({"entity_type": "Clarification", "id": hit["clarification_id"]})
+    if made and apr is not None:
+        apr["impact"] = apr.get("impact", []) + [m for m in made if m not in apr.get("impact", [])]; store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _persist_requirements(run, task, rm):
-    p = rm["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"])
+def _has_unresolved_critical(rm) -> bool:
+    """舊資料（E6）的 critical 判斷；新資料改讀推導出的有效等級（見 _apply_effects）。"""
+    return any((r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
+               for r in rm["payload"]["requirements"] if not decisions.is_new(r))
+
+def _persist_requirements(run, task, rm_art, ctx=None, derived=None):
+    p = rm_art["payload"]; path = store.requirements_path(p["spec_id"], p["spec_version"]); derived = derived or {}
     reqs = []
     for r in p["requirements"]:
-        r = dict(r); r["status"] = None; r.pop("history", None); r["history"] = []
-        crit = (r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
-        state.apply("requirement", r, "DRAFT", SYSTEM, rm["artifact_id"], run["run_id"])
+        d = derived.get(r["requirement_id"])
+        r = decisions.stamp(dict(r), d, ctx); r["status"] = None; r.pop("history", None); r["history"] = []
+        if d is not None: crit = d["status"] == "DRAFT"                       # 新資料：任一決策點落在 DRAFT 路由
+        else: crit = (r.get("ambiguity") or {}).get("level") == "critical" and not (r.get("ambiguity") or {}).get("resolved_by_approval")
+        state.apply("requirement", r, "DRAFT", SYSTEM, rm_art["artifact_id"], run["run_id"])
         if not crit: state.apply("requirement", r, "ACTIVE", SYSTEM, "G-SPEC PASS", run["run_id"])
         reqs.append(r)
-    doc = {"spec_id": p["spec_id"], "spec_version": p["spec_version"], "source_artifact_id": rm["artifact_id"], "persisted_at": store.now(), "requirements": reqs}
-    errs = schema.errors(doc, "spec/requirements-file.schema.json")
-    if errs: raise EngineError("requirements.yaml 不符 schema：" + "; ".join(errs[:3]))
-    store.save(path, doc)
+    extra = None
+    e = dispatch.current_entry(task) if dispatch.needs_packet(task) else None
+    if e is not None:                                                      # 這次分析所用的派發包與決議快照（附錄 A 5-14）
+        pk = dispatch.load_packet(e)
+        extra = {"dispatch_packet_sha256": e["sha256"],
+                 "decision_snapshot_hashes": {"resolutions": sources.chash(pk["resolutions"]), "run_decisions": sources.chash(pk["run_decisions"])}}
+    pin = rm.save_requirements(p["spec_id"], p["spec_version"], reqs, reason="analysis", by=SYSTEM, run_id=run["run_id"], source_artifact_id=rm_art["artifact_id"], extra=extra)
+    run["requirement_model_revision"] = pin                                  # 本 run 自己的分析：綁定（重新分析時改綁本 run 新產生的 revision）
     d = store.spec_dir(p["spec_id"]); spec = store.load(d / "spec.yaml")
     for v in spec["versions"]:
         if v["spec_version"] == p["spec_version"] and v["status"] == "IMPORTED": v["status"] = "ANALYZED"
     store.save(d / "spec.yaml", spec)
-    store.audit(run["run_id"], SYSTEM, "PERSIST_REQUIREMENTS", f"{path} ({len(reqs)} reqs)")
+    store.audit(run["run_id"], SYSTEM, "PERSIST_REQUIREMENTS", f"{path} {pin['revision']} ({len(reqs)} reqs)")
+    return reqs
 
 def _materialize_testcases(run, task, report):
     """G-TVAL PASS：Draft → 正式 ID → versions/ (VALIDATED) → pointer；回傳 EntityRefs 供 approval。"""
     draft = store.load(store.find_artifact(report["payload"]["testcase_draft_artifact_id"]))
+    pin = rm.run_pin(run)                                                    # TC 版本綁定 run 的依據（第 5 章 §4.1）
     created = []
     for tc in draft["payload"]["testcases"]:
         sup = tc.get("supersedes_testcase")
@@ -370,7 +578,7 @@ def _materialize_testcases(run, task, report):
         v = {k: tc[k] for k in tc if k not in ("draft_id", "supersedes_testcase", "design_rationale")}
         v.update({"testcase_id": tc_id, "version": version, "supersedes": sup["version"] if sup else None, "status": None,
                   "created_by": draft["created_by"], "validated_by": report["created_by"], "validation_report_id": report["artifact_id"],
-                  "created_at": store.now(), "updated_at": store.now(), "history": []})
+                  "created_at": store.now(), "updated_at": store.now(), "history": [], "requirement_model_revision": pin})
         v["assumptions"] = [dict(a) for a in tc.get("assumptions", [])]   # 保留 needs_human_confirmation，ACTIVATE 時由 Human 逐項確認
         state.apply("testcase", v, "DRAFT", SYSTEM, draft["artifact_id"], run["run_id"])
         state.apply("testcase", v, "VALIDATING", SYSTEM, "dispatch validator", run["run_id"])
@@ -451,13 +659,14 @@ def _create_approval_for_task(run, task, approval_type):
     if approval_type in ("ACTIVATE_TESTCASE", "APPLY_CHANGE") and exp_lines:
         apr["diff_summary"] = "\n".join(exp_lines); store.save(f"approvals/{apr['approval_id']}.yaml", apr)
 
-def _create_approval(run, task, approval_type, summary, impact, art_ids, options, batch_items=None, reopen_task=None):
+def _create_approval(run, task, approval_type, summary, impact, art_ids, options, batch_items=None, reopen_task=None, rm_pin=None):
     apr_id = ids.alloc("APR")
     apr = {"approval_id": apr_id, "type": approval_type, "run_id": run["run_id"], "task_id": task["task_id"], "status": "PENDING",
            "summary": summary, "impact": [{k: v for k, v in i.items() if not k.startswith("_")} for i in impact], "artifact_ids": art_ids,
            "trace": [], "options": options, "batch_items": [{k: v for k, v in i.items() if not k.startswith("_")} for i in (batch_items or [])],
            "requested_by": "agent-supervisor", "requested_at": store.now()}
     if reopen_task: apr["diff_summary"] = f"reopen_task={reopen_task}"
+    if rm_pin: apr["requirement_model_revision"] = rm_pin
     errs = schema.errors(apr, "approval/approval-request.schema.json")
     if errs: raise EngineError("ApprovalRequest 不符 schema：" + "; ".join(errs[:3]))
     store.save(f"approvals/{apr_id}.yaml", apr)
@@ -466,14 +675,16 @@ def _create_approval(run, task, approval_type, summary, impact, art_ids, options
     store.audit(run["run_id"], "agent-supervisor", "REQUEST_HUMAN_APPROVAL", f"{apr_id} {approval_type}: {summary}")
     return apr
 
-def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_option: str | None = None, adjustments: dict | None = None, per_item: list | None = None) -> dict:
+@operation.operation("approve")
+def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_option: str | None = None, adjustments: dict | None = None, per_item: list | None = None,
+            resolutions: list | None = None) -> dict:
     if by.startswith("agent-") or by == SYSTEM: raise EngineError("RECORD_APPROVAL 只能由 Human 執行")
     if decision == "override" and not rationale.strip(): raise EngineError("override 必須提供 rationale")
     apr = store.load(f"approvals/{apr_id}.yaml")
     if apr["status"] != "PENDING": raise EngineError(f"{apr_id} 狀態 {apr['status']}")
-    _preflight_approval(apr, decision)
+    _preflight_approval(apr, decision, resolutions)
     apr["decision"] = {k: v for k, v in {"decision": decision, "selected_option": selected_option, "decided_by": by, "decided_at": store.now(),
-                       "rationale": rationale or None, "per_item": per_item, "adjustments": adjustments}.items() if v is not None}
+                       "rationale": rationale or None, "per_item": per_item, "adjustments": adjustments, "resolutions": resolutions}.items() if v is not None}
     apr["status"] = "DECIDED"
     errs = schema.errors(apr, "approval/approval-request.schema.json")
     if errs: raise EngineError("ApprovalDecision 不符 schema：" + "; ".join(errs[:3]))
@@ -488,14 +699,67 @@ def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_o
     handler(run, task, apr, decision, by)
     return apr
 
-def _preflight_approval(apr, decision):
-    """寫入 decision 之前的檢查：失敗時 approval 維持 PENDING、run 維持 WAITING_HUMAN。"""
-    if apr["type"] == "RESOLVE_AMBIGUITY" and decision in ("approve", "override"):
-        for ref in apr.get("impact", []):
-            if ref["entity_type"] == "Clarification":
-                c = clr.load(ref["id"])
-                if c["status"] in ("OPEN", "ASKED"):
-                    raise EngineError(f"{ref['id']} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
+def _critical_points(apr) -> list:
+    """核准單綁定的 revision 中，有效等級為 critical 的決策點；舊 revision、沒有 revision（Bug Validator 建立）→ 空（附錄 A 1-9）。"""
+    pin = apr.get("requirement_model_revision")
+    return decisions.critical_points(rm.requirements_of(pin).values()) if pin else []
+
+def _legacy_clr_refs(apr) -> list[str]:
+    """核准單上屬於舊資料的 CLR：沒有綁定 revision，或 CLR 的需求在 revision 中沒有決策點（附錄 A 1-9；混合 revision 時兩套規則並行）。"""
+    pin = apr.get("requirement_model_revision"); reqs = rm.requirements_of(pin) if pin else {}
+    out = []
+    for ref in apr.get("impact", []):
+        if ref["entity_type"] != "Clarification": continue
+        rid = clr.load(ref["id"]).get("requirement_id")
+        if not (rid in reqs and decisions.is_new(reqs[rid])): out.append(ref["id"])
+    return out
+
+def _preflight_approval(apr, decision, resolutions=None):
+    """寫入 decision 之前的檢查（第 1 章 §3.7）：失敗時 approval 維持 PENDING、run 維持 WAITING_HUMAN。"""
+    res = resolutions or []
+    if res and apr["type"] != "RESOLVE_AMBIGUITY": raise EngineError(f"resolutions 只用於 RESOLVE_AMBIGUITY（{apr['approval_id']} 是 {apr['type']}）")
+    if apr["type"] != "RESOLVE_AMBIGUITY" or decision not in ("approve", "override"): return      # reject 不檢查（現行行為）
+    for i, e in enumerate(res):
+        if e.get("outcome") == "defer": raise EngineError(f"resolutions[{i}] 的 outcome 是 defer：核准時不允許（等同沒有做決定）；要延後就不要核准")
+    for cid in _legacy_clr_refs(apr):                                           # 舊資料：所有掛的 CLR 都必須已回答（附錄 A 1-9）
+        c = clr.load(cid)
+        if c["status"] in ("OPEN", "ASKED"):
+            raise EngineError(f"{cid} 尚未有 PM 回答（狀態 {c['status']}）；請先 qaos clarification answer，再 approve")
+    pin = apr.get("requirement_model_revision")
+    if not pin:
+        if res: raise EngineError("這張核准單沒有綁定需求模型 revision，不接受 resolutions")
+        return
+    reqs = rm.requirements_of(pin)
+    known = {(rid, dp["question_id"]): (r, dp) for rid, r in reqs.items() for dp in r.get("decision_points") or []}
+    seen = {}
+    for i, e in enumerate(res):
+        at = (e.get("requirement_id"), e.get("question_id"))
+        if at not in known: raise EngineError(f"resolutions[{i}] 指向 {at[0]}/{at[1]}，不是 {pin['revision']} 中的決策點")
+        if at in seen: raise EngineError(f"{at[0]}/{at[1]} 有兩筆 resolutions 條目（resolutions[{seen[at]}]、[{i}]）；每個決策點最多一筆")
+        seen[at] = i
+        r, dp = known[at]; st = dp["derived"]["state"]
+        allowed = decisions.OUTCOMES_FOR.get(st, ())
+        if e["outcome"] not in allowed:
+            raise EngineError(f"resolutions[{i}]：{at[0]}/{at[1]} 是 {st}，outcome 只能是 {'、'.join(allowed) or '（已定，不需要決議）'}（實際 {e['outcome']}）")
+        if e["outcome"] == "select_interpretation" and e.get("source") is not None:
+            src = e["source"]
+            if src.get("type") != "clarification": raise EngineError(f"resolutions[{i}] 的 source 只能是 clarification 型或 null（null 代表這份核准本身就是裁決）")
+            errs, _ = sources.validate(src, target=(r["spec_id"], r["spec_version"]), at=at)
+            if errs: raise EngineError(f"resolutions[{i}] 的 source：{'; '.join(errs)}")
+            if clr.load(src["clarification_id"])["status"] not in decisions.ANSWERED:
+                raise EngineError(f"resolutions[{i}] 的 source {src['clarification_id']} 不是 ANSWERED、INCORPORATED 或 APPLIED")
+        if e["outcome"] == "waive_missing":
+            items = decisions.dp_items(dp)
+            if not e.get("waived"): raise EngineError(f"resolutions[{i}] 的 waive_missing 要逐項列出 waived")
+            shape = decisions.waived_shape_errors(e["waived"])
+            if shape: raise EngineError(f"resolutions[{i}]：{'; '.join(shape)}")
+            for it in e["waived"]:
+                try: k = decisions._wid(it)
+                except (KeyError, TypeError): raise EngineError(f"resolutions[{i}] 的 waived 項目形狀不合法：{it!r}")
+                if k not in items: raise EngineError(f"resolutions[{i}] 的 waived 項目 {it.get('name') or it.get('pin')} 不完全等於 {at[0]}/{at[1]} 的任何缺檔或未查參考")
+    for r, dp in decisions.critical_points(reqs.values()):
+        at = (r["requirement_id"], dp["question_id"])
+        if at not in seen: raise EngineError(f"{at[0]}/{at[1]}（{dp['derived']['state']} critical）必須恰好有一筆 resolutions 條目（實際 0 筆）")
 
 def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, to_agent: str | None = None):
     if task["type"] == "approval":
@@ -513,7 +777,7 @@ def _finish_approval_task(run, task, ok: bool, back_to_generator: bool = False, 
         gen["iteration"] += 1; gen["status"] = "READY"; gen["output_artifact_ids"] = []
         for t in run["tasks"][ids_.index(gen["task_id"]) + 1:]:
             if t["task_id"] != task["task_id"] and t["status"] in ("DONE",) and not (t["type"] == "agent" and t.get("agent_id") == "agent-supervisor"):
-                t["status"] = "PENDING"; t["output_artifact_ids"] = []
+                _reopen_downstream(t)
             if t["type"] == "approval": t["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到本輪 reject 前的殘留資料
         task["status"] = "PENDING"; task["input_entity_refs"] = []
         run["current_task_id"] = gen["task_id"]
@@ -610,10 +874,9 @@ def _commit_suite(run, task, apr, decision, by):
 
 def _after_ambiguity(run, task, apr, decision, by):
     reopen = (apr.get("diff_summary") or "").replace("reopen_task=", "") or None
-    for ref in apr.get("impact", []):
-        if ref["entity_type"] == "Clarification":
-            c = clr.load(ref["id"])
-            if decision in ("approve", "override") and c["status"] == "ANSWERED": clr.apply_(ref["id"], by, note=apr["approval_id"], impact_reviewed=f"由 {apr['approval_id']}（RESOLVE_AMBIGUITY）核准者於 run 內判定；候選清單見本 note，run 外 TC 若受影響需另行修訂")
+    if decision in ("approve", "override") and apr.get("requirement_model_revision"):
+        # 第 6 章 §3.4：核准不再 apply 任何 CLR（新舊資料皆同；ADR-010 取消 ADR-008 Decision 3）；文件索取單套用 waive_missing 後做最後判定（A8、A9）
+        _apply_waivers(apr, by)
     if run["workflow_id"] == "spec-to-bug":
         if decision == "reject":
             _bug_entity_transition(run, "REJECTED", apr["approval_id"], by=by)
@@ -625,8 +888,21 @@ def _after_ambiguity(run, task, apr, decision, by):
     if reopen:
         t = _task(run, reopen); t["iteration"] += 1; t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen
         for later in run["tasks"][[x["task_id"] for x in run["tasks"]].index(reopen) + 1:]:
-            if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"): later["status"] = "PENDING"
+            if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"): _reopen_downstream(later)
         _save_run(run)
+
+def _apply_waivers(apr, by):
+    """waive_missing 條目：把同一決策點的文件索取單中被列出的項目標為 waived，再做最後判定（第 6 章 §6.6、§6.7）。"""
+    pin = apr["requirement_model_revision"]
+    for e in apr["decision"].get("resolutions") or []:
+        if e["outcome"] != "waive_missing": continue
+        keys = {decisions._wid(it) for it in e["waived"]}
+        for p in store.glob("clarifications/*/*/CLR-*.yaml"):
+            c = store.load(p)
+            if c.get("kind") != "document_request" or c["status"] not in ("OPEN", "ASKED"): continue
+            if (c["spec_id"], str(c["spec_version"]), c.get("requirement_id"), c.get("question_id")) != (pin["spec_id"], pin["spec_version"], e["requirement_id"], e["question_id"]): continue
+            clr_lifecycle.waive_items_by_approval(c["clarification_id"], [it["item_id"] for it in c.get("document_items") or [] if decisions._wid({"cited_at": it["cited_at"], "name": it["name"]}) in keys],
+                                        apr["approval_id"], by)
 
 def _after_override(run, task, apr, decision, by):
     reopen = (apr.get("diff_summary") or "").replace("reopen_task=", "") or None
@@ -639,11 +915,11 @@ def _after_override(run, task, apr, decision, by):
             _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM, validator=vt["agent_id"], report_id=arts["BugValidationReport"]["artifact_id"])
         vt["status"] = "DONE"; _advance(run, vt["task_id"]); return
     if decision == "reject" and reopen:
-        t = _task(run, reopen); t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen
+        t = _task(run, reopen); t["iteration"] += 1; t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen   # 「再給一次迭代」：新的 iteration、新的派發包
         ids_ = [x["task_id"] for x in run["tasks"]]
         for later in run["tasks"][ids_.index(reopen) + 1:]:   # 下游已 DONE 的 task 重設，讓 Validator 可再跑
             if later["status"] == "DONE" and not (later["type"] == "agent" and later.get("agent_id") == "agent-supervisor"):
-                later["status"] = "PENDING"; later["output_artifact_ids"] = []; later.pop("history", None)
+                _reopen_downstream(later); later.pop("history", None)
             if later["type"] == "approval": later["input_entity_refs"] = []   # 清掉舊的 entity refs，避免下次 _create_approval_for_task 誤撿到殘留資料
         _save_run(run); return
     state.apply("workflow_run", run, "CANCELLED", by, apr["approval_id"], run["run_id"]); _save_run(run)
@@ -670,8 +946,24 @@ def _after_needs_decision(run, task, apr, decision, by):
         _advance(run, cont); return
     t = _task(run, apr["task_id"]); t["status"] = "READY"; t["output_artifact_ids"] = []; _save_run(run)   # structural retry 不計入 semantic 迭代
 
+def cancel_body(run_id: str, by: str, reason: str = "cancel") -> list[str]:
+    """run 轉 CANCELLED，並把該 run **所有** PENDING 的核准單轉 CANCELLED（不只 waiting_on_approval_id）；每張的 ID 與理由寫進 run 的 audit 事件。
+    已綁定的 revision 與 sidecar 保留（第 5 章 §10）。`migrate --cancel-run` 在同一個移轉操作中呼叫這裡。回傳被取消的核准單。"""
+    from . import approval_render
+    run = load_run(run_id); state.apply("workflow_run", run, "CANCELLED", by, reason, run_id); _save_run(run)
+    store.audit(run_id, by, "CANCEL_RUN", reason)
+    cancelled = []
+    for p in store.glob("approvals/APR-*.yaml"):
+        a = store.load(p)
+        if a.get("run_id") != run_id or a.get("status") != "PENDING": continue
+        a["status"] = "CANCELLED"; store.save(p, a); cancelled.append(a["approval_id"])
+        store.audit(run_id, by, "CANCEL_APPROVAL", f"{a['approval_id']}：run {run_id} 取消（{reason}）")
+        approval_render.render(a["approval_id"]); approval_render.render_html(a["approval_id"])
+    return cancelled
+
+@operation.operation("run_cancel", scope=lambda run_id, *a, **k: run_id)
 def cancel(run_id: str, by: str):
-    run = load_run(run_id); state.apply("workflow_run", run, "CANCELLED", by, "cancel", run_id); _save_run(run)
+    return cancel_body(run_id, by)
 
 # ---------- Summary ----------
 def _summarize(run, task):

@@ -1,0 +1,40 @@
+clarification_id: CLR-BONUSCCY-002
+product: ba-admin
+functional_area: BONUSCCY
+spec_id: SPEC-BONUSCCY-001
+spec_version: '1.0'
+question: 停用站台核心貨幣本身對應的錢包幣別，實際發現：系統允許停用（不阻擋），停用後開分/入金失敗、但出金/洗分仍成功——這是預期設計，還是漏洞？
+context: REQ-BONUSCCY-004 依 spec.md §一句話 限制段落（站台的系統幣別必須是啟用中的錢包幣別之一，否則獎勵會發到玩家看不到的錢包）寫成「不允許停用核心貨幣對應的幣別」。但 Oscar 2026-09-15 實測機台站台：成功將核心貨幣
+  TWD 停用，系統未阻擋這個停用動作本身；停用後嘗試開分與入金皆失敗，但出金與洗分仍可正常執行（可把既有餘額結清領出）。這呈現出一個不同於原本 TC 假設的機制：停用不會被整體阻擋，而是阻擋新資金流入（開分/入金），但仍允許既有餘額的結清流出（出金/洗分）。目前不確定這是
+  RD 刻意設計的補償機制，還是「應該完全阻擋停用」本身沒做到位的漏洞。
+options:
+- 選項A：這是刻意設計——停用一個幣別本來就不該卡死玩家既有餘額，所以只擋新增（開分/入金），既有餘額仍可結清出金/洗分；REQ-BONUSCCY-004 的敘述需要改寫成這個更精確的兩層規則
+- 選項B：這是漏洞——正確設計應該是完全阻擋停用站台核心貨幣本身對應的幣別，現在能停用成功這件事本身就該修；開分/入金失敗、出金/洗分成功只是停用之後的連帶症狀，不代表這是對的
+- 選項C：以上都不是，實際規則是：______（請說明）
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-14T18:40:26Z'
+status: APPLIED
+history:
+- at: '2026-09-14T18:40:26Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-14T20:03:34Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by oscarchen@blockaction.tech
+- at: '2026-09-14T20:03:36Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: REQ-BONUSCCY-004 改寫為：核心貨幣可停用(止損用途)，但停用後入金/出金/開分/洗分四個操作皆應被阻擋。經Oscar實測確認出金/洗分未被阻擋，屬於違反PM確認行為的真實Bug，另外處理。
+requirement_id: REQ-BONUSCCY-004
+impact_if_unanswered: 若未回答，TC-BONUSCCY-008 的修訂版（APR-0042）無法確認預期結果是否正確，暫不核准；若之後証實選項A，需重寫 TC 與 Requirement 敘述反映兩層規則；若証實選項B，則現有停用成功這件事本身要回報成
+  Bug
+answer: 1. 可以停用核心貨幣——這是刻意設計，用途是當資金池出問題時可以即時止損。2. 當鏈上錢包的核心貨幣被關閉時，入金、出金、開分、洗分四個操作都需要被阻擋，不是只擋開分/入金兩項。
+answered_by: oscarchen@blockaction.tech
+answered_at: '2026-09-14T20:03:34Z'
+resolution: requirement_clarified

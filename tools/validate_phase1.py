@@ -68,6 +68,21 @@ for f in sorted(p for p in (ROOT / "workflows").glob("*.yaml") if p.name != "sta
         if "gate" in t and t["gate"].split(".")[0] not in gates: errors.append(f"{f.name}: task {t['id']} unknown gate {t['gate']}")
 print(f"[3] {n} workflow definitions checked")
 
+# [4] fork 使用清單（最終規格第 4 章 §4.8、AC-07-77g）：QAOS 自身程式碼中 os.fork／multiprocessing 的使用預期為零。
+#     有新增時必須同時新增對應的 fork 掛鉤測試，並列入 FORK_ALLOWED（路徑: 測試名稱）。
+#     只涵蓋 QAOS 原始碼；第三方或原生依賴是否 fork 不在這個檢查的範圍內。
+import re as _re
+FORK_ALLOWED: dict[str, str] = {}
+fork_uses = []
+for f in sorted((ROOT / "tools").rglob("*.py")):
+    for i, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+        code = line.split("#", 1)[0]
+        if _re.search(r"\bos\.fork(pty)?\s*\(|\bimport\s+multiprocessing|\bfrom\s+multiprocessing\b", code):
+            rel = f"{f.relative_to(ROOT).as_posix()}:{i}"
+            fork_uses.append(rel)
+            if f.relative_to(ROOT).as_posix() not in FORK_ALLOWED: errors.append(f"{rel}: 使用 fork／multiprocessing，需要對應的測試並列入 FORK_ALLOWED")
+print(f"[4] fork／multiprocessing 使用：{len(fork_uses)} 處" + (f"（{', '.join(fork_uses)}）" if fork_uses else "（預期為零）"))
+
 if errors:
     print("\nERRORS:"); [print(" -", e) for e in errors]; sys.exit(1)
 print("\nALL CHECKS PASSED")

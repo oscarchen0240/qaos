@@ -112,10 +112,22 @@ machines:
   clarification:
     initial: OPEN
     terminal: [APPLIED, WITHDRAWN]
+    # 需求 A 第 6 章 §3（A1～A10）。kinds 限定適用的 kind；沒有 kind 的舊 CLR 視為 spec_question。
     transitions:
-      - {from: OPEN,     to: ASKED,     by: [human],         requires: "asked_to 已填（已送給 PM）"}
-      - {from: OPEN,     to: ANSWERED,  by: [human],         requires: "answer + resolution（PM 直接回答）"}
-      - {from: ASKED,    to: ANSWERED,  by: [human],         requires: "answer + resolution"}
-      - {from: ANSWERED, to: APPLIED,   by: [human, system], requires: "impact_reviewed（ADR-008：同 area ACTIVE TC 影響掃描逐條判定，掃描清單+結論寫入 history note）；且 spec 新版本已匯入 / RESOLVE_AMBIGUITY 已 approve"}
-      - {from: OPEN,     to: WITHDRAWN, by: [human]}
-      - {from: ASKED,    to: WITHDRAWN, by: [human]}
+      - {from: OPEN,         to: ASKED,        by: [human],  requires: "A1：ask（--sent-at、--channel 選填；補記時兩個時間都保留）"}
+      - {from: OPEN,         to: ANSWERED,     by: [human],  kinds: [spec_question, conflict_resolution], requires: "A2：answer（answer_sources 驗證通過；記錄此 rev 的 basis）"}
+      - {from: ASKED,        to: ANSWERED,     by: [human],  kinds: [spec_question, conflict_resolution], requires: "A2"}
+      - {from: ANSWERED,     to: ANSWERED,     by: [human],  kinds: [spec_question, conflict_resolution], requires: "A3：追加一筆 answer_rev（舊修訂不變）"}
+      - {from: ANSWERED,     to: INCORPORATED, by: [system], kinds: [spec_question, conflict_resolution], requires: "A4：提交的 revision／BugDraft 以明確 SourceRef 引用最新 answer_rev 且通過 X16；追加 incorporated landing"}
+      - {from: INCORPORATED, to: INCORPORATED, by: [system], kinds: [spec_question, conflict_resolution], requires: "A4'：再被引用，只追加 landing"}
+      - {from: INCORPORATED, to: ANSWERED,     by: [human],  kinds: [spec_question, conflict_resolution], requires: "A5：answer 追加新 answer_rev（需要重新納入；landings 保留）"}
+      - {from: INCORPORATED, to: APPLIED,      by: [human],  kinds: [spec_question, conflict_resolution], requires: "A6：apply --path a6（第 6 章 §5）"}
+      - {from: ANSWERED,     to: APPLIED,      by: [human],  kinds: [spec_question, conflict_resolution], requires: "A6b：apply --path a6b（bug reject 路徑）；A7：apply --path a7（no_change／out_of_scope 且全部歷史沒有引用）"}
+      - {from: OPEN,         to: APPLIED,      by: [human],  kinds: [document_request], requires: "A8：fulfill／waive-item／核准的 waive_missing 之後的最後判定，全部項目都是有效 fulfillment 或 waived（第 6 章 §6.6）"}
+      - {from: ASKED,        to: APPLIED,      by: [human],  kinds: [document_request], requires: "A8"}
+      - {from: OPEN,         to: WITHDRAWN,    by: [system], kinds: [document_request], requires: "A9：核准的 waive_missing 涵蓋全部項目且沒有有效 fulfillment（第 6 章 §6.7）"}
+      - {from: ASKED,        to: WITHDRAWN,    by: [system], kinds: [document_request], requires: "A9"}
+      - {from: OPEN,         to: WITHDRAWN,    by: [human],  requires: "A10：withdraw --reason（必填）"}
+      - {from: ASKED,        to: WITHDRAWN,    by: [human],  requires: "A10"}
+      - {from: ANSWERED,     to: WITHDRAWN,    by: [human],  requires: "A10"}
+      - {from: INCORPORATED, to: WITHDRAWN,    by: [human],  requires: "A10：引用它的 revision 在下次判定時為 decision_revised"}

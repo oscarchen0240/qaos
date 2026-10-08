@@ -1,5 +1,5 @@
 """Bug OPEN 之後的生命週期（RD 不進系統；QA 登記，每步有紀錄與證據）。"""
-from . import store, state, schema, ids, refs
+from . import store, state, schema, ids, refs, operation
 from .engine import EngineError
 
 def _load(bug_id):
@@ -12,6 +12,7 @@ def _save(b, p):
     if errs: raise EngineError("Bug 不符 schema：" + "; ".join(errs[:3]))
     store.save(p, b)
 
+@operation.operation("bug_resolve")
 def resolve(bug_id, by, external_ref, note="", fixed_by=""):
     """QA 依共用表單登記 RD 已修復：OPEN → IN_PROGRESS → RESOLVED。"""
     b, p = _load(bug_id)
@@ -20,6 +21,7 @@ def resolve(bug_id, by, external_ref, note="", fixed_by=""):
     b["external_ref"] = external_ref; b["resolution_note"] = note; b["resolved_at"] = store.now(); _save(b, p)
     store.audit(None, by, "BUG_RESOLVE", f"{bug_id} external_ref={external_ref}"); return b
 
+@operation.operation("bug_verify")
 def verify(bug_id, execution_id, by):
     """QA 複測：Execution 必須有 Evidence 且對應同一 TC；pass → VERIFIED，fail → OPEN（reopen）。"""
     b, p = _load(bug_id)
@@ -40,6 +42,7 @@ def verify(bug_id, execution_id, by):
         state.apply("bug", b, "OPEN", by, execution_id, note=f"複測 {e['result']}，reopen"); b["reopen_count"] = b.get("reopen_count", 0) + 1
     _save(b, p); store.audit(None, by, "BUG_VERIFY", f"{bug_id} {execution_id} {e['result']} → {b['status']}"); return b
 
+@operation.operation("bug_close")
 def close(bug_id, by, rationale=""):
     """結案（= 共用表單的 done）。Human 動作即為 CLOSE_BUG approval，但仍留一張 ApprovalRequest 供審計。"""
     b, p = _load(bug_id)

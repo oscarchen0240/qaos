@@ -1,0 +1,82 @@
+clarification_id: CLR-CASHOUT-002
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.1'
+question: 機台洗分（單階段交易）實際上會不會出現「待處理／等待中」（＝spec 概念的待確認）狀態？若不會，TC-CASHOUT-044「尚未完成的洗分不會出現在核實頁」如何驗證？
+context: '【背景】TC-CASHOUT-044（ACTIVE，掛 REQ-CASHOUT-004／AC-CASHOUT-0041）的 given 是「一筆機台洗分交易於機台交易紀錄查得的交易狀態為待確認（尚未完成）」，expected
+  為「核實頁查無此筆」。實測時發現此前置條件可能造不出來。
+
+
+  【spec 原文一：SPEC-CASHOUT-001 v0.1 §紀錄產生規則】
+
+  「僅交易狀態為「已完成」的機台洗分與機台出金會出現在本頁；待確認、已取消、已逾時、未成立的交易不會出現。⚠️ 機台畫面顯示失敗、本頁又查無該筆時，代表交易可能沒有完成——請先到「機台交易紀錄」查明狀態再決定付不付錢，不要憑本頁有沒有紀錄以外的印象判斷」
+
+  「開分與入金不需核實，不會出現在本頁（兩者都不是付錢給玩家）」
+
+
+  【spec 原文二：SPEC-CASHFLOW-001 v0.1 四種金流階段對照】
+
+  「開分 req-keyin 單階段 立即／洗分 req-keyout 單階段 立即／入金 req-cashin→end-cashin 兩階段 第二階段／出金 req-cashout→end-cashout 兩階段 第二階段」
+
+
+  【spec 原文三：SPEC-CASHFLOW-001 v0.1 洗分異常的處理表】——只設想兩種狀態，沒有待確認
+
+  「後台查到的狀態｜處理方式：已完成→分數確實已扣，店員照該筆金額付現給玩家；查無此筆／未成立→分數未扣，請店員重新操作一次洗分」
+
+
+  【spec 原文四：SPEC-CASHFLOW-001 v0.1 出金】——明確會有待確認
+
+  「平台既有規則不變：請求出金未成功時分數不扣，再按一次結算即可，平台留下的待確認出金會被新的一筆取代；請求成功但完成回報未送達時，交易停在「待確認」，由櫃檯查後台…」
+
+
+  【與實際畫面的落差】REQ-TXLOG-009（ACTIVE，Oscar 2026-09-14 依畫面截圖確認）記載：交易狀態篩選為多選 chip，依交易類型分兩組技術值——「出鈔／洗分」共用一組：失效、待處理、已拒絕、等待中、錯誤、已處理，映射為
+  待處理→待確認、等待中→待確認、已拒絕→未成立、失效→已取消、錯誤→未成立、已處理→已完成。也就是畫面上洗分可選「待處理／等待中」，但 CASHFLOW spec 對洗分只設想已完成／未成立。
+
+
+  【2026-09-23 實測】機台 ACAA00414 洗分交易 8798101（-，09-23 00:21:27）在機台交易紀錄的交易狀態為「已處理」（＝已完成），核實頁查得到該筆、核實狀態「待核實」並帶「⚠ 現金未確認」標籤——此為正確行為，與本問題無關，僅說明已完成路徑運作正常。目前尚未取得任何一筆洗分處於「待處理／等待中」的實例。
+
+
+  【順帶】REQ-TXLOG-009 另有一個 minor 歧義未解：開分／入鈔的技術值「無」對應 spec 的哪個概念分類（候選：對應未成立／對應其他尚未定義情況／純 UI 佔位實務不會出現），若 RD 一併回覆可同時結案。'
+options:
+- A. 洗分不會出現待處理／等待中（單階段、立即生效，該兩值是與出鈔共用篩選器的殘留）→ TC-CASHOUT-044 改用出金造待確認，或改寫為「洗分僅有已完成或未成立兩種路徑」
+- B. 洗分在特定情境會停在待處理／等待中（請說明情境，例如平台已受理但未收到機台回報）→ TC-CASHOUT-044 維持洗分，given 用語改為實際技術值「待處理」
+- C. 其他（請說明）
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-23T01:15:44Z'
+status: APPLIED
+history:
+- at: '2026-09-23T01:15:44Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-23T01:15:44Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked RD／PM
+- at: '2026-09-23T01:27:44Z'
+  from_status: ASKED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by Oscar（QA，2026-09-23；依實際系統行為確認）
+- at: '2026-09-23T01:28:33Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: '回覆 A：洗分單階段、無中間狀態，「待處理／等待中」是與出鈔共用篩選器的殘留，對洗分不適用；impact-scan[48]: TC-CASHOUT-041(keyword:洗分)；TC-CASHOUT-042(keyword:洗分)；TC-CASHOUT-043(keyword:洗分)；TC-CASHOUT-044(requirement,keyword:待確認,keyword:洗分,keyword:尚未完成)；TC-CASHOUT-045(requirement,keyword:洗分,keyword:未成立)；TC-CASHOUT-046(keyword:洗分)；TC-CASHOUT-047(keyword:洗分)；TC-CASHOUT-048(keyword:洗分)；TC-CASHOUT-049(keyword:洗分)；TC-CASHOUT-050(keyword:洗分)；TC-CASHOUT-051(keyword:洗分)；TC-CASHOUT-052(keyword:洗分)；TC-CASHOUT-053(keyword:洗分)；TC-CASHOUT-054(keyword:洗分)；TC-CASHOUT-055(keyword:洗分)；TC-CASHOUT-056(keyword:洗分)；TC-CASHOUT-057(keyword:洗分)；TC-CASHOUT-058(keyword:洗分)；TC-CASHOUT-059(keyword:洗分)；TC-CASHOUT-060(keyword:洗分)；TC-CASHOUT-061(keyword:洗分)；TC-CASHOUT-062(keyword:洗分)；TC-CASHOUT-063(keyword:洗分)；TC-CASHOUT-064(keyword:洗分)；TC-CASHOUT-065(keyword:洗分)；TC-CASHOUT-066(keyword:洗分)；TC-CASHOUT-067(keyword:洗分)；TC-CASHOUT-068(keyword:洗分)；TC-CASHOUT-069(keyword:洗分)；TC-CASHOUT-070(keyword:洗分)；TC-CASHOUT-071(keyword:洗分)；TC-CASHOUT-072(keyword:洗分)；TC-CASHOUT-073(keyword:洗分)；TC-CASHOUT-074(keyword:洗分)；TC-CASHOUT-075(keyword:洗分)；TC-CASHOUT-076(keyword:洗分)；TC-CASHOUT-077(keyword:洗分)；TC-CASHOUT-078(keyword:洗分)；TC-CASHOUT-079(keyword:洗分)；TC-CASHOUT-080(keyword:洗分)；TC-CASHOUT-081(keyword:洗分)；TC-CASHOUT-082(keyword:洗分)；TC-CASHOUT-084(keyword:洗分)；TC-CASHOUT-085(requirement,keyword:待確認,keyword:洗分,keyword:尚未完成)；TC-CASHOUT-091(keyword:洗分)；TC-CASHOUT-093(keyword:洗分)；TC-CASHOUT-100(keyword:洗分)；TC-CASHOUT-110(keyword:洗分)；reviewed:
+    48 條候選中「洗分」為 CASHOUT area 通用詞，實際受影響 2 條：TC-CASHOUT-044（AC-0041）與 TC-CASHOUT-085（AC-0011＋AC-0041）皆以「洗分交易狀態為待確認」為前置，依本回覆無法建立，需修訂改用出金（兩階段）造待確認；TC-CASHOUT-045（未成立的出金）不受影響，出金未成立可由平台拒絕造出；其餘
+    45 條為核實流程／篩選器／欄位／權限類，與交易狀態路徑無關，不受影響。REQ-TXLOG-009 的「無」歧義本次未回覆，維持既有 minor ambiguity'
+requirement_id: REQ-CASHOUT-004
+impact_if_unanswered: TC-CASHOUT-044 前置條件可能無法建立，目前無法執行也無法判讀（暫標 Blocked）；AC-CASHOUT-0041 的驗證路徑懸空
+asked_to: RD／PM
+asked_at: '2026-09-23T01:15:44Z'
+answer: A：洗分一送出就完成，不會有中間狀態。機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待中」；畫面篩選器上那兩個值是與「出鈔」共用同一組技術值的結果，對洗分不適用。洗分只會是「已處理（＝已完成）」或「已拒絕／錯誤（＝未成立）」，與
+  SPEC-CASHFLOW-001 洗分異常處理表「已完成／查無此筆或未成立」兩種路徑一致。→ TC-CASHOUT-044 的 given「洗分交易狀態為待確認」無法建立，須改用出金（兩階段，req-cashout 成功但 end-cashout
+  完成回報未送達時會停在待確認）來驗證 AC-CASHOUT-0041「未完成交易不會出現在核實頁」。核實狀態層面（洗分待核實帶「⚠ 現金未確認」警示、出金待核實屬正常）與 spec 一致，非本題範圍。REQ-TXLOG-009 的「無」歧義本次未回覆，仍待
+  RD。
+answered_by: Oscar（QA，2026-09-23；依實際系統行為確認）
+answered_at: '2026-09-23T01:27:44Z'
+resolution: requirement_clarified

@@ -1,6 +1,6 @@
 """ID 配發：只有 Runtime 可呼叫；counters 存於 testcases/registry/_counters.yaml。"""
 import time, secrets
-from . import store
+from . import store, operation
 
 COUNTERS = "testcases/registry/_counters.yaml"
 _B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -14,7 +14,9 @@ def _load():
     return store.load(COUNTERS) if store.exists(COUNTERS) else {"schema_version": "1.0", "counters": {}}
 
 def alloc(kind: str, area: str | None = None, width: int = 3) -> str:
-    """kind ∈ TC REQ AC BUG (需 area) | EXE RUN (日期) | EVD APR (全域) | ART-<TYPE>"""
+    """kind ∈ TC REQ AC BUG (需 area) | EXE RUN (日期) | EVD APR (全域) | ART-<TYPE>
+    計數器的更新是操作計畫的一步（ID 由計畫固定）；ART- 用 ULID，不寫計數器。"""
+    if kind.startswith("ART-"): return f"{kind}-{ulid()}"
     d = _load(); c = d["counters"]
     if kind in ("TC", "REQ", "AC", "BUG", "CLR"):
         if not area: raise ValueError(f"{kind} 需要 area")
@@ -33,7 +35,14 @@ def alloc(kind: str, area: str | None = None, width: int = 3) -> str:
     else:
         raise ValueError(f"unknown id kind {kind}")
     store.save(COUNTERS, d)
+    cap = store.capturing()
+    if cap is not None: cap.allocated_ids.append(out)
     return out
+
+@operation.operation("id_alloc")
+def alloc_cmd(kind: str, area: str | None = None) -> str:
+    """CLI `qaos id`：配發一個 ID（寫計數器，要經過 executor）。"""
+    return alloc(kind, area)
 
 ART_PREFIX = {
     "SpecAnalysis": "ART-SA", "RequirementModel": "ART-RM", "TestDesignReport": "ART-TDR", "TestCaseDraft": "ART-TCD",
