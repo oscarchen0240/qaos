@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 
 import yaml
 
@@ -93,12 +94,32 @@ def _same_import_elsewhere(r: dict, request: str) -> dict | None:
                                   (request, r["id"])))
 
 
+def _evidence_mismatch(r: dict) -> str | None:
+    """R03：EXE 還沒成功、但 EVD 已經登記過（例如 execution import 失敗後重試）時，目前的證據清單必須和當初登記的一致；
+    登記過的證據無法從 QAOS 撤回，清單變了卻沿用舊的 EVD，送出去的 execution／bug 會對不上平台上看到的證據。"""
+    ids = r.get("qaos_evidence_ids") or []
+    if not ids or r.get("qaos_execution_id"):
+        return None
+    cur = testruns.evidence_signature(r.get("evidence") or [])
+    snap = r.get("qaos_evidence_snapshot") or []
+    same = (snap == cur) if snap else len(cur) == len(ids)       # 舊資料沒有快照，只能比數量
+    if same:
+        return None
+    return (f"證據已登記到 QAOS（{'、'.join(ids)}），但目前的證據清單和當初登記時不一致；已登記的證據無法撤回，沿用會讓 QAOS 與平台對不上。"
+            "請把清單還原成當初登記的內容，或在回合裡重開一筆")
+
+
 def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     """組出要跑的指令與預檢警告，不執行。mode=bug（Fail → 開 bug）或 execution（只匯 execution，給 Pass 用）。"""
     if mode not in MODES:
         raise BugFileError(400, f"mode 必須是 {'／'.join(MODES)}")
     run, r = _result(run_id, result_id)
     who = tk.operator()
+    summary = {k: r.get(k) for k in ("id", "testcase_id", "testcase_version", "result", "actual_result", "bug_run_id", "qaos_execution_id")}
+    if mode == "bug" and r.get("bug_run_id") and not r.get("bug_handoff_id"):
+        # R04：run 已經開了、交接或執行紀錄沒補齊：重試只補這兩樣，不重跑任何 CLI
+        return {"mode": mode, "steps": [{"kind": "handoff", "label": f"補做交接與執行紀錄（{r['bug_run_id']} 已開，不會重開）", "command": r.get("bug_run_command") or ""}],
+                "warnings": [], "writes": [".warroom/handoff.jsonl（平台）"], "meta": {}, "operator": who, "pending_handoff": True, "result": summary}
     warnings: list[str] = []
     if mode == "bug":
         if r["result"] != "fail":
@@ -114,6 +135,9 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
             warnings.append("未測的結果不匯入")
         if r.get("qaos_execution_id"):
             warnings.append(f"這條已經匯過：{r['qaos_execution_id']}")
+    mismatch = _evidence_mismatch(r)
+    if mismatch:
+        warnings.append(mismatch)
     meta = _tc_meta(r["testcase_id"], r.get("testcase_version"))
     if not meta.get("spec_id") or not meta.get("spec_version"):
         warnings.append(f"找不到 {r['testcase_id']} 的 spec 版本（testcases/versions/{r['testcase_id']}/v{r.get('testcase_version') or '?'}.yaml）")
@@ -141,7 +165,7 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     writes = ["evidence/testrun-%d/EVD-*.{ext,yaml}" % run_id, "executions/YYYY-MM/EXE-*.yaml", "testcases/registry/_counters.yaml", "runs/_audit.log"]
     if mode == "bug":
         writes += ["runs/RUN-*/run.yaml（新 spec-to-bug run）", ".warroom/handoff.jsonl（平台）"]
-    return {"mode": mode, "steps": steps, "warnings": warnings, "writes": writes, "meta": meta, "operator": who, "result": {k: r.get(k) for k in ("id", "testcase_id", "testcase_version", "result", "actual_result", "bug_run_id", "qaos_execution_id")}}
+    return {"mode": mode, "steps": steps, "warnings": warnings, "writes": writes, "meta": meta, "operator": who, "pending_handoff": False, "result": summary}
 
 
 def _target_session() -> str | None:
@@ -166,6 +190,9 @@ def _run_or_raise(cmd: str, what: str, log: list[dict]) -> str:
     except qaos_exec.ExecError as e:      # 例如 PROJECT_ROOT 是 git worktree → 拒絕執行
         raise BugFileError(e.status, str(e)) from e
     log.append({"what": what, **res})
+    if res.get("timed_out"):
+        raise BugFileError(502, f"{what} 逾時，結果不確定（QAOS 可能已完成部分或全部動作）。請先對帳（{qaos_exec.RECONCILE}）再決定是否重試；"
+                                f"已取得的輸出：{((res['stderr'] or '') + (res['stdout'] or ''))[-300:]}")
     if res["exit_code"] != 0:
         raise BugFileError(502, f"{what} 失敗（exit {res['exit_code']}）：{(res['stderr'] or res['stdout'])[-300:]}")
     return res["stdout"].strip()
@@ -179,74 +206,106 @@ def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
     log: list[dict] = []
     started = db.now()
     try:
-        # 預檢與讀結果都在鎖內（同 qaos_exec.execute）：鎖外讀到的舊快照會讓後到的請求看不到前一個請求剛存的編號，重複交接
-        p = plan(run_id, result_id, mode)
-        if p["warnings"]:
-            raise BugFileError(409, "；".join(p["warnings"]))
-        run, r = _result(run_id, result_id)
-        who = p["operator"]; meta = p["meta"]
-        evd_ids: list[str] = list(r.get("qaos_evidence_ids") or [])
-        if not evd_ids:
-            for st in [s for s in p["steps"] if s["kind"] == "evidence"]:
-                out = _run_or_raise(st["command"], st["label"], log)
-                m = EVD_RE.search(out)
-                if not m:
-                    raise BugFileError(502, f"證據登記沒有回傳 EVD 編號：{out[-200:]}")
-                evd_ids.append(m.group(0))
-            _save(result_id, qaos_evidence_ids=evd_ids)
-        exe_id = r.get("qaos_execution_id")
-        if not exe_id:
-            ex_parts = _execution_argv(run, r, meta, who)
-            for e in evd_ids:
-                ex_parts += _opt("--evidence", e)
-            ex_cmd = _cmd(ex_parts)
-            out = _run_or_raise(ex_cmd, "匯入執行紀錄", log)
-            m = EXE_RE.search(out)
-            if not m:
-                raise BugFileError(502, f"execution import 沒有回傳 EXE 編號：{out[-200:]}")
-            exe_id = m.group(0)
-            _save(result_id, qaos_execution_id=exe_id, qaos_import_request=ex_cmd)
-        bug_run = None; hint = f"已匯入 QAOS：{exe_id}"
-        if mode == "bug":
-            bug_cmd = _cmd(["bin/qaos", "run", "new", "spec-to-bug", *_opt("--input", f"spec_id={meta['spec_id']}"), *_opt("--input", f"spec_version={meta['spec_version']}"),
-                            *_opt("--input", f"testcase_id={r['testcase_id']}"), *_opt("--input", f"testcase_version={meta['version']}"),
-                            *_opt("--input", f"execution_id={exe_id}"), *_opt("--input", "evidence_ids=" + json.dumps(evd_ids)), *_opt("--by", who)])
-            out = _run_or_raise(bug_cmd, "開 spec-to-bug run", log)
-            m = RUN_RE.search(out)
-            if not m:
-                raise BugFileError(502, f"run new 沒有回傳 RUN 編號：{out[-200:]}")
-            bug_run = m.group(0)
-            _save(result_id, bug_run_id=bug_run)
-            hint = f"已開 {bug_run}（spec-to-bug）。Bug Analyst 的 T1 已 READY，QA session 會由 relay 接續；走到 OPEN_BUG 核准單時會出現在「單據 › 核准」。"
+        # sending：送出期間這筆結果不能被改（證據、結果），標記後的屏障保證接下來讀到的是定案內容（R03）
+        with testruns.sending(result_id):
+            # 預檢與讀結果都在鎖內（同 qaos_exec.execute）：鎖外讀到的舊快照會讓後到的請求看不到前一個請求剛存的編號，重複交接
+            p = plan(run_id, result_id, mode)
+            if p["warnings"]:
+                raise BugFileError(409, "；".join(p["warnings"]))
+            run, r = _result(run_id, result_id)
+            who = p["operator"]; meta = p["meta"]
+            bug_run = None; bug_cmd = ""
+            if p["pending_handoff"]:
+                # R04：run 已開、交接未補齊。只補後段，不重跑任何 CLI
+                evd_ids = list(r.get("qaos_evidence_ids") or []); exe_id = r.get("qaos_execution_id")
+                bug_run = r["bug_run_id"]; bug_cmd = r.get("bug_run_command") or ""
+                hint = f"已開 {bug_run}（spec-to-bug），這次補做交接與執行紀錄。"
+            else:
+                evd_ids = list(r.get("qaos_evidence_ids") or [])
+                if not evd_ids:
+                    for st in [s for s in p["steps"] if s["kind"] == "evidence"]:
+                        out = _run_or_raise(st["command"], st["label"], log)
+                        m = EVD_RE.search(out)
+                        if not m:
+                            raise BugFileError(502, f"證據登記沒有回傳 EVD 編號：{out[-200:]}")
+                        evd_ids.append(m.group(0))
+                    _save(result_id, qaos_evidence_ids=evd_ids, qaos_evidence_snapshot=testruns.evidence_signature(r.get("evidence") or []))
+                exe_id = r.get("qaos_execution_id")
+                if not exe_id:
+                    ex_parts = _execution_argv(run, r, meta, who)
+                    for e in evd_ids:
+                        ex_parts += _opt("--evidence", e)
+                    ex_cmd = _cmd(ex_parts)
+                    out = _run_or_raise(ex_cmd, "匯入執行紀錄", log)
+                    m = EXE_RE.search(out)
+                    if not m:
+                        raise BugFileError(502, f"execution import 沒有回傳 EXE 編號：{out[-200:]}")
+                    exe_id = m.group(0)
+                    _save(result_id, qaos_execution_id=exe_id, qaos_import_request=ex_cmd)
+                hint = f"已匯入 QAOS：{exe_id}"
+                if mode == "bug":
+                    bug_cmd = _cmd(["bin/qaos", "run", "new", "spec-to-bug", *_opt("--input", f"spec_id={meta['spec_id']}"), *_opt("--input", f"spec_version={meta['spec_version']}"),
+                                    *_opt("--input", f"testcase_id={r['testcase_id']}"), *_opt("--input", f"testcase_version={meta['version']}"),
+                                    *_opt("--input", f"execution_id={exe_id}"), *_opt("--input", "evidence_ids=" + json.dumps(evd_ids)), *_opt("--by", who)])
+                    out = _run_or_raise(bug_cmd, "開 spec-to-bug run", log)
+                    m = RUN_RE.search(out)
+                    if not m:
+                        raise BugFileError(502, f"run new 沒有回傳 RUN 編號：{out[-200:]}")
+                    bug_run = m.group(0)
+                    _save(result_id, bug_run_id=bug_run, bug_run_command=bug_cmd)
+                    hint = f"已開 {bug_run}（spec-to-bug）。Bug Analyst 的 T1 已 READY，QA session 會由 relay 接續；走到 OPEN_BUG 核准單時會出現在「單據 › 核准」。"
+            ended = db.now()
+            handoff_id = None
+            try:
+                if bug_run:
+                    handoff_id, hint = _complete_bug_handoff(run_id, result_id, bug_run, bug_cmd, who, hint, started, ended, log)
+                else:
+                    with db.connect() as con:
+                        _insert_filing_row(con, run_id, result_id, mode, log, None, None, hint, started, ended)
+            except (OSError, sqlite3.Error) as e:
+                raise BugFileError(500, f"{bug_run + ' 已開，但' if bug_run else ''}交接或執行紀錄寫入失敗：{e}。"
+                                        "再按一次「送 QAOS」只會補做交接與紀錄，不會重跑 CLI、不會重開 run。") from e
     finally:
         qaos_exec._lock.release()
-    ended = db.now()
-    handoff_id = None
-    if bug_run:
-        from . import runs as run_svc
-        run_svc._cache.pop(str(run_svc.RUNS_DIR / bug_run / "run.yaml"), None)
-        after = run_svc.get(bug_run)
-        cur = next((t for t in (after or {}).get("tasks", []) if t["task_id"] == (after or {}).get("current_task_id")), None)
-        sid = _target_session()
-        import uuid
-        handoff_id = uuid.uuid4().hex[:12]
-        qaos_exec._append_handoff({
-            "kind": "handoff", "id": handoff_id, "ts": ended, "ticket_id": f"TESTRUN-{run_id}/{result_id}", "ticket_kind": "bug_filing", "action": "spec-to-bug",
-            "handoff_kind": "resume_agent" if (after and after["status"] == "RUNNING" and cur and cur.get("status") == "READY") else "notify_only",
-            "command": bug_cmd, "exit_code": 0, "run_id": bug_run, "run_status_after": after["status"] if after else None,
-            "next_task": (after or {}).get("current_task_id"), "next_agent": cur.get("agent_id") if cur else None,
-            "session_id": sid, "hint": hint, "by": who,
-        })
-        if not sid:
-            hint += " 找不到活著的 QA session 可交接，請到 QA session 說「繼續 " + bug_run + "」。"
-    with db.connect() as con:
-        con.execute("""INSERT INTO ticket_executions (ticket_id, kind, action, command, exit_code, stdout, stderr, post_json, run_id, run_status_after, next_task, session_id, handoff_id, hint, started_at, ended_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (f"TESTRUN-{run_id}/{result_id}", "bug_filing" if mode == "bug" else "execution_import", mode, "\n".join(x["command"] for x in log), 0,
-                     "\n".join(x["stdout"] for x in log)[-4000:], "", json.dumps(_compact_log(log), ensure_ascii=False), bug_run, None, None, None, handoff_id, hint, started, ended))
     if run.get("status") in ("done", "aborted"):
         testruns.sync_report(run_id)
-    return {"ok": True, "evidence_ids": evd_ids, "execution_id": exe_id, "bug_run_id": bug_run, "hint": hint, "log": log}
+    return {"ok": True, "evidence_ids": evd_ids, "execution_id": exe_id, "bug_run_id": bug_run, "handoff_id": handoff_id, "hint": hint, "log": log}
+
+
+def _insert_filing_row(con, run_id: int, result_id: int, mode: str, log: list[dict], bug_run: str | None, handoff_id: str | None, hint: str, started: str, ended: str):
+    con.execute("""INSERT INTO ticket_executions (ticket_id, kind, action, command, exit_code, stdout, stderr, post_json, run_id, run_status_after, next_task, session_id, handoff_id, hint, started_at, ended_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (f"TESTRUN-{run_id}/{result_id}", "bug_filing" if mode == "bug" else "execution_import", mode, "\n".join(x["command"] for x in log), 0,
+                 "\n".join(x["stdout"] for x in log)[-4000:], "", json.dumps(_compact_log(log), ensure_ascii=False), bug_run, None, None, None, handoff_id, hint, started, ended))
+
+
+def _complete_bug_handoff(run_id: int, result_id: int, bug_run: str, bug_cmd: str, who: str, hint: str, started: str, ended: str, log: list[dict]) -> tuple[str, str]:
+    """開 bug 之後的後段，每一步都冪等，失敗後重試只會補沒做完的：
+    1) 交接寫進 handoff.jsonl（ID 由 bug run 衍生；已經在檔案裡就不再寫）
+    2) 執行紀錄（同一個 handoff_id 已有就不再插）
+    3) 最後才在結果上記 bug_handoff_id＝交接完成（plan 看這個欄位決定是「已送過」還是「待補交接」）。"""
+    from . import runs as run_svc
+    run_svc._cache.pop(str(run_svc.RUNS_DIR / bug_run / "run.yaml"), None)
+    after = run_svc.get(bug_run)
+    cur = next((t for t in (after or {}).get("tasks", []) if t["task_id"] == (after or {}).get("current_task_id")), None)
+    sid = _target_session()
+    handoff_id = qaos_exec.stable_handoff_id("bug_filing", bug_run)
+    qaos_exec.append_handoff_once({
+        "kind": "handoff", "id": handoff_id, "ts": ended, "ticket_id": f"TESTRUN-{run_id}/{result_id}", "ticket_kind": "bug_filing", "action": "spec-to-bug",
+        "handoff_kind": "resume_agent" if (after and after["status"] == "RUNNING" and cur and cur.get("status") == "READY") else "notify_only",
+        "command": bug_cmd, "exit_code": 0, "run_id": bug_run, "run_status_after": after["status"] if after else None,
+        "next_task": (after or {}).get("current_task_id"), "next_agent": cur.get("agent_id") if cur else None,
+        "session_id": sid, "hint": hint, "by": who,
+    })
+    if not sid:
+        hint += " 找不到活著的 QA session 可交接，請到 QA session 說「繼續 " + bug_run + "」。"
+    with db.connect() as con:
+        if not con.execute("SELECT 1 FROM ticket_executions WHERE ticket_id=? AND handoff_id=?", (f"TESTRUN-{run_id}/{result_id}", handoff_id)).fetchone():
+            if not log:        # 補做：沒有這次的 CLI 紀錄，執行紀錄裡至少留下當初開 run 的指令
+                log = [{"what": "開 spec-to-bug run（補做交接）", "command": bug_cmd, "exit_code": 0, "stdout": bug_run, "stderr": ""}]
+            _insert_filing_row(con, run_id, result_id, "bug", log, bug_run, handoff_id, hint, started, ended)
+    _save(result_id, bug_handoff_id=handoff_id)
+    return handoff_id, hint
 
 
 def import_passes(run_id: int) -> dict:

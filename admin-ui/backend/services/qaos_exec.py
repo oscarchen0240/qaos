@@ -11,12 +11,13 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shlex
+import sqlite3
 import subprocess
 import threading
-import uuid
 
 from .. import db
 from ..config import PROJECT_ROOT, WARROOM_DIR
@@ -127,6 +128,13 @@ def _write_guard() -> None:
                              "請用 QAOS_ADMIN_PROJECT_ROOT 指向主資料夾後重啟指揮台。")
 
 
+def _text(v) -> str:
+    """TimeoutExpired 的 output／stderr 在 POSIX 上可能是 bytes（即使 text=True），也可能是 None。"""
+    if v is None:
+        return ""
+    return v.decode("utf-8", "replace") if isinstance(v, bytes) else v
+
+
 def _run(cmd: str) -> dict:
     args = shlex.split(cmd)
     if not args or args[0] != "bin/qaos":
@@ -136,8 +144,19 @@ def _run(cmd: str) -> dict:
     try:
         r = subprocess.run(args, cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=TIMEOUT, env=env)
         return {"command": cmd, "exit_code": r.returncode, "stdout": r.stdout[-4000:], "stderr": r.stderr[-4000:]}
-    except subprocess.TimeoutExpired:
-        return {"command": cmd, "exit_code": -1, "stdout": "", "stderr": f"逾時 {TIMEOUT}s"}
+    except subprocess.TimeoutExpired as e:
+        # 逾時前 CLI 可能已經印出部分輸出、甚至已寫入部分狀態：保留已取得的輸出，並標明結果不確定（R10）
+        return {"command": cmd, "exit_code": -1, "stdout": _text(e.output)[-4000:], "stderr": (_text(e.stderr)[-3900:] + f"\n逾時 {TIMEOUT}s").strip(), "timed_out": True}
+
+
+RECONCILE = "bin/qaos operation list --incomplete"
+
+
+def failure_hint(res: dict) -> str:
+    """執行失敗時的提示。不再宣稱「QAOS 沒有改任何狀態」：逾時（或被訊號中斷）時 CLI 可能已寫入一部分，一般失敗這裡也無從確認。"""
+    if res.get("timed_out") or res.get("exit_code", 0) < 0:
+        return f"結果不確定：指令逾時或被中斷，QAOS 可能已完成部分或全部動作。請先對帳（{RECONCILE}），確認後再決定要不要重試；已取得的輸出見 stdout／stderr。"
+    return f"執行失敗（exit {res.get('exit_code')}），看 stderr。這裡無法確認 QAOS 有沒有留下部分變更；有疑慮請先對帳（{RECONCILE}）。"
 
 
 def _index_note(post: list[dict], index_path: str) -> str:
@@ -184,12 +203,57 @@ def handoff_tail(n: int = 50) -> list[dict]:
     return items[-n:]
 
 
+def stable_handoff_id(*parts: str) -> str:
+    """交接 ID 由內容衍生（不是隨機）：同一件事重複補做得到同一個 ID，handoff.jsonl 裡就只會有一筆。"""
+    return hashlib.sha1("\x1f".join(parts).encode("utf-8")).hexdigest()[:12]
+
+
+def handoff_recorded(handoff_id: str) -> bool:
+    if not HANDOFF_FILE.exists():
+        return False
+    for line in HANDOFF_FILE.read_text(encoding="utf-8").splitlines():
+        if handoff_id not in line:
+            continue
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if r.get("kind") == "handoff" and r.get("id") == handoff_id:
+            return True
+    return False
+
+
+def append_handoff_once(rec: dict):
+    """冪等：同一個 ID 已經在 handoff.jsonl 裡就不再寫。補做交接時前一次可能其實已寫成功、只是後面的步驟失敗。"""
+    if not handoff_recorded(rec["id"]):
+        _append_handoff(rec)
+
+
+def _pending_execution(ticket_id: str) -> dict | None:
+    with db.connect() as con:
+        return db.one(con.execute("SELECT * FROM ticket_executions WHERE ticket_id=? AND completion='pending' ORDER BY id DESC LIMIT 1", (ticket_id,)))
+
+
+def _post_steps(raw: str | None) -> list[dict]:
+    try:
+        v = json.loads(raw or "[]")
+        return v if isinstance(v, list) else []
+    except ValueError:
+        return []
+
+
 def execute(ticket_id: str) -> dict:
     if not _lock.acquire(blocking=False):
         raise ExecError(409, "另一條 bin/qaos 正在執行，稍後再試")
     try:
         # 草稿、預檢、組指令與執行都在同一把鎖內：兩個請求交錯時，後取得鎖的一定讀到前一個請求寫入後的最新狀態，
         # 重複的回答（--new-request 擋不住的合法自轉換）才擋得住；預檢放在鎖外會讓兩個請求都通過舊狀態的預檢。
+        # R04：上一次 CLI 已成功、但後段（交接、mark_sent、執行紀錄）沒做完時，只補做後段；不預檢（QAOS 狀態已經變了，預檢必然不符）也不重跑指令。
+        pend = _pending_execution(ticket_id)
+        if pend:
+            res = {"command": pend["command"], "exit_code": 0, "stdout": pend["stdout"], "stderr": pend["stderr"]}
+            return _finish_success(pend["id"], ticket_id, pend["kind"], pend["action"], pend["command"], pend["run_id"], res,
+                                   _post_steps(pend["post_json"]), pend["started_at"], pend["ended_at"], pend["handoff_id"], resumed=True)
         draft = tk.get_draft(ticket_id)
         if not draft:
             raise ExecError(409, "還沒有草稿；先在畫面上做決定")
@@ -205,62 +269,79 @@ def execute(ticket_id: str) -> dict:
                 post.append(_run("bin/qaos clarification index --new-request"))
             elif kind == "bug":
                 post.append(_run("bin/qaos bug index --new-request"))
+        ended = db.now()
+        if res["exit_code"] != 0:
+            hint = failure_hint(res)
+            with db.connect() as con:
+                _insert_execution(con, ticket_id, kind, action, cmd_out["command"], res, post, run_id, None, None, None, None, hint, started, ended, "done")
+            return {"ok": False, **res, "post": post, "run_id": run_id, "run_status_after": None, "next_task": None, "session_id": None, "handoff_id": None,
+                    "hint": hint, "started_at": started, "ended_at": ended}
+        # CLI 已改了 QAOS：先把「已執行、後段待補」記下來（含穩定的 handoff ID），之後任何一步失敗都能只補後段
+        hid = stable_handoff_id(ticket_id, cmd_out["command"], started)
+        with db.connect() as con:
+            row_id = _insert_execution(con, ticket_id, kind, action, cmd_out["command"], res, post, run_id, None, None, None, hid, "", started, ended, "pending")
+        return _finish_success(row_id, ticket_id, kind, action, cmd_out["command"], run_id, res, post, started, ended, hid, resumed=False)
     finally:
         _lock.release()
-    ended = db.now()
 
-    if run_id:
-        run_svc._cache.pop(str(run_svc.RUNS_DIR / run_id / "run.yaml"), None)  # 強制重讀
-    run_after = run_svc.get(run_id) if run_id else None
-    next_task = None
-    cur = None
-    hint = ""
-    session_id = None
-    if res["exit_code"] != 0:
-        hint = "執行失敗，QAOS 沒有改任何狀態；看 stderr。"
-    elif kind == "approval" and run_after:
-        cur = next((t for t in run_after["tasks"] if t["task_id"] == run_after.get("current_task_id")), None)
-        next_task = run_after.get("current_task_id")
-        session_id = _owner_session(run_id)
-        st = run_after["status"]
-        if st == "RUNNING" and cur and cur["status"] == "READY":
-            hint = f"run {run_id} 已推進到 {next_task}（{cur.get('agent_id') or cur.get('type')}）。QA session 會在下一回合結束或你送出任何訊息時由 relay hook 接續；沒裝 relay 就到 QA session 說「繼續 {run_id}」。"
-        elif st == "WAITING_HUMAN":
-            hint = f"run {run_id} 又開了新的核准單（{run_after.get('waiting_on_approval_id')}），回單據頁處理。"
-        elif st == "COMPLETED":
-            hint = f"run {run_id} 已完成。若是啟用 TC，請到 QA session 跑 tc-export 重新匯出 final（產出頁會顯示「final 已過期」）。"
-        elif st == "CANCELLED":
-            hint = f"run {run_id} 已取消。"
-        else:
-            hint = f"run {run_id} 現在 {st}。"
-    elif kind == "clarification":
-        hint = "釐清單已更新，" + _index_note(post, "clarifications/index.md") + ("若已回答且有對應 RESOLVE_AMBIGUITY 核准單，回核准頁套用。" if action == "answer" else "")
-    elif kind == "bug":
-        hint = "Bug 已更新，" + _index_note(post, "bugs/index.md")
 
-    handoff_id = None
-    if res["exit_code"] == 0:
-        handoff_id = uuid.uuid4().hex[:12]
+def _insert_execution(con, ticket_id, kind, action, command, res, post, run_id, run_status_after, next_task, session_id, handoff_id, hint, started, ended, completion) -> int:
+    return con.execute("""INSERT INTO ticket_executions (ticket_id, kind, action, command, exit_code, stdout, stderr, post_json, run_id, run_status_after, next_task, session_id, handoff_id, hint, started_at, ended_at, completion)
+                          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                       (ticket_id, kind, action, command, res["exit_code"], res["stdout"], res["stderr"], json.dumps(post, ensure_ascii=False), run_id, run_status_after, next_task,
+                        session_id, handoff_id, hint, started, ended, completion)).lastrowid
+
+
+def _finish_success(row_id: int, ticket_id: str, kind: str, action: str, command: str, run_id: str | None, res: dict, post: list[dict],
+                    started: str, ended: str, handoff_id: str, resumed: bool) -> dict:
+    """CLI 成功之後的後段：讀 run 現況、組提示、寫交接（冪等）、mark_sent、把執行紀錄改成 done。任何一步失敗都保留 pending，可重試補做。"""
+    try:
+        if run_id:
+            run_svc._cache.pop(str(run_svc.RUNS_DIR / run_id / "run.yaml"), None)  # 強制重讀
+        run_after = run_svc.get(run_id) if run_id else None
+        next_task = None
+        cur = None
+        hint = ""
+        session_id = None
+        if kind == "approval" and run_after:
+            cur = next((t for t in run_after["tasks"] if t["task_id"] == run_after.get("current_task_id")), None)
+            next_task = run_after.get("current_task_id")
+            session_id = _owner_session(run_id)
+            st = run_after["status"]
+            if st == "RUNNING" and cur and cur["status"] == "READY":
+                hint = f"run {run_id} 已推進到 {next_task}（{cur.get('agent_id') or cur.get('type')}）。QA session 會在下一回合結束或你送出任何訊息時由 relay hook 接續；沒裝 relay 就到 QA session 說「繼續 {run_id}」。"
+            elif st == "WAITING_HUMAN":
+                hint = f"run {run_id} 又開了新的核准單（{run_after.get('waiting_on_approval_id')}），回單據頁處理。"
+            elif st == "COMPLETED":
+                hint = f"run {run_id} 已完成。若是啟用 TC，請到 QA session 跑 tc-export 重新匯出 final（產出頁會顯示「final 已過期」）。"
+            elif st == "CANCELLED":
+                hint = f"run {run_id} 已取消。"
+            else:
+                hint = f"run {run_id} 現在 {st}。"
+        elif kind == "clarification":
+            hint = "釐清單已更新，" + _index_note(post, "clarifications/index.md") + ("若已回答且有對應 RESOLVE_AMBIGUITY 核准單，回核准頁套用。" if action == "answer" else "")
+        elif kind == "bug":
+            hint = "Bug 已更新，" + _index_note(post, "bugs/index.md")
         # 交接分類：run 還有 READY 的 agent task 要接 → resume_agent（relay 會 block 讓 QA session 接續）；
         # 其他（run 結案／又在等人／釐清、Bug 動作）→ notify_only（relay 只在 UserPromptSubmit 顯示，不擋、不吞）
         resume = bool(kind == "approval" and run_after and run_after["status"] == "RUNNING" and cur and cur.get("status") == "READY")
-        _append_handoff({
+        append_handoff_once({
             "kind": "handoff", "id": handoff_id, "ts": ended, "ticket_id": ticket_id, "ticket_kind": kind, "action": action,
             "handoff_kind": "resume_agent" if resume else "notify_only",
-            "command": cmd_out["command"], "exit_code": res["exit_code"], "run_id": run_id,
+            "command": command, "exit_code": res["exit_code"], "run_id": run_id,
             "run_status_after": run_after["status"] if run_after else None, "next_task": next_task,
             "next_agent": (cur.get("agent_id") if (kind == "approval" and run_after and cur) else None),
             "session_id": session_id, "hint": hint, "by": tk.operator(),
         })
-        tk.mark_sent(ticket_id, cmd_out["command"])
-
-    with db.connect() as con:
-        con.execute("""INSERT INTO ticket_executions (ticket_id, kind, action, command, exit_code, stdout, stderr, post_json, run_id, run_status_after, next_task, session_id, handoff_id, hint, started_at, ended_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (ticket_id, kind, action, cmd_out["command"], res["exit_code"], res["stdout"], res["stderr"], json.dumps(post, ensure_ascii=False),
-                     run_id, run_after["status"] if run_after else None, next_task, session_id, handoff_id, hint, started, ended))
-    return {"ok": res["exit_code"] == 0, **res, "post": post, "run_id": run_id, "run_status_after": run_after["status"] if run_after else None,
-            "next_task": next_task, "session_id": session_id, "handoff_id": handoff_id, "hint": hint, "started_at": started, "ended_at": ended}
+        tk.mark_sent(ticket_id, command)
+        with db.connect() as con:
+            con.execute("UPDATE ticket_executions SET run_status_after=?, next_task=?, session_id=?, hint=?, completion='done' WHERE id=?",
+                        (run_after["status"] if run_after else None, next_task, session_id, hint, row_id))
+    except (OSError, sqlite3.Error) as e:
+        raise ExecError(500, f"指令已成功執行（QAOS 已改變），但交接或執行紀錄寫入失敗：{e}。再按一次「執行」只會補做交接與紀錄，不會重跑指令。") from e
+    return {"ok": True, **res, "post": post, "run_id": run_id, "run_status_after": run_after["status"] if run_after else None,
+            "next_task": next_task, "session_id": session_id, "handoff_id": handoff_id, "hint": hint, "started_at": started, "ended_at": ended,
+            "completed_pending": resumed}
 
 
 def executions(ticket_id: str) -> list[dict]:
@@ -274,4 +355,5 @@ def executions(ticket_id: str) -> list[dict]:
             r["post"] = []
             r["post_error"] = "這筆執行紀錄的步驟明細已損毀（舊版截斷），無法顯示"
         r["ok"] = r["exit_code"] == 0
+        r["pending_completion"] = r.get("completion") == "pending"
     return rows
