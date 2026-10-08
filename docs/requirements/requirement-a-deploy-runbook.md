@@ -32,7 +32,14 @@ BY=<actor>                          # maintenance／migrate 的 --by；用既有
 H=<MR 的 HEAD 完整 SHA>             # 例：3b2b726…（MR !8）
 OLD=<舊程式 SHA>                    # 部署前的 main = origin/main = github/main；例：f5188b0…
 export PYTHONDONTWRITEBYTECODE=1
+env | grep '^QAOS_'                 # 預期：只有 QAOS_ROOT（或沒有輸出）
 ```
+
+**環境變數檢查**（部署前，以及每次對主資料夾執行 `bin/qaos` 寫入指令之前）：`env | grep '^QAOS_'` 除了 `QAOS_ROOT` 以外不應該有其他輸出。`QAOS_FAULT`、`QAOS_PAUSE`、`QAOS_TEST_CLOCK` 都只供測試使用，沒有正式環境的防護，誤設時會影響經過執行器的寫入（不限於 migrate）：
+- `QAOS_FAULT`、`QAOS_PAUSE`：命中指定的故障點或同步點時，讓程序中止、拋出例外或停住等待；
+- `QAOS_TEST_CLOCK`：固定**新建**計畫的時間與日期，連帶影響依日期配發的 ID。已建立的計畫在同請求重送或 `operation resume` 時沿用原本的時間，`unset` 不會修正已經寫入的時間或 ID。
+
+出現就先 `unset`，再繼續。
 
 | # | 事項 | 建議（括號內為 2026-10-08 的決定） |
 |---|---|---|
@@ -379,16 +386,15 @@ cd $MAIN
 bin/qaos maintenance end --by $BY                          # 預期：rc=0
 test ! -e locks/maintenance.yaml && echo S_post
 bin/qaos operation list                                    # 預期：maintenance_end completed；沒有 in_progress
-bin/qaos migrate verify                                    # 預期：rc=1，只報 runs/_audit.log 的 2 項（見下方說明）
+bin/qaos migrate verify                                    # 預期：rc=0，通過（輸出另列 X 之後的已完成操作，只供對照）
 ```
 
-**說明**（2026-10-08 依實際結果更正；原本預期「仍然通過」是錯的）：
+**說明**：
 - `maintenance end` 依規格 §11.7 會重建全域 `runs/_audit.log`，在末尾追加一行 `MAINTENANCE_END`。
-- 規格 §12 的 `migrate verify` 要求 restore 類等於移轉當下的計畫值，所以這時一定會回報 `runs/_audit.log` 的 2 項：「計畫值不符」與「restore 不等於移轉後的值」。
-- W2 改用下列方式驗證：`runs/_audit.log` 去掉最後一行 `MAINTENANCE_END` 之後，sha256 等於移轉計畫中 `runs/_audit.log` 步驟（render）的 expected_after。
-- 除了這 2 項以外，verify 回報其他任何失敗都要停下來。
+- 規格 §12.1～12.5（MR !18，main `4f2d062` 起）以「有出處的事件」重建 audit 檢視：X 時的事件重建等於計畫值，目前內容等於「X 時的事件 + X 之後已完成操作的全部有出處計畫事件 + 規格允許包含的有效診斷事件」的重建結果（診斷事件不 render，最後一次 render 之後才寫的診斷事件可以不在檢視中；細節見 §12.2）。所以 `maintenance end` 之後 verify 仍然通過。
+- 2026-10-08 部署時用的是修正前的程式，這一步回報了 `runs/_audit.log` 的 2 項（「計畫值不符」「restore 不等於移轉後的值」），當時改用「`runs/_audit.log` 去掉最後一行 `MAINTENANCE_END` 後的 sha256 等於移轉計畫 render 步驟的 expected_after」人工驗證。部署的程式早於 `4f2d062` 時，照這個方式處理。
 
-**停止條件**：`maintenance end` 的 rc 不是 0、維護檔仍然存在，或 verify 回報上述 2 項以外的失敗。
+**停止條件**：`maintenance end` 的 rc 不是 0、維護檔仍然存在，或 verify 回報任何失敗（用修正前的程式時，除了上述 2 項）。
 
 完成後寫一則通知 admin-ui（Session B）可以恢復的訊息，交給 Oscar 轉貼。內容包括：
 - 新程式已經上線；
@@ -500,6 +506,24 @@ git status --porcelain                                     # 預期：只剩 rev
 M5 → **回報**，並附上部署後待辦（寫在 deploy log）。
 
 ---
+
+## 附：S_post 之後的 `migrate verify` 與 rollback
+
+移轉結束、恢復正常使用之後，以下是預期行為，不是故障：
+
+1. **`migrate verify` 一定會回報被後續業務操作改寫的 untouched 路徑**。
+   - 移轉清單把 spec.yaml、TC 版本、`testcases/registry/*`（包括計數器 `testcases/registry/_counters.yaml`）、其他 run 的 run.yaml 等列為 untouched。之後只要有業務操作改寫它們（例如配發 ID、`run cancel`、spec 宣告變更），verify 就會回報「untouched … 被改動」（規格第 5 章 §12.5）。
+   - `runs/_audit.log` 等 audit 檢視不在此列：它們依規格 §12.2 判定，合法操作之後仍應通過；audit 檢視、事件檔或操作證據的回報都要當成異常處理。
+   - 判斷方法（verify 輸出另列的「X 之後的已完成操作」只是線索）：
+     1. 先排除其他 verify 錯誤，並確認讀取期間沒有其他寫入。
+     2. 依登錄紀錄（`operations/_global/index.d/`）的 `plan_seq`，在 X 之後、狀態為 completed 的計畫中，找出**最後一個**在 `steps` 裡寫入該路徑的步驟。不要用時鐘或檔案 mtime 排序（同秒操作、時間倒退都會排錯）；`no_change` 不是寫入步驟。
+     3. 以目前檔案原始位元組的 sha256 比對該步驟的 `expected_after`（null 表示應不存在）。
+     4. 找不到寫入步驟、或比對不符，就要追查。相符只表示與可信的計畫一致，不是覆寫或回復的授權；需要更強保證時對照 git 歷史。
+   - 例（2026-10-09，主資料夾資料複本）：回報 `specs/ba-admin/COMMON/SPEC-COMMON-001/spec.yaml`、`testcases/registry/_counters.yaml`、`runs/RUN-20260914-001/run.yaml` 3 項，都來自部署後的業務操作。
+2. **X 之後已經有業務操作時，`migrate rollback` 預設會被拒絕**（規格第 5 章 §13.1、§13.11）。
+   - 沒有 `--allow-later-ops`：由 T6 拒絕，並產出後續操作報告。
+   - 有 `--allow-later-ops`：只放行 T6；T7 再依**目前內容**判斷。`untouched` 或 X 的 `no_change` 業務檔不符、或 `restore`／`remove` 無法依 T7 規則回復時，T7 仍然拒絕（例如改寫過 `_counters.yaml` 的情況）。後續操作只寫清單以外的路徑時，T7 可以通過，回復後那些檔案保留。
+   - T7 的拒絕是安全行為：回復會讓後續工作與回復後的狀態不一致。不要放寬 T7，改由人工處理（是否回復、如何保留後續工作，由 Oscar 決定）。
 
 ## 附：回復（只在 Oscar 決定時執行，本手冊不執行）
 
