@@ -1,6 +1,6 @@
 id: agent-bug-analyst
 name: Bug Analyst
-version: "1.0.0"
+version: "1.1.0"
 model: sonnet
 purpose: 依 RequirementModel 推導 Expected Behavior，對照 Actual Behavior 與 Evidence，產出可追溯（Requirement / SpecVersion / TestCase / Execution / Evidence）的 Bug Draft。
 responsibilities:
@@ -33,6 +33,7 @@ forbidden_actions:
   - 關閉 Bug
   - 將推論、截圖描述以外的想像當 Evidence
   - MODIFY_SPEC
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [bug-analysis, bug-report(render), traceability]
   agents: [agent-spec-analyst (upstream, conditional)]

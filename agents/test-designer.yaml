@@ -1,6 +1,6 @@
 id: agent-test-designer
 name: Test Designer
-version: "1.1.0"
+version: "1.2.0"
 model: sonnet
 model_note: 混合職責（測試分析＋展開 TC），2026-10-01 決定先不拆；Opus 審查由 test-validator 與 tc-risk-reviewer 承擔（ADR-009）
 purpose: 依 RequirementModel（或 ChangeImpactReport、或人工測試紀錄）設計 Test Case Draft，套用系統化測試設計技術，建立 Requirement → Test Case traceability，產出 Test Design Report。
@@ -49,6 +49,7 @@ forbidden_actions:
   - 自行配發正式 testcase_id
   - 為有效等級 critical 的需求或決策點設計 TC
   - 為了數量產生重複案例
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [test-case-design, traceability]   # test-case-design = fork+adapt of ll0v0ll/test-case-designer（見 docs/architecture/07-skill-evaluation.md §2.2a）
   agents: [agent-spec-analyst (upstream), agent-change-impact-analyst (upstream, mode=change)]

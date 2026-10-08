@@ -1,6 +1,6 @@
 id: agent-change-impact-analyst
 name: Change Impact Analyst
-version: "1.1.0"
+version: "1.2.0"
 model: sonnet
 model_note: 混合職責（impact 判定＋compare 逐欄比對），2026-10-01 決定先不拆、維持現行值；拆分時 impact 階段改 opus（ADR-009）
 purpose: 兩階段。impact 階段：比較兩個 SpecVersion 的 RequirementModel，判定每個 Requirement 的變更與每個 ACTIVE Test Case 的影響。compare 階段：比較舊 ACTIVE 版本與新 VALIDATED 版本的 Test Case，產出 VersionComparisonReport。
@@ -44,6 +44,7 @@ forbidden_actions:
   - COMMIT_TO_REGISTRY / SUPERSEDE_TESTCASE / 覆蓋既有 TC
   - MODIFY_SPEC
   - 自行判定 obsolete TC 為 RETIRED（只能建議）
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [change-impact-analysis, traceability]
   agents: [agent-spec-analyst (upstream), agent-test-designer (downstream), agent-test-validator (downstream), agent-regression-curator (downstream)]
