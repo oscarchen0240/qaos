@@ -1,10 +1,13 @@
 """testcases/final/<AREA>-final.html／-final-active.json：某功能區全部 ACTIVE TC 的最終整合文件（DoD 三項之一）。
 
 事實來源：testcases/registry（ACTIVE 指標）→ testcases/versions（內容）→ artifacts/requirements（需求標題）。
-樣式沿用既有 final.html 的 <head>（第一次產出時從既有檔擷取；若無既有檔則用內建最小樣式）。
+樣式一律用內建範本 tools/qaos/templates/final-head.html（只替換標題）；副標題沿用既有 final.html 的 brand-sub。
+不從既有檔擷取 <head>：新功能區沒有既有檔時會退化成無樣式，而退化的檔案又會在下次匯出時被沿用。
 """
-import html, json, re
+import html, json, re, pathlib
 from . import store, operation
+
+HEAD_TEMPLATE = pathlib.Path(__file__).resolve().parent / "templates" / "final-head.html"
 
 def _active_tcs(area):
     out = []
@@ -26,14 +29,15 @@ def _req_index(tcs):
                 if r: idx[rid] = r
     return idx
 
-def _existing_head(area):
+def _head(area):
+    return HEAD_TEMPLATE.read_text(encoding="utf-8").replace("__AREA__", html.escape(area))
+
+def _existing_subtitle(area):
     p = f"testcases/final/{area}-final.html"
     if store.exists(p):
-        s = store.read_text(p); i = s.find("<body>")
-        if i > 0:
-            sub = re.search(r'<div class="brand-sub">([^<]*)</div>', s)
-            return s[:i], (sub.group(1).split(" · ")[0] if sub else area)
-    return None, area
+        sub = re.search(r'<div class="brand-sub">([^<]*)</div>', store.read_text(p))
+        if sub: return html.unescape(sub.group(1).split(" · ")[0])
+    return area
 
 def _cut(s, n=40): return html.escape(s if len(s) <= n else s[:n] + "...")
 
@@ -89,8 +93,7 @@ def export(area):
     tcs = _active_tcs(area)
     if not tcs: raise SystemExit(f"{area} 沒有 ACTIVE TC")
     reqs = _req_index(tcs); spec_ids = sorted({t["spec_id"] for t in tcs})
-    head, subtitle = _existing_head(area)
-    if head is None: head = f"<!DOCTYPE html><html lang='zh-Hant'><head><meta charset='utf-8'><title>{area} 測試案例集</title><style>body{{font-family:sans-serif}}</style></head>"
+    head, subtitle = _head(area), _existing_subtitle(area)
     by_req = {}
     for t in tcs:
         for rid in t["requirement_ids"]: by_req.setdefault(rid, []).append(t)
