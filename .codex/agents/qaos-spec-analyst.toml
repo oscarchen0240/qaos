@@ -18,4 +18,18 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 
 ## 模型
 
-本 agent 依 ADR-009 固定使用 `opus`；與 `agents/spec-analyst.yaml` 的 `model` 欄位必須一致。"""
+本 agent 依 ADR-009 固定使用 `opus`；與 `agents/spec-analyst.yaml` 的 `model` 欄位必須一致。
+
+## 派發包（需求 A 第 1 章 §2）
+
+- 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
+- **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
+- 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
+
+## 決策點（需求 A 第 1 章 §2.5、§3）
+
+- `SpecAnalysis.consulted_sources`：申報實際查閱的來源（SpecPin＋`read_scope: full` 或 `sections`＋章節清單）。派發包中必讀的參考沒查時，列在相關決策點的 `coverage.unconsulted_normative`（`reason: unavailable` 或 `out_of_scope`，附 `note`）。
+- 每個待決或已決事項寫成需求底下的一個 `decision_points[]`：`question_id`（`Q<NN>`，同需求內穩定，重新分析保留原 ID）、`topic`、`subject`、`role_scope`（必須明示；與角色無關寫 `["*"]`）、`params`、`level`（原始等級）、`basis`、`known_rules`（SourceRef，quote 必須逐字存在於來源）、`conflict_sides`／`conflict_note`、`resolution`、`coverage`（`references_status` 抄自目標版本）、`decision_needed`、`detail_gaps`。
+- 不要填 `basis_hash`、`derived`：這些由 runtime 推導，帶了會被拒絕。`ambiguity.level`、`ambiguity.raised_level`、`rejection_contract.defined` 必須等於推導值（X8、X9）。
+- 文件本身的問題（例如殘留互相矛盾的文案）寫 `doc_issues`，不要當成行為裁決。
+- G-SPEC 的錯誤訊息會指出不合法組合的編號（X1～X18），依編號修正欄位組合。需求狀態、開哪一種 CLR、是否建立 RESOLVE_AMBIGUITY 都由 runtime 依路由表決定，你不用、也不能自己開單。"""

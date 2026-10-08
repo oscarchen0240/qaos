@@ -391,10 +391,18 @@ def test_no_project_level_codex_hooks_json_is_tracked():
 
 
 # ------------------------------------------------------------------ .codex/agents 與 .claude/agents 一致
-ALLOWED_BODY_SUBSTITUTIONS = {"qaos-test-designer": [("Claude Code session", "Codex session")]}
+SYNC_AGENTS = HOOKS_DIR / "codex" / "sync-agents"
+SYNC_HINT = "請執行 admin-ui/hooks/codex/sync-agents 重新產生 .codex/agents 並一併 commit"
+
+
+def test_codex_agents_are_in_sync_with_the_generator():
+    r = subprocess.run([sys.executable, str(SYNC_AGENTS), "--check"], capture_output=True, text=True, cwd=REPO_ROOT)
+    assert r.returncode == 0, f"{r.stdout}\n{SYNC_HINT}"
 
 
 def test_codex_agents_match_claude_agents():
+    """獨立於產生器再驗一次語意：名稱、描述、本文逐字一致（只允許產生器的宿主用語替換）。"""
+    ALLOWED_BODY_SUBSTITUTIONS = _load(SYNC_AGENTS, "qaos_sync_agents").SUBSTITUTIONS
     codex_dir, claude_dir = REPO_ROOT / ".codex" / "agents", REPO_ROOT / ".claude" / "agents"
     tomls = sorted(codex_dir.glob("*.toml"))
     assert tomls, ".codex/agents 不應是空的"
@@ -410,4 +418,4 @@ def test_codex_agents_match_claude_agents():
             body = body.replace(old, new)
         assert d["name"] == front["name"] == t.stem
         assert d["description"] == front["description"]
-        assert d["developer_instructions"].strip() == body, f"{t.name} 與 .claude/agents/{t.stem}.md 內容不一致"
+        assert d["developer_instructions"].strip() == body, f"{t.name} 與 .claude/agents/{t.stem}.md 內容不一致。{SYNC_HINT}"
