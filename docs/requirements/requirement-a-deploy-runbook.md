@@ -463,6 +463,8 @@ git status --porcelain > $DEP/m5/status.txt
 
 ### M5-3 commit 並 push
 
+**放行清單（`ALLOW`）要依當次 M5-1 調整。** 下面的五個目錄是 2026-10-08 移轉的範圍。如果當次 M5-1 的修改或新增涉及其他業務目錄（例如 `approvals/`、`bugs/`、`evidence/`、`executions/`、`specs/`），要先更新 `ALLOW`，再執行下面的指令。
+
 ```sh
 cd $MAIN
 # 逐檔清單：修改的檔案 + 未追蹤檔（--others 會把未追蹤目錄展開成檔案），只放行 M5-1／M5-2 的業務目錄
@@ -475,8 +477,9 @@ cd $MAIN
 ALLOW='^(artifacts|clarifications|operations|runs|testcases)/'
 { git -c core.quotePath=false diff --name-only; git -c core.quotePath=false ls-files --others --exclude-standard; } | sort -u > $DEP/m5/changed.txt
 grep -E "$ALLOW" $DEP/m5/changed.txt > $DEP/m5/paths.txt
-grep -vE "$ALLOW" $DEP/m5/changed.txt                      # 不納入的變更：預期只有已知的非業務檔（例如 review-handoff/），其他一律停下來回報
-git add --pathspec-from-file=$DEP/m5/paths.txt             # 逐檔路徑清單，不使用 -A 或 .
+grep -vE "$ALLOW" $DEP/m5/changed.txt                      # 不納入的變更：預期只有 review-handoff/ 底下的路徑；出現其他任何路徑就停下來回報
+git -c core.quotePath=false diff --name-only --diff-filter=D | grep -E "$ALLOW"   # 刪除檢查：預期沒有輸出（移轉不刪除業務檔）
+git --literal-pathspecs add --pathspec-from-file=$DEP/m5/paths.txt   # 逐檔路徑清單，路徑不當成萬用字元；不使用 -A 或 .
 git -c core.quotePath=false diff --cached --name-only | sort > $DEP/m5/staged.txt
 diff $DEP/m5/paths.txt $DEP/m5/staged.txt                  # 預期：沒有差異
 git diff --cached --stat | tail -1                          # 檔數必須與 M5-1 的預期相符
@@ -485,12 +488,13 @@ git log --oneline origin/main..main                        # 預期：D1、L、D
 git push origin main                                       # 一般 push（fast-forward：M → L → D2）
 git push github main                                       # 一般 push（fast-forward：M → … → D2）
 git rev-parse main origin/main github/main                 # 預期：三者相同
-git status --porcelain                                     # 預期：只剩非業務檔（例如 review-handoff/）
+git status --porcelain                                     # 預期：只剩 review-handoff/
 ```
 
 **停止條件**：
 - 有清單以外的檔案被 staged；
-- 業務目錄以外出現未知的變更；
+- 業務目錄以外出現 `review-handoff/` 以外的任何路徑；
+- 刪除檢查有輸出；
 - push 被拒絕（non-fast-forward），**絕不 force**。
 
 M5 → **回報**，並附上部署後待辦（寫在 deploy log）。
