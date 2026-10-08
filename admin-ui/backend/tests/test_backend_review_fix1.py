@@ -193,6 +193,39 @@ def test_r14_draft_is_not_saved_when_validation_fails(sandbox):
     assert d["per_item"] == {"TC-X-001": {"decision": "reject", "reason": "缺前置"}}
 
 
+def _asgi_put(app, path: str, payload: dict) -> int:
+    """不經 httpx／TestClient，直接以 ASGI 呼叫 app，回 HTTP 狀態碼（CI 的 requirements 沒有 httpx）。"""
+    raw = json.dumps(payload).encode()
+    sent: list[dict] = []
+
+    async def receive():
+        return {"type": "http.request", "body": raw, "more_body": False}
+
+    async def send(message):
+        sent.append(message)
+    scope = {"type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1", "method": "PUT", "scheme": "http", "path": path, "raw_path": path.encode(),
+             "query_string": b"", "root_path": "", "headers": [(b"content-type", b"application/json")], "server": ("test", 80), "client": ("test", 1)}
+    asyncio.run(app(scope, receive, send))
+    return next(m["status"] for m in sent if m["type"] == "http.response.start")
+
+
+def test_r14_http_put_with_non_string_values_is_422_and_writes_nothing(sandbox, monkeypatch):
+    from fastapi import FastAPI
+    from backend.routers import tickets as rt
+    app = FastAPI(); app.include_router(rt.router)
+
+    def must_not_reach(*a, **k):
+        raise AssertionError("驗證失敗的請求不該進到 endpoint／service")
+    for name in ("approval_detail", "clarification_detail", "bug_detail"):
+        monkeypatch.setattr(sandbox.tickets, name, must_not_reach)
+    for kind, plural in (("approval", "approvals"), ("clarification", "clarifications"), ("bug", "bugs")):
+        tid = f"T-{kind}"
+        before = sandbox.tickets.save_draft(tid, kind, "ask", None, "原內容", None, {"asked_to": "PM"})
+        for payload in ({"extra": {"asked_to": 123}}, {"per_item": {"TC-X-001": {"reason": ["x"]}}}):
+            assert _asgi_put(app, f"/api/tickets/{plural}/{tid}/draft", payload) == 422
+            assert sandbox.tickets.get_draft(tid) == before
+
+
 def test_r14_legacy_non_string_extra_does_not_crash_command_assembly(sandbox):
     out = sandbox.tickets.clarification_command("CLR-T-7", {"decision": "ask", "extra": {"asked_to": 123}})
     assert "--to 123" in out["command"]
