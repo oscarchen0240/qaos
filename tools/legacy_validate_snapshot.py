@@ -9,19 +9,21 @@
       另記錄當時登錄紀錄（index.d）中已有的 op，以及舊程式環境的 jsonschema／PyYAML 版本。
       W1：資料 commit 之後、M2 之前（仍是舊程式）對主資料夾執行，結果作為 W1 對照。R5：程式 revert 之後再執行一次。
       範圍排除定義層（schemas、agents、workflows、permissions、tools、tests、admin-ui、docs、bin）與隱藏目錄。
-      自我檢查：任何輸出含 Traceback，或 VALID 為 0 → 視為舊程式環境異常，結束碼 2，不寫結果。
+      自我檢查：任何輸出含 Traceback，或 VALID 為 0（包含範圍內一個檔案都沒有）→ 視為舊程式環境或範圍異常，結束碼 2，不寫結果。
       本工具只讀資料 root（結果檔不得寫在資料 root 內）；子程序是舊程式的唯讀指令 `validate` 與 `schema.infer`。
-  compare --w1 <W1 對照.json> --after <回復後.json> --root <資料 root> [--op <X 的 op_id>] [--report <報告.json>]
-      先核對兩份結果的中繼資料（資料 root、舊程式內容的雜湊、工具版本與 sha256、jsonschema／PyYAML 版本）相同，不同即不符。
+  compare --w1 <W1 對照.json> --after <回復後.json> --root <資料 root> --op <X 的 op_id> [--report <報告.json>]
+      先核對兩份結果的中繼資料：兩份結果的資料 root 都必須等於 --root（不借用其他 root 的登錄紀錄）；舊程式內容的雜湊、
+      資料 root 實際使用的 schemas 的雜湊（舊程式從 QAOS_ROOT 讀 schemas）、工具版本與 sha256、jsonschema／PyYAML 版本都相同。不同即不符。
       舊程式的 git HEAD 只記錄、不比對（R5 的 HEAD 是 revert commit）。
       依 5-16 判定：
         (1) W1 對照中有的路徑：回復後也必須存在，退出碼、stdout、stderr 全文都相同；
         (2) W1 對照中沒有的路徑：只允許是 `runs/_audit.d/<op>-<n>.yaml`、`runs/<run>/audit.d/<op>-<n>.yaml` 的事件檔，
             而且 <op> 必須能在登錄紀錄（`operations/_global/index.d/*.yaml`）中找到、在 W1 時尚未登錄（M2 之後），
-            action 是 migrate、migrate_rollback、maintenance_start 或 maintenance_end；給了 --op 時，migrate 只限 X、
+            action 是 migrate、migrate_rollback、maintenance_start 或 maintenance_end；migrate 只限 --op 指定的 X、
             migrate_rollback 只限 takeover_of 為 X 的 R。符合者不在舊 validate 的判定範圍；
         (3) 其他情況都視為不符。全部符合 → 結束碼 0；有不符 → 結束碼 1，逐項列出。
-      前提：`later_ops_snapshot` 為空。給了 --op 時，工具讀 R 的計畫檔確認；非空時列為不符，後續操作寫入的路徑依後續操作報告人工判定。
+      前提：`later_ops_snapshot` 為空。工具一律讀 R 的計畫檔確認；找不到 R 或非空時列為不符，後續操作寫入的路徑依後續操作報告人工判定。
+      `--op` 必填：沒有指定本次的 X，就無法確認豁免的事件屬於本次的 X、R，也無法核對前提。
 """
 import argparse, concurrent.futures as cf, datetime, hashlib, json, os, pathlib, platform, re, subprocess, sys
 
@@ -43,6 +45,13 @@ def _program_sha(program: pathlib.Path) -> str:
     files = [program / "bin/qaos", *sorted((program / "tools/qaos").rglob("*.py")), *sorted((program / "schemas").rglob("*.json"))]
     for f in files:
         if f.is_file() and "__pycache__" not in f.parts: h.update(f"{f.relative_to(program).as_posix()}\0{_sha(f)}\n".encode())
+    return h.hexdigest()
+
+def _schemas_sha(root: pathlib.Path) -> str:
+    """資料 root 的 schemas（舊程式的 schema registry 從 QAOS_ROOT/schemas 讀取，這才是實際使用的驗證定義）。"""
+    h = hashlib.sha256()
+    for f in sorted((root / "schemas").rglob("*.json")):
+        if f.is_file(): h.update(f"{f.relative_to(root).as_posix()}\0{_sha(f)}\n".encode())
     return h.hexdigest()
 
 def _candidates(root: pathlib.Path) -> list[str]:
@@ -76,18 +85,18 @@ def snapshot(root: pathlib.Path, program: pathlib.Path, workers: int = 8) -> dic
         return rel, {"schema": inf[rel], "rc": r.returncode, "stdout": norm(r.stdout), "stderr": norm(r.stderr), "sha256": _sha(root / rel)}
     with cf.ThreadPoolExecutor(workers) as ex: results = dict(ex.map(run, files))
     broken = [r for r, v in results.items() if "Traceback" in v["stdout"] + v["stderr"]]
-    if broken or (results and not any(v["rc"] == 0 for v in results.values())):
+    if broken or not any(v["rc"] == 0 for v in results.values()):
         _abort(broken)
     return {"tool": "legacy_validate_snapshot", "tool_version": TOOL_VERSION, "tool_sha256": _sha(pathlib.Path(__file__)),
             "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"), "python": platform.python_version(),
-            "root": str(root), "root_git_head": _git_head(root), "program": str(program), "program_git_head": _git_head(program), "program_sha256": _program_sha(program),
+            "root": str(root), "root_git_head": _git_head(root), "program": str(program), "program_git_head": _git_head(program), "program_sha256": _program_sha(program), "root_schemas_sha256": _schemas_sha(root),
             "scope": "舊 schema.infer 能推斷 schema 的全部 yaml（排除定義層與隱藏目錄）", "no_schema": len(inf) - len(files),
             "env_versions": got["versions"], "registered_ops": sorted(_registered(root)),
             "summary": {"files": len(results), "valid": sum(1 for v in results.values() if v["rc"] == 0), "invalid": sum(1 for v in results.values() if v["rc"] != 0)},
             "files": results}
 
 def _abort(broken):
-    print(f"舊程式環境異常：Traceback {len(broken)} 檔（例如 {broken[:3]}），或沒有任何 VALID；不寫結果", file=sys.stderr)
+    print(f"舊程式環境或範圍異常：Traceback {len(broken)} 檔（例如 {broken[:3]}），或沒有任何 VALID（含範圍內沒有任何檔案）；不寫結果", file=sys.stderr)
     raise SystemExit(2)
 
 def _registered(root: pathlib.Path) -> dict:
@@ -99,26 +108,28 @@ def _registered(root: pathlib.Path) -> dict:
         if op and act: out[op.group(1)] = act.group(1)
     return out
 
-META = ("root", "program_sha256", "tool_version", "tool_sha256", "env_versions")
+META = ("program_sha256", "root_schemas_sha256", "tool_version", "tool_sha256", "env_versions")
 
 def _plan_text(root: pathlib.Path, op: str) -> str:
     p = root / f"operations/_global/{op}.yaml"
     return p.read_text(encoding="utf-8") if p.is_file() else ""
 
-def compare(w1: dict, after: dict, root: pathlib.Path, x: str | None = None) -> dict:
+def compare(w1: dict, after: dict, root: pathlib.Path, x: str) -> dict:
     a, b = w1["files"], after["files"]; root = root.resolve(); regs = _registered(root)
     problems, exempt = [], []
+    for name, d in (("W1 對照", w1), ("回復後", after)):
+        if not d.get("root") or pathlib.Path(d["root"]).resolve() != root:
+            problems.append({"path": "-", "rule": "(meta)", "reason": f"{name}結果的資料 root 不是 --root", "snapshot_root": d.get("root"), "root": str(root)})
     for k in META:
         if w1.get(k) != after.get(k): problems.append({"path": "-", "rule": "(meta)", "reason": f"兩份結果的 {k} 不同", "w1": w1.get(k), "after": after.get(k)})
     pre_ops = set(w1.get("registered_ops") or [])
-    allowed = None
-    if x:
-        rs = [op for op, act in regs.items() if act == "migrate_rollback" and re.search(rf"^takeover_of:\s*{x}\s*$", _plan_text(root, op), re.M)]
-        allowed = {x, *rs}
-        for r in rs:
-            if not re.search(r"^later_ops_snapshot:\s*\[\]\s*$", _plan_text(root, r), re.M):
-                problems.append({"path": f"operations/_global/{r}.yaml", "rule": "(前提)", "reason": "R 的 later_ops_snapshot 不是空的：後續操作寫入的路徑另依後續操作報告人工判定"})
-        if not rs: problems.append({"path": "-", "rule": "(前提)", "reason": f"登錄紀錄中找不到 takeover_of 為 {x} 的 rollback 計畫"})
+    if regs.get(x) != "migrate": problems.append({"path": "-", "rule": "(前提)", "reason": f"--op {x} 不是登錄紀錄中的 migrate 計畫"})
+    rs = [op for op, act in regs.items() if act == "migrate_rollback" and re.search(rf"^takeover_of:\s*{re.escape(x)}\s*$", _plan_text(root, op), re.M)]
+    allowed = {x, *rs}
+    for r in rs:
+        if not re.search(r"^later_ops_snapshot:\s*\[\]\s*$", _plan_text(root, r), re.M):
+            problems.append({"path": f"operations/_global/{r}.yaml", "rule": "(前提)", "reason": "R 的 later_ops_snapshot 不是空的：後續操作寫入的路徑另依後續操作報告人工判定"})
+    if not rs: problems.append({"path": "-", "rule": "(前提)", "reason": f"登錄紀錄中找不到 takeover_of 為 {x} 的 rollback 計畫"})
     for rel, v in sorted(a.items()):                                                       # (1)
         if rel not in b: problems.append({"path": rel, "rule": "(1)", "reason": "W1 對照中有，回復後不在範圍內（不存在或推斷不出 schema）"}); continue
         diff = [k for k in ("rc", "stdout", "stderr") if v[k] != b[rel][k]]
@@ -130,19 +141,19 @@ def compare(w1: dict, after: dict, root: pathlib.Path, x: str | None = None) -> 
         elif act is None: why = "（op 不在登錄紀錄中）"
         elif act not in EXEMPT_ACTIONS: why = f"（op 的 action 是 {act}）"
         elif op in pre_ops: why = "（op 在 W1 時已登錄，不是 M2 之後的操作）"
-        elif allowed is not None and act in ("migrate", "migrate_rollback") and op not in allowed: why = "（不是本次的 X 或接管 X 的 R）"
+        elif act in ("migrate", "migrate_rollback") and op not in allowed: why = "（不是本次的 X 或接管 X 的 R）"
         if why is None: exempt.append({"path": rel, "op_id": op, "action": act, "rc": b[rel]["rc"]})
         else: problems.append({"path": rel, "rule": "(3)", "reason": "W1 對照中沒有，且不是可對應到 X、R 或 M2 之後控制類操作的事件檔" + why})
     return {"result": "PASS" if not problems else "FAIL", "w1_files": len(a), "after_files": len(b),
             "exempt": exempt, "problems": problems,
-            "note": "前提：later_ops_snapshot 為空（給了 --op 時已核對）；非空時後續操作報告列出的路徑另依該報告人工判定（附錄 A 5-16）"}
+            "note": "前提：later_ops_snapshot 為空（已讀 R 的計畫檔核對）；非空時後續操作報告列出的路徑另依該報告人工判定（附錄 A 5-16）"}
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0]); sp = ap.add_subparsers(dest="cmd", required=True)
     s = sp.add_parser("snapshot"); s.add_argument("--root", required=True, type=pathlib.Path); s.add_argument("--program", type=pathlib.Path)
     s.add_argument("--out", required=True, type=pathlib.Path); s.add_argument("--workers", type=int, default=8)
     c = sp.add_parser("compare"); c.add_argument("--w1", required=True, type=pathlib.Path); c.add_argument("--after", required=True, type=pathlib.Path)
-    c.add_argument("--root", required=True, type=pathlib.Path); c.add_argument("--op"); c.add_argument("--report", type=pathlib.Path)
+    c.add_argument("--root", required=True, type=pathlib.Path); c.add_argument("--op", required=True, help="本次移轉 X 的 op_id"); c.add_argument("--report", type=pathlib.Path)
     a = ap.parse_args(argv)
     if a.cmd == "snapshot":
         out = a.out.resolve()

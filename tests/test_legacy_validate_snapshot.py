@@ -59,8 +59,8 @@ def world(tmp_path_factory):
     (root / "locks/maintenance.yaml").unlink()                                                # R6（人工；locks/ 不在舊 validate 範圍）
     return root, w1, after, {**info, "x": x, "bad": bad.relative_to(root).as_posix()}
 
-def cmp(root, w1, after, tmp, *extra):
-    rep = tmp / "cmp.json"; r = tool("compare", "--w1", w1, "--after", after, "--root", root, "--report", rep, *extra)
+def cmp(root, w1, after, tmp, x):
+    rep = tmp / "cmp.json"; r = tool("compare", "--w1", w1, "--after", after, "--root", root, "--op", x, "--report", rep)
     return r, json.loads(rep.read_text(encoding="utf-8"))
 
 def test_snapshot_keeps_full_output_and_metadata(world):
@@ -75,23 +75,29 @@ def test_snapshot_keeps_full_output_and_metadata(world):
     norm = lambda s: s.replace(str(root), "<ROOT>")
     assert e["rc"] == r.returncode != 0 and e["stdout"] == norm(r.stdout) and e["stderr"] == norm(r.stderr)
     assert e["stdout"].count("\n") > 5 and len(e["stdout"]) > 600, (len(e["stdout"]), e["stdout"][:200])
-    assert len(d["program_sha256"]) == 64 and set(d["env_versions"]) == {"jsonschema", "PyYAML"} and d["registered_ops"] == []
+    assert len(d["program_sha256"]) == 64 and len(d["root_schemas_sha256"]) == 64 and set(d["env_versions"]) == {"jsonschema", "PyYAML"} and d["registered_ops"] == []
     assert all(len(v["sha256"]) == 64 for v in d["files"].values()) and d["summary"]["files"] == len(d["files"])
 
 def test_rollback_passes_with_control_events_exempt(world, tmp_path):
     """正常回復：W1 對照中有的路徑結果全部相同（含既有的 INVALID）；多出的只有 maintenance_start、migrate、migrate_rollback 的事件檔，
-    都對應到 index.d、W1 時尚未登錄 → PASS。給 --op X 時同樣 PASS（R 由 takeover_of 推得，later_ops_snapshot 為空）。"""
+    都對應到 index.d、W1 時尚未登錄；--op X 的 R 由 takeover_of 推得，later_ops_snapshot 為空 → PASS。"""
     root, w1, after, info = world
-    for extra in ((), ("--op", info["x"])):
-        r, rep = cmp(root, w1, after, tmp_path, *extra)
-        assert r.returncode == 0 and rep["result"] == "PASS" and not rep["problems"], (extra, rep["problems"])
-        assert {e["action"] for e in rep["exempt"]} == {"maintenance_start", "migrate", "migrate_rollback"}
-        assert info["x"] in {e["op_id"] for e in rep["exempt"]}
+    r, rep = cmp(root, w1, after, tmp_path, info["x"])
+    assert r.returncode == 0 and rep["result"] == "PASS" and not rep["problems"], rep["problems"]
+    assert {e["action"] for e in rep["exempt"]} == {"maintenance_start", "migrate", "migrate_rollback"}
+    assert info["x"] in {e["op_id"] for e in rep["exempt"]}
+
+def test_compare_requires_op(world, tmp_path):
+    """--op 必填：沒有指定本次的 X，就無法確認豁免的事件屬於本次的 X、R，也無法核對 later_ops 前提（不得以 PASS 結束）。"""
+    root, w1, after, _ = world
+    r = tool("compare", "--w1", w1, "--after", after, "--root", root, "--report", tmp_path / "c.json")
+    assert r.returncode == 2 and "--op" in r.stderr and not (tmp_path / "c.json").exists()
 
 CASES = ["result_changed", "output_changed", "stderr_changed", "w1_path_removed", "event_unregistered", "event_business_op",
-         "non_event_new_yaml", "meta_program_changed", "event_op_registered_at_w1", "event_other_migrate_with_op", "later_ops_not_empty"]
-RULE = {"result_changed": "(1)", "output_changed": "(1)", "stderr_changed": "(1)", "w1_path_removed": "(1)", "meta_program_changed": "(meta)",
-        "later_ops_not_empty": "(前提)"}
+         "non_event_new_yaml", "meta_program_changed", "meta_schemas_changed", "cli_root_mismatch", "event_op_registered_at_w1",
+         "event_other_migrate", "later_ops_not_empty", "op_not_migrate"]
+RULE = {"result_changed": ["(1)"], "output_changed": ["(1)"], "stderr_changed": ["(1)"], "w1_path_removed": ["(1)"], "meta_program_changed": ["(meta)"],
+        "meta_schemas_changed": ["(meta)"], "cli_root_mismatch": ["(meta)", "(meta)"], "later_ops_not_empty": ["(前提)"], "op_not_migrate": ["(前提)", "(前提)", "(3)", "(3)", "(3)"]}
 
 @pytest.mark.parametrize("case", CASES)
 def test_compare_reports_mismatch(world, tmp_path, case):
@@ -100,7 +106,7 @@ def test_compare_reports_mismatch(world, tmp_path, case):
     w = json.loads(w1.read_text(encoding="utf-8")); d = json.loads(after.read_text(encoding="utf-8")); f = d["files"]
     regs = tmp_path / "root"; shutil.copytree(root / "operations", regs / "operations")     # 登錄紀錄與計畫檔的複本（compare 只讀 operations/）
     w["root"] = d["root"] = str(regs.resolve())
-    run_yaml = f"runs/{info['done']}/run.yaml"; bad = info["bad"]; extra = ()
+    run_yaml = f"runs/{info['done']}/run.yaml"; bad = info["bad"]; x = info["x"]
     def reg(op, action):
         (regs / "operations/_global/index.d" / f"99999999-{op}.yaml").write_text(f"plan_seq: 99999999\nop_id: {op}\naction: {action}\n", encoding="utf-8")
     if case == "result_changed": f[run_yaml] = dict(f[run_yaml], rc=1, stdout="INVALID (workflow/workflow-run.schema.json)\n")
@@ -112,27 +118,53 @@ def test_compare_reports_mismatch(world, tmp_path, case):
         op = "b" * 64; reg(op, "clarification_answer"); f[f"runs/{info['done']}/audit.d/{op}-1.yaml"] = dict(f[run_yaml])
     elif case == "non_event_new_yaml": f[f"runs/{info['done']}/entities/new.yaml"] = dict(f[run_yaml])
     elif case == "meta_program_changed": d["program_sha256"] = "0" * 64
+    elif case == "meta_schemas_changed": d["root_schemas_sha256"] = "0" * 64
+    elif case == "cli_root_mismatch": w["root"] = d["root"] = str(root.resolve())                 # 兩份結果屬於 root，卻以另一個 root（regs）的登錄紀錄判定
+    elif case == "op_not_migrate": x = "d" * 64                                                    # --op 指到不存在的 migrate：X 與 R 都找不到，X 的事件也不再豁免
     elif case == "event_op_registered_at_w1":
         op = next(e for e in f if e.startswith("runs/_audit.d/") and info["x"] in e)
         w["registered_ops"] = [info["x"]]                                                        # W1 時已登錄的 op 不能當成 M2 之後的操作豁免
-    elif case == "event_other_migrate_with_op":
-        op = "c" * 64; reg(op, "migrate"); f[f"runs/_audit.d/{op}-1.yaml"] = dict(f[run_yaml]); extra = ("--op", info["x"])
+    elif case == "event_other_migrate":
+        op = "c" * 64; reg(op, "migrate"); f[f"runs/_audit.d/{op}-1.yaml"] = dict(f[run_yaml])
     else:
-        extra = ("--op", info["x"])
         rp = next(p for p in (regs / "operations/_global").glob("*.yaml") if "action: migrate_rollback" in p.read_text(encoding="utf-8"))
         rp.write_text(rp.read_text(encoding="utf-8").replace("later_ops_snapshot: []", "later_ops_snapshot:\n- op_id: x"), encoding="utf-8")
     w1b, afterb = tmp_path / "w1-bad.json", tmp_path / "after-bad.json"
     w1b.write_text(json.dumps(w, ensure_ascii=False), encoding="utf-8"); afterb.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
-    r, rep = cmp(regs, w1b, afterb, tmp_path, *extra)
+    r, rep = cmp(regs, w1b, afterb, tmp_path, x)
     assert r.returncode == 1 and rep["result"] == "FAIL", rep
-    assert [p["rule"] for p in rep["problems"]] == [RULE.get(case, "(3)")], rep["problems"]
+    assert sorted(p["rule"] for p in rep["problems"]) == sorted(RULE.get(case, ["(3)"])), rep["problems"]
+
+def test_schema_change_in_root_is_detected(world, tmp_path):
+    """舊程式從資料 root 的 schemas 驗證：在兩次 snapshot 之間只改資料 root 的 schema（說明文字，結果不變），
+    program 的內容雜湊相同，但 root_schemas_sha256 不同 → compare 以 (meta) FAIL。"""
+    root, _, _, info = world
+    small = tmp_path / "small"; (small / "runs" / info["done"]).mkdir(parents=True)
+    for d in DEFS: shutil.copytree(old_program() / d, small / d)
+    shutil.copy2(root / f"runs/{info['done']}/run.yaml", small / f"runs/{info['done']}/run.yaml")
+    a = snap(small, tmp_path / "a.json")
+    s = small / "schemas/workflow/workflow-run.schema.json"; doc = json.loads(s.read_text(encoding="utf-8"))
+    doc["description"] = (doc.get("description") or "") + "（測試改動）"; s.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    b = snap(small, tmp_path / "b.json")
+    assert a["program_sha256"] == b["program_sha256"] and a["root_schemas_sha256"] != b["root_schemas_sha256"]
+    assert a["files"] == b["files"]                                                            # 結果本身沒有差異
+    r, rep = cmp(small, tmp_path / "a.json", tmp_path / "b.json", tmp_path, info["x"])
+    assert r.returncode == 1 and any(p["rule"] == "(meta)" and "root_schemas_sha256" in p["reason"] for p in rep["problems"]), rep["problems"]
+
+@pytest.mark.parametrize("kind", ["empty_root", "nothing_inferable"])
+def test_snapshot_refuses_empty_scope(tmp_path, kind):
+    """範圍內沒有任何檔案（空 root，或所有 yaml 都推斷不出 schema）→ 等同沒有任何 VALID：結束碼 2、不寫結果。"""
+    root = tmp_path / "root"; root.mkdir()
+    if kind == "nothing_inferable": (root / "misc").mkdir(); (root / "misc/x.yaml").write_text("a: 1\n", encoding="utf-8")
+    r = tool("snapshot", "--root", root, "--program", old_program(), "--out", tmp_path / "e.json")
+    assert r.returncode == 2 and "異常" in r.stderr and not (tmp_path / "e.json").exists(), (r.returncode, r.stderr[-300:])
 
 def test_outputs_refused_inside_root(world, tmp_path):
     """snapshot 的結果檔、compare 的報告檔都不能寫在資料 root 內。"""
-    root, w1, after, _ = world
+    root, w1, after, info = world
     r = tool("snapshot", "--root", root, "--program", old_program(), "--out", root / "x.json")
     assert r.returncode != 0 and "資料 root" in r.stderr and not (root / "x.json").exists()
-    r = tool("compare", "--w1", w1, "--after", after, "--root", root, "--report", root / "y.json")
+    r = tool("compare", "--w1", w1, "--after", after, "--root", root, "--op", info["x"], "--report", root / "y.json")
     assert r.returncode != 0 and "資料 root" in r.stderr and not (root / "y.json").exists()
 
 def test_snapshot_refuses_broken_old_environment(world, tmp_path):
@@ -143,4 +175,4 @@ def test_snapshot_refuses_broken_old_environment(world, tmp_path):
     use_defs(root, old_program())
     try: r = tool("snapshot", "--root", root, "--program", prog, "--out", tmp_path / "z.json")
     finally: use_defs(root, old_program())
-    assert r.returncode == 2 and "環境異常" in r.stderr and not (tmp_path / "z.json").exists(), r.stderr[-500:]
+    assert r.returncode == 2 and "異常" in r.stderr and not (tmp_path / "z.json").exists(), r.stderr[-500:]

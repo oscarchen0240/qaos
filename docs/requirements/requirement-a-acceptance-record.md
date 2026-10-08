@@ -431,7 +431,7 @@
 | AC-09-83、84、85 | `test_ac_09_83_*`、`test_ac_09_84_*`、`test_ac_09_85_*`（84 ⑥ 為函式層，屬防禦性） | 通過 |
 | migrate verify（§12） | `test_verify_after_migrate_each_category`、`test_verify_after_rollback_each_category`、`test_verify_after_partial_rollback_*` | 通過 |
 | AC-09-89 (b) | `test_ac_09_89_b_*` | 通過 |
-| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 通過（依附錄 A 5-16 的 baseline 比對，Oscar 2026-10-08 決定 D-M1-1）。M1 當時以截短比對（退出碼、輸出首行、末 600 字元）判定；之後以 `tools/legacy_validate_snapshot.py`（保存全文、核對中繼資料、`--op X` 限定豁免）對 M1 的同一對複本重跑全文比對：PASS，豁免 4 個事件檔、不符 0。正式部署的 W1／R5 以此工具執行 |
+| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 通過（依附錄 A 5-16 的 baseline 比對，Oscar 2026-10-08 決定 D-M1-1）。M1 當時以截短比對（退出碼、輸出首行、末 600 字元）判定；之後以 `tools/legacy_validate_snapshot.py`（保存全文；核對中繼資料，含 root 身分與資料 root 的 schemas；`--op X` 必填並限定豁免、檢查 later_ops）對 M1 的同一對複本重跑全文比對：PASS，豁免 4 個事件檔、不符 0。正式部署的 W1／R5 以此工具執行 |
 | AC-10A-14、47 | `test_p6_clr_residual.py::test_ac_10a_14_47_same_product_cross_area` | 通過 |
 | AC-10A-15 | `test_ac_10a_15_confirmed_second_target_stale_tc` | 通過 |
 | AC-10A-28 | `test_ac_10a_28_candidate_revised_after_scan` | 通過 |
@@ -479,7 +479,7 @@
 
 ## M1 預演（2026-10-08）
 
-- **結果**：**通過（附已接受的缺口：AC-08-16／32 的 0.3 部分）**。執行時因 AC-09-64 的 R5「舊程式的 validate 通過」照字面不成立而受阻停止；Oscar 2026-10-08 決定改為 baseline 比對（附錄 A 5-16），AC-09-64 以本次證據成立（未重跑）。當天資料不具備的項目中，AC-09-66、67、20、24（既有 run）、27（RR）、31（跨版本）已以隔離測試補驗，其餘見「已接受的缺口」
+- **結果**：**通過（附已接受的缺口：AC-08-16／32 的 0.3 部分）**，以 Oscar 2026-10-08 決定的條件——補測測試與 M1 階段審查通過——成立為前提；審查結果見交接區的 M1 總結。執行時因 AC-09-64 的 R5「舊程式的 validate 通過」照字面不成立而受阻停止；Oscar 2026-10-08 決定改為 baseline 比對（附錄 A 5-16），AC-09-64 以本次證據成立（未重跑）。當天資料不具備的項目中，AC-09-66、67、20、24（既有 run）、27（RR）、31（跨版本）已以隔離測試補驗，其餘見「已接受的缺口」
 - **程式**：`4e34efb2633cfe3d1b0857f017e8c368ba5c1f77`（未修改程式）
 - **資料**：主資料夾 `/Users/oscar/Desktop/qa-agent-os` 當天的工作目錄，含未追蹤的 9/18 業務檔（`runs/RUN-20260918-012`、`013`，`executions/2026-09/EXE-20260918-001`、`002`，`evidence/testrun-6`）
   - 以 rsync 複製，排除 `.git`、`.codex`、`review-handoff`、`.claude`、`AGENTS.md`、admin-ui 的 `node_modules`／`.venv`、快取、`.DS_Store`
