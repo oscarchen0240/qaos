@@ -90,7 +90,7 @@ def test_12b_bval_fail_gate_abort_then_resend_and_next_round(monkeypatch):
     first = operation.LAST_OUTCOME["op_id"]
     assert not [o for o in operation.list_operations() if o["state"] == "in_progress"]
     assert engine.load_run(rid)["current_task_id"] == "T1"
-    engine.evaluate_gate(rid, "T2"); assert operation.LAST_OUTCOME == {"kind": "completed", "op_id": first}    # 完成後重送 → 回報已完成
+    engine.evaluate_gate(rid, "T2"); assert (operation.LAST_OUTCOME["kind"], operation.LAST_OUTCOME["op_id"]) == ("completed", first)    # 完成後重送 → 回報已完成（LAST_OUTCOME 另有 ADR-011 的欄位）
     round_(2)
     assert engine.evaluate_gate(rid, "T2")["result"] == "FAIL" and operation.LAST_OUTCOME["kind"] == "new" and operation.LAST_OUTCOME["op_id"] != first
 
