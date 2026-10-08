@@ -109,7 +109,7 @@ def test_ac_09_92_5_same_second_and_earlier_clock():
     root, info = migrated(); x = x_of(root); xc = clock(root, x)
     ok(U.q(root, "maintenance", "end", "--by", "m", extra_env={"QAOS_TEST_CLOCK": xc}))
     sides = set()
-    for i in range(16):                                                             # 同秒、op_id 大於與小於 X 各至少一例
+    for i in range(80):                                                             # 同秒、op_id 大於與小於 X 各至少一例
         spec_import(root, f"SPEC-S{i:02d}-001", extra_env={"QAOS_TEST_CLOCK": xc})
         o = last_op(root, "spec_import"); sides.add(o < x)
         if sides == {True, False}: break
@@ -121,8 +121,16 @@ def test_ac_09_92_5_same_second_and_earlier_clock():
     rid = new_run(root); vok_but(root, COUNTERS)
     U.q(root, "run", "cancel", rid, "--by", "t", check=True, extra_env={"QAOS_TEST_CLOCK": "2001-01-01T00:00:01Z"}); vok_but(root, COUNTERS)   # run 檢視 (c)、早於 X
     # X 中 render 過的 run（acknowledge-idle 的 RUNNING run）：同秒的後續事件；只回報 untouched 的 run.yaml（§12.5），audit 檢視不被回報
-    U.q(root, "run", "cancel", info["running"], "--by", "t", check=True, extra_env={"QAOS_TEST_CLOCK": xc})
-    vok_but(root, COUNTERS, f"runs/{info['running']}/run.yaml")
+    # run 檢視同秒、op_id 小於與大於 X 各至少一例：從同一狀態複製，以 --new-request 取得不同的 op_id
+    sides = set()
+    for _ in range(80):                                                             # op_id 是隨機的；X 的 op_id 偏向一端時需要多試幾次
+        c = copy(root)
+        U.q(c, "run", "cancel", info["running"], "--by", "t", "--new-request", check=True, extra_env={"QAOS_TEST_CLOCK": xc})
+        o = last_op(c, "run_cancel"); assert clock(c, o) == xc
+        if (o < x) in sides: shutil.rmtree(c.parent); continue
+        vok_but(c, COUNTERS, f"runs/{info['running']}/run.yaml"); sides.add(o < x)
+        if sides == {True, False}: break
+    assert sides == {True, False}
 
 def test_ac_09_92_6_rollback_then_remigrate():
     root, info = migrated(); x1 = x_of(root)
@@ -147,9 +155,9 @@ def test_ac_09_92_8_9_diagnostic_edge_cases():
 # ---------------------------------------------------------------- AC-09-93：竄改失敗（每例使用獨立複本；還原後再次通過）
 def tamper_case(fn, *needles):
     root, info = rich(); vok_but(root, COUNTERS)
-    snap = {p: p.read_bytes() for p in pathlib.Path(root).rglob("*") if p.is_file() and ("runs/" in p.as_posix() or "operations/" in p.as_posix())}
+    snap = {p: p.read_bytes() for p in pathlib.Path(root).rglob("*") if p.is_file()}             # 整個 root
     fn(root, info); vfail(root, *needles)
-    for p in [p for p in pathlib.Path(root).rglob("*") if p.is_file() and ("runs/" in p.as_posix() or "operations/" in p.as_posix())]:
+    for p in [p for p in pathlib.Path(root).rglob("*") if p.is_file()]:
         if p not in snap: p.unlink()
     for p, b in snap.items(): p.write_bytes(b)
     vok_but(root, COUNTERS)
@@ -293,15 +301,29 @@ def test_ac_09_94_interrupted_operations():
     root, _ = rich()
     r = spec_import(root, "SPEC-ZG-001", fault="before_completed", check=False); assert r.returncode == 86       # (b) 所有 render 之後
     o = U.incomplete(root)[0]["op_id"]
-    r = vfail(root, "未完成的操作", f"operation resume {o}"); assert "竄改" in r.stdout and "不是竄改" in r.stdout
+    interrupted(root, o)
     ok(U.q(root, "operation", "resume", o)); vok_but(root, COUNTERS)
     r = U.q(root, "run", "new", "regression-generation", "--input", 'target_suites=["full_regression"]', "--input", "scope=all",
             "--input", "trigger=manual", "--by", "t", "--new-request", fault="after_register"); assert r.returncode == 86
     o = U.incomplete(root)[0]["op_id"]; plan = U.plan_of(root, o)
     renders = [s for s in plan["steps"] if s["path"].endswith("audit.log")]; assert len(renders) == 2
     assert U.q(root, "operation", "resume", o, fault=f"after_progress:{renders[0]['seq']}").returncode == 86   # (a) 全域與 run 的 render 之間
-    vfail(root, "未完成的操作", f"operation resume {o}")
+    interrupted(root, o)
     ok(U.q(root, "operation", "resume", o)); vok_but(root, COUNTERS)
+    r = spec_import(root, "SPEC-ZH-001", fault="after_register", check=False); assert r.returncode == 86            # (c) 事件檔已寫、完成紀錄未寫
+    o = U.incomplete(root)[0]["op_id"]; st = next(s for s in U.plan_of(root, o)["steps"] if s["kind"] == "event")
+    assert U.q(root, "operation", "resume", o, fault=f"after_output:{st['seq']}").returncode == 86
+    assert P(root, st["path"]).exists() and not P(root, f"operations/_global/{o}/progress.d/{st['seq']:04d}-{st['step_id']}.yaml").exists()
+    interrupted(root, o)
+    ok(U.q(root, "operation", "resume", o)); vok_but(root, COUNTERS)
+
+def interrupted(root, o):
+    """合法中斷：只回報未完成操作（與竄改的訊息區分），不回報證據衝突或事件缺失；其餘只剩 §12.5 的 untouched。"""
+    r = verify(root); issues = [l[2:] for l in r.stdout.splitlines() if l.startswith("- ")]
+    assert r.returncode != 0 and any(i.startswith(f"未完成的操作 {o}") and f"operation resume {o}" in i and "不是竄改" in i for i in issues), r.stdout
+    rest = [i for i in issues if not i.startswith("未完成的操作") and i != f"untouched {COUNTERS} 被改動"]
+    assert not any("證據衝突" in i or "缺失或不符" in i or "無法對應" in i for i in issues), r.stdout
+    assert all(i.startswith("audit 檢視 ") for i in rest), r.stdout                  # 已 render 進 log 的未完成事件只會讓檢視不符
 
 # ---------------------------------------------------------------- AC-09-95：blobs 只有被步驟引用的內容（附錄 A 5-18）
 def test_ac_09_95_no_orphan_blobs():
@@ -315,3 +337,19 @@ def test_ac_09_95_no_orphan_blobs():
     assert drafts == []
     ok(U.q(root, "migrate", "rollback", "--op", x, "--by", "m"))
     check(next(o for o in plans(root) if (U.plan_of(root, o) or {}).get("action") == "migrate_rollback"))
+
+# ---------------------------------------------------------------- 穩健性（自審補充）
+def test_corrupt_later_plan_reports_instead_of_crashing():
+    root, _ = rich(); o = _end_op(root)
+    P(root, f"operations/_global/{o}.yaml").write_text("steps: [\n")                  # 竄改：計畫檔變成非法 YAML
+    r = vfail(root, f"op {o} 的登錄紀錄或計畫檔無法核對"); assert "Traceback" not in r.stdout + r.stderr
+
+def test_test_clock_must_be_well_formed():
+    root, _ = rich()
+    r = spec_import(root, "SPEC-ZI-001", extra_env={"QAOS_TEST_CLOCK": "not-a-time"}, check=False)
+    assert r.returncode != 0 and "QAOS_TEST_CLOCK" in r.stderr
+
+def test_too_many_same_second_diagnostics_need_manual_check():
+    root, _ = rich(); xc = clock(root, x_of(root))
+    for _ in range(11): diag_file(root, at=xc)
+    vfail(root, "與 X 同秒的診斷事件太多（11）")

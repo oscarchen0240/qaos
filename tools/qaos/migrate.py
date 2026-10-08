@@ -621,7 +621,7 @@ def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
     known, plans, bad = {}, {}, []
     for o, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]):
         try: plans[o] = op.verify_registration(o, reg)
-        except OperationError as e: bad.append(str(e))
+        except Exception as e: bad.append(f"op {o} 的登錄紀錄或計畫檔無法核對：{e}")      # 計畫檔損壞（例如非法 YAML）也是失敗，不中止 verify
     for o, plan in plans.items():
         state = op.plan_state(o); evs, b = _plan_events(plan); bad += b
         done_seqs = None                                                       # None：全部事件都應存在
@@ -674,7 +674,7 @@ def _view_ok(view: str, planned: str | None, has_plan: bool, head: bytes | None,
     key = lambda e: (str(e["at"]), str(e["op_id"]), int(e["step"]))
     candidates = []
     if has_plan:
-        if len(A0) > 10: return f"與 X 同秒的診斷事件太多（{len(A0)}），無法判定，需人工核對"
+        if len(A0) > 10: return f"與 X 同秒的診斷事件太多（{len(A0)}），不列舉，需人工核對（§12.2）"
         for mask in range(1 << len(A0)):
             S = [e for i, e in enumerate(A0) if mask >> i & 1]
             if planned is None:
@@ -717,7 +717,7 @@ def audit_issues(mk: dict, xplan: dict) -> list[str]:
         k = known.get(path)
         if k is not None:
             if store.sha256_bytes(data) != k["sha"]: bad.append(f"事件檔 {path} 和 {k['op'][:12]}… 的計畫不符"); continue
-            if not k["required"]: bad.append(f"證據衝突：事件檔 {path} 不應存在（{k['op'][:12]}… 的該步驟未執行）"); continue
+            if not k["required"]: continue                                       # 未完成操作的合法尾端（已由 §12.4 回報）；已終結移轉的未執行事件已由 _op_evidence 回報
             if k["seq"] <= xseq and k["state"] != "in_progress": groups["B"].append(k["ev"])
             elif k["seq"] > xseq and k["state"] == "completed": groups["R"].append(k["ev"])
             continue
