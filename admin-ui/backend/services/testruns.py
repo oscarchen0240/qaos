@@ -138,10 +138,12 @@ def create_run(name: str, environment: str, build: str, notes: str, items: list[
 
 
 def patch_run(run_id: int, fields: dict) -> dict:
-    allowed = {"name", "environment", "build", "notes", "status", "import_all"}
+    if fields.get("status") is not None:
+        # 回合狀態只能經由記結果（planned→running）與 finish（→ done／aborted，同時寫結束時間、產報告、import_all 匯入）改變；
+        # 通用 PATCH 改狀態會把已結束的回合重開、留下過期的結束時間與報告，或略過 finish 的流程
+        raise TestRunError(400, "回合狀態不能用 PATCH 修改；結束或中止請用 POST /api/testruns/{id}/finish")
+    allowed = {"name", "environment", "build", "notes", "import_all"}
     sets = {k: v for k, v in fields.items() if k in allowed and v is not None}
-    if "status" in sets and sets["status"] not in RUN_STATUS:
-        raise TestRunError(400, f"status 必須是 {', '.join(RUN_STATUS)}")
     if not sets:
         return get_run(run_id)
     sets["updated_at"] = db.now()

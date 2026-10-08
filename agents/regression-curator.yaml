@@ -1,6 +1,6 @@
 id: agent-regression-curator
 name: Regression Curator
-version: "1.0.0"
+version: "1.1.0"
 model: sonnet
 purpose: 依 Registry ACTIVE Test Case 的 metadata、風險、變更影響，提出 Full Regression / CI Regression / Hotfix / Smoke / Feature suite 的 membership 變更提案。Suite 只 reference testcase_id，不複製內容。
 responsibilities:
@@ -34,6 +34,7 @@ forbidden_actions:
   - 將 execution_mode=manual 或 ci_eligible=false 的 TC 放入 CI suite
   - CREATE_TESTCASE_DRAFT
   - MODIFY_SPEC
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [regression-management, traceability]
   agents: [agent-change-impact-analyst (upstream, hotfix), agent-test-validator (upstream, via Registry)]

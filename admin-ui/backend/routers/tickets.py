@@ -7,12 +7,23 @@ from ..services import qaos_exec
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 
 
+class PerItemIn(BaseModel):
+    decision: str | None = None
+    reason: str | None = None
+
+
 class DraftIn(BaseModel):
+    """extra／per_item 的值會被組進 bin/qaos 的 argv：寫入 DB 前先限定型別（非字串回 422），
+    不讓壞草稿先存進去、組指令時才 500。"""
     decision: str | None = None
     option: str | None = None
     rationale: str | None = None
-    per_item: dict | None = None
-    extra: dict | None = None
+    per_item: dict[str, PerItemIn] | None = None
+    extra: dict[str, str] | None = None
+
+    def save(self, ticket_id: str, kind: str) -> dict:
+        per = {k: v.model_dump(exclude_none=True) for k, v in self.per_item.items()} if self.per_item is not None else None
+        return svc.save_draft(ticket_id, kind, self.decision, self.option, self.rationale, per, self.extra)
 
 
 class SentIn(BaseModel):
@@ -57,7 +68,7 @@ def get_approval(apr_id: str):
 def put_approval_draft(apr_id: str, body: DraftIn):
     if not svc.approval_detail(apr_id):
         raise HTTPException(404, "approval 不存在")
-    draft = svc.save_draft(apr_id, "approval", body.decision, body.option, body.rationale, body.per_item, body.extra)
+    draft = body.save(apr_id, "approval")
     return {"draft": draft, **svc.approval_command(apr_id, draft)}
 
 
@@ -84,7 +95,7 @@ def get_clarification(clr_id: str):
 def put_clr_draft(clr_id: str, body: DraftIn):
     if not svc.clarification_detail(clr_id):
         raise HTTPException(404, "clarification 不存在")
-    draft = svc.save_draft(clr_id, "clarification", body.decision, body.option, body.rationale, body.per_item, body.extra)
+    draft = body.save(clr_id, "clarification")
     return {"draft": draft, **svc.clarification_command(clr_id, draft)}
 
 
@@ -106,7 +117,7 @@ def get_bug(bug_id: str):
 def put_bug_draft(bug_id: str, body: DraftIn):
     if not svc.bug_detail(bug_id):
         raise HTTPException(404, "bug 不存在")
-    draft = svc.save_draft(bug_id, "bug", body.decision, body.option, body.rationale, body.per_item, body.extra)
+    draft = body.save(bug_id, "bug")
     return {"draft": draft, **svc.bug_command(bug_id, draft)}
 
 

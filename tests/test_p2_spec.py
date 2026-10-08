@@ -61,11 +61,11 @@ print(schema.errors(spec, "spec/spec.schema.json"), spec_ops.references_status(e
     assert U.py(root, code).stdout.strip() == "[] undeclared analyze 0"
 
 def test_ac_01_2_existing_repo_specs_pass_new_schema():
-    """主資料夾既有的 spec.yaml（唯讀）全部通過新 schema。"""
+    """repo 內既有的 spec.yaml（唯讀）全部通過新 schema。找不到 spec 資料時直接失敗，不跳過。"""
     import json
-    repo = pathlib.Path("/Users/oscar/Desktop/qa-agent-os/specs")
+    repo = pathlib.Path(__file__).resolve().parents[1] / "specs"
     files = sorted(repo.glob("*/*/*/spec.yaml"))
-    if not files: pytest.skip("主資料夾沒有 spec 資料")
+    assert files, f"{repo} 底下沒有 spec 資料（*/*/*/spec.yaml）"
     root = U.mkroot()
     code = f"""
 import yaml, json

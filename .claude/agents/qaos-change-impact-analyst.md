@@ -30,9 +30,17 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 - 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
 - **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
 - 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
-- envelope 的 `created_at` 一律以 `store.now()` 取寫檔當下的時間，不得手填：早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕。
 
 ## pin_groups（需求 A 第 5 章 §9）
 
 - 派發包的 `rm_pins.pin_groups` 列出候選 TC 各自綁定的 RMPin。ChangeImpactReport 依此分組：每組 `from_pin`、`testcase_ids`、`requirement_diff`（恰好涵蓋該 from revision 與 to revision 的需求各一次）。
 - spec_id 相同的全部 ACTIVE TC 都是候選，每張恰好分到一組；`testcase_impact` 每筆帶 `pin_group_index`；`from_rm_revision`、`to_rm_revision` 等於 run 的綁定。G-IMPACT 以 G1～G8 機械核對。
+
+## 寫入與提交（由主 session 經 bin/qaos 執行）
+
+- 你只負責把產出的 artifact 檔寫進 `write_paths`，寫完回報檔案路徑就結束。**不得自己執行 `bin/qaos submit`、`bin/qaos gate`，也不得 `git add`／`git commit`**；其他會寫入的 `bin/qaos` 指令（`dispatch`、`id`、`approve`、`clarification` 的寫入子指令等）同樣不可執行。提交、關卡、ID 配發與版控一律由主 session 經 `bin/qaos` 執行。唯讀查詢（`bin/qaos validate`、`run show`、`trace` 等）可以用。
+- artifact 檔用 Write 工具，或在腳本中以一般檔案寫入（例如 `pathlib.Path(path).write_bytes(store.dump(artifact))`；`store.dump` 只做序列化、不寫檔，格式與 Runtime 相同）。**不要呼叫 `tools.qaos.store` 的寫入函式（`store.save`、`store.write_text`、`store.audit` 等）**：Runtime 的所有寫入都必須經過持鎖的 executor，agent 環境沒有 executor context，呼叫一定丟 `NoExecutorContext`。這是防止繞過 executor 直接寫檔的保護，不是環境故障，不要嘗試繞過；`store.dump` 與讀取函式（`store.load` 等）可以用。
+- artifact_id 用 `tools.qaos.ids.artifact_id("<ArtifactType>")` 產生（`ART-` 前綴只用 ULID、不寫計數器，agent 環境可以呼叫），檔名必須等於 artifact_id。經計數器配發的正式 ID（REQ 等）不得自行編號，也不要自己執行 `bin/qaos id`：同語意需求沿用既有 REQ ID；需要新的 REQ ID 時，只用派發訊息中主 session 已以 `bin/qaos id` 配發的 ID。沒有提供或不夠用時，先不要寫出 artifact，回報需要的數量，由主 session 配發後再繼續。AC 不經計數器：編號由所屬 REQ 推導（`AC-<AREA>-<REQ 序號><AC 序號>`，規則見 `docs/architecture/02-data-model.md` §5），不向主 session 要 AC ID，也不得執行 `bin/qaos id AC`。TC 草稿一律用 `TC-DRAFT-<ulid>`，正式 TC、BUG 等編號由 Runtime 在核准／開單時配發，不在此列。
+- 你只引用 AC（`acceptance_criteria_ids` 等），不產生、不配發、不重編 AC ID；AC 對不上時回報，不要自行改號。
+- envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間（含時區）；由 Runtime 決定的狀態（如 `VALID`）不要自填。`created_at` 不得手填過去或未來的時間：早於本次 iteration 的派發時間（不需要派發包的 task 為 run 的建立時間）或晚於提交時間，submit 會拒絕。
+- 主 session 送出或關卡失敗時，會把錯誤訊息交回給你；修正時用新的 artifact_id 產生新檔，不要刪除或覆寫已寫出的檔案。

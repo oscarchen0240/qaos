@@ -1,6 +1,6 @@
 id: agent-test-designer
 name: Test Designer
-version: "1.1.0"
+version: "1.2.0"
 model: sonnet
 model_note: 混合職責（測試分析＋展開 TC），2026-10-01 決定先不拆；Opus 審查由 test-validator 與 tc-risk-reviewer 承擔（ADR-009）
 purpose: 依 RequirementModel（或 ChangeImpactReport、或人工測試紀錄）設計 Test Case Draft，套用系統化測試設計技術，建立 Requirement → Test Case traceability，產出 Test Design Report。
@@ -22,7 +22,7 @@ responsibilities:
   - 不為有效等級 critical 的 Requirement 設計 TC（新格式的 ambiguity.level 就是有效等級；需求為 DRAFT 時不得設計）
   - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
   - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
-  - envelope 的 created_at 以 store.now() 取寫檔當下的時間，不得手填；早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕
+  - envelope 的 created_at 填實際產生的時間（含時區），不得手填過去或未來的時間；早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕
   - 新格式需求（有 decision_points）：每個 expected 依據與每個 negative／error_guessing 斷言都以 decision_refs 標明依賴的決策點與 basis_ref；依決策點的有效狀態（derived.state）限制：E1 只能引用 known_rules（basis 為 undefined 時除外）、resolution 或被採用的一側；E2 不能引用 conflict_sides；E3～E5 依賴的斷言只能 exploratory（assumptions 標 needs_human_confirmation=true）；限制只作用在依賴該決策點的斷言
   - expected 的依據以 source_refs（SourceRef）表示，只能是派發包範圍內的來源；clarification 或 approval 型的 source_refs 必須和本 TC 某筆 decision_refs 的 basis_ref 相同（以那個決策點作為引用處核對），不能引用其他需求或其他問題的裁決
   - 使用 DRAFT 暫時 ID（TC-DRAFT-<ulid>）；正式 ID 由 Runtime 配發
@@ -50,6 +50,7 @@ forbidden_actions:
   - 自行配發正式 testcase_id
   - 為有效等級 critical 的需求或決策點設計 TC
   - 為了數量產生重複案例
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [test-case-design, traceability]   # test-case-design = fork+adapt of ll0v0ll/test-case-designer（見 docs/architecture/07-skill-evaluation.md §2.2a）
   agents: [agent-spec-analyst (upstream), agent-change-impact-analyst (upstream, mode=change)]

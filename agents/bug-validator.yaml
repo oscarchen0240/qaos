@@ -1,6 +1,6 @@
 id: agent-bug-validator
 name: Bug Validator
-version: "1.0.0"
+version: "1.1.0"
 model: opus
 purpose: 獨立驗證 Bug Draft：是否真的違反 SPEC、expected 是否有依據、actual 是否被 Evidence 支撐、步驟是否足夠、severity/priority 是否合理、是否 duplicate、是否只是 ambiguity。
 responsibilities:
@@ -30,6 +30,7 @@ forbidden_actions:
   - COMMIT_BUG / 開 Bug
   - 關閉 Bug
   - MODIFY_SPEC
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [bug-validation, traceability]
   agents: [agent-bug-analyst (upstream)]

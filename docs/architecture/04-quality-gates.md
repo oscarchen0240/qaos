@@ -25,8 +25,8 @@
 | rejection 類 | `behavior_kind=rejection` 的 REQ 沒有 `test_types` 含 negative 的案例 | FAIL |
 | 邊界 | `inputs[].constraints` 有 min/max/min_length/max_length 但無 `boundary_value` 案例 | FAIL |
 | 狀態 | `states[]` 非空但無 `state_transition` 案例 | FAIL |
-| 臆測偵測 | `rejection_contract.defined=false` 的 REQ，以 `negative` / `error_guessing` **技術**寫的案例沒有 `assumptions`（寫成了確定規則）。boundary / requirement_based 案例不受此限（其 expected 來自成功路徑條文） | FAIL |
-| 假設外顯 | `assumptions[]` 每筆必須 `needs_human_confirmation: true` 且指向本 TC 的 REQ | FAIL |
+| 臆測偵測 | （舊格式需求，沒有 `decision_points`）`rejection_contract.defined=false` 的 REQ，以 `negative` / `error_guessing` **技術**寫的案例沒有 `assumptions`（寫成了確定規則）。boundary / requirement_based 案例不受此限（其 expected 來自成功路徑條文）。新格式需求改依需求 A 第 1 章 §3.6 逐決策點檢查（negative 技術的 TC 沒有 `decision_refs` → FAIL；依賴 E3～E5 的斷言必須 exploratory） | FAIL |
+| 假設外顯 | `assumptions[]` 每筆必須 `needs_human_confirmation: true`（已由核准解決、填 `resolved_by_approval` 的歷史假設除外；其有效性由 Validator 核對）且指向本 TC 的 REQ | FAIL |
 | 上限 | 單一 REQ 的 exploratory > 3 | FAIL |
 | 統計一致 | `technique_summary` 與 Draft 實際計數不符 | FAIL |
 | 整份 | 沒有任何非 happy-path 案例 | FAIL |
@@ -62,5 +62,5 @@
 | level | 定義 | 處理 |
 |---|---|---|
 | `critical` | 無法決定 expected result | Requirement 停留 DRAFT；Test Designer 不得為其設計 TC；產生 `ApprovalRequest(RESOLVE_AMBIGUITY)` |
-| `major` | 可設計 TC 但 expected result 有 ≥2 合理解讀 | TC 標記 `assumptions[]`，Validator 必須 FAIL 除非 Human 已決定 |
+| `major` | 可設計 TC 但 expected result 有 ≥2 合理解讀 | 舊格式需求：TC 標記 `assumptions[]`（`needs_human_confirmation: true`），以 exploratory 呈現；Validator 不因未裁決而 FAIL，寫成確定斷言才 FAIL。新格式需求依決策點有效狀態判斷（需求 A 第 1 章 §3.6：依賴 E3～E5 的斷言必須 exploratory） |
 | `minor` | 不影響 expected result | 記錄即可 |
