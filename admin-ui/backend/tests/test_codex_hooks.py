@@ -17,6 +17,7 @@ import sys
 import tomllib
 
 import pytest
+import yaml
 
 ADMIN_DIR = pathlib.Path(__file__).resolve().parents[2]
 HOOKS_DIR = ADMIN_DIR / "hooks"
@@ -411,7 +412,7 @@ def test_codex_agents_match_claude_agents():
         d = tomllib.loads(t.read_text(encoding="utf-8"))
         assert set(d) == {"name", "description", "developer_instructions"}
         m = re.match(r"^---\n(.*?)\n---\n(.*)$", (claude_dir / f"{t.stem}.md").read_text(encoding="utf-8"), re.S)
-        front = dict(l.split(": ", 1) for l in m.group(1).splitlines() if ": " in l)
+        front = yaml.safe_load(m.group(1))
         body = m.group(2).strip()
         for old, new in ALLOWED_BODY_SUBSTITUTIONS.get(t.stem, []):
             assert old in body, f"{t.stem}: 允許的替換 {old!r} 在 Claude 版找不到，請更新 ALLOWED_BODY_SUBSTITUTIONS"
@@ -419,3 +420,47 @@ def test_codex_agents_match_claude_agents():
         assert d["name"] == front["name"] == t.stem
         assert d["description"] == front["description"]
         assert d["developer_instructions"].strip() == body, f"{t.name} 與 .claude/agents/{t.stem}.md 內容不一致。{SYNC_HINT}"
+
+
+# ---- sync-agents 產生器的邊界（Codex review 第 04 輪 P2 ×2）
+def _gen():
+    return _load(SYNC_AGENTS, "qaos_sync_agents_edge")
+
+
+def _md(tmp_path, front: str, body: str, stem: str = "probe"):
+    p = tmp_path / f"{stem}.md"
+    p.write_text(f"---\n{front}\n---\n{body}", encoding="utf-8")
+    return p
+
+
+def test_sync_agents_parses_frontmatter_as_yaml(tmp_path):
+    """帶引號、冒號、跳脫字元的描述要和 YAML 語意一致，不能把引號當成內容。"""
+    cases = {
+        'description: "quoted: description"': "quoted: description",
+        "description: 'single ''quoted'' text'": "single 'quoted' text",
+        'description: "tab\\there and \\"escape\\""': 'tab\there and "escape"',
+        "description: plain: value with colon": None,         # 這種寫法 YAML 本身就不合法 → 產生器要中止，不是默默吞掉
+    }
+    for line, expected in cases.items():
+        md = _md(tmp_path, f"name: probe\n{line}", "body")
+        if expected is None:
+            with pytest.raises(Exception):
+                _gen().render(md)
+            continue
+        parsed = tomllib.loads(_gen().render(md))
+        assert parsed["description"] == expected == yaml.safe_load(f"name: probe\n{line}")["description"]
+
+
+def test_sync_agents_rejects_missing_or_non_string_frontmatter(tmp_path):
+    for front in ("name: probe", "name: probe\ndescription: 123", "description: only"):
+        with pytest.raises(SystemExit):
+            _gen().render(_md(tmp_path, front, "body"))
+
+
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 5, 6, 7])
+def test_sync_agents_round_trips_runs_of_double_quotes_and_backslashes(tmp_path, n):
+    q, bs = '"' * n, "\\"
+    bodies = [f"start{q}end", f"{q}start", f"end{q}", f"a{q}b{bs}{q}c", f"{bs}{q}{bs}{bs}{q}", f"x{bs}", f"line1\n{q}\nline3", f"{q}"]
+    for body in bodies:
+        md = _md(tmp_path, "name: probe\ndescription: d", body)
+        assert tomllib.loads(_gen().render(md))["developer_instructions"].strip() == body.strip(), repr(body)

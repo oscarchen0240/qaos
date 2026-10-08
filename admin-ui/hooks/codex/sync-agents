@@ -12,6 +12,11 @@ import sys
 import tomllib
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    sys.exit("需要 PyYAML（admin-ui/.venv 已有；或 pip install pyyaml）")
+
 ROOT = Path(__file__).resolve().parents[3]
 SUBSTITUTIONS = {"qaos-test-designer": [("Claude Code session", "Codex session")]}
 
@@ -20,17 +25,23 @@ def render(md_path: Path) -> str:
     m = re.match(r"^---\n(.*?)\n---\n(.*)$", md_path.read_text(encoding="utf-8"), re.S)
     if not m:
         raise SystemExit(f"{md_path}: 找不到 frontmatter")
-    front = dict(l.split(": ", 1) for l in m.group(1).splitlines() if ": " in l)
+    front = yaml.safe_load(m.group(1))
+    if not isinstance(front, dict) or not all(isinstance(front.get(k), str) and front[k] for k in ("name", "description")):
+        raise SystemExit(f"{md_path}: frontmatter 的 name、description 必須是非空字串")
     body = m.group(2).strip()
     for old, new in SUBSTITUTIONS.get(md_path.stem, []):
         if old not in body:
             raise SystemExit(f"{md_path.stem}: 允許的替換 {old!r} 在 Claude 版找不到，請更新 SUBSTITUTIONS")
         body = body.replace(old, new)
-    escaped = body.replace("\\", "\\\\").replace('"""', '\\"""')
+    # 基本多行字串：反斜線要加倍；連續 3 個以上的雙引號（以及貼著結尾分隔符的雙引號）要逐一跳脫
+    escaped = re.sub(r'"{3,}|"+$', lambda q: '\\"' * len(q.group()), body.replace("\\", "\\\\"))
     text = f'name = {json.dumps(front["name"], ensure_ascii=False)}\ndescription = {json.dumps(front["description"], ensure_ascii=False)}\ndeveloper_instructions = """\n{escaped}"""\n'
-    parsed = tomllib.loads(text)
-    if parsed["developer_instructions"].strip() != body or parsed["name"] != md_path.stem:
-        raise SystemExit(f"{md_path.stem}: 產生的 toml 解析後與來源不一致")
+    try:
+        parsed = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as e:
+        raise SystemExit(f"{md_path.stem}: 產生的 toml 不合法：{e}")
+    if (parsed["name"], parsed["description"], parsed["developer_instructions"].strip()) != (front["name"], front["description"], body) or parsed["name"] != md_path.stem:
+        raise SystemExit(f"{md_path.stem}: 產生的 toml 解析後與來源（name／description／本文）不一致")
     return text
 
 
@@ -38,10 +49,10 @@ def main() -> int:
     check = "--check" in sys.argv[1:]
     out_dir = ROOT / ".codex" / "agents"
     mds = sorted((ROOT / ".claude" / "agents").glob("*.md"))
+    rendered = {md.stem: render(md) for md in mds}          # 全部先產生並驗證過，才開始寫入（不會只更新一半）
     drift = []
-    for md in mds:
-        target = out_dir / f"{md.stem}.toml"
-        text = render(md)
+    for stem, text in rendered.items():
+        target = out_dir / f"{stem}.toml"
         if not target.exists() or target.read_text(encoding="utf-8") != text:
             drift.append(target.name)
             if not check:
