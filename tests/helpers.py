@@ -46,7 +46,8 @@ def write_artifact(run_id, task_id, agent, artifact_type, payload, references, s
     raw_save(p, art); return aid, p
 
 def alloc_req_ids(payload):
-    """模擬 Spec Analyst 以 bin/qaos id REQ --area <AREA> 配發 REQ ID：計數器推進到 payload 用到的最大序號（G-SPEC 會核對）。"""
+    """模擬主 session 以 bin/qaos id REQ --area <AREA> 配發、再交給 Spec Analyst 的 REQ ID（agent 不自行配號）：
+    經正式 executor 把計數器推進到測試 payload 用到的最大序號（G-SPEC 會核對）。這是測試 fixture，不是 agent 行為或派發訊息交付的端到端測試。"""
     import re
     want = {}
     for r in payload.get("requirements") or []:
