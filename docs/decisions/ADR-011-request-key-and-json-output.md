@@ -24,12 +24,17 @@ admin-ui 後端以子程序呼叫 `bin/qaos` 寫入 QAOS。後端審查（review
   - 不同 key、同內容 → 不同 op（R02：每筆 admin 測試結果用自己的 key）。
   - 同 key、不同內容 → **拒絕**（`key_conflict`），不寫任何東西。呼叫端改了草稿內容就必須換新 key；否則會靜默變成另一個 op。
 - **key 索引**：`operations/_global/request_keys.d/<sha256(key)>.yaml`，內容 `{request_key, op_id}`。
-  - 只在持有全域操作鎖時讀寫；以 link 一次建立（已存在且內容相同 → 不動；內容不同 → 證據衝突），不會半寫。
-  - 建立時點：計畫**登錄之後、執行第一步之前**。登錄後、建立索引前中止的計畫，在下次同 key 重送（第 2 步）、`operation resume` 或回報已完成時補齊。
-  - 衝突判斷在第 2 步之前：key 已綁定的 op 和這次算出的 op 不同 → `key_conflict`。
-  - 已知窗口：計畫登錄後、索引建立前中止，又在續做之前以同 key 送出**不同內容**——此時索引還沒有這個 key，請求會被第 3b 步以 `incomplete_plan` 擋下（附上未完成的 op），而不是 `key_conflict`。續做該 op 後索引即補齊。
+  - 只在持有全域操作鎖時讀寫；新建以 link 一次建立，不會半寫。
+  - 建立時點：產生計畫之後、**保存計畫之前**（擷取型計畫與 migrate rollback 的 planner 計畫都一樣）。所以只要計畫存在，key 一定已綁定它；之後任何時點中止、被 rollback 接管或終結，key 都不會變成未綁定。
+  - 綁定的判斷（第 2 步之前，`_bound_op`）：
+    - 索引指向的 op 有計畫檔，而且計畫的 `canonical_request.request_key` 就是這個 key → 已綁定；和這次算出的 op 不同 → `key_conflict`，不寫任何東西。
+    - 索引指向的 op **沒有計畫檔**（綁定之後、計畫保存之前中止，該 op 從未建立；殘留清理與登錄補齊之後，計畫檔存在 ⇔ 已登錄）→ 視為未綁定，本次請求改綁到自己的 op（原子取代）。
+    - 索引形狀不符，或指向的計畫沒有帶同一個 key → 證據衝突（`internal`），需人工處理。
+    - 同 key 同內容重送（回報已完成或續做）時會再核對一次綁定：索引指向從未建立的 op → 改回本 op；指向另一份計畫 → 證據衝突。
+    - 限制：索引被竄改成指向不存在的 op、又在同內容重送修復之前以同 key 送出不同內容，會被當成未綁定（系統不另外掃描所有計畫找同 key）。正常流程不會產生這種狀態。
+  - 綁定途中中止留下的暫存檔，在同一 op 下次綁定時清除（只清本 op、本 key 的暫存檔）。
   - 驗證失敗的請求（診斷輸出、沒有計畫）不綁定 key：同 key 可以修正內容後重送。
-  - rollback 不清除索引：被回復（`rolled_back`、`aborted_for_rollback`）的 op 以同 key 重送會被拒絕（終態），要重做請換新 key。
+  - rollback 不清除索引：被回復（`rolled_back`、`aborted_for_rollback`）或被接管的 op 仍保有它的 key；同 key 同內容重送會被拒絕（終態），同 key 不同內容（包括以同一 key 發出的 rollback）→ `key_conflict`。要重做請換新 key。
 - **audit**：有 key 的請求在計畫中追加一筆全域事件 `REQUEST_KEY`（detail `<key> → <action>`），進入 `runs/_audit.d` 與 render 後的 audit.log。`migrate rollback`（不經擷取的計畫）只把 key 記在計畫的 `canonical_request`。
 - 不帶 `--request-key` 時行為與之前完全相同。
 
@@ -45,7 +50,8 @@ admin-ui 後端以子程序呼叫 `bin/qaos` 寫入 QAOS。後端審查（review
   ```
 
   - `outcome` 取自 executor 的 `LAST_OUTCOME.kind`。
-  - `ids`：本 op 計畫記錄的 `allocated_ids` 依前綴命名（EVD → `evidence_id`、EXE → `execution_id`、RUN → `run_id`、APR → `approval_id`、BUG → `bug_id`、CLR → `clarification_id`、TC → `testcase_id`、REQ → `requirement_id`、AC → `acceptance_criteria_id`）。同一種類配發多個時不放進 `ids`，只列在 `allocated_ids`。沒有配發計數器 ID 的指令（例如狀態轉換）`ids` 為 `{}`。
+  - `ids`：本 op 計畫記錄的 `allocated_ids` 依前綴命名（EVD → `evidence_id`、EXE → `execution_id`、RUN → `run_id`、APR → `approval_id`、BUG → `bug_id`、CLR → `clarification_id`、TC → `testcase_id`、REQ → `requirement_id`、AC → `acceptance_criteria_id`、MAN → `manual_record_id`）。同一種類配發多個時不放進 `ids`，只列在 `allocated_ids`。沒有配發計數器 ID 的指令（例如狀態轉換）`ids` 為 `{}`。
+  - `allocated_ids` 只含**計數器 ID**（上列十種，`tools/qaos/ids.py`）。ULID 型的 `ART-…`（artifact、`qaos id ART-<TYPE>`）不寫計數器，不會出現在 `allocated_ids`／`ids`，只在 `result` 中。
   - `result`：`new` 時是本次寫入函式的回傳值；`completed`、`resumed` 時是**計畫當時存下的結果**。
   - 寫入成功、但指令依既有語意以非零結束（例如 gate FAIL、submit INVALID）：`ok: true`，加上 `exit_code`，程序結束碼照舊。
 - 失敗（程序結束碼非零）：
@@ -60,9 +66,9 @@ admin-ui 後端以子程序呼叫 `bin/qaos` 寫入 QAOS。後端審查（review
   | `validation` | 輸入不合法：參數格式、key 格式、指令層的輸入檢查、檔案不存在 | 修正輸入；沒有寫入 |
   | `key_conflict` | key 已用於不同內容 | 內容改變 → 換新 key |
   | `incomplete_plan` | 第 3b 步或續做 V3：有其他未完成的計畫；`incomplete_ops` 列出 op | 先續做（同 key 重送或 `operation resume`） |
-  | `maintenance` | 維護中，准入拒絕 | 維護結束後再試 |
+  | `maintenance` | 維護中，一般寫入的准入拒絕 | 維護結束後再試 |
   | `locked` | 全域操作鎖由其他 executor 持有 | 稍後重試 |
-  | `refused` | 業務規則或狀態機拒絕、op 已終結或被接管、已配發的 ID 不能重用 | 不要原樣重試 |
+  | `refused` | 業務規則或狀態機拒絕、op 已終結或被接管、已配發的 ID 不能重用、控制指令（maintenance、migrate、rollback）的狀態前置條件不符（例如已移轉後再 migrate） | 不要原樣重試 |
   | `internal` | 證據衝突、executor context 失效、未預期的例外 | 結果不明，需人工確認（`operation list`） |
 
 - **argparse 層級的錯誤**（未知參數、缺必填參數、`--request-key` 與 `--new-request` 同時使用）維持原生行為：結束碼 2、usage 印在 stderr、stdout 沒有 JSON。
@@ -71,7 +77,9 @@ admin-ui 後端以子程序呼叫 `bin/qaos` 寫入 QAOS。後端審查（review
 
 ### 3. `completed` 回放的是當時的結果
 
-`outcome: completed` 時，`result` 與 `ids` 是計畫當時存下的內容，**不是實體目前的狀態**（例如 run 之後被取消，回放的 `result.status` 仍是建立當時的狀態）。CLI 不另外查目前狀態；需要目前狀態的呼叫端自行讀取（admin-ui 讀 `run.yaml` 對帳，R07 的做法）。人看的輸出（stderr）照舊顯示目前狀態。
+`outcome: completed` 時，JSON 的 `result` 與 `ids` 取自計畫當時存下的內容，**不是實體目前的狀態**（例如 run 之後被取消，回放的 `result.status` 仍是建立當時的狀態）。JSON 欄位不另外反映目前狀態；需要目前狀態的呼叫端自行讀取（admin-ui 讀 `run.yaml` 對帳，R07 的做法）。
+
+`--json` 執行的是和不帶 `--json` 時相同的指令流程，只是把給人看的輸出改到 stderr，所以**部分指令在回放時仍會讀取目前狀態來產生人看的輸出**（例如 `run new` 回放顯示 run 目前的狀態、`clarification ask|answer|…`、`bug resolve|verify|close|transition` 顯示單據目前的狀態）。這個讀取失敗（例如實體檔已不存在）時，指令和不帶 `--json` 時一樣以錯誤結束，JSON 為對應的 `error_kind`（檔案不存在 → `validation`），不回傳計畫存下的結果；op 本身仍是 completed，可用 `operation list` 依 op_id 確認。結束碼一致性優先於「回放一定成功」。
 
 ### 4. `--new-request` 保留給「刻意重做」
 

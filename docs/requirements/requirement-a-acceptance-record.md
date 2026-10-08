@@ -540,10 +540,15 @@
 | 案例 | 預期 |
 |---|---|
 | 同 key 重送已完成的請求 | `outcome=completed`、root 內容不變 |
-| `after_register`／`after_bind_key`／`after_output:1` 中止後同 key 重送 | `outcome=resumed`、同一 op、不被第 3b 步擋下；索引補齊 |
-| 中止後 `operation resume`，再以同 key 不同內容送出 | 索引已補齊 → `key_conflict` |
+| `after_plan_save`／`after_register`／`after_output:1`／`before_completed` 中止後同 key 重送 | 索引在計畫保存前已綁定；`outcome=resumed`、同一 op、不被第 3b 步擋下 |
+| 綁定之後、計畫保存之前中止（`after_bind_key`）；綁定途中短寫中止 | 同 key 同內容 → 新建同一 op；同 key 不同內容 → 改綁到新 op；本 op 本 key 的暫存檔被清除、其他暫存檔不動 |
+| 未完成或 `operation resume` 之後，以同 key 不同內容送出 | `key_conflict` |
+| migrate 中止後被 rollback 接管（含以同一 key 發 rollback） | key 仍綁定原 op：同 key 不同內容與同 key 的 rollback → `key_conflict`；同內容 → 已終結、`refused` |
+| 索引被竄改（指向沒有該 key 的計畫／不存在的 op） | `internal`／同內容重送時改回 |
 | 同 key 不同內容（含 key 綁定的 op 尚未完成） | `key_conflict`、root 內容不變 |
 | 不同 key、相同內容的 `execution import` | 兩個 op、兩筆 EXE（R02） |
 | `--request-key` 與 `--new-request` 同時使用、key 格式不符 | argparse 錯誤（結束碼 2）／`validation`；沒有寫入 |
-| `--json` 的成功與失敗（validation、refused、maintenance、locked、incomplete_plan、key_conflict、internal、非零結束的成功） | stdout 剛好一行 JSON；`ids` 取自計畫的 allocated_ids；`completed` 的 `result` 是當時的結果 |
+| `--json` 的成功與失敗（validation、refused、maintenance、locked、incomplete_plan、key_conflict、internal、非零結束的成功） | stdout 剛好一行 JSON；`ids` 取自計畫的 allocated_ids（十種計數器 ID 都有名稱，含 MAN）；`completed` 的 `result` 是當時的結果；回放時讀目前狀態失敗 → 和不帶 `--json` 一樣失敗 |
+| 控制指令的前置條件不符（已移轉再 migrate、已在維護中再 start） | `refused`（一般寫入在維護中才是 `maintenance`） |
+| 有 key 的 `qaos id` 重送 | 提示換新 key，不提示互斥的 `--new-request` |
 | 有 key 的請求 | 計畫追加 `REQUEST_KEY` audit 事件；沒有 key 的請求沒有 |
