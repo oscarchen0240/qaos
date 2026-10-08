@@ -58,7 +58,7 @@ def test_02_g_spec_rejects_ac_rule_violations_with_specific_messages():
     assert f"AC-{AREA}-0023 不符合推導規則：REQ-{AREA}-001 的 AC 必須是 AC-{AREA}-001<AC 序號>" in msg       # 前綴不是所屬 REQ
     assert f"AC-{AREA}-00105 不符合推導規則" in msg                                                        # AC 序號補 0
     assert f"AC-{AREA}-777 不符合推導規則" in msg and "不可用舊 3 位數格式" in msg                         # 新增 AC 用舊格式
-    assert f"AC-{AREA}-0011 重複：同時出現在 REQ-{AREA}-001 與 REQ-{AREA}-002" in msg
+    assert f"AC-{AREA}-0011 重複：同時出現在 REQ-{AREA}-001（歷史最大序號 0）與 REQ-{AREA}-002（歷史最大序號 0）" in msg
     assert len(r["issues"]) == 4, r["issues"]
 
 def test_03_ten_acs_pass_with_advisory_before_structural_result():
@@ -102,7 +102,7 @@ def test_05_deleted_sequence_cannot_be_reused_and_new_must_exceed_high_water():
     _save_rev(SPEC, "1.0", reqs)
     req1 = lambda acs: _rm(req1_acs=acs)["requirements"]
     out = gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00110"]))
-    assert len(out) == 1 and f"AC-{AREA}-00110 已從 {SPEC} 的最新 revision 刪除，序號不得重用；REQ-{AREA}-001 新增 AC 取 11 起" in out[0]
+    assert len(out) == 1 and f"AC-{AREA}-00110 已從 {SPEC} 的最新 revision 刪除，序號不得重用（REQ-{AREA}-001 歷史最大序號 10，新增 AC 取 11 起）" in out[0]
     assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-0019"]))[0].startswith(f"AC-{AREA}-0019 已從")
     assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00111"])) == []
     assert rm_mod.ac_history(SPEC)["high_water"][f"REQ-{AREA}-001"] == 10
@@ -162,12 +162,29 @@ def test_09_id_ac_is_rejected_and_counter_unchanged():
         ids.alloc("AC", AREA)
     assert ids._load()["counters"].get(f"AC-{AREA}") == before
 
-def test_10_missing_latest_revision_fails_closed():
-    """最新 revision 檔遺失時不退回較舊的 revision 判定（否則已刪除的 AC 會變回可用）。"""
-    sid = "SPEC-ACLEG-001"; latest = rm_mod.index(sid, "1.0")[-1]["path"]
-    p = store.ROOT / latest; data = p.read_bytes(); p.unlink()
+@pytest.mark.parametrize("which", [0, -1], ids=["older", "latest"])
+def test_10_missing_revision_fails_closed(which):
+    """任一 revision 檔遺失（較舊或最新）都明確報錯，不以殘缺歷史放行（否則已刪除的 AC、歷史最大序號會漏算）。"""
+    revs = rm_mod.index(SPEC, "1.0"); assert len(revs) >= 3
+    p = store.ROOT / revs[which]["path"]; data = p.read_bytes(); p.unlink()
     try:
-        with pytest.raises(rm_mod.RMError, match="最新 revision 檔"):
-            rm_mod.ac_history(sid)
+        with pytest.raises(rm_mod.RMError, match="revision 檔不存在"):
+            rm_mod.ac_history(SPEC)
+        with pytest.raises(rm_mod.RMError, match="revision 檔不存在"):
+            gates.ac_id_issues(SPEC, _rm(req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"])
     finally:
         p.write_bytes(data)
+
+def test_11_every_ac_message_names_the_requirement_high_water():
+    """每一種 AC 錯誤訊息都列出所屬 REQ 的歷史最大序號（REQ-001 為 10、REQ-002 為 1）。"""
+    m = _rm(req1_acs=TEN[:8] + [f"AC-{AREA}-0021"])["requirements"]                                # 0021 改掛到 REQ-001
+    m[1]["acceptance_criteria"].append(_ac(f"AC-{AREA}-0018"))                                       # 跨 REQ 重複（0018 也在 REQ-001）
+    out = gates.ac_id_issues(SPEC, m)
+    moved = next(x for x in out if x.startswith(f"AC-{AREA}-0021 在"))
+    dup = next(x for x in out if "重複" in x)
+    assert f"REQ-{AREA}-001 歷史最大序號 10" in moved
+    assert f"REQ-{AREA}-001（歷史最大序號 10）與 REQ-{AREA}-002（歷史最大序號 1）" in dup
+    gone = gates.ac_id_issues(SPEC, _rm(req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"])
+    assert f"REQ-{AREA}-001 歷史最大序號 10，新增 AC 取 11 起" in gone[0]
+    odd = gates.ac_id_issues(SPEC, [{"requirement_id": "REQ-OLD", "acceptance_criteria": [_ac("AC-OLD-1")]}])
+    assert "REQ-OLD 歷史最大序號 0" in odd[0]

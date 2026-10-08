@@ -72,19 +72,19 @@ def ac_id_issues(spec_id, requirements, skip=frozenset()) -> list[str]:
     for r in requirements:
         rid = r["requirement_id"]
         for a in r.get("acceptance_criteria") or []:
-            aid = a["ac_id"]
-            if aid in seen: out.append(f"{aid} 重複：同時出現在 {seen[aid]} 與 {rid}"); continue
+            aid = a["ac_id"]; hw = high.get(rid, 0)
+            if aid in seen:
+                out.append(f"{aid} 重複：同時出現在 {seen[aid]}（歷史最大序號 {high.get(seen[aid], 0)}）與 {rid}（歷史最大序號 {hw}）"); continue
             seen[aid] = rid
             if rid in skip: continue
             if aid in owners:
                 if rid not in owners[aid]:
-                    out.append(f"{aid} 在 {spec_id} 歷史上屬於 {'/'.join(sorted(owners[aid]))}，不能改掛到 {rid}（既有 AC 一律沿用原 REQ）")
+                    out.append(f"{aid} 在 {spec_id} 歷史上屬於 {'/'.join(sorted(owners[aid]))}，不能改掛到 {rid}（既有 AC 一律沿用原 REQ；{rid} 歷史最大序號 {hw}）")
                 elif aid not in live:
-                    out.append(f"{aid} 已從 {spec_id} 的最新 revision 刪除，序號不得重用；{rid} 新增 AC 取 {high.get(rid, 0) + 1} 起")
+                    out.append(f"{aid} 已從 {spec_id} 的最新 revision 刪除，序號不得重用（{rid} 歷史最大序號 {hw}，新增 AC 取 {hw + 1} 起）")
                 continue
-            hw = high.get(rid, 0)
             if not re.fullmatch(r"REQ-[A-Z0-9]+-[0-9]{3,}", rid):
-                out.append(f"{aid}：所屬 {rid} 不是 REQ-<AREA>-<序號> 格式，新 AC 無法依推導規則編號"); continue
+                out.append(f"{aid}：所屬 {rid} 不是 REQ-<AREA>-<序號> 格式，新 AC 無法依推導規則編號（{rid} 歷史最大序號 {hw}）"); continue
             n = rm.derived_ac_seq(aid, rid)
             if n is None:
                 prefix = "AC-" + rid[len("REQ-"):]

@@ -94,10 +94,10 @@ def ac_history(spec_id) -> dict:
     owners, high, live = {}, {}, set()
     for ip in store.glob(f"artifacts/requirements/{spec_id}/v*/revisions/index.yaml"):
         entries = store.load(ip).get("revisions") or []
-        if entries and not store.exists(entries[-1]["path"]):          # 最新 revision 遺失時不退回較舊的 revision 判定（與 latest_pin 一致，fail closed）
-            raise RMError(f"{ip} 的最新 revision 檔 {entries[-1]['path']} 不存在")
+        missing = [e["path"] for e in entries if not store.exists(e["path"])]
+        if missing:                                                     # 任一 revision 遺失：歷史不完整（刪除的號碼與最大序號會漏算），不以殘缺歷史判定（fail closed）
+            raise RMError(f"{ip} 列出的 revision 檔不存在：{', '.join(missing)}；AC 歷史不完整，無法判定")
         for i, e in enumerate(entries):
-            if not store.exists(e["path"]): continue
             for r in store.load(e["path"]).get("requirements") or []:
                 rid = r["requirement_id"]
                 for a in r.get("acceptance_criteria") or []:
