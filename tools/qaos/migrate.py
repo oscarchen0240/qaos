@@ -205,8 +205,9 @@ def post_plan(plan: dict, blobs: dict) -> tuple[dict, dict]:
     new_steps[0]["expected_after"] = msha; new_steps[0]["blob"] = msha
     # 標記補上 manifest_sha256（標記步驟的內容因此改變；render 內容不受影響）
     mstep = next(s for s in new_steps if s["path"] == MARKER)
-    mk = yaml.safe_load(blobs[mstep["blob"]].decode()); mk["manifest_sha256"] = msha
+    draft = mstep["blob"]; mk = yaml.safe_load(blobs[draft].decode()); mk["manifest_sha256"] = msha
     mkdata = store.dump(mk); mstep["blob"] = mstep["expected_after"] = store.sha256_bytes(mkdata); blobs[mstep["blob"]] = mkdata
+    if all(s.get("blob") != draft for s in new_steps): blobs.pop(draft, None)   # 草稿不寫入 blobs（§11.4、附錄 A 5-18）
     plan["steps"] = new_steps; plan["manifest_sha256"] = msha
     return plan, blobs
 
@@ -448,13 +449,13 @@ def x_evidence_issues(rplan: dict, xplan: dict) -> list[str]:
             bad.append(f"X 合法尾端的完成紀錄 {op.progress_path(xplan, s)} 不應存在（R 不替 X 補寫）")
     return bad
 
-def plan_evidence_issues(plan: dict) -> list[str]:
-    """已完成的計畫：每一步的輸出等於計畫值（刪除步驟則不存在）、每個非最終步驟的完成紀錄存在且位元組相符、completed 紀錄相符、登錄紀錄相符。"""
+def plan_evidence_issues(plan: dict, skip: set[str] = frozenset()) -> list[str]:
+    """已完成的計畫：每一步的輸出等於計畫值（刪除步驟則不存在；skip 中的路徑另行核對）、每個非最終步驟的完成紀錄存在且位元組相符、completed 紀錄相符、登錄紀錄相符。"""
     bad = []
     try: op.verify_registration(plan["op_id"])
     except OperationError as e: bad.append(str(e))
     for s in plan["steps"]:
-        if _sha(s["path"]) != s["expected_after"]: bad.append(f"{plan['op_id'][:12]}… 的 {s['path']} 不等於計畫值")
+        if s["path"] not in skip and _sha(s["path"]) != s["expected_after"]: bad.append(f"{plan['op_id'][:12]}… 的 {s['path']} 不等於計畫值")
         if s["kind"] == "status_final": continue
         pp = store.ROOT / op.progress_path(plan, s)
         if not pp.is_file() or pp.read_bytes() != op.progress_bytes(plan, s): bad.append(f"{plan['op_id'][:12]}… 的完成紀錄 {op.progress_path(plan, s)} 缺失或不符")
@@ -527,18 +528,21 @@ def verify(rolled_back: bool = False) -> list[str]:
     """唯讀（第 5 章 §12）。移轉後：X 的計畫逐步核對（含清單、backup、事件、完成紀錄、completed、登錄）與清單各類；
     回復後：R 的計畫逐步核對、X 依凍結的 x_progress 核對、清單各類回到移轉前、X 恰好一個終態。"""
     issues = []
+    VERIFY_NOTES.clear()
     if not rolled_back:
         mk = op.marker()
         if mk is None: return ["移轉標記不存在"]
         x = mk["migrate_op_id"]; xplan = op.load_plan(x)
         if xplan is None: return [f"移轉標記指向的 {x} 沒有計畫"]
         if op.plan_state(x) != "completed": issues.append(f"{x} 不是 completed（{op.plan_state(x)}）")
-        issues += plan_evidence_issues(xplan)
+        views = {s["path"] for s in xplan["steps"] if AUDIT_VIEW.fullmatch(s["path"])}
+        issues += plan_evidence_issues(xplan, skip=views)                         # audit 檢視改依 §12.2
         manifest = planned_manifest(xplan)
         if mk.get("manifest_sha256") != xplan.get("manifest_sha256") or _sha(manifest_path(x)) != xplan.get("manifest_sha256"): issues.append("移轉清單檔或標記中的 manifest_sha256 和計畫不符")
         for e in manifest["restore"]:
-            if _sha(e["path"]) != e["planned_post_sha256"]: issues.append(f"restore {e['path']} 不等於移轉後的值")
+            if e["path"] not in views and _sha(e["path"]) != e["planned_post_sha256"]: issues.append(f"restore {e['path']} 不等於移轉後的值")
             if _sha(e["backup_path"]) != e["backup_sha256"]: issues.append(f"backup {e['backup_path']} 缺失或不符")
+        issues += audit_issues(mk, xplan)
     else:
         regs = op.registrations()
         rs = [o for o, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]) if reg["action"] == "migrate_rollback"]
@@ -566,3 +570,184 @@ def verify(rolled_back: bool = False) -> list[str]:
         if _sha(u["path"]) != u["pre_sha256"]: issues.append(f"untouched {u['path']} 被改動")
     if not (store.ROOT / op.LOCK_PATH).exists(): issues.append("鎖檔不存在")
     return issues
+
+# ---------------------------------------------------------------- migrate verify：audit 檢視與事件檔（第 5 章 §12.1～§12.5）
+VERIFY_NOTES: list[str] = []                     # 只供人工對照的附註（X 之後的已完成操作），不影響判定
+EVENT_FILE = re.compile(r"runs/(?:(RUN-[0-9]{8}-[0-9]{3,})/audit\.d|_audit\.d)/([^/]+)\.yaml")
+DIAG_NAME = re.compile(r"(adhoc-[0-9a-f]{32})-0")
+DIAG_FIELDS = {"at", "actor", "action", "detail", "op_id", "step", "run_id"}
+CLOCK_FORMAT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
+GLOBAL_VIEW = "runs/_audit.log"
+
+def _event_files() -> dict[str, bytes]:
+    out = {}
+    for pat in ("runs/_audit.d/*.yaml", "runs/*/audit.d/*.yaml"):
+        for p in store.ROOT.glob(pat):
+            if p.is_file() and not p.name.startswith(".qaos-tmp"): out[store.rel(p)] = p.read_bytes()
+    return out
+
+def _diag_event(path: str, data: bytes) -> dict | None:
+    """有效的診斷事件（§12.1）：檔名、位置、欄位與型別全部符合才回傳 payload。"""
+    m = EVENT_FILE.fullmatch(path); n = DIAG_NAME.fullmatch(m.group(2)) if m else None
+    if n is None: return None
+    try: ev = yaml.safe_load(data.decode("utf-8"))
+    except Exception: return None
+    if not isinstance(ev, dict) or set(ev) != DIAG_FIELDS or ev["op_id"] != n.group(1): return None
+    if type(ev["step"]) is not int or ev["step"] != 0 or ev["run_id"] != m.group(1): return None
+    if not isinstance(ev["at"], str) or not CLOCK_FORMAT.fullmatch(ev["at"]): return None
+    try: op.parse_ts(ev["at"])
+    except ValueError: return None
+    if not all(isinstance(ev[k], str) and ev[k] for k in ("actor", "action")) or not isinstance(ev["detail"], str): return None
+    return ev
+
+def _plan_events(plan: dict) -> tuple[list[tuple[dict, dict]], list[str]]:
+    """計畫事件 → [(payload, 事件步驟)]；路徑由 (op_id, step, run_id) 推導，必須恰好對應一個 kind: event 步驟且 payload 序列化 sha 相符（§12.1）。"""
+    out, bad = [], []
+    by_path = {}
+    for s in plan["steps"]:
+        if s["kind"] == "event": by_path.setdefault(s["path"], []).append(s)
+    for ev in plan.get("audit_events") or []:
+        path = op._event_path(ev.get("op_id"), ev.get("run_id"), ev.get("step"))
+        st = by_path.get(path, [])
+        if ev.get("op_id") != plan["op_id"] or len(st) != 1 or st[0]["expected_after"] != store.sha256_bytes(store.dump(ev)):
+            bad.append(f"{plan['op_id'][:12]}… 的計畫事件與事件步驟不一致（{path}）"); continue
+        out.append((ev, st[0]))
+    if len(out) != sum(1 for s in plan["steps"] if s["kind"] == "event"): bad.append(f"{plan['op_id'][:12]}… 有沒有對應計畫事件的事件步驟")
+    return out, bad
+
+def _taker(o: str, plans: dict) -> list[dict]:
+    return [p for p in plans.values() if p.get("action") == "migrate_rollback" and p.get("takeover_of") == o]
+
+def _op_evidence(regs: dict) -> tuple[dict, dict, list[str], dict]:
+    """操作證據核對（§12.1 失敗傳播）。回傳 (事件路徑 → {ev, sha, op, seq, state, required}, op → plan, issues, op → 狀態集合)。
+    任何不符都列入 issues（整次 verify 失敗），不以排除事件代替。"""
+    known, plans, bad = {}, {}, []
+    files, sts = op.plan_files(), op.all_statuses()                           # 一次載入，避免逐 op 重掃目錄
+    for o, reg in sorted(regs.items(), key=lambda kv: kv[1]["plan_seq"]):
+        try: plans[o] = op.verify_registration(o, reg, plan_file=files.get(o), status_set=sts.get(o, set()))
+        except Exception as e: bad.append(f"op {o} 的登錄紀錄或計畫檔無法核對：{e}")      # 計畫檔損壞（例如非法 YAML）也是失敗，不中止 verify
+    for o, plan in plans.items():
+        state = op.plan_state(o, sts.get(o, set())); evs, b = _plan_events(plan); bad += b
+        done_seqs = None                                                       # None：全部事件都應存在
+        if state == "completed":
+            for s in plan["steps"][:-1]:
+                pp = store.ROOT / op.progress_path(plan, s)
+                if not pp.is_file() or pp.read_bytes() != op.progress_bytes(plan, s): bad.append(f"{o[:12]}… 的完成紀錄 {op.progress_path(plan, s)} 缺失或不符")
+                if s["kind"] in ("status", "index") and _sha(s["path"]) != s["expected_after"]: bad.append(f"{o[:12]}… 寫入的稽核紀錄 {s['path']} 缺失或不符")   # 例如 R 寫的 X 終態
+        elif state in op.TERMINAL:
+            rs = _taker(o, plans)
+            if len(rs) != 1: bad.append(f"已終結的 {o[:12]}… 應恰好有一份接管它的 rollback（目前 {len(rs)}）"); done_seqs = set()
+            else:
+                rp = rs[0]; bad += [f"證據衝突：{i}" for i in x_evidence_issues(rp, plan)]
+                present = sorted(t for t in op.TERMINAL if t in sts.get(o, set()))
+                planned = sorted(t for t in op.TERMINAL if any(s["path"] == op.status_path(o, t) for s in rp["steps"]))
+                if present != planned or len(present) != 1:                     # 互斥終態：恰好一個，而且是接管它的 R 計畫寫的那一個
+                    bad.append(f"證據衝突：{o[:12]}… 的終態紀錄應恰好是 {planned}（目前 {present}：{[op.status_path(o, t) for t in present]}）")
+                xsteps = {s["seq"]: s for s in plan["steps"]}; done_seqs = set()
+                for row in rp["x_progress"]["steps"]:
+                    xs = xsteps.get(row["seq"])
+                    if xs is None: continue
+                    if row["status"] == "done": done_seqs.add(xs["seq"]); continue
+                    if row["status"] != "not_executed": continue                   # 例如 external_change：依凍結的 proof 由 x_evidence_issues 核對
+                    if xs["kind"] in ("event", "status_final") and (store.ROOT / xs["path"]).exists(): bad.append(f"證據衝突：{o[:12]}… 未執行步驟的輸出 {xs['path']} 出現了")
+                    if xs["kind"] != "status_final" and (store.ROOT / op.progress_path(plan, xs)).exists(): bad.append(f"證據衝突：{o[:12]}… 未執行步驟的完成紀錄 {op.progress_path(plan, xs)} 出現了")
+        else:                                                                  # 未完成（§12.4）：只要求已有完成紀錄的事件
+            bad.append(f"未完成的操作 {o} {plan.get('action')}：這是合法中斷，不是竄改；請以 `operation resume {o}` 完成後再執行 migrate verify")
+            done_seqs = {s["seq"] for s in plan["steps"][:-1] if (store.ROOT / op.progress_path(plan, s)).exists()}
+        for ev, st in evs:
+            required = done_seqs is None or st["seq"] in done_seqs
+            known[st["path"]] = {"ev": ev, "sha": st["expected_after"], "op": o, "seq": regs[o]["plan_seq"], "state": state, "required": required}
+            if required and _sha(st["path"]) != st["expected_after"]: bad.append(f"事件檔 {st['path']}（{o[:12]}… {plan.get('action')}）缺失或不符")
+    return known, plans, bad, sts
+
+def _render(view: str, events: list[dict], head: bytes) -> bytes:
+    evs = sorted(events, key=lambda e: (str(e["at"]), str(e["op_id"]), int(e["step"])))
+    return head + "".join(op._format_line(e, view == GLOBAL_VIEW) for e in evs).encode("utf-8")
+
+def _belongs(view: str, ev: dict) -> bool:
+    return view == GLOBAL_VIEW or f"runs/{ev.get('run_id')}/audit.log" == view
+
+def _matches(body: bytes, items: list[tuple[bytes, bool]]) -> bool:
+    """body 是否等於依序串接 items（(位元組, 可省略)）中「全部必含項＋可含項的某個子集合」的結果。"""
+    pos = {0}
+    for b, optional in items:
+        nxt = {p + len(b) for p in pos if body.startswith(b, p)}
+        if optional: nxt |= pos
+        pos = nxt
+        if not pos: return False
+    return len(body) in pos
+
+def _view_ok(view: str, planned: str | None, has_plan: bool, head: bytes | None, groups: dict) -> str | None:
+    """§12.2 的判定 1、2；回傳失敗原因或 None。"""
+    B, A0, R, D = (([e for e in groups[k] if _belongs(view, e)]) for k in ("B", "A0", "R", "D"))
+    cur = op._disk_bytes(view)
+    key = lambda e: (str(e["at"]), str(e["op_id"]), int(e["step"]))
+    candidates = []
+    if has_plan:
+        if len(A0) > 10: return f"與 X 同秒的診斷事件太多（{len(A0)}），不列舉，需人工核對（§12.2）"
+        for mask in range(1 << len(A0)):
+            S = [e for i, e in enumerate(A0) if mask >> i & 1]
+            if planned is None:
+                if not B and not S and head == b"": candidates.append(S)
+            elif head is not None and store.sha256_bytes(_render(view, B + S, head)) == planned: candidates.append(S)
+        if not candidates: return f"X 時的內容無法由前段事件重建（計畫值 {planned}）"
+    else:
+        candidates = [[]]
+    for S in candidates:
+        rest = [e for e in A0 if e not in S] if has_plan else A0
+        must = B + S + R
+        if cur is None:
+            if not must and (not has_plan or planned is None): return None
+            continue
+        if head is None or not cur.startswith(head): continue
+        items = sorted([(e, False) for e in must] + [(e, True) for e in D + rest], key=lambda t: key(t[0]))
+        if _matches(cur[len(head):], [(op._format_line(e, view == GLOBAL_VIEW).encode("utf-8"), o) for e, o in items]): return None
+    return f"目前內容不等於有出處事件的重建結果（目前 {store.sha256_bytes(cur) if cur is not None else '不存在'}）"
+
+def _legacy_head(view: str, mk: dict) -> tuple[bytes | None, str | None]:
+    info = (mk.get("logs") or {}).get(view)
+    if info is None: return b"", None
+    if info.get("legacy") == "absent": return b"", None
+    if info.get("legacy") == "frozen":
+        lb = op._disk_bytes(view.replace("audit.log", "audit.legacy.log"))
+        if lb is None or store.sha256_bytes(lb) != info.get("sha256"): return None, f"{view} 的 legacy 檔不存在或 hash 不符"
+        return lb, None
+    return None, f"{view} 在移轉標記中的 legacy 狀態不合法"
+
+def audit_issues(mk: dict, xplan: dict) -> list[str]:
+    """移轉後的 audit 檢視（§12.2）、事件檔雙向核對（§12.3）、未完成操作（§12.4）；並記錄 X 之後的已完成操作作為附註（§12.5）。"""
+    try: regs = op.registrations()
+    except OperationError as e: return [str(e)]
+    x = xplan["op_id"]
+    if x not in regs: return [f"{x} 沒有登錄紀錄"]
+    xseq, xclock = regs[x]["plan_seq"], op.parse_ts(xplan["clock"])
+    known, plans, bad, sts = _op_evidence(regs)
+    groups = {"B": [], "A0": [], "R": [], "D": []}
+    for path, data in sorted(_event_files().items()):
+        k = known.get(path)
+        if k is not None:
+            if store.sha256_bytes(data) != k["sha"]: bad.append(f"事件檔 {path} 和 {k['op'][:12]}… 的計畫不符"); continue
+            if not k["required"]: continue                                       # 未完成操作的合法尾端（已由 §12.4 回報）；已終結移轉的未執行事件已由 _op_evidence 回報
+            if k["seq"] <= xseq and k["state"] != "in_progress": groups["B"].append(k["ev"])
+            elif k["seq"] > xseq and k["state"] == "completed": groups["R"].append(k["ev"])
+            continue
+        ev = _diag_event(path, data)
+        if ev is None: bad.append(f"事件檔 {path} 無法對應到任何登錄操作，也不是有效的診斷事件"); continue
+        at = op.parse_ts(ev["at"])
+        groups["B" if at < xclock else "A0" if at == xclock else "D"].append(ev)
+    # 適用路徑：(a) X 的 render 步驟、(b) X 的 no_change audit 檢視、(c) X 之後建立的 run
+    targets = {s["path"]: (s["expected_after"], True) for s in xplan["steps"] if AUDIT_VIEW.fullmatch(s["path"])}
+    targets.update({n["path"]: (n["content_sha256"], True) for n in xplan.get("no_change", []) if AUDIT_VIEW.fullmatch(n["path"])})
+    run_ids = {e.get("run_id") for g in groups.values() for e in g if e.get("run_id")}
+    run_ids |= {p.parent.name for p in store.ROOT.glob("runs/*/audit.log")}
+    for rid in sorted(run_ids):
+        v = f"runs/{rid}/audit.log"
+        if v not in targets and v not in (mk.get("logs") or {}): targets[v] = (None, False)
+    for view, (planned, has_plan) in sorted(targets.items()):
+        head, err = _legacy_head(view, mk) if has_plan else (b"", None)
+        if err: bad.append(err); continue
+        why = _view_ok(view, planned, has_plan, head, groups)
+        if why: bad.append(f"audit 檢視 {view}：{why}")
+    later = [f"{o} {regs[o]['action']}" for o in sorted(regs, key=lambda o: regs[o]["plan_seq"]) if regs[o]["plan_seq"] > xseq and op.plan_state(o, sts.get(o, set())) == "completed"]
+    if later: VERIFY_NOTES.append("X 之後的已完成操作（只供人工對照，不影響判定）：\n" + "\n".join(f"  {l}" for l in later))
+    return bad

@@ -285,6 +285,7 @@ def cmd_migrate(a):
         print("（唯讀：不取鎖；讀取期間如果有寫入，結果可能不一致。在維護窗口中執行時結果一致）")
         issues = m.verify(rolled_back=a.rolled_back)
         for i in issues: print(f"- {i}")
+        for n in m.VERIFY_NOTES: print(n)
         print("verify 通過" if not issues else f"verify 失敗（{len(issues)} 項）"); sys.exit(1 if issues else 0)
     if not a.by: sys.exit("qaos: migrate 與 migrate rollback 需要 --by")
     if a.action == "rollback":
