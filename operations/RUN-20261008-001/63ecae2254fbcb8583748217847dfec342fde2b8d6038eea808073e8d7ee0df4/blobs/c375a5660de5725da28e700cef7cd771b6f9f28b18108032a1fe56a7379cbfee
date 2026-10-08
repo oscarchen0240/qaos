@@ -1,0 +1,205 @@
+title: 開啟紅包直接入帳：核心貨幣入錢包、交易紀錄『紅包』正值、稽核明細『紅包』
+description: 開啟紅包直接入帳：核心貨幣入錢包、交易紀錄『紅包』正值、稽核明細『紅包』
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-014
+- REQ-REDPACKET-031
+acceptance_criteria_ids:
+- AC-REDPACKET-0141
+- AC-REDPACKET-0313
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 【環境前提】EUR 錢包已開啟；選定一名既有線上會員（玩家 A），以 EUR 為主下注；記下玩家 A 目前 USDT 與 EUR 錢包餘額
+test_data:
+- name: 稽核倍數／固定金額
+  value: 2 / 18
+- name: 下注
+  value: EUR 有效投注 2000（100%遊戲）
+steps:
+- n: 1
+  action: 建立活動『RP-CREDIT』（活動時間『永久』）：活動幣種 USDT、EUR；預設規則門檻 1000／上限 1／固定金額 18／稽核倍數 2；每日重置；儲存
+  expected: 建立成功（上限 1 確保只產生 1 個紅包）
+- n: 2
+  action: 玩家 A 於前台以 EUR 結算足夠的有效流水貢獻（例如 EUR 有效投注 2000，100% 遊戲；EUR 對 USDT 匯率約為 1，2000 EUR 應遠超過門檻 1000 USDT，若環境匯率特殊請加大投注額）
+  expected: 產生 1 個待開啟紅包，紅包明細金額 18
+- n: 3
+  action: 玩家 A 開啟前台紅包入口，點該待開啟紅包
+  expected: 出現開啟動畫並顯示金額 18
+- n: 4
+  action: 檢視玩家 A 錢包
+  expected: USDT 餘額立即 +18；EUR 餘額不變
+- n: 5
+  action: 至『各式報表 > 交易紀錄查詢』，篩選會員編號為玩家 A、交易類型『紅包』
+  expected: 交易類型選項中有『紅包』；出現 1 筆：交易類型『紅包』、幣別 USDT、變動金額 +18（正值）
+- n: 6
+  action: 至『各式報表 > 稽核明細』，篩選會員編號為玩家 A、類型『紅包』
+  expected: 類型選項中有『紅包』；出現 1 筆：類型『紅包』、金額 18、所需有效投注額增加 36（18×2）
+- n: 7
+  action: 至紅包明細檢視該紅包
+  expected: 狀態『已入帳』（綠色）、入帳時間有值
+expected_result: 開啟紅包後 USDT 錢包立即 +18（以核心貨幣入帳，EUR 玩家亦同）；交易紀錄新增『紅包 +18 USDT』；稽核明細新增類型『紅包』、所需有效投注額 +36（紅包金額×稽核倍數 2）；紅包明細狀態轉『已入帳』。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 324 行）
+  quote: 開啟即入錢包，不經 3.3 優惠彩金審核
+decision_refs:
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 324 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 325 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 326 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §功能說明（第 24 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 347 行）
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 166 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 324 行）
+  quote: 開啟即入錢包，不經 3.3 優惠彩金審核
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 325 行）
+  quote: 入帳時所需有效投注額增加 紅包金額 × 稽核倍數，寫入 4.4 稽核明細（類型「紅包」）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 326 行）
+  quote: 入帳時寫入 4.1 交易紀錄查詢，交易類型「紅包」，正值
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §功能說明（第 24 行）
+  quote: 紅包一律派發核心貨幣
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 347 行）
+  quote: 4.1 交易類型新增「紅包」（線上與機台皆有）；4.4 稽核明細類型新增「紅包」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 166 行）
+  quote: 點擊待開啟紅包 → 開啟動畫 → 顯示金額 → 金額即時入錢包
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 243 行）
+  quote: 玩家開啟入帳的時間；未入帳顯示「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包狀態（第 157 行）
+  quote: '| 已入帳 | 綠色 | 玩家於前台開啟 |'
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-036
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

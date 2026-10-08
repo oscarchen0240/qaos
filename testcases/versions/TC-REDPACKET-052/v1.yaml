@@ -1,0 +1,138 @@
+title: 尚無已入帳紅包顯示『—』；建立時成本試算為建立當下快照、不隨會員人數變動
+description: 尚無已入帳紅包顯示『—』；建立時成本試算為建立當下快照、不隨會員人數變動
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-021
+acceptance_criteria_ids:
+- AC-REDPACKET-0212
+- AC-REDPACKET-0213
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義】需有可立即改變指定測試會員 VIP 等級序號的辦法（6.2 僅定義自動升降的評估週期；變動結果可於『各式報表 > 會員等級異動紀錄』核對），由環境負責人提供；下文『會員升級／降級』均指此辦法
+- 前往『系統管理 > 會員等級設定』記下生效方案各等級的『會員人數』（至少兩個等級有會員）；選定一名既有線上會員（會員 B），其目前等級記為 x，另選一個不同於 x 的等級 a（等級規則 1 之後只勾選 a）；記下 a 與 x 的會員人數
+test_data:
+- name: 總預算
+  value: 5000
+- name: 會員 B
+  value: 由等級 x 移到等級 a（a ≠ x）
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』；預設規則（門檻 1000／上限 5／固定 10／稽核 1）；新增『等級規則 1』只勾選等級 a（門檻 800／上限 8／固定 30／稽核 1）；總預算
+    5000；活動時間選『永久』
+  expected: 整體試算顯示；記錄整體期望金額、整體成本占比、預算約可發放，及預設規則、等級規則 1 各自的涵蓋會員人數 n₀、n₁
+- n: 2
+  action: 儲存活動『RP-SNAP』並進入紅包明細
+  expected: 建立成功；頂部『建立時成本試算』顯示整體試算
+- n: 3
+  action: 核對建立時成本試算與步驟 1 記錄的數值
+  expected: 完全一致
+- n: 4
+  action: 檢視頂部『實際平均紅包金額』（各規則）
+  expected: 尚無已入帳紅包，各規則皆顯示『—』
+- n: 5
+  action: 把會員 B 由等級 x 變更為等級 a；再到『系統管理 > 會員等級設定』核對等級 a 的會員人數比前置記錄 +1、等級 x 的會員人數 −1
+  expected: 人數已確實改變（若沒有改變，佈置無效，本案不判定，回報）
+- n: 6
+  action: 【對照，不儲存】另開『新增優惠活動』紅包表單，填入與步驟 1 相同的預設規則與『等級規則 1』（只勾選 a），檢視整體試算
+  expected: 【佈置有效性確認】預設規則涵蓋人數應為 n₀−1、等級規則 1 涵蓋人數應為 n₁+1，整體期望金額與步驟 1 不同（證明『即時計算』確實會隨人數變動；若相同，本案步驟 7 沒有判定力，回報）；離開表單不儲存
+- n: 7
+  action: 回到活動『RP-SNAP』的紅包明細，重新整理後檢視『建立時成本試算』
+  expected: 仍與步驟 1 的數值完全一致，不隨人數變動
+- n: 8
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額（並把會員 B 還原為等級 x）
+  expected: 已清理
+expected_result: 尚無已入帳紅包時，各規則的實際平均紅包金額顯示『—』；紅包明細的建立時成本試算與建立當下表單的試算一致，會員人數之後變動也不改變。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §紅包明細（第 213 行）
+  quote: 以建立當下各規則的涵蓋會員人數加權（建立時記錄，不隨會員人數變動）
+decision_refs:
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 213 行）
+- requirement_id: REQ-REDPACKET-021
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 214 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 213 行）
+  quote: 以建立當下各規則的涵蓋會員人數加權（建立時記錄，不隨會員人數變動）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 214 行）
+  quote: 該規則已入帳金額合計 ÷ 已入帳紅包數（僅計已入帳，不含待開啟與已作廢）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-052
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

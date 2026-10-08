@@ -1,0 +1,160 @@
+title: 切換會員等級方案：等級規則依 VIP 序號對應新方案、紅包明細歷史不改寫
+description: 切換會員等級方案：等級規則依 VIP 序號對應新方案、紅包明細歷史不改寫
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-007
+acceptance_criteria_ids:
+- AC-REDPACKET-0071
+- AC-REDPACKET-0072
+- AC-REDPACKET-0073
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義】需有可立即改變指定測試會員 VIP 等級序號的辦法（6.2 僅定義自動升降的評估週期；變動結果可於『各式報表 > 會員等級異動紀錄』核對），由環境負責人提供；下文『會員升級／降級』均指此辦法
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 【環境前提，spec 未定義建立細節，需環境負責人確認可行】『系統管理 > 會員等級設定』有兩個方案：目前生效的方案 P1（至少 7 級，序號 3 名稱記為 N3）與可切換的方案 P2（只有 6 級，序號 3 名稱記為 N3' 且 ≠ N3）；P2
+  的建立方式依 6.2 新增方案／新增等級
+- 選定一名等級序號為 3 的既有線上會員（會員 B），及另一名等級序號為 1 的既有線上會員（會員 C；序號 1 不在等級規則 1 勾選範圍內）；兩人本週期都尚無注單計入累計
+- 【環境前提，spec 未定義切換方案後既有會員的等級序號是否保留，需環境負責人確認】切換到 P2 後，會員 B 的序號仍為 3、會員 C 的序號仍為 1（可於『各式報表 > 會員等級異動紀錄』或會員資料核對）；若不成立，請另選切換後序號分別為
+  3 與 1 的會員代替，並在紀錄註明
+test_data:
+- name: 等級規則 1 勾選序號
+  value: 3, 7
+- name: 下注
+  value: B 500 → (切換方案) → B 500；C 500
+steps:
+- n: 1
+  action: 建立活動『RP-SWITCH』（活動時間『永久』）：每日重置；預設規則關閉；等級規則 1 勾選序號 3 與序號 7（門檻 500／上限 5／固定 10／稽核 1）；儲存
+  expected: 建立成功
+- n: 2
+  action: 會員 B 結算有效流水貢獻 500
+  expected: 紅包明細產生 1 筆，『適用規則』顯示『等級規則 1（3・N3）』
+- n: 3
+  action: 到『系統管理 > 會員等級設定』，『生效設定』選 P2，點『儲存』
+  expected: P2 成為生效方案
+- n: 4
+  action: 至『活動排程 > 紅包活動』檢視該活動『參加等級』摘要；並進入紅包明細檢視『規則設定』區的適用等級
+  expected: 序號 3 改顯示新方案名稱 N3'（『3・N3'』）；序號 7 顯示『7（目前方案無此等級）』
+- n: 5
+  action: 在紅包明細列表檢視步驟 2 產生的紅包『適用規則』
+  expected: 仍顯示『等級規則 1（3・N3）』，沒有被改寫
+- n: 6
+  action: 會員 B 再結算有效流水貢獻 500
+  expected: 紅包明細新增 1 筆會員 B 的紅包（等級規則 1 的門檻 500 達標；改適用新方案第 3 級）；其『適用規則』顯示『等級規則 1（3・N3'）』
+- n: 7
+  action: 會員 C 結算有效流水貢獻 500
+  expected: 紅包明細沒有會員 C 的紅包（序號 1 沒有等級規則、預設規則關閉，不參加）
+- n: 8
+  action: 清理：將生效方案切回 P1；測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已還原
+expected_result: 切換方案後：等級規則 1 改以序號對應新方案（序號 3 顯示新方案名稱 N3'）；新方案沒有的序號 7 顯示『7（目前方案無此等級）』；切換前產生的紅包『適用規則』仍為『等級規則 1（3・N3）』；切換後序號
+  3 的會員結算達標仍依等級規則 1 產生紅包（適用規則顯示新名稱 N3'），序號 1 的會員（預設規則關閉）不產生。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 317 行）
+  quote: 等級規則依 VIP 等級序號對應新方案的等級
+decision_refs:
+- requirement_id: REQ-REDPACKET-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 317 行）
+- requirement_id: REQ-REDPACKET-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 317 行）
+- requirement_id: REQ-REDPACKET-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 236 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 317 行）
+  quote: 等級規則依 VIP 等級序號對應新方案的等級
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 317 行）
+  quote: 新方案沒有的序號：該勾選不對應任何會員
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 236 行）
+  quote: 記錄產生當下的序號與等級名稱，切換會員等級方案後不改寫
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-021
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

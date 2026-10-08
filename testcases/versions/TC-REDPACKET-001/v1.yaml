@@ -1,0 +1,178 @@
+title: 線上站台新增紅包活動表單：固定欄位、活動幣種預設、活動時間選項
+description: 線上站台新增紅包活動表單：固定欄位、活動幣種預設、活動時間選項
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-001
+acceptance_criteria_ids:
+- AC-REDPACKET-0011
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 記下『帳務管理 > 鏈上錢包管理』中目前已開啟的幣種清單（供步驟 4 比對）
+test_data:
+- name: 活動類型
+  value: 紅包
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，活動類型選『紅包』
+  expected: 表單載入，麵包屑為『優惠活動管理 / 新增優惠活動』
+- n: 2
+  action: 檢視『活動條件』欄位，並嘗試點擊／輸入修改
+  expected: 固定顯示『有效流水累計』，無法修改
+- n: 3
+  action: 檢視『派發幣種』欄位，並嘗試修改
+  expected: 唯讀，顯示站台核心貨幣 USDT（與『系統管理 > 站台列表』該主站台的核心貨幣一致）
+- n: 4
+  action: 檢視『活動幣種』區：記下可勾選的幣種項目與預設勾選狀態
+  expected: 可複選；顯示的項目與前置記下的鏈上錢包管理已開啟幣種一致；核心貨幣 USDT 預設為勾選（其他幣種的預設勾選狀態只記錄、不判定）
+- n: 5
+  action: 檢視『活動時間』欄位，依序選『永久』與『區間』
+  expected: 提供『永久』與『區間』兩種；選『區間』時可由日曆選起訖日期與時間（時間以 UTC+0 計；畫面是否標示時區只記錄、不判定）
+expected_result: 表單：活動條件固定為『有效流水累計』且不可修改；派發幣種唯讀顯示站台核心貨幣；活動幣種可複選、選項與鏈上錢包管理已開啟幣種一致、核心貨幣預設為勾選；活動時間可選『永久』或『區間』（區間以日曆選取起訖日期與時間；畫面是否標示時區只記錄）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §新增優惠活動 — 紅包（第 63 行）
+  quote: 固定顯示「有效流水累計」，不可修改
+decision_refs:
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 63 行）
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 65 行）
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 64 行）
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 64 行）
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+    location: §6.5.2 新增優惠活動 — 充值（首儲／次儲）（第 477 行）
+- requirement_id: REQ-REDPACKET-001
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 66 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 63 行）
+  quote: 固定顯示「有效流水累計」，不可修改
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 65 行）
+  quote: 唯讀，自動顯示站台核心貨幣
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 64 行）
+  quote: 預設勾選核心貨幣
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 64 行）
+  quote: 機台場館不顯示（固定 TWD）；建立後不可修改
+- type: spec
+  spec_id: SPEC-SYSADMIN-001
+  spec_version: '0.1'
+  content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  location: §6.5.2 新增優惠活動 — 充值（首儲／次儲）（第 477 行）
+  quote: 勾選此活動適用的幣種（可複選）；實際顯示的項目依鏈上錢包管理中已開啟的幣種為準
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 66 行）
+  quote: 永久（無期限持續生效）或區間（以日曆選擇起訖日期與時間，UTC+0）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-001
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

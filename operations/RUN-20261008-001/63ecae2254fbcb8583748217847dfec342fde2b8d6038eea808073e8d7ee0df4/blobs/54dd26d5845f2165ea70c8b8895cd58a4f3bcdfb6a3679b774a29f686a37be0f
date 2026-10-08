@@ -1,0 +1,108 @@
+title: 線上站台：無優惠活動管理權限的角色無法進入或操作
+description: 線上站台：無優惠活動管理權限的角色無法進入或操作
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-023
+acceptance_criteria_ids:
+- AC-REDPACKET-0232
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【清空後依序佈置】由站長（或管理員）建立進行中的活動 E『RP-ROLE-E』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後於『活動排程 > 紅包活動』確認
+  E 出現（若列表顯示活動尚未生效，等其生效；狀態文字與位置只記錄）
+- 另備一個後台帳號，其角色不具備優惠活動管理權限（spec 只列出可操作的財務、站長、管理員，未列具體其他角色名稱；由環境負責人挑選一個確認無此權限的角色，例如查閱後台角色權限設定）
+test_data: []
+steps:
+- n: 1
+  action: 以該無權限帳號登入，切到線上站台，檢視左側選單『系統管理』
+  expected: 『優惠活動管理』不可進入（隱藏、停用或被拒，呈現方式不判定）
+- n: 2
+  action: 嘗試直接以網址進入優惠活動管理的新增頁（不經選單）
+  expected: 無法使用新增功能（被拒或導回，呈現方式不判定）
+- n: 3
+  action: 改回站長（或管理員）登入，檢視活動 E 的總預算與狀態，及活動排程中的紅包活動列表
+  expected: 活動 E 仍在列表上、總預算 5000、排程說明與測試前一致；列表中沒有多出的活動（未被新增或修改）
+- n: 4
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 沒有優惠活動管理權限的角色無法進入優惠活動管理或使用新增紅包活動功能，活動資料未被改動。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §角色與權限（第 250 行）
+  quote: 沿用 6.5 優惠活動管理既有權限（系統管理模組：財務、站長；另含內部角色管理員）；追加預算與新增活動同權限
+decision_refs:
+- requirement_id: REQ-REDPACKET-023
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §角色與權限（第 250 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §角色與權限（第 250 行）
+  quote: 沿用 6.5 優惠活動管理既有權限（系統管理模組：財務、站長；另含內部角色管理員）；追加預算與新增活動同權限
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-056
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

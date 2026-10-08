@@ -1,0 +1,134 @@
+title: 洗分未成立（餘額不足一個洗分門檻單位）：紅包不作廢、恢復可開啟
+description: 洗分未成立（餘額不足一個洗分門檻單位）：紅包不作廢、恢復可開啟
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-028
+acceptance_criteria_ids:
+- AC-REDPACKET-0284
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- negative
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，需環境負責人確認】機台帳號 M1（自行從環境中選定）所在機台的洗分門檻為已知的正值 W（機台端設定，後台無此設定；下文以 W＝100 為例）；場館店員（持鑰匙）可對 M1 開分與洗分；M1 目前沒有任何待開啟紅包（上一條已清空活動）
+- 【佈置順序：務必先降餘額、後產生紅包】(1) 店員對 M1 開分，使 M1 餘額落在 W 到 2W 之間（W＝100 時例如 150；視 M1 現有餘額調整開分金額）；(2) 店員對 M1 以『全洗』洗分一次：依 SPEC-ARCADE-001
+  的洗分門檻說明，洗出以 W 為單位的金額、不足一個 W 的餘數 r 留在機台上（例如 150 全洗洗出 100、餘數 50）；確認 M1 餘額 r 小於 W；此時尚無任何紅包活動，沒有待開啟紅包會被這次洗分作廢；(3) 從此到本案結束，不得再對
+  M1 做洗分或出金（會作廢其待開啟紅包，與本案要的狀態矛盾）
+test_data:
+- name: 洗分門檻 W／M1 餘數 r
+  value: 100 / 50（例）
+- name: 活動規則
+  value: 門檻 20／固定 20／稽核 0
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-NOWASH』（活動時間『永久』）：重置方式每日；預設規則門檻 20／上限 5／固定金額 20／稽核倍數 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 在機台前台以不超過餘額 r 的小額下注（例如一局下注 20 TWD、100% 貢獻系數遊戲），使結算的有效流水貢獻累計 20；當局結束後彈出紅包時直接關閉彈窗、不開啟；到後台紅包明細確認
+  expected: M1 恰有 1 筆待開啟紅包 P1
+- n: 3
+  action: 檢視 M1 目前餘額（機台畫面或後台）
+  expected: 餘額仍小於 W（洗分仍無法成立）。若因中獎餘額已大於等於 W，本次佈置失敗：不得以洗分或出金降低餘額（會作廢 P1），回報並於清理後重做佈置
+- n: 4
+  action: 店員在 M1 以鑰匙選單嘗試『全洗』
+  expected: 平台拒絕，機台顯示餘額不足；洗分未成立
+- n: 5
+  action: 在 M1 前台查看 P1；並到後台紅包明細檢視 P1
+  expected: P1 按鈕可點（恢復可開啟，沒有停留在『交易處理中』）；後台 P1 狀態仍為『待開啟』，沒有被作廢
+- n: 6
+  action: 在 M1 前台開啟 P1
+  expected: 開啟成功，分數增加 20；紅包明細 P1 為『已入帳』
+- n: 7
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 洗分因餘額不足一個門檻單位而未成立時，待開啟紅包不被作廢，恢復可開啟。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 329 行）
+  quote: 紅包入帳與機台洗分／出金使用同一把帳號鎖：洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上列作廢，交易取消或未成立則恢復可開啟
+decision_refs:
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 329 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 329 行）
+  quote: 紅包入帳與機台洗分／出金使用同一把帳號鎖：洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上列作廢，交易取消或未成立則恢復可開啟
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  location: §洗分（第 433 行）
+  quote: 餘數單獨存在時因不足一個計算單位，可洗金額為 0、無法洗出
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  location: §洗分（第 438 行）
+  quote: 計算後可洗金額為 0 時，平台拒絕，機台畫面顯示餘額不足
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-070
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

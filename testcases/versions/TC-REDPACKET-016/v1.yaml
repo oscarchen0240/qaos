@@ -1,0 +1,133 @@
+title: 規則適用判定決策表：該等級有無等級規則 × 預設規則開／關
+description: 規則適用判定決策表：該等級有無等級規則 × 預設規則開／關
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-005
+acceptance_criteria_ids:
+- AC-REDPACKET-0051
+- AC-REDPACKET-0052
+- AC-REDPACKET-0053
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- decision_table
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義】需有可立即改變指定測試會員 VIP 等級序號的辦法（6.2 僅定義自動升降的評估週期；變動結果可於『各式報表 > 會員等級異動紀錄』核對），由環境負責人提供；下文『會員升級／降級』均指此辦法
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定兩名既有線上會員：會員 S（目前 VIP 等級序號記為 s）與會員 B（目前 VIP 等級序號記為 b，b ≠ s）；兩人本週期都尚未有注單計入累計
+test_data:
+- name: 門檻/金額
+  value: 預設 1000/10；等級規則 1 800/30
+- name: 下注
+  value: 'S: 900；B: 900 + 150'
+steps:
+- n: 1
+  action: 【輪 1：預設開】建立活動『RP-DT-ON』（活動時間『永久』）：每日重置、活動幣種 USDT；預設規則開啟（門檻 1000／上限 5／固定 10／稽核 1）；等級規則 1 勾選序號 s（門檻 800／上限 5／固定 30／稽核
+    1）；儲存
+  expected: 建立成功
+- n: 2
+  action: 會員 S 於前台以 USDT 下注並結算出有效流水貢獻 900
+  expected: 累計 900 ≥ 等級規則 1 門檻 800
+- n: 3
+  action: 至紅包明細檢視會員 S 的紅包
+  expected: 產生 1 個紅包，金額 30（等級規則 1 的固定金額）
+- n: 4
+  action: 會員 B 於前台結算有效流水貢獻 900
+  expected: 900 < 預設規則門檻 1000，紅包明細沒有會員 B 的紅包
+- n: 5
+  action: 會員 B 再結算 150（累計 1,050）
+  expected: 產生 1 個金額 10（預設規則固定金額）的紅包
+- n: 6
+  action: 取消排程『RP-DT-ON』；建立活動『RP-DT-OFF』（活動時間『永久』）：同上設定，但預設規則開關關閉（欄位隱藏）；儲存
+  expected: 建立成功
+- n: 7
+  action: 會員 S 結算有效流水貢獻 900
+  expected: 產生 1 個金額 30 的紅包（仍適用等級規則 1）
+- n: 8
+  action: 會員 B 結算 900，再結算 150（累計 1,050）
+  expected: 紅包明細始終沒有會員 B 的紅包（預設規則關閉，B 的等級未被勾選，不參加）
+- n: 9
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: (有等級規則, 預設開)→依等級規則（S 在 900 即產生 30 元紅包）；(無等級規則, 預設開)→依預設規則（B 累計 1,050 才產生 10 元紅包）；(有等級規則, 預設關)→仍依等級規則；(無等級規則,
+  預設關)→不累計、不產生紅包（B 累計 1,050 仍無紅包）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §新增優惠活動 — 紅包（第 79 行）
+  quote: 該等級序號有等級規則 → 適用該等級規則；否則預設規則開啟 → 適用預設規則；兩者皆無 → 不參加
+decision_refs:
+- requirement_id: REQ-REDPACKET-005
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §新增優惠活動 — 紅包（第 79 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §新增優惠活動 — 紅包（第 79 行）
+  quote: 該等級序號有等級規則 → 適用該等級規則；否則預設規則開啟 → 適用預設規則；兩者皆無 → 不參加
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-016
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

@@ -1,0 +1,130 @@
+title: 所有機台帳號適用預設規則；紅包以 TWD 入帳並寫入交易紀錄『紅包』
+description: 所有機台帳號適用預設規則；紅包以 TWD 入帳並寫入交易紀錄『紅包』
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-025
+- REQ-REDPACKET-014
+acceptance_criteria_ids:
+- AC-REDPACKET-0252
+- AC-REDPACKET-0253
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館內兩台不同的機台帳號 M1、M2，皆無本週期注單；記下兩者目前分數餘額
+test_data:
+- name: 下注
+  value: M1 300；M2 300
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-ARC-TWD』（活動時間『永久』）：每日重置；預設規則門檻 300／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 300；M2 結算有效流水貢獻 300
+  expected: 兩台各產生 1 個紅包（皆適用預設規則，金額 20）
+- n: 3
+  action: M1 當局結束後於機台畫面開啟紅包（M2 的紅包保持不開啟）
+  expected: M1 分數 +20（TWD）
+- n: 4
+  action: 後台切到機台場館，進入『各式報表 > 交易紀錄查詢』，只篩選 M1 的會員編號（不選交易類型），檢視 M1 的交易列表
+  expected: 可查到 1 筆交易類型為『紅包』、金額 20 的紀錄（欄位名稱、交易類型篩選選項、其餘欄位在機台視角如何呈現 spec 未定義，見 CLR-REDPACKET-007；只記錄，不判定）
+- n: 5
+  action: 只篩選 M2 的會員編號，檢視 M2 的交易列表
+  expected: 沒有交易類型為『紅包』的紀錄（M2 的紅包尚未開啟）
+- n: 6
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 場館內所有機台帳號（M1、M2）都以預設規則產生紅包（金額 20）；M1 開啟後以 TWD 入帳（分數 +20）；交易紀錄可查到 M1 一筆『紅包』類型、金額 20 的紀錄，未開啟的 M2 沒有。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §線上與機台的差異（第 38 行）
+  quote: 固定 TWD（場館僅此一種），不顯示選項
+decision_refs:
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §線上與機台的差異（第 38 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 347 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §線上與機台的差異（第 38 行）
+  quote: 固定 TWD（場館僅此一種），不顯示選項
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 347 行）
+  quote: 4.1 交易類型新增「紅包」（線上與機台皆有）；4.4 稽核明細類型新增「紅包」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-061
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

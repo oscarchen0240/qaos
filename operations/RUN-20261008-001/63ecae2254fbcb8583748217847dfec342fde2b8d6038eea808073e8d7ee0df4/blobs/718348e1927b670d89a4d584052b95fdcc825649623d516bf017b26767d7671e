@@ -1,0 +1,149 @@
+title: 場館日結報表：紅包金額欄、期末餘額驗算式、現金淨收不含紅包
+description: 場館日結報表：紅包金額欄、期末餘額驗算式、現金淨收不含紅包
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-032
+acceptance_criteria_ids:
+- AC-REDPACKET-0321
+- AC-REDPACKET-0322
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 已有一個『已結束的營業日』Z，場館內某機台帳號 M1 在 Z 當日有已入帳紅包（入帳時間在 Z 的中段，避開營業日邊界——以入帳時間歸屬營業日的確認屬 REQ-032 Q02，E4，CLR-REDPACKET-025 未決），且當日有開分、進鈔、洗分、出金（收據）紀錄
+test_data: []
+steps:
+- n: 1
+  action: 進入『各式報表 > 場館日結報表』，結算日期選 Z～Z，統計週期『按日』，統計維度『依機台明細』，機台帳號輸入 M1 的會員編號，搜尋
+  expected: 出現 Z 當日 M1 一列
+- n: 2
+  action: 記錄該列：期初餘額、開分金額、進鈔金額、紅包金額、損益、洗分金額、收據金額、期末餘額、已核實洗分、已兌現金額、現金淨收
+  expected: 『紅包金額』欄存在
+- n: 3
+  action: 在 M1 的紅包明細中，把 Z 當日『入帳時間』落在營業日內的已入帳紅包金額相加
+  expected: 等於報表『紅包金額』
+- n: 4
+  action: 驗算：期初＋開分＋進鈔＋紅包金額＋損益－洗分－收據
+  expected: 等於報表『期末餘額』
+- n: 5
+  action: 驗算：開分＋進鈔－已核實洗分－已兌現
+  expected: 等於報表『現金淨收』（不含紅包金額）
+expected_result: 報表新增『紅包金額』欄＝當日已入帳紅包合計；期末餘額＝期初＋開分＋進鈔＋紅包金額＋損益－洗分－收據；現金淨收維持 開分＋進鈔－已核實洗分－已兌現（紅包不影響）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §對既有章節的影響（第 350 行）
+  quote: 新增「紅包金額」欄（當日已入帳紅包合計）
+decision_refs:
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 350 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 350 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §對既有章節的影響（第 350 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+    location: §列表欄位（第 54 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 350 行）
+  quote: 新增「紅包金額」欄（當日已入帳紅包合計）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 350 行）
+  quote: 期末餘額 ＝ 期初餘額 ＋ 開分 ＋ 進鈔 ＋ 紅包金額 ＋ 損益 － 洗分 － 收據
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §對既有章節的影響（第 350 行）
+  quote: 現金淨收不變（紅包無現金流入
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  location: §列表欄位（第 54 行）
+  quote: 開分 ＋ 進鈔 － 已核實洗分 － 已兌現
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-074
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

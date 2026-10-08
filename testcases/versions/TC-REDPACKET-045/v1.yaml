@@ -1,0 +1,134 @@
+title: 時段重疊決策表：既有活動狀態（排程中／已取消）× 時段是否重疊
+description: 時段重疊決策表：既有活動狀態（排程中／已取消）× 時段是否重疊
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-017
+acceptance_criteria_ids:
+- AC-REDPACKET-0171
+- AC-REDPACKET-0173
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- negative
+- functional
+design_techniques:
+- decision_table
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 日期以執行當天（UTC+0）為 D：既有活動 E 區間為 D+1 ～ D+30
+test_data:
+- name: E 區間
+  value: D+1 ～ D+30
+- name: 新活動區間
+  value: D+15～D+45（重疊）／D+40～D+60（不重疊）／D+1～D+30（相同）
+steps:
+- n: 1
+  action: 建立活動 E『RP-OV-E』：區間 D+1 ～ D+30；其餘合法；儲存
+  expected: 建立成功（排程中）
+- n: 2
+  action: 【格 1：既有排程中 × 重疊】新增『RP-OV-1』區間 D+15 ～ D+45；儲存
+  expected: 阻擋儲存；無『RP-OV-1』
+- n: 3
+  action: 【格 2：既有排程中 × 不重疊】新增『RP-OV-2』區間 D+40 ～ D+60；儲存
+  expected: 儲存成功
+- n: 4
+  action: 取消『RP-OV-2』的排程，再取消 E『RP-OV-E』的排程
+  expected: 皆已取消
+- n: 5
+  action: 【格 3：既有已取消 × 相同時段】新增『RP-OV-3』區間 D+1 ～ D+30；儲存
+  expected: 儲存成功（已取消的活動不占用時段）
+- n: 6
+  action: 取消『RP-OV-3』；【格 4：既有已取消 × 不重疊】新增『RP-OV-4』區間 D+40 ～ D+60；儲存
+  expected: 儲存成功
+- n: 7
+  action: 清理：取消『RP-OV-4』
+  expected: 已取消
+expected_result: 只有『既有活動為排程中（或進行中）且新活動時段重疊』時阻擋儲存；既有活動不重疊、或已取消（不論重疊與否）時都可儲存。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 331 行）
+  quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+decision_refs:
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 331 行）
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 331 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 331 行）
+  quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 331 行）
+  quote: 同一站台同一時間僅能有一個進行中的紅包活動（排程時間重疊時阻擋儲存）
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-045
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

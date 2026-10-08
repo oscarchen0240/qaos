@@ -1,0 +1,109 @@
+title: 追加預算為不可修改的唯一例外：總預算調高、其餘設定不變
+description: 追加預算為不可修改的唯一例外：總預算調高、其餘設定不變
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-002
+acceptance_criteria_ids:
+- AC-REDPACKET-0022
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【清空後依序佈置】建立活動『RP-BUDGET-EXC』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後於『活動排程 > 紅包活動』確認該活動出現（若列表顯示活動尚未生效，等其生效；狀態文字與位置只記錄）；然後進入其紅包明細，記下頂部『活動設定』『規則設定』的所有顯示值（截圖）
+test_data:
+- name: 原總預算
+  value: 5000
+- name: 新總預算
+  value: 6000
+steps:
+- n: 1
+  action: 進入『活動排程 > 紅包活動』，該活動列點『追加預算』
+  expected: 開啟追加預算視窗
+- n: 2
+  action: 輸入新的總預算 6000，點『確認』
+  expected: 視窗關閉，操作成功
+- n: 3
+  action: 重新進入該活動的紅包明細，檢視『活動設定』『規則設定』
+  expected: 總預算顯示 6000；除總預算外，所有顯示值與前置截圖逐項一致
+- n: 4
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 追加預算可把總預算由 5000 調高至 6000；活動幣種、重置方式、規則設定等其餘設定維持不變。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 337 行）
+  quote: 活動幣種、重置方式、規則設定（含預設規則開關、各規則適用等級、累積門檻、單週期上限、獎勵設定、稽核倍數）於建立後不可修改；需調整時取消排程後重建。唯一例外為總預算可追加調高
+decision_refs:
+- requirement_id: REQ-REDPACKET-002
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 337 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 337 行）
+  quote: 活動幣種、重置方式、規則設定（含預設規則開關、各規則適用等級、累積門檻、單週期上限、獎勵設定、稽核倍數）於建立後不可修改；需調整時取消排程後重建。唯一例外為總預算可追加調高
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-005
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

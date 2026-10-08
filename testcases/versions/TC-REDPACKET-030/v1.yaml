@@ -1,0 +1,137 @@
+title: 機台場館以場館既有日結時間切分週期：切分點前後各一筆流水
+description: 機台場館以場館既有日結時間切分週期：切分點前後各一筆流水
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-011
+acceptance_criteria_ids:
+- AC-REDPACKET-0112
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- boundary
+- functional
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，非 spec 定義，需環境負責人確認可行】選定一個『日結時間』不是 00:00（UTC+0）的既有機台場館：於『系統管理 > 站台列表』開啟該場館的編輯畫面檢視『日結時間』，記為 T（UTC+0）；只檢視、離開時不要儲存，也不要在測試當天（或任何時候為了本案）修改日結時間——修改後何時生效
+  spec 未定義（見 CLR-REDPACKET-006），本案不依賴它。若環境中所有機台場館的日結時間都是 00:00，本案無法區分『依場館日結時間切分』與『依 UTC+0 00:00 切分』，應回報，不要自行修改日結時間。本案須在 T
+  前約 20 分鐘開始、T 後約 10 分鐘結束，請環境負責人選擇 T 落在可接受等待範圍內的場館，或提供調整測試時鐘的辦法（兩者皆為環境佈置）
+- 場館內有兩台機台帳號 M1、M2，皆尚無本週期注單
+- 測試時間窗：T 前 10 分鐘至 T 後 10 分鐘（UTC+0）；建立活動須在 T 前約 20 分鐘完成
+test_data:
+- name: 日結時間 T
+  value: 場館既有值（非 00:00 UTC+0），由前置記錄
+- name: M1
+  value: T前：600+600
+- name: M2
+  value: T前600 / T後600
+steps:
+- n: 1
+  action: （T 前約 20 分鐘）建立活動『RP-CUT』（活動時間『永久』）：重置方式每日；預設規則門檻 1000／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: 【對照組，T 前同一營業日】T 前 10 分鐘內，M1 結算有效流水貢獻 600，再結算 600
+  expected: 第二筆後 M1 產生 1 個紅包（兩筆同一週期，累計 1,200）
+- n: 3
+  action: 【切分點前後】M2 在 T 前 10 分鐘內結算 600
+  expected: 無紅包
+- n: 4
+  action: 等待時間通過 T，M2 在 T 後 10 分鐘內再結算 600
+  expected: 仍無紅包（兩筆分屬兩個週期，累計各為 600）
+- n: 5
+  action: 檢視紅包明細 M2
+  expected: 沒有 M2 的紅包
+- n: 6
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 同一週期（T 之前）的兩筆 600 合計 1,200 使 M1 產生紅包；跨 T 的兩筆 600 因週期被切分而不累計，M2 沒有紅包。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 313 行）
+  quote: 線上站台 UTC+0 00:00；機台場館為場館「日結時間」，每週／每月週期亦以該時間點切分
+decision_refs:
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 313 行）
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+    location: §站台類型與機台專屬欄位（第 84 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 313 行）
+  quote: 線上站台 UTC+0 00:00；機台場館為場館「日結時間」，每週／每月週期亦以該時間點切分
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  location: §站台類型與機台專屬欄位（第 84 行）
+  quote: '| 日結時間 | 每日結算的截止時刻（UTC+0），用於場館日結報表分日 |'
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-030
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

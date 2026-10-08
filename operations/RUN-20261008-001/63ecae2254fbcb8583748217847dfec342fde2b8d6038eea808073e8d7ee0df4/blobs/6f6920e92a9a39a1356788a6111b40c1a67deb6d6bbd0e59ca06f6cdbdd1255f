@@ -1,0 +1,117 @@
+title: 升級後已產生數已達新規則上限：停止累計
+description: 升級後已產生數已達新規則上限：停止累計
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-006
+acceptance_criteria_ids:
+- AC-REDPACKET-0063
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義】需有可立即改變指定測試會員 VIP 等級序號的辦法（6.2 僅定義自動升降的評估週期；變動結果可於『各式報表 > 會員等級異動紀錄』核對），由環境負責人提供；下文『會員升級／降級』均指此辦法
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（會員 B，等級序號 b，未被等級規則勾選）及升級目標序號 s
+test_data:
+- name: 預設規則上限／等級規則上限
+  value: 10 / 8
+- name: 下注
+  value: 800 → 升級 → 100 → 500
+steps:
+- n: 1
+  action: 建立活動『RP-UPGCAP』（活動時間『永久』）：每日重置；預設規則開啟（門檻 100／上限 10／固定 5／稽核 1）；等級規則 1 勾選序號 s（門檻 100／上限 8／固定 7／稽核 1）；儲存
+  expected: 建立成功
+- n: 2
+  action: 會員 B 結算有效流水貢獻 800
+  expected: 紅包明細產生 8 個金額 5 的紅包（本週期已產生 8；8 小於預設規則上限 10，尚未達舊規則上限）
+- n: 3
+  action: 把會員 B 升級至序號 s
+  expected: 等級異動生效
+- n: 4
+  action: 會員 B 再結算 100，再結算 500
+  expected: 紅包明細仍只有 8 筆，沒有新增（已產生數 8 對照新規則上限 8，已達上限，停止累計；若系統誤對照舊規則上限 10 或只計升級後的產生數，會多出紅包）
+- n: 5
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 升級前已產生 8 個（尚未達舊規則上限 10）、新規則上限 8：升級後的注單結算不再產生任何紅包（紅包筆數維持 8）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證（第 315 行）
+  quote: 活動期間會員升降級時立即改用新等級的規則：本週期累計進度與已產生數保留；變動當下不觸發產生
+decision_refs:
+- requirement_id: REQ-REDPACKET-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §業務規則與驗證（第 315 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 315 行）
+  quote: 活動期間會員升降級時立即改用新等級的規則：本週期累計進度與已產生數保留；變動當下不觸發產生
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-019
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

@@ -1,0 +1,107 @@
+title: 機台場館操作員的紅包明細：僅自身場館且唯讀
+description: 機台場館操作員的紅包明細：僅自身場館且唯讀
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-024
+acceptance_criteria_ids:
+- AC-REDPACKET-0242
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 操作員所屬機台場館稱 V1，另有同一站長可見的其他機台場館 V2（自行從環境中選定）；準備 V1 的操作員後台帳號
+- 【依序佈置，V1 與 V2 各做一次】(1) 後台站台切換到該場館，確認該場館沒有進行中或排程中的紅包活動，有則先取消排程；(2) 以站長建立紅包活動（活動時間『永久』、重置方式每日、預設規則門檻 300／上限 5／固定 20／稽核 0）；(3)
+  該場館內一台機台帳號結算有效流水貢獻 300，使紅包明細至少有 1 筆紅包
+test_data: []
+steps:
+- n: 1
+  action: 以 V1 操作員登入，檢視站台切換下拉選單
+  expected: 【僅記錄，不判定】記錄可選的場館（預期只有自身場館 V1；此預期出自 SPEC-DAILYREPORT-001 的澄清 CLR-DAILYREPORT-001，不屬本需求的決策點依據，故不當作斷言）
+- n: 2
+  action: 嘗試經『優惠活動管理 > 活動排程 > 紅包活動 > 點擊活動名稱』進入紅包明細（若操作員無法進入活動排程列表，記錄實際行為並結束本案，此情形不判 fail，供 CLR-REDPACKET-017 參考）
+  expected: 可檢視 V1 活動的紅包明細
+- n: 3
+  action: 檢視頁面上的資料與可操作控制項
+  expected: 只有 V1 的紅包資料（沒有 V2 的）；沒有任何新增、修改、取消排程、追加預算控制項（唯讀）
+- n: 4
+  action: 清理：以站長分別取消 V1、V2 的紅包活動排程
+  expected: 已取消排程
+expected_result: 操作員在紅包明細只能看到自身場館的資料，且頁面唯讀。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §角色與權限（第 257 行）
+  quote: '| 紅包明細 | 管轄範圍 | 管轄範圍 | 自身場館（唯讀） |'
+decision_refs:
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §角色與權限（第 257 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §角色與權限（第 257 行）
+  quote: '| 紅包明細 | 管轄範圍 | 管轄範圍 | 自身場館（唯讀） |'
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-058
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

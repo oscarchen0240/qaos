@@ -1,0 +1,198 @@
+title: 紅包明細篩選、金額總計僅計已入帳、線上場次編號顯示『—』
+description: 紅包明細篩選、金額總計僅計已入帳、線上場次編號顯示『—』
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-022
+acceptance_criteria_ids:
+- AC-REDPACKET-0221
+- AC-REDPACKET-0222
+- AC-REDPACKET-0223
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長，或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）；財務角色能否檢視紅包明細、取消排程尚未定義（CLR-REDPACKET-015），所以除 023 系列案例外一律不用財務角色執行
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 此案須橫跨 UTC+0 00:00：在 UTC+0 23:40 之前完成步驟 1～5，等待日切後再進行步驟 6 起
+- 選定兩名不同的既有線上會員（會員 X、會員 Y），本週期都沒有注單計入累計
+test_data:
+- name: 活動設定
+  value: 門檻100／上限5／固定10／稽核1／每日重置／只有預設規則
+- name: 下注序列
+  value: 'X: 200；Y: 100；(日切)；Y: 100'
+steps:
+- n: 1
+  action: 建立活動『RP-DETAIL』（活動時間『永久』）：活動幣種 USDT；重置方式每日；只設預設規則（不新增等級規則）：門檻 100／上限 5／固定 10／稽核 1；儲存
+  expected: 建立成功
+- n: 2
+  action: 會員 X 結算有效流水貢獻 200
+  expected: 產生 2 個待開啟紅包 PX1、PX2
+- n: 3
+  action: 會員 X 於前台開啟 PX1
+  expected: PX1 已入帳（10 USDT）
+- n: 4
+  action: 會員 Y 結算有效流水貢獻 100
+  expected: 產生 1 個待開啟紅包 PY1
+- n: 5
+  action: 等待 UTC+0 時間通過 00:00（日切）
+  expected: —
+- n: 6
+  action: 進入該活動的紅包明細，檢視 PX1、PX2、PY1 的狀態
+  expected: PX1 仍為『已入帳』；PX2、PY1 為『已作廢』（週期重置）
+- n: 7
+  action: 會員 Y 再結算有效流水貢獻 100（日切後累計已歸零）
+  expected: 產生 1 個待開啟紅包 PY2
+- n: 8
+  action: 檢視紅包明細列表（不設篩選）的狀態分布與頂部發放統計
+  expected: 共 4 筆：已入帳 1（PX1）、待開啟 1（PY2）、已作廢 2（PX2、PY1）；頂部發放統計的各狀態筆數與之一致，已入帳金額合計 10
+- n: 9
+  action: 檢視篩選器
+  expected: 有會員編號、紅包狀態、產生時間；沒有『規則』篩選（只有預設規則的活動不顯示）
+- n: 10
+  action: 會員編號只輸入 X 的編號，搜尋；再改輸入『X 的編號,Y 的編號』（以半形逗號分隔），搜尋
+  expected: 只輸入 X：結果恰 2 筆（PX1、PX2）；輸入 X,Y：結果恰 4 筆（含 Y 的 PY1、PY2）
+- n: 11
+  action: 紅包狀態依序選『待開啟』『已入帳』『已作廢』各搜尋一次
+  expected: 待開啟 1 筆（PY2）；已入帳 1 筆（PX1）；已作廢 2 筆（PX2、PY1）
+- n: 12
+  action: 點『清除』
+  expected: 所有篩選條件重置為預設，列表恢復全部 4 筆
+- n: 13
+  action: 不設篩選，檢視列表底部紅包金額總計
+  expected: 總計＝10（只加總已入帳的 PX1；待開啟的 PY2 與已作廢的 PX2、PY1 各為 10，若被誤加總會是 20、30 或 40）
+- n: 14
+  action: 只篩選『待開啟』，再只篩選『已作廢』，各自檢視列表底部總計
+  expected: 兩次總計皆為 0（篩選結果中沒有已入帳）
+- n: 15
+  action: 檢視任一筆紅包列的『場次編號』欄
+  expected: 顯示『—』（線上帳號）
+- n: 16
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 只有預設規則的活動不顯示『規則』篩選；會員編號可多筆逗號查詢；狀態篩選與清除正常；列表底部金額總計只加總已入帳；線上帳號的場次編號顯示『—』。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §紅包明細（第 222 行）
+  quote: 全部 / 各規則名稱；僅有等級規則的活動顯示
+decision_refs:
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 222 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 230 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 244 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §紅包明細（第 237 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 222 行）
+  quote: 全部 / 各規則名稱；僅有等級規則的活動顯示
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 230 行）
+  quote: 列表底部顯示當前篩選結果的紅包金額總計（僅計已入帳）。
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 244 行）
+  quote: 週期重置 / 活動結束 / 機台洗分 / 機台出金；未作廢顯示「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 237 行）
+  quote: 紅包產生當下的場次（僅供現場爭議追溯）；線上帳號顯示「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 221 行）
+  quote: 支援同時查詢多筆，以「,」分隔
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-053
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

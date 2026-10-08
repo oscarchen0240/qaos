@@ -1,0 +1,127 @@
+title: 機台紅包：當局結束後彈出、關閉後保留於錢包彈窗可再開啟
+description: 機台紅包：當局結束後彈出、關閉後保留於錢包彈窗可再開啟
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-027
+acceptance_criteria_ids:
+- AC-REDPACKET-0271
+- AC-REDPACKET-0272
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 機台帳號 M1（自行從環境中選定），本週期無注單；先建立機台場館紅包活動『RP-POPUP』（活動時間『永久』）：重置方式每日、預設規則門檻 100／上限 5／固定 20／稽核 0，儲存
+test_data: []
+steps:
+- n: 1
+  action: 在 M1 前台遊戲畫面開始一局，使該局結算的有效流水貢獻累計跨過 100（本局進行中）
+  expected: 【僅記錄，不判定】記錄局進行中畫面上是否已出現紅包（spec 只規定『當局結束後』彈出，沒有寫局中不得彈出）
+- n: 2
+  action: 等該局結束
+  expected: 當局結束後機台畫面彈出紅包
+- n: 3
+  action: 不點開啟，直接關閉彈窗
+  expected: 彈窗關閉
+- n: 4
+  action: 開啟遊戲首頁錢包彈窗（結算鍵所在處）
+  expected: 該紅包保留在錢包彈窗內，可看到並可再次開啟
+- n: 5
+  action: 點擊該紅包開啟
+  expected: 顯示金額 20；分數即時增加 20
+- n: 6
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 累計達門檻時，紅包於當局結束後彈出；玩家關閉彈窗後紅包保留在遊戲首頁錢包彈窗，仍可開啟並即時加分。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §前台呈現說明（第 171 行）
+  quote: 累計達門檻時，於當局結束後在機台遊戲畫面彈出紅包；玩家點擊開啟 → 顯示金額 → 分數即時增加
+decision_refs:
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 171 行）
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §前台呈現說明（第 172 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 171 行）
+  quote: 累計達門檻時，於當局結束後在機台遊戲畫面彈出紅包；玩家點擊開啟 → 顯示金額 → 分數即時增加
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §前台呈現說明（第 172 行）
+  quote: 玩家未開啟即關閉彈窗時，紅包保留於遊戲首頁錢包彈窗內（與結算鍵同處）可再次開啟
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-064
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c

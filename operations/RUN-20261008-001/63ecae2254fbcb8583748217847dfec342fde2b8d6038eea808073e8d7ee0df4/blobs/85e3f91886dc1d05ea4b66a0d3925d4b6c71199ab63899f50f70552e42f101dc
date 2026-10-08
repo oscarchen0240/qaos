@@ -1,0 +1,128 @@
+title: 機台紅包屬於機台：跨玩家累計、紅包歸屬機台帳號
+description: 機台紅包屬於機台：跨玩家累計、紅包歸屬機台帳號
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-025
+acceptance_criteria_ids:
+- AC-REDPACKET-0251
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；【環境前提，非 spec 定義】該場館已啟用紅包；啟用方式與時點 spec 未定義（見 CLR-REDPACKET-020），由環境負責人佈置並告知，不以『選單是否出現優惠活動管理』來判定是否已啟用
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁；若有，逐一於該列點『取消排程』直到列表沒有）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若列表顯示活動尚未生效，等其進入進行中再開始下注（永久活動是否立即生效
+  spec 未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館內一台機台帳號 M1，本週期無注單計入累計；需兩位現場人員分飾玩家甲、乙（同一台機台，M1 帳號登入後不換帳號）
+test_data:
+- name: 下注
+  value: 甲 250；乙 100
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-SHARED』（活動時間『永久』）：每日重置；預設規則門檻 300／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家甲在 M1 玩，結算有效流水貢獻 250，之後離開座位（不洗分、不出金）
+  expected: 尚無紅包（250 < 300）
+- n: 3
+  action: 玩家乙坐上 M1（機台帳號不變），結算有效流水貢獻 100（兩人合計 350）
+  expected: 累計達門檻，當局結束後 M1 畫面彈出 1 個紅包
+- n: 4
+  action: 玩家乙點擊開啟
+  expected: 顯示金額 20，M1 的分數即時增加 20
+- n: 5
+  action: 到後台紅包明細檢視
+  expected: 共 1 筆，會員編號欄為 M1 的機台帳號（不是某位玩家）
+- n: 6
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』清理，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 甲、乙兩位玩家在同一台機台的流水合計達門檻，產生 1 個屬於機台帳號 M1 的紅包，由當下在台前的玩家乙開啟並取得。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §線上與機台的差異（第 31 行）
+  quote: 紅包在機台場館屬於機台、不屬於玩家
+decision_refs:
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §線上與機台的差異（第 31 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+    location: §線上與機台的差異（第 35 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §線上與機台的差異（第 31 行）
+  quote: 紅包在機台場館屬於機台、不屬於玩家
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §線上與機台的差異（第 35 行）
+  quote: '| 累計對象 | 會員帳號（＝一位玩家） | 機台帳號（多位玩家共用，跨玩家累計） |'
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+testcase_id: TC-REDPACKET-060
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+created_at: '2026-10-08T07:00:55Z'
+updated_at: '2026-10-08T07:00:55Z'
+history:
+- at: '2026-10-08T07:00:55Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4D4C27GH0W63BCGG74SMB5V
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4D4X5SXGFSFAG2W3CQDH280
+  run_id: RUN-20261008-001
+- at: '2026-10-08T07:00:55Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261008-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 7794533ada3f2f18cabfa9546e4d5f33408bd9a9946013536ada15efff946a9c
