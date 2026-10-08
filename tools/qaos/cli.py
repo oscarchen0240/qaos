@@ -71,7 +71,12 @@ def cmd_validate(a):
     if errs: print(f"INVALID ({rel})"); [print(" -", e) for e in errs]; sys.exit(1)
     print(f"VALID ({rel})")
 
-def cmd_id(a): print(ids.alloc_cmd(a.kind, a.area, **_nr(a)))
+def cmd_id(a):
+    new_id = ids.alloc_cmd(a.kind, a.area, **_nr(a))
+    if operation.LAST_OUTCOME.get("kind") == "completed":    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
+        op = operation.LAST_OUTCOME["op_id"]; operation.LAST_OUTCOME.clear()
+        sys.exit(f"qaos: 這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請加 --new-request")
+    print(new_id)
 
 def cmd_run_new(a):
     inputs = {}
@@ -79,6 +84,7 @@ def cmd_run_new(a):
         k, v = kv.split("=", 1)
         inputs[k] = json.loads(v) if v[:1] in "[{" else v
     run = engine.new_run(a.workflow, inputs, a.by, **_nr(a))
+    if operation.LAST_OUTCOME.get("kind") == "completed": run = engine.load_run(run["run_id"])   # 重送：顯示 run 目前的狀態，不是建立當時存下的結果
     print(f"{run['run_id']} {run['status']} current_task={run.get('current_task_id')}")
 
 def cmd_run_show(a): [print(l) for l in trace.trace(a.run_id)]
