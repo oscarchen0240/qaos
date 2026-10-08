@@ -1,7 +1,7 @@
 """移轉時「原本不存在」的檔案與 regression-generation run（需求 A 第 5 章 §11～§13、附錄 A 5-x；AC-09-24、66、67）。
 
 資料來源：
-- legacy 資料由需求 A 之前的程式（base 2e01d4b，tests/p3_legacy.py 以 git archive 匯出）以它自己的正式流程產生：
+- legacy 資料由需求 A 之前的程式碼（base 2e01d4b，tests/p3_legacy.py 以 git archive 匯出）以它自己的正式流程產生（舊程式碼 2e01d4b 在 root 上執行時，root 的定義層——schemas／agents／workflows／permissions——是新程式的版本，沿用 p3_legacy 的作法；2e01d4b 到目前的定義層差異對這些流程只有說明文字、version 字串與新增欄位，task graph、risk_review 與 applies_to_areas 都沒有變。cross_version 測試的舊 CIR 需要舊 schema，所以那裡改用舊定義層）：
   沿用 p3_legacy.OLD_FLOW（完成的 spec-to-testcase run、RUNNING 的 spec-to-testcase run、已回答／未回答的 CLR、4 個 ACTIVE TC），
   再接上本檔的 REG_EXTRA：在**舊程式**中以 `engine.new_run("regression-generation", ...)` 建立一個 RUNNING 的 regression-generation run（T1 待提交）。
 - 舊程式本身不會產生「沒有 audit.log 的 run」與「沒有 .md render 的 CLR」：AC-09-66、67 的 fixture 在 legacy root（S_pre、移轉之前）
@@ -166,7 +166,7 @@ def test_ac_09_24_legacy_regression_generation_run_unchanged():
     移轉前後行為不變。
 
     「行為不變」的比較範圍：同一份 legacy root 複製兩份——
-      A：不移轉，以舊程式（2e01d4b）的正式 API 推進；
+      A：不移轉，以舊程式碼（2e01d4b；root 的定義層同上，是新程式的版本）的正式 API 推進；
       B：以新程式 maintenance start → migrate --acknowledge-idle（兩個 RUNNING run）→ verify → maintenance end 後，以新程式的正式 API 推進；
     兩邊執行相同步驟：T1 regression curator 提交 RegressionProposal（full_regression、全部 ACTIVE TC）→ engine.submit → evaluate_gate（G-REG）
     → 取 run 的 waiting_on_approval_id → approve。比較每一步後的 run 狀態、current_task_id、各 task 狀態、submit 結果、G-REG 結果與 issues、
@@ -202,3 +202,9 @@ def test_ac_09_24_legacy_regression_generation_run_unchanged():
     assert len(b["active"]) >= 1 and len(b["suite"]["members"]) == len(b["active"]) and b["suite"]["added_by_this_apr"]
     assert all(s["rm_pin_keys"] == [] for s in (b["before"], b["after_submit"], b["after_gate"], b["after_approve"]))
     assert not P(root_b, sc_rel).exists()                                              # 推進後仍沒有 sidecar
+    # 明確例外（函式層）：上面的 run 的 input 沒有 spec_id，通用分支本來就不產生 sidecar；這裡以帶 spec_id／spec_version 的 run 呼叫
+    # migrate._run_sidecar，確認 regression-generation 的明確例外仍回傳 None（對照：同樣 input 的 spec-to-testcase 會產生 sidecar）
+    r = U.py(root_b, "import json\nfrom tools.qaos import migrate as M\n"
+             "inp = {'spec_id': 'SPEC-AUTH-001', 'spec_version': '1.0'}\n"
+             "print(json.dumps([M._run_sidecar({'run_id': 'RUN-X', 'workflow_id': w, 'input': inp}, 'x') is None for w in ('regression-generation', 'spec-to-testcase')]))")
+    assert json.loads(r.stdout.strip().splitlines()[-1]) == [True, False]

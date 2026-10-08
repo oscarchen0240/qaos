@@ -1,7 +1,7 @@
 """移轉後恢復舊 run 時的 RM 綁定（需求 A 第 5 章 §4.1 run sidecar、移轉章；AC-09-20、AC-09-27）。
 
-legacy 資料一律由需求 A 之前的程式（base 2e01d4b，tests/p3_legacy.old_checkout 匯出的唯讀副本）在暫存 root 上
-以它自己的正式流程（spec import、new_run、submit、evaluate_gate、approve、cancel、manual_new）產生，不手改業務檔。
+legacy 資料一律由需求 A 之前的程式碼（base 2e01d4b，tests/p3_legacy.old_checkout 匯出的唯讀副本）在暫存 root 上
+以它自己的正式流程（spec import、new_run、submit、evaluate_gate、approve、cancel、manual_new）產生，不手改業務檔（舊程式碼 2e01d4b 在 root 上執行時，root 的定義層——schemas／agents／workflows／permissions——是新程式的版本，沿用 p3_legacy 的作法；2e01d4b 到目前的定義層差異對這些流程只有說明文字、version 字串與新增欄位，task graph、risk_review 與 applies_to_areas 都沒有變。cross_version 測試的舊 CIR 需要舊 schema，所以那裡改用舊定義層）。
 之後全部以新程式的正式指令／API 操作：maintenance start → migrate（RUNNING 的 run 以 --acknowledge-idle 列入）
 → migrate verify → maintenance end → spec reference declare-empty ＋ 新 spec-to-testcase run 重新分析（產生內容不同的 R001，
 拿掉 REQ-AUTH-004）→ 恢復舊 run（approve reject／dispatch／submit／evaluate_gate）。

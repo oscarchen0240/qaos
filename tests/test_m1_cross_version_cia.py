@@ -98,10 +98,15 @@ OLD_DEFS = pathlib.Path(tempfile.gettempdir()) / f"qaos-base-{LG.BASE}-defs"
 
 def _old_defs() -> pathlib.Path:
     """2e01d4b 的定義層（git archive 匯出到系統暫存目錄，唯讀；與 p3_legacy.old_checkout 同樣以快取目錄重用）。"""
-    if not all((OLD_DEFS / d).is_dir() for d in DEFS):
-        OLD_DEFS.mkdir(parents=True, exist_ok=True)
+    if not (OLD_DEFS / ".complete").exists():                         # 先解壓到臨時目錄再改名，以完成標記判斷快取是否完整
+        tmp = pathlib.Path(tempfile.mkdtemp(prefix=f"{OLD_DEFS.name}-", dir=OLD_DEFS.parent))
         data = subprocess.run(["git", "-C", str(U.REPO), "archive", LG.BASE, *DEFS], capture_output=True, check=True).stdout
-        subprocess.run(["tar", "-x", "-C", str(OLD_DEFS)], input=data, check=True)
+        subprocess.run(["tar", "-x", "-C", str(tmp)], input=data, check=True)
+        (tmp / ".complete").write_text(LG.BASE)
+        try: tmp.rename(OLD_DEFS)
+        except OSError:
+            if not (OLD_DEFS / ".complete").exists(): shutil.rmtree(OLD_DEFS, ignore_errors=True); tmp.rename(OLD_DEFS)
+            else: shutil.rmtree(tmp, ignore_errors=True)
     return OLD_DEFS
 
 def legacy_two_versions():

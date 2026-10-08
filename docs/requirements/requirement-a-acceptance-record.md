@@ -423,7 +423,7 @@
 | AC-09-17、32 | `test_ac_09_17_32_cancel_run_with_several_pending_approvals`（第二張 PENDING 以故障注入建立）；快照預演：RUN-20261002-001 cancel、新 0.4→0.7 run 不綁 0.6 | 通過 |
 | AC-09-18、19 | P5 RA 流程（`test_p5_lifecycle.py`） | 通過 |
 | AC-09-24、66、67 | 快照預演：新 regression-generation run 不綁 revision（24） | 通過：`test_m1_migrate_absent.py` 的 AC-09-24、66、67（M1 補測） |
-| AC-09-28～31、AC-A-B1-7 | `test_ac_09_28_29_30_two_rounds_*`（含 legacy R000 混合、G2＋G5、G4 反例）；快照預演：DAILYREPORT 96 條分 0.1／0.2 各 48 → PASS、只判一組 → G2、G5 FAIL（函式層 g_impact） | 通過；AC-09-31 的跨版本情境：`test_m1_cross_version_cia.py`（M1 補測）。真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA：M1 當天資料不具備，有測試 spec 的機制證據（AC-09-15、本列） |
+| AC-09-28～31、AC-A-B1-7 | `test_ac_09_28_29_30_two_rounds_*`（含 legacy R000 混合、G2＋G5、G4 反例）；快照預演：DAILYREPORT 96 條分 0.1／0.2 各 48 → PASS、只判一組 → G2、G5 FAIL（函式層 g_impact） | 通過；AC-09-31 的跨版本情境：`test_m1_cross_version_cia.py`（M1 補測，小型 fixture 3＋2 張；96 條實數為 M1 函式層）。真實 PLATFORMRULE 0.2／DAILYREPORT 0.3 的正式 CIA：M1 當天資料不具備，有測試 spec 的機制證據（AC-09-15、本列） |
 | AC-09-45、47、48、50 | `test_p6_migrate_residual.py::test_ac_09_45_*`、`_47_*`、`_48_*`、`_50_*` | 通過 |
 | AC-09-58、79、81 | `test_ac_09_81_58_*`、`test_ac_09_79_*` | 通過 |
 | AC-09-73、74、76 | `test_ac_09_73_74_*`、`test_ac_09_73_t5_report_names_the_step`、`test_ac_09_74_3_*`、`test_ac_09_76_*` | 通過 |
@@ -431,7 +431,7 @@
 | AC-09-83、84、85 | `test_ac_09_83_*`、`test_ac_09_84_*`、`test_ac_09_85_*`（84 ⑥ 為函式層，屬防禦性） | 通過 |
 | migrate verify（§12） | `test_verify_after_migrate_each_category`、`test_verify_after_rollback_each_category`、`test_verify_after_partial_rollback_*` | 通過 |
 | AC-09-89 (b) | `test_ac_09_89_b_*` | 通過 |
-| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 通過（依附錄 A 5-16 的 baseline 比對，Oscar 2026-10-08 決定 D-M1-1；W1 對照工具 `tools/legacy_validate_snapshot.py`） |
+| AC-09-64 | M1（2026-10-08）R0～R6 演練 | 通過（依附錄 A 5-16 的 baseline 比對，Oscar 2026-10-08 決定 D-M1-1）。M1 當時以截短比對（退出碼、輸出首行、末 600 字元）判定；之後以 `tools/legacy_validate_snapshot.py`（保存全文、核對中繼資料、`--op X` 限定豁免）對 M1 的同一對複本重跑全文比對：PASS，豁免 4 個事件檔、不符 0。正式部署的 W1／R5 以此工具執行 |
 | AC-10A-14、47 | `test_p6_clr_residual.py::test_ac_10a_14_47_same_product_cross_area` | 通過 |
 | AC-10A-15 | `test_ac_10a_15_confirmed_second_target_stale_tc` | 通過 |
 | AC-10A-28 | `test_ac_10a_28_candidate_revised_after_scan` | 通過 |
@@ -513,7 +513,7 @@
 - AC-08-16／32 的 0.3 部分選 **(b) 接受缺口**，見下方「已接受的缺口」。
 - 補測之前的證據分類（真實資料、直接測試、推論）保留在交接區的 M1 文件中。
 
-下表的補測測試都以 legacy fixture 建構情境，也就是用需求 A 之前的程式（base `2e01d4b`），在暫存 root 跑它自己的正式流程。之後的步驟一律以新程式的正式 CLI／API 執行。每個測試都做過突變對照：在 `git archive` 的乾淨匯出目錄改動對應的程式，測試都會失敗。
+下表的補測測試都以 legacy fixture 建構情境，也就是用需求 A 之前的程式（base `2e01d4b`），在暫存 root 跑它自己的正式流程。之後的步驟一律以新程式的正式 CLI／API 執行。每個測試都做過突變對照：在 `git archive` 的乾淨匯出目錄改動對應的程式，測試都會失敗（AC-09-24 的「不產生 sidecar」另以函式層斷言守住 regression-generation 的明確例外，因為 legacy run 的 input 沒有 spec_id，通用分支本來就不產生 sidecar）。
 
 | AC | 補測的測試（tests/…） | 驗收內容 | 結果 |
 |---|---|---|---|
@@ -522,13 +522,13 @@
 | AC-09-24 | `test_m1_migrate_absent.py::test_ac_09_24_legacy_regression_generation_run_unchanged` | 舊程式建立一個停在 T1 的 regression-generation run。<br>移轉後：沒有 sidecar；`run.yaml` 列在 untouched，sha 不變。<br>**行為不變**：同一份 legacy 資料做兩份複本，一份用舊程式（不移轉）、一份用新程式（移轉並 maintenance end 後），以相同的正式 API 推進（提交 RegressionProposal → G-REG → approve）。逐步比較 run 與 task 的狀態、gate 結果與 issues、核准單類型與狀態、套件結果，全部相同（id、時間戳不比較） | 通過 |
 | AC-09-20 | `test_m1_resume_pins.py::test_ac_09_20_waiting_human_testcase_revision_resumes_on_sidecar_r000` | 舊程式把 testcase-revision run 推進到 T3 ACTIVATE_TESTCASE 等待核准（WAITING_HUMAN）。<br>移轉後，以重新分析做出拿掉 REQ-AUTH-004 的 R001，再以 reject 讓 Designer 重做。<br>結果：T1 派發包的 `rm_pins.target` 等於 sidecar 的 R000，不是 R001；引用 REQ-AUTH-004 的 Draft 通過 G-DESIGN。<br>對照：同一份 Draft 改用 R001 評估會 FAIL。run.yaml 沒有 pin | 通過 |
 | AC-09-27 | `test_m1_resume_pins.py::test_ac_09_27_old_manual_run_rr_and_validator_packets_share_sidecar_r000` | 舊程式以高風險 area（CASHFLOW）建立 manual-test-to-regression run，task graph 含 T2RR，停在 T2 READY。<br>移轉（acknowledge-idle）並做出 R001 之後，T2（Validator）與 T2RR（RR）的派發包 `rm_pins` 完全相同，target 都等於 sidecar 的 R000（revision 與 sha256 都相同），不是 R001 | 通過 |
-| AC-09-31（跨版本） | `test_m1_cross_version_cia.py` 的 6 個測試 | 舊程式產生兩個版本的 ACTIVE TC：v1.0 3 張；v1.1 2 張，由舊程式的 1.0→1.1 CIA 產生。這對應真實資料的 DAILYREPORT 0.1、0.2。<br>移轉後每張 TC 以 legacy sidecar 綁自己版本的 R000。新程式匯入 v1.2（測試用合成檔 `tests/fixtures/SPEC-AUTH-001-v1.2.md`），以正式流程跑 spec-change-impact 1.1→1.2。<br>結果：候選＝兩個版本全部的 ACTIVE TC；只判 1.1 那組 → G-IMPACT FAIL，訊息含 G2、G5，T1 回 READY；兩組恰好分割 → PASS；T1 派發包的 `pin_groups` 含兩組 | 通過 |
+| AC-09-31（跨版本） | `test_m1_cross_version_cia.py` 的 6 個測試 | 舊程式產生兩個版本的 ACTIVE TC：v1.0 3 張；v1.1 2 張，由舊程式的 1.0→1.1 CIA 產生。這對應真實資料的 DAILYREPORT 0.1、0.2。<br>移轉後每張 TC 以 legacy sidecar 綁自己版本的 R000。新程式匯入 v1.2（測試用合成檔 `tests/fixtures/SPEC-AUTH-001-v1.2.md`），以正式流程跑 spec-change-impact 1.1→1.2。<br>結果：候選＝兩個版本全部的 ACTIVE TC；只判 1.1 那組 → G-IMPACT FAIL，訊息含 G2、G5，T1 回 READY；兩組恰好分割 → PASS；T1 派發包的 `pin_groups` 含兩組。<br>以小型 fixture（3＋2 張）重現資料形狀；AC 原文的 96 條（48＋48）實數只在 M1 以真實資料做函式層檢查 | 通過 |
 
 ### 已接受的缺口（Oscar 2026-10-08 決定 (b)）
 
 | 項目 | 接受的缺口 | 現有證據與保證界限 | 之後的驗證 |
 |---|---|---|---|
 | AC-08-16 的 0.3 部分 | 沒有驗證「REQ-DAILYREPORT-012（v0.3）以 CLR-010 rev 0 作 resolution，且有一筆人建立的 applicability（scope `{SPEC-DAILYREPORT-001, REQ-DAILYREPORT-012, report.cash_net.semantics, ["*"], {}}`）→ PASS」的真實情境 | **有保證**：<br>• CLR-010 rev 0 的 legacy basis 正確：0.1、`target_decl_rev` 0、閉包空，basis_hash 可重算（M1 真實資料）。<br>• applicability 的機制本身：沒有 applicability 時 X16 FAIL；有相符的 applicability 時 PASS（`test_p2_sources.py::test_ac_08_17_and_38_legacy_clr_needs_applicability`，以合成的 legacy CLR 驗同版本、同需求）。<br>**沒有保證**：<br>• 跨需求（CLR 自身範圍是 REQ-011，目標是 REQ-012）與跨版本（basis 從 0.1 到 0.3＋閉包）的組合，在真實 DAILYREPORT 資料上成立。<br>• 人核對的是 0.3 那一次的 basis。 | DAILYREPORT 0.3 匯入時，以真實資料執行 AC-08-16 |
-| AC-08-32 的 0.3 部分 | 沒有驗證「REQ-012 在 0.3 的 basis 為 0.3＋閉包；人建立的 applicability 帶 0.3 本次的 basis_hash → E1，並記錄人核對的是 0.3 那一次的 basis」 | **有保證**：同上，加上 basis_hash 的計算與比對機制（P2 測試）。<br>**沒有保證**：0.3 的 basis_hash 與 E1 推導在真實資料上成立 | 同上 |
+| AC-08-32 的 0.3 部分 | 沒有驗證「REQ-012 在 0.3 的 basis 為 0.3＋閉包；人建立的 applicability 帶 0.3 本次的 basis_hash → E1，並記錄人核對的是 0.3 那一次的 basis」 | **有保證**：同上，加上 basis_hash 的計算與比對機制（`test_p2_sources.py::test_basis_hash_changes_with_declarations_only`、`test_ac_08_27_28_basis_changed_fails_and_29_applicability_fixes`、`test_ac_08_30_same_basis_and_covering_scope_passes`）。<br>**沒有保證**：0.3 的 basis_hash 與 E1 推導在真實資料上成立 | 同上 |
 
-兩項都標「M1：當天資料不具備（已接受缺口）」。它們**不算通過的對題測試**。
+兩項在各表都標為「已接受的缺口」。它們**不算通過的對題測試**。
