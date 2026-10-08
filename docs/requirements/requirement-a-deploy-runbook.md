@@ -64,6 +64,7 @@ env | grep '^QAOS_'                 # 預期：只有 QAOS_ROOT（或沒有輸�
 | 被忽略的檔案 | — | `.warroom/{events.jsonl,handoff.jsonl,recommendations/}`、`admin-ui/data/`、`locks/` |
 | GitLab 專案設定 | — | `merge_method: merge`（會產生 merge commit）、squash 預設關閉 |
 | MR 差異範圍 | 只有程式與定義層，**沒有任何業務資料檔** | 127 檔：tools、tests、schemas、docs、agents、workflows、`.claude`、`.github` |
+| M4 檢查腳本 | M4 檢查腳本的兩個錯誤假設已修正（deploy log 待辦第 7 項）：spec-to-bug 的 `legacy_binding`、移轉標記的 `planned_post_sha256` 為 null。未修正就執行 M4 會誤報 | 2026-10-08 使用的 `$DEP/scripts/m4_checks.py` 仍有這兩個假設 |
 
 ---
 
