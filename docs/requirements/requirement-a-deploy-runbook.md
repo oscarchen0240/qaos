@@ -465,10 +465,19 @@ git status --porcelain > $DEP/m5/status.txt
 
 ```sh
 cd $MAIN
-# 逐檔清單：修改的檔案 + git ls-files --others --exclude-standard（未追蹤目錄會展開成檔案），排除非業務檔
-{ git diff --name-only; git ls-files --others --exclude-standard; } | grep -vE '^(review-handoff/|\.codex/|AGENTS\.md)' | sort -u > $DEP/m5/paths.txt
+# 逐檔清單：修改的檔案 + 未追蹤檔（--others 會把未追蹤目錄展開成檔案），只放行 M5-1／M5-2 的業務目錄
+#   artifacts/      revisions、_bindings、_migration.yaml
+#   clarifications/ CLR 的 yaml 與 render 的 md
+#   operations/     計畫、清單、blobs、backup、index.d、status.d、progress.d
+#   runs/           audit.log、audit.legacy.log、_audit.d、audit.d
+#   testcases/      _bindings
+# core.quotePath=false：中文路徑不轉成八進位跳脫，pathspec 才對得上
+ALLOW='^(artifacts|clarifications|operations|runs|testcases)/'
+{ git -c core.quotePath=false diff --name-only; git -c core.quotePath=false ls-files --others --exclude-standard; } | sort -u > $DEP/m5/changed.txt
+grep -E "$ALLOW" $DEP/m5/changed.txt > $DEP/m5/paths.txt
+grep -vE "$ALLOW" $DEP/m5/changed.txt                      # 不納入的變更：預期只有已知的非業務檔（例如 review-handoff/），其他一律停下來回報
 git add --pathspec-from-file=$DEP/m5/paths.txt             # 逐檔路徑清單，不使用 -A 或 .
-git diff --cached --name-only | sort > $DEP/m5/staged.txt
+git -c core.quotePath=false diff --cached --name-only | sort > $DEP/m5/staged.txt
 diff $DEP/m5/paths.txt $DEP/m5/staged.txt                  # 預期：沒有差異
 git diff --cached --stat | tail -1                          # 檔數必須與 M5-1 的預期相符
 git commit -m "data: 需求 A 資料移轉（migrate <X 前 12 碼>，<RUN 的處理方式>）" -m "..." -m "Co-Authored-By: ..."
@@ -481,6 +490,7 @@ git status --porcelain                                     # 預期：只剩非�
 
 **停止條件**：
 - 有清單以外的檔案被 staged；
+- 業務目錄以外出現未知的變更；
 - push 被拒絕（non-fast-forward），**絕不 force**。
 
 M5 → **回報**，並附上部署後待辦（寫在 deploy log）。
