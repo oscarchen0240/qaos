@@ -320,7 +320,7 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
 def _created_at_issues(run, task, art) -> list[str]:
     """envelope 的 created_at 必須落在本 task 本輪實際可能產出的時間窗內：不早於本次 iteration 的派發包（不需要派發包的 task 以 run 建立時間為準），
     不晚於提交當下（executor 的時鐘）。agent 手填的過去或未來時間都拒絕。"""
-    try: at = operation.parse_ts(art["created_at"])
+    try: at = operation.parse_ts(art["created_at"]).replace(microsecond=0)     # executor 的時鐘只到秒：同一秒內帶小數秒的時間不算未來
     except ValueError as e: return [f"created_at 不是含時區的 RFC3339 時間：{e}"]
     out = []; now = store.now()
     if at > operation.parse_ts(now): out.append(f"created_at {art['created_at']} 晚於提交時間 {now}（不能是未來時間）")

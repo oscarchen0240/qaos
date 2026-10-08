@@ -20,7 +20,11 @@ def alloc(kind: str, area: str | None = None, width: int = 3) -> str:
     d = _load(); c = d["counters"]
     if kind in ("TC", "REQ", "AC", "BUG", "CLR"):
         if not area: raise ValueError(f"{kind} 需要 area")
-        key = f"{kind}-{area}"; c[key] = c.get(key, 0) + 1
+        key = f"{kind}-{area}"
+        if kind == "REQ":                                                    # 舊 area 的計數器可能落後於已持久化的需求：從已用的最大序號之後配發
+            from . import rm
+            c[key] = max(c.get(key, 0), rm.max_requirement_seq(area))
+        c[key] = c.get(key, 0) + 1
         out = f"{kind}-{area}-{c[key]:0{width}d}"
     elif kind in ("EXE", "RUN"):
         key = f"{kind}-{store.today()}"; c[key] = c.get(key, 0) + 1

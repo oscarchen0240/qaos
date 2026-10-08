@@ -61,10 +61,10 @@ def test_02_g_spec_rejects_req_ids_not_from_counter_then_passes_and_rebuilds_clr
 def test_03_req_id_rules_reuse_owner_and_format():
     ok = gates.requirement_id_issues(SPEC, AREA, [f"REQ-{AREA}-001"])                 # 同 spec 已持久化 → 可沿用
     other = gates.requirement_id_issues(OTHER, AREA, [f"REQ-{AREA}-001"])             # 同 area 其他 spec 的需求 → 不能用
-    fmt = gates.requirement_id_issues(OTHER, AREA, ["REQ-AUTH-001", f"REQ-{AREA}-ABC"])
+    fmt = gates.requirement_id_issues(OTHER, AREA, ["REQ-AUTH-001", f"REQ-{AREA}-ABC", f"REQ-{AREA}-000", f"REQ-{AREA}-0001", f"REQ-{AREA}-01"])
     beyond = gates.requirement_id_issues(OTHER, AREA, [f"REQ-{AREA}-{_counter() + 1:03d}"])
     assert ok == [] and len(other) == 1 and f"已是 {SPEC} 的需求" in other[0]
-    assert len(fmt) == 2 and all("格式" in m for m in fmt) and len(beyond) == 1 and "未經計數器配發" in beyond[0]
+    assert len(fmt) == 5 and all("格式" in m for m in fmt) and len(beyond) == 1 and "未經計數器配發" in beyond[0]
 
 def _draft(rid, tcs, iteration=0, created_at=None):
     refs_ = [{"entity_type": "Requirement", "id": r} for r in sorted({r for t in tcs for r in t["requirement_ids"]})]
@@ -78,6 +78,9 @@ def test_04_submit_rejects_future_and_backdated_created_at():
     _, pb = _draft(rid, tcs, created_at="2000-01-01T00:00:00Z")
     ok, problems = engine.submit(rid, "T2", str(pb)); assert not ok and any("早於T2 iteration 0 的派發時間" in x for x in problems), problems
     t2 = engine.load_run(rid)["tasks"][1]; assert t2["status"] == "READY" and not t2["output_artifact_ids"]
+    # executor 時鐘只到秒：同一秒內帶小數秒的合法時間不能被當成未來時間
+    _, pm = _draft(rid, tcs, created_at=store.real_now().replace("Z", ".999999Z"))
+    ok, problems = engine.submit(rid, "T2", str(pm)); assert ok, problems
 
 def _design(rid, tcs, iteration=0):
     did, pd = _draft(rid, tcs, iteration)
@@ -125,6 +128,19 @@ def test_06_missing_reference_routes_back_then_tampered_copy_fails_and_intact_co
     H.raw_save(entry["path"], leaked)                                                 # 竄改副本（外部寫入）
     assert engine.submit(rid, "T3", str(p))[0]
     r = engine.evaluate_gate(rid, "T3"); assert r["result"] == "FAIL" and any("審查用 Draft 副本" in i and "sha256" in i for i in r["issues"]), r["issues"]
-    store.abspath(entry["path"]).write_bytes(original)                                # 還原後同一份報告 PASS
+    store.abspath(entry["path"]).write_bytes(original)                                # 還原副本
+    src = store.find_artifact(did); src_bytes = store.read_bytes(src)
+    changed = store.load(src); changed["payload"]["testcases"][0]["expected_result"] = "派發之後改過的預期結果"
+    H.raw_save(src, changed)                                                          # 派發後改動原稿（外部寫入）：審的副本不是將要落地的內容
+    r = engine.evaluate_gate(rid, "T3", new_request=True); assert r["result"] == "FAIL" and any("在派發之後被改動" in i for i in r["issues"]), r["issues"]
+    store.abspath(src).write_bytes(src_bytes)                                         # 兩者都還原後同一份報告 PASS
     r = engine.evaluate_gate(rid, "T3", new_request=True); assert r["result"] == "PASS", r["issues"]   # 同一組 artifact 重評：新請求
     assert engine.load_run(rid)["status"] == "WAITING_HUMAN"
+
+def test_07_req_alloc_skips_persisted_ids_when_counter_lags():
+    """舊 area 的計數器可能落後於已持久化的需求（主資料的 TXLOG、CASHOUT 等沒有 REQ 計數器）：配發必須從已用的最大序號之後開始，不能撞到既有 ID。"""
+    from tools.qaos import ids
+    d = ids._load(); d["counters"][f"REQ-{AREA}"] = 0; H.raw_save(ids.COUNTERS, d)  # 模擬舊資料：計數器缺漏（外部寫入）
+    new = ids.alloc_cmd("REQ", AREA, new_request=True)
+    assert new == f"REQ-{AREA}-005" and _counter() == 5                              # 001～004 已是 SPEC-GATEINT-001 的需求
+    assert gates.requirement_id_issues(OTHER, AREA, [new]) == []

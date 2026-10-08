@@ -43,24 +43,15 @@ def g_spec(run, task, arts) -> list[str]:
         issues += decisions.check(r, ctx)[0]
     return issues
 
-def _persisted_requirement_owners(area) -> dict:
-    """同 area 各 spec 已持久化（任一版本、任一 revision）的 requirement_id → spec_id 集合。"""
-    out = {}
-    for sp in store.glob(f"specs/*/{area}/*/spec.yaml"):
-        sid = sp.parent.name
-        for ip in store.glob(f"artifacts/requirements/{sid}/v*/revisions/index.yaml"):
-            for e in store.load(ip).get("revisions") or []:
-                if not store.exists(e["path"]): continue
-                for r in store.load(e["path"]).get("requirements") or []: out.setdefault(r["requirement_id"], set()).add(sid)
-    return out
-
 def requirement_id_issues(spec_id, area, rids) -> list[str]:
     """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
-    格式為 REQ-<本 spec 的 area>-<序號>；同一 spec 先前已持久化的 ID 可沿用；其餘新 ID 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
+    格式為計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）；同一 spec 先前已持久化的 ID 可沿用；
+    其餘新 ID 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
     counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
-    owners = _persisted_requirement_owners(area); out = []
+    owners = rm.requirement_owners(area); out = []
     for rid in rids:
         m = re.fullmatch(rf"REQ-{re.escape(area)}-(\d+)", rid)
+        if m and (int(m.group(1)) < 1 or m.group(1) != f"{int(m.group(1)):03d}"): m = None
         if not m: out.append(f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
         mine = owners.get(rid, set())
         if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
@@ -339,6 +330,8 @@ def g_tval(run, task, arts) -> list[str]:
             else:
                 try: dispatch.load_review_draft(entry)
                 except dispatch.DispatchError as ex: issues.append(str(ex))
+                if store.sha256_file(draft) != entry["source_sha256"]:
+                    issues.append(f"{entry['artifact_id']} 在派發之後被改動（和派發時副本的來源 sha256 不符），審查的內容不是將要落地的 Draft")
         for did, bad in draft_out_of_scope(store.load(draft)["payload"], packet).items():
             if not any(i["issue_type"] == "missing_reference" and i["testcase_id"] in (did, "*") and i["severity"] in ("blocker", "major") for i in p["issues"]):
                 issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")
