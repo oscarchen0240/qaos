@@ -46,6 +46,22 @@ def signature() -> tuple:
     return (sig(APR_DIR, "APR-*.yaml"), sig(CLR_DIR, "*/*/CLR-*.yaml"), sig(BUG_DIR, "*/*/BUG-*.yaml"))
 
 
+def opt(flag: str, value) -> list[str]:
+    """一個帶值選項的 argv。值以 `-` 開頭時改用 `--flag=value`：argparse 會把獨立的 `-…` 當成另一個選項
+    （例如回答內容是「--verbose」會變成 `--answer: expected one argument`）；shlex.quote 只處理 shell，管不到這層。"""
+    v = "" if value is None else str(value)
+    return [f"{flag}={v}"] if v.startswith("-") else [flag, v]
+
+
+def _text(v) -> str:
+    """草稿 extra 的值當文字用（router 已限定為字串；這裡防舊草稿的非字串值讓組指令拋 TypeError）。"""
+    return "" if v is None else str(v)
+
+
+def cmdline(parts: list[str]) -> str:
+    return " ".join(shlex.quote(x) for x in parts)
+
+
 def operator() -> str:
     with db.connect() as con:
         r = db.one(con.execute("SELECT value FROM settings WHERE key='operator_email'"))
@@ -296,19 +312,19 @@ def approval_command(apr_id: str, draft: dict) -> dict:
     """組 bin/qaos approve 指令。decision=approve/reject/override；option=NEEDS_DECISION 等的 selected_option；per_item 退回。"""
     who = operator()
     decision = draft.get("decision") or "approve"
-    parts = ["bin/qaos", "approve", apr_id, "--decision", decision, "--by", who]
+    parts = ["bin/qaos", "approve", apr_id, *opt("--decision", decision), *opt("--by", who)]
     if draft.get("option"):
-        parts += ["--option", draft["option"]]
+        parts += opt("--option", draft["option"])
     per = draft.get("per_item") or {}
     rejected = [(t, v) for t, v in per.items() if isinstance(v, dict) and v.get("decision") == "reject"]
     for t, _ in rejected:
-        parts += ["--per-item", f"{t}:reject"]
+        parts += opt("--per-item", f"{t}:reject")
     reasons = [f"{t}：{v.get('reason')}" for t, v in rejected if v.get("reason")]
     rationale = (draft.get("rationale") or "").strip()
     if reasons:
         rationale = (rationale + "；" if rationale else "") + "退回：" + "；".join(reasons)
     if rationale:
-        parts += ["--rationale", rationale]
+        parts += opt("--rationale", rationale)
     warnings = []
     if decision == "override" and not rationale:
         warnings.append("override 需要 --rationale")
@@ -321,7 +337,12 @@ def approval_command(apr_id: str, draft: dict) -> dict:
     n_items = len(d.get("batch_items") or [])
     if decision == "approve" and n_items and len(rejected) >= n_items:
         warnings.append("這批全部標退回：整批退回請把整體決定改成「退回」，QAOS 才會把 Designer task 重開")
-    return {"command": " ".join(shlex.quote(x) for x in parts), "warnings": warnings, "rejected": [t for t, _ in rejected]}
+    if d.get("type") == "RESOLVE_AMBIGUITY" and d.get("requirement_model_revision") and decision in ("approve", "override"):
+        # 綁定需求模型 revision 的新格式核准單：CLI 要求每個 critical 決策點恰好一筆 resolutions 條目（--resolution JSON），
+        # 一般 rationale／option 不能替代。指揮台還沒有逐決策點的決議表單，與 CLR apply 相同：只給指令骨架，不讓平台執行。
+        warnings.append("這張 RESOLVE_AMBIGUITY 綁定需求模型 revision，核准時要對每個 critical 決策點附 --resolution（或 --resolutions-file）；"
+                        "指揮台不支援，請到 QA session／終端機依 approve --help 補齊後執行")
+    return {"command": cmdline(parts), "warnings": warnings, "rejected": [t for t, _ in rejected]}
 
 
 # ---------- clarifications ----------
@@ -374,25 +395,25 @@ def clarification_command(clr_id: str, draft: dict) -> dict:
     action = draft.get("decision") or "answer"
     warnings = []
     if action == "ask":
-        to = ex.get("asked_to") or ""
+        to = _text(ex.get("asked_to"))
         if not to:
             warnings.append("需要填「問誰」（--to）")
-        parts = ["bin/qaos", "clarification", "ask", clr_id, "--to", to, "--by", who, "--new-request"]
+        parts = ["bin/qaos", "clarification", "ask", clr_id, *opt("--to", to), *opt("--by", who), "--new-request"]
     elif action == "answer":
         ans = (draft.get("rationale") or "").strip()
-        res = ex.get("resolution") or "requirement_clarified"
-        by2 = ex.get("answered_by") or ex.get("asked_to") or "PM"
+        res = _text(ex.get("resolution")) or "requirement_clarified"
+        by2 = _text(ex.get("answered_by")) or _text(ex.get("asked_to")) or "PM"
         if not ans:
             warnings.append("需要填回答內容（--answer）")
-        parts = ["bin/qaos", "clarification", "answer", clr_id, "--answer", ans, "--answered-by", by2, "--resolution", res]
+        parts = ["bin/qaos", "clarification", "answer", clr_id, *opt("--answer", ans), *opt("--answered-by", by2), *opt("--resolution", res)]
         if ex.get("spec_version"):
-            parts += ["--spec-version", str(ex["spec_version"])]
-        parts += ["--by", who, "--new-request"]
+            parts += opt("--spec-version", ex["spec_version"])
+        parts += [*opt("--by", who), "--new-request"]
     elif action == "withdraw":
         reason = (draft.get("rationale") or "").strip()
         if not reason:
             warnings.append("需要填撤回原因（--reason）")
-        parts = ["bin/qaos", "clarification", "withdraw", clr_id, "--reason", reason, "--by", who, "--new-request"]
+        parts = ["bin/qaos", "clarification", "withdraw", clr_id, *opt("--reason", reason), *opt("--by", who), "--new-request"]
     elif action == "apply":
         # 需求 A 後 apply 要選落地路徑（--path a6|a6b|a7），並對重新掃描出的每一張候選 TC 下結論（--tc-conclusion），
         # 是 ADR-008 規定由 QA session 逐條判定的動作，不適合做成指揮台表單；這裡只給指令骨架，不讓平台執行。
@@ -402,10 +423,10 @@ def clarification_command(clr_id: str, draft: dict) -> dict:
         else:
             warnings.append("套用（apply）需要 --path {a6,a6b,a7}、--impact-reviewed，以及對每張候選 TC 的 --tc-conclusion；指揮台不支援，"
                             "請框選下方指令骨架，到 QA session／終端機依 clarification apply --help 補齊後執行")
-        parts = ["bin/qaos", "clarification", "apply", clr_id, "--path", "<a6|a6b|a7>", "--impact-reviewed", "<整體說明>", "--by", who, "--new-request"]
+        parts = ["bin/qaos", "clarification", "apply", clr_id, "--path", "<a6|a6b|a7>", "--impact-reviewed", "<整體說明>", *opt("--by", who), "--new-request"]
     else:
         return {"command": "", "warnings": [f"未知動作 {action}"]}
-    return {"command": " ".join(shlex.quote(x) for x in parts), "warnings": warnings}
+    return {"command": cmdline(parts), "warnings": warnings}
 
 
 # ---------- bugs ----------
@@ -449,32 +470,32 @@ def bug_command(bug_id: str, draft: dict) -> dict:
     warnings = []
     note = (draft.get("rationale") or "").strip()
     if action == "resolve":
-        ref = ex.get("external_ref") or ""
+        ref = _text(ex.get("external_ref"))
         if not ref:
             warnings.append("需要 RD 修復的外部參照（--external-ref，例如 ticket 或 PR）")
-        parts = ["bin/qaos", "bug", "resolve", bug_id, "--external-ref", ref, "--by", who]
-        if note: parts += ["--note", note]
-        if ex.get("fixed_by"): parts += ["--fixed-by", ex["fixed_by"]]
+        parts = ["bin/qaos", "bug", "resolve", bug_id, *opt("--external-ref", ref), *opt("--by", who)]
+        if note: parts += opt("--note", note)
+        if ex.get("fixed_by"): parts += opt("--fixed-by", ex["fixed_by"])
     elif action == "verify":
-        exe = ex.get("execution_id") or ""
+        exe = _text(ex.get("execution_id"))
         if not exe:
             warnings.append("需要複測的 Execution ID（--execution，含 Evidence）")
-        parts = ["bin/qaos", "bug", "verify", bug_id, "--execution", exe, "--by", who]
+        parts = ["bin/qaos", "bug", "verify", bug_id, *opt("--execution", exe), *opt("--by", who)]
     elif action == "close":
-        parts = ["bin/qaos", "bug", "close", bug_id, "--by", who]
-        if note: parts += ["--rationale", note]
+        parts = ["bin/qaos", "bug", "close", bug_id, *opt("--by", who)]
+        if note: parts += opt("--rationale", note)
     else:
-        to = ex.get("to") or ""
+        to = _text(ex.get("to"))
         if not to:
             warnings.append("需要目標狀態（--to）")
-        parts = ["bin/qaos", "bug", "transition", bug_id, "--to", to, "--by", who]
-        if ex.get("trigger"): parts += ["--trigger", ex["trigger"]]
-        if note: parts += ["--note", note]
+        parts = ["bin/qaos", "bug", "transition", bug_id, *opt("--to", to), *opt("--by", who)]
+        if ex.get("trigger"): parts += opt("--trigger", ex["trigger"])
+        if note: parts += opt("--note", note)
     # Bug 有重開迴圈（RESOLVED→OPEN→IN_PROGRESS…），同一個 bug 會合法地再次出現內容完全相同的請求；
     # 需求 A 後 CLI 會把它當成先前已完成而「印成功訊息卻不寫入」，所以人工決定的指令一律帶 --new-request
     # （狀態預檢與單飛鎖由 qaos_exec 負責，狀態機本身仍會拒絕不合法的轉換）。
     parts.append("--new-request")
-    return {"command": " ".join(shlex.quote(x) for x in parts), "warnings": warnings}
+    return {"command": cmdline(parts), "warnings": warnings}
 
 
 def counts() -> dict:

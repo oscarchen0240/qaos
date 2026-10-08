@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import re
-import shlex
 
 import yaml
 
@@ -21,6 +20,12 @@ from . import qaos_exec, testruns
 from . import tickets as tk
 
 VER_DIR = PROJECT_ROOT / "testcases" / "versions"
+MODES = ("bug", "execution")
+# QAOS 的流水號是 :03d（最小寬度），單日第 1000 筆起是四位數；尾端要有界線，不能截成前三位
+EVD_RE = re.compile(r"\bEVD-\d+\b")
+EXE_RE = re.compile(r"\bEXE-\d{8}-\d{3,}\b")
+RUN_RE = re.compile(r"\bRUN-\d{8}-\d{3,}\b")
+LOG_FIELD_MAX = 2000
 
 
 class BugFileError(Exception):
@@ -57,12 +62,45 @@ def _result(run_id: int, result_id: int) -> tuple[dict, dict]:
     return run, r
 
 
-def _cmd(parts: list[str]) -> str:
-    return " ".join(shlex.quote(x) for x in parts)
+_cmd = tk.cmdline
+_opt = tk.opt
+
+
+def _execution_argv(run: dict, r: dict, meta: dict, who: str) -> list[str]:
+    """execution import 的 argv（不含 --evidence）。預覽與實際執行共用；證據編號由呼叫端以 argv 元素追加，
+    不對含使用者文字的整條指令做字串替換。"""
+    parts = ["bin/qaos", "execution", "import", *_opt("--testcase-id", r["testcase_id"]), *_opt("--result", r["result"]), "--executor-type", "human",
+             *_opt("--environment", run.get("environment") or ""), *_opt("--by", who)]
+    if meta.get("version"): parts += _opt("--testcase-version", meta["version"])
+    if run.get("build"): parts += _opt("--build", run["build"])
+    if r.get("executed_at"): parts += _opt("--executed-at", r["executed_at"])
+    if (r.get("actual_result") or "").strip(): parts += _opt("--actual-result", r["actual_result"].strip())
+    if (r.get("notes") or "").strip(): parts += _opt("--notes", r["notes"].strip())
+    return parts
+
+
+def _same_import_elsewhere(run: dict, r: dict) -> dict | None:
+    """暫時擋法（R02，第 3 批 --request-key 上線後移除）：execution import 的請求內容沒有 admin 結果的身分，
+    另一筆沒有證據、匯入欄位完全相同的結果已匯入過時，CLI 會把這次當成同一請求的重送、回傳舊的 EXE。
+    只比對平台自己匯入過的結果；QA session 在終端機匯入的同參數紀錄擋不到。"""
+    if r.get("evidence"):
+        return None                      # 有證據時 --evidence 帶的是新登記的 EVD，請求內容必然不同
+    key = lambda x: (x["testcase_id"], x["testcase_version"], x["result"], x["environment"] or "", x["build"] or "", x["executed_at"],
+                     (x["actual_result"] or "").strip(), (x["notes"] or "").strip())
+    mine = key({**r, "environment": run.get("environment"), "build": run.get("build")})
+    with db.connect() as con:
+        rows = db.rows(con.execute(
+            """SELECT r.id, r.run_id, r.testcase_id, r.testcase_version, r.result, r.executed_at, r.actual_result, r.notes, r.evidence, r.qaos_execution_id,
+                      t.environment, t.build
+               FROM test_results r JOIN test_runs t ON t.id = r.run_id
+               WHERE r.testcase_id=? AND r.qaos_execution_id IS NOT NULL AND r.id<>?""", (r["testcase_id"], r["id"])))
+    return next((x for x in rows if not json.loads(x["evidence"] or "[]") and key(x) == mine), None)
 
 
 def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     """組出要跑的指令與預檢警告，不執行。mode=bug（Fail → 開 bug）或 execution（只匯 execution，給 Pass 用）。"""
+    if mode not in MODES:
+        raise BugFileError(400, f"mode 必須是 {'／'.join(MODES)}")
     run, r = _result(run_id, result_id)
     who = tk.operator()
     warnings: list[str] = []
@@ -92,17 +130,17 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
         path = DATA_DIR / e["stored"]
         if not path.exists():
             warnings.append(f"證據檔不存在：{e['filename']}")
-        steps.append({"kind": "evidence", "label": f"登記證據 {e['filename']}", "command": _cmd(["bin/qaos", "evidence", "add", "--type", e["type"], "--file", str(path), "--owner", owner, "--description", e.get("description") or e["filename"], "--captured-at", e["added_at"], "--by", who])})
-    ex_parts = ["bin/qaos", "execution", "import", "--testcase-id", r["testcase_id"], "--result", r["result"], "--executor-type", "human", "--environment", env, "--by", who]
-    if meta.get("version"): ex_parts += ["--testcase-version", str(meta["version"])]
-    if run.get("build"): ex_parts += ["--build", run["build"]]
-    if r.get("executed_at"): ex_parts += ["--executed-at", r["executed_at"]]
-    if (r.get("actual_result") or "").strip(): ex_parts += ["--actual-result", r["actual_result"].strip()]
-    if (r.get("notes") or "").strip(): ex_parts += ["--notes", r["notes"].strip()]
-    steps.append({"kind": "execution", "label": "匯入執行紀錄（--evidence 會在證據登記後帶入）", "command": _cmd(ex_parts) + (" --evidence <EVD…>" if r.get("evidence") else "")})
+        steps.append({"kind": "evidence", "label": f"登記證據 {e['filename']}", "command": _cmd(["bin/qaos", "evidence", "add", *_opt("--type", e["type"]), *_opt("--file", str(path)), *_opt("--owner", owner),
+                                                                                              *_opt("--description", e.get("description") or e["filename"]), *_opt("--captured-at", e["added_at"]), *_opt("--by", who)])})
+    if not r.get("qaos_execution_id"):
+        dup = _same_import_elsewhere(run, r)
+        if dup:
+            warnings.append(f"另一筆結果（回合 #{dup['run_id']}）已用完全相同的內容匯入為 {dup['qaos_execution_id']}；QAOS 會把這次當成同一筆重送、不會新增 execution。"
+                            "請補一段備註或實際結果，讓兩筆內容不同後再送")
+    steps.append({"kind": "execution", "label": "匯入執行紀錄（--evidence 會在證據登記後帶入）", "command": _cmd(_execution_argv(run, r, meta, who)) + (" --evidence <EVD…>" if r.get("evidence") else "")})
     if mode == "bug":
-        bug_parts = ["bin/qaos", "run", "new", "spec-to-bug", "--input", f"spec_id={meta.get('spec_id')}", "--input", f"spec_version={meta.get('spec_version')}",
-                     "--input", f"testcase_id={r['testcase_id']}", "--input", f"testcase_version={meta.get('version')}", "--by", who]
+        bug_parts = ["bin/qaos", "run", "new", "spec-to-bug", *_opt("--input", f"spec_id={meta.get('spec_id')}"), *_opt("--input", f"spec_version={meta.get('spec_version')}"),
+                     *_opt("--input", f"testcase_id={r['testcase_id']}"), *_opt("--input", f"testcase_version={meta.get('version')}"), *_opt("--by", who)]
         steps.append({"kind": "run", "label": "開 spec-to-bug run（execution_id／evidence_ids 由前兩步帶入）", "command": _cmd(bug_parts) + " --input execution_id=<EXE> --input 'evidence_ids=[…]'"})
     writes = ["evidence/testrun-%d/EVD-*.{ext,yaml}" % run_id, "executions/YYYY-MM/EXE-*.yaml", "testcases/registry/_counters.yaml", "runs/_audit.log"]
     if mode == "bug":
@@ -138,43 +176,46 @@ def _run_or_raise(cmd: str, what: str, log: list[dict]) -> str:
 
 
 def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
-    p = plan(run_id, result_id, mode)
-    if p["warnings"]:
-        raise BugFileError(409, "；".join(p["warnings"]))
-    run, r = _result(run_id, result_id)
-    who = p["operator"]; meta = p["meta"]
+    if mode not in MODES:
+        raise BugFileError(400, f"mode 必須是 {'／'.join(MODES)}")
     if not qaos_exec._lock.acquire(blocking=False):
         raise BugFileError(409, "另一條 bin/qaos 正在執行，稍後再試")
     log: list[dict] = []
     started = db.now()
     try:
+        # 預檢與讀結果都在鎖內（同 qaos_exec.execute）：鎖外讀到的舊快照會讓後到的請求看不到前一個請求剛存的編號，重複交接
+        p = plan(run_id, result_id, mode)
+        if p["warnings"]:
+            raise BugFileError(409, "；".join(p["warnings"]))
+        run, r = _result(run_id, result_id)
+        who = p["operator"]; meta = p["meta"]
         evd_ids: list[str] = list(r.get("qaos_evidence_ids") or [])
         if not evd_ids:
             for st in [s for s in p["steps"] if s["kind"] == "evidence"]:
                 out = _run_or_raise(st["command"], st["label"], log)
-                m = re.search(r"EVD-\d+", out)
+                m = EVD_RE.search(out)
                 if not m:
                     raise BugFileError(502, f"證據登記沒有回傳 EVD 編號：{out[-200:]}")
                 evd_ids.append(m.group(0))
             _save(result_id, qaos_evidence_ids=evd_ids)
         exe_id = r.get("qaos_execution_id")
         if not exe_id:
-            ex_cmd = next(s for s in p["steps"] if s["kind"] == "execution")["command"].replace(" --evidence <EVD…>", "")
+            ex_parts = _execution_argv(run, r, meta, who)
             for e in evd_ids:
-                ex_cmd += " --evidence " + shlex.quote(e)
-            out = _run_or_raise(ex_cmd, "匯入執行紀錄", log)
-            m = re.search(r"EXE-\d{8}-\d{3}", out)
+                ex_parts += _opt("--evidence", e)
+            out = _run_or_raise(_cmd(ex_parts), "匯入執行紀錄", log)
+            m = EXE_RE.search(out)
             if not m:
                 raise BugFileError(502, f"execution import 沒有回傳 EXE 編號：{out[-200:]}")
             exe_id = m.group(0)
             _save(result_id, qaos_execution_id=exe_id)
         bug_run = None; hint = f"已匯入 QAOS：{exe_id}"
         if mode == "bug":
-            bug_cmd = _cmd(["bin/qaos", "run", "new", "spec-to-bug", "--input", f"spec_id={meta['spec_id']}", "--input", f"spec_version={meta['spec_version']}",
-                            "--input", f"testcase_id={r['testcase_id']}", "--input", f"testcase_version={meta['version']}",
-                            "--input", f"execution_id={exe_id}", "--input", "evidence_ids=" + json.dumps(evd_ids), "--by", who])
+            bug_cmd = _cmd(["bin/qaos", "run", "new", "spec-to-bug", *_opt("--input", f"spec_id={meta['spec_id']}"), *_opt("--input", f"spec_version={meta['spec_version']}"),
+                            *_opt("--input", f"testcase_id={r['testcase_id']}"), *_opt("--input", f"testcase_version={meta['version']}"),
+                            *_opt("--input", f"execution_id={exe_id}"), *_opt("--input", "evidence_ids=" + json.dumps(evd_ids)), *_opt("--by", who)])
             out = _run_or_raise(bug_cmd, "開 spec-to-bug run", log)
-            m = re.search(r"RUN-\d{8}-\d{3}", out)
+            m = RUN_RE.search(out)
             if not m:
                 raise BugFileError(502, f"run new 沒有回傳 RUN 編號：{out[-200:]}")
             bug_run = m.group(0)
@@ -205,7 +246,7 @@ def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
         con.execute("""INSERT INTO ticket_executions (ticket_id, kind, action, command, exit_code, stdout, stderr, post_json, run_id, run_status_after, next_task, session_id, handoff_id, hint, started_at, ended_at)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (f"TESTRUN-{run_id}/{result_id}", "bug_filing" if mode == "bug" else "execution_import", mode, "\n".join(x["command"] for x in log), 0,
-                     "\n".join(x["stdout"] for x in log)[-4000:], "", json.dumps(log, ensure_ascii=False)[-8000:], bug_run, None, None, None, handoff_id, hint, started, ended))
+                     "\n".join(x["stdout"] for x in log)[-4000:], "", json.dumps(_compact_log(log), ensure_ascii=False), bug_run, None, None, None, handoff_id, hint, started, ended))
     if run.get("status") in ("done", "aborted"):
         testruns.sync_report(run_id)
     return {"ok": True, "evidence_ids": evd_ids, "execution_id": exe_id, "bug_run_id": bug_run, "hint": hint, "log": log}
@@ -225,6 +266,13 @@ def import_passes(run_id: int) -> dict:
         except BugFileError as e:
             errors.append(f"{r['testcase_id']}: {e}")
     return {"imported": n, "skipped": skipped, "errors": errors}
+
+
+def _compact_log(log: list[dict]) -> list[dict]:
+    """先截各欄位再序列化：對序列化後的 JSON 字串切片會切出無法解析的 post_json，執行歷史就讀不出來。"""
+    def cut(v):
+        return v if not isinstance(v, str) or len(v) <= LOG_FIELD_MAX else v[:LOG_FIELD_MAX // 2] + "\n…（已截斷）…\n" + v[-LOG_FIELD_MAX // 2:]
+    return [{k: cut(v) for k, v in x.items()} for x in log]
 
 
 def _save(result_id: int, **fields):

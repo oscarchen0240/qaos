@@ -267,6 +267,11 @@ def executions(ticket_id: str) -> list[dict]:
     with db.connect() as con:
         rows = db.rows(con.execute("SELECT * FROM ticket_executions WHERE ticket_id=? ORDER BY id DESC LIMIT 20", (ticket_id,)))
     for r in rows:
-        r["post"] = json.loads(r.pop("post_json") or "[]")
+        raw = r.pop("post_json") or "[]"
+        try:
+            r["post"] = json.loads(raw)
+        except ValueError:               # 舊版把序列化後的 JSON 直接切片存進來，可能已無法解析：照實標出，不讓整份歷史讀不出來
+            r["post"] = []
+            r["post_error"] = "這筆執行紀錄的步驟明細已損毀（舊版截斷），無法顯示"
         r["ok"] = r["exit_code"] == 0
     return rows

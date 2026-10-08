@@ -1,4 +1,6 @@
 """M7 測試執行 API。/api/testruns"""
+from typing import Literal
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -29,7 +31,7 @@ class RunPatch(BaseModel):
     environment: str | None = None
     build: str | None = None
     notes: str | None = None
-    status: str | None = None
+    status: str | None = None          # 不接受：回合狀態只能經由記結果（planned→running）與 finish 改變；保留欄位是為了回 400 而不是默默忽略
     import_all: bool | None = None
 
 
@@ -100,7 +102,15 @@ def set_result(run_id: int, result_id: int, body: ResultPatch):
 
 @router.post("/{run_id}/results/{result_id}/evidence", status_code=201)
 async def add_evidence(run_id: int, result_id: int, file: UploadFile = File(...), type: str = Form("screenshot"), description: str = Form("")):
-    data = await file.read()
+    # 分塊讀，超過上限就停：整份 await file.read() 會先把任意大小的上傳讀進記憶體，之後才檢查 25MB
+    chunks, size = [], 0
+    while chunk := await file.read(1024 * 1024):
+        size += len(chunk)
+        if size > svc.MAX_EVIDENCE_BYTES:
+            await file.close()
+            raise HTTPException(413, "檔案超過 25MB")
+        chunks.append(chunk)
+    data = b"".join(chunks)
     try:
         return svc.add_evidence(run_id, result_id, file.filename or "file", data, type, description, ticket_svc.operator())
     except svc.TestRunError as e:
@@ -136,7 +146,7 @@ def finish(run_id: int, body: FinishIn):
 
 # ---- M7b：NG 送 QAOS 開 bug ----
 @router.get("/{run_id}/results/{result_id}/bug-plan")
-def bug_plan(run_id: int, result_id: int, mode: str = "bug"):
+def bug_plan(run_id: int, result_id: int, mode: Literal["bug", "execution"] = "bug"):
     """預覽會跑的 bin/qaos 指令、預檢警告與寫入路徑；不執行。"""
     try:
         return qaos_bug.plan(run_id, result_id, mode)
@@ -145,7 +155,7 @@ def bug_plan(run_id: int, result_id: int, mode: str = "bug"):
 
 
 @router.post("/{run_id}/results/{result_id}/file-bug")
-def file_bug(run_id: int, result_id: int, mode: str = "bug"):
+def file_bug(run_id: int, result_id: int, mode: Literal["bug", "execution"] = "bug"):
     """執行：evidence add → execution import → run new spec-to-bug；成功後寫 handoff 交給 QA session。"""
     try:
         return qaos_bug.execute(run_id, result_id, mode)
