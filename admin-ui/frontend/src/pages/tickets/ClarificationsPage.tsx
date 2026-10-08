@@ -8,8 +8,11 @@ import { api, type ClarificationDetail, type ClarificationLite, type CommandOut,
 import { fmtDate } from "@/lib/format";
 import { CommandBox } from "./CommandBox";
 
-const ST_LABEL: Record<string, string> = { OPEN: "待處理", ASKED: "已問 PM", ANSWERED: "已回答", APPLIED: "已套用", WITHDRAWN: "已撤回" };
-const ST_CLASS: Record<string, string> = { OPEN: "warn", ASKED: "accent", ANSWERED: "ok", APPLIED: "", WITHDRAWN: "" };
+const ST_LABEL: Record<string, string> = { OPEN: "待處理", ASKED: "已問 PM", ANSWERED: "已回答", INCORPORATED: "已納入（待套用）", APPLIED: "已套用", WITHDRAWN: "已撤回" };
+const ST_CLASS: Record<string, string> = { OPEN: "warn", ASKED: "accent", ANSWERED: "ok", INCORPORATED: "ok", APPLIED: "", WITHDRAWN: "" };
+// 還需要人處理的狀態；終止狀態只有 APPLIED、WITHDRAWN。INCORPORATED 是答案已被提交的 revision／BugDraft 引用，仍待人工套用或撤回。
+const ACTIVE = ["OPEN", "ASKED", "ANSWERED", "INCORPORATED"];
+const PENDING_APPLY = ["ANSWERED", "INCORPORATED"];
 const RES_LABEL: Record<string, string> = { spec_updated: "Spec 已更新", requirement_clarified: "需求已釐清", no_change: "不需更動", out_of_scope: "超出範圍" };
 const ACTION_LABEL: Record<string, string> = { ask: "送問 PM", answer: "登記回答", apply: "套用", withdraw: "撤回" };
 const ACTION_FOR: Record<string, string> = { ASKED: "ask", ANSWERED: "answer", APPLIED: "apply", WITHDRAWN: "withdraw" };
@@ -22,8 +25,8 @@ export function ClarificationsPage() {
   const load = useCallback(() => api.get<ClarificationLite[]>("/api/tickets/clarifications").then(setList).catch((e) => toast(`載入失敗：${e.message}`, "danger")), [toast]);
   useEffect(() => { load(); const id = setInterval(load, 10000); return () => clearInterval(id); }, [load]);
   const opens = list.filter((c) => ["OPEN", "ASKED"].includes(c.status));
-  const answered = list.filter((c) => c.status === "ANSWERED");
-  const done = list.filter((c) => !["OPEN", "ASKED", "ANSWERED"].includes(c.status));
+  const answered = list.filter((c) => PENDING_APPLY.includes(c.status));
+  const done = list.filter((c) => !ACTIVE.includes(c.status));
   const shown = tab === "open" ? opens : tab === "answered" ? answered : done;
   return (
     <>
@@ -62,7 +65,7 @@ function ClrDrawer({ id, onClose, onChanged }: { id: string | null; onClose: () 
   const { toast } = useToast();
   useEffect(() => {
     if (!id) { setD(null); setDraft(null); setCmd(null); latest.current = null; return; }
-    api.get<ClarificationDetail>(`/api/tickets/clarifications/${id}`).then((x) => { setD(x); setDraft(x.draft); latest.current = x.draft; if (["OPEN", "ASKED", "ANSWERED"].includes(x.status)) put({}, x); })
+    api.get<ClarificationDetail>(`/api/tickets/clarifications/${id}`).then((x) => { setD(x); setDraft(x.draft); latest.current = x.draft; if (ACTIVE.includes(x.status)) put({}, x); })
       .catch((e) => toast(`載入失敗：${e.message}`, "danger"));
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   const put = async (patch: Partial<Pick<TicketDraft, "decision" | "rationale" | "extra">>, base?: ClarificationDetail) => {
@@ -78,7 +81,7 @@ function ClrDrawer({ id, onClose, onChanged }: { id: string | null; onClose: () 
     latest.current = { ...(latest.current ?? ({} as TicketDraft)), extra };
     put({ extra });
   };
-  const active = !!d && ["OPEN", "ASKED", "ANSWERED"].includes(d.status);
+  const active = !!d && ACTIVE.includes(d.status);
   const actions = (d?.allowed ?? []).map((to) => ACTION_FOR[to]).filter(Boolean);
   const action = draft?.decision ?? actions[0] ?? null;
   return (
@@ -126,7 +129,8 @@ function ClrDrawer({ id, onClose, onChanged }: { id: string | null; onClose: () 
                   <div className="field"><label>PM 的回答（逐字，會進 --answer）</label><textarea className="textarea" defaultValue={draft?.rationale ?? ""} onBlur={(e) => { if (e.target.value !== (draft?.rationale ?? "")) put({ rationale: e.target.value }); }} /></div>
                 </>
               )}
-              {(action === "apply" || action === "withdraw") && <div className="field"><label>備註（選填）</label><input className="input" defaultValue={draft?.rationale ?? ""} onBlur={(e) => put({ rationale: e.target.value })} /></div>}
+              {action === "withdraw" && <div className="field"><label>撤回原因（必填，會進 --reason）</label><input className="input" defaultValue={draft?.rationale ?? ""} onBlur={(e) => put({ rationale: e.target.value })} /></div>}
+              {action === "apply" && <div className="faint" style={{ fontSize: 12.5 }}>套用要選落地路徑（a6／a6b／a7），並對重新掃描出的每張候選 TC 下結論，由 QA session 逐條判定，指揮台不執行；下方只提供指令骨架。</div>}
             </div>
           )}
 
