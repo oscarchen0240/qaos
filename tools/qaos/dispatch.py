@@ -40,6 +40,12 @@ def load_packet(entry: dict) -> dict:
     if store.sha256_file(entry["path"]) != entry["sha256"]: raise DispatchError(f"派發包 {entry['path']} 的 sha256 和 task 的紀錄不符（派發包不可變）")
     return store.load(entry["path"])
 
+def load_review_draft(entry: dict) -> dict:
+    """派發包 review_drafts 的一筆：讀剝除後的 Draft 副本，位元組 sha256 必須和派發包紀錄相符。"""
+    if not store.exists(entry["path"]): raise DispatchError(f"審查用 Draft 副本 {entry['path']} 不存在")
+    if store.sha256_file(entry["path"]) != entry["sha256"]: raise DispatchError(f"審查用 Draft 副本 {entry['path']} 的 sha256 和派發包紀錄不符")
+    return store.load(entry["path"])
+
 def current_packet(run: dict, task: dict) -> dict | None:
     e = current_entry(task)
     return load_packet(e) if e else None
@@ -123,7 +129,26 @@ def _extra(item: dict) -> dict:
     if not store.exists(rel) or store.abspath(rel).is_dir(): raise DispatchError(f"額外來源 {ref} 不存在或不是檔案")
     return {"kind": "path", "ref": rel, "sha256": store.sha256_file(rel), "reason": reason}
 
-def build(run: dict, task: dict, extras: list[dict]) -> dict:
+REVIEW_AGENTS = ("agent-test-validator", "agent-tc-risk-reviewer")
+STRIPPED_FIELDS = ("design_rationale",)
+
+def review_draft_path(run_id: str, task_id: str, iteration: int, artifact_id: str) -> str:
+    return f"runs/{run_id}/dispatch/{task_id}-iter{iteration}-{artifact_id}.yaml"
+
+def _review_drafts(run: dict, task: dict) -> tuple[list[dict], dict]:
+    """審查者（Validator、TC Risk Reviewer）的 Draft 副本：前面各 task 本輪最後一份 VALID 的 TestCaseDraft，剝除每條 TC 的 design_rationale
+    （Designer 的推理說明；agents/test-validator.yaml forbidden_actions，避免同源偏誤）。回傳 (派發包紀錄, {路徑: 位元組})。"""
+    if task.get("agent_id") not in REVIEW_AGENTS: return [], {}
+    from . import gates
+    draft = gates._run_output(run, task, "TestCaseDraft")
+    if draft is None: return [], {}
+    src = store.find_artifact(draft["artifact_id"])
+    copy = {**draft, "payload": {**draft["payload"], "testcases": [{k: v for k, v in tc.items() if k not in STRIPPED_FIELDS} for tc in draft["payload"]["testcases"]]}}
+    data = store.dump(copy); path = review_draft_path(run["run_id"], task["task_id"], task["iteration"], draft["artifact_id"])
+    entry = {"artifact_id": draft["artifact_id"], "path": path, "sha256": store.sha256_bytes(data), "source_sha256": store.sha256_file(src), "stripped_fields": list(STRIPPED_FIELDS)}
+    return [entry], {path: data}
+
+def build(run: dict, task: dict, extras: list[dict], review: list[dict] | None = None) -> dict:
     tgt = target_of(run)
     pins = {}
     for end in ("target", "from"):
@@ -145,6 +170,7 @@ def build(run: dict, task: dict, extras: list[dict]) -> dict:
     if run["workflow_id"] == "spec-change-impact": doc["rm_pins"]["pin_groups"] = _pin_groups(run["input"]["spec_id"])
     bound = [p for p in (pins["target"], pins["from"]) if p] + doc["rm_pins"]["pin_groups"]
     doc["decision_sources"] = _decision_sources(bound)
+    if task.get("agent_id") in REVIEW_AGENTS: doc["review_drafts"] = review if review is not None else _review_drafts(run, task)[0]
     return doc
 
 # ---------------------------------------------------------------- 寫入指令
@@ -166,9 +192,11 @@ def dispatch(run_id: str, task_id: str, extras=(), by: str = "system") -> dict:
     if task["status"] not in ("READY", "RUNNING"): raise DispatchError(f"{task_id} 狀態 {task['status']}，不能派發")
     if current_entry(task) or store.exists(packet_path(run_id, task_id, task["iteration"])):
         raise DispatchError(f"{task_id} iteration {task['iteration']} 已經派發過；同一 iteration 只能派發一次，要改輸入必須進入新的 iteration")
-    doc = build(run, task, list(extras))
+    review, copies = _review_drafts(run, task)
+    doc = build(run, task, list(extras), review=review)
     errs = schema.errors(doc, "workflow/dispatch-packet.schema.json")
     if errs: raise DispatchError("派發包不符 schema：" + "; ".join(errs[:3]))
+    for cp, cdata in copies.items(): store.write_bytes(cp, cdata)               # 剝除推理說明的 Draft 副本（派發包記錄其 sha256）
     data = store.dump(doc); path = packet_path(run_id, task_id, task["iteration"])
     store.write_bytes(path, data)
     entry = {"iteration": task["iteration"], "path": path, "sha256": store.sha256_bytes(data), "at": doc["created_at"]}

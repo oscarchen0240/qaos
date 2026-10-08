@@ -68,6 +68,22 @@ def revision_meta(pin: dict) -> dict:
     if "target_decl_rev" not in d or "reference_pins" not in d: raise RMError(f"{pin['spec_id']}@{pin['spec_version']} {pin['revision']} 缺少 target_decl_rev 或 reference_pins")
     return {"target_decl_rev": d["target_decl_rev"], "reference_pins": d["reference_pins"]}
 
+def requirement_owners(area) -> dict:
+    """同 area 各 spec 已持久化（任一版本、任一 revision）的 requirement_id → spec_id 集合。"""
+    out = {}
+    for sp in store.glob(f"specs/*/{area}/*/spec.yaml"):
+        sid = sp.parent.name
+        for ip in store.glob(f"artifacts/requirements/{sid}/v*/revisions/index.yaml"):
+            for e in store.load(ip).get("revisions") or []:
+                if not store.exists(e["path"]): continue
+                for r in store.load(e["path"]).get("requirements") or []: out.setdefault(r["requirement_id"], set()).add(sid)
+    return out
+
+def max_requirement_seq(area) -> int:
+    """同 area 已持久化的 REQ-<AREA>-<序號> 的最大序號（沒有 → 0）。"""
+    pat = re.compile(rf"REQ-{re.escape(area)}-([0-9]+)")
+    return max((int(m.group(1)) for rid in requirement_owners(area) if (m := pat.fullmatch(rid))), default=0)
+
 # ---------------------------------------------------------------- 寫入（唯一的需求寫入點）
 def save_requirements(sid, ver, requirements: list, *, reason: str, by: str, run_id=None, source_artifact_id=None, extra: dict | None = None) -> dict:
     """產生新的不可變 revision、更新索引與檢視；回傳新 revision 的 RMPin。"""

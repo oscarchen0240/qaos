@@ -25,6 +25,7 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 - 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
 - **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
 - 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
+- G-SPEC 會檢查 `requirement_id`：同一 spec 前版已有的需求沿用原 ID；新需求只能用主 session 以計數器配發後提供的 ID（見下方「寫入與提交」）。自行編號的 ID（超過計數器、不是 `REQ-<AREA>-<序號>` 格式，或已屬於同 area 其他 spec）會被擋下。
 
 ## 決策點（需求 A 第 1 章 §2.5、§3）
 
@@ -45,5 +46,5 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
   - **新增 AC 取歷史最大序號 + 1**：取該 REQ 在所有 revision、所有 spec_version 用過的最大 AC 序號 + 1。
   - MEMBER、BONUSCCY、ARCADE 既有的 3 位數 AC（如 `AC-MEMBER-025`）照樣沿用、不遷移；這三區新增的 AC 改用推導格式。
   - 一條 REQ 的 AC 達 10 個以上時，代表需求可能太大，考慮拆分需求。
-- envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間；由 Runtime 決定的狀態（如 `VALID`）不要自填。
+- envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間（含時區）；由 Runtime 決定的狀態（如 `VALID`）不要自填。`created_at` 不得手填過去或未來的時間：早於本次 iteration 的派發時間（不需要派發包的 task 為 run 的建立時間）或晚於提交時間，submit 會拒絕。
 - 主 session 送出或關卡失敗時，會把錯誤訊息交回給你；修正時用新的 artifact_id 產生新檔，不要刪除或覆寫已寫出的檔案。"""

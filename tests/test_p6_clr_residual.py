@@ -110,29 +110,29 @@ from tools.qaos import spec_ops
 OA, VER = "SPEC-OA-001", "1.0"
 def oa_pin(): return spec_ops.verify_pin(OA, VER)
 def oa_run(cid, k):
-    '''對 SPEC-OA-001（product demo、area OTH）做 spec-to-testcase：REQ-OA-001/Q01 以 CLR 最新 rev 為依據（defined_by_decision，經 applicability 通過 X16）→ 設計 → 驗證 → ACTIVATE。'''
+    '''對 SPEC-OA-001（product demo、area OTH）做 spec-to-testcase：REQ-OTH-001/Q01 以 CLR 最新 rev 為依據（defined_by_decision，經 applicability 通過 X16）→ 設計 → 驗證 → ACTIVATE。'''
     src = F.cref(cid, "任何站台都不能刪除")
     dp = F.dp("Q01", "defined_by_decision", "none", subject="site.child.delete", role=["admin"], known=[src],
               coverage={"references_status": "undeclared", "consulted": [oa_pin()], "unconsulted_normative": [], "missing_sources": [], "waivers": []})
-    req = {"requirement_id": "REQ-OA-001", "version": 1, "spec_id": OA, "spec_version": VER, "type": "functional", "title": "營運區站台刪除", "statement": "營運區站台刪除規則",
+    req = {"requirement_id": "REQ-OTH-001", "version": 1, "spec_id": OA, "spec_version": VER, "type": "functional", "title": "營運區站台刪除", "statement": "營運區站台刪除規則",
            "acceptance_criteria": [{"ac_id": "AC-OA-001", "given": "已登入", "when": "刪除子站台", "then": "依規則"}],
            "spec_reference": {"spec_id": OA, "spec_version": VER, "location": "§刪除", "quote": "營運區的站台刪除規則依總規格辦理。"}, "ambiguity": None, "risk": "medium",
            "status": "DRAFT", "history": [], "decision_points": [dp]}
     rid = engine.new_run("spec-to-testcase", {"spec_id": OA, "spec_version": VER}, F.BY, new_request=True)["run_id"]
     refs_ = [{"entity_type": "SpecVersion", "id": OA, "version": VER}]; s_ = {"type": "SpecVersion", "ids": [f"{OA}@{VER}"]}
     sa = {"spec_id": OA, "spec_version": VER, "content_hash": oa_pin()["content_hash"], "summary": "s", "scope": {"in_scope": ["x"], "out_of_scope": []},
-          "requirement_ids": ["REQ-OA-001"], "ambiguities": [], "constraints": [], "edge_case_candidates": [], "open_questions": []}
+          "requirement_ids": ["REQ-OTH-001"], "ambiguities": [], "constraints": [], "edge_case_candidates": [], "open_questions": []}
     _, p1 = H.write_artifact(rid, "T1", "agent-spec-analyst", "SpecAnalysis", sa, refs_, s_, "spec-analysis")
     rmid, p2 = H.write_artifact(rid, "T1", "agent-spec-analyst", "RequirementModel", {"spec_id": OA, "spec_version": VER, "requirements": [req],
-                                "traceability": [{"requirement_id": "REQ-OA-001", "spec_reference": req["spec_reference"]}]}, refs_, s_, "requirements")
+                                "traceability": [{"requirement_id": "REQ-OTH-001", "spec_reference": req["spec_reference"]}]}, refs_, s_, "requirements")
     assert engine.submit(rid, "T1", str(p1))[0] and engine.submit(rid, "T1", str(p2))[0]
     g = engine.evaluate_gate(rid, "T1"); assert g["result"] == "PASS", g
-    tc = F.tc(1, "REQ-OA-001", f"營運區刪除子站台被拒（第 {k} 輪）", techs=["negative"], types=["negative"],
-              drefs=[{"requirement_id": "REQ-OA-001", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])
+    tc = F.tc(1, "REQ-OTH-001", f"營運區刪除子站台被拒（第 {k} 輪）", techs=["negative"], types=["negative"],
+              drefs=[{"requirement_id": "REQ-OTH-001", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])
     tc.update({"functional_area": "OTH", "spec_id": OA, "acceptance_criteria_ids": ["AC-OA-001"], "expected_result_spec_reference": {"spec_id": OA, "spec_version": VER, "location": "§刪除"},
                "draft_id": f"TC-DRAFT-01ARZ3NDEKTSV4RRFFQ69GOA0{k}"})
     did, pd = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": OA, "spec_version": VER, "testcases": [tc]},
-                               [{"entity_type": "Requirement", "id": "REQ-OA-001"}], {"type": "RequirementModel", "ids": []}, "test-design")
+                               [{"entity_type": "Requirement", "id": "REQ-OTH-001"}], {"type": "RequirementModel", "ids": []}, "test-design")
     _, pr = H.write_artifact(rid, "T2", "agent-test-designer", "TestDesignReport", H.design_report(did, [tc]), [{"entity_type": "Artifact", "id": did}], {"type": "TestCaseDraft", "ids": [did]}, "test-design")
     assert engine.submit(rid, "T2", str(pd))[0] and engine.submit(rid, "T2", str(pr))[0]
     g2 = engine.evaluate_gate(rid, "T2"); assert g2["result"] == "PASS", g2
@@ -154,10 +154,10 @@ def test_ac_10a_14_47_same_product_cross_area(tmp_path):
     out = py(root, HDR + OA_FLOW + """
 ra = P.full_ra(); cid = ra["cid"]                                                         # SA（demo/DEMO）以 rev 0 落地
 bh = sources.basis_hash(sources.basis(OA, VER))
-clr.applicability_add(cid, 0, "REQ-OA-001", "site.child.delete", ["admin"], {}, f"{OA}@{VER}", "同一條刪除規則也適用營運區", "oscar", confirm_basis=bh, new_request=True)
+clr.applicability_add(cid, 0, "REQ-OTH-001", "site.child.delete", ["admin"], {}, f"{OA}@{VER}", "同一條刪除規則也適用營運區", "oscar", confirm_basis=bh, new_request=True)
 rb = oa_run(cid, 1); old_oa = oa_tcs()                                                     # OTH 的 TC 依 rev 0
 clr.answer(cid, "任何站台都不能刪除；表格已更正。", "pm", "requirement_clarified", "oscar", new_request=True)      # A5 → rev 1
-clr.applicability_add(cid, 1, "REQ-OA-001", "site.child.delete", ["admin"], {}, f"{OA}@{VER}", "rev 1 同樣適用營運區", "oscar", confirm_basis=bh, new_request=True)
+clr.applicability_add(cid, 1, "REQ-OTH-001", "site.child.delete", ["admin"], {}, f"{OA}@{VER}", "rev 1 同樣適用營運區", "oscar", confirm_basis=bh, new_request=True)
 rid2 = F.new_run(); g = F.analyze(rid2, [P.conflict_req(1, {"source": F.cref(cid, "任何站台都不能刪除"), "decided_at": "2026-10-07", "adopted_side_index": 1})])
 assert g["result"] == "PASS", g
 P.ra_p3_design(rid2, cid, g)
@@ -165,18 +165,18 @@ rb2 = oa_run(cid, 2); new_oa = [t for t in oa_tcs() if t not in old_oa]
 targets = sorted(L.target_id(t) for t in L.resolve_targets(clr.load(cid)))
 scan = L.impact(cid, ["刪除"], [], "oscar", new_request=True)
 cands = [x["tc_id"] for x in scan["candidates"]]
-T_OA = "SPEC-OA-001@1.0:REQ-OA-001#Q01"; base = dict(landed_in=[rid2, rb2], targets=["SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", T_OA], keywords=["刪除"])
+T_OA = "SPEC-OA-001@1.0:REQ-OTH-001#Q01"; base = dict(landed_in=[rid2, rb2], targets=["SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", T_OA], keywords=["刪除"])
 h0 = P.clr_sha(cid)
 miss = P.apply_(cid, **base, tc_conclusions=[f"{t}=updated" for t in cands if t not in old_oa])
 h1 = P.clr_sha(cid)
 ok = P.apply_(cid, **base, tc_conclusions=[f"{t}=updated" for t in cands])
 print(json.dumps({"old_oa": old_oa, "new_oa": new_oa, "targets": targets, "scan": scan, "miss": miss, "h": [h0, h1], "ok": ok, "c": clr.load(cid)}, default=str))""")
-    assert out["targets"] == ["SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", "SPEC-OA-001@1.0:REQ-OA-001#Q01"]
+    assert out["targets"] == ["SPEC-DEMO-001@1.0:REQ-DEMO-001#Q01", "SPEC-OA-001@1.0:REQ-OTH-001#Q01"]
     s = out["scan"]; units = [{"product": "demo", "area": "DEMO"}, {"product": "demo", "area": "OTH"}]
     assert s["scan_units"] == units                                                               # AC-10A-14：掃描範圍包含同 product 的另一個 area
     reasons = {x["tc_id"]: x["reasons"] for x in s["candidates"]}
-    assert out["old_oa"] and all("stale_decision_ref:REQ-OA-001#Q01" in reasons[t] for t in out["old_oa"])   # 那裡依賴舊答案的 TC 被列出
-    assert out["new_oa"] and all("stale_decision_ref:REQ-OA-001#Q01" not in reasons[t] for t in out["new_oa"])
+    assert out["old_oa"] and all("stale_decision_ref:REQ-OTH-001#Q01" in reasons[t] for t in out["old_oa"])   # 那裡依賴舊答案的 TC 被列出
+    assert out["new_oa"] and all("stale_decision_ref:REQ-OTH-001#Q01" not in reasons[t] for t in out["new_oa"])
     assert "缺少 --tc-conclusion" in out["miss"]["error"] and out["old_oa"][0] in out["miss"]["error"] and out["h"][0] == out["h"][1]
     c = out["c"]; l = c["landings"][-1]                                                           # AC-10A-47：apply 正例，兩個 area 都掃描
     assert c["status"] == "APPLIED" and l["scan_units"] == units

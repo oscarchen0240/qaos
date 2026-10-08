@@ -30,18 +30,31 @@ def consulted_all(run_id, task_id, sha):
     pins = [pk["target"]] + [n for n in pk["closure"] if n["required"]]
     return [{"spec_id": p["spec_id"], "spec_version": p["spec_version"], "content_hash": p["content_hash"], "read_scope": "full"} for p in pins]
 
-def write_artifact(run_id, task_id, agent, artifact_type, payload, references, source, subdir, iteration=0, requires_approval=None, packet="auto"):
-    """packet：'auto' 自動派發並填入本次 iteration 的派發包 sha；None 不填；字串則直接填入（反例用）。"""
+def write_artifact(run_id, task_id, agent, artifact_type, payload, references, source, subdir, iteration=0, requires_approval=None, packet="auto", alloc_req=True, created_at=None):
+    """packet：'auto' 自動派發並填入本次 iteration 的派發包 sha；None 不填；字串則直接填入（反例用）。
+    alloc_req=False：不替 RequirementModel 配發 REQ ID（模擬 agent 自行編號的反例）；created_at：指定 envelope 時間（反例用）。"""
     aid = ids.artifact_id(artifact_type)
+    sha = packet_sha(run_id, task_id) if packet == "auto" else packet       # 先派發再產出：created_at 不得早於派發包
+    if artifact_type == "RequirementModel" and alloc_req: alloc_req_ids(payload)
     art = {"artifact_id": aid, "artifact_type": artifact_type, "schema_version": "1.0", "version": 1, "run_id": run_id, "task_id": task_id,
-           "iteration": iteration, "created_by": agent, "created_at": store.now(), "status": "DRAFT",
+           "iteration": iteration, "created_by": agent, "created_at": created_at or store.now(), "status": "DRAFT",
            "source": source, "references": references, "requires_approval": requires_approval, "payload": payload}
-    sha = packet_sha(run_id, task_id) if packet == "auto" else packet
     if sha: art["dispatch_packet_sha256"] = sha
     if artifact_type == "SpecAnalysis" and "consulted_sources" not in payload and sha:
         payload["consulted_sources"] = consulted_all(run_id, task_id, sha)
     p = store.ROOT / "artifacts" / subdir / run_id / f"{aid}.yaml"
     raw_save(p, art); return aid, p
+
+def alloc_req_ids(payload):
+    """模擬主 session 以 bin/qaos id REQ --area <AREA> 配發、再交給 Spec Analyst 的 REQ ID（agent 不自行配號）：
+    經正式 executor 把計數器推進到測試 payload 用到的最大序號（G-SPEC 會核對）。這是測試 fixture，不是 agent 行為或派發訊息交付的端到端測試。"""
+    import re
+    want = {}
+    for r in payload.get("requirements") or []:
+        m = re.fullmatch(r"REQ-([A-Z0-9]+)-(\d+)", str(r.get("requirement_id")))
+        if m: want[m.group(1)] = max(want.get(m.group(1), 0), int(m.group(2)))
+    for area, n in want.items():
+        while ids._load()["counters"].get(f"REQ-{area}", 0) < n: ids.alloc_cmd("REQ", area, new_request=True)
 
 def spec_ref(loc, quote=""): return {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "location": loc, "quote": quote}
 

@@ -11,8 +11,10 @@ responsibilities:
   - 產出 Edge Case 候選（標記為 edge_case_candidate，不是正式需求）
   - 每個 Requirement 附 spec_reference（章節 / 行號 / 原文引用）
   - 若 spec 已有前版 RequirementModel，保留既有 requirement_id（同語意需求不換 ID）
+  - 新需求的 requirement_id 只用主 session 以 bin/qaos id 配發後提供的 ID；G-SPEC 會擋超過計數器、格式不符（REQ-<AREA>-<序號>）或屬於同 area 其他 spec 的 ID
   - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
   - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
+  - envelope 的 created_at 填實際產生的時間（含時區），不得手填過去或未來的時間；早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕
   - SpecAnalysis 申報 consulted_sources（實際查閱的 SpecPin＋read_scope＝full 或 sections）；派發包中必讀（depth=1 normative）的參考沒有查閱時，必須列在相關決策點的 coverage.unconsulted_normative 並附理由（unavailable／out_of_scope）
   - 需求底下以 decision_points 記錄每個待決或已決事項：question_id（Q<NN>，同需求內穩定、重新分析保留原 ID）、topic、subject、role_scope（必須明示，與角色無關寫 ["*"]）、params、level（原始等級）、basis（defined_in_target／defined_in_reference／defined_by_decision／undefined／conflict）、known_rules（SourceRef＋逐字 quote）、conflict_sides／conflict_note、resolution、coverage、decision_needed、detail_gaps
   - 已裁決的事項以 resolution.source 指向已回答的 CLR 最新 answer_rev 或 RESOLVE_AMBIGUITY 的決議條目；豁免記在 coverage.waivers（指向核准條目、逐項列出）；不得填 basis_hash、derived（runtime 推導，帶了會被拒絕）

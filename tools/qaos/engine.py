@@ -270,6 +270,7 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     if art["run_id"] != run_id or art["task_id"] != task_id: problems.append("artifact 的 run_id/task_id 與提交目標不符")
     if p.stem != art["artifact_id"]: problems.append(f"檔名 {p.name} 必須等於 artifact_id")
     if art["status"] not in ("DRAFT", "SUBMITTED"): problems.append(f"artifact 狀態 {art['status']} 不可提交")
+    problems += _created_at_issues(run, task, art)
     # 派發包（第 1 章 §2.2、附錄 A 1-6）：產出必須指向 task 本次 iteration 的派發包
     if dispatch.needs_packet(task):
         e = dispatch.current_entry(task)
@@ -315,6 +316,18 @@ def submit(run_id: str, task_id: str, artifact_path: str) -> tuple[bool, list[st
     task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "PASS", "details": [f"{art['artifact_type']} {art['artifact_id']} VALID"]})
     _save_run(run); store.audit(run_id, task["agent_id"], "SUBMIT_ARTIFACT", f"{art['artifact_type']} {art['artifact_id']} VALID")
     return True, []
+
+def _created_at_issues(run, task, art) -> list[str]:
+    """envelope 的 created_at 必須落在本 task 本輪實際可能產出的時間窗內：不早於本次 iteration 的派發包（不需要派發包的 task 以 run 建立時間為準），
+    不晚於提交當下（executor 的時鐘）。agent 手填的過去或未來時間都拒絕。"""
+    try: at = operation.parse_ts(art["created_at"]).replace(microsecond=0)     # executor 的時鐘只到秒：同一秒內帶小數秒的時間不算未來
+    except ValueError as e: return [f"created_at 不是含時區的 RFC3339 時間：{e}"]
+    out = []; now = store.now()
+    if at > operation.parse_ts(now): out.append(f"created_at {art['created_at']} 晚於提交時間 {now}（不能是未來時間）")
+    e = dispatch.current_entry(task) if dispatch.needs_packet(task) else None
+    floor, what = (e["at"], f"{task['task_id']} iteration {task['iteration']} 的派發時間") if e else (run["created_at"], f"run {run['run_id']} 的建立時間")
+    if at < operation.parse_ts(floor): out.append(f"created_at {art['created_at']} 早於{what} {floor}（不能是自填的過去時間）")
+    return out
 
 def _mark_invalid(run, task, art, p, problems):
     # 驗證失敗不改 artifact 檔（最終規格第 4 章 §13）：INVALID 只記在 task 的 gate_results（含 artifact_id）。
@@ -406,6 +419,7 @@ def _apply_effects(run, task, wf, wt, arts, sem):
             _open_clarifications(run, apr, legacy)
         _route_decisions(run, new_reqs, apr, rm_art["created_by"])
         clr_lifecycle.incorporate_revision(run, run["requirement_model_revision"])      # A4／A4'：revision 以明確 SourceRef 採用最新答案（第 6 章 §3.2）
+        _refresh_clr_index()
         if apr is not None: _save_run(run); return
     elif gate == "G-DESIGN":
         tcs = arts["TestCaseDraft"]["payload"]["testcases"]; n_exp = sum(1 for tc in tcs if gates.is_exploratory(tc))
@@ -478,6 +492,11 @@ def _route_back(run, task, wf, report):
     gen.setdefault("history", None); gen.pop("history", None)
     run["current_task_id"] = gen["task_id"]; _save_run(run)
     store.audit(run["run_id"], SYSTEM, "ROUTE_BACK", f"{task['task_id']} → {gen['task_id']} iteration {gen['iteration']}")
+
+def _refresh_clr_index():
+    """本操作新開或改動了 CLR（G-SPEC 自動開單、納入答案）→ 在同一個操作中重建 clarifications/index.md，總表不落後於 CLR 檔。"""
+    cap = store.capturing()
+    if cap is not None and any(store.match(r, "clarifications/*/*/CLR-*.yaml") for r in cap.files): clr.build_index()
 
 def _open_rejection_clarifications(run, rm):
     """rejection_contract.defined == false 的 REQ：開一張不阻塞的 Clarification 問 PM「不符合時系統該怎麼做」。"""

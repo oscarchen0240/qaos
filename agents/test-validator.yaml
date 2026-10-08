@@ -15,7 +15,9 @@ responsibilities:
   - 產出 TestValidationReport：result、issues[]（8 必填欄位）、advisories[]、coverage_summary
   - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
   - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
-  - 檢查 Draft 用到的 SourceRef（source_refs、decision_refs 的 basis_ref）都在派發包範圍內；不在範圍內 → issue_type=missing_reference（severity major 以上，result FAIL）；G-TVAL 會核對沒有漏報
+  - envelope 的 created_at 填實際產生的時間（含時區），不得手填過去或未來的時間；早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕
+  - 只讀派發包 review_drafts 指定的 Draft 副本（runtime 已剝除 design_rationale），不讀原始 TestCaseDraft 檔；報告的 testcase_draft_artifact_id 填該筆 artifact_id，G-TVAL 會核對副本 sha256
+  - 檢查 Draft 用到的來源（source_refs、decision_refs 的 basis_ref、expected_result_spec_reference 的 spec 版本）都在派發包範圍內；不在範圍內 → issue_type=missing_reference（severity major 以上，result FAIL）；G-TVAL 會核對沒有漏報
 input_schema: schemas/artifact/test-validator-input.schema.json
 output_schema: schemas/artifact/test-validation-report.schema.json
 allowed_actions:

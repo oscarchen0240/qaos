@@ -1,6 +1,6 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
-import hashlib, json
-from . import store, refs, rm, dispatch, decisions, sources, spec_ops
+import hashlib, json, re
+from . import store, refs, rm, dispatch, decisions, sources, spec_ops, ids as ids_mod
 
 def _payload(art): return art["payload"]
 
@@ -29,6 +29,7 @@ def g_spec(run, task, arts) -> list[str]:
     if sa:
         for rid in _payload(sa).get("requirement_ids", []):
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
+    issues += requirement_id_issues(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
     if issues: return issues
     ctx, more = spec_context(run, task, arts)
     if ctx is None: return issues + more
@@ -41,6 +42,22 @@ def g_spec(run, task, arts) -> list[str]:
             issues += [f"X10：{r['requirement_id']} source_refs[{i}]：{e}" for e in errs]
         issues += decisions.check(r, ctx)[0]
     return issues
+
+def requirement_id_issues(spec_id, area, rids) -> list[str]:
+    """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
+    同一 spec 先前已持久化的 ID 可沿用（不論格式，舊資料可能不同）；其餘新 ID 必須是計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）， 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
+    counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
+    owners = rm.requirement_owners(area); out = []
+    for rid in rids:
+        mine = owners.get(rid, set())
+        if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
+        if spec_id in mine: continue                                         # 沿用同一 spec 已持久化的 ID（舊資料的 ID 格式可能不同，不再檢查）
+        m = re.fullmatch(rf"REQ-{re.escape(area)}-(\d+)", rid)
+        if m and (int(m.group(1)) < 1 or m.group(1) != f"{int(m.group(1)):03d}"): m = None
+        if not m: out.append(f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
+        if int(m.group(1)) > counter:
+            out.append(f"{rid} 未經計數器配發（REQ-{area} 計數器目前為 {counter}）；REQ ID 必須以 bin/qaos id REQ --area {area} 配發，不得自行編號")
+    return out
 
 def spec_context(run, task, arts):
     """G-SPEC 的派發包檢查（第 1 章 §2.7 第 1～3 點）；回傳 (decisions.Ctx 或 None, issues)。"""
@@ -250,12 +267,22 @@ def source_ref_issues(tc, target, packet=None) -> list[str]:
         out += [f"{tag}：{e}" for e in errs]
     return out
 
+def _spec_version_in_scope(packet, spec_id, spec_version) -> bool:
+    """spec 版本是否為派發包的目標、閉包或登記的額外 spec（不比 hash：用於沒有 content_hash 的舊式引用）。"""
+    pins = ([packet["target"]] if packet.get("target") else []) + list(packet.get("closure") or [])
+    pins += [x["pin"] for x in packet.get("extra_inputs") or [] if x["kind"] == "spec_pin"]
+    return any((p["spec_id"], str(p["spec_version"])) == (spec_id, str(spec_version)) for p in pins)
+
 def draft_out_of_scope(draft_payload, packet) -> dict:
-    """Draft 用到、但不在派發包範圍內的 SourceRef（第 1 章 §2.6）：{draft_id: [身分]}。"""
+    """Draft 用到、但不在派發包範圍內的來源（第 1 章 §2.6）：{draft_id: [身分]}。
+    expected_result_spec_reference 沒有 content_hash，以 spec_id＋spec_version 核對是否為派發包內的 spec 版本（spec 版本內容不可變，hash 由派發包釘選）。"""
     out = {}
     for tc in draft_payload["testcases"]:
         refs_ = list(tc.get("source_refs") or []) + [r["basis_ref"] for r in tc.get("decision_refs") or [] if r.get("basis_ref")]
         bad = [dispatch.basis_ref(r) for r in refs_ if not dispatch.in_scope(packet, r)]
+        er = tc.get("expected_result_spec_reference")
+        if er and not _spec_version_in_scope(packet, er.get("spec_id"), er.get("spec_version")):
+            bad.append({"type": "expected_result_spec_reference", "spec_id": er.get("spec_id"), "spec_version": str(er.get("spec_version")), "location": er.get("location")})
         if bad: out[tc["draft_id"]] = bad
     return out
 
@@ -277,6 +304,20 @@ def reviewed_draft_issues(run, task, art_type, draft_id) -> list[str]:
     if a["status"] != "VALID": return [f"報告審查的 {draft_id} 狀態是 {a['status']}，不是本輪有效的 Draft"]
     return []
 
+def review_draft_issues(packet, draft_id) -> list[str]:
+    """派發包提供剝除推理說明的 Draft 副本時（review_drafts；舊派發包沒有此欄位，不核對）：審查的必須是其中一筆，
+    副本 sha256 與派發包紀錄相符，原始 Draft 也和派發時記錄的 source_sha256 相符（G-TVAL、G-RISK 共用）。"""
+    if packet is None or "review_drafts" not in packet: return []
+    entry = next((r for r in packet["review_drafts"] if r["artifact_id"] == draft_id), None)
+    if entry is None: return [f"審查的 {draft_id} 不是派發包提供的 Draft（{', '.join(r['artifact_id'] for r in packet['review_drafts']) or '無'}）"]
+    out = []
+    try: dispatch.load_review_draft(entry)
+    except dispatch.DispatchError as ex: out.append(str(ex))
+    src = store.find_artifact(draft_id)
+    if src is None or store.sha256_file(src) != entry["source_sha256"]:
+        out.append(f"{draft_id} 在派發之後被改動或不存在（和派發時副本的來源 sha256 不符），審查的內容不是將要落地的 Draft")
+    return out
+
 def g_tval(run, task, arts) -> list[str]:
     rep = arts.get("TestValidationReport")
     if not rep: return ["缺 TestValidationReport"]
@@ -296,6 +337,7 @@ def g_tval(run, task, arts) -> list[str]:
     if e is not None:
         try: packet = dispatch.load_packet(e)
         except dispatch.DispatchError as ex: return issues + [str(ex)]
+        issues += review_draft_issues(packet, p["testcase_draft_artifact_id"])
         for did, bad in draft_out_of_scope(store.load(draft)["payload"], packet).items():
             if not any(i["issue_type"] == "missing_reference" and i["testcase_id"] in (did, "*") and i["severity"] in ("blocker", "major") for i in p["issues"]):
                 issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")
@@ -504,6 +546,7 @@ def g_risk(run, task, arts) -> list[str]:
     if not tvr: return ["找不到本 run Validator 的 VALID TestValidationReport"]
     if rv["validation_report_artifact_id"] != tvr["artifact_id"]: issues.append(f"reviewed.validation_report_artifact_id 應為 {tvr['artifact_id']}")
     if rv["testcase_draft_artifact_id"] != tvr["payload"]["testcase_draft_artifact_id"]: issues.append(f"reviewed.testcase_draft_artifact_id 應為 {tvr['payload']['testcase_draft_artifact_id']}（Validator 審過的那份）")
+    issues += review_draft_issues(rr_packet, rv["testcase_draft_artifact_id"])
     dp = store.find_artifact(tvr["payload"]["testcase_draft_artifact_id"])
     draft = store.load(dp)["payload"] if dp else {"testcases": []}
     did_set = {tc["draft_id"] for tc in draft["testcases"]}
