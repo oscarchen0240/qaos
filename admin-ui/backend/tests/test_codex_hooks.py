@@ -464,3 +464,18 @@ def test_sync_agents_round_trips_runs_of_double_quotes_and_backslashes(tmp_path,
     for body in bodies:
         md = _md(tmp_path, "name: probe\ndescription: d", body)
         assert tomllib.loads(_gen().render(md))["developer_instructions"].strip() == body.strip(), repr(body)
+
+
+# ---- Codex review 第 05 輪 P3：YAML 跳脫出來的控制字元（DEL 等）要能產生合法 TOML
+@pytest.mark.parametrize("esc,char", [("\\x7f", "\x7f"), ("\\x00", "\x00"), ("\\x01", "\x01"), ("\\x08", "\x08"), ("\\x0b", "\x0b"), ("\\x1b", "\x1b"), ("\\x1f", "\x1f"), ("\\t", "\t")])
+def test_sync_agents_description_with_control_characters_round_trips(tmp_path, esc, char):
+    md = _md(tmp_path, f'name: probe\ndescription: "a{esc}b"', "body")
+    assert yaml.safe_load(f'x: "a{esc}b"')["x"] == f"a{char}b"                       # 先確認 YAML 語意本來就是這個字元
+    assert tomllib.loads(_gen().render(md))["description"] == f"a{char}b"
+
+
+@pytest.mark.parametrize("char", ["\x7f", "\x00", "\x01", "\x08", "\x0b", "\x0c", "\x1b", "\x1f", "\t"])
+def test_sync_agents_body_with_control_characters_round_trips(tmp_path, char):
+    body = f"first{char}middle{char}{char}last\nsecond line"
+    md = _md(tmp_path, "name: probe\ndescription: d", body)
+    assert tomllib.loads(_gen().render(md))["developer_instructions"].strip() == body.strip()

@@ -19,6 +19,13 @@ except ImportError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[3]
 SUBSTITUTIONS = {"qaos-test-designer": [("Claude Code session", "Codex session")]}
+# TOML 基本字串不允許直接出現 U+0000–U+0008、U+000A–U+001F（多行字串容許換行）與 U+007F
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def _basic_string(value: str) -> str:
+    """單行 TOML 基本字串。json.dumps 會跳脫引號、反斜線與 U+0000–U+001F，但不跳脫 U+007F（DEL），這裡補上。"""
+    return json.dumps(value, ensure_ascii=False).replace("\x7f", "\\u007f")
 
 
 def render(md_path: Path) -> str:
@@ -35,7 +42,8 @@ def render(md_path: Path) -> str:
         body = body.replace(old, new)
     # 基本多行字串：反斜線要加倍；連續 3 個以上的雙引號（以及貼著結尾分隔符的雙引號）要逐一跳脫
     escaped = re.sub(r'"{3,}|"+$', lambda q: '\\"' * len(q.group()), body.replace("\\", "\\\\"))
-    text = f'name = {json.dumps(front["name"], ensure_ascii=False)}\ndescription = {json.dumps(front["description"], ensure_ascii=False)}\ndeveloper_instructions = """\n{escaped}"""\n'
+    escaped = CONTROL_CHARS.sub(lambda c: f"\\u{ord(c.group()):04x}", escaped)       # 基本多行字串不允許直接放控制字元（tab、換行除外）
+    text = f'name = {_basic_string(front["name"])}\ndescription = {_basic_string(front["description"])}\ndeveloper_instructions = """\n{escaped}"""\n'
     try:
         parsed = tomllib.loads(text)
     except tomllib.TOMLDecodeError as e:
