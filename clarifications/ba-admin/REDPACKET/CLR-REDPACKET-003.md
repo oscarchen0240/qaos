@@ -1,0 +1,38 @@
+# CLR-REDPACKET-003：換算為核心貨幣後金額的小數位數與捨入方式（影響是否剛好達門檻）
+
+- 產品 / 功能：ba-admin / REDPACKET
+- 規格：SPEC-REDPACKET-001 v0.1  §§業務規則與驗證 L309
+- 相關需求：REQ-REDPACKET-008
+- 提出者：agent-spec-analyst（2026-10-08）
+- 狀態：OPEN
+
+## 背景
+REQ-REDPACKET-008：累計基準為有效流水貢獻（有效投注額 × 貢獻系數），以注單結算時點計入，只計以「活動幣種」下注的注單；貢獻系數為 0 的遊戲不計入。非核心貨幣注單的有效流水貢獻於注單結算當下依系統匯率（幣安 API）換算為核心貨幣後計入，換算後不因匯率變動重算。
+
+## 可能的解讀（請勾選或補充）
+- （無預設選項，請自由回答）
+
+## 若未回答的影響
+依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+
+## 已查文件
+- SPEC-REDPACKET-001 v0.1（590d35efdb11…）
+- SPEC-SYSADMIN-001 v0.1（688ddf35ab03…）
+- SPEC-REPORTS-001 v0.1（a4ec6b0d93ef…）
+- SPEC-SITELIST-001 v0.6（b57f48c699cc…）
+- SPEC-PLATFORMRULE-001 v0.2（b36b764b7756…）
+- SPEC-DAILYREPORT-001 v0.2（7930c1fb9c11…）
+- SPEC-ARCADE-001 v0.7（0e216890e8a3…）
+- SPEC-COMMON-001 v0.2（d31569007fd5…）
+
+## 已確定的部分
+- SPEC-REDPACKET-001 v0.1 §業務規則與驗證（第 311 行）：「取價方式與更新頻率依既有串接，由工程定義」
+
+## 還需決定的事
+換算為核心貨幣後金額的小數位數與捨入方式（影響是否剛好達門檻）
+- 細節：rounding_mode
+- 細節：decimal_places
+
+## PM 回覆
+（待回覆）
+

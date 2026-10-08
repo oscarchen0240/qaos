@@ -1,0 +1,38 @@
+# CLR-REDPACKET-005：單筆注單使累計跨越多個門檻而超過上限時，超出上限部分的累計是否保留、紅包明細「週期累計」顯示值為何
+
+- 產品 / 功能：ba-admin / REDPACKET
+- 規格：SPEC-REDPACKET-001 v0.1  §§業務規則與驗證 L318
+- 相關需求：REQ-REDPACKET-010
+- 提出者：agent-spec-analyst（2026-10-08）
+- 狀態：OPEN
+
+## 背景
+REQ-REDPACKET-010：每累計滿適用規則的累積門檻即產生一個紅包，超出部分續計入下一個；單一帳號在一個重置週期內產生數達單週期發放上限後停止累計，直到下次重置。
+
+## 可能的解讀（請勾選或補充）
+- （無預設選項，請自由回答）
+
+## 若未回答的影響
+依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+
+## 已查文件
+- SPEC-REDPACKET-001 v0.1（590d35efdb11…）
+- SPEC-SYSADMIN-001 v0.1（688ddf35ab03…）
+- SPEC-REPORTS-001 v0.1（a4ec6b0d93ef…）
+- SPEC-SITELIST-001 v0.6（b57f48c699cc…）
+- SPEC-PLATFORMRULE-001 v0.2（b36b764b7756…）
+- SPEC-DAILYREPORT-001 v0.2（7930c1fb9c11…）
+- SPEC-ARCADE-001 v0.7（0e216890e8a3…）
+- SPEC-COMMON-001 v0.2（d31569007fd5…）
+
+## 已確定的部分
+- SPEC-REDPACKET-001 v0.1 §新增優惠活動 — 紅包（第 96 行）：「單一帳號在一個重置週期內最多產生的紅包數；達上限後停止累計，直到下次重置」
+
+## 還需決定的事
+單筆注單使累計跨越多個門檻而超過上限時，超出上限部分的累計是否保留、紅包明細「週期累計」顯示值為何
+- 細節：overflow_after_cap
+- 細節：cycle_accumulation_display
+
+## PM 回覆
+（待回覆）
+

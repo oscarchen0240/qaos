@@ -1,0 +1,40 @@
+# CLR-REDPACKET-023：機台紅包稽核倍數大於 0 時，紅包產生的稽核如何影響機台洗分／出金的核可金額：正本的扣除規則以出金設定 TWD 倍數大於 0 為條件、計入交易僅開分與入金，出金設定為 0 倍而紅包倍數大於 0 時是否仍扣除
+
+- 產品 / 功能：ba-admin / REDPACKET
+- 規格：SPEC-REDPACKET-001 v0.1  §§線上與機台的差異 L48
+- 相關需求：REQ-REDPACKET-030
+- 提出者：agent-spec-analyst（2026-10-08）
+- 狀態：OPEN
+
+## 背景
+REQ-REDPACKET-030：機台場館的紅包稽核倍數預設帶 0；填大於 0 時表單顯示機台稽核警告（玩家隨時離台、稽核掛在共用帳號會卡到下一位），站長確認後可儲存。
+
+## 可能的解讀（請勾選或補充）
+- （無預設選項，請自由回答）
+
+## 若未回答的影響
+依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+
+## 已查文件
+- SPEC-REDPACKET-001 v0.1（590d35efdb11…）
+- SPEC-SYSADMIN-001 v0.1（688ddf35ab03…）
+- SPEC-REPORTS-001 v0.1（a4ec6b0d93ef…）
+- SPEC-SITELIST-001 v0.6（b57f48c699cc…）
+- SPEC-PLATFORMRULE-001 v0.2（b36b764b7756…）
+- SPEC-DAILYREPORT-001 v0.2（7930c1fb9c11…）
+- SPEC-ARCADE-001 v0.7（0e216890e8a3…）
+- SPEC-COMMON-001 v0.2（d31569007fd5…）
+- 缺：開發包③（機台金流與場次_spec_v01.md）「機台帳號的稽核」（SPEC-REDPACKET-001 v0.1 第 48 行提到）
+
+## 已確定的部分
+- SPEC-ARCADE-001 v0.7 §業務規則與驗證（第 808 行）：「倍數大於 0 時，洗分與出金的核可金額須先扣除未完成稽核的部分」
+- SPEC-ARCADE-001 v0.7 §機台帳號的稽核（第 197 行）：「| 計入的交易 | 機台開分、機台入金 |」
+
+## 還需決定的事
+機台紅包稽核倍數大於 0 時，紅包產生的稽核如何影響機台洗分／出金的核可金額：正本的扣除規則以出金設定 TWD 倍數大於 0 為條件、計入交易僅開分與入金，出金設定為 0 倍而紅包倍數大於 0 時是否仍扣除
+- 細節：deduction_trigger_condition
+- 細節：keyout_cashout_calculation
+
+## PM 回覆
+（待回覆）
+
