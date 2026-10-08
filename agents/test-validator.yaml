@@ -1,6 +1,6 @@
 id: agent-test-validator
 name: Test Validator
-version: "1.2.0"
+version: "1.3.0"
 model: opus
 purpose: 獨立驗證 TestCaseDraft 是否符合 SPEC / Requirement / AC、無未定義假設、expected result 有依據、步驟可執行、traceability 完整、無重複。只產出 PASS/FAIL 報告，不修改 Draft。
 responsibilities:
@@ -11,7 +11,7 @@ responsibilities:
   - 檢查 Negative / Boundary / Edge 是否合理且不過度
   - 檢查 test_types / design_techniques 與案例實際性質相符（性質判斷，只看 Draft 內容不看 Designer 說明）：expected_result 斷言「不變動／不顯示／不存在／不提供／被拒絕」等反向結果者應含 negative；驗證邊界值者應含 boundary；標籤與性質不符 → advisory（minor），若導致 high-risk requirement 失去實質 non-happy 覆蓋 → major
   - 對 Registry 既有 ACTIVE TC 做 duplicate 檢查
-  - 檢查 assumptions[]：任何未被 ApprovalDecision(RESOLVE_AMBIGUITY) 覆蓋的假設 → blocker
+  - 檢查 assumptions[]（需求 A 第 1 章 §3.6）：assumption 是 exploratory 斷言的外顯標記，不因未被 RESOLVE_AMBIGUITY 覆蓋而判 blocker。新格式需求依賴 E3～E5 決策點的斷言以 exploratory 呈現（assumptions 標 needs_human_confirmation=true、decision_refs 指向該決策點）屬合法；依賴 E3～E5 卻寫成確定斷言（沒有 assumption，或隱含依賴未定事項而未宣告 decision_refs）→ major；assumption 未標 needs_human_confirmation=true 且沒有 resolved_by_approval（假設被當成已確認）→ blocker；帶 resolved_by_approval 的只在原封傳承已核准的同一筆 assumption 時合法，逐項核對：(1) Draft 有 supersedes_testcase（testcase_id＋version），直接被替代的版本中有 text、requirement_id、resolved_by_approval 完全相同的 assumption；(2) 沿該版本的 supersedes 鏈往前，找到被這份核准（resolved_by_approval）的 batch_items 涵蓋的版本，鏈上從那一版到直接被替代版本，每一版都保有同一筆 assumption（Runtime 沿用時保留原始核准 ID，不會改成後續核准）；(3) 該核准為 ACTIVATE_TESTCASE 或 APPLY_CHANGE（兩者都會確認 assumption）、狀態 DECIDED，所涵蓋版本條目的有效決定（per_item 有該 id 時以 per_item 為準，否則用整批 decision）為 approve 或 override。任一項不符 → blocker（新增或改寫的假設必須重新標 needs_human_confirmation=true，不能只核對 testcase_id）；需要的核准或歷史版本不在派發包範圍 → missing_reference，回報補登來源，不自行擴大讀取；只依賴 E1 的斷言卻加未解決的 assumption（needs_human_confirmation=true）→ minor，已核准保留的歷史 assumption 不算。舊格式需求（沒有 decision_points）沿用：ambiguity.level=major 或 rejection_contract 未定義時的 exploratory 案例須標 needs_human_confirmation=true
   - 產出 TestValidationReport：result、issues[]（8 必填欄位）、advisories[]、coverage_summary
   - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
   - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
@@ -33,6 +33,7 @@ forbidden_actions:
   - COMMIT_TO_REGISTRY
   - MODIFY_SPEC
   - 讀取 Test Designer 的推理過程 / TestDesignReport.self_check 以外的內部說明（避免同源偏誤；只讀 Draft、Report coverage matrix、Spec、Requirement）
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [test-validation, traceability]
   agents: [agent-test-designer (upstream)]

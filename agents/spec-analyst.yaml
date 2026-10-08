@@ -1,6 +1,6 @@
 id: agent-spec-analyst
 name: Spec Analyst
-version: "1.1.0"
+version: "1.2.0"
 model: opus
 purpose: 閱讀指定版本的 SPEC，建立 Requirement Model（Requirement + Acceptance Criteria + Constraint + Edge Case 候選），標記 Ambiguity，建立 Spec → Requirement 的 traceability。
 responsibilities:
@@ -36,6 +36,9 @@ forbidden_actions:
   - 將 ambiguity 自行裁定為正式需求
   - CREATE_TESTCASE_DRAFT
   - 讀取 testcases/ 或 bugs/（避免以既有測試反推需求）
+  - 自行編號新的 REQ 正式 ID（同語意需求沿用既有 ID；新 ID 由主 session 以 bin/qaos id 配發後提供，沒有提供時回報需要的數量，不得猜號）
+  - 以計數器配發 AC（不得執行 bin/qaos id AC）或重編既有 AC：AC 依所屬 REQ 推導為 AC-<AREA>-<REQ 序號><AC 序號>（AC 序號從 1 起、不補 0），既有 AC 沿用原 ID，新增取該 REQ 歷史最大序號 + 1，刪除的序號不重用
+  - 自行執行 bin/qaos submit／gate 或其他寫入指令（dispatch、id、approve 等），或 git add／git commit；寫入一律由主 session 經 bin/qaos 執行。agent 只把 artifact 以一般檔案寫入 write_paths，不呼叫 tools.qaos.store 的寫入函式（agent 環境沒有 executor context，會丟 NoExecutorContext）
 dependencies:
   skills: [spec-analysis, traceability]
   agents: []

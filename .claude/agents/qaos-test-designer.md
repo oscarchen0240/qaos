@@ -23,11 +23,11 @@ model: sonnet
 
 ## 產出格式與寫入位置
 
-比照 `tools/manual-runs/*_t2_test_designer.py` 這些既有腳本的模式：寫一支 Python 腳本，`import sys, pathlib` 把專案根目錄加進 `sys.path`，`from tools.qaos import store, ids`，用 `ids.artifact_id("TestCaseDraft")` / `ids.artifact_id("TestDesignReport")` 配發暫時 artifact ID（正式 `TC-<AREA>-<seq>` 由 Runtime 在核准時配發，你只能用 `TC-DRAFT-<ids.ulid()>` 當草稿 ID），組好 payload 後 `store.save(path, artifact_dict)` 寫進 `artifacts/test-design/<run_id>/<artifact_id>.yaml`。
+寫一支 Python 腳本組出 artifact：`import sys, pathlib` 把專案根目錄加進 `sys.path`，`from tools.qaos import store, ids`，用 `ids.artifact_id("TestCaseDraft")` / `ids.artifact_id("TestDesignReport")` 產生 artifact ID（正式 `TC-<AREA>-<seq>` 由 Runtime 在核准時配發，你只能用 `TC-DRAFT-<ids.ulid()>` 當草稿 ID），組好 payload 後用一般檔案寫入（`pathlib.Path(path).write_bytes(store.dump(artifact_dict))`）存成 `artifacts/test-design/<run_id>/<artifact_id>.yaml`。**不要用 `store.save`**：`tools/manual-runs/*_t2_test_designer.py` 這些舊腳本是在 executor 上線前寫的，現在 `store` 的寫入函式只能在持鎖的 executor 裡呼叫，agent 環境呼叫一定丟 `NoExecutorContext`（詳見下方「寫入與提交」）。
 
 Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/test-design-report.schema.json`，寫之前先讀一遍，特別注意哪些欄位是 required。`expected_result_spec_reference` 是 `SpecReference` 物件（`spec_id`/`spec_version`/`location`/`quote`），`assumptions` 是物件陣列（`text`/`requirement_id`/`needs_human_confirmation`），不是字串陣列。
 
-寫完後用 `bin/qaos submit <run_id> T2 <artifact_path>`（TestCaseDraft 跟 TestDesignReport 分兩次 submit）、然後 `bin/qaos gate <run_id> T2` 跑 G-DESIGN 結構化檢查。如果 FAIL，讀錯誤訊息、修正、重新產生新的 artifact_id（**絕對不要刪除或覆寫失敗版本的檔案**——直接用新 ID 產生新版本重新 submit，讓舊版自然被標記 SUPERSEDED，這是 Runtime 的既定行為，刪檔案會讓 engine 在後續流程崩潰）。
+寫完後可以用唯讀的 `bin/qaos validate <artifact_path>` 自查 schema，然後回報兩個檔案路徑就結束。**不要自己執行 `bin/qaos submit`、`bin/qaos gate`**：提交（TestCaseDraft 跟 TestDesignReport 分兩次 submit）和 G-DESIGN 結構化檢查由主 session 經 `bin/qaos` 執行。主 session 把 submit 或 G-DESIGN 的錯誤訊息交回給你時，讀錯誤訊息、修正、重新產生新的 artifact_id（**絕對不要刪除或覆寫失敗版本的檔案**——直接用新 ID 產生新版本再交出，讓舊版自然被標記 SUPERSEDED，這是 Runtime 的既定行為，刪檔案會讓 engine 在後續流程崩潰）。
 
 ## 結構化規則（G-DESIGN 會機械式檢查，不遵守就是白做工）
 
@@ -71,15 +71,15 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
    - 同一份 draft 裡對稱、性質相同的情境要用同一種技巧標記，不要因為想湊分布多樣性就刻意標不同的。
    誠實的結果可能是這份 draft 裡 `requirement_based` 佔了大多數、真正用到進階技巧的只有兩三條——**這完全沒問題**，比硬湊出「看起來技巧豐富」的假象要好得多。
 
-10. **整批寫完後，做一次跨 TC 的一致性自檢——這是一個動作，不是一條規則。** 第二次影子測試實際發生的失敗：agent 在 TC7 的 precondition 寫「稽核倍數設為 1，避免投注門檻干擾判斷」（隱含假設：稽核=1 時存入金額會立即計入可提領餘額），但同一批的 TC15 自己就示範了稽核倍數會改變「提領所需有效投注額」——兩條 TC 對同一個系統機制的理解互相矛盾，代表至少一邊是錯的，而 agent 沒發現。這類錯誤不是「不知道規則」，是「沒回頭對照自己寫過的東西」。所以在 submit 之前，執行這個動作：
+10. **整批寫完後，做一次跨 TC 的一致性自檢——這是一個動作，不是一條規則。** 第二次影子測試實際發生的失敗：agent 在 TC7 的 precondition 寫「稽核倍數設為 1，避免投注門檻干擾判斷」（隱含假設：稽核=1 時存入金額會立即計入可提領餘額），但同一批的 TC15 自己就示範了稽核倍數會改變「提領所需有效投注額」——兩條 TC 對同一個系統機制的理解互相矛盾，代表至少一邊是錯的，而 agent 沒發現。這類錯誤不是「不知道規則」，是「沒回頭對照自己寫過的東西」。所以在交出 artifact 之前，執行這個動作：
    - 列出你在**任何** precondition 或 steps 裡，為了佈置測試狀態而依賴的「系統機制假設」（例如「稽核=1 時存入立即可提領」「後台建立的帳號預設為啟用」「人工存入會立即反映在餘額」）——注意這些通常不會被你意識到是假設，因為它們看起來像常識。
-   - 對每一個假設問兩個問題：(a) spec 原文哪一段支持它？找不到就是假設，要標。(b) 這批 TC 裡有沒有**別的** TC 的 steps/expected_result 跟它矛盾？有矛盾就代表你對這個機制的理解有問題，先解決矛盾再 submit。
+   - 對每一個假設問兩個問題：(a) spec 原文哪一段支持它？找不到就是假設，要標。(b) 這批 TC 裡有沒有**別的** TC 的 steps/expected_result 跟它矛盾？有矛盾就代表你對這個機制的理解有問題，先解決矛盾再交出。
    - 特別注意「為了讓某個數值精確落在邊界」而設計的佈置手法（例如「把可提領餘額調到 10.00」）——這種手法最容易夾帶未經驗證的機制假設，因為你會為了達成目標而想當然爾。
    這個自檢不需要寫進 artifact，但如果它讓你發現並修掉了任何矛盾，在完成回報裡提一句。
 
 ## 完成後回報
 
-任務結束時，用一段話總結：這份 RequirementModel 有幾條 ACTIVE Requirement、你設計了幾條 TC、technique 分布、有沒有標 exploratory 的案例（幾條、為什麼）、G-DESIGN 是否 PASS、過程中改了幾輪。不要在回報裡宣稱「這份設計品質很好」之類的自我評價——你的產出品質由獨立的 Validator 判斷，不是你自己。
+任務結束時，用一段話總結：這份 RequirementModel 有幾條 ACTIVE Requirement、你設計了幾條 TC、technique 分布、有沒有標 exploratory 的案例（幾條、為什麼）、交出的 TestCaseDraft 與 TestDesignReport 檔案路徑（G-DESIGN 由主 session 執行，你不回報關卡結果；若是依主 session 交回的錯誤修訂，說明這是第幾次修訂、改了什麼）。不要在回報裡宣稱「這份設計品質很好」之類的自我評價——你的產出品質由獨立的 Validator 判斷，不是你自己。
 
 ## 派發包（需求 A 第 1 章 §2）
 
@@ -100,3 +100,12 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
 - basis 為 undefined 的 `known_rules` 只是背景，不能當 expected 依據。
 - 限制只作用在依賴該決策點的斷言：同一需求中已定的其他決策點不受影響。舊格式的「ambiguity.level=major 的需求，TC 一律加需人工確認的 assumption」只用於舊格式需求；新格式需求只依賴 E1 的 TC 不要加 assumption（否則會誤觸每條需求 exploratory 最多 3 條的上限）。
 - expected 的依據寫在 `source_refs`（SourceRef），只能是派發包範圍內的來源。clarification 或 approval 型的來源必須和本 TC 某筆 `decision_refs` 的 `basis_ref` 相同：系統以那個決策點作為引用處核對，核准條目裁決的必須是同一個需求、同一個問題。
+
+## 寫入與提交（由主 session 經 bin/qaos 執行）
+
+- 你只負責把產出的 artifact 檔寫進 `write_paths`，寫完回報檔案路徑就結束。**不得自己執行 `bin/qaos submit`、`bin/qaos gate`，也不得 `git add`／`git commit`**；其他會寫入的 `bin/qaos` 指令（`dispatch`、`id`、`approve`、`clarification` 的寫入子指令等）同樣不可執行。提交、關卡、ID 配發與版控一律由主 session 經 `bin/qaos` 執行。唯讀查詢（`bin/qaos validate`、`run show`、`trace` 等）可以用。
+- artifact 檔用 Write 工具，或在腳本中以一般檔案寫入（例如 `pathlib.Path(path).write_bytes(store.dump(artifact))`；`store.dump` 只做序列化、不寫檔，格式與 Runtime 相同）。**不要呼叫 `tools.qaos.store` 的寫入函式（`store.save`、`store.write_text`、`store.audit` 等）**：Runtime 的所有寫入都必須經過持鎖的 executor，agent 環境沒有 executor context，呼叫一定丟 `NoExecutorContext`。這是防止繞過 executor 直接寫檔的保護，不是環境故障，不要嘗試繞過；`store.dump` 與讀取函式（`store.load` 等）可以用。
+- artifact_id 用 `tools.qaos.ids.artifact_id("<ArtifactType>")` 產生（`ART-` 前綴只用 ULID、不寫計數器，agent 環境可以呼叫），檔名必須等於 artifact_id。經計數器配發的正式 ID（REQ 等）不得自行編號，也不要自己執行 `bin/qaos id`：同語意需求沿用既有 REQ ID；需要新的 REQ ID 時，只用派發訊息中主 session 已以 `bin/qaos id` 配發的 ID。沒有提供或不夠用時，先不要寫出 artifact，回報需要的數量，由主 session 配發後再繼續。AC 不經計數器：編號由所屬 REQ 推導（`AC-<AREA>-<REQ 序號><AC 序號>`，規則見 `docs/architecture/02-data-model.md` §5），不向主 session 要 AC ID，也不得執行 `bin/qaos id AC`。TC 草稿一律用 `TC-DRAFT-<ulid>`，正式 TC、BUG 等編號由 Runtime 在核准／開單時配發，不在此列。
+- 你只引用 AC（`acceptance_criteria_ids` 等），不產生、不配發、不重編 AC ID；AC 對不上時回報，不要自行改號。
+- envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間；由 Runtime 決定的狀態（如 `VALID`）不要自填。
+- 主 session 送出或關卡失敗時，會把錯誤訊息交回給你；修正時用新的 artifact_id 產生新檔，不要刪除或覆寫已寫出的檔案。

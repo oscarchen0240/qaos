@@ -78,7 +78,7 @@ GPT 講的是「成熟多 Agent 系統的理想路由」。本專案 Phase 1 已
 - 「看起來合理」的業務假設（例：未兌現金額是否受結算日期限制）
 - Designer 與 Validator 互相同意但缺少 spec 依據
 
-對應既有規則：`agents/test-validator.yaml` 已要求——任何未被 `ApprovalDecision(RESOLVE_AMBIGUITY)` 覆蓋的假設 → **blocker**。
+對應既有規則：`agents/test-validator.yaml` 要求——assumption 未標 `needs_human_confirmation: true`、也沒有經核對有效的 `resolved_by_approval`（只限原封傳承已核准的同一筆 assumption：沿 supersedes 鏈追溯到 ACTIVATE_TESTCASE 或 APPLY_CHANGE 核准涵蓋的版本，逐項有效決定、assumption 內容都要相符）→ **blocker**；依賴未定事項卻寫成確定斷言 → **major**。依賴未定決策點（E3～E5）而以 exploratory 呈現的斷言是合法的，不因未被 `ApprovalDecision(RESOLVE_AMBIGUITY)` 覆蓋而判 blocker（需求 A 第 1 章 §3.6；2026-10-08 起）。
 
 實例（必須當成反面教材，不要重演）：
 
