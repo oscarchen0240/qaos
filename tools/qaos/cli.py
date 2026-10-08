@@ -17,6 +17,10 @@ def _print(obj):
 def _nr(a) -> dict:
     return {"new_request": bool(getattr(a, "new_request", False))}
 
+def _replayed() -> bool:
+    """最近一次寫入是「同一請求重送且已完成」：executor 回傳的是當時存下的結果，不是重新執行的結果。"""
+    return operation.LAST_OUTCOME.get("kind") == "completed"
+
 def _notice():
     o = operation.LAST_OUTCOME
     if o.get("kind") == "completed":
@@ -73,7 +77,7 @@ def cmd_validate(a):
 
 def cmd_id(a):
     new_id = ids.alloc_cmd(a.kind, a.area, **_nr(a))
-    if operation.LAST_OUTCOME.get("kind") == "completed":    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
+    if _replayed():    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
         op = operation.LAST_OUTCOME["op_id"]; operation.LAST_OUTCOME.clear()
         sys.exit(f"qaos: 這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請加 --new-request")
     print(new_id)
@@ -84,7 +88,7 @@ def cmd_run_new(a):
         k, v = kv.split("=", 1)
         inputs[k] = json.loads(v) if v[:1] in "[{" else v
     run = engine.new_run(a.workflow, inputs, a.by, **_nr(a))
-    if operation.LAST_OUTCOME.get("kind") == "completed": run = engine.load_run(run["run_id"])   # 重送：顯示 run 目前的狀態，不是建立當時存下的結果
+    if _replayed(): run = engine.load_run(run["run_id"])   # 重送：顯示 run 目前的狀態，不是建立當時存下的結果
     print(f"{run['run_id']} {run['status']} current_task={run.get('current_task_id')}")
 
 def cmd_run_show(a): [print(l) for l in trace.trace(a.run_id)]
@@ -103,7 +107,7 @@ def cmd_dispatch(a):
 
 def cmd_gate(a):
     r = engine.evaluate_gate(a.run_id, a.task_id, **_nr(a))
-    print(f"{r['gate']} {r['layer']} {r['result']}")
+    print(("先前結果（未重新評估）：" if _replayed() else "") + f"{r['gate']} {r['layer']} {r['result']}")
     for i in r["issues"]: print(" -", i)
     run = engine.load_run(a.run_id); print(f"run={run['status']} current_task={run.get('current_task_id')} waiting={run.get('waiting_on_approval_id')}")
     if r["result"] != "PASS": sys.exit(1)
@@ -128,7 +132,11 @@ def cmd_req_export(a):
 def cmd_tc_retire(a):
     apr, suites = tc_ops.retire(a.tc_id, a.by, a.rationale, **_nr(a))
     print(f"{a.tc_id} → RETIRED via {apr}" + (f"；仍在 suite {[s['suite_id'] for s in suites]}，請另跑 regression-generation 移除" if suites else ""))
-def cmd_tc_revise(a): run = tc_ops.revise(a.tc_id, a.reason, a.by, **_nr(a)); print(f"{run['run_id']} testcase-revision 已建立，current_task={run.get('current_task_id')}（Test Designer 產新版本 Draft → Validator → 你核准）")
+def cmd_tc_revise(a):
+    run = tc_ops.revise(a.tc_id, a.reason, a.by, **_nr(a))
+    if _replayed():
+        run = engine.load_run(run["run_id"]); print(f"{run['run_id']} testcase-revision 先前已建立，目前 {run['status']} current_task={run.get('current_task_id')}"); return
+    print(f"{run['run_id']} testcase-revision 已建立，current_task={run.get('current_task_id')}（Test Designer 產新版本 Draft → Validator → 你核准）")
 def cmd_manual_new(a):
     rid = tc_ops.manual_new(a.title, a.product, a.area, a.step, a.observed, a.outcome, a.by, a.spec_id, a.spec_version, a.requirement_id, a.environment or "", a.precondition, a.evidence, a.notes or "", **_nr(a))
     print(f"{rid} → testcases/manual/{rid}.yaml；下一步：bin/qaos run new manual-test-to-regression --input manual_record_id={rid}" + (f" --input spec_id={a.spec_id} --input spec_version={a.spec_version}" if a.spec_id else "") + f" --by {a.by}")
@@ -136,7 +144,9 @@ def cmd_manual_new(a):
 def cmd_tc_export(a):
     if a.stdout: print(READONLY_NOTE); print(tc_export.build(a.area)); return
     print(tc_export.export(a.area, **_nr(a)))
-def cmd_tc_final(a): n, g = final_export.export(a.area, **_nr(a)); print(f"testcases/final/{a.area}-final.html + -final-active.json（{n} 條 ACTIVE、{g} 項需求）")
+def cmd_tc_final(a):
+    n, g = final_export.export(a.area, **_nr(a))
+    print(("先前已匯出（未重新匯出；ACTIVE 有變動時請加 --new-request）：" if _replayed() else "") + f"testcases/final/{a.area}-final.html + -final-active.json（{n} 條 ACTIVE、{g} 項需求）")
 
 def cmd_approvals(a):
     for p in store.glob("approvals/APR-*.yaml"):
@@ -224,9 +234,12 @@ def cmd_clr_meta_upgrade(a):
     c = clr.metadata_upgrade(a.id, a.by, a.reason, kind=a.kind, question_id=a.question_id, subject=a.subject,
                              role_scope=_role_scope(a.role_scope) if a.role_scope else None, params=_json_arg(a.params, "--params") if a.params else None, **_nr(a))
     print(f"{a.id} metadata upgraded")
-def cmd_bug_resolve(a): b = bug_lifecycle.resolve(a.bug_id, a.by, a.external_ref, a.note or "", a.fixed_by or "", **_nr(a)); print(f"{a.bug_id} → {b['status']}")
-def cmd_bug_verify(a): b = bug_lifecycle.verify(a.bug_id, a.execution, a.by, **_nr(a)); print(f"{a.bug_id} → {b['status']}")
-def cmd_bug_close(a): b = bug_lifecycle.close(a.bug_id, a.by, a.rationale or "", **_nr(a)); print(f"{a.bug_id} → {b['status']} (done)")
+def _bug_result(bug_id, b, suffix=""):
+    if _replayed(): print(f"{bug_id} 先前已處理，目前狀態 {bug_lifecycle._load(bug_id)[0]['status']}"); return   # 重送：顯示目前狀態，不是當時的結果
+    print(f"{bug_id} → {b['status']}{suffix}")
+def cmd_bug_resolve(a): _bug_result(a.bug_id, bug_lifecycle.resolve(a.bug_id, a.by, a.external_ref, a.note or "", a.fixed_by or "", **_nr(a)))
+def cmd_bug_verify(a): _bug_result(a.bug_id, bug_lifecycle.verify(a.bug_id, a.execution, a.by, **_nr(a)))
+def cmd_bug_close(a): _bug_result(a.bug_id, bug_lifecycle.close(a.bug_id, a.by, a.rationale or "", **_nr(a)), " (done)")
 def cmd_bug_index(a): print(f"{bugindex.build(**_nr(a))} bugs indexed → bugs/index.md + bugs/<product>/<area>/index.md")
 
 def cmd_op_list(a):
