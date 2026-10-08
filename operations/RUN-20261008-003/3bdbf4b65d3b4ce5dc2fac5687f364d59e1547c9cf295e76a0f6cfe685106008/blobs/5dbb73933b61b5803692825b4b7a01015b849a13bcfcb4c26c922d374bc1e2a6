@@ -1,0 +1,114 @@
+clarification_id: CLR-REDPACKET-048
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+question: 機台紅包稽核倍數大於 0 時，紅包產生的未完成稽核是否扣減洗分／出金的核可金額。SPEC-CASHFLOW-001@0.1 的扣除規則以「出金設定的 TWD 稽核倍數大於 0」為觸發條件（第 245、363 行），計入交易只有開分與入金（第
+  57 行），未提到紅包：(1) 出金設定為 0 倍、紅包倍數大於 0 時是否仍扣除；(2) 出金一律以全部餘額核可、清空餘額（第 332 行），扣除稽核後的出金如何處理（核可金額減少後餘額是否仍清空、剩餘分數去向）
+context: REQ-REDPACKET-030：機台場館的紅包稽核倍數預設帶 0；填大於 0 時表單顯示機台稽核警告（玩家隨時離台、稽核掛在共用帳號會卡到下一位），站長確認後可儲存。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-08T09:37:40Z'
+status: OPEN
+history:
+- at: '2026-10-08T09:37:40Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261008-003
+requirement_id: REQ-REDPACKET-030
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §線上與機台的差異 L48
+  quote: 機台場館的紅包稽核倍數填大於 0 時，表單顯示上述警告，站長確認後可儲存。
+run_id: RUN-20261008-003
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q02
+topic: calculation
+subject: redpacket.arcade.audit_effect_on_cashout
+params: {}
+role_scope:
+- '*'
+level: major
+known_rules:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §機台帳號的稽核（第 57 行）
+  quote: '| 計入的交易 | 機台開分、機台入金 |'
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §機台帳號的稽核（第 59 行）
+  quote: '| 倍數大於 0 時 | 洗分與出金的核可金額須扣除尚未完成稽核的部分；扣除後為 0 時視同餘額不足，機台畫面顯示餘額不足 |'
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §業務規則與驗證（本包相關）（第 245 行）
+  quote: '| 稽核倍數 | 開分與入金依出金設定的幣種稽核倍數計算，機台預設 0 倍；倍數大於 0 時，洗分與出金的核可金額須先扣除未完成稽核的部分 |'
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §洗分（`req-keyout`）（第 363 行）
+  quote: 稽核倍數大於 0 時，可洗金額須先扣除尚未完成稽核的部分再套用門檻計算；扣除後為 0 時回 `1-NO CREDITS`（機台預設 0 倍，不會觸發）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §出金（`req-cashout` → `end-cashout`）（第 332 行）
+  quote: 核可金額 ＝ `req-cashout` 當下的**全部餘額**（**清空餘額、不套門檻**
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 325 行）
+  quote: 入帳時所需有效投注額增加 紅包金額 × 稽核倍數，寫入 4.4 稽核明細（類型「紅包」）
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-COMMON-001
+    spec_version: '0.2'
+    content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 機台紅包稽核倍數大於 0 時，紅包產生的未完成稽核是否扣減洗分／出金的核可金額。SPEC-CASHFLOW-001@0.1 的扣除規則以「出金設定的 TWD 稽核倍數大於 0」為觸發條件（第 245、363 行），計入交易只有開分與入金（第
+  57 行），未提到紅包：(1) 出金設定為 0 倍、紅包倍數大於 0 時是否仍扣除；(2) 出金一律以全部餘額核可、清空餘額（第 332 行），扣除稽核後的出金如何處理（核可金額減少後餘額是否仍清空、剩餘分數去向）
+detail_gaps:
+- deduction_trigger_condition
+- cashout_full_balance_vs_deduction
+issue_key: e665a4510f4c27af6ab07dc011ed7bc4d7ceb7f9be7fa22d21ece87c2e7ef0b9

@@ -1,0 +1,95 @@
+clarification_id: CLR-REDPACKET-026
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+question: 後端是否同樣拒絕不合法的紅包活動設定（門檻、上限、總預算、活動幣種、等級規則、權重表、活動名稱、活動時間），以及直接呼叫 API 時的回應（狀態碼與訊息）；前端阻擋方式與提示文字已由 SPEC-REDPACKET-002@0.1
+  saveAdd() 定義（見 Q05）
+context: REQ-REDPACKET-003：儲存時檢查：活動幣種至少勾選一個；預設規則關閉時至少須有一個等級規則；每個等級規則至少勾選一個等級；一個等級只能屬於一個規則；各生效規則（關閉的預設規則不檢查）的累積門檻須大於 0、單週期發放上限須為大於
+  0 的整數；總預算有填時須大於 0；權重表至少一列、各列金額須大於 0、機率合計須為 100%（否則阻擋儲存）；活動名稱最多 25 字元。前端驗證（依 SPEC-REDPACKET-002@0.1）：活動時間必填，區間的結束時間須晚於開始時間；活動名稱必填、輸入欄最多
+  25 字元；權重表最後一列不可移除；稽核倍數可為 0。儲存時任一欄位不合法即不建立，於該欄位以紅框與訊息標示並提示「請修正標示紅框的欄位」。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-08T09:37:40Z'
+status: OPEN
+history:
+- at: '2026-10-08T09:37:40Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261008-003
+requirement_id: REQ-REDPACKET-003
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證 L334
+  quote: 累積門檻須大於 0；單週期發放上限須為大於 0 的整數；總預算有填時須大於 0
+run_id: RUN-20261008-003
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q03
+topic: rejection_response
+subject: redpacket.validation.other_rules_reject
+params: {}
+role_scope:
+- '*'
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §業務規則與驗證（第 334 行）
+  quote: 累積門檻須大於 0；單週期發放上限須為大於 0 的整數；總預算有填時須大於 0
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L891 saveAdd() 前端阻擋
+  quote: if(bad){showToast('請修正標示紅框的欄位');return;}
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-COMMON-001
+    spec_version: '0.2'
+    content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 後端是否同樣拒絕不合法的紅包活動設定（門檻、上限、總預算、活動幣種、等級規則、權重表、活動名稱、活動時間），以及直接呼叫 API 時的回應（狀態碼與訊息）；前端阻擋方式與提示文字已由 SPEC-REDPACKET-002@0.1
+  saveAdd() 定義（見 Q05）
+detail_gaps:
+- backend_enforcement
+- backend_response
+issue_key: 43308ee8f821c8fc1999a5a2c83ceda4a640b5f3c2cb82cd59fa59e901f274f7
+related_clarifications:
+- id: CLR-REDPACKET-001
+  relation: prior_version

@@ -1,0 +1,39 @@
+# CLR-REDPACKET-036：「同一站台」的範圍：主站台與其子站台的紅包活動是否各自獨立判斷重疊；某站台的活動是否涵蓋子站台的會員
+
+- 產品 / 功能：ba-admin / REDPACKET
+- 規格：SPEC-REDPACKET-001 v0.1  §§業務規則與驗證 L331
+- 相關需求：REQ-REDPACKET-017
+- 提出者：agent-spec-analyst（2026-10-08）
+- 狀態：OPEN
+
+## 背景
+REQ-REDPACKET-017：同一站台同一時間僅能有一個進行中的紅包活動，排程時間重疊時阻擋儲存；重疊判斷只計「進行中」與「排程中」的活動，已取消的活動不占用時段，取消後可立即以相同時段重建。重疊以時間區間嚴格交疊判斷（首尾相接不算重疊；永久活動視為無結束時間），已結束的活動不列入；重疊時於活動時間欄提示衝突的活動名稱（SPEC-REDPACKET-002@0.1）。
+
+## 可能的解讀（請勾選或補充）
+- （無預設選項，請自由回答）
+
+## 若未回答的影響
+依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+
+## 已查文件
+- SPEC-REDPACKET-001 v0.1（590d35efdb11…）
+- SPEC-SYSADMIN-001 v0.1（688ddf35ab03…）
+- SPEC-REPORTS-001 v0.1（a4ec6b0d93ef…）
+- SPEC-SITELIST-001 v0.6（b57f48c699cc…）
+- SPEC-PLATFORMRULE-001 v0.2（b36b764b7756…）
+- SPEC-DAILYREPORT-001 v0.2（7930c1fb9c11…）
+- SPEC-ARCADE-001 v0.7（0e216890e8a3…）
+- SPEC-REDPACKET-002 v0.1（71bd6dd03dc4…）
+- SPEC-CASHFLOW-001 v0.1（b34624219b5a…）
+- SPEC-COMMON-001 v0.2（d31569007fd5…）
+
+## 已確定的部分
+- SPEC-REDPACKET-001 v0.1 §業務規則與驗證（第 331 行）：「同一站台同一時間僅能有一個進行中的紅包活動（排程時間重疊時阻擋儲存）」
+
+## 還需決定的事
+「同一站台」的範圍：主站台與其子站台的紅包活動是否各自獨立判斷重疊；某站台的活動是否涵蓋子站台的會員
+- 細節：site_hierarchy_scope
+
+## PM 回覆
+（待回覆）
+

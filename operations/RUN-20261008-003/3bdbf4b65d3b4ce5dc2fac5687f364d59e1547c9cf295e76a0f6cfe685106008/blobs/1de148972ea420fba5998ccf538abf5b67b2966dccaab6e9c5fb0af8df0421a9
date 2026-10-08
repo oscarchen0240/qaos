@@ -1,0 +1,93 @@
+clarification_id: CLR-REDPACKET-035
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+question: 追加預算的操作紀錄於何處檢視（後台操作紀錄頁或紅包明細），以及可檢視的角色
+context: REQ-REDPACKET-016：設有總預算、且狀態為進行中或排程中的活動，列表提供「追加預算」：開啟視窗顯示目前總預算、已占用與剩餘；輸入新的總預算（須大於目前總預算），點擊「確認」即時生效，原本預算用罄的活動恢復產生紅包。只能調高、不能調低；未設總預算的活動不提供此操作、不可改為有預算。每次追加寫入操作紀錄（操作人員、時間、調整前與調整後金額）。活動狀態依
+  SPEC-REDPACKET-002@0.1 getStatus()：已取消排程 → 已取消；開始時間晚於現在 → 排程中；區間活動結束時間早於現在 → 已結束；其餘 → 進行中。列表有狀態欄與狀態篩選（全部／進行中／排程中／已結束／已取消），已結束與已取消的活動仍列出。新總預算不大於目前總預算時，前端於欄位顯示「須大於目前總預算（只能調高、不能調低）」且不生效。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-08T09:37:40Z'
+status: OPEN
+history:
+- at: '2026-10-08T09:37:40Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261008-003
+requirement_id: REQ-REDPACKET-016
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §活動排程 L190
+  quote: 設有總預算、且狀態為進行中或排程中的活動，列表提供「追加預算」操作
+run_id: RUN-20261008-003
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q04
+topic: data_scope
+subject: redpacket.budget_topup.operation_log
+params: {}
+role_scope:
+- admin
+- site_manager
+- finance
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §活動排程（第 197 行）
+  quote: 每次追加寫入操作紀錄（操作人員、時間、調整前與調整後金額）
+- type: spec
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  location: §對既有章節的影響（本包落實）（第 160 行）
+  quote: 須寫入後台操作紀錄（操作人員、時間、對象交易）
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-COMMON-001
+    spec_version: '0.2'
+    content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 追加預算的操作紀錄於何處檢視（後台操作紀錄頁或紅包明細），以及可檢視的角色
+detail_gaps:
+- log_view_location
+issue_key: 9d05553818fe70f6112fd9117e5f4d9cdea99e60a10f8a5fb3aea49346eb57bc
+related_clarifications:
+- id: CLR-REDPACKET-010
+  relation: prior_version

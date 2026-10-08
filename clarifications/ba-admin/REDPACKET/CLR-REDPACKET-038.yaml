@@ -1,0 +1,92 @@
+clarification_id: CLR-REDPACKET-038
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+question: 預設規則關閉且只有一組等級規則的活動，紅包明細是否顯示「規則」篩選
+context: REQ-REDPACKET-022：紅包明細（優惠活動管理 > 活動排程 > 紅包活動 > 點擊活動名稱）列出該活動所有紅包。篩選：會員編號（多筆以「,」分隔；機台場館即機台帳號）、規則（僅有等級規則的活動顯示）、紅包狀態、產生時間（UTC+0）；搜尋／清除。列表欄位：紅包編號、會員編號、適用規則（產生當下的規則與序號・等級名稱，切換方案後不改寫；機台固定「預設規則」）、場次編號（產生當下的場次，僅供爭議追溯；線上顯示「—」）、產生時間、週期累計、紅包金額、稽核倍數、狀態、入帳時間、作廢原因（週期重置／活動結束／機台洗分／機台出金）。列表底部顯示篩選結果的紅包金額總計（僅計已入帳）；右上角「匯出
+  CSV」匯出整個查詢結果。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-08T09:37:40Z'
+status: OPEN
+history:
+- at: '2026-10-08T09:37:40Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261008-003
+requirement_id: REQ-REDPACKET-022
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §紅包明細 L230
+  quote: 列表底部顯示當前篩選結果的紅包金額總計（僅計已入帳）。
+run_id: RUN-20261008-003
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: conflict_resolution
+question_id: Q04
+topic: display_format
+subject: redpacket.detail.rule_filter_visibility
+params: {}
+role_scope:
+- admin
+- site_manager
+- finance
+- operator
+level: major
+known_rules: []
+conflict_sides:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  location: §紅包明細（第 222 行）
+  quote: 全部 / 各規則名稱；僅有等級規則的活動顯示
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.1'
+  content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  location: L925 openDetail()
+  quote: const multi=a.plans.length>1;
+conflict_note: 目標 spec 第 222 行：規則篩選「僅有等級規則的活動顯示」——預設規則關閉、只有一組等級規則的活動也有等級規則，依此應顯示；SPEC-REDPACKET-002@0.1 openDetail() 以規則數大於
+  1 判斷（第 926 行 multi 為假時隱藏），同一情境不顯示。其餘情境兩者一致
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-COMMON-001
+    spec_version: '0.2'
+    content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 預設規則關閉且只有一組等級規則的活動，紅包明細是否顯示「規則」篩選
+issue_key: 9afd116de99d8102b19f4d92b5004a994202972e67ab9779129a19785127a373

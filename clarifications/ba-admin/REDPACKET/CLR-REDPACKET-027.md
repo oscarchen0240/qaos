@@ -1,0 +1,42 @@
+# CLR-REDPACKET-027：稽核倍數可否為負數、可否為小數及其上限；中獎機率、紅包金額、累積門檻與總預算允許的小數位數（可否為 0 已由 Q06 定義）
+
+- 產品 / 功能：ba-admin / REDPACKET
+- 規格：SPEC-REDPACKET-001 v0.1  §§業務規則與驗證 L334
+- 相關需求：REQ-REDPACKET-003
+- 提出者：agent-spec-analyst（2026-10-08）
+- 狀態：OPEN
+
+## 背景
+REQ-REDPACKET-003：儲存時檢查：活動幣種至少勾選一個；預設規則關閉時至少須有一個等級規則；每個等級規則至少勾選一個等級；一個等級只能屬於一個規則；各生效規則（關閉的預設規則不檢查）的累積門檻須大於 0、單週期發放上限須為大於 0 的整數；總預算有填時須大於 0；權重表至少一列、各列金額須大於 0、機率合計須為 100%（否則阻擋儲存）；活動名稱最多 25 字元。前端驗證（依 SPEC-REDPACKET-002@0.1）：活動時間必填，區間的結束時間須晚於開始時間；活動名稱必填、輸入欄最多 25 字元；權重表最後一列不可移除；稽核倍數可為 0。儲存時任一欄位不合法即不建立，於該欄位以紅框與訊息標示並提示「請修正標示紅框的欄位」。
+
+## 可能的解讀（請勾選或補充）
+- （無預設選項，請自由回答）
+
+## 若未回答的影響
+依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+
+## 已查文件
+- SPEC-REDPACKET-001 v0.1（590d35efdb11…）
+- SPEC-SYSADMIN-001 v0.1（688ddf35ab03…）
+- SPEC-REPORTS-001 v0.1（a4ec6b0d93ef…）
+- SPEC-SITELIST-001 v0.6（b57f48c699cc…）
+- SPEC-PLATFORMRULE-001 v0.2（b36b764b7756…）
+- SPEC-DAILYREPORT-001 v0.2（7930c1fb9c11…）
+- SPEC-ARCADE-001 v0.7（0e216890e8a3…）
+- SPEC-REDPACKET-002 v0.1（71bd6dd03dc4…）
+- SPEC-CASHFLOW-001 v0.1（b34624219b5a…）
+- SPEC-COMMON-001 v0.2（d31569007fd5…）
+
+## 已確定的部分
+- SPEC-REDPACKET-001 v0.1 §新增優惠活動 — 紅包（第 98 行）：「紅包金額的提領稽核倍數；入帳時增加所需有效投注額 ＝ 紅包金額 × 倍數」
+- SPEC-REDPACKET-002 v0.1 L761 稽核倍數輸入欄：「<input type="number" value="${p.audit}" oninput="setP(${i},'audit',this.value)"/>」
+
+## 還需決定的事
+稽核倍數可否為負數、可否為小數及其上限；中獎機率、紅包金額、累積門檻與總預算允許的小數位數（可否為 0 已由 Q06 定義）
+- 細節：audit_multiplier_negative_decimal_upper
+- 細節：probability_decimal_places
+- 細節：amount_decimal_places
+
+## PM 回覆
+（待回覆）
+

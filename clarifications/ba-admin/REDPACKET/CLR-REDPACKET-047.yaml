@@ -1,0 +1,94 @@
+clarification_id: CLR-REDPACKET-047
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.1'
+question: 待確認出金能否由 Admin 手動取消（並因此使紅包恢復可開啟），以 spec 原文或 CLR-CASHFLOW-004 為準
+context: REQ-REDPACKET-028：機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢（作廢原因機台洗分／機台出金），累計進度不歸零。紅包入帳與機台洗分／出金使用同一把帳號鎖：洗分或出金請求送出後、交易完成前，紅包不可開啟；交易完成依上述作廢，交易取消或未成立則恢復可開啟。出金停在「待確認」期間屬交易進行中、紅包不可開啟；該筆轉為「已取消」時恢復可開啟（被新出金取代時，新出金本身仍在進行中則繼續鎖定；Admin
+  手動取消路徑是否存在見 Q04）；過渡期由前台完成的出金以前台回報完成、平台扣分成功為完成時點。洗分為單階段交易，鎖定只在請求送出至平台回覆之間。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-08T09:37:40Z'
+status: OPEN
+history:
+- at: '2026-10-08T09:37:40Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261008-003
+requirement_id: REQ-REDPACKET-028
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  location: §業務規則與驗證 L328
+  quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢；累計進度不歸零
+run_id: RUN-20261008-003
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: conflict_resolution
+question_id: Q04
+topic: state_transition
+subject: redpacket.arcade.pending_cashout_admin_cancel
+params: {}
+role_scope:
+- '*'
+level: major
+known_rules: []
+conflict_sides:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §業務規則與驗證（本包相關）（第 257 行）
+  quote: '**出金：不設逾時**，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止'
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.7'
+  content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  location: §交易狀態（第 584 行）
+  quote: '**出金不設逾時**，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止'
+- type: clarification
+  clarification_id: CLR-CASHFLOW-004
+  answer_rev: 0
+  answer_sha256: 005cce0a33de80ab70b66eab5f3ea8a14ac98e03f5f69f5643441eaf1f981f2e
+  quote: 「Admin/站長手動取消」這條收斂路徑需要移除
+conflict_note: SPEC-CASHFLOW-001@0.1 第 257、341、344、372 行與 SPEC-ARCADE-001@0.7 第 584、612 行定義待確認出金可由 Admin 手動取消收斂；已落地的 CLR-CASHFLOW-004（APPLIED，針對
+  REQ-CASHFLOW-008／026）定案交易紀錄頁沒有手動取消功能、這條收斂路徑須移除，出金死單只剩新請求取代與人工出金連動取消。對紅包的影響：目標第 329 行「交易取消則恢復可開啟」中，待確認出金能否經 Admin 手動取消而恢復紅包可開啟，取決於此路徑是否存在
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.1'
+    content_hash: 590d35efdb117e817095dcb61758afcab0b2c118924b8363a8966130938ca2a7
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.6'
+    content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.2'
+    content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.7'
+    content_hash: 0e216890e8a307f91227153e4fd781cbfd75dc98bce6b5f70bbba41fc43d587f
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.1'
+    content_hash: 71bd6dd03dc44a4ac7a486bb69ab8b0dda9df0373851fc7d411afafb939c5e57
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-COMMON-001
+    spec_version: '0.2'
+    content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 待確認出金能否由 Admin 手動取消（並因此使紅包恢復可開啟），以 spec 原文或 CLR-CASHFLOW-004 為準
+issue_key: 81b5eeddc5ff01694d28c1d20e685a0eba873e7992f1b0488f5a86fd585151b2
