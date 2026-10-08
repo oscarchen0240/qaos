@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>紅包 — bl'ac 後台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg-page:#0d0d0b;   --bg-sidebar:#111110; --bg-card:#181816;
+  --bg-hover:#1e1e1c;  --bg-input:#111110;
+  --bg-panel:#141412;  --bg-active:#232320;
+  --text-primary:#dedad2; --text-secondary:#6b6965; --text-muted:#3d3d3b;
+  --border:#242422;    --border-focus:#3d3d3b;      --border-light:#3d3d3b;
+  --green:#1D9E75;  --green-text:#5DCAA5;  --green-dim:#0F2E23;
+  --blue:#378ADD;   --blue-text:#85B7EB;   --blue-dim:#0C2A4A;
+  --red-text:#F09595;    --red-dim:#3A1818;
+  --yellow-text:#EF9F27; --yellow-dim:#2E2000;
+  --orange-text:#E8894A; --orange-dim:#2E1800;
+  --purple-text:#B09FE8; --purple-dim:#2A1F3D;
+  --gray-sw:#3a3a38;
+  --sidebar-width:160px; --topbar-height:48px;
+  --radius:6px; --radius-lg:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif;
+}
+body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary);min-height:100vh;display:flex;flex-direction:column;}
+
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;background:var(--bg-sidebar);flex-shrink:0;}
+.topbar-logo{font-size:15px;font-weight:600;letter-spacing:-0.02em;} .topbar-logo span{opacity:0.4;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.topbar-tag{font-size:12px;color:var(--text-secondary);background:var(--bg-hover);border:1px solid var(--border);padding:3px 9px;border-radius:4px;}
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 48px);}
+.sidebar{width:160px;background:var(--bg-sidebar);border-right:1px solid var(--border);padding:8px 0;flex-shrink:0;overflow-y:auto;}
+.sidebar-group{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-group:hover,.sidebar-group.active{color:var(--text-primary);}
+.sidebar-group .arr{font-size:10px;opacity:0.4;}
+.sidebar-item{padding:6px 14px 6px 26px;font-size:13px;color:var(--text-secondary);cursor:pointer;}
+.sidebar-item:hover{color:var(--text-primary);background:var(--bg-hover);}
+.sidebar-item.active{color:var(--text-primary);}
+.main{flex:1;overflow-y:auto;padding:24px 28px 60px;}
+.breadcrumb{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb span{opacity:0.35;margin:0 5px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.page-title{font-size:18px;font-weight:500;color:var(--text-primary);}
+.page-header-right{display:flex;align-items:center;gap:10px;}
+
+.site-switch-row{margin-bottom:12px;}
+.f-select.site-select{width:auto;min-width:190px;}
+.hint{font-size:12px;color:var(--text-muted);line-height:1.7;}
+.page-hint{background:var(--bg-panel);border:1px dashed var(--purple-text);border-radius:var(--radius);padding:9px 12px;margin-bottom:16px;}
+.page-hint::before{content:'PROTO 說明・非畫面內容，請勿實作';display:block;font-size:10px;letter-spacing:0.06em;color:var(--purple-text);margin-bottom:4px;}
+
+button{font-family:inherit;cursor:pointer;}
+.btn-primary{background:var(--text-primary);color:#0d0d0b;border:none;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;}
+.btn-primary:hover{opacity:0.8;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:6px 12px;border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm{padding:3px 9px;font-size:12px;white-space:nowrap;border-radius:var(--radius);font-family:inherit;cursor:pointer;}
+.btn-sm:not(.btn-primary){background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.btn-sm:hover{color:var(--text-primary);border-color:var(--border-focus);background:var(--bg-hover);}
+.btn-sm.danger:hover{color:var(--red-text);border-color:var(--red-text);}
+
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit;}
+.filter-chip:hover{color:var(--text-primary);border-color:var(--border-focus);}
+.filter-chip.active{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-focus);}
+.filter-divider{width:1px;height:18px;background:var(--border);margin:0 4px;}
+.filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.f-field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.f-field label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+.f-input{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;width:100%;}
+.f-input:focus{border-color:var(--border-focus);}
+.f-input::placeholder{color:var(--text-muted);}
+.f-select{padding:6px 10px;font-size:12px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233d3d3b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;width:100%;}
+.f-select option{background:#181816;}
+.filter-btn-group{display:flex;gap:6px;margin-left:auto;}
+
+/* 列表 */
+.list-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:auto;}
+.list-wrap > .list-header, .list-wrap > .list-body{min-width:max-content;}
+.list-header{display:grid;align-items:center;padding:5px 14px 6px;margin-bottom:2px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;background:var(--bg-page);}
+.list-header > span{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;white-space:nowrap;padding-right:12px;}
+.rp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:7px;}
+.rp-card:hover{border-color:var(--border-focus);}
+.rp-row{display:grid;align-items:center;padding:11px 14px;grid-template-columns:220px 130px 160px 150px 70px 150px 170px 120px 230px;min-width:1400px;}
+.rp-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.ops-cell{display:flex;gap:6px;justify-content:flex-start;}
+.num{font-variant-numeric:tabular-nums;}
+.sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+.rp-tag{display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;flex-shrink:0;letter-spacing:0.04em;background:var(--red-dim);color:var(--red-text);}
+.time-range{font-size:12px;color:var(--text-secondary);line-height:1.55;}
+.time-row{display:flex;align-items:center;gap:4px;}
+.time-label{font-size:10px;color:var(--text-muted);width:20px;flex-shrink:0;}
+
+.status-cell{display:flex;align-items:center;gap:6px;font-size:12px;}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.status-active{color:var(--green-text);} .status-active .status-dot{background:var(--green-text);box-shadow:0 0 6px rgba(93,202,165,0.4);}
+.status-scheduled{color:var(--blue-text);} .status-scheduled .status-dot{background:var(--blue-text);}
+.status-expired{color:var(--text-muted);} .status-expired .status-dot{background:var(--text-muted);}
+.status-cancelled{color:var(--red-text);} .status-cancelled .status-dot{background:var(--red-text);}
+
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:1px 7px;border-radius:3px;}
+.b-pending{background:var(--yellow-dim);color:var(--yellow-text);}
+.b-credited{background:var(--green-dim);color:var(--green-text);}
+.b-void{background:var(--bg-hover);color:var(--text-secondary);}
+
+.empty-state{padding:60px 0;text-align:center;color:var(--text-muted);font-size:13px;}
+.empty-state-title{font-size:14px;color:var(--text-secondary);margin-bottom:6px;}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.modal{background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);width:560px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);box-shadow:0 16px 48px rgba(0,0,0,0.7);display:flex;flex-direction:column;}
+.modal-wide{width:640px;}
+.modal-xl{width:1000px;}
+.modal-sm{width:380px;}
+.modal-head{padding:.8rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-size:14px;font-weight:500;color:var(--text-primary);}
+.modal-close{background:none;border:none;font-size:17px;color:var(--text-secondary);cursor:pointer;padding:2px 5px;line-height:1;}
+.modal-close:hover{color:var(--text-primary);}
+.modal-body{padding:.875rem 1rem;overflow-y:auto;flex:1;min-height:0;}
+.modal-foot{padding:.7rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+
+/* 表單 */
+.field{margin-bottom:13px;}
+label.field-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
+.req{color:#F09595;}
+input[type=text],input[type=number],input[type=datetime-local],input[type=date],select,textarea{
+  width:100%;padding:7px 10px;font-size:13px;font-family:inherit;
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg-input);color:var(--text-primary);outline:none;transition:border-color .15s;}
+input::placeholder,textarea::placeholder{color:var(--text-muted);}
+input:focus,select:focus,textarea:focus{border-color:var(--border-focus);}
+select option{background:#181816;}
+textarea{resize:vertical;min-height:72px;}
+.field-error input,.field-error select,.field-error textarea{border-color:var(--red-text)!important;}
+.field-error-msg{font-size:11px;color:var(--red-text);margin-top:4px;display:none;}
+.field-error .field-error-msg{display:block;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field-hint{font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.6;}
+input[type=checkbox]{appearance:none;width:15px;height:15px;flex-shrink:0;margin:0;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);cursor:pointer;position:relative;vertical-align:middle;}
+input[type=checkbox]:checked{background:var(--text-primary);border-color:var(--text-primary);}
+input[type=checkbox]:checked::after{content:'';position:absolute;left:4px;top:1px;width:4px;height:8px;border:2px solid var(--bg-page);border-top:none;border-left:none;transform:rotate(40deg);}
+input[type=radio]{appearance:none;width:14px;height:14px;border:1px solid var(--border);border-radius:50%;background:var(--bg-input);cursor:pointer;position:relative;vertical-align:middle;}
+input[type=radio]:checked{border-color:var(--text-primary);}
+input[type=radio]:checked::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--text-primary);}
+.radio-line{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-secondary);}
+.radio-line label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.cb-line{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text-secondary);}
+.cb-line label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+
+.option-group{display:flex;gap:6px;flex-wrap:wrap;}
+.option-card{flex:1;min-width:0;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;background:var(--bg-input);}
+.option-card:hover{border-color:var(--border-focus);background:var(--bg-hover);}
+.option-card.sel{border-color:var(--blue);background:var(--blue-dim);}
+.option-card.disabled{opacity:0.35;cursor:not-allowed;}
+.option-card-title{font-size:13px;color:var(--text-primary);margin-bottom:3px;}
+.option-card.sel .option-card-title{color:var(--blue-text);}
+.option-card-desc{font-size:11px;color:var(--text-muted);}
+
+.section-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--border);}
+.section-label:first-child{margin-top:0;padding-top:0;border-top:none;}
+.warn-box{background:var(--yellow-dim);border:1px solid rgba(239,159,39,0.15);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--yellow-text);margin-top:8px;line-height:1.6;}
+.info-box{background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--text-secondary);line-height:1.6;}
+
+.wt-row{display:grid;grid-template-columns:1fr 1fr 32px;gap:8px;align-items:center;margin-bottom:6px;}
+.wt-head{font-size:11px;color:var(--text-muted);}
+.wt-rm{background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);height:32px;}
+.wt-rm:hover{color:var(--red-text);border-color:var(--red-text);}
+.wt-sum{font-size:12px;margin-top:4px;}
+.cost-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.stat-mini{background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+.stat-mini-lbl{font-size:11px;color:var(--text-muted);margin-bottom:3px;}
+.stat-mini-val{font-size:18px;font-weight:500;color:var(--text-primary);font-variant-numeric:tabular-nums;}
+
+/* 紅包明細 */
+.dt-row{display:grid;align-items:center;padding:9px 14px;grid-template-columns:150px 110px 160px 130px 150px 110px 100px 70px 80px 150px 90px;min-width:1300px;}
+.dt-row > div{font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.dt-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;}
+.dt-card:hover{border-color:var(--border-focus);}
+.detail-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
+.cfg-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;}
+.cfg-title{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:8px;}
+.cfg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 16px;}
+.cfg-k{font-size:11px;color:var(--text-muted);margin-bottom:2px;}
+.cfg-v{font-size:12px;color:var(--text-primary);line-height:1.5;}
+.cfg-box .cost-grid{margin-top:0;grid-template-columns:repeat(5,1fr);}
+.b-exhausted{background:var(--orange-dim);color:var(--orange-text);margin-left:6px;}
+.sw-track{display:inline-flex;align-items:center;width:44px;height:24px;border-radius:12px;cursor:pointer;transition:background 0.25s;position:relative;flex-shrink:0;user-select:none;}
+.sw-track.on{background:#c8c6be;}
+.sw-track.off{background:#2a2a28;}
+.sw-dot{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;transition:left 0.25s,background 0.25s;}
+.sw-track.on .sw-dot{left:23px;background:#3a3a38;}
+.sw-track.off .sw-dot{left:3px;background:#5a5a58;}
+.sw-wrap{display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;margin-left:12px;font-size:12px;color:var(--text-secondary);}
+.plan-box.off{padding-bottom:12px;}
+.plan-box.off .plan-head{margin-bottom:0;}
+.plan-box{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-panel);padding:12px 12px 2px;margin-bottom:10px;}
+.plan-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.plan-name{font-size:13px;color:var(--text-primary);}
+.plan-scope{font-size:11px;color:var(--text-muted);margin-left:8px;}
+.plan-box .cost-grid{margin:0 0 12px;}
+.cb-line label.dis{opacity:0.35;cursor:not-allowed;}
+.cb-line label.dis input{cursor:not-allowed;}
+.pl-row{display:grid;align-items:center;padding:7px 10px;grid-template-columns:110px 220px 110px 100px 70px 1fr;gap:0;border-top:1px solid var(--border);}
+.pl-row > div,.pl-row > span{font-size:12px;color:var(--text-secondary);padding-right:10px;}
+.pl-row.pl-head{border-top:none;padding-top:0;}
+.pl-row.pl-head > span{font-size:11px;color:var(--text-muted);}
+.plan-cost-lbl{font-size:11px;color:var(--text-secondary);margin:10px 0 6px;}
+.bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;width:120px;}
+.bar-fill{height:3px;background:var(--green);border-radius:2px;}
+.bar-fill.full{background:var(--orange-text);}
+
+/* 日曆選擇（沿用 加盟商設定 v01 的 cal-* 元件） */
+.dp{position:relative;}
+.date-input{padding:7px 10px;font-size:13px;font-family:inherit;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-input);color:var(--text-primary);outline:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.date-input:hover{border-color:var(--border-focus);}
+.date-input .ph{color:var(--text-muted);}
+.date-input svg{color:var(--text-muted);flex-shrink:0;}
+.dp.sm .date-input{padding:6px 10px;font-size:12px;}
+.dp.disabled .date-input{opacity:0.5;cursor:not-allowed;}
+.field-error .date-input{border-color:var(--red-text);}
+.date-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);z-index:50;min-width:250px;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.date-dropdown.open{display:block;}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.cal-nav{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:var(--radius);}
+.cal-nav:hover{color:var(--text-primary);background:var(--bg-hover);}
+.cal-month{font-size:13px;color:var(--text-primary);}
+.cal-grid{padding:8px 10px 10px;}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cal-dow span{font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{font-size:12px;color:var(--text-secondary);text-align:center;padding:6px 2px;border-radius:var(--radius);cursor:pointer;}
+.cal-day:hover{color:var(--text-primary);background:var(--bg-hover);}
+.cal-day.other{color:var(--text-muted);cursor:default;}
+.cal-day.other:hover{background:none;color:var(--text-muted);}
+.cal-day.today{color:var(--blue-text);}
+.cal-day.sel{background:var(--text-primary);color:#0d0d0b;}
+.cal-time{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary);}
+.cal-time select{width:64px;padding:4px 6px;font-size:12px;}
+.cal-foot{display:flex;justify-content:flex-end;gap:6px;padding:8px 12px;border-top:1px solid var(--border);}
+.table-footer{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-secondary);padding:10px 2px 0;}
+
+.toast{position:fixed;right:24px;bottom:24px;background:var(--bg-hover);border:1px solid var(--border-focus);color:var(--text-primary);font-size:13px;padding:10px 14px;border-radius:var(--radius);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:500;max-width:420px;}
+.toast.show{opacity:1;transform:translateY(0);}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">bl<span>'</span>ac</div>
+  <div class="topbar-right">
+    <span class="topbar-tag">UTC+00:00</span>
+    <span class="topbar-tag">簡體中文</span>
+    <span class="topbar-tag">OAAE27852 站長</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="breadcrumb">系統管理 <span>/</span> 優惠活動管理</div>
+    <div class="page-header">
+      <h1 class="page-title">優惠活動管理</h1>
+      <div class="page-header-right"><button class="btn-primary" onclick="openAddModal()">+ 新增優惠活動</button></div>
+    </div>
+    <div class="site-switch-row">
+      <select class="f-select site-select" id="site-switch" onchange="siteChanged()" title="站台切換（模擬）">
+        <option value="main">主站台（線上）</option>
+        <option value="ty">桃園場館（機台）</option>
+        <option value="tc">台中場館（機台）</option>
+      </select>
+    </div>
+    <div class="page-hint hint" id="page-hint"></div>
+
+    <div class="filter-bar" id="type-tabs"></div>
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="status" data-value="all" onclick="setStatus('all')">全部</button>
+      <button class="filter-chip" data-filter="status" data-value="active" onclick="setStatus('active')">進行中</button>
+      <button class="filter-chip" data-filter="status" data-value="scheduled" onclick="setStatus('scheduled')">排程中</button>
+      <button class="filter-chip" data-filter="status" data-value="expired" onclick="setStatus('expired')">已結束</button>
+      <button class="filter-chip" data-filter="status" data-value="cancelled" onclick="setStatus('cancelled')">已取消</button>
+    </div>
+
+    <div class="list-wrap">
+      <div class="list-header rp-row">
+        <span>活動名稱</span><span>活動幣種／派發</span><span>累積門檻／單週期上限</span><span>獎勵方式</span><span>稽核倍數</span><span>預算使用</span><span>活動時間 (UTC+0)</span><span>狀態</span><span>操作</span>
+      </div>
+      <div class="list-body" id="rp-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增 Modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal modal-wide">
+    <div class="modal-head"><h2>新增優惠活動</h2><button class="modal-close" onclick="closeAdd()">✕</button></div>
+    <div class="modal-body">
+      <div class="section-label">活動類型</div>
+      <div class="option-group" id="type-options"></div>
+      <div class="field-hint" id="type-hint"></div>
+
+      <div class="section-label">基本設定</div>
+      <div class="field">
+        <label class="field-label">活動條件</label>
+        <input type="text" value="有效流水累計" readonly style="opacity:0.5;"/>
+        <p class="field-hint">固定，不可修改。累計基準＝有效投注額 × 遊戲貢獻系數（見 4.2 注單查詢）</p>
+      </div>
+      <div class="field" id="field-coins">
+        <label class="field-label">活動幣種 <span class="req">*</span></label>
+        <div class="cb-line" id="coin-cbs"></div>
+        <p class="field-hint">勾選此活動適用的幣種（可複選）；實際顯示的項目依鏈上錢包管理中已開啟的幣種為準。與充值活動的「活動幣種」相同，即可參加活動的錢包；非核心貨幣注單於結算當下依系統匯率換算為核心貨幣後累計</p>
+        <p class="field-error-msg">請至少勾選一個幣種</p>
+      </div>
+      <div class="info-box" id="coins-machine" style="display:none;margin-bottom:13px;">活動幣種：機台場館固定 TWD（場館僅此一種），不顯示選項。</div>
+      <div class="field">
+        <label class="field-label">派發幣種</label>
+        <input type="text" id="m-wallet" readonly style="opacity:0.5;"/>
+        <p class="field-hint">自動帶入站台核心貨幣，不可選；累積門檻、紅包金額、總預算皆以此幣種計</p>
+      </div>
+      <div class="field" id="field-time">
+        <label class="field-label">活動時間 <span class="req">*</span></label>
+        <div class="radio-line" style="margin-bottom:8px;">
+          <label><input type="radio" name="tm" value="forever" checked onchange="toggleTime()"/>永久</label>
+          <label><input type="radio" name="tm" value="range" onchange="toggleTime()"/>區間</label>
+        </div>
+        <div class="field-row">
+          <div class="dp" data-target="m-start" data-time="1" data-ph="開始時間"></div>
+          <div class="dp" data-target="m-end" data-time="1" data-ph="結束時間"></div>
+        </div>
+        <p class="field-error-msg" id="time-msg">時間設定有誤</p>
+        <p class="field-hint">UTC+0。同一站台同一時間僅能有一個進行中的紅包活動</p>
+      </div>
+      <div class="field">
+        <label class="field-label">重置方式 <span class="req">*</span></label>
+        <select id="m-reset">
+          <option value="day">每日重置</option>
+          <option value="week">每週一重置</option>
+          <option value="month">每月 1 日重置</option>
+          <option value="none">不重置</option>
+        </select>
+        <p class="field-hint" id="reset-hint"></p>
+      </div>
+      <div class="field" id="field-budget">
+        <label class="field-label">活動總預算</label>
+        <input type="number" id="m-budget" placeholder="選填，空白表示不限" oninput="clearErr('field-budget');renderAllCosts()"/>
+        <p class="field-error-msg">有填時須大於 0</p>
+        <p class="field-hint">單位為派發幣種，所有規則共用一池。預算占用＝已入帳＋待開啟紅包金額，用罄即停止產生紅包；建立後只能追加調高</p>
+      </div>
+
+      <div class="section-label">規則設定</div>
+      <p class="field-hint" id="plan-hint" style="margin:0 0 10px;"></p>
+      <div id="plans"></div>
+      <button class="btn-ghost" id="add-plan-btn" onclick="addPlan()" style="margin-bottom:10px;">+ 新增等級規則</button>
+      <div id="cost-overall"></div>
+      <p class="field-hint">成本試算為系統自動計算，不可編輯，僅供預算評估；「預算約可發放」假設預算全由該規則發放。金額於紅包產生當下即抽定。規則設定建立後不可修改。</p>
+
+      <div class="section-label">前台顯示</div>
+      <div class="field">
+        <label class="field-label">前台圖示選擇</label>
+        <select id="m-icon"><option>紅包 A（金色）</option><option>紅包 B（福袋）</option><option>紅包 C（信封）</option></select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">預設語系</label>
+          <select id="m-lang-default"><option>繁體中文</option><option>簡體中文</option><option>English</option></select>
+        </div>
+        <div class="field">
+          <label class="field-label">語系</label>
+          <select id="m-lang"><option>繁體中文</option><option>簡體中文</option><option>English</option></select>
+        </div>
+      </div>
+      <div class="field" id="field-name">
+        <label class="field-label">活動名稱 <span class="req">*</span></label>
+        <input type="text" id="m-name" maxlength="25" placeholder="最多 25 字元；前台紅包入口與機台彈窗顯示" oninput="clearErr('field-name')"/>
+        <p class="field-error-msg">請填寫活動名稱</p>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label class="field-label">說明欄</label>
+        <textarea id="m-desc" placeholder="該語系的活動說明文字"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeAdd()">取消</button>
+      <button class="btn-primary" onclick="saveAdd()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 紅包明細 Modal -->
+<div class="overlay" id="detail-overlay">
+  <div class="modal modal-xl">
+    <div class="modal-head"><h2 id="detail-title">紅包明細</h2><button class="modal-close" onclick="closeDetail()">✕</button></div>
+    <div class="modal-body">
+      <div class="cfg-box" id="detail-cfg"></div>
+      <div class="cfg-title">發放統計</div>
+      <div class="detail-stats" id="detail-stats"></div>
+      <div class="filter-bar">
+        <div class="filter-row" style="flex:1;">
+          <div class="f-field" style="width:220px;"><label>會員編號</label><input class="f-input" id="d-mem" placeholder="多筆以「,」分隔"/></div>
+          <div class="f-field" style="width:130px;" id="d-plan-field"><label>規則</label><select class="f-select" id="d-plan"></select></div>
+          <div class="f-field" style="width:130px;"><label>紅包狀態</label>
+            <select class="f-select" id="d-status"><option value="">全部</option><option value="pending">待開啟</option><option value="credited">已入帳</option><option value="void">已作廢</option></select></div>
+          <div class="f-field" style="width:150px;"><label>產生時間 起 (UTC+0)</label><div class="dp sm" data-target="d-from" data-ph="請選擇日期"></div></div>
+          <div class="f-field" style="width:150px;"><label>產生時間 迄 (UTC+0)</label><div class="dp sm" data-target="d-to" data-ph="請選擇日期"></div></div>
+          <div class="filter-btn-group">
+            <button class="btn-ghost" onclick="clearDetailFilter()">清除</button>
+            <button class="btn-primary" onclick="renderDetail()">搜尋</button>
+            <button class="btn-ghost" onclick="showToast('匯出整個查詢結果為 CSV（示意）')">匯出 CSV</button>
+          </div>
+        </div>
+      </div>
+      <div class="list-wrap">
+        <div class="list-header dt-row">
+          <span>紅包編號</span><span>會員編號</span><span>適用規則</span><span>場次編號</span><span>產生時間</span><span>週期累計</span><span>紅包金額</span><span>稽核倍數</span><span>狀態</span><span>入帳時間</span><span>作廢原因</span>
+        </div>
+        <div class="list-body" id="detail-list"></div>
+      </div>
+      <div class="table-footer" id="detail-footer"></div>
+    </div>
+    <div class="modal-foot"><button class="btn-ghost" onclick="closeDetail()">關閉</button></div>
+  </div>
+</div>
+
+<!-- 取消排程確認 -->
+<div class="overlay" id="cancel-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head"><h2>確認取消排程</h2><button class="modal-close" onclick="closeCancel()">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;line-height:1.7;">確定要取消「<span id="cancel-name" style="color:var(--red-text);"></span>」？此操作無法復原。</p>
+      <p class="hint" style="margin-top:8px;">活動停止累計與產生紅包；已產生但未開啟的紅包一併作廢，已入帳紀錄不受影響。</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeCancel()">返回</button>
+      <button class="btn-primary" style="background:var(--red-text);color:#0d0d0b;" onclick="confirmCancel()">確認取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 追加預算 -->
+<div class="overlay" id="budget-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head"><h2>追加預算</h2><button class="modal-close" onclick="closeBudget()">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:10px;">「<span id="budget-name"></span>」</p>
+      <div class="info-box" id="budget-now" style="margin-bottom:12px;"></div>
+      <div class="field" id="field-newbudget" style="margin-bottom:0;">
+        <label class="field-label">新的總預算 <span class="req">*</span></label>
+        <input type="number" id="m-newbudget" oninput="clearErr('field-newbudget')"/>
+        <p class="field-error-msg">須大於目前總預算（只能調高、不能調低）</p>
+        <p class="field-hint">確認後即時生效；預算用罄的活動恢復產生紅包。本次調整寫入操作紀錄（操作人員、時間、調整前後金額）</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeBudget()">取消</button>
+      <button class="btn-primary" onclick="confirmBudget()">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SITES={
+  main:{name:'主站台（線上）',machine:false,core:'USDT',wallets:['USDT','EUR','USD']},
+  ty:{name:'桃園場館（機台）',machine:true,core:'TWD',wallets:['TWD'],closing:'20:00'},
+  tc:{name:'台中場館（機台）',machine:true,core:'TWD',wallets:['TWD'],closing:'16:00'},
+};
+// 6.2 會員等級設定「生效方案」的等級（示意）；紅包等級規則以 VIP 等級序號記錄
+const LEVEL_NAMES={1:'Starter',2:'Bronze',3:'Silver',4:'Gold',5:'Platinum'};
+const LEVELS=Object.keys(LEVEL_NAMES).map(Number);
+const LEVEL_MEMBERS={1:1280,2:640,3:310,4:95,5:22};  // 6.2 等級列表「會員人數」（示意）
+// 規則涵蓋的等級與會員人數：預設規則＝未被等級規則勾選的等級
+function coveredLevels(p,list){return p.def?LEVELS.filter(l=>!list.some(q=>!q.def&&q.levels.includes(l))):p.levels.filter(l=>LEVELS.includes(l));}
+function membersOf(p,list){return coveredLevels(p,list).reduce((a,l)=>a+(LEVEL_MEMBERS[l]||0),0);}
+function lvLabel(n){return LEVEL_NAMES[n]?`${n}・${LEVEL_NAMES[n]}`:`${n}（目前方案無此等級）`;}
+const ONLINE_TYPES=['每日簽到','累計簽到','儲值活動','熱門活動','彩金活動','紅包活動'];
+const RESET_LABEL={day:'每日重置',week:'每週一重置',month:'每月 1 日重置',none:'不重置'};
+const NOW=new Date('2026-09-24T08:00:00Z');
+
+let nextId=1;
+// 規則：levels 為 null 表示預設規則（套用其餘等級）；活動無預設規則＝預設規則關閉（其餘等級不參加）
+const P=(levels,th,cap,reward,x,audit)=>({levels,th,cap,reward,fixed:reward==='fixed'?x:null,wt:reward==='random'?x:[],audit});
+function mk(o){
+  o.id=nextId++;
+  o.plans.forEach(p=>{p.def=!p.levels;p.levels=p.levels||[];});
+  let n=0;o.plans.forEach(p=>p.name=p.def?'預設規則':'等級規則 '+(++n));
+  if(!SITES[o.site].machine)o.plans.forEach(p=>p.members=membersOf(p,o.plans));  // 建立當下涵蓋會員人數
+  return o;
+}
+let activities=[
+  mk({site:'main',name:'九月流水紅包',wallet:'USDT',coins:['USDT','EUR','USD'],budget:5000,reset:'day',forever:false,start:'2026-09-01T00:00',end:'2026-09-30T23:59',cancelled:false,
+    plans:[P(null,1000,5,'random',[[8,60],[18,30],[88,10]],1),P([4,5],800,8,'random',[[18,60],[38,30],[188,10]],1)]}),
+  mk({site:'main',name:'VIP 週末紅包',wallet:'USDT',coins:['USDT','EUR'],budget:3000,reset:'week',forever:false,start:'2026-10-01T00:00',end:'2026-10-31T23:59',cancelled:false,
+    plans:[P([4],5000,3,'fixed',50,2),P([5],5000,3,'fixed',80,2)]}),
+  mk({site:'main',name:'八月流水紅包',wallet:'USDT',coins:['USDT'],budget:null,reset:'day',forever:false,start:'2026-08-01T00:00',end:'2026-08-31T23:59',cancelled:false,
+    plans:[P(null,1000,5,'fixed',10,1)]}),
+  mk({site:'main',name:'七月測試紅包',wallet:'USDT',coins:['EUR'],budget:null,reset:'none',forever:false,start:'2026-07-01T00:00',end:'2026-07-31T23:59',cancelled:true,
+    plans:[P([1],500,2,'fixed',5,1)]}),
+  mk({site:'ty',name:'桃園機台好運紅包',wallet:'TWD',coins:['TWD'],budget:'used',exhausted:true,reset:'day',forever:true,start:'2026-09-10T00:00',end:'',cancelled:false,
+    plans:[P(null,20000,10,'random',[[100,70],[300,25],[1000,5]],0)]}),
+  mk({site:'ty',name:'桃園開幕紅包',wallet:'TWD',coins:['TWD'],budget:null,reset:'day',forever:false,start:'2026-08-15T00:00',end:'2026-08-31T23:59',cancelled:false,
+    plans:[P(null,10000,5,'fixed',200,0)]}),
+  mk({site:'tc',name:'台中九月週末紅包',wallet:'TWD',coins:['TWD'],budget:20000,reset:'week',forever:false,start:'2026-09-15T00:00',end:'2026-09-30T23:59',cancelled:false,
+    plans:[P(null,15000,3,'fixed',150,0)]}),
+  mk({site:'tc',name:'台中年終紅包',wallet:'TWD',coins:['TWD'],budget:50000,reset:'day',forever:false,start:'2026-12-01T00:00',end:'2026-12-31T23:59',cancelled:false,
+    plans:[P(null,20000,8,'random',[[100,60],[300,30],[888,10]],1)]}),
+  mk({site:'tc',name:'台中試營運紅包',wallet:'TWD',coins:['TWD'],budget:null,reset:'day',forever:false,start:'2026-08-01T00:00',end:'2026-08-31T23:59',cancelled:false,
+    plans:[P(null,8000,5,'random',[[50,80],[200,20]],0)]}),
+  mk({site:'tc',name:'台中測試紅包',wallet:'TWD',coins:['TWD'],budget:5000,reset:'none',forever:false,start:'2026-07-10T00:00',end:'2026-07-31T23:59',cancelled:true,
+    plans:[P(null,5000,2,'fixed',100,0)]}),
+];
+// 會員當下適用的規則：該等級有等級規則則用之 → 否則預設規則（開啟時）→ 皆無則不參加（null）
+function planFor(a,lv){
+  if(SITES[a.site].machine)return a.plans.find(p=>p.def)||null;
+  return a.plans.find(p=>!p.def&&p.levels.includes(lv))||a.plans.find(p=>p.def)||null;
+}
+// 參加等級摘要（列表與明細）
+function joinLevels(a){
+  if(SITES[a.site].machine)return '本場館所有機台帳號';
+  if(a.plans.some(p=>p.def))return '全部等級';
+  const lv=a.plans.flatMap(p=>p.levels);return lv.sort((x,y)=>x-y).map(lvLabel).join('、');
+}
+// 預設規則實際套用的等級
+function defaultScope(a){
+  if(SITES[a.site].machine)return '本場館所有機台帳號';
+  const taken=a.plans.filter(p=>!p.def).flatMap(p=>p.levels);
+  const rest=LEVELS.filter(l=>!taken.includes(l));
+  return (rest.length?rest.map(lvLabel).join('、')+'，及其他未勾選的等級序號':'其他未勾選的等級序號');
+}
+// 示意會員等級序號；BBAA00706 於第 10 筆後由 3 升為 4（改用等級規則）
+const MEM_LV={BBAA00701:2,BBAA00702:4,BBAA00703:1,BBAA00705:5,BBAA00706:3};
+function memLevel(m,i){return m==='BBAA00706'&&i>=9?4:MEM_LV[m]||null;}
+
+// 假紅包紀錄
+const RECORDS={};
+function seedRecords(a){
+  const machine=SITES[a.site].machine;
+  const pre=a.site==='tc'?'TCM':'TYM';
+  const mems=machine?[1,2,3,4].map(n=>pre+String(n).padStart(5,'0')):['BBAA00701','BBAA00702','BBAA00703','BBAA00705','BBAA00706'];
+  const out=[];let n=1;
+  const base=new Date(a.start+':00Z');
+  for(let i=0;i<14;i++){
+    const m=mems[i%mems.length];
+    const t=new Date(base.getTime()+i*5.3*3600*1000);
+    if(t>NOW)break;
+    const lv=machine?null:memLevel(m,i);
+    const pl=planFor(a,lv);if(!pl)continue;
+    const amt=pl.reward==='fixed'?pl.fixed:pickWt(pl.wt,i);
+    const r=i%5;
+    let st='credited',reason='—',cred='';
+    if(r===3){st='void';reason=machine?(i%2?'機台出金':'機台洗分'):'週期重置';}
+    else if(r===4&&i>8){st='pending';}
+    else cred=fmt(new Date(t.getTime()+(machine?40:3600)*1000));
+    out.push({no:'RP'+String(a.id).padStart(3,'0')+String(n++).padStart(5,'0'),mem:m,
+      session:machine?'S'+m.slice(-3)+'-'+String(20+i).padStart(4,'0'):'—',
+      plan:pl.name,lv,at:fmt(t),atDate:t,cum:pl.th*(1+(i%3)),amt,audit:pl.audit,st,cred:cred||'—',reason});
+  }
+  return out;
+}
+function pickWt(wt,i){const r=(i*37)%100;let acc=0;for(const [amt,p] of wt){acc+=p;if(r<acc)return amt;}return wt[0][0];}
+function fmt(d){const p=n=>String(n).padStart(2,'0');return `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;}
+activities.forEach(a=>RECORDS[a.id]=seedRecords(a));
+// 預算占用＝已入帳＋待開啟金額（作廢即釋放）
+function usedOf(a){return (RECORDS[a.id]||[]).filter(r=>r.st!=='void').reduce((s,r)=>s+r.amt,0);}
+activities.forEach(a=>{if(a.budget==='used')a.budget=usedOf(a);});  // 示意：桃園好運紅包的預算剛好用罄
+
+let site='main',statusFilter='all',typeTab='紅包活動';
+
+function isMachine(){return SITES[site].machine;}
+// 日結時間為 UTC+0，換算台灣時間（UTC+8）供表單提示
+function twTime(hm){const [h,m]=hm.split(':').map(Number);return `${String((h+8)%24).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
+function getStatus(a){
+  if(a.cancelled)return 'cancelled';
+  const s=new Date(a.start+':00Z');
+  if(s>NOW)return 'scheduled';
+  if(!a.forever&&a.end&&new Date(a.end+':00Z')<NOW)return 'expired';
+  return 'active';
+}
+const SL={active:'進行中',scheduled:'排程中',expired:'已結束',cancelled:'已取消'};
+
+function renderSidebar(){
+  const m=isMachine();
+  const sys=m?['優惠活動管理','公告設定','Free Spin 管理','橫幅管理','消稽核設定']
+            :['KYC設定','會員等級設定','代理設定','加盟商設定','優惠活動管理','畫面管理','公告設定','Free Spin 管理','橫幅管理','消稽核設定'];
+  document.getElementById('sidebar').innerHTML=
+    (m?'':'<div class="sidebar-group">資訊看板</div>')+
+    '<div class="sidebar-group">會員與加盟商 <span class="arr">›</span></div>'+
+    '<div class="sidebar-group">帳務管理 <span class="arr">›</span></div>'+
+    '<div class="sidebar-group">各式報表 <span class="arr">›</span></div>'+
+    '<div class="sidebar-group">遊戲商管理 <span class="arr">›</span></div>'+
+    '<div class="sidebar-group active">系統管理 <span class="arr" style="opacity:0.7;">∨</span></div>'+
+    sys.map(s=>`<div class="sidebar-item${s==='優惠活動管理'?' active':''}" onclick="${s==='優惠活動管理'?'':`showToast('請開啟對應 proto：${s}')`}">${s}</div>`).join('')+
+    '<div class="sidebar-group">後台管理員系統 <span class="arr">›</span></div>';
+}
+function renderHint(){
+  document.getElementById('page-hint').innerHTML=isMachine()
+    ?'<span style="color:var(--text-secondary);">機台場館視角</span>：優惠活動管理於機台場館<span style="color:var(--text-secondary);">僅開放「紅包」類型</span>（開發包⑥排除規則逐項解除紅包，其餘優惠類型仍排除），活動排程只有「紅包活動」子分頁。紅包屬於機台：累計為整台機台帳號的有效流水貢獻，達標即於機台遊戲畫面彈出；機台完成洗分／出金時未開啟的紅包作廢，洗分／出金進行中紅包不可開啟（前台行為，本 proto 不呈現）。活動幣種與派發幣種固定 TWD、僅預設規則且固定開啟（無等級規則）、稽核倍數預設 0；每日／每週／每月重置於<span style="color:var(--text-secondary);">場館日結時間</span>切分（本 proto 假設桃園 20:00、台中 16:00，UTC+0）。'
+    :'<span style="color:var(--text-secondary);">線上站台視角</span>：本 proto 只呈現新增的「紅包」類型；其餘子分頁（每日簽到、累計簽到、儲值、熱門、彩金）見 <span style="color:var(--text-secondary);">優惠活動管理_proto_v01.html</span>。切換頁面標題下方的站台（模擬）可比較機台場館的差異。活動幣種的注單流水於結算當下依系統匯率換算為核心貨幣（USDT）累計，紅包一律派發 USDT。可依會員等級設定等級規則，其餘等級套用預設規則，預設規則可關閉（其餘等級不參加），不另設受眾範圍（「九月流水紅包」有預設＋等級規則；「VIP 週末紅包」「七月測試紅包」預設規則關閉，只有勾選的等級參加；九月紅包明細中 BBAA00706 示意由 3・Silver 升 4・Gold 後改用等級規則）。適用等級選項讀取會員等級設定中生效的會員等級方案（本 proto 假設 1・Starter～5・Platinum），以 VIP 等級序號記錄；切換會員等級方案時依序號對應。前台呈現、紅包編號與場次編號格式為示意，spec 未定義。';
+}
+function renderTabs(){
+  const tabs=isMachine()?['紅包活動']:ONLINE_TYPES;
+  document.getElementById('type-tabs').innerHTML=tabs.map(t=>`<button class="filter-chip${t===typeTab?' active':''}" onclick="setTab('${t}')">${t}</button>`).join('');
+}
+function setTab(t){
+  if(t!=='紅包活動'){showToast('「'+t+'」子分頁請見 優惠活動管理_proto_v01.html');return;}
+  typeTab=t;renderTabs();
+}
+function setStatus(v){
+  statusFilter=v;
+  document.querySelectorAll('.filter-chip[data-filter="status"]').forEach(el=>el.classList.toggle('active',el.dataset.value===v));
+  render();
+}
+function rewardText(p,cur){
+  if(p.reward==='fixed')return `固定 ${p.fixed} ${cur}`;
+  const amts=p.wt.map(w=>w[0]);
+  return `隨機 ${Math.min(...amts)}～${Math.max(...amts)} ${cur}<div class="sub">權重表 ${p.wt.length} 項</div>`;
+}
+function rewardFull(p,cur){return p.reward==='fixed'?`固定金額 ${p.fixed} ${cur}`:'隨機：'+p.wt.map(w=>`${w[0]}（${w[1]}%）`).join('・');}
+function render(){
+  const list=activities.filter(a=>a.site===site&&(statusFilter==='all'||getStatus(a)===statusFilter));
+  const el=document.getElementById('rp-list');
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-state-title">沒有符合條件的紅包活動</div><div>調整狀態篩選，或新增一個活動</div></div>';return;}
+  el.innerHTML=list.map(a=>{
+    const st=getStatus(a);
+    const canCancel=st==='active'||st==='scheduled';
+    const used=usedOf(a);
+    const mp=a.plans[0];
+    const budgetCell=a.budget
+      ?`<div class="num">${used.toLocaleString()} ／ ${a.budget.toLocaleString()}</div><div class="bar"><div class="bar-fill${used>=a.budget||a.exhausted?' full':''}" style="width:${Math.min(100,used/a.budget*100)}%"></div></div><div class="sub">剩餘 ${Math.max(0,a.budget-used).toLocaleString()} ${a.wallet}</div>`
+      :'<div>不限</div>';
+    return `<div class="rp-card"><div class="rp-row">
+      <div><div style="display:flex;align-items:center;gap:6px;"><span class="rp-tag">紅包</span><span style="font-size:14px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;">${a.name}</span></div>
+        <div class="sub">${SITES[a.site].machine?'':'參加等級：'+joinLevels(a)+'　'}${RESET_LABEL[a.reset]}</div></div>
+      <div><div>${a.coins.join('、')}</div><div class="sub">派發 ${a.wallet}</div></div>
+      <div><div class="num">${mp.th.toLocaleString()} ／ ${mp.cap} 個</div>${a.plans.length>1?`<div class="sub">${mp.name}　＋${a.plans.length-1} 個等級規則</div>`:''}</div>
+      <div>${rewardText(mp,a.wallet)}</div>
+      <div class="num">${mp.audit} 倍</div>
+      <div>${budgetCell}</div>
+      <div class="time-range">${a.forever?`<div class="time-row"><span class="time-label">起</span>${a.start.replace('T',' ')}</div><div class="time-row"><span class="time-label">迄</span>永久</div>`:`<div class="time-row"><span class="time-label">起</span>${a.start.replace('T',' ')}</div><div class="time-row"><span class="time-label">迄</span>${a.end.replace('T',' ')}</div>`}</div>
+      <div class="status-cell status-${st}"><span class="status-dot"></span><span>${SL[st]}</span>${st==='active'&&a.exhausted?'<span class="badge b-exhausted">預算用罄</span>':''}</div>
+      <div class="ops-cell">
+        <button class="btn-sm" onclick="openDetail(${a.id})">紅包明細</button>
+        ${canCancel&&a.budget?`<button class="btn-sm" onclick="openBudget(${a.id})">追加預算</button>`:''}
+        ${canCancel?`<button class="btn-sm danger" onclick="askCancel(${a.id})">取消排程</button>`:''}
+      </div>
+    </div></div>`;
+  }).join('');
+}
+function siteChanged(){
+  site=document.getElementById('site-switch').value;
+  typeTab='紅包活動';
+  renderSidebar();renderHint();renderTabs();render();
+  showToast('已切換至 '+SITES[site].name);
+}
+
+/* ---------- 新增 ---------- */
+const WT_DEFAULT=[[8,60],[18,30],[88,10]];
+let plans=[];
+function newPlan(def){return {def,on:true,levels:[],th:'',cap:'',reward:'fixed',fixed:'',wt:WT_DEFAULT.map(w=>[...w]),audit:isMachine()?0:1};}
+function openAddModal(){
+  const m=isMachine();
+  const types=['充值','簽到','熱門','彩金活動','紅包'];
+  document.getElementById('type-options').innerHTML=types.map(t=>{
+    const dis=m&&t!=='紅包';
+    return `<div class="option-card${t==='紅包'?' sel':''}${dis?' disabled':''}" onclick="${dis?'':(t==='紅包'?'':`showToast('其他活動類型請見 優惠活動管理_proto_v01.html')`)}"><div class="option-card-title">${t}</div></div>`;
+  }).join('');
+  document.getElementById('type-hint').textContent=m?'機台場館僅開放「紅包」類型（其餘優惠類型依排除規則仍不適用）':'';
+  const S=SITES[site];
+  document.getElementById('m-wallet').value=S.core;
+  document.getElementById('field-coins').style.display=m?'none':'';
+  document.getElementById('coins-machine').style.display=m?'':'none';
+  document.getElementById('coin-cbs').innerHTML=S.wallets.map(x=>`<label><input type="checkbox" value="${x}"${x===S.core?' checked':''} onchange="clearErr('field-coins')"/>${x}${x===S.core?'<span class="sub" style="margin:0 0 0 4px;">核心貨幣</span>':''}</label>`).join('');
+  document.getElementById('reset-hint').textContent=m
+    ?`每日／每週一／每月 1 日於本場館日結時間歸零（目前設定：UTC+0 ${S.closing}，台灣時間 ${twTime(S.closing)}）；重置時未開啟的紅包一併作廢；建立後不可修改`
+    :'累計歸零週期，於 UTC+0 00:00 切分；重置時未開啟的紅包一併作廢；建立後不可修改';
+  document.getElementById('m-budget').value='';
+  document.querySelector('input[name=tm][value=forever]').checked=true;
+  dpSet('m-start','2026-10-01T00:00');dpSet('m-end','');toggleTime();
+  ['m-name','m-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-reset').value='day';
+  document.getElementById('add-plan-btn').style.display=m?'none':'';
+  document.getElementById('plan-hint').textContent=m
+    ?'機台場館僅預設規則且固定開啟（機台帳號不參與會員等級），套用本場館所有機台帳號。'
+    :'規則決定誰能參加與適用哪一組規則。可依會員等級新增等級規則；未指定的等級套用預設規則，預設規則關閉時其餘等級不參加。一個等級只能屬於一個規則。會員升降級時立即改用新等級的規則（本週期累計與已產生數保留）。';
+  plans=[newPlan(true)];
+  renderPlans();
+  ['field-coins','field-time','field-budget','field-name'].forEach(clearErr);
+  document.getElementById('add-overlay').classList.add('active');
+}
+function closeAdd(){document.getElementById('add-overlay').classList.remove('active');}
+function toggleTime(){
+  const range=document.querySelector('input[name=tm]:checked').value==='range';
+  dpDisable('m-end',!range);
+  if(!range)dpSet('m-end','');clearErr('field-time');
+}
+function ownerOf(l){return plans.findIndex(p=>!p.def&&p.levels.includes(l));}
+function defaultOff(){return !isMachine()&&!plans[0].on;}
+function formScope(){
+  if(isMachine())return '本場館所有機台帳號';
+  const rest=LEVELS.filter(l=>ownerOf(l)===-1);
+  return rest.length?rest.map(lvLabel).join('、')+'，及其他未勾選的等級序號':'其他未勾選的等級序號';
+}
+function toggleDefault(){plans[0].on=!plans[0].on;clearErr('plans-msg');renderPlans();}
+function planHtml(p,i){
+  const m=isMachine();
+  const lvField=p.def?'':`<div class="field" id="pf-${i}-lv">
+      <label class="field-label">適用等級 <span class="req">*</span><span class="plan-scope" style="margin-left:6px;">選項為會員等級設定的生效方案，以序號記錄</span></label>
+      ${`<div class="cb-line">${LEVELS.map(l=>{const o=ownerOf(l);const dis=o!==-1&&o!==i;
+        return `<label class="${dis?'dis':''}"><input type="checkbox"${p.levels.includes(l)?' checked':''}${dis?' disabled':''} onchange="togglePlanLevel(${i},${l},this.checked)"/>${lvLabel(l)}${dis?`<span class="sub" style="margin:0 0 0 4px;">等級規則 ${o}</span>`:''}</label>`;}).join('')}</div>`}
+      <p class="field-error-msg">請至少勾選一個等級</p>
+    </div>`;
+  const sw=p.def&&!m?`<div class="sw-wrap">其餘等級參加<div class="sw-track ${p.on?'on':'off'}" onclick="toggleDefault()"><div class="sw-dot"></div></div></div>`:'';
+  if(p.def&&!p.on)return `<div class="plan-box off">
+    <div class="plan-head"><div><span class="plan-name">預設規則</span><span class="plan-scope">已關閉</span></div>${sw}</div>
+    <p class="field-hint" style="margin-top:6px;">未指定等級規則的等級不參加：${formScope()}</p></div>`;
+  return `<div class="plan-box">
+    <div class="plan-head"><div><span class="plan-name">${p.def?'預設規則':'等級規則 '+i}</span>${p.def?`<span class="plan-scope">套用：${formScope()}</span>`:''}${m?'':`<span class="plan-scope">涵蓋會員 ${membersOf(p,plans).toLocaleString()} 人</span>`}</div>
+      ${p.def?sw:`<button class="btn-sm danger" onclick="rmPlan(${i})">移除</button>`}</div>
+    ${lvField}
+    <div class="field-row">
+      <div class="field" id="pf-${i}-th">
+        <label class="field-label">累積門檻 <span class="req">*</span></label>
+        <input type="number" value="${p.th}" placeholder="例：1000" oninput="setP(${i},'th',this.value)"/>
+        <p class="field-error-msg">須大於 0</p>
+        <p class="field-hint">每累計滿此有效流水貢獻產生一個紅包（循環）</p>
+      </div>
+      <div class="field" id="pf-${i}-cap">
+        <label class="field-label">單週期發放上限 <span class="req">*</span></label>
+        <input type="number" value="${p.cap}" placeholder="例：5" oninput="setP(${i},'cap',this.value)"/>
+        <p class="field-error-msg">須為大於 0 的整數</p>
+        <p class="field-hint">每帳號每週期最多產生的紅包數</p>
+      </div>
+    </div>
+    <label class="field-label">獎勵方式 <span class="req">*</span></label>
+    <div class="option-group" style="margin-bottom:10px;">
+      <div class="option-card${p.reward==='fixed'?' sel':''}" onclick="setReward(${i},'fixed')"><div class="option-card-title">固定金額</div><div class="option-card-desc">每個紅包金額固定</div></div>
+      <div class="option-card${p.reward==='random'?' sel':''}" onclick="setReward(${i},'random')"><div class="option-card-title">隨機金額</div><div class="option-card-desc">權重表：依機率抽出獎項</div></div>
+    </div>
+    ${p.reward==='fixed'?`<div class="field" id="pf-${i}-fixed">
+      <label class="field-label">紅包金額 <span class="req">*</span></label>
+      <input type="number" value="${p.fixed}" placeholder="例：18" oninput="setP(${i},'fixed',this.value)"/>
+      <p class="field-error-msg">須大於 0</p>
+    </div>`:`<div class="field" id="pf-${i}-wt">
+      <label class="field-label">權重表 <span class="req">*</span></label>
+      <div class="wt-row wt-head"><span>紅包金額</span><span>中獎機率（%）</span><span></span></div>
+      ${p.wt.map((w,j)=>`<div class="wt-row">
+        <input type="number" value="${w[0]}" oninput="setWt(${i},${j},0,this.value)"/>
+        <input type="number" value="${w[1]}" oninput="setWt(${i},${j},1,this.value)"/>
+        <button class="wt-rm" title="移除" onclick="rmWt(${i},${j})">✕</button></div>`).join('')}
+      <button class="btn-sm" onclick="addWt(${i})">+ 新增</button>
+      <div class="wt-sum" id="pw-${i}-sum"></div>
+      <p class="field-error-msg">機率合計須為 100%，且各列金額須大於 0</p>
+    </div>`}
+    <div class="field" id="pf-${i}-audit">
+      <label class="field-label">稽核倍數 <span class="req">*</span></label>
+      <input type="number" value="${p.audit}" oninput="setP(${i},'audit',this.value)"/>
+      <p class="field-hint">入帳時所需有效投注額增加 紅包金額 × 倍數</p>
+      <div class="warn-box" id="pw-${i}-audit" style="display:none;">⚠️ 機台帳號由所有玩家共用：稽核未完成時玩家會洗不出錢，且前一位未完成的門檻會卡到下一位。機台稽核預設 0 倍是刻意的，確定要設大於 0 嗎？</div>
+    </div>
+    <div class="cost-grid" id="pc-${i}"></div>
+  </div>`;
+}
+function renderPlans(){
+  const off=defaultOff();
+  document.getElementById('plans').innerHTML=plans.map((p,i)=>planHtml(p,i)).join('')+
+    '<div class="field" id="plans-msg" style="margin:0;"><p class="field-error-msg" style="margin:0 0 8px;">預設規則關閉時，至少須新增一個等級規則</p></div>';
+  plans.forEach((p,i)=>{if(p.def&&off)return;renderPlanCost(i);renderAuditWarn(i);if(p.reward==='random')renderWtSum(i);});
+  renderOverall();
+}
+function addPlan(){
+  if(LEVELS.every(l=>ownerOf(l)!==-1)){showToast('所有會員等級皆已指定規則');return;}
+  clearErr('plans-msg');plans.push(newPlan(false));renderPlans();
+}
+function rmPlan(i){plans.splice(i,1);renderPlans();}
+function togglePlanLevel(i,l,on){
+  const p=plans[i];
+  p.levels=on?[...p.levels,l]:p.levels.filter(x=>x!==l);
+  renderPlans();
+}
+function setP(i,k,v){plans[i][k]=v;clearErr(`pf-${i}-${k}`);renderPlanCost(i);if(k==='audit')renderAuditWarn(i);}
+function setReward(i,r){plans[i].reward=r;renderPlans();}
+function setWt(i,j,k,v){plans[i].wt[j][k]=parseFloat(v)||0;clearErr(`pf-${i}-wt`);renderWtSum(i);renderPlanCost(i);}
+function addWt(i){plans[i].wt.push([0,0]);renderPlans();}
+function rmWt(i,j){if(plans[i].wt.length<=1){showToast('權重表至少須保留一列');return;}plans[i].wt.splice(j,1);renderPlans();}
+function renderWtSum(i){
+  const s=plans[i].wt.reduce((a,w)=>a+w[1],0);
+  const ok=Math.abs(s-100)<1e-9;
+  const el=document.getElementById(`pw-${i}-sum`);if(!el)return;
+  el.innerHTML=`機率合計：<span style="color:${ok?'var(--green-text)':'var(--red-text)'};">${+s.toFixed(2)}%</span>${ok?'':'（須為 100%）'}`;
+}
+// 成本試算：新增表單與紅包明細共用同一套算法（逐規則）
+function calcCost(c){
+  let exp=0,max=0,partial=false;
+  if(c.reward==='fixed'){exp=max=parseFloat(c.fixed)||0;}
+  else{exp=c.wt.reduce((a,w)=>a+w[0]*w[1]/100,0);max=Math.max(0,...c.wt.map(w=>w[0]));partial=Math.abs(c.wt.reduce((a,w)=>a+w[1],0)-100)>1e-9;}
+  const th=parseFloat(c.th)||0,cap=parseInt(c.cap)||0;
+  return {exp,maxCycle:max*cap,ratio:th>0?exp/th*100:null,partial,
+    issuable:c.budget>0?(exp>0?Math.floor(c.budget/exp):null):'unlimited'};
+}
+function costHtml(k,cur){
+  return `
+    <div class="stat-mini"><div class="stat-mini-lbl">單個紅包期望金額${k.partial?'（機率未滿 100%，僅供參考）':''}</div><div class="stat-mini-val">${+k.exp.toFixed(2)} <span style="font-size:11px;color:var(--text-muted);">${cur}</span></div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">每帳號單週期最高成本</div><div class="stat-mini-val">${+k.maxCycle.toFixed(2)} <span style="font-size:11px;color:var(--text-muted);">${cur}</span></div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">成本占比（期望金額 ÷ 門檻）</div><div class="stat-mini-val">${k.ratio===null?'—':k.ratio.toFixed(2)+'%'}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">預算約可發放（總預算 ÷ 期望金額）</div><div class="stat-mini-val">${k.issuable==='unlimited'?'不限':k.issuable===null?'—':k.issuable.toLocaleString()+' <span style="font-size:11px;color:var(--text-muted);">個</span>'}</div></div>`;
+}
+// 實際平均紅包金額＝該規則已入帳金額 ÷ 已入帳數（僅計已入帳），與該規則期望金額對照
+function actualHtml(a,p){
+  const cr=(RECORDS[a.id]||[]).filter(x=>x.st==='credited'&&x.plan===p.name);
+  const exp=calcCost(p).exp;
+  if(!cr.length)return `<div class="stat-mini"><div class="stat-mini-lbl">實際平均紅包金額</div><div class="stat-mini-val">—</div><div class="sub">尚無已入帳紅包</div></div>`;
+  const avg=cr.reduce((s,x)=>s+x.amt,0)/cr.length;
+  const diff=exp>0?(avg-exp)/exp*100:0;
+  const col=Math.abs(diff)<0.005?'var(--text-secondary)':diff>0?'var(--red-text)':'var(--green-text)';
+  return `<div class="stat-mini"><div class="stat-mini-lbl">實際平均紅包金額</div><div class="stat-mini-val">${+avg.toFixed(2)} <span style="font-size:11px;color:var(--text-muted);">${a.wallet}</span></div><div class="sub">已入帳 ${cr.length} 個；較期望 <span style="color:${col};">${diff>=0?'+':''}${diff.toFixed(1)}%</span></div></div>`;
+}
+function renderPlanCost(i){
+  const el=document.getElementById(`pc-${i}`);if(!el)return;
+  el.innerHTML=costHtml(calcCost({...plans[i],budget:parseFloat(document.getElementById('m-budget').value)||0}),document.getElementById('m-wallet').value||'');
+  renderOverall();
+}
+function renderAllCosts(){plans.forEach((p,i)=>renderPlanCost(i));renderOverall();}
+// 整體試算：各規則依涵蓋會員人數加權；每帳號單週期最高成本取最大值
+function overallCost(items,budget){
+  const ks=items.map(x=>({k:calcCost({...x.p,budget}),w:x.w}));
+  const W=ks.reduce((a,x)=>a+x.w,0);
+  const maxCycle=Math.max(0,...ks.map(x=>x.k.maxCycle));
+  if(!W)return {exp:null,maxCycle,ratio:null,issuable:budget>0?null:'unlimited'};
+  const exp=ks.reduce((a,x)=>a+x.k.exp*x.w,0)/W;
+  const rs=ks.filter(x=>x.k.ratio!==null),RW=rs.reduce((a,x)=>a+x.w,0);
+  return {exp,maxCycle,ratio:RW?rs.reduce((a,x)=>a+x.k.ratio*x.w,0)/RW:null,issuable:budget>0?(exp>0?Math.floor(budget/exp):null):'unlimited'};
+}
+function overallHtml(o,cur){
+  const u=`<span style="font-size:11px;color:var(--text-muted);">${cur}</span>`;
+  return `
+    <div class="stat-mini"><div class="stat-mini-lbl">整體期望金額（依會員人數加權）</div><div class="stat-mini-val">${o.exp===null?'—':+o.exp.toFixed(2)+' '+u}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">每帳號單週期最高成本（各規則最大值）</div><div class="stat-mini-val">${+o.maxCycle.toFixed(2)} ${u}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">整體成本占比</div><div class="stat-mini-val">${o.ratio===null?'—':o.ratio.toFixed(2)+'%'}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">預算約可發放（總預算 ÷ 整體期望金額）</div><div class="stat-mini-val">${o.issuable==='unlimited'?'不限':o.issuable===null?'—':o.issuable.toLocaleString()+' <span style="font-size:11px;color:var(--text-muted);">個</span>'}</div></div>`;
+}
+function renderOverall(){
+  const el=document.getElementById('cost-overall');if(!el)return;
+  const off=defaultOff();
+  const act=plans.filter(p=>!(p.def&&off));
+  if(isMachine()||act.length<2){el.innerHTML='';return;}
+  const o=overallCost(act.map(p=>({p,w:membersOf(p,plans)})),parseFloat(document.getElementById('m-budget').value)||0);
+  el.innerHTML=`<div class="plan-box" style="padding-bottom:12px;"><div class="plan-head"><div><span class="plan-name">整體試算</span><span class="plan-scope">${act.length} 組規則，涵蓋會員 ${act.reduce((a,p)=>a+membersOf(p,plans),0).toLocaleString()} 人</span></div></div>
+    <div class="cost-grid" style="margin:0;">${overallHtml(o,document.getElementById('m-wallet').value||'')}</div>
+    <p class="field-hint" style="margin-top:8px;">依目前會員人數估算，僅供參考：假設每位會員產生紅包的機會相同，高等級會員流水通常較高，實際成本可能高於此數值。</p></div>`;
+}
+function renderAuditWarn(i){
+  const el=document.getElementById(`pw-${i}-audit`);if(!el)return;
+  el.style.display=(isMachine()&&(parseFloat(plans[i].audit)||0)>0)?'':'none';
+}
+function setErr(id,msg){const el=document.getElementById(id);el.classList.add('field-error');if(msg){const m=el.querySelector('.field-error-msg');if(m)m.textContent=msg;}}
+function clearErr(id){const el=document.getElementById(id);if(el)el.classList.remove('field-error');}
+function overlaps(s1,e1,s2,e2){return s1<(e2||Infinity)&&s2<(e1||Infinity);}
+function saveAdd(){
+  const m=isMachine();let bad=false;
+  ['field-coins','field-time','field-budget','field-name','plans-msg'].forEach(clearErr);
+  const forever=document.querySelector('input[name=tm]:checked').value==='forever';
+  const start=document.getElementById('m-start').value,end=document.getElementById('m-end').value;
+  if(!start||(!forever&&!end)){setErr('field-time','請設定活動時間');bad=true;}
+  else if(!forever&&new Date(end)<=new Date(start)){setErr('field-time','結束時間須晚於開始時間');bad=true;}
+  // 逐規則驗證；預設規則關閉時略過，且至少須有一個等級規則
+  const hide=defaultOff();
+  if(hide&&plans.length<2){setErr('plans-msg');bad=true;}
+  plans.forEach((p,i)=>{
+    if(p.def&&hide)return;
+    if(!p.def&&!p.levels.length){setErr(`pf-${i}-lv`);bad=true;}
+    if(!(parseFloat(p.th)>0)){setErr(`pf-${i}-th`);bad=true;}
+    const cap=Number(p.cap);if(!(p.cap!==''&&cap>0&&Number.isInteger(cap))){setErr(`pf-${i}-cap`);bad=true;}
+    if(p.reward==='fixed'&&!(parseFloat(p.fixed)>0)){setErr(`pf-${i}-fixed`);bad=true;}
+    if(p.reward==='random'){
+      const s=p.wt.reduce((a,w)=>a+w[1],0);
+      if(Math.abs(s-100)>1e-9||p.wt.some(w=>!(w[0]>0))){setErr(`pf-${i}-wt`);bad=true;}
+    }
+  });
+  const coins=m?[SITES[site].core]:[...document.querySelectorAll('#coin-cbs input:checked')].map(x=>x.value);
+  if(!coins.length){setErr('field-coins');bad=true;}
+  const bRaw=document.getElementById('m-budget').value.trim();
+  const budget=bRaw===''?null:parseFloat(bRaw);
+  if(budget!==null&&!(budget>0)){setErr('field-budget');bad=true;}
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){setErr('field-name');bad=true;}
+  if(bad){showToast('請修正標示紅框的欄位');return;}
+  const ns=new Date(start+':00Z').getTime(),ne=forever?null:new Date(end+':00Z').getTime();
+  const clash=activities.find(a=>a.site===site&&!a.cancelled&&getStatus(a)!=='expired'&&
+    overlaps(ns,ne,new Date(a.start+':00Z').getTime(),a.forever?null:new Date(a.end+':00Z').getTime()));
+  if(clash){setErr('field-time','與「'+clash.name+'」的活動時間重疊：同一站台同一時間僅能有一個進行中的紅包活動');return;}
+  const saved=plans.filter(p=>!(p.def&&hide)).map(p=>P(p.def?null:[...p.levels],parseFloat(p.th),Number(p.cap),p.reward,
+    p.reward==='fixed'?parseFloat(p.fixed):p.wt.map(w=>[...w]),parseFloat(p.audit)||0));
+  const a=mk({site,name,wallet:SITES[site].core,coins,budget,exhausted:false,
+    reset:document.getElementById('m-reset').value,forever,start,end,cancelled:false,plans:saved});
+  activities.unshift(a);RECORDS[a.id]=[];
+  closeAdd();render();showToast('已建立紅包活動「'+name+'」（'+saved.length+' 個規則）');
+}
+
+/* ---------- 紅包明細 ---------- */
+let detailId=null;
+const ST_BADGE={pending:'<span class="badge b-pending">待開啟</span>',credited:'<span class="badge b-credited">已入帳</span>',void:'<span class="badge b-void">已作廢</span>'};
+function openDetail(id){
+  detailId=id;clearDetailFilter(true);
+  const a=activities.find(x=>x.id===id);
+  document.getElementById('detail-title').textContent='紅包明細 — '+a.name;
+  const used=usedOf(a);
+  const cfg=[['活動幣種',a.coins.join('、')],['派發幣種',a.wallet],
+    ['總預算',a.budget?`${used.toLocaleString()} ／ ${a.budget.toLocaleString()} ${a.wallet}（剩餘 ${Math.max(0,a.budget-used).toLocaleString()}）${a.exhausted?' <span class="badge b-exhausted" style="margin-left:4px;">預算用罄</span>':''}`:'不限'],['參加等級',joinLevels(a)],['重置方式',RESET_LABEL[a.reset]],
+    ['活動時間 (UTC+0)',a.start.replace('T',' ')+' ～ '+(a.forever?'永久':a.end.replace('T',' '))]];
+  document.getElementById('detail-cfg').innerHTML=`
+    <div class="cfg-title">活動設定（建立後不可修改）</div>
+    <div class="cfg-grid">${cfg.map(([k,v])=>`<div><div class="cfg-k">${k}</div><div class="cfg-v">${v}</div></div>`).join('')}</div>
+    <div class="cfg-title" style="margin-top:14px;">規則設定</div>
+    <div class="pl-row pl-head"><span>規則</span><span>適用等級</span><span>累積門檻</span><span>單週期上限</span><span>稽核倍數</span><span>獎勵方式</span></div>
+    ${a.plans.map(p=>`<div class="pl-row"><div style="color:var(--text-primary);">${p.name}</div><div>${p.def?defaultScope(a):p.levels.map(lvLabel).join('、')}</div>
+      <div class="num">${p.th.toLocaleString()} ${a.wallet}</div><div class="num">${p.cap} 個</div><div class="num">${p.audit} 倍</div><div>${rewardFull(p,a.wallet)}</div></div>`).join('')}
+    <div class="cfg-title" style="margin-top:14px;">建立時成本試算 ／ 實際（依規則）</div>
+    ${a.plans.length>1?`<div class="plan-cost-lbl">整體試算（依建立當下涵蓋會員人數 ${a.plans.reduce((x,p)=>x+p.members,0).toLocaleString()} 人加權，僅供參考）</div><div class="cost-grid">${overallHtml(overallCost(a.plans.map(p=>({p,w:p.members})),a.budget||0),a.wallet)}</div>`:''}
+    ${a.plans.map(p=>`${a.plans.length>1?`<div class="plan-cost-lbl">${p.name}（建立時涵蓋會員 ${p.members.toLocaleString()} 人）</div>`:''}<div class="cost-grid">${costHtml(calcCost({...p,budget:a.budget}),a.wallet)}${actualHtml(a,p)}</div>`).join('')}`;
+  const multi=a.plans.length>1;
+  document.getElementById('d-plan-field').style.display=multi?'':'none';
+  document.getElementById('d-plan').innerHTML='<option value="">全部</option>'+a.plans.map(p=>`<option>${p.name}</option>`).join('');
+  const r=RECORDS[id];
+  const cnt=k=>r.filter(x=>x.st===k).length;
+  const sum=r.filter(x=>x.st==='credited').reduce((s,x)=>s+x.amt,0);
+  document.getElementById('detail-stats').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-lbl">已產生</div><div class="stat-mini-val">${r.length}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">已入帳</div><div class="stat-mini-val" style="color:var(--green-text);">${cnt('credited')}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">待開啟</div><div class="stat-mini-val" style="color:var(--yellow-text);">${cnt('pending')}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">已作廢</div><div class="stat-mini-val" style="color:var(--text-secondary);">${cnt('void')}</div></div>
+    <div class="stat-mini"><div class="stat-mini-lbl">已入帳金額（${a.wallet}）</div><div class="stat-mini-val">${sum.toLocaleString()}</div></div>`;
+  renderDetail();
+  document.getElementById('detail-overlay').classList.add('active');
+}
+function clearDetailFilter(silent){
+  ['d-mem','d-status','d-plan'].forEach(id=>document.getElementById(id).value='');
+  dpSet('d-from','');dpSet('d-to','');
+  if(!silent)renderDetail();
+}
+function renderDetail(){
+  const a=activities.find(x=>x.id===detailId);
+  const mems=document.getElementById('d-mem').value.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+  const st=document.getElementById('d-status').value,pl=document.getElementById('d-plan').value;
+  const f=document.getElementById('d-from').value,t=document.getElementById('d-to').value;
+  const rows=RECORDS[detailId].filter(r=>
+    (!mems.length||mems.includes(r.mem))&&(!st||r.st===st)&&(!pl||r.plan===pl)&&
+    (!f||r.at.slice(0,10)>=f)&&(!t||r.at.slice(0,10)<=t));
+  document.getElementById('detail-list').innerHTML=rows.length?rows.map(r=>`<div class="dt-card"><div class="dt-row">
+    <div class="num">${r.no}</div><div style="color:var(--text-primary);">${r.mem}</div><div>${r.plan}${r.lv?`（${lvLabel(r.lv)}）`:''}</div><div>${r.session}</div>
+    <div class="num">${r.at}</div><div class="num">${r.cum.toLocaleString()}</div><div class="num">${r.amt} ${a.wallet}</div>
+    <div class="num">${r.audit} 倍</div><div>${ST_BADGE[r.st]}</div><div class="num">${r.cred}</div><div>${r.reason}</div>
+  </div></div>`).join(''):'<div class="empty-state"><div class="empty-state-title">沒有符合條件的紅包</div></div>';
+  const total=rows.filter(r=>r.st==='credited').reduce((s,r)=>s+r.amt,0);
+  document.getElementById('detail-footer').innerHTML=`<span>共 ${rows.length} 筆</span><span>紅包金額總計（僅計已入帳）：<span style="color:var(--text-primary);">${total.toLocaleString()} ${a.wallet}</span></span>`;
+}
+function closeDetail(){document.getElementById('detail-overlay').classList.remove('active');}
+
+/* ---------- 取消排程 ---------- */
+let cancelId=null;
+function askCancel(id){cancelId=id;document.getElementById('cancel-name').textContent=activities.find(a=>a.id===id).name;document.getElementById('cancel-overlay').classList.add('active');}
+function closeCancel(){document.getElementById('cancel-overlay').classList.remove('active');cancelId=null;}
+function confirmCancel(){
+  const a=activities.find(x=>x.id===cancelId);
+  if(a){a.cancelled=true;(RECORDS[a.id]||[]).forEach(r=>{if(r.st==='pending'){r.st='void';r.reason='活動結束';}});showToast('已取消「'+a.name+'」，未開啟的紅包已作廢');}
+  closeCancel();render();
+}
+
+/* ---------- 追加預算 ---------- */
+let budgetId=null;
+function openBudget(id){
+  const a=activities.find(x=>x.id===id);budgetId=id;
+  const used=usedOf(a);
+  document.getElementById('budget-name').textContent=a.name;
+  document.getElementById('budget-now').innerHTML=`目前總預算 <span style="color:var(--text-primary);">${a.budget.toLocaleString()}</span>　已占用 ${used.toLocaleString()}　剩餘 ${Math.max(0,a.budget-used).toLocaleString()}（${a.wallet}）`;
+  document.getElementById('m-newbudget').value='';clearErr('field-newbudget');
+  document.getElementById('budget-overlay').classList.add('active');
+}
+function closeBudget(){document.getElementById('budget-overlay').classList.remove('active');budgetId=null;}
+function confirmBudget(){
+  const a=activities.find(x=>x.id===budgetId);if(!a)return;
+  const v=parseFloat(document.getElementById('m-newbudget').value);
+  if(!(v>a.budget)){setErr('field-newbudget');return;}
+  const before=a.budget;a.budget=v;a.exhausted=false;
+  closeBudget();render();showToast(`已追加預算：${before.toLocaleString()} → ${v.toLocaleString()} ${a.wallet}（已寫入操作紀錄）`);
+}
+
+let toastTimer=null;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+
+/* ---------- 日曆選擇 ---------- */
+const DP={};
+const CAL_SVG='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>';
+function pad(n){return String(n).padStart(2,'0');}
+function dpMount(el){
+  const t=el.dataset.target;
+  DP[t]={el,time:el.dataset.time==='1',ph:el.dataset.ph||'請選擇',y:NOW.getUTCFullYear(),m:NOW.getUTCMonth(),pick:null,h:'00',mi:'00'};
+  el.innerHTML=`<input type="hidden" id="${t}"/><div class="date-input" onclick="dpToggle('${t}')"><span id="${t}-disp"></span>${CAL_SVG}</div><div class="date-dropdown" id="${t}-dd"></div>`;
+  dpSet(t,'');
+}
+function dpSet(t,val){
+  const d=DP[t];document.getElementById(t).value=val;
+  document.getElementById(t+'-disp').innerHTML=val?val.replace('T',' '):`<span class="ph">${d.ph}</span>`;
+  if(t.startsWith('m-'))clearErr('field-time');
+}
+function dpDisable(t,b){DP[t].el.classList.toggle('disabled',b);if(b)dpClose(t);}
+function dpClose(t){document.getElementById(t+'-dd').classList.remove('open');}
+function dpCloseAll(){Object.keys(DP).forEach(dpClose);}
+function dpToggle(t){
+  const d=DP[t];if(d.el.classList.contains('disabled'))return;
+  const dd=document.getElementById(t+'-dd');const open=dd.classList.contains('open');
+  dpCloseAll();if(open)return;
+  const v=document.getElementById(t).value;
+  if(v){d.y=+v.slice(0,4);d.m=+v.slice(5,7)-1;d.pick=v.slice(0,10);if(d.time){d.h=v.slice(11,13);d.mi=v.slice(14,16);}}
+  else{d.y=NOW.getUTCFullYear();d.m=NOW.getUTCMonth();d.pick=null;d.h='00';d.mi=t==='m-end'?'59':'00';if(t==='m-end')d.h='23';}
+  dpRender(t);dd.classList.add('open');
+}
+function dpNav(t,k){const d=DP[t];d.m+=k;if(d.m<0){d.m=11;d.y--;}if(d.m>11){d.m=0;d.y++;}dpRender(t);}
+function dpPick(t,day){
+  const d=DP[t];d.pick=`${d.y}-${pad(d.m+1)}-${pad(day)}`;
+  if(!d.time){dpSet(t,d.pick);dpClose(t);return;}
+  dpRender(t);
+}
+function dpApply(t){
+  const d=DP[t];if(!d.pick){showToast('請先選擇日期');return;}
+  d.h=document.getElementById(t+'-h').value;d.mi=document.getElementById(t+'-mi').value;
+  dpSet(t,`${d.pick}T${d.h}:${d.mi}`);dpClose(t);
+}
+function dpClear(t){DP[t].pick=null;dpSet(t,'');dpClose(t);}
+function dpRender(t){
+  const d=DP[t];
+  const first=new Date(Date.UTC(d.y,d.m,1)).getUTCDay(),days=new Date(Date.UTC(d.y,d.m+1,0)).getUTCDate(),prev=new Date(Date.UTC(d.y,d.m,0)).getUTCDate();
+  const today=`${NOW.getUTCFullYear()}-${pad(NOW.getUTCMonth()+1)}-${pad(NOW.getUTCDate())}`;
+  let h='';
+  for(let i=0;i<first;i++)h+=`<div class="cal-day other">${prev-first+1+i}</div>`;
+  for(let x=1;x<=days;x++){const key=`${d.y}-${pad(d.m+1)}-${pad(x)}`;
+    h+=`<div class="cal-day${key===today?' today':''}${key===d.pick?' sel':''}" onclick="dpPick('${t}',${x})">${x}</div>`;}
+  const rest=(7-(first+days)%7)%7;for(let x=1;x<=rest;x++)h+=`<div class="cal-day other">${x}</div>`;
+  const opts=(n,cur)=>Array.from({length:n},(_,i)=>`<option${pad(i)===cur?' selected':''}>${pad(i)}</option>`).join('');
+  document.getElementById(t+'-dd').innerHTML=`
+    <div class="cal-head"><button class="cal-nav" onclick="dpNav('${t}',-1)">‹</button><span class="cal-month">${d.y} 年 ${d.m+1} 月</span><button class="cal-nav" onclick="dpNav('${t}',1)">›</button></div>
+    <div class="cal-grid"><div class="cal-dow"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div class="cal-days">${h}</div></div>
+    ${d.time?`<div class="cal-time">時間 (UTC+0)<select id="${t}-h">${opts(24,d.h)}</select>:<select id="${t}-mi">${opts(60,d.mi)}</select></div>`:''}
+    <div class="cal-foot"><button class="btn-sm" onclick="dpClear('${t}')">清除</button>${d.time?`<button class="btn-sm btn-primary" onclick="dpApply('${t}')">確定</button>`:''}</div>`;
+}
+document.querySelectorAll('.dp').forEach(dpMount);
+document.addEventListener('mousedown',e=>{if(!e.target.closest('.dp'))dpCloseAll();});
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.date-dropdown.open')){dpCloseAll();return;}closeAdd();closeDetail();closeCancel();closeBudget();}});
+['add-overlay','detail-overlay','cancel-overlay','budget-overlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById(id).classList.remove('active');}));
+
+renderSidebar();renderHint();renderTabs();render();
+</script>
+</body>
+</html>
