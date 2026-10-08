@@ -305,6 +305,20 @@ def reviewed_draft_issues(run, task, art_type, draft_id) -> list[str]:
     if a["status"] != "VALID": return [f"報告審查的 {draft_id} 狀態是 {a['status']}，不是本輪有效的 Draft"]
     return []
 
+def review_draft_issues(packet, draft_id) -> list[str]:
+    """派發包提供剝除推理說明的 Draft 副本時（review_drafts；舊派發包沒有此欄位，不核對）：審查的必須是其中一筆，
+    副本 sha256 與派發包紀錄相符，原始 Draft 也和派發時記錄的 source_sha256 相符（G-TVAL、G-RISK 共用）。"""
+    if packet is None or "review_drafts" not in packet: return []
+    entry = next((r for r in packet["review_drafts"] if r["artifact_id"] == draft_id), None)
+    if entry is None: return [f"審查的 {draft_id} 不是派發包提供的 Draft（{', '.join(r['artifact_id'] for r in packet['review_drafts']) or '無'}）"]
+    out = []
+    try: dispatch.load_review_draft(entry)
+    except dispatch.DispatchError as ex: out.append(str(ex))
+    src = store.find_artifact(draft_id)
+    if src is None or store.sha256_file(src) != entry["source_sha256"]:
+        out.append(f"{draft_id} 在派發之後被改動或不存在（和派發時副本的來源 sha256 不符），審查的內容不是將要落地的 Draft")
+    return out
+
 def g_tval(run, task, arts) -> list[str]:
     rep = arts.get("TestValidationReport")
     if not rep: return ["缺 TestValidationReport"]
@@ -324,14 +338,7 @@ def g_tval(run, task, arts) -> list[str]:
     if e is not None:
         try: packet = dispatch.load_packet(e)
         except dispatch.DispatchError as ex: return issues + [str(ex)]
-        if "review_drafts" in packet:                                       # 派發包提供剝除推理說明的 Draft 副本：報告必須審查那一份（舊派發包沒有此欄位，不核對）
-            entry = next((r for r in packet["review_drafts"] if r["artifact_id"] == p["testcase_draft_artifact_id"]), None)
-            if entry is None: issues.append(f"報告審查的 {p['testcase_draft_artifact_id']} 不是派發包提供的 Draft（{', '.join(r['artifact_id'] for r in packet['review_drafts']) or '無'}）")
-            else:
-                try: dispatch.load_review_draft(entry)
-                except dispatch.DispatchError as ex: issues.append(str(ex))
-                if store.sha256_file(draft) != entry["source_sha256"]:
-                    issues.append(f"{entry['artifact_id']} 在派發之後被改動（和派發時副本的來源 sha256 不符），審查的內容不是將要落地的 Draft")
+        issues += review_draft_issues(packet, p["testcase_draft_artifact_id"])
         for did, bad in draft_out_of_scope(store.load(draft)["payload"], packet).items():
             if not any(i["issue_type"] == "missing_reference" and i["testcase_id"] in (did, "*") and i["severity"] in ("blocker", "major") for i in p["issues"]):
                 issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")
@@ -540,6 +547,7 @@ def g_risk(run, task, arts) -> list[str]:
     if not tvr: return ["找不到本 run Validator 的 VALID TestValidationReport"]
     if rv["validation_report_artifact_id"] != tvr["artifact_id"]: issues.append(f"reviewed.validation_report_artifact_id 應為 {tvr['artifact_id']}")
     if rv["testcase_draft_artifact_id"] != tvr["payload"]["testcase_draft_artifact_id"]: issues.append(f"reviewed.testcase_draft_artifact_id 應為 {tvr['payload']['testcase_draft_artifact_id']}（Validator 審過的那份）")
+    issues += review_draft_issues(rr_packet, rv["testcase_draft_artifact_id"])
     dp = store.find_artifact(tvr["payload"]["testcase_draft_artifact_id"])
     draft = store.load(dp)["payload"] if dp else {"testcases": []}
     did_set = {tc["draft_id"] for tc in draft["testcases"]}

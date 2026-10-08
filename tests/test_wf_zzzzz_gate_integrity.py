@@ -2,7 +2,7 @@
 - #1  G-SPEC：REQ ID 必須由計數器配發（不得自行編號、不得用同 area 其他 spec 的 ID）。
 - #9  G-SPEC 自動開 CLR 後，同一個操作重建 clarifications/index.md。
 - #16 submit：envelope created_at 不能是未來時間，也不能早於本輪派發（agent 自填的時間）。
-- #5  派給 Validator 的派發包附剝除 design_rationale 的 Draft 副本；G-TVAL 核對報告審的是那一份、副本未被改動。
+- #5  派給 Validator／TC Risk Reviewer 的派發包附剝除 design_rationale 的 Draft 副本；G-TVAL、G-RISK 核對審的是那一份、副本與原稿未被改動。
 - #8  G-TVAL 的派發包範圍檢查納入 expected_result_spec_reference。"""
 import copy
 from tools.qaos import store, engine, gates, dispatch, clarification as clr
@@ -144,3 +144,27 @@ def test_07_req_alloc_skips_persisted_ids_when_counter_lags():
     new = ids.alloc_cmd("REQ", AREA, new_request=True)
     assert new == f"REQ-{AREA}-005" and _counter() == 5                              # 001～004 已是 SPEC-GATEINT-001 的需求
     assert gates.requirement_id_issues(OTHER, AREA, [new]) == []
+
+def test_08_risk_reviewer_packet_has_stripped_copy_and_g_risk_checks_it(monkeypatch):
+    """GI-01：TC Risk Reviewer 的副本也受 gate 保護（副本被改動 → G-RISK FAIL；還原 → PASS）。"""
+    rr = engine.agents()["agent-tc-risk-reviewer"]
+    monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + [AREA])     # 測試用：把 GATEINT 當高風險 area
+    run = engine.new_run("spec-to-testcase", {"spec_id": SPEC, "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
+    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T3RR", "T4", "T5"]
+    S["rm"] = store.load(store.requirements_path(SPEC, "1.0"))["source_artifact_id"]
+    tcs, draft_ids = _tcs("01KZZZZZZZZZZZZZZZZZZZZZZ"); did = _design(rid, tcs)
+    _, p = _report(rid, did, "PASS"); assert engine.submit(rid, "T3", str(p))[0] and engine.evaluate_gate(rid, "T3")["result"] == "PASS"
+    payload = {"reviewed": {"testcase_draft_artifact_id": did, "validation_report_artifact_id": p.stem, "functional_area": AREA, "spec_id": SPEC, "spec_version": "1.0",
+                            "testcase_draft_ids": draft_ids},
+               "dimension_results": [{"dimension": d, "status": "covered", "rationale": f"{d} 已逐條檢視"} for d in gates.RISK_DIMENSIONS], "findings": [], "summary": "抽查完成，五個面向皆已覆蓋"}
+    _, pr = H.write_artifact(rid, "T3RR", "agent-tc-risk-reviewer", "TCRiskReview", payload, [{"entity_type": "Artifact", "id": did}, {"entity_type": "Artifact", "id": p.stem}],
+                             {"type": "TestCaseDraft", "ids": [did]}, "risk-review")
+    t = engine._task(engine.load_run(rid), "T3RR"); entry = dispatch.current_packet(engine.load_run(rid), t)["review_drafts"][0]
+    assert entry["artifact_id"] == did and all("design_rationale" not in x for x in dispatch.load_review_draft(entry)["payload"]["testcases"])
+    original = store.read_bytes(entry["path"])
+    leaked = store.load(entry["path"]); leaked["payload"]["testcases"][0]["design_rationale"] = "被塞回的推理說明"; H.raw_save(entry["path"], leaked)
+    ok, probs = engine.submit(rid, "T3RR", str(pr)); assert ok, probs
+    r = engine.evaluate_gate(rid, "T3RR"); assert r["result"] == "FAIL" and any("審查用 Draft 副本" in i for i in r["issues"]), r["issues"]
+    store.abspath(entry["path"]).write_bytes(original)
+    r = engine.evaluate_gate(rid, "T3RR", new_request=True); assert r["result"] == "PASS", r["issues"]
+    engine.cancel(rid, "oscar@example.com")
