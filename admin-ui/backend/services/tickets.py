@@ -339,7 +339,7 @@ def clarifications(open_only: bool = False) -> list[dict]:
         if open_only and d.get("status") not in CLR_ACTIVE:
             continue
         out.append({**{k: d.get(k) for k in ("clarification_id", "product", "functional_area", "spec_id", "spec_version", "status", "question", "requirement_id",
-                                              "raised_by", "raised_at", "asked_to", "asked_at", "answered_by", "answered_at", "resolution", "run_id", "approval_id", "impact")},
+                                              "raised_by", "raised_at", "asked_to", "asked_at", "answered_by", "answered_at", "resolution", "resulting_spec_version", "run_id", "approval_id", "impact")},
                     "kind": d.get("kind") or "spec_question",
                     "answer": d.get("answer"), "options": d.get("options") or [], "context": d.get("context") or "",
                     "impact": d.get("impact") or d.get("impact_if_unanswered"),

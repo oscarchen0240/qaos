@@ -88,7 +88,12 @@ def _answer_already_registered(d: dict, draft: dict) -> bool:
     ex = draft.get("extra") or {}
     mine = ((draft.get("rationale") or "").strip(), ex.get("answered_by") or ex.get("asked_to") or "PM", ex.get("resolution") or "requirement_clarified")
     cur = ((d.get("answer") or "").strip(), d.get("answered_by"), d.get("resolution"))
-    return mine == cur
+    if mine != cur:
+        return False
+    # --spec-version 只在有帶時才更新 CLR 的 resulting_spec_version（CLI：`if resulting_spec_version: …`）。
+    # 草稿明確指定了與目前不同的落地版本，就是有實際效果的更正，不算重複；沒指定則不更新，不影響判斷。
+    wanted = str(ex.get("spec_version") or "").strip()
+    return not wanted or wanted == str(d.get("resulting_spec_version") or "").strip()
 
 
 # ---------- 執行 ----------
@@ -180,17 +185,19 @@ def handoff_tail(n: int = 50) -> list[dict]:
 
 
 def execute(ticket_id: str) -> dict:
-    draft = tk.get_draft(ticket_id)
-    if not draft:
-        raise ExecError(409, "還沒有草稿；先在畫面上做決定")
-    kind = draft["kind"]
-    cmd_out, action, run_id = _preflight(ticket_id, kind, draft)
-    if cmd_out.get("warnings"):
-        raise ExecError(409, "指令尚未完整：" + "；".join(cmd_out["warnings"]))
     if not _lock.acquire(blocking=False):
         raise ExecError(409, "另一條 bin/qaos 正在執行，稍後再試")
-    started = db.now()
     try:
+        # 草稿、預檢、組指令與執行都在同一把鎖內：兩個請求交錯時，後取得鎖的一定讀到前一個請求寫入後的最新狀態，
+        # 重複的回答（--new-request 擋不住的合法自轉換）才擋得住；預檢放在鎖外會讓兩個請求都通過舊狀態的預檢。
+        draft = tk.get_draft(ticket_id)
+        if not draft:
+            raise ExecError(409, "還沒有草稿；先在畫面上做決定")
+        kind = draft["kind"]
+        cmd_out, action, run_id = _preflight(ticket_id, kind, draft)
+        if cmd_out.get("warnings"):
+            raise ExecError(409, "指令尚未完整：" + "；".join(cmd_out["warnings"]))
+        started = db.now()
         res = _run(cmd_out["command"])
         post: list[dict] = []
         if res["exit_code"] == 0:

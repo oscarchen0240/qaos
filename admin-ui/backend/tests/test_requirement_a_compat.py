@@ -314,12 +314,15 @@ def _answer_effect(sb, clr_path: pathlib.Path):
             get = lambda flag: a[a.index(flag) + 1]
             d = yaml.safe_load(clr_path.read_text(encoding="utf-8"))
             d.update({"status": "ANSWERED", "answer": get("--answer"), "answered_by": get("--answered-by"), "resolution": get("--resolution")})
+            if "--spec-version" in a:                           # 真正的 CLI：只有帶了才更新 resulting_spec_version
+                d["resulting_spec_version"] = get("--spec-version")
             clr_path.write_text(yaml.safe_dump(d, allow_unicode=True), encoding="utf-8")
     return effect
 
 
-def _answer_draft(sb, cid: str, text: str, by: str = "PM", resolution: str = "requirement_clarified"):
-    return sb.tickets.save_draft(cid, "clarification", "answer", None, text, None, {"answered_by": by, "resolution": resolution})
+def _answer_draft(sb, cid: str, text: str, by: str = "PM", resolution: str = "requirement_clarified", spec_version: str | None = None):
+    extra = {"answered_by": by, "resolution": resolution, **({"spec_version": spec_version} if spec_version else {})}
+    return sb.tickets.save_draft(cid, "clarification", "answer", None, text, None, extra)
 
 
 def test_resending_the_same_answer_is_refused_and_does_not_add_a_revision(real_sm, fake_qaos):
@@ -370,3 +373,78 @@ def test_first_answer_on_an_open_clr_is_never_treated_as_a_duplicate(real_sm, fa
     with pytest.raises(sb.qaos_exec.ExecError) as ei:
         sb.qaos_exec.execute("CLR-R-4")
     assert "指令尚未完整" in str(ei.value)
+
+
+# ------------------------------------------------------------ Codex review 第 02 輪：鎖內預檢、落地版本
+def test_preflight_and_command_assembly_run_while_holding_the_lock(real_sm, fake_qaos, monkeypatch):
+    sb = real_sm
+    p = _clr(sb.root, "CLR-L-1", "OPEN")
+    fake_qaos["side_effect"] = _answer_effect(sb, p)
+    _answer_draft(sb, "CLR-L-1", "答案")
+    seen = []
+    orig = sb.qaos_exec._preflight
+    monkeypatch.setattr(sb.qaos_exec, "_preflight", lambda *a, **k: (seen.append(sb.qaos_exec._lock.locked()), orig(*a, **k))[1])
+    sb.qaos_exec.execute("CLR-L-1")
+    assert seen == [True]                                # 預檢在持鎖時進行，不是鎖外
+
+
+def test_lock_is_released_when_preflight_refuses(real_sm, fake_qaos):
+    sb = real_sm
+    _clr(sb.root, "CLR-L-2", "APPLIED")
+    sb.tickets.save_draft("CLR-L-2", "clarification", "withdraw", None, "x", None, None)
+    with pytest.raises(sb.qaos_exec.ExecError):
+        sb.qaos_exec.execute("CLR-L-2")
+    assert not sb.qaos_exec._lock.locked()               # 預檢丟例外也要放鎖，否則之後所有請求都 409
+
+
+def test_interleaved_identical_requests_run_the_answer_only_once(real_sm, fake_qaos):
+    """兩個相同請求交錯：A 持鎖執行時 B 被擋（busy）；A 完成後 B 重試，在鎖內重新預檢，發現已登記而被拒。"""
+    import threading
+    sb = real_sm
+    p = _clr(sb.root, "CLR-L-3", "OPEN")
+    base = _answer_effect(sb, p)
+    entered, gate = threading.Event(), threading.Event()
+
+    def effect(cmd):
+        base(cmd)
+        if " clarification answer " in f" {cmd} ":
+            entered.set()
+            gate.wait(5)                                 # A 卡在 CLI 執行中（持鎖）
+    fake_qaos["side_effect"] = effect
+    _answer_draft(sb, "CLR-L-3", "答案 A")
+    out = {}
+    t = threading.Thread(target=lambda: out.setdefault("a", sb.qaos_exec.execute("CLR-L-3")))
+    t.start()
+    assert entered.wait(5)
+    with pytest.raises(sb.qaos_exec.ExecError) as busy:
+        sb.qaos_exec.execute("CLR-L-3")                  # B：A 還持著鎖
+    assert busy.value.status == 409 and "正在執行" in str(busy.value)
+    gate.set(); t.join(5)
+    assert out["a"]["ok"]
+    with pytest.raises(sb.qaos_exec.ExecError) as dup:   # B 重試：鎖內預檢看到 A 已登記
+        sb.qaos_exec.execute("CLR-L-3")
+    assert dup.value.status == 409 and "已經登記過這個回答" in str(dup.value)
+    assert sum(1 for c in fake_qaos["calls"] if " clarification answer " in f" {c} ") == 1
+
+
+def test_only_changing_the_resulting_spec_version_is_a_real_correction(real_sm, fake_qaos):
+    """--spec-version 只在有帶時才更新 resulting_spec_version：版本不同是有效更正，相同或沒指定才是重複。"""
+    sb = real_sm
+    p = _clr(sb.root, "CLR-V-1", "ANSWERED", answer="答案 A", answered_by="PM", resolution="spec_updated", resulting_spec_version="0.2")
+    fake_qaos["side_effect"] = _answer_effect(sb, p)
+    _answer_draft(sb, "CLR-V-1", "答案 A", resolution="spec_updated", spec_version="0.2")
+    with pytest.raises(sb.qaos_exec.ExecError):
+        sb.qaos_exec.execute("CLR-V-1")                  # 版本相同 → 重複
+    _answer_draft(sb, "CLR-V-1", "答案 A", resolution="spec_updated", spec_version="")
+    with pytest.raises(sb.qaos_exec.ExecError):
+        sb.qaos_exec.execute("CLR-V-1")                  # 沒指定版本 → CLI 不會更新版本 → 重複
+    sb.tickets.save_draft("CLR-V-1", "clarification", "answer", None, "答案 A", None, {"answered_by": "PM", "resolution": "spec_updated", "spec_version": "0.3"})
+    assert sb.qaos_exec.execute("CLR-V-1")["ok"]         # 版本 0.3 ≠ 0.2 → 有效更正
+    assert any("--spec-version 0.3" in c for c in fake_qaos["calls"])
+    assert yaml.safe_load(p.read_text(encoding="utf-8"))["resulting_spec_version"] == "0.3"
+
+
+def test_resulting_spec_version_is_exposed_in_the_clr_detail(real_sm):
+    _clr(real_sm.root, "CLR-V-2", "ANSWERED", resulting_spec_version="0.4")
+    real_sm.tickets._cache.clear()
+    assert real_sm.tickets.clarification_detail("CLR-V-2")["resulting_spec_version"] == "0.4"
