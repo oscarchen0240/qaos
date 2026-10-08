@@ -618,8 +618,8 @@ def _plan_events(plan: dict) -> tuple[list[tuple[dict, dict]], list[str]]:
 def _taker(o: str, plans: dict) -> list[dict]:
     return [p for p in plans.values() if p.get("action") == "migrate_rollback" and p.get("takeover_of") == o]
 
-def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
-    """操作證據核對（§12.1 失敗傳播）。回傳 (事件路徑 → {ev, sha, op, seq, state, ok_for_group}, op → plan, issues)。
+def _op_evidence(regs: dict) -> tuple[dict, dict, list[str], dict]:
+    """操作證據核對（§12.1 失敗傳播）。回傳 (事件路徑 → {ev, sha, op, seq, state, required}, op → plan, issues, op → 狀態集合)。
     任何不符都列入 issues（整次 verify 失敗），不以排除事件代替。"""
     known, plans, bad = {}, {}, []
     files, sts = op.plan_files(), op.all_statuses()                           # 一次載入，避免逐 op 重掃目錄
@@ -633,11 +633,16 @@ def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
             for s in plan["steps"][:-1]:
                 pp = store.ROOT / op.progress_path(plan, s)
                 if not pp.is_file() or pp.read_bytes() != op.progress_bytes(plan, s): bad.append(f"{o[:12]}… 的完成紀錄 {op.progress_path(plan, s)} 缺失或不符")
+                if s["kind"] in ("status", "index") and _sha(s["path"]) != s["expected_after"]: bad.append(f"{o[:12]}… 寫入的稽核紀錄 {s['path']} 缺失或不符")   # 例如 R 寫的 X 終態
         elif state in op.TERMINAL:
             rs = _taker(o, plans)
             if len(rs) != 1: bad.append(f"已終結的 {o[:12]}… 應恰好有一份接管它的 rollback（目前 {len(rs)}）"); done_seqs = set()
             else:
                 rp = rs[0]; bad += [f"證據衝突：{i}" for i in x_evidence_issues(rp, plan)]
+                present = sorted(t for t in op.TERMINAL if t in sts.get(o, set()))
+                planned = sorted(t for t in op.TERMINAL if any(s["path"] == op.status_path(o, t) for s in rp["steps"]))
+                if present != planned or len(present) != 1:                     # 互斥終態：恰好一個，而且是接管它的 R 計畫寫的那一個
+                    bad.append(f"證據衝突：{o[:12]}… 的終態紀錄應恰好是 {planned}（目前 {present}：{[op.status_path(o, t) for t in present]}）")
                 xsteps = {s["seq"]: s for s in plan["steps"]}; done_seqs = set()
                 for row in rp["x_progress"]["steps"]:
                     xs = xsteps.get(row["seq"])
@@ -653,7 +658,7 @@ def _op_evidence(regs: dict) -> tuple[dict, dict, list[str]]:
             required = done_seqs is None or st["seq"] in done_seqs
             known[st["path"]] = {"ev": ev, "sha": st["expected_after"], "op": o, "seq": regs[o]["plan_seq"], "state": state, "required": required}
             if required and _sha(st["path"]) != st["expected_after"]: bad.append(f"事件檔 {st['path']}（{o[:12]}… {plan.get('action')}）缺失或不符")
-    return known, plans, bad
+    return known, plans, bad, sts
 
 def _render(view: str, events: list[dict], head: bytes) -> bytes:
     evs = sorted(events, key=lambda e: (str(e["at"]), str(e["op_id"]), int(e["step"])))
@@ -716,7 +721,7 @@ def audit_issues(mk: dict, xplan: dict) -> list[str]:
     x = xplan["op_id"]
     if x not in regs: return [f"{x} 沒有登錄紀錄"]
     xseq, xclock = regs[x]["plan_seq"], op.parse_ts(xplan["clock"])
-    known, plans, bad = _op_evidence(regs)
+    known, plans, bad, sts = _op_evidence(regs)
     groups = {"B": [], "A0": [], "R": [], "D": []}
     for path, data in sorted(_event_files().items()):
         k = known.get(path)
@@ -743,6 +748,6 @@ def audit_issues(mk: dict, xplan: dict) -> list[str]:
         if err: bad.append(err); continue
         why = _view_ok(view, planned, has_plan, head, groups)
         if why: bad.append(f"audit 檢視 {view}：{why}")
-    later = [f"{o} {regs[o]['action']}" for o in sorted(regs, key=lambda o: regs[o]["plan_seq"]) if regs[o]["plan_seq"] > xseq and op.plan_state(o) == "completed"]
+    later = [f"{o} {regs[o]['action']}" for o in sorted(regs, key=lambda o: regs[o]["plan_seq"]) if regs[o]["plan_seq"] > xseq and op.plan_state(o, sts.get(o, set())) == "completed"]
     if later: VERIFY_NOTES.append("X 之後的已完成操作（只供人工對照，不影響判定）：\n" + "\n".join(f"  {l}" for l in later))
     return bad

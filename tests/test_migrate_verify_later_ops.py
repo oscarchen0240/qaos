@@ -396,3 +396,32 @@ def test_c04_malformed_registration_reports_instead_of_crashing():
     f = next(P(root, "operations/_global/index.d").glob(f"*-{o}.yaml")); f.write_text("plan_seq: [\n")    # 竄改：登錄紀錄變成非法 YAML
     r = vfail(root, f"登錄紀錄 {f.name} 無法解析"); assert "Traceback" not in r.stdout + r.stderr
     f.write_text("- a\n"); r = vfail(root, f"登錄紀錄 {f.name} 的內容不是 mapping"); assert "Traceback" not in r.stdout + r.stderr
+
+def test_c06_conflicting_terminal_status_of_rolled_back_x1():
+    """竄改：X1 → R（rolled_back）→ X2 之後，補寫相反的 aborted_for_rollback；或改動 R 寫的 rolled_back → 失敗；還原後通過。"""
+    root = U.mkroot(migrated=False)
+    ok(U.q(root, "maintenance", "start", "--by", "m")); ok(U.q(root, "migrate", "--by", "m")); x1 = x_of(root)
+    ok(U.q(root, "migrate", "rollback", "--op", x1, "--by", "m")); ok(U.q(root, "migrate", "--by", "m", "--new-request")); vok(root)
+    rb = P(root, f"operations/_global/status.d/{x1}-rolled_back.yaml"); assert rb.exists()
+    f = P(root, f"operations/_global/status.d/{x1}-aborted_for_rollback.yaml")
+    f.write_text(yaml.safe_dump({"op_id": x1, "status": "aborted_for_rollback", "by": "forged", "at": "2026-01-01T00:00:00Z"}))
+    vfail(root, f"{x1[:12]}… 的終態紀錄應恰好是 ['rolled_back']", f.relative_to(root).as_posix())
+    f.unlink(); vok(root)
+    data = rb.read_bytes(); rb.write_bytes(data + b"# x\n")
+    vfail(root, f"寫入的稽核紀錄 {rb.relative_to(root).as_posix()} 缺失或不符")
+    rb.write_bytes(data); vok(root)
+
+def test_c05_verify_does_not_rescan_status_per_operation():
+    """全操作核對與附註共用一次載入的狀態索引：逐 op 掃描 status.d 的次數不隨後續操作數增加（只剩 X 本身的固定查詢）。"""
+    code = """
+from tools.qaos import operation as op, migrate as m
+calls = [0]; orig = op.statuses
+def counted(o): calls[0] += 1; return orig(o)
+op.statuses = counted
+m.verify()
+print(calls[0], len(op.registrations()))
+"""
+    root, _ = rich(); a, n1 = map(int, U.py(root, code).stdout.split())
+    for i in range(5): spec_import(root, f"SPEC-P{i}-001")
+    b, n2 = map(int, U.py(root, code).stdout.split())
+    assert n2 == n1 + 5 and a == b <= 2, (a, b, n1, n2)
