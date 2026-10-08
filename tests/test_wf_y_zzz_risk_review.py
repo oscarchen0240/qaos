@@ -4,6 +4,7 @@
 - G-RISK 只擋結構：審錯 draft、五面向不齊、無 spec 依據卻未標需澄清
 - 抽查結果附在 ACTIVATE 核准單；整批 reject 後抽查 task 重設、退回的是 Designer 而非 Reviewer"""
 import pathlib, yaml, pytest
+from tests.helpers import raw_save
 from tools.qaos import store, engine
 from tests import helpers as H
 from tools.qaos.cli import main as cli
@@ -25,13 +26,13 @@ def test_70_agent_models_match_dispatch_wrappers():
     assert rr["model"] == "opus" and set(rr["applies_to_areas"]) >= {"CASHFLOW", "CASHOUT", "TXLOG", "DAILYREPORT"}
 
 def test_71_non_high_risk_area_has_no_risk_task():
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com")
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5"]
     engine.cancel(run["run_id"], "oscar@example.com")
 
 def test_72_analysis_review_task_id_passes_schema():
     """T2R 過去不符 TaskId ^T[0-9]+$，analysis_review=required 的 run 根本存不進 run.yaml（回歸）。"""
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0", "analysis_review": "required"}, "oscar@example.com")
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0", "analysis_review": "required"}, "oscar@example.com", new_request=True)
     assert "T2R" in [t["task_id"] for t in run["tasks"]]
     engine.cancel(run["run_id"], "oscar@example.com")
 
@@ -54,7 +55,7 @@ def _finding(**kw):
 def test_73_high_risk_area_inserts_risk_task_and_attaches_to_approval(monkeypatch):
     rr = engine.agents()["agent-tc-risk-reviewer"]
     monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])   # 測試用：把 NEG 當高風險 area
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T3RR", "T4", "T5"]
     rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
     tcs, draft_ids = _tcs(prefix="01R0ZZZZZZZZZZZZZZZZZZZZZ")
@@ -86,7 +87,7 @@ def test_73_high_risk_area_inserts_risk_task_and_attaches_to_approval(monkeypatc
 def test_74_only_risk_reviewer_may_produce_risk_review(monkeypatch):
     rr = engine.agents()["agent-tc-risk-reviewer"]
     monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
     tcs, draft_ids = _tcs(prefix="01R1ZZZZZZZZZZZZZZZZZZZZZ")
     did, _ = _submit_design(rid, tcs)
@@ -98,7 +99,7 @@ def test_74_only_risk_reviewer_may_produce_risk_review(monkeypatch):
     assert not ok and any("越權" in x for x in problems) and engine.load_run(rid)["status"] == "FAILED"
 
 def _run_to_risk_task(prefix):
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     rm_aid = store.load(store.requirements_path("SPEC-NEG-001", "1.0"))["source_artifact_id"]
     tcs, draft_ids = _tcs(prefix=prefix)
     did, _ = _submit_design(rid, tcs)
@@ -115,14 +116,14 @@ def test_75_risk_gate_binds_version_rejects_blank_basis_and_checks_active_area(m
     blank = _review(rid, did, tvr, draft_ids, findings=[_finding(spec_basis={"location": " ", "quote": " "}, needs_clarification=False)])
     ok, problems = engine.submit(rid, "T3RR", str(blank)); assert not ok
     # 版本與 draft／run 不符
-    p = _review(rid, did, tvr, draft_ids); d = store.load(p); d["payload"]["reviewed"]["spec_version"] = "9.9"; store.save(p, d)
+    p = _review(rid, did, tvr, draft_ids); d = store.load(p); d["payload"]["reviewed"]["spec_version"] = "9.9"; raw_save(p, d)
     assert engine.submit(rid, "T3RR", str(p))[0]
     msgs = " ".join(engine.evaluate_gate(rid, "T3RR")["issues"])
     assert "Validator 審過的 draft SPEC-NEG-001@1.0" in msgs and "目標版本 1.0" in msgs
     # ID 前綴是 TC-NEG-，但 ACTIVE 版本實際是 AUTH 的 TC → 不算同 area
     src = next(q for q in sorted((store.ROOT / "testcases" / "registry").glob("TC-AUTH-*.yaml")) if store.load(q)["status"] == "ACTIVE")
     ptr = store.load(src); ver = ptr["active_version"]; v = store.load(store.tc_version_path(src.stem, ver))
-    store.save(store.tc_version_path("TC-NEG-900", ver), dict(v, testcase_id="TC-NEG-900")); store.save(store.tc_pointer_path("TC-NEG-900"), dict(ptr, testcase_id="TC-NEG-900"))
+    raw_save(store.tc_version_path("TC-NEG-900", ver), dict(v, testcase_id="TC-NEG-900")); raw_save(store.tc_pointer_path("TC-NEG-900"), dict(ptr, testcase_id="TC-NEG-900"))
     try:
         p = _review(rid, did, tvr, draft_ids, findings=[_finding(related_testcase_ids=["TC-NEG-900"])])
         assert engine.submit(rid, "T3RR", str(p))[0]
@@ -136,30 +137,32 @@ def test_76_change_impact_reject_returns_to_designer_and_resets_risk_task(monkey
     """MR !1 review：spec-change-impact 的核准前是 T4 CIA compare；整批 reject 必須退回 T2 Designer，T3／T3RR／T4 一起重設。"""
     rr = engine.agents()["agent-tc-risk-reviewer"]
     monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["AUTH"])
-    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     assert [t["task_id"] for t in run["tasks"]] == ["T0", "T1", "T2", "T3", "T3RR", "T4", "T5", "T6"]
     for t in run["tasks"]:
         if t["task_id"] in ("T0", "T1", "T2", "T3", "T3RR", "T4"): t["status"] = "DONE"
     apr_task = next(t for t in run["tasks"] if t["task_id"] == "T5"); apr_task["status"] = "RUNNING"
     # 走 TC 核准單實際的 reject 路徑（_commit_testcases → to_agent=Designer）；用 ACTIVATE 型別是因為這裡沒有 change-impact entity，
     # 兩種型別呼叫 _finish_approval_task 的方式相同
-    engine._commit_testcases(run, apr_task, {"type": "ACTIVATE_TESTCASE", "approval_id": "APR-9999", "batch_items": [], "decision": {}}, "reject", "oscar@example.com")
+    from tools.qaos import operation   # 內部函式的單元測試：以測試專用的 executor 操作包住（寫入一律經過 executor）
+    operation.run_operation("test_internal", lambda: engine._commit_testcases(run, apr_task, {"type": "ACTIVATE_TESTCASE", "approval_id": "APR-9999", "batch_items": [], "decision": {}}, "reject", "oscar@example.com"), new_request=True)
     run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
     assert run["current_task_id"] == "T2" and st["T2"] == "READY" and st["T1"] == "DONE"
     assert st["T3"] == st["T3RR"] == st["T4"] == st["T5"] == "PENDING"
     engine.cancel(rid, "oscar@example.com")
 
 def test_77_manual_run_area_comes_from_record_and_unknown_area_is_rejected(monkeypatch):
-    """MR !1 review：manual-test-to-regression 可不填 spec_id；area 改看 manual record，判定不了就拒絕建 run，不默默跳過抽查。"""
+    """MR !1 review：area 看 manual record，判定不了就拒絕建 run，不默默跳過抽查。
+    需求 A 第 5 章 §4.3 之後，manual run 必須有 spec（inputs 或 spec_hint）：沒有 spec 的 record 仍以 record 的 area 決定是否抽查，但 run new 拒絕。"""
     from tools.qaos import tc_ops
     rr = engine.agents()["agent-tc-risk-reviewer"]
     monkeypatch.setitem(rr, "applies_to_areas", rr["applies_to_areas"] + ["NEG"])
     rec = tc_ops.manual_new("提款連點測試", "demo", "NEG", ["連點送出"], "產生兩筆", "fail", "oscar@example.com")
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com")
-    assert "T2RR" in [t["task_id"] for t in run["tasks"]]
-    engine.cancel(run["run_id"], "oscar@example.com")
+    assert engine._risk_review_task_id(engine.workflow("manual-test-to-regression"), {"manual_record_id": rec}) == "T2RR"
+    with pytest.raises(engine.EngineError, match="沒有可分析的 spec"):
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
     with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
-        engine.new_run("manual-test-to-regression", {"manual_record_id": "MAN-19990101-001"}, "oscar@example.com")
+        engine.new_run("manual-test-to-regression", {"manual_record_id": "MAN-19990101-001"}, "oscar@example.com", new_request=True)
 
 def test_78_risk_reviewer_input_schema_binds_validation_report():
     """MR !1 review 第二輪：Reviewer 原本沿用 test-validator-input（additionalProperties false），傳不進必須綁定的 TVR ID。"""
@@ -184,13 +187,14 @@ def test_78_risk_reviewer_input_schema_binds_validation_report():
 def test_79_suite_membership_reject_still_returns_to_curator():
     """回歸：退回 Designer 只限 TC 核准單。manual-test-to-regression 的 T5 suite 成員核准被 reject，必須退回 T4 curator，不可退到 T1 Designer。"""
     from tools.qaos import tc_ops
-    rec = tc_ops.manual_new("suite 退回測試", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com")
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com"); rid = run["run_id"]
-    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5", "T6"]   # NEG 非高風險，不插 RR
+    rec = tc_ops.manual_new("suite 退回測試", "demo", "NEG", ["步驟"], "結果", "pass", "oscar@example.com", spec_id="SPEC-AUTH-001", spec_version="1.0")   # manual run 需要 spec（需求 A 第 5 章 §4.3）
+    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True); rid = run["run_id"]
+    assert [t["task_id"] for t in run["tasks"]] == ["T1", "T2", "T3", "T4", "T5", "T6"]   # area 取 spec 的 AUTH，非高風險，不插 RR
     for t in run["tasks"]:
         if t["task_id"] in ("T1", "T2", "T3", "T4"): t["status"] = "DONE"
     t5 = next(t for t in run["tasks"] if t["task_id"] == "T5"); t5["status"] = "RUNNING"
-    engine._commit_suite(run, t5, {"type": "UPDATE_SUITE_MEMBERSHIP", "artifact_ids": []}, "reject", "oscar@example.com")
+    from tools.qaos import operation   # 內部函式的單元測試：以測試專用的 executor 操作包住
+    operation.run_operation("test_internal", lambda: engine._commit_suite(run, t5, {"type": "UPDATE_SUITE_MEMBERSHIP", "artifact_ids": []}, "reject", "oscar@example.com"), new_request=True)
     run = engine.load_run(rid); st = {t["task_id"]: t["status"] for t in run["tasks"]}
     assert run["current_task_id"] == "T4" and st["T4"] == "READY" and st["T1"] == st["T2"] == st["T3"] == "DONE"
     engine.cancel(rid, "oscar@example.com")
@@ -207,7 +211,7 @@ def _manual(area=None, spec_hint=None, drop_area=False):
     path = f"testcases/manual/{rec}.yaml"; d = store.load(path)
     if drop_area: d.pop("functional_area")
     elif area is not None: d["functional_area"] = area
-    store.save(path, d); return rec
+    raw_save(path, d); return rec
 
 def test_80_manual_run_area_sources_and_validation(monkeypatch, fixtures):
     """MR !1 review R3-01／R3-02／R4-01：functional_area 在 manual record schema 是選填、無格式限制。
@@ -219,16 +223,19 @@ def test_80_manual_run_area_sources_and_validation(monkeypatch, fixtures):
     # 只有 spec_hint（沒有 functional_area）→ 取 spec 目錄，高風險就插 RR
     rec = _manual(spec_hint=hint, drop_area=True)
     assert store.run_area({"manual_record_id": rec}) == "HINTRISK"
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com")
-    assert "T2RR" in [t["task_id"] for t in run["tasks"]]; engine.cancel(run["run_id"], "oscar@example.com")
+    wf = engine.workflow("manual-test-to-regression")
+    assert engine._risk_review_task_id(wf, {"manual_record_id": rec}) == "T2RR"
+    with pytest.raises(engine.EngineError, match="還沒有需求模型 revision"):                  # 需求 A 第 5 章 §4.3：spec 還沒分析 → 拒絕
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec}, "oscar@example.com", new_request=True)
     # spec_hint 可解析時優先於手填 area；不存在的 spec_hint → 退回有效的手填 area（strip 後）
     assert store.run_area({"manual_record_id": _manual(area="AUTH", spec_hint=hint)}) == "HINTRISK"
     assert store.run_area({"manual_record_id": _manual(area=" CASHOUT ", spec_hint={"spec_id": "SPEC-NOPE-001", "spec_version": "1.0"})}) == "CASHOUT"
     # 含數字的合法 area（R4-01）：可建 run、非高風險不插 RR
     rec2 = _manual(area="AUTH2")
     assert store.run_area({"manual_record_id": rec2}) == "AUTH2"
-    run = engine.new_run("manual-test-to-regression", {"manual_record_id": rec2}, "oscar@example.com")
-    assert "T2RR" not in [t["task_id"] for t in run["tasks"]]; engine.cancel(run["run_id"], "oscar@example.com")
+    assert engine._risk_review_task_id(wf, {"manual_record_id": rec2}) is None
+    with pytest.raises(engine.EngineError, match="沒有可分析的 spec"):
+        engine.new_run("manual-test-to-regression", {"manual_record_id": rec2}, "oscar@example.com", new_request=True)
     # 同一個 area 從三種來源取得結果一致
     assert store.run_area({"spec_id": "SPEC-HINT2-001"}) == store.run_area({"manual_record_id": _manual(spec_hint={"spec_id": "SPEC-HINT2-001", "spec_version": "1.0"}, drop_area=True)}) \
         == store.run_area({"manual_record_id": _manual(area="AREA2")}) == "AREA2"
@@ -237,4 +244,4 @@ def test_80_manual_run_area_sources_and_validation(monkeypatch, fixtures):
         rec3 = _manual(area=bad, spec_hint=h)
         assert store.run_area({"manual_record_id": rec3}) is None, bad
         with pytest.raises(engine.EngineError, match="無法判定本 run 的 functional area"):
-            engine.new_run("manual-test-to-regression", {"manual_record_id": rec3}, "oscar@example.com")
+            engine.new_run("manual-test-to-regression", {"manual_record_id": rec3}, "oscar@example.com", new_request=True)

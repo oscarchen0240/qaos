@@ -15,6 +15,7 @@
     "impact": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/EntityRef"}, "description": "受影響的 TC / Bug / Suite / Requirement"},
     "artifact_ids": {"type": "array", "items": {"$ref": "../common/defs.schema.json#/$defs/ArtifactId"}, "description": "支撐此 request 的 artifacts（validation report、comparison report…）"},
     "diff_summary": {"type": "string"},
+    "requirement_model_revision": {"$ref": "../common/defs.schema.json#/$defs/RMPin", "description": "RESOLVE_AMBIGUITY：要決議的需求模型 revision（preflight 依此找有效等級為 critical 的決策點；需求 A 第 1 章 §3.7）"},
     "trace": {"type": "array", "items": {"type": "string"}, "description": "qaos trace 輸出"},
     "agent_recommendation": {"type": "object", "properties": {"recommend": {"type": "string"}, "rationale": {"type": "string"}}},
     "options": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["key", "label"], "properties": {"key": {"type": "string"}, "label": {"type": "string"}, "consequence": {"type": "string"}}}, "description": "approve / reject / override 或 NEEDS_DECISION 的 Option A/B"},
@@ -32,7 +33,22 @@
         "decided_at": {"$ref": "../common/defs.schema.json#/$defs/Timestamp"},
         "rationale": {"type": "string"},
         "per_item": {"type": "array", "items": {"type": "object", "required": ["id", "decision"], "properties": {"id": {"type": "string"}, "decision": {"$ref": "../common/defs.schema.json#/$defs/Decision"}, "rationale": {"type": "string"}}}},
-        "adjustments": {"type": "object", "description": "例如 OPEN_BUG 時 Human 改定的 severity/priority"}
+        "adjustments": {"type": "object", "description": "例如 OPEN_BUG 時 Human 改定的 severity/priority"},
+        "resolutions": {
+          "type": "array", "description": "RESOLVE_AMBIGUITY 的決議條目（需求 A 第 1 章 §3.7）；寫入與 preflight 在 P4",
+          "items": {
+            "type": "object", "required": ["requirement_id", "question_id", "outcome", "rationale"],
+            "properties": {
+              "requirement_id": {"$ref": "../common/defs.schema.json#/$defs/RequirementId"},
+              "question_id": {"type": "string", "pattern": "^Q[0-9]{2,}$"},
+              "outcome": {"type": "string", "enum": ["select_interpretation", "waive_missing", "defer"]},
+              "source": {"oneOf": [{"type": "null"}, {"$ref": "../common/defs.schema.json#/$defs/SourceRef"}]},
+              "rationale": {"type": "string", "minLength": 1},
+              "waived": {"type": "array", "items": {"type": "object"}}
+            },
+            "additionalProperties": false
+          }
+        }
       },
       "additionalProperties": false,
       "allOf": [{"if": {"properties": {"decision": {"const": "override"}}}, "then": {"required": ["rationale"]}}]

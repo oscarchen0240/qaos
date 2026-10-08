@@ -39,6 +39,8 @@ def _fail_report(bd, evd):
 
 def _flow(fixtures):
     """在子程序執行（QAOS_ROOT 為全新 root）；任何斷言失敗都會讓子程序以非 0 結束。"""
+    from tools.qaos import operation   # 全新 root 為 S_pre：與 conftest 相同，以正式流程進入移轉後狀態再開始
+    operation.maintenance_start("test"); operation.migrate("test"); operation.maintenance_end("test")
     cli(["spec", "import", os.path.join(fixtures, "SPEC-OVR-001-v1.0.md"), "--spec-id", SPEC, "--version", VER, "--product", "demo", "--area", "OVR", "--by", BY])
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf): cli(["evidence", "add", "--type", "api_response", "--inline", '{"redeemed":true}', "--owner", "manual", "--description", "第二次兌換成功", "--by", BY])

@@ -1,9 +1,10 @@
 """testcases/<AREA>.md：某功能區的 Test Case 人可讀總表（給人看，不是事實來源）。"""
-from . import store
+from . import store, operation
 
-def export(area: str) -> str:
+def build(area: str) -> str:
+    """唯讀：產生內容，不寫檔（`tc-export --stdout` 用）。"""
     rows = []
-    for ptr in sorted((store.ROOT / "testcases" / "registry").glob(f"TC-{area}-*.yaml")):
+    for ptr in store.glob(f"testcases/registry/TC-{area}-*.yaml"):
         d = store.load(ptr)
         for v in d["versions"]:
             tc = store.load(store.tc_version_path(d["testcase_id"], v["version"])); rows.append(tc)
@@ -20,4 +21,9 @@ def export(area: str) -> str:
         steps = "<br>".join(f"{s['n']}. {s['action']}" for s in t["steps"])
         exp = t["expected_result"] + ("".join(f"<br>⚠ 假設：{a['text']}" for a in t.get("assumptions", [])))
         lines.append(f"| {t['testcase_id']} | v{t['version']} | {t['status']} | {t['priority']} | {t['risk']} | {cls} | {'；'.join(req_title(r) for r in t['requirement_ids'])} | {t['title']} | {steps} | {exp} |")
-    out = "\n".join(lines) + "\n"; p = store.ROOT / "testcases" / f"{area}.md"; p.write_text(out, encoding="utf-8"); return str(p.relative_to(store.ROOT))
+    return "\n".join(lines) + "\n"
+
+@operation.operation("tc_export")
+def export(area: str) -> str:
+    """寫檔：testcases/<AREA>.md（衍生輸出）。"""
+    p = f"testcases/{area}.md"; store.write_derived(p, build(area)); return p

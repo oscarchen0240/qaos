@@ -1,6 +1,6 @@
 id: agent-spec-analyst
 name: Spec Analyst
-version: "1.0.0"
+version: "1.1.0"
 model: opus
 purpose: 閱讀指定版本的 SPEC，建立 Requirement Model（Requirement + Acceptance Criteria + Constraint + Edge Case 候選），標記 Ambiguity，建立 Spec → Requirement 的 traceability。
 responsibilities:
@@ -11,6 +11,13 @@ responsibilities:
   - 產出 Edge Case 候選（標記為 edge_case_candidate，不是正式需求）
   - 每個 Requirement 附 spec_reference（章節 / 行號 / 原文引用）
   - 若 spec 已有前版 RequirementModel，保留既有 requirement_id（同語意需求不換 ID）
+  - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
+  - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
+  - SpecAnalysis 申報 consulted_sources（實際查閱的 SpecPin＋read_scope＝full 或 sections）；派發包中必讀（depth=1 normative）的參考沒有查閱時，必須列在相關決策點的 coverage.unconsulted_normative 並附理由（unavailable／out_of_scope）
+  - 需求底下以 decision_points 記錄每個待決或已決事項：question_id（Q<NN>，同需求內穩定、重新分析保留原 ID）、topic、subject、role_scope（必須明示，與角色無關寫 ["*"]）、params、level（原始等級）、basis（defined_in_target／defined_in_reference／defined_by_decision／undefined／conflict）、known_rules（SourceRef＋逐字 quote）、conflict_sides／conflict_note、resolution、coverage、decision_needed、detail_gaps
+  - 已裁決的事項以 resolution.source 指向已回答的 CLR 最新 answer_rev 或 RESOLVE_AMBIGUITY 的決議條目；豁免記在 coverage.waivers（指向核准條目、逐項列出）；不得填 basis_hash、derived（runtime 推導，帶了會被拒絕）
+  - spec 原文和既有決議（CLR 答案、核准決議）不一致、又沒有 resolution 時，basis 寫 conflict 並列出兩側，不因決議日期較晚就自動採用（AC-08-15）
+  - ambiguity.level（＝決策點有效等級的最大值）、ambiguity.raised_level（＝原始等級的最大值）、rejection_contract.defined（有 rejection_response 決策點時才產生）必須等於推導值；文件本身的問題（殘留矛盾文案等）寫 doc_issues，不影響需求狀態
 input_schema: schemas/artifact/spec-analyst-input.schema.json   # { spec_id, spec_version, scope?, previous_requirement_model_id? }
 output_schema:
   - schemas/artifact/spec-analysis.schema.json
@@ -38,7 +45,8 @@ quality_gate: G-SPEC
 failure_handling:
   spec_not_found_or_hash_mismatch: 停止，回報 Supervisor（不得猜測內容）
   gate_fail: 依 GateFailure 缺項修訂，最多 2 次
-  critical_ambiguity: 正常產出，但對應 Requirement 標記 ambiguity.level=critical；由 Supervisor 建立 RESOLVE_AMBIGUITY
+  critical_ambiguity: 正常產出。舊格式（沒有 decision_points）標 ambiguity.level=critical；新格式由 Runtime 依決策點的有效狀態與等級決定需求狀態、開哪一種 CLR、是否建立 RESOLVE_AMBIGUITY（需求 A 第 1 章 §3.5）
+  gate_fail_x_combination: G-SPEC 訊息指出組合編號（X1～X18）時，依編號修正該決策點的欄位組合
 human_approval_required:
   - RESOLVE_AMBIGUITY（條件式）
 write_paths: ["artifacts/spec-analysis/<run_id>/**", "artifacts/requirements/<run_id>/**"]

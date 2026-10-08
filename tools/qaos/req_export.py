@@ -1,21 +1,24 @@
 """requirements/<SPEC>-v<ver>.md：某 Spec 版本的 Requirement 人可讀清單（給 Human 檢查 Spec Analyst 的切法）。"""
-from . import store
+from . import store, operation, sources
 
-def export(spec_id: str, spec_version: str) -> str:
+def build(spec_id: str, spec_version: str) -> str:
+    """唯讀：產生內容，不寫檔（`req-export --stdout` 用）。"""
     from . import clarification as clr
-    doc = store.load(store.requirements_path(spec_id, spec_version)); reqs = doc["requirements"]
+    from . import rm
+    pin = rm.latest_pin(spec_id, spec_version)                               # run 外的輸出：最新 revision（需求 A 第 5 章 §4.1），並在輸出中標明
+    doc = rm.load_revision(pin) if pin else store.load(store.requirements_path(spec_id, spec_version)); reqs = doc["requirements"]
     answered = {}
     for c in clr.list_(open_only=False):
-        if c["spec_id"] == spec_id and c.get("requirement_id") and c["status"] in ("ANSWERED", "APPLIED"): answered.setdefault(c["requirement_id"], []).append(c)
+        if c["spec_id"] == spec_id and c.get("requirement_id") and c["status"] in sources.ANSWERED_STATES: answered.setdefault(c["requirement_id"], []).append(c)
     spec = store.load(store.spec_dir(spec_id) / "spec.yaml")
     tcs = {}
-    for ptr in (store.ROOT / "testcases" / "registry").glob("TC-*.yaml"):
+    for ptr in store.glob("testcases/registry/TC-*.yaml"):
         d = store.load(ptr)
         for v in d["versions"]:
             t = store.load(store.tc_version_path(d["testcase_id"], v["version"]))
             if t["spec_id"] == spec_id:
                 for r in t["requirement_ids"]: tcs.setdefault(r, []).append(f"{d['testcase_id']} v{v['version']}")
-    lines = [f"# Requirements — {spec_id} v{spec_version}（{spec['title']}）", "", f"- 共 {len(reqs)} 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理", "- 事實來源：`" + store.requirements_path(spec_id, spec_version) + "`", ""]
+    lines = [f"# Requirements — {spec_id} v{spec_version}（{spec['title']}）", "", f"- 共 {len(reqs)} 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理", "- 事實來源：`" + (rm.rev_path(spec_id, spec_version, pin["revision"]) + f"`（revision {pin['revision']}）" if pin else store.requirements_path(spec_id, spec_version) + "`（尚未移轉的 legacy 檢視）"), ""]
     for r in reqs:
         amb = r.get("ambiguity") or {}; rc = r.get("rejection_contract") or {}
         lines += [f"## {r['requirement_id']} {r.get('title', '')}", "", f"**需求**：{r['statement']}", "",
@@ -32,5 +35,9 @@ def export(spec_id: str, spec_version: str) -> str:
             lines.append(f"- ✅ PM 回答（{c['clarification_id']}）：{c['answer']}")
         if amb: lines.append(f"- ⚠ 歧義（{amb['level']}）：{amb['description']}" + (f"　可能解讀：{' / '.join(amb.get('options', []))}" if amb.get("options") else ""))
         lines.append(f"- 對應 TC：{', '.join(tcs.get(r['requirement_id'], [])) or '（尚無）'}"); lines.append("")
-    out = "\n".join(lines) + "\n"; d = store.ROOT / "requirements"; d.mkdir(exist_ok=True)
-    p = d / f"{spec_id}-v{spec_version}.md"; p.write_text(out, encoding="utf-8"); return str(p.relative_to(store.ROOT))
+    return "\n".join(lines) + "\n"
+
+@operation.operation("req_export")
+def export(spec_id: str, spec_version: str) -> str:
+    """寫檔：requirements/<spec>-v<ver>.md（衍生輸出）。"""
+    p = f"requirements/{spec_id}-v{spec_version}.md"; store.write_derived(p, build(spec_id, spec_version)); return p

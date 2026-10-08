@@ -29,8 +29,8 @@ def test_10_evidence_and_execution_import(capsys):
     assert msg and "竄改" in msg and refs.resolve({"entity_type": "Evidence", "id": S["evd"]}) is None
 
 def test_11_no_evidence_no_formal_bug():
-    with pytest.raises(EngineError): engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "evidence_ids": []}, "oscar@example.com")
-    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com")
+    with pytest.raises(EngineError): engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "evidence_ids": []}, "oscar@example.com", new_request=True)
+    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com", new_request=True)
     S["run"] = run["run_id"]
     assert run["tasks"][0]["status"] == "DONE" and run["current_task_id"] == "T1"  # T0 因 RequirementModel 已存在而 skip
 
@@ -62,6 +62,38 @@ def test_12_bug_analyst_then_validator_pass():
     assert store.load(f"runs/{rid}/entities/bug.yaml")["status"] == "PENDING_APPROVAL"
     assert not list((store.ROOT / "bugs").rglob("BUG-*.yaml"))  # 未核准前 bugs/ 不得有正式檔
 
+def test_12b_bval_fail_gate_abort_then_resend_and_next_round(monkeypatch):
+    """P1 審查 P1-01：G-BVAL FAIL 的 gate 在 run.yaml 寫入後中止 → 同一請求重送可續做；完成後重送回報已完成；下一輪不同報告是新操作。"""
+    from tools.qaos import operation
+    run = engine.new_run("spec-to-bug", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "execution_id": S["exe"], "evidence_ids": [S["evd"]]}, "oscar@example.com", new_request=True)
+    rid = run["run_id"]
+    refs_ = [{"entity_type": "Requirement", "id": "REQ-AUTH-001"}, {"entity_type": "Evidence", "id": S["evd"]}, {"entity_type": "TestExecution", "id": S["exe"]},
+             {"entity_type": "TestCaseVersion", "id": S["tc"][0], "version": S["tc"][1]}]
+    def round_(n):
+        bd, p = H.write_artifact(rid, "T1", "agent-bug-analyst", "BugDraft", _bug_draft(S["evd"], S["tc"]), refs_, {"type": "TestExecution", "ids": [S["exe"]]}, "bug-analysis")
+        assert engine.submit(rid, "T1", str(p))[0] and engine.evaluate_gate(rid, "T1")["result"] == "PASS"
+        rep = {"result": "FAIL", "bug_draft_artifact_id": bd,
+               "checks": {k: k != "reproduction_sufficient" for k in ["violates_spec", "expected_has_spec_basis", "actual_supported_by_evidence", "reproduction_sufficient", "severity_reasonable", "priority_reasonable", "not_duplicate", "not_mere_ambiguity"]},
+               "issues": [{"testcase_id": S["tc"][0], "issue_type": "non_executable_steps", "severity": "major", "violated_requirement": None, "spec_reference": None,
+                           "evidence": "reproduction_steps", "explanation": f"第 {n} 輪：步驟不足", "recommended_change": "補步驟"}],
+               "evidence_verification": [{"evidence_id": S["evd"], "hash_verified": True, "supports_claim": True}],
+               "severity_assessment": {"severity_recommended": "major", "priority_recommended": "high", "agrees_with_analyst": True, "rationale": "同意"},
+               "duplicate_check": {"searched": True, "duplicate_of": None}}
+        _, p = H.write_artifact(rid, "T2", "agent-bug-validator", "BugValidationReport", rep, [{"entity_type": "Artifact", "id": bd}, {"entity_type": "Evidence", "id": S["evd"]}], {"type": "BugDraft", "ids": [bd]}, "validation")
+        assert engine.submit(rid, "T2", str(p))[0]
+    round_(1)
+    monkeypatch.setenv("QAOS_FAULT", "raise:after_progress:1")
+    with pytest.raises(OSError): engine.evaluate_gate(rid, "T2")
+    monkeypatch.delenv("QAOS_FAULT")
+    inc = [o for o in operation.list_operations() if o["state"] == "in_progress"]; assert len(inc) == 1
+    assert engine.evaluate_gate(rid, "T2")["result"] == "FAIL" and operation.LAST_OUTCOME["kind"] == "resumed"   # 同一請求重送 → 續做
+    first = operation.LAST_OUTCOME["op_id"]
+    assert not [o for o in operation.list_operations() if o["state"] == "in_progress"]
+    assert engine.load_run(rid)["current_task_id"] == "T1"
+    engine.evaluate_gate(rid, "T2"); assert operation.LAST_OUTCOME == {"kind": "completed", "op_id": first}    # 完成後重送 → 回報已完成
+    round_(2)
+    assert engine.evaluate_gate(rid, "T2")["result"] == "FAIL" and operation.LAST_OUTCOME["kind"] == "new" and operation.LAST_OUTCOME["op_id"] != first
+
 def test_13_open_bug_with_human_adjustment_and_manual_lifecycle(capsys):
     engine.approve(S["apr"], "approve", "oscar@example.com", adjustments={"severity": "critical"})
     bugs = list((store.ROOT / "bugs").rglob("BUG-*.yaml")); assert len(bugs) == 1
@@ -78,7 +110,7 @@ def test_13_open_bug_with_human_adjustment_and_manual_lifecycle(capsys):
 def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
     active = _active_tcs(); assert len(active) == 4
     manual = next(t for t in active if t[2]["execution_mode"] == "manual")
-    run = engine.new_run("regression-generation", {"target_suites": ["ci_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com")
+    run = engine.new_run("regression-generation", {"target_suites": ["ci_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com", new_request=True)
     prop = {"suite_id": "SUITE-CI", "suite_type": "ci_regression", "base_suite_version": None, "trigger": "manual",
             "proposed_memberships": [{"testcase_id": t[0], "pinned_version": "active", "justification": "high risk", "risk_tag": "auth"} for t in active],
             "diff": {"add": [{"testcase_id": t[0], "reason": "new"} for t in active], "remove": [], "repin": []},
@@ -87,7 +119,7 @@ def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
     assert engine.submit(run["run_id"], "T1", str(p))[0]
     r = engine.evaluate_gate(run["run_id"], "T1"); assert r["result"] == "FAIL" and any(manual[0] in i and "manual" in i for i in r["issues"])
     # Full regression：全部 4 個 → PASS → approval → commit
-    run2 = engine.new_run("regression-generation", {"target_suites": ["full_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com")
+    run2 = engine.new_run("regression-generation", {"target_suites": ["full_regression"], "scope": "all", "trigger": "manual"}, "oscar@example.com", new_request=True)
     prop.update({"suite_id": "SUITE-FULL", "suite_type": "full_regression"})
     rp, p = H.write_artifact(run2["run_id"], "T1", "agent-regression-curator", "RegressionProposal", prop, [{"entity_type": "TestCase", "id": t[0]} for t in active], {"type": "Registry", "ids": []}, "regression")
     assert engine.submit(run2["run_id"], "T1", str(p))[0] and engine.evaluate_gate(run2["run_id"], "T1")["result"] == "PASS"
@@ -103,7 +135,7 @@ def test_14_regression_gate_rejects_manual_in_ci_and_commits_full():
 def test_15_change_impact_v1_1_supersedes_testcase(fixtures):
     """WF-C：v1.0 → v1.1（8 → 12），REQ-AUTH-001 changed，兩個 TC affected → 新版本 → APPLY_CHANGE → v2 ACTIVE、v1 SUPERSEDED。"""
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.1.md"), "--spec-id", "SPEC-AUTH-001", "--version", "1.1", "--product", "demo", "--area", "AUTH", "--change-summary", "密碼最小長度 8 → 12", "--by", "oscar@example.com"])
-    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-change-impact", {"spec_id": "SPEC-AUTH-001", "from_version": "1.0", "to_version": "1.1"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     assert run["current_task_id"] == "T0"  # to_version 尚無 RequirementModel
     rm = H.requirement_model("1.1", "12")
     sa = {"spec_id": "SPEC-AUTH-001", "spec_version": "1.1", "content_hash": store.load(store.spec_dir("SPEC-AUTH-001") / "spec.yaml")["versions"][1]["content_hash"], "summary": "v1.1", "scope": {"in_scope": [], "out_of_scope": []},
@@ -118,6 +150,16 @@ def test_15_change_impact_v1_1_supersedes_testcase(fixtures):
            "testcase_impact": [{"testcase_id": t[0], "active_version": t[1], "impact": "affected" if t in affected else "unaffected", "reason": "邊界值變更" if t in affected else "-", "affected_requirement_ids": ["REQ-AUTH-001"] if t in affected else []} for t in active],
            "summary": {"requirements_changed": 1, "requirements_added": 0, "requirements_removed": 0, "testcases_affected": 2, "testcases_obsolete": 0, "testcases_unaffected": 2},
            "completeness": {"all_active_requirements_judged": True, "all_referencing_testcases_judged": True}}
+    # 需求 A 第 5 章 §8、§9：CIR 帶兩端 revision，候選 TC 依各自的 pin 分組（G1～G8）
+    import json as _json
+    from tools.qaos import rm
+    r = engine.load_run(rid); groups = {}
+    for t in active: groups.setdefault(_json.dumps(rm.tc_pin(t[0], t[1]), sort_keys=True), []).append(t[0])
+    pin_groups = [{"from_pin": _json.loads(k), "testcase_ids": v, "requirement_diff": cir["requirement_diff"]} for k, v in groups.items()]
+    gidx = {t: k for k, g in enumerate(pin_groups) for t in g["testcase_ids"]}
+    cir.update(from_rm_revision=r["from_requirement_model_revision"], to_rm_revision=r["requirement_model_revision"], pin_groups=pin_groups)
+    for ti in cir["testcase_impact"]: ti["pin_group_index"] = gidx[ti["testcase_id"]]
+    assert len(pin_groups) == 1 and cir["to_rm_revision"]["spec_version"] == "1.1"
     # 漏判一個 TC → G-IMPACT FAIL
     bad = dict(cir, testcase_impact=cir["testcase_impact"][:-1], completeness={"all_active_requirements_judged": True, "all_referencing_testcases_judged": False})
     _, p = H.write_artifact(rid, "T1", "agent-change-impact-analyst", "ChangeImpactReport", bad, refs_, {"type": "SpecVersion", "ids": []}, "change-impact")

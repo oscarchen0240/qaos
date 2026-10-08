@@ -37,7 +37,7 @@ def _submit_design(rid, tcs, iteration=0, report_fix=None):
 
 def test_30_rejection_contract_undefined_opens_clarification(fixtures):
     cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-NEG-001", "--version", "1.0", "--product", "demo", "--area", "NEG", "--by", "oscar@example.com"])
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); S["run"] = run["run_id"]; rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); S["run"] = run["run_id"]; rid = run["run_id"]
     rm = _rm(); h = store.load(store.spec_dir("SPEC-NEG-001") / "spec.yaml")["versions"][0]["content_hash"]
     sa = {"spec_id": "SPEC-NEG-001", "spec_version": "1.0", "content_hash": h, "summary": "x", "scope": {"in_scope": [], "out_of_scope": []}, "requirement_ids": list(r["requirement_id"] for r in rm["requirements"]), "ambiguities": [], "constraints": [], "edge_case_candidates": [], "open_questions": []}
     refs_ = [{"entity_type": "SpecVersion", "id": "SPEC-NEG-001", "version": "1.0"}]
@@ -77,7 +77,7 @@ def test_32_exploratory_needs_flag_and_over_half_triggers_decision():
 
 def test_33_over_half_exploratory_routes_to_needs_decision_then_continue():
     """另開一個 run：4/5 exploratory → NEEDS_DECISION（不 FAIL）→ Human 選 continue → 進 T3。"""
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com"); rid = run["run_id"]
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-NEG-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True); rid = run["run_id"]
     assert run["tasks"][0]["status"] == "DONE" and run["current_task_id"] == "T2"   # RequirementModel 已存在 → T1 skip
     tcs, ids_ = _tcs(prefix="01EZZZZZZZZZZZZZZZZZZZZZZ")
     for t in tcs[:4]: t["assumptions"] = [{"text": "假設", "requirement_id": t["requirement_ids"][0], "needs_human_confirmation": True}]

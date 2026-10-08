@@ -6,6 +6,8 @@ input:
     spec_id: {required: true}
     from_version: {required: true}
     to_version: {required: true, description: 已由 Human 匯入 specs/}
+    from_revision: {required: false, description: "同版本 CIA 必填：from 端的 revision（R<NNN>）（需求 A 第 5 章 §8）"}
+    reason: {required: false, description: "同版本 CIA 必填：declaration_changed | decision_revised | decision_applied，必須和判定函式結果相符"}
     initiated_by: {required: true}
 initial_state: {workflow_run: CREATED, change_impact: DETECTED}
 agents: [agent-supervisor, agent-spec-analyst(conditional), agent-change-impact-analyst, agent-test-designer, agent-test-validator, agent-tc-risk-reviewer(conditional)]
@@ -23,7 +25,7 @@ risk_review: {after: T3, agent: agent-tc-risk-reviewer}   # ADR-009：高風險 
 tasks:
   - id: T0
     agent: agent-spec-analyst
-    run_if: "RequirementModel for spec_id@to_version NOT exists"
+    run_if: "RequirementModel for spec_id@to_version NOT exists（實際依需求 A 第 5 章 §7 的 _skip 優先序；同版本 CIA 一定執行）"
     inputs: [SpecVersion(to), "RequirementModel(from) as previous (保留 requirement_id)"]
     gate: G-SPEC
   - id: T1
