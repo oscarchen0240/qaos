@@ -1,0 +1,44 @@
+clarification_id: CLR-ACCOUNT-005
+product: ba-admin
+functional_area: ACCOUNT
+spec_id: SPEC-ACCOUNT-001
+spec_version: '0.1'
+question: 機台場館底下手動建立「線上」型帳號，用途是什麼？行為上是否真的完全比照一般線上會員？額度上限/場館設定是否也套用到它？
+context: 'ACCOUNT spec 只規定「機台」選項在線上站台下停用，沒有反過來規定「線上」選項在機台場館下停用——理論上可以在機台場館底下手動選「線上」建立帳號。REQ-ACCOUNT-007 只驗證了表單欄位行為（不帶機台專屬欄位、電子信箱電話留空），沒有測過「建立站台為機台場館」這個組合情境本身：這種帳號是否完全等同建在線上站台的線上帳號（走一般系統入金/出金、一般線上遊戲下注/注單，與開分/洗分/出金/入金四種機台金流完全無關）；場館層級的額度上限、洗分門檻等設定是否也對它生效或完全不相關；後台各頁（會員列表可見範圍、機台交易紀錄等）是否會把這種帳號當成該機台場館的一員處理。
+
+
+  另外想請教設計目的：這個組合（機台場館底下的線上型帳號）在 spec 裡完全沒有使用情境說明，只是帳號類型欄位邏輯的副作用（「機台」選項僅在線上站台下停用，沒有反過來限制「線上」選項在機台場館下不能選）。想請教當初留這個口子是刻意設計的功能（例如：站務人員的測試帳號、想保留完整會員福利/KYC/優惠資格給特定客人等），還是單純表單邏輯沒有特別收斂、沒有預期會被使用？這會影響這個組合情境該不該正式列為
+  Requirement 並設計對應測試。'
+options:
+- 選項A：完全比照一般線上會員，與所屬站台是否為機台場館無關，場館層級的額度上限/洗分門檻等機台專屬設定對它完全不生效
+- 選項B：雖是線上帳號類型，但因所屬站台是機台場館，仍需套用該場館部分設定（例如額度上限），需另定規則
+- 選項C：這個組合情境在實務上不會發生／不需支援，應在後台層面直接擋掉（機台場館下不應允許建立線上型帳號）
+- 選項D：這個組合是刻意設計的功能，用途是：______（請說明）
+- 選項E：純屬表單邏輯的副作用，沒有預期會被使用，也不需要特別支援或測試
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-14T15:19:55Z'
+status: APPLIED
+history:
+- at: '2026-09-14T15:19:55Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-14T15:49:04Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by oscarchen@blockaction.tech
+- at: '2026-09-17T20:06:34Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 回覆內容已核對確認體現在對應RequirementModel（或spec已標記需修正處另案處理），補跑正式落地
+requirement_id: REQ-ACCOUNT-007
+impact_if_unanswered: 若未回答，這個組合情境將維持推論狀態（比照一般線上會員），不會有對應的 Requirement/TC；若之後發現實際行為與推論不符，需要回頭補測並可能影響 SPEC-ACCOUNT-001/CASHFLOW/UPDATEPACK
+  相關頁面的可見範圍與金流規則
+answer: 選項B：機台場館底下建立的「線上」型帳號，雖然帳號類型是線上，但因所屬站台是機台場館，仍需套用該場館的部分設定（例如額度上限），需要另外定義具體規則。用途/設計目的與確切要套用哪些場館設定，PM 表示後續再另行設計，本次先確認方向為選項B（不是選項A完全比照一般線上會員，也不是選項C禁止此組合）。
+answered_by: oscarchen@blockaction.tech
+answered_at: '2026-09-14T15:49:04Z'
+resolution: requirement_clarified

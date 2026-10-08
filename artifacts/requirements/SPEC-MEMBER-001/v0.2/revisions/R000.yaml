@@ -1,0 +1,806 @@
+spec_id: SPEC-MEMBER-001
+spec_version: '0.2'
+source_artifact_id: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+persisted_at: '2026-09-14T19:49:41Z'
+requirements:
+- requirement_id: REQ-MEMBER-001
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: OTP 報表可查詢特定年月的 OTP 使用次數
+  statement: 會員列表頁面頂部「OTP 報表」按鈕，開啟彈窗輸入年份與月份後查詢該月 OTP 使用次數
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-001
+    given: 點擊會員列表頁面頂部的「OTP報表」按鈕
+    when: 輸入指定年份與月份並搜尋
+    then: 顯示該月份的 OTP 使用次數查詢結果
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.1 頁面頂部功能
+    quote: 查詢特定月份的 OTP 使用次數。操作步驟：1.點擊「OTP報表」按鈕，開啟彈窗 2.輸入欲查詢的年份與月份 3.點擊「搜尋」查看結果 4.點擊✕關閉彈窗
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.1
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-002
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 篩選器 KYC 狀態須搭配 KYC 階段使用，不可單獨篩選
+  statement: 會員列表篩選器的 KYC 階段與 KYC 狀態可組合篩選，但 KYC 狀態須先選定 KYC 階段才可篩選；兩者搭配使用，例如篩選「身分證明文件驗證」階段中狀態為「審核中」的會員
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-002
+    given: 未選擇 KYC 階段
+    when: 嘗試直接篩選 KYC 狀態
+    then: KYC 狀態欄位不可篩選或無作用，須先選定 KYC 階段
+  - ac_id: AC-MEMBER-003
+    given: 已選擇 KYC 階段「身分證明文件驗證」，KYC 狀態選「審核中」
+    when: 點擊搜尋
+    then: 正確篩選出該階段狀態為審核中的所有會員
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.2 篩選器
+    quote: KYC 階段：需先選擇 KYC 階段，才可篩選 KYC 狀態
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.2
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-003
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 會員列表 KYC 狀態以五個圖示的顏色顯示各驗證階段狀態
+  statement: 會員列表 KYC 狀態欄以五個圖示由左至右對應五個驗證階段（個人基本資訊/身分證明文件/身分證件自拍/居住地址/資產證明），各圖示顏色代表該階段狀態：綠色已核准、橘色審核中、紅色待補件、淺灰未申請、深灰已停用；滑鼠移至圖示顯示
+    Tooltip 說明階段名稱與狀態
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-004
+    given: 一名會員的五個 KYC 階段分別處於不同狀態（已核准/審核中/待補件/未申請/已停用其中幾種）
+    when: 檢視會員列表該會員的 KYC 狀態欄五個圖示
+    then: 五個圖示顏色分別正確對應各自階段的實際狀態；滑鼠移至任一圖示顯示 Tooltip 說明階段名稱與狀態
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.3 KYC驗證階段圖示說明
+    quote: 🟢綠色已核准該階段已通過審核｜🟠橘色審核中會員已送出申請，待後台審核｜🔴紅色待補件審核不通過，需會員補件｜灰色（淺）未申請會員尚未提交此階段｜灰色（深）已停用此階段已被停用
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義，五種狀態顏色對照清楚
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.3
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-004
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 側邊面板邀請鏈：非透過邀請鏈註冊的會員，上層顯示為站長
+  statement: 會員若為加盟商，側邊簡易資料面板顯示其邀請鏈（上層會員編號→當前會員編號→會員N人）；若該會員非透過邀請鏈註冊，則上層顯示為站長
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-005
+    given: 一名加盟商會員是透過邀請鏈註冊
+    when: 檢視其側邊簡易資料面板的邀請鏈顯示
+    then: 正確顯示上層會員編號 → 當前會員編號 → 下層會員人數的完整關係
+  - ac_id: AC-MEMBER-006
+    given: 一名加盟商會員不是透過邀請鏈註冊（例如後台直接建立）
+    when: 檢視其側邊簡易資料面板的邀請鏈顯示
+    then: 上層顯示為「站長」，不是空白或錯誤資料
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.4 側邊簡易資料面板
+    quote: 若該會員為加盟商，則顯示其成為加盟商的時間與邀請鏈。邀請鏈顯示完整的上下層關係（如：上層會員編號 → 當前會員編號 → 會員 N 人）；若該會員非透過邀請鏈註冊，則上層顯示為站長
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-005
+  version: 3
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 可提領餘額須大於 10 USDT 才可申請出金
+  statement: 會員申請出金時，「提領申請金額」本身須大於等於 10 USDT 才可出金；門檻判斷對象是會員實際填寫送出的提領金額，與後台帳務資訊「可提領餘額」欄位的精確數值無關（只要可提領餘額足以支應本次提領金額即可），也與出金手續費計算無關。spec
+    §2.1.4原文僅寫「可提領餘額...須大於10 USDT方可申請出金」，字面上用「大於」(不含10)且以「可提領餘額」為判斷對象，與實際產品行為（大於等於/含10、判斷對象是提領申請金額本身）有落差，已由 Oscar 2026-09-16
+    以實際操作確認並多次更正，建議另案更新spec原文。
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-007
+    given: 會員可提領餘額足夠支應提領金額，提領申請金額本身為 9.99 USDT（邊界值，未達 10 USDT 門檻）
+    when: 送出提領申請
+    then: 不可出金——提領申請金額本身未達 10 USDT 門檻
+  - ac_id: AC-MEMBER-008
+    given: 會員可提領餘額足夠支應提領金額，提領申請金額本身恰為 10.00 USDT（邊界值，剛好達到門檻）
+    when: 送出提領申請
+    then: 可正常出金，申請成功送出——提領申請金額本身剛好達到 10 USDT 門檻（含）
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.4 帳戶資訊
+    quote: 可提領餘額｜目前符合提領條件的金額（單位USDT）；須大於 10 USDT 方可申請出金
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: boundary
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義，是個精確的數值邊界規則，容易被誤實作成「大於」(不含10)而非「大於等於」(含10)，值得用邊界值驗證（此描述已於2026-09-16修正方向：原文誤把「大於等於」當成錯誤實作，實際上「大於等於」才是正確方向）
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.4
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+  - at: '2026-09-16T03:09:00Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    note: 修正AC-MEMBER-007/008：原定義誤把門檻判斷對象設為『可提領餘額』欄位本身、且門檻方向為『大於10』(不含)。Oscar 2026-09-16確認實際機制：門檻判斷對象是『提領申請金額扣除出金手續費(後台鏈上錢包管理設定%)後的淨額』，且門檻含10(大於等於)。此為spec原文未揭露的產品行為，spec.md
+      §2.1.4本身未修訂，僅更正RequirementModel與statement中誠實揭露此落差。
+  - at: '2026-09-16T03:22:53Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    note: 再次修正AC-MEMBER-007/008（version 2→3）：Oscar 2026-09-16當天先確認『門檻判斷對象是提領金額扣除出金手續費後淨額』(version 2)，隨後又更正：出金手續費從主錢包額外扣除、不影響到手金額，且門檻判斷對象是『提領申請金額本身』(不涉及手續費)。本次version
+      3移除所有手續費相關描述，改為單純的『提領申請金額本身>=10』門檻。同時修正version 1遺留的rejection_contract.description方向錯誤（原文誤導方向為『大於』才對、『大於等於』是常見錯誤實作，實際相反）。
+- requirement_id: REQ-MEMBER-006
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 會員詳細頁 KYC 審核：駁回須選原因，未開放階段不可操作
+  statement: 會員詳細資料頁的 KYC 狀態區塊，後台人員可對每個已開放的驗證階段執行審核操作，選擇通過或駁回；駁回時須從下拉選單選取駁回原因；未開放審核的階段（顯示--）不可操作
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-009
+    given: 後台人員對一個已開放審核的 KYC 階段選擇「駁回」，未選取駁回原因
+    when: 點擊儲存
+    then: 系統阻擋，要求先選取駁回原因
+  - ac_id: AC-MEMBER-010
+    given: 嘗試對一個顯示為「--」（未開放審核）的 KYC 階段執行審核操作
+    when: 觀察系統反應
+    then: 該階段不可操作，找不到可用的審核入口
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 KYC狀態
+    quote: 審核結果選擇「通過」或「駁回」；選擇駁回時，需從下拉選單選取駁回原因 ｜ ⚠️未開放審核的階段（顯示--）不可操作
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-007
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 會員啟用狀態切換為停用後，該會員無法登入或進入平台
+  statement: 會員詳細頁可切換會員啟用狀態（啟用/停用），處於停用狀態的會員將無法登入或進入平台
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-011
+    given: 後台將一名會員的帳號狀態從啟用切換為停用
+    when: 該會員嘗試登入前台
+    then: 無法登入，系統拒絕
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 會員啟用狀態
+    quote: 顯示該會員目前的帳號狀態，分為「啟用」與「停用」兩種。處於停用狀態的會員將無法登入或進入平台。點擊鉛筆圖示可切換狀態
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義，直接關係帳號存取控制
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-008
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 會員等級可由後台人員手動編輯，含後台備註與自動帶入的操作人員
+  statement: 會員詳細頁的會員等級旁附「編輯」按鈕，可手動調整該會員等級；編輯面板含會員編號（唯讀）、會員等級（下拉選單）、後台備註（選填）、操作人員（自動帶入當前登入帳號，唯讀）
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-012
+    given: 後台人員點擊會員等級旁的「編輯」按鈕，選擇新的會員等級並儲存
+    when: 檢視該會員的會員等級與操作紀錄
+    then: 會員等級成功更新為新選擇的等級；操作人員欄位自動帶入當前登入帳號，不需手動填寫
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 等級資訊
+    quote: 會員等級｜可透過「編輯」按鈕手動調整；點擊後右側滑出「會員等級編輯」面板，填寫以下欄位後點擊「儲存」：會員編號（唯讀）、會員等級（下拉選單）、後台備注（選填）、操作人員（自動帶入當前登入帳號，唯讀）
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-009
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 人工存入/提出可一次對多筆會員編號批次執行
+  statement: 會員詳細頁的人工存入/人工提出面板，會員編號欄預設帶入當前會員編號，也可用「,」分隔輸入多個會員編號，一次對多筆會員執行同一筆操作
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-013
+    given: 開啟人工存入面板，會員編號欄額外輸入其他會員編號，以「,」分隔（例如當前會員編號,另一會員編號）
+    when: 填寫金額等其他欄位後儲存
+    then: 系統對輸入的所有會員編號各自執行一筆相同金額的人工存入操作
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 帳務資訊
+    quote: 會員編號｜預設帶入當前會員編號；亦可使用「,」分隔多個會員編號，一次對多筆會員執行操作
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-010
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 人工存入/提出的前台備注與後台備注皆為必填
+  statement: 人工存入/人工提出面板的前台備注（顯示於會員端）與後台備注（僅後台人員可見）皆為必填欄位
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-014
+    given: 填寫人工存入面板時，前台備注或後台備注其中一項留空
+    when: 嘗試點擊儲存
+    then: 系統阻擋，不允許在缺少必填備注的情況下送出
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 帳務資訊
+    quote: 前台備注｜必填；填寫後顯示於會員端，作為該筆金額異動的說明 ｜ 後台備注｜必填；僅後台人員可見，作為該筆操作紀錄的內部說明
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-011
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 人工存入/提出的稽核倍數會影響會員後續的提領所需有效投注額
+  statement: 人工存入/提出面板的「稽核」欄位設定本次異動金額所需完成的可提領投注倍數（預設1），會影響會員後續的提款條件（提領所需有效投注額）
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-015
+    given: 對一名會員執行一筆人工存入，稽核倍數設定為大於1的值（例如3倍）
+    when: 檢視該會員存入前後的「提領所需有效投注額」
+    then: 提領所需有效投注額因這筆存入金額乘上稽核倍數而增加，不是單純加回存入金額本身
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.1.5 帳務資訊
+    quote: 稽核｜設定本次異動金額所需完成的可提領投注倍數，將影響會員後續提款條件；預設為 1
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義，直接影響會員能否提領資金，計算錯誤會造成金流爭議
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.1.5
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-012
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 加盟列表狀態 Toggle 可切換會員的加盟商啟用/停用身分
+  statement: 加盟列表點擊狀態 Toggle 可切換該會員的加盟商啟用或停用狀態；停用表示該會員不再具加盟商身分
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-016
+    given: 一名會員目前是啟用中的加盟商
+    when: 在加盟列表點擊其狀態 Toggle
+    then: 該會員的加盟商狀態切換為停用，篩選器選停用時可查到該筆
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.2.2 加盟列表
+    quote: 點擊狀態Toggle：切換該加盟商的啟用或停用狀態 ｜ 狀態｜全部/啟用/停用；啟用表示該會員具加盟商身分，停用表示不具加盟商身分
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-013
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 一般加盟商（全民加盟）以三種 Badge 樣式顯示 Partner 等級達成狀態
+  statement: 加盟列表的一般加盟商欄位以 Badge 呈現會員目前達成的 Partner 等級，依是否達成升等門檻與是否已透過前台申請，分三種狀態：已申請（白底）、達成未申請（深灰底）、未達成（黑底）
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-017
+    given: 一名會員已達成 Partner 升等門檻且已透過前台申請
+    when: 檢視加盟列表該會員的一般加盟商 Badge
+    then: 顯示白底「已申請」樣式
+  - ac_id: AC-MEMBER-018
+    given: 一名會員已達成升等門檻但尚未透過前台申請
+    when: 檢視其一般加盟商 Badge
+    then: 顯示深灰底「達成未申請」樣式
+  - ac_id: AC-MEMBER-019
+    given: 一名會員尚未達成升等門檻
+    when: 檢視其一般加盟商 Badge
+    then: 顯示黑底「未達成」樣式
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.2.2 加盟等級
+    quote: （1）已申請（白底）：會員達成升等門檻，且已透過前台主動申請成為加盟商；（2）達成未申請（深灰底）：會員已達成升等門檻，但尚未透過前台申請；（3）未達成（黑底）：會員尚未達成升等門檻
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義，三態顯示邏輯清楚
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.2
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-014
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 客製化加盟商（S Partner）可透過 Inline 編輯直接修改佣金相關欄位
+  statement: 加盟列表點擊「超級加盟商」按鈕後，該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核倍數欄位進入 Inline 編輯模式，可直接修改，確認儲存或取消還原原始值
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-020
+    given: 點擊某加盟商列的「超級加盟商」按鈕，修改佣金比例%等數值後點擊✓確認
+    when: 檢視該列數值
+    then: 數值成功更新並儲存
+  - ac_id: AC-MEMBER-021
+    given: 點擊「超級加盟商」按鈕進入 Inline 編輯，修改數值後點擊✕取消
+    when: 檢視該列數值
+    then: 還原為修改前的原始值，變更未儲存
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.2.3 客製化加盟商設定
+    quote: 3.該列的佣金比例%、優惠%、返水%、推薦返傭%、行政費、稽核欄位進入Inline編輯模式 4.直接修改各欄位數值 5.點擊列尾的✓確認儲存；或點擊✕取消並還原原始值
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.2.3
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-015
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 從會員頁點擊最後登入 IP 可跳轉至登入網域查詢頁並自動帶入該 IP 篩選
+  statement: 會員列表側邊面板或會員詳細資料頁點擊「最後登入IP」，跳轉至登入網域查詢頁，系統自動帶入該 IP 進行篩選
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-022
+    given: 於會員詳細資料頁點擊「最後登入IP」欄位值
+    when: 檢視跳轉後的登入網域查詢頁
+    then: 自動跳轉並帶入該 IP 值作為篩選條件，查詢結果為曾使用該 IP 登入的所有會員及登入時間
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.3.1 篩選器
+    quote: 從會員列表側邊面板或會員詳細資料頁點擊「最後登入IP」跳轉至此頁時，系統會自動帶入該IP進行篩選
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.3.1
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-016
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 推薦註冊金設定新增時會員編號為必填，不可為空
+  statement: 推薦註冊金設定頁新增方案時，會員編號為必填欄位，不可為空
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-023
+    given: 新增推薦註冊金設定時，會員編號欄位留空
+    when: 嘗試點擊新增送出
+    then: 系統阻擋，提示會員編號為必填
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.4.2 新增設定
+    quote: 會員編號為必填（必填），不可為空
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.4.2
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-017
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: functional
+  title: 推薦註冊金設定刪除為不可復原操作，須二次確認
+  statement: 推薦註冊金設定列表刪除某筆設定時，彈出確認視窗，確認後刪除該筆設定，操作不可復原
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-024
+    given: 點擊某筆推薦註冊金設定旁的刪除圖示
+    when: 確認彈窗詢問是否刪除
+    then: 彈出確認視窗；確認後該筆設定被永久刪除，且系統不提供復原此操作的功能
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.4.3 列表欄位
+    quote: 建立時間｜該筆設定的建立時間；點擊旁側刪除圖示後，彈出確認視窗，確認後刪除該筆設定，操作不可復原
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.4.3
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008
+- requirement_id: REQ-MEMBER-018
+  version: 1
+  spec_id: SPEC-MEMBER-001
+  spec_version: '0.2'
+  type: constraint
+  title: 暱稱禁用詞設定分四個類別分頁，各自獨立管理
+  statement: 暱稱禁用詞設定分為 Violence、Pornography、Sensitive、Other 四個類別分頁，各分頁的新增/移除禁用詞操作方式相同但設定互相獨立
+  acceptance_criteria:
+  - ac_id: AC-MEMBER-025
+    given: 在 Violence 分頁新增一個禁用詞
+    when: 切換至 Other 分頁檢視禁用詞清單
+    then: Other 分頁的清單不包含剛才在 Violence 分頁新增的那個詞，兩個分頁的設定互相獨立
+  spec_reference:
+    spec_id: SPEC-MEMBER-001
+    spec_version: '0.2'
+    location: §2.5.1 分頁說明
+    quote: 各分頁的操作方式相同，設定互相獨立
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 規則已明確定義
+    spec_reference:
+      spec_id: SPEC-MEMBER-001
+      spec_version: '0.2'
+      location: §2.5.1
+      quote: ''
+  history:
+  - at: '2026-09-14T19:49:41Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2GQFHHQVJ62X9PPE8EAV0K8
+    run_id: RUN-20260915-008
+  - at: '2026-09-14T19:49:41Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260915-008

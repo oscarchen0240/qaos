@@ -1,0 +1,48 @@
+clarification_id: CLR-DAILYREPORT-010
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+question: 「已兌現金額」以收據日還是兌現日歸屬？（同一筆出金跨日兌現時，記在出收據那天還是付現那天）
+context: Spec 欄位說明「已兌現金額＝當日已核實（核銷）的收據金額合計」有兩種讀法，且 spec 兩處暗示相反：AC-DAILYREPORT-0113「當日收據 200，其中 150 已核銷 → 已兌現 150」是收據日基準；現金淨收註解「代表場館端當日現金應該增減多少」是兌現日基準。例：9/10
+  出收據 1000、9/12 櫃檯付現核實。收據日基準 → 9/10 列 收據 1000／已兌現 1000／現金淨收 −1000（但 9/10 抽屜沒少錢）；兌現日基準 → 9/10 列 收據 1000／已兌現 0／未兌現 0（1000 對不上）、9/12
+  列 已兌現 1000／現金淨收 −1000（與抽屜一致）。CASHOUT spec 明說收據不設兌現時效、未兌現會長期累積，跨日是常態。此題連帶決定 REQ-DAILYREPORT-012 現金淨收是否為當日現金基礎。
+options:
+- A. 收據日：已兌現歸在出收據那天（同 AC-0113）；單列內 收據＝已兌現＋未兌現＋已作廢 成立；現金淨收含未來才付的錢
+- B. 兌現日：已兌現歸在付現那天；現金淨收＝當日實際現金增減；單列內收據與已兌現不勾稽
+- C. 實務上一律當天兌現，跨日視為例外，採 A 即可
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-09-21T20:53:40Z'
+status: APPLIED
+history:
+- at: '2026-09-21T20:53:41Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-09-21T20:56:40Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked PM
+- at: '2026-09-22T04:43:40Z'
+  from_status: ASKED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM（2026-09-22，經 Oscar 轉達）
+- at: '2026-09-22T04:45:58Z'
+  from_status: ANSWERED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: applied
+  note: 'RM：REQ-011 statement 補收據日基準、新增 AC-0115 跨日案例；REQ-012 現金淨收註記（dailyreport_clr010_apply.py）；impact-scan[8]: TC-DAILYREPORT-034(requirement)；TC-DAILYREPORT-035(requirement)；TC-DAILYREPORT-036(requirement,keyword:已兌現,keyword:未兌現,keyword:核銷)；TC-DAILYREPORT-037(requirement)；TC-DAILYREPORT-038(keyword:已兌現,keyword:現金淨收)；TC-DAILYREPORT-039(keyword:已兌現,keyword:現金淨收)；TC-DAILYREPORT-045(keyword:未兌現)；TC-DAILYREPORT-046(keyword:未兌現)；reviewed:
+    TC-036 需修訂（明確核銷可在當日或之後，仍歸收據日）並新增 1 條跨日兌現 TC（AC-0115）；034/035/037 洗分不受影響；038/039 現金淨收公式不變不受影響；045/046 未兌現週期／範圍規則不受影響'
+requirement_id: REQ-DAILYREPORT-011
+impact_if_unanswered: REQ-011／012 相關 TC 的 expected 只能以假設撰寫；已兌現與現金淨收的跨日案例無法設計
+asked_to: PM
+asked_at: '2026-09-21T20:56:39Z'
+answer: A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 AC-DAILYREPORT-0113）。因此單列內 收據金額＝已兌現＋未兌現＋已作廢 成立；現金淨收（開分＋進鈔－已核實洗分－已兌現）含未來才付現的收據金額，不是當日實際現金增減。作廢在報表的呈現另見
+  CLR-DAILYREPORT-011（待回）。
+answered_by: PM（2026-09-22，經 Oscar 轉達）
+answered_at: '2026-09-22T04:43:40Z'
+resolution: requirement_clarified

@@ -1,0 +1,1466 @@
+spec_id: SPEC-SITELIST-001
+spec_version: '0.4'
+source_artifact_id: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+persisted_at: '2026-09-13T19:09:47Z'
+requirements:
+- requirement_id: REQ-SITELIST-001
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 站台類型二擇一且建立後不可修改
+  statement: 每個站台的站台類型為線上或機台二擇一；建立後不可修改
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0011
+    given: 新增站台
+    when: 根層站台選擇線上或機台
+    then: 系統接受並依所選類型建立
+  - ac_id: AC-SITELIST-0012
+    given: 站台已建立
+    when: 進入編輯畫面檢視站台類型欄位
+    then: 欄位為唯讀（置灰），無法修改
+  - ac_id: AC-SITELIST-0013
+    given: 站台已建立
+    when: 嘗試透過編輯送出不同的站台類型值
+    then: 系統不得變更站台類型
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位 + §業務規則-站台類型鎖定
+    quote: 每個站台的「站台類型」為線上 / 機台，二擇一；建立後不可修改
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 編輯彈窗顯示為唯讀（置灰）即為拒絕修改的方式
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台類型鎖定
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-002
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 站台類型由主站台決定，子站台強制繼承
+  statement: 站台類型於主站台（根層）選定，子站台一律與主站台同類型，不可個別選擇；例外：當上層站台為 admin（最上層根站台）時，此強制跟隨規則不適用——底下子站台可自由選擇機台或線上類型，核心貨幣依所選類型連動建立（此為 PM
+    最終決定，已開發完成並上線，非待定或實驗性設計；正式確認見 CLR-SITELIST-010，spec.md 原文尚未反映此例外，屬 spec 文件落後於實際已上線行為的已知落差）
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0021
+    given: 上層站台為機台類型
+    when: 新增子站台
+    then: 子站台的站台類型固定為機台，UI 不開放選擇
+  - ac_id: AC-SITELIST-0022
+    given: 上層站台為線上類型
+    when: 新增子站台
+    then: 子站台的站台類型固定為線上，UI 不開放選擇
+  - ac_id: AC-SITELIST-0023
+    given: 上層站台為 admin（最上層根站台）
+    when: 新增子站台
+    then: 站台類型欄位可自由選擇機台或線上，不強制跟隨 admin 自身的站台類型；核心貨幣依所選類型連動建立（例如選機台則連動啟用 TWD）且此欄位不可更改、不能於後台關閉。與此同時，該新站台自己的「鏈上錢包管理」（每站台獨立一份、可事後調整的幣種出入金開關）會自動連動啟用對應幣別；此連動不需要
+      admin 自身的鏈上錢包管理預先啟用該幣別（即不依賴上層/admin 的狀態）。【CLR-SITELIST-012已修正】先前CLR-SITELIST-011誤判兩者「完全無關」，實際上兩者性質不同（核心貨幣不可變 vs 鏈上錢包管理可調整）但確有連動關係，已由既有ACTIVE的TC-SITELIST-063（早於本次CLR討論即存在）獨立佐證修正。
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位 + §業務規則-站台類型隨主站台
+    quote: 站台類型於主站台（根層）選定，子站台一律與主站台同類型、不可個別選擇
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: false
+    description: 若繞過前端UI、直接呼叫建立站台API並帶入與上層站台不同的站台類型，後端同樣拒絕（不只是前端唯讀限制）。依CLR-SITELIST-001確認
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-14T18:12:03Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: product_confirmation_2026-09-15
+  - at: '2026-09-16T16:08:56Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: product_confirmation_2026-09-16：Oscar 直接於對話中確認 admin 例外規則為新設計、非資料錯誤（修正先前 2026-09-14 記錄與所述 2026-09-15 確認日期矛盾、且缺乏
+      CLR 交叉引用的問題，此次以直接對話確認取代，trigger 日期與本筆 at 時間戳同步產生，避免重蹈先前的日期矛盾）
+  - at: '2026-09-17T12:44:12Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-010（2026-09-17）：admin 例外規則正式確認為 PM 最終決定、已開發完成上線，取代先前 2026-09-14/09-16 兩筆僅靠對話確認、缺乏
+      CLR 交叉引用的記錄
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-001
+- requirement_id: REQ-SITELIST-003
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 機台專屬欄位僅機台類型顯示
+  statement: 機台專屬欄位僅於站台類型為「機台」時顯示，主站台與子站台皆同
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0031
+    given: 站台類型為線上
+    when: 開啟新增或編輯畫面
+    then: 不顯示任何機台專屬欄位
+  - ac_id: AC-SITELIST-0032
+    given: 站台類型為機台
+    when: 開啟新增或編輯畫面
+    then: 顯示全部機台專屬欄位（場館地址、聯絡人／電話、額度上限、場次逾時時間、日結時間）
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位
+    quote: 類型為「機台」時才顯示下列機台專屬欄位
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 顯示與否即為規則本身，無額外拒絕情境
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-004
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 場館幣別唯讀繼承核心貨幣，不另設欄位
+  statement: 場館幣別唯讀，自動顯示所屬主站台的核心貨幣；新增／編輯視窗不另設本欄位，由核心貨幣欄承載
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0041
+    given: 站台類型為機台
+    when: 開啟新增或編輯畫面
+    then: 只有一個貨幣相關欄位（核心貨幣），沒有獨立的場館幣別輸入欄
+  - ac_id: AC-SITELIST-0042
+    given: 查看機台資訊或報表等檢視情境
+    when: 檢視場館幣別
+    then: 顯示值等於該站台所屬主站台的核心貨幣
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位/場館幣別
+    quote: 新增／編輯視窗不另設本欄位——與「核心貨幣」為同一個值，由核心貨幣欄的子站台唯讀繼承顯示承載
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 唯讀顯示即為規則本身
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/場館幣別
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-005
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 額度上限為場館層級共用池
+  statement: 額度上限為場館層級設定，該場館底下所有機台帳號共用同一份額度，以全場館機台分數餘額合計檢核；設為 0 代表不限制；修改後即時生效，不影響既有餘額
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0051
+    given: 場館額度上限設為 0
+    when: 檢視設定
+    then: 代表不限制
+  - ac_id: AC-SITELIST-0052
+    given: 修改場館額度上限
+    when: 儲存後檢視既有機台餘額
+    then: 既有餘額不受影響，僅新請求依新上限檢核
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位/額度上限 + §業務規則-額度上限（場館）
+    quote: 設為 0 代表不限制…修改後即時生效，不影響既有餘額
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: 額度上限輸入負數：前端顯示「值必須大於或等於0」，後端也拒絕（雙層驗證）。依CLR-SITELIST-002確認
+  inputs:
+  - name: credit_limit
+    type: number
+    required: false
+    constraints:
+      min: 0
+      note: 0 代表不限制
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-002
+- requirement_id: REQ-SITELIST-006
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 場次逾時時間欄位
+  statement: 場次逾時時間為機台仍有餘額但無任何交易與遊玩時，自動結束場次的時間長度；預設 1 小時，站長可調整
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0061
+    given: 新建機台類型站台
+    when: 檢視場次逾時時間預設值
+    then: 為 1 小時
+  - ac_id: AC-SITELIST-0062
+    given: 站長身分
+    when: 修改場次逾時時間
+    then: 系統接受修改
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位/場次逾時時間
+    quote: 預設 1 小時，站長可調整，操作員唯讀
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: 場次逾時時間輸入0、負數或低於1小時：後端拒絕（最低值1小時）；輸入超過17位數等極端格式：前端跳格式錯誤，後端阻擋並回傳通用錯誤代碼COMMON_INVALID_REQUEST_FORMAT。依CLR-SITELIST-003確認（原問題另提及「操作員唯讀」，因本spec未定義該角色，無法在本功能區驗證，不在此規則範圍內）
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-003
+- requirement_id: REQ-SITELIST-007
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 日結時間欄位
+  statement: 日結時間為每日結算的截止時刻（UTC+0），用於場館日結報表分日
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0071
+    given: 機台類型站台
+    when: 設定日結時間
+    then: 系統接受並儲存該時刻值（UTC+0）
+  - ac_id: AC-SITELIST-0072
+    given: 已設定日結時間
+    when: 查看場館日結報表
+    then: 報表依此時刻切分營業日（見 SPEC-DAILYREPORT-001 REQ-007）
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位/日結時間
+    quote: 每日結算的截止時刻（UTC+0），用於場館日結報表分日
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 純設定值，無拒絕情境；實際切分行為定義於 SPEC-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台類型與機台專屬欄位/日結時間
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-008
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 核心貨幣為主站台層級設定，子站台繼承不可各自指定
+  statement: 核心貨幣為站台層級的通用設定，不在子站台（場館）層級設定；主站台選定後，底下所有子站台一律沿用，不可各自指定
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0081
+    given: 主站台已選定核心貨幣
+    when: 新增或檢視子站台
+    then: 子站台的核心貨幣唯讀顯示，值等於主站台核心貨幣，無法個別指定
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §核心貨幣
+    quote: 幣別不在子站台（場館）層級設定，而是主站台層級的設定…其底下所有子站台一律沿用，不可各自指定
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 唯讀顯示即為規則本身
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-009
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 核心貨幣下拉依站台類型過濾
+  statement: 主站台核心貨幣為下拉選單，選項依站台類型過濾（目前線上僅 USDT、機台僅 TWD，各僅一種）；清單須可擴充，不得寫死幣別
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0091
+    given: 根層站台類型選線上
+    when: 檢視核心貨幣下拉選項
+    then: 只列出 USDT
+  - ac_id: AC-SITELIST-0092
+    given: 根層站台類型選機台
+    when: 檢視核心貨幣下拉選項
+    then: 只列出 TWD
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §核心貨幣
+    quote: 可選幣別清單依類型維護，目前線上＝USDT、機台＝TWD 各僅一種…實作不得將幣別寫死
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 過濾清單即為拒絕不符類型選項的方式
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣
+      quote: ''
+  inputs:
+  - name: core_currency
+    type: enum
+    required: true
+    constraints:
+      enum:
+      - USDT
+      - TWD
+      note: 依 site_type 過濾；線上→USDT，機台→TWD
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-010
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 核心貨幣建立後不可修改
+  statement: 主站台建立後，核心貨幣不可修改（v07 定案），編輯視窗唯讀顯示
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0101
+    given: 主站台已建立
+    when: 進入編輯畫面檢視核心貨幣欄位
+    then: 唯讀顯示，無法修改，也無法透過編輯換成其他幣別
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §核心貨幣 + §業務規則-核心貨幣繼承
+    quote: 主站台建立後，核心貨幣不可修改（v07 定案）：比照「站台類型」，於建立時選定即永久鎖定，編輯視窗唯讀顯示
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 編輯視窗唯讀顯示即為拒絕修改的方式
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §核心貨幣
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-011
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: security
+  title: 可見範圍依角色
+  statement: Admin 可見全部站台；站長僅可見自身所屬站台及其所有子站台，不包含平行或上層站台
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0111
+    given: 以 Admin 登入
+    when: 檢視站台列表根層
+    then: 顯示所有無上層站台的根層站台
+  - ac_id: AC-SITELIST-0112
+    given: 以站長登入
+    when: 檢視站台列表
+    then: 預設顯示自身所屬站台，且僅能看到自身及其所有子站台
+  - ac_id: AC-SITELIST-0113
+    given: 以站長登入
+    when: 嘗試瀏覽平行站台或上層站台
+    then: 系統不得顯示該站台資料
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §角色與權限 + §階層結構與逐層瀏覽-根層顯示
+    quote: 可見站台範圍 | 全部站台 | 僅自身站台及所有子站台（不含平行或上層站台）
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: false
+    description: 站長嘗試存取平行或上層站台（含直接以站台ID呼叫查詢API）：依「三個角色的關係」權限範圍模型（範圍由所屬站台決定，不是角色本身；站長可見範圍＝自身所屬站台及其子樹），該站台不在其可見範圍內，應無法取得資料。依CLR-SITELIST-004確認
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-004
+- requirement_id: REQ-SITELIST-012
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: security
+  title: 新增站台時上層站台欄位權限
+  statement: Admin 新增站台時可自由選取上層站台（留空為根層）；站長新增站台時上層站台固定為當前所在層，不可修改
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0121
+    given: 以 Admin 登入
+    when: 新增站台，搜尋並改選上層站台
+    then: 系統接受所選的任意站台為上層站台；留空則建立為根層站台
+  - ac_id: AC-SITELIST-0122
+    given: 以站長登入
+    when: 新增站台
+    then: 上層站台欄位唯讀，固定顯示當前所在層，無法改選
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §角色與權限 + §操作/新增站台
+    quote: 上層站台 | 自動帶入當前所在層；可搜尋改選任意站台…留空為根層 | 預帶當前所在層，唯讀不可修改
+  ambiguity:
+    level: major
+    description: 「站長固定為當前所在層，不可修改」是否為前端限制、還是後端也必須驗證並拒絕不同的上層站台？spec 未區分前後端層級
+    options:
+    - 僅前端限制即符合規格（後端不需額外驗證）
+    - 前後端皆須拒絕，後端也必須驗證並拒絕站長帶入非當前層的上層站台
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: false
+    description: 站長若繞過前端直接呼叫建立站台API並帶入其他上層站台ID：後端已拒絕（不接受繞過前端指定其他上層站台），此前RD回報的「直接呼叫API仍會成功」風險已修復。依CLR-SITELIST-005確認
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-005
+- requirement_id: REQ-SITELIST-013
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: security
+  title: 編輯站台時上層站台欄位權限與循環防護
+  statement: Admin 編輯時可修改上層站台，選取時自動排除自身及子站台；站長編輯時唯讀顯示，如需變更須通知 Admin
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0131
+    given: 以 Admin 登入
+    when: 編輯某站台的上層站台，開啟選單
+    then: 選單不包含該站台自身及其所有子站台
+  - ac_id: AC-SITELIST-0132
+    given: 以站長登入
+    when: 編輯站台
+    then: 上層站台欄位唯讀顯示目前值，無法修改
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §角色與權限 + §操作/編輯站台 + §業務規則-上層站台循環防護
+    quote: 編輯時，不可將自身或自身的子站台選為上層站台
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: false
+    description: 站長若繞過前端直接呼叫編輯站台API並帶入會形成循環的上層站台ID：後端已拒絕（同CLR-SITELIST-005的修復範圍）。依CLR-SITELIST-006確認（Admin編輯時的循環防護是否也有對應後端驗證，本次回覆未涵蓋，若後續測試發現可繞過需另案處理）
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-SITELIST-006
+- requirement_id: REQ-SITELIST-014
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: security
+  title: 模板權限
+  statement: 模板僅 Admin 可指定或修改；站長新增與編輯時模板欄位不顯示或唯讀，不開放修改
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0141
+    given: 以 Admin 登入
+    when: 新增或編輯站台並選取模板
+    then: 系統接受
+  - ac_id: AC-SITELIST-0142
+    given: 以站長登入
+    when: 新增或編輯站台
+    then: 模板欄位不顯示（新增）或唯讀顯示（編輯），無法修改
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §模板設定 + §角色與權限
+    quote: 指定權限：僅 Admin 可指定或修改；站長的模板欄位為唯讀，如需變更須通知 Admin
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 欄位不顯示／唯讀即為拒絕修改的方式
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §模板設定
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-015
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 模板必填規則（切換開通）
+  statement: 新建站台時模板可留空；當狀態切換為「開通」時，模板為必填，否則阻擋儲存並提示錯誤
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0151
+    given: 新建站台
+    when: 模板留空並送出
+    then: 系統接受建立（狀態為待開通）
+  - ac_id: AC-SITELIST-0152
+    given: 站台狀態非開通，模板為空
+    when: 將狀態切換為開通並儲存
+    then: 系統阻擋儲存，顯示錯誤提示
+  - ac_id: AC-SITELIST-0153
+    given: 站台狀態非開通，模板已填
+    when: 將狀態切換為開通並儲存
+    then: 系統接受，狀態變更為開通
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §模板設定/填寫規則 + §業務規則-模板（切換開通）
+    quote: 當狀態切換為「開通」時，模板為必填，否則阻擋儲存並提示錯誤
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 阻擋儲存並提示錯誤，規則已明確定義
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/模板（切換開通）
+      quote: ''
+  states:
+  - from: 非開通
+    to: 開通
+    trigger: Admin 手動切換，模板需已填
+    allowed: true
+  - from: 非開通
+    to: 開通
+    trigger: 模板為空
+    allowed: false
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-016
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: security
+  title: 狀態切換權限
+  statement: Admin 可切換為任意可手動選取的狀態（待開通／開通／暫停／關閉，共 4 種；不含僅由系統自動觸發、不開放手動選取的「更新待審」——已由 Oscar 2026-09-14 確認「任意狀態」含待開通）；站長僅可切換為「暫停」或「關閉」，其他狀態顯示但不可選；操作員因後台不顯示站台列表頁面，不具備任何狀態調整能力（含查看）。暫停與關閉在功能上皆代表該站台平台無法入金（即
+    SPEC-CASHFLOW-001 所指「場館站台非開通狀態」，機台一律無法運作，回 7-OUT OF SERVICE）
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0161
+    given: 以 Admin 登入
+    when: 編輯站台並切換狀態
+    then: 可選擇五種狀態中的任一種
+  - ac_id: AC-SITELIST-0162
+    given: 以站長登入
+    when: 編輯站台並切換狀態
+    then: 只能選擇暫停或關閉；其餘選項顯示但不可點選
+  - ac_id: AC-SITELIST-0163
+    given: 以站長登入
+    when: 嘗試切換為暫停或關閉以外的狀態
+    then: 系統阻擋儲存
+  - ac_id: AC-SITELIST-0164
+    given: 以操作員身分登入後台
+    when: 尋找站台列表頁面（選單或直接訪問）
+    then: 站台列表頁面不對操作員開放，操作員無法檢視或調整任何站台的狀態
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §角色與權限/狀態切換
+    quote: 狀態切換 | 可切換為任意狀態 | 僅可切換為「暫停」或「關閉」（「任意狀態」範圍已於 2026-09-14 由 Oscar 確認含待開通）
+  ambiguity:
+    level: major
+    description: Admin「可切換為任意狀態」是否包含「待開通」？「待開通」在 §站台狀態一節的觸發方式僅列「新建站台自動設定」，未列為可被 Admin 手動選取的目標狀態【已解決】已由 Oscar 於 2026-09-14
+      直接確認：Admin 的「任意狀態」包含待開通（可將既有站台手動切回待開通），採用選項一
+    options:
+    - 任意狀態含待開通，Admin 可把既有站台手動改回待開通
+    - 任意狀態不含待開通，待開通只能由新建站台觸發，Admin 手動切換的目標僅限開通/暫停/關閉
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 其他狀態顯示但不可選，即為拒絕方式
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §角色與權限/狀態切換
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-017
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 更新待審狀態自動觸發
+  statement: 站台處於「開通」或「更新待審」狀態下，若前台或後台網域有異動，儲存後自動切換為「更新待審」；此狀態不開放手動選取；Admin 可在此狀態下手動切換為其他任意狀態
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0171
+    given: 站台狀態為開通
+    when: 新增或刪除一筆網域並儲存
+    then: 狀態自動變為更新待審
+  - ac_id: AC-SITELIST-0172
+    given: 站台狀態為暫停或關閉或待開通
+    when: 新增或刪除一筆網域並儲存
+    then: 狀態不因網域異動而改變
+  - ac_id: AC-SITELIST-0173
+    given: 站台狀態為更新待審
+    when: Admin 手動切換為其他狀態
+    then: 系統接受
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台狀態/更新待審
+    quote: 站台處於「開通」或「更新待審」狀態下，若前台或後台網域有異動，儲存後自動切換；……不開放手動選取；Admin 可在此狀態下手動切換為其他任意狀態
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: state_change
+  rejection_contract:
+    defined: true
+    description: 僅「開通」與「更新待審」兩狀態下的網域異動觸發此規則，其餘狀態不觸發，規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §站台狀態/更新待審
+      quote: ''
+  states:
+  - from: 開通
+    to: 更新待審
+    trigger: 網域新增或刪除
+    allowed: true
+  - from: 更新待審
+    to: 更新待審
+    trigger: 網域新增或刪除
+    allowed: true
+  - from: 待開通
+    to: 待開通
+    trigger: 網域新增或刪除（不觸發變更）
+    allowed: true
+  - from: 暫停
+    to: 暫停
+    trigger: 網域新增或刪除（不觸發變更）
+    allowed: true
+  - from: 關閉
+    to: 關閉
+    trigger: 網域新增或刪除（不觸發變更）
+    allowed: true
+  - from: 更新待審
+    to: 任意狀態
+    trigger: Admin 手動切換
+    allowed: true
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-018
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 網域欄位新增刪除 UI 行為
+  statement: 前台／後台網域各可設定多筆，無上限；預設顯示一個空輸入欄；可點擊新增追加；每列右側有移除按鈕，若僅剩最後一列，移除後清空輸入欄但保留該列
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0181
+    given: 開啟新增站台 Modal
+    when: 檢視網域欄位
+    then: 前台與後台網域各預設顯示一個空輸入欄
+  - ac_id: AC-SITELIST-0182
+    given: 已有多筆網域列
+    when: 點擊某一列的移除按鈕
+    then: 該列被移除，其餘列不變
+  - ac_id: AC-SITELIST-0183
+    given: 僅剩最後一筆網域列
+    when: 點擊該列的移除按鈕
+    then: 輸入欄被清空，但該列本身保留（不會變成 0 列）
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §操作/網域編輯行為（Modal 內）
+    quote: 每個站台各可設定多筆，無上限……若僅剩最後一列，點擊移除後清空輸入欄但保留該列
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: UI 行為已明確定義
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §操作/網域編輯行為（Modal 內）
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-019
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 網域格式不驗證
+  statement: 網域欄位不做格式驗證，由管理員自行確保正確性
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0191
+    given: 新增或編輯站台
+    when: 在網域欄位輸入不符合網域格式的字串（如純數字、含空白、無網域字元）
+    then: 系統接受並儲存，不阻擋、不提示格式錯誤
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §業務規則與驗證/網域格式
+    quote: 不做格式驗證，由管理員自行確保正確性
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 明確定義為不驗證，此規則本身即是「不拒絕任何格式」
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/網域格式
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-020
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 站台代碼格式、唯一性與鎖定
+  statement: 站台代碼必須為恰好兩碼大寫英文字，輸入時自動轉大寫並過濾非英文字元；新增時檢查唯一性，重複則阻擋並提示錯誤；建立後不可修改
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0201
+    given: 輸入站台代碼小寫字母
+    when: 系統處理輸入
+    then: 自動轉為大寫
+  - ac_id: AC-SITELIST-0202
+    given: 輸入包含數字或符號的字串
+    when: 系統處理輸入
+    then: 非英文字元被過濾，不計入代碼
+  - ac_id: AC-SITELIST-0203
+    given: 輸入與既有站台相同的代碼
+    when: 送出新增
+    then: 系統阻擋儲存並提示重複錯誤
+  - ac_id: AC-SITELIST-0204
+    given: 站台已建立
+    when: 進入編輯畫面檢視站台代碼
+    then: 唯讀顯示，無法修改
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §業務規則與驗證/站台代碼格式、唯一性、鎖定
+    quote: 必須為恰好兩碼大寫英文字；輸入時自動轉大寫並過濾非英文字元…重複時阻擋儲存並提示錯誤
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 阻擋並提示錯誤，規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台代碼唯一性
+      quote: ''
+  inputs:
+  - name: site_code
+    type: string
+    required: true
+    constraints:
+      pattern: ^[A-Z]{2}$
+      note: 自動轉大寫、過濾非英文字元
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-021
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 站台名稱必填
+  statement: 站台名稱為空時阻擋儲存，輸入框標示紅框與錯誤提示
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0211
+    given: 站台名稱留空
+    when: 送出新增或編輯
+    then: 系統阻擋儲存，輸入框顯示紅框與錯誤提示
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §業務規則與驗證/站台名稱必填
+    quote: 名稱為空時阻擋儲存，輸入框標示紅框與錯誤提示
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 阻擋並提示錯誤，規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/站台名稱必填
+      quote: ''
+  inputs:
+  - name: site_name
+    type: string
+    required: true
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-022
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 站台列表不提供刪除操作
+  statement: spec.md v0.4 原文描述的「點擊刪除後顯示確認彈窗、二次確認後執行」流程，經 PM／後端於 2026-09-14 共同確認（CLR-SITELIST-007/008/009）並不存在於現行產品：任何站台類型（含線上與機台）前端皆不提供刪除操作入口，後端
+    API 亦拒絕刪除請求；原因是刪除站台會影響站台樹狀結構（子站台歸屬、上下層關係）。可用的狀態切換選項依角色而定，詳見 REQ-SITELIST-016。此節為 spec 待修正的錯誤敘述，待 Spec 作者合入 v0.5 時一併修正／移除
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0221
+    given: 檢視任一站台（線上或機台類型）於站台列表與編輯畫面的可用操作
+    when: 尋找刪除相關的按鈕或入口
+    then: 不存在任何可執行的刪除操作（可用的狀態切換選項依角色而定，詳見 REQ-SITELIST-016）
+  - ac_id: AC-SITELIST-0222
+    given: 略過前端限制，直接呼叫刪除站台的後端 API
+    when: 送出刪除請求
+    then: 後端拒絕該請求，站台資料不受影響
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §操作/刪除站台（此節內容已由 CLR-SITELIST-009 確認為錯誤敘述）
+    quote: 點擊列表「刪除」後顯示確認彈窗，列出站台名稱與代碼，二次確認後執行（＊此流程不存在於現行產品，見 CLR-SITELIST-009 PM 回覆）
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 前端無入口、後端拒絕，皆已由 PM／後端明確確認
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: CLR-SITELIST-009
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-023
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 刪除操作不可復原
+  statement: 原描述「刪除操作不可復原」，惟刪除功能經 CLR-SITELIST-009 確認前後端皆不提供（見 REQ-SITELIST-022），此需求描述的情境（刪除已執行、事後不可復原）不會發生，原先「刪除有子站台的站台時系統如何處理子站台」的疑慮亦隨之消失（因為刪除永遠不會執行）。本條保留僅供追溯，不作為
+    grounded TC 設計依據
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0231
+    given: 站台已被刪除
+    when: 嘗試尋找該站台或復原
+    then: 系統無提供復原機制，該站台資料不再存在
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §操作/刪除站台 + §業務規則-刪除確認
+    quote: ⚠️ 刪除操作不可復原
+  ambiguity:
+    level: major
+    description: 刪除有子站台的站台時，系統應如何處理其子站台？spec 未提及【已解決】已由 CLR-SITELIST-009 確認為 moot：刪除功能本身前後端皆不提供，此疑慮不會發生
+    options:
+    - 阻擋刪除，需先刪除或移轉所有子站台
+    - 串聯刪除所有子站台（含孫層）
+    - 子站台自動上移為根層或掛到被刪站台的上層
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: false
+    description: Spec 完全未定義刪除一個仍有子站台的站台時的行為：阻擋刪除？子站台一併刪除（串聯）？子站台變成根層？三種結果對資料完整性影響差異極大
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-024
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 機台主站台可自行經營，場館設定範圍不含子站台
+  statement: 機台主站台可自行直接經營（自身即一間場館），也可在底下建立場館子站台；每份場館設定的作用範圍為該站台自身，不含子站台，各站台各自一份、互不影響
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0241
+    given: 機台主站台自身設有額度上限 A
+    when: 在其底下新增場館子站台並設定額度上限 B
+    then: 主站台的額度上限仍為 A，子站台為 B，互不影響
+  - ac_id: AC-SITELIST-0242
+    given: 修改機台主站台的場次逾時時間
+    when: 檢視其場館子站台的場次逾時時間
+    then: 子站台的值不受影響
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §站台類型與機台專屬欄位 + §業務規則-機台主站台可直接經營
+    quote: 每份場館設定（額度上限、場次逾時、日結時間）的作用範圍為該站台自身、不含子站台，主站台與各場館各自一份、互不影響
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 各自一份、互不影響，規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §業務規則與驗證/機台主站台可直接經營
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-025
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: constraint
+  title: 洗分／出金門檻不在後台設定（v04 移除）
+  statement: v04 起移除機台專屬欄位「洗分／出金最低門檻」；後台不提供此欄位，門檻改由機台端設定
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0251
+    given: 站台類型為機台
+    when: 檢視新增或編輯畫面的機台專屬欄位群
+    then: 不存在「洗分／出金最低門檻」或類似名稱的欄位
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §業務規則與驗證/洗分門檻採用值 + §變更記錄 v04
+    quote: 移除機台專屬欄位「洗分／出金最低門檻」——洗分門檻定案改於機台端設定
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: true
+    description: 明確定義為移除，此規則即是「不應存在」
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §變更記錄（本功能） v04 2026-09-01
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-026
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 列表基本欄位呈現
+  statement: 列表欄位包含站台名稱／代碼（可點擊進入子站列表，有子站時顯示「N 個子站」）、站台類型標記、狀態 Badge、網域數量（僅顯示數量）、模板名稱（未指定顯示「—」）、操作（編輯／刪除）
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0261
+    given: 某站台有 3 個子站
+    when: 檢視列表
+    then: 名稱旁顯示「3 個子站」
+  - ac_id: AC-SITELIST-0262
+    given: 某站台無子站
+    when: 檢視列表
+    then: 名稱旁不顯示子站數量文字
+  - ac_id: AC-SITELIST-0263
+    given: 某站台有前台網域 2 筆、後台網域 1 筆
+    when: 檢視列表網域欄
+    then: 顯示「前台 2 個 / 後台 1 個」，不展開完整清單
+  - ac_id: AC-SITELIST-0264
+    given: 某站台未指定模板
+    when: 檢視列表模板欄
+    then: 顯示「—」
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §列表欄位
+    quote: 站台名稱／代碼 | 名稱可點擊，進入該站台的子站台列表；有子站時名稱旁顯示「N 個子站」……網域 | 前台與後台網域合併顯示，僅顯示數量
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 顯示規則已明確定義
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-027
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 時間紀錄欄位
+  statement: 時間紀錄欄位（創建時間、修改時間、最後登入）三列並陳，均為系統自動產生（UTC+0）、不開放編輯；新建站台修改時間為空，從未登入顯示「從未登入」
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0271
+    given: 新建站台
+    when: 檢視時間紀錄欄
+    then: 創建時間有值，修改時間為空，最後登入顯示「從未登入」
+  - ac_id: AC-SITELIST-0272
+    given: 站台曾被編輯
+    when: 檢視時間紀錄欄
+    then: 修改時間更新為最近一次編輯的時刻
+  - ac_id: AC-SITELIST-0273
+    given: 任何角色
+    when: 嘗試編輯時間紀錄欄位
+    then: 系統不開放編輯，欄位為唯讀
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §列表欄位/時間紀錄
+    quote: 均為系統自動產生（UTC+0），不開放編輯；新建站台修改時間為空、從未登入顯示「從未登入」
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 系統自動產生、不可編輯，規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §列表欄位/時間紀錄
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-028
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 篩選器行為
+  statement: 依狀態篩選（全部／五種狀態，單選）與依名稱或代碼關鍵字搜尋，兩者可同時作用；篩選與搜尋均僅作用於當前所在層，不跨層查詢
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0281
+    given: 選擇狀態篩選為「開通」並輸入關鍵字
+    when: 搜尋
+    then: 結果同時符合狀態為開通且名稱或代碼含關鍵字的站台
+  - ac_id: AC-SITELIST-0282
+    given: 在某子站台層級套用篩選
+    when: 檢視結果
+    then: 結果僅限當前層的站台，不包含其他層級的站台，即使其他層級也有符合條件的站台
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §篩選器
+    quote: 篩選與搜尋均僅作用於當前所在層，不跨層查詢
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 篩選與搜尋的組合與範圍規則已明確
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §篩選器
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002
+- requirement_id: REQ-SITELIST-029
+  version: 1
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  type: functional
+  title: 階層瀏覽行為
+  statement: 點擊任意站台名稱進入該站台的子站台列表；頁面頂部路徑列顯示當前瀏覽路徑，點擊任意節點可跳回該層，點擊「站台列表」回到根層
+  acceptance_criteria:
+  - ac_id: AC-SITELIST-0291
+    given: 在根層列表
+    when: 點擊某站台名稱
+    then: 進入該站台的子站台列表，路徑列顯示對應路徑
+  - ac_id: AC-SITELIST-0292
+    given: 已鑽入多層
+    when: 點擊路徑列中間某節點
+    then: 回到該節點對應的層級
+  - ac_id: AC-SITELIST-0293
+    given: 已鑽入多層
+    when: 點擊路徑列的「站台列表」
+    then: 回到根層
+  spec_reference:
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.4'
+    location: §階層結構與逐層瀏覽/鑽入、路徑列
+    quote: 點擊任意節點可跳回該層，點擊「站台列表」回到根層
+  ambiguity: null
+  risk: low
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 鑽入與路徑列行為已明確定義
+    spec_reference:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.4'
+      location: §階層結構與逐層瀏覽
+      quote: ''
+  history:
+  - at: '2026-09-13T19:09:47Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2E2SWZ3GR030YTSZS54E1NE
+    run_id: RUN-20260914-002
+  - at: '2026-09-13T19:09:47Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260914-002

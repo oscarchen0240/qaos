@@ -1,0 +1,954 @@
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.1'
+source_artifact_id: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+persisted_at: '2026-09-13T11:05:07Z'
+requirements:
+- requirement_id: REQ-DAILYREPORT-001
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: security
+  title: 角色權限範圍
+  statement: 場館日結報表依角色限制可見範圍：Admin 全部；站長 管轄範圍；操作員 自身場館。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0011
+    given: 以 Admin 登入
+    when: 開啟場館日結報表並切換任一站台
+    then: 可查看該站台所有場館資料
+  - ac_id: AC-DAILYREPORT-0012
+    given: 以站長登入
+    when: 開啟場館日結報表
+    then: 只能查看自身及子站台管轄範圍內的場館資料
+  - ac_id: AC-DAILYREPORT-0013
+    given: 以操作員登入
+    when: 開啟場館日結報表
+    then: 只能查看自身場館資料
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §功能說明/權限表
+    quote: 場館日結報表 | 全部 | 管轄範圍 | 自身場館
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: false
+    description: 越權時（操作員嘗試切換至非自身場館）：前端已擋（站台切換選單不提供其他場館選項）；後端也擋（直接呼叫API帶非自身場館參數會被拒絕）。依CLR-DAILYREPORT-001確認（含2026-09-14補充）
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-001
+- requirement_id: REQ-DAILYREPORT-002
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 場館範圍跟隨站台切換
+  statement: 頁面資料範圍由頁面標題下方的站台切換下拉選單決定，一次僅顯示所選站台，不另設場館篩選欄位。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0021
+    given: 使用者在場館日結報表
+    when: 切換站台下拉選單
+    then: 列表只顯示所選站台的場館資料，且頁面上不存在場館篩選欄位
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §篩選器 / §業務規則-場館範圍跟隨站台切換
+    quote: 不另設場館篩選欄位
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 不存在場館篩選欄位即為規則本身
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+- requirement_id: REQ-DAILYREPORT-003
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 機台帳號篩選
+  statement: 篩選欄「機台帳號」為文字輸入，輸入會員編號；留空表示場館全部機台。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0031
+    given: 場館下有多台機台
+    when: 機台帳號留空並搜尋
+    then: 列表包含場館全部機台的資料
+  - ac_id: AC-DAILYREPORT-0032
+    given: 場館下有機台帳號 ACAA00250
+    when: 輸入 ACAA00250 並搜尋
+    then: 列表只包含該機台的資料
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §篩選器/機台帳號
+    quote: 輸入會員編號；留空為場館全部機台
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: '輸入不存在或非本場館的機台帳號：找不到用戶即可，API回rows: []（空列表，不報錯）。依CLR-DAILYREPORT-002確認'
+  inputs:
+  - name: machine_account
+    type: string
+    required: false
+    constraints:
+      note: 會員編號格式未在本包定義
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-002
+- requirement_id: REQ-DAILYREPORT-004
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: constraint
+  title: 結算日期必填
+  statement: 結算日期為日期範圍、必填；不設區間上限。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0041
+    given: 使用者在場館日結報表
+    when: 未填結算日期即搜尋
+    then: 系統不執行查詢（必填）
+  - ac_id: AC-DAILYREPORT-0042
+    given: 使用者在場館日結報表
+    when: 輸入跨越一年以上的日期區間並搜尋
+    then: 系統接受並回傳資料，不因區間長度拒絕
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §篩選器/結算日期
+    quote: 必填；不設區間上限，與手冊其他報表一致
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: rejection
+  rejection_contract:
+    defined: false
+    description: '結算日期異常（起日晚於迄日等）：找不到資料即可，API回rows: []；未填結算日期時，前端popup警示「失敗：結算日期為必填」，不送出查詢。依CLR-DAILYREPORT-003確認（含2026-09-14補充）'
+  inputs:
+  - name: settle_date_from
+    type: date
+    required: true
+  - name: settle_date_to
+    type: date
+    required: true
+    constraints:
+      note: 不設區間上限
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-003
+- requirement_id: REQ-DAILYREPORT-005
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 統計週期
+  statement: 統計週期為下拉選單：按日（預設）／按週／按月／區間合計。按週以週一為週起；非按日時每列為該週期內各營業日的彙總。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0051
+    given: 使用者開啟頁面
+    when: 未變更統計週期
+    then: 預設為「按日」
+  - ac_id: AC-DAILYREPORT-0052
+    given: 結算日期涵蓋 2026-09-02(三)～2026-09-10(四)
+    when: 統計週期選「按週」並搜尋
+    then: 列出兩列：週起為 2026-08-31(一) 與 2026-09-07(一) 的兩週，金額為各週內營業日合計
+  - ac_id: AC-DAILYREPORT-0053
+    given: 結算日期涵蓋多個營業日
+    when: 統計週期選「區間合計」
+    then: 只有一列，各欄為區間內所有營業日合計
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §篩選器/統計週期
+    quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 不完整週：照結算日期範圍實際起迄顯示（不強制補滿整週），只要「完整」的週仍以週一為週起；範圍外的營業日不計入該列合計。依CLR-DAILYREPORT-008確認（含具體算例：結算日期09-03起、按週→列出「2026-09-07~2026-09-13」與「2026-09-03~2026-09-06」兩列，08-31~09-02不計入第一列合計）
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計週期
+      quote: ''
+  inputs:
+  - name: period
+    type: enum
+    required: true
+    constraints:
+      enum:
+      - 按日
+      - 按週
+      - 按月
+      - 區間合計
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-008
+- requirement_id: REQ-DAILYREPORT-006
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 統計維度
+  statement: 統計維度為下拉選單：依場館彙總／依機台明細／依場次明細。「依場次明細」時統計週期僅決定查詢範圍，列表逐場次列出、不彙總。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0061
+    given: 場館內有 3 台機台、共 10 個已結束場次
+    when: 維度選「依場館彙總」
+    then: 一列場館彙總
+  - ac_id: AC-DAILYREPORT-0062
+    given: 同上
+    when: 維度選「依機台明細」
+    then: 3 列，每台機台一列
+  - ac_id: AC-DAILYREPORT-0063
+    given: 同上，統計週期選「區間合計」
+    when: 維度選「依場次明細」
+    then: 10 列逐場次列出，不因週期而彙總
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §篩選器/統計維度
+    quote: 「依場次明細」時統計週期僅決定查詢範圍，列表仍逐場次列出、不彙總
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 下拉選單三選一
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §篩選器/統計維度
+      quote: ''
+  inputs:
+  - name: dimension
+    type: enum
+    required: true
+    constraints:
+      enum:
+      - 依場館彙總
+      - 依機台明細
+      - 依場次明細
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+- requirement_id: REQ-DAILYREPORT-007
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 結算期間欄位與營業日切分
+  statement: 「結算期間」欄按日顯示營業日（依場館設定的日結時間切分，UTC+0）；按週／按月／區間合計顯示該週期起訖日期。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0071
+    given: 場館日結時間設為 06:00 UTC+0
+    when: 一筆交易發生在 2026-09-05 05:59 UTC+0
+    then: 計入營業日 2026-09-04
+  - ac_id: AC-DAILYREPORT-0072
+    given: 場館日結時間設為 06:00 UTC+0
+    when: 一筆交易發生在 2026-09-05 06:00 UTC+0
+    then: 計入營業日 2026-09-05
+  - ac_id: AC-DAILYREPORT-0073
+    given: 統計週期為按月
+    when: 查看結算期間欄
+    then: 顯示該月起訖日期
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/結算期間 + §業務規則/日結時間
+    quote: 按日顯示營業日（依場館日結時間切分）
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: 場館未設定日結時間時，以預設值00:00 UTC+0切分營業日（畫面截圖顯示該欄位預設值為上午12:00）。依CLR-DAILYREPORT-004確認
+  inputs:
+  - name: settle_time
+    type: datetime
+    required: true
+    constraints:
+      format: HH:mm UTC+0
+      note: 場館設定欄位，切分營業日的邊界
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-004
+- requirement_id: REQ-DAILYREPORT-008
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 場次編號欄（依場次明細）
+  statement: 「場次編號」欄僅在「依場次明細」維度顯示，並附開始／結束時間與場次時長。依場次明細列出所有狀態的場次，含進行中：進行中場次的結束時間顯示「—」，場次時長與期末餘額為累計到查詢當下的值（依 CLR-DAILYREPORT-013
+    PM 定案 A，2026-10-01，以 spec 2026-09-17 修訂為準，推翻 CLR-DAILYREPORT-012 的 B）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0081
+    given: 維度為依場次明細
+    when: 查看列表
+    then: 每列有場次編號、開始時間、結束時間（UTC+0）、場次時長
+  - ac_id: AC-DAILYREPORT-0082
+    given: 維度為依場館彙總或依機台明細
+    when: 查看列表
+    then: 不顯示場次編號欄
+  - ac_id: AC-DAILYREPORT-0083
+    given: 機台 A 有一個進行中場次（已有開分與投注，目前分數 X）
+    when: 以含當日的結算日期依場次明細查詢，查看該場次列
+    then: 該列狀態「進行中」、結束時間「—」，場次時長與期末餘額為累計到查詢當下的值（期末餘額＝X）
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/場次編號 + §背景:場次資訊（進行中場次的期末餘額依 CLR-DAILYREPORT-013 PM 定案 A／spec 2026-09-17）
+    quote: 進行中的場次結束時間顯示「—」
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 非場次明細維度不顯示該欄
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次編號
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-22T03:01:51Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-012：依場次明細不列進行中場次；AC-DAILYREPORT-0083 作廢移除（原 given「有一場次仍進行中」then「結束時間「—」、時長累計至查詢當下」）；TC-DAILYREPORT-027
+      已 retire
+  - at: '2026-10-01T10:24:11Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-013：PM 定案 A，依場次明細列出進行中場次；恢復 AC-DAILYREPORT-0083（並加上期末餘額累計到查詢當下）
+- requirement_id: REQ-DAILYREPORT-009
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 場次數
+  statement: 「場次數」於「依場館彙總」與「依機台明細」維度顯示，為當日結束的場次筆數：依機台明細＝該機台帳號當日場次數；依場館彙總＝該場館底下所有機台帳號當日場次數的加總。「當日結束」包含「已結束」與「日結結算」兩種狀態（依CLR-DAILYREPORT-007確認：逾時結束的時間必然超過日結時間，而日結時間到達時會強制結束所有進行中場次，故當日內場次只會以「已結束」或「日結結算」收尾，兩者皆計入當日場次數）；僅「進行中」狀態不計入。日結結算場次的營業日歸屬：歸屬於場次**開始**的營業日，不因其被日結時刻強制結束而計入下一個營業日（CLR-DAILYREPORT-007
+    PM 回覆的第二層，對應 TC-DAILYREPORT-031 已由 APR-0003 核准的假設；2026-09-23 回寫）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0091
+    given: 機台 A 當日結束 3 場、機台 B 當日結束 2 場
+    when: 維度依機台明細
+    then: A 列場次數 3、B 列場次數 2
+  - ac_id: AC-DAILYREPORT-0092
+    given: 同上
+    when: 維度依場館彙總
+    then: 場次數 5
+  - ac_id: AC-DAILYREPORT-0093
+    given: 機台 A 有 1 場進行中
+    when: 維度依機台明細
+    then: 進行中場次不計入場次數
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/場次數（2026-09-03 定案）
+    quote: 依場館彙總＝該場館底下所有機台帳號當日場次數的加總
+  ambiguity:
+    level: major
+    description: 「當日結束的場次」是否包含狀態為「逾時結束」與「日結結算」的場次，Spec 未明示
+    options:
+    - 包含所有非進行中狀態（已結束、逾時結束、日結結算）
+    - 僅包含「已結束」
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 進行中場次不計（『當日結束的場次筆數』）；已結束與日結結算兩種狀態皆計入，此點已由CLR-DAILYREPORT-007正式確認
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位/場次數
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:37:49Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-007：當日結束場次數計算範圍（已結束+日結結算皆計入）正式套用
+  - at: '2026-09-23T00:24:28Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-007（補回第二層）：日結結算場次歸屬開始的營業日；首次 apply 漏回寫，由 RUN-20260923-001 Bug Validator
+      指出
+- requirement_id: REQ-DAILYREPORT-010
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 現金收支金額欄定義
+  statement: 開分金額＝當日開分總額；洗分金額＝當日洗分總額；進鈔金額＝當日入金總額；收據金額＝當日出金總額（收據面額合計；過渡期機台無印表機時為結算結果畫面顯示的出金金額合計）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0101
+    given: 當日機台 A 開分 1000、洗分 300、入金 500、出金 200
+    when: 查看依機台明細
+    then: 開分 1000、洗分 300、進鈔 500、收據 200
+  - ac_id: AC-DAILYREPORT-0102
+    given: 過渡期機台無印表機、當日出金 200
+    when: 查看收據金額
+    then: 顯示 200（取結算結果畫面出金金額）
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/開分~收據金額
+    quote: 收據金額 | 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 純統計，無拒絕行為
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+- requirement_id: REQ-DAILYREPORT-011
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 核實狀態連動欄位
+  statement: 已核實洗分＝當日洗分中已於「洗分出金核實」頁核實的金額合計；待核實洗分＝仍待核實的合計，不為 0 時標示提醒；已兌現＝已核實的收據金額合計；未兌現＝截至查詢當下仍待核實的收據金額合計。已兌現／未兌現皆以「收據日」歸屬：已兌現＝當日出金的收據中已核實（核銷）者的金額合計，不論實際付現是哪一天（CLR-DAILYREPORT-010
+    PM 定案 A，2026-09-22）；因此單列內 收據金額＝已兌現＋未兌現（＋已作廢，呈現方式見 CLR-DAILYREPORT-011）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0111
+    given: 當日洗分 300，其中 200 已核實
+    when: 查看列表
+    then: 已核實洗分 200、待核實洗分 100 且該格有提醒標示
+  - ac_id: AC-DAILYREPORT-0112
+    given: 當日洗分全部已核實
+    when: 查看列表
+    then: 待核實洗分 0，無提醒標示
+  - ac_id: AC-DAILYREPORT-0113
+    given: 當日收據 200，其中 150 已核銷
+    when: 查看列表
+    then: 已兌現 150、未兌現 50
+  - ac_id: AC-DAILYREPORT-0114
+    given: 在洗分出金核實頁將一筆待核實洗分核實後
+    when: 重新搜尋報表
+    then: 已核實／待核實數字對應變動
+  - ac_id: AC-DAILYREPORT-0115
+    given: 9/10 出金收據 1000，9/12 於洗分出金核實頁核銷（付現）
+    when: 分別查看 9/10 與 9/12 的列
+    then: 9/10 列：收據 1000、已兌現 1000、未兌現 0；9/12 列：收據 0、已兌現 0（已兌現歸收據日，不歸兌現日）
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/已核實洗分~未兌現金額
+    quote: 待核實洗分 | ...不為 0 時標示提醒
+  ambiguity:
+    level: minor
+    description: 「標示提醒」的具體呈現方式未定義
+    options:
+    - 紅字
+    - 圖示
+    - 文字標籤
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: 「標示提醒」的呈現方式：待核實的機台洗分交易列表顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」，已核實者為綠色「已核實」；報表的待核實洗分提醒沿用同款黃色警示標籤。依CLR-DAILYREPORT-005確認
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-005
+  - at: '2026-09-22T04:45:31Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-010：已兌現以收據日歸屬；新增 AC-0115 跨日兌現案例
+- requirement_id: REQ-DAILYREPORT-012
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 現金淨收計算
+  statement: 現金淨收＝開分＋進鈔－已核實洗分－已兌現；不扣待核實洗分。註：已兌現以收據日歸屬（CLR-DAILYREPORT-010 A），故現金淨收含未來才付現的收據金額，為推算值、非當日實際現金增減（spec 註解「代表場館端當日現金應該增減多少」應依此理解）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0121
+    given: 開分 1000、進鈔 500、已核實洗分 200、待核實洗分 100、已兌現 150
+    when: 查看現金淨收
+    then: 1150（=1000+500-200-150，不扣 100）
+  - ac_id: AC-DAILYREPORT-0122
+    given: 開分 0、進鈔 0、已核實洗分 300、已兌現 0
+    when: 查看現金淨收
+    then: -300（允許負值）
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/現金淨收 + §業務規則/現金淨收計算
+    quote: 開分 ＋ 進鈔 － 已核實洗分 － 已兌現（不扣待核實洗分）
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 純計算
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/現金淨收計算
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-22T04:45:31Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-010：現金淨收語意註記
+- requirement_id: REQ-DAILYREPORT-013
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 有效投注額與損益以核心貨幣計算
+  statement: 有效投注額與損益以主站台核心貨幣計算（機台場館為 TWD）；損益正值綠色、負值紅色。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0131
+    given: 機台場館（核心貨幣 TWD）當日投注
+    when: 查看有效投注額與損益
+    then: 數值以 TWD 表示
+  - ac_id: AC-DAILYREPORT-0132
+    given: 當日損益為正
+    when: 查看損益欄
+    then: 綠色
+  - ac_id: AC-DAILYREPORT-0133
+    given: 當日損益為負
+    when: 查看損益欄
+    then: 紅色
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/有效投注額、損益（2026-09-03 定案）
+    quote: 以主站台核心貨幣計算（機台場館為 TWD）；正值綠色、負值紅色
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 純顯示
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+- requirement_id: REQ-DAILYREPORT-014
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 期末餘額
+  statement: 期末餘額為各機台分數合計，計入進行中場次的分數：已結算的營業日取該日結算時點的值；尚未結算（含有進行中場次）的取截至查詢當下的分數。統計週期非按日時取該週期最後一個營業日的值（依 CLR-DAILYREPORT-013
+    PM 定案 A，2026-10-01，以 spec 2026-09-17 修訂為準）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0141
+    given: 按日、場館有 A(期末 50)、B(期末 30)
+    when: 依場館彙總
+    then: 期末餘額 80
+  - ac_id: AC-DAILYREPORT-0142
+    given: 按週，週內最後營業日期末合計 80、前一日 120
+    when: 依場館彙總
+    then: 期末餘額 80（非 200）
+  - ac_id: AC-DAILYREPORT-0143
+    given: 當日營業日尚未日結，機台 A 有進行中場次、目前分數 300
+    when: 結算日期為當日，依機台明細查詢
+    then: 機台 A 列的期末餘額為 300（截至查詢當下，含進行中場次的分數）
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位/期末餘額 + 欄位說明附註（計入進行中場次依 CLR-DAILYREPORT-013 PM 定案 A／spec 2026-09-17）
+    quote: 該日結算時點各機台的分數合計
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: true
+    description: 純統計
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-10-01T10:24:11Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-013：PM 定案 A，期末餘額計入進行中場次（尚未結算取截至查詢當下）；新增 AC-DAILYREPORT-0143；風險 medium→high
+- requirement_id: REQ-DAILYREPORT-015
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 非按日週期的彙總規則
+  statement: 統計週期非按日時：各金額與筆數欄為該週期內各營業日的合計；期末餘額取最後營業日；未兌現金額不受統計週期切分方式影響，一律為截至查詢當下的累計，但仍受結算日期範圍這個篩選條件限制（依CLR-DAILYREPORT-009確認：範圍外的未兌現收據不計入；「不受週期影響」指的是不會因為切成週/月而被打散或重複計算，不是不受結算日期範圍本身限制）。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0151
+    given: 按週，週內三個營業日開分各 100
+    when: 查看開分金額
+    then: '300'
+  - ac_id: AC-DAILYREPORT-0152
+    given: 按週，查詢當下未兌現累計 500（含週外）
+    when: 查看未兌現金額
+    then: 500，不受週期限制
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位附註
+    quote: 「未兌現金額」不受週期影響、一律為截至查詢當下的累計
+  ambiguity:
+    level: major
+    description: 「未兌現金額不受週期影響」與「結算日期」篩選的關係未明：是否也不受結算日期範圍限制？
+    options:
+    - 不受結算日期限制（全期累計）
+    - 受結算日期限制、只不受統計週期切分影響
+  risk: high
+  status: ACTIVE
+  behavior_kind: constraint
+  rejection_contract:
+    defined: true
+    description: 純統計
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §列表欄位附註
+      quote: ''
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:38:00Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-009：未兌現金額仍受結算日期範圍限制，正式套用
+- requirement_id: REQ-DAILYREPORT-016
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 列表總計與匯出 CSV
+  statement: 列表底部顯示當前篩選結果的各欄總計；頁面右上角「匯出 CSV」匯出當前篩選結果。本頁為統計檢視，不提供新增／編輯／刪除／審核。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0161
+    given: 列表有多列
+    when: 查看底部
+    then: 各欄總計等於各列合計
+  - ac_id: AC-DAILYREPORT-0162
+    given: 已搜尋出結果
+    when: 點匯出 CSV
+    then: 下載內容與當前篩選結果一致
+  - ac_id: AC-DAILYREPORT-0163
+    given: 任何角色
+    when: 檢視頁面
+    then: 無新增／編輯／刪除／審核按鈕
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §列表欄位末段 + §操作
+    quote: 列表底部顯示當前篩選結果的各欄總計。頁面右上角提供「匯出 CSV」
+  ambiguity: null
+  risk: medium
+  status: ACTIVE
+  behavior_kind: success
+  rejection_contract:
+    defined: false
+    description: 無資料時列表仍列出（日期正常顯示、各欄位顯示0）；匯出CSV無資料時的行為推定同列表（一列0）。依CLR-DAILYREPORT-006確認（PM提供的完整欄位清單含「注單數」，但spec.md v0.1列表欄位定義尚未列出此欄，屬文件缺口，已記錄於project
+      memory待後續統一處理，不影響本條rejection_contract的有效性）
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
+  - at: '2026-09-17T20:43:45Z'
+    from_status: ACTIVE
+    to_status: ACTIVE
+    by: oscarchen@blockaction.tech
+    trigger: clarification_applied_CLR-DAILYREPORT-006
+- requirement_id: REQ-DAILYREPORT-017
+  version: 1
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  type: functional
+  title: 場次日結強制結束
+  statement: 日結時間到達時強制結束所有進行中的場次（狀態為日結結算），餘額轉為隔日新場次的期初餘額。
+  acceptance_criteria:
+  - ac_id: AC-DAILYREPORT-0171
+    given: 機台 A 有進行中場次、餘額 80
+    when: 日結時間到達
+    then: 該場次狀態變為「日結結算」、結束時間＝日結時間，隔日新場次期初餘額 80
+  - ac_id: AC-DAILYREPORT-0172
+    given: 機台 A 無進行中場次
+    when: 日結時間到達
+    then: 不產生新場次
+  spec_reference:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.1'
+    location: §業務規則/場次日結 + §場次資訊/場次狀態、期初餘額
+    quote: 日結時間到達時強制結束所有進行中的場次，餘額轉為隔日新場次的期初餘額
+  ambiguity: null
+  risk: high
+  status: ACTIVE
+  behavior_kind: state_change
+  rejection_contract:
+    defined: true
+    description: 狀態轉換規則明確
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.1'
+      location: §業務規則/場次日結
+      quote: ''
+  states:
+  - from: 進行中
+    to: 日結結算
+    trigger: 日結時間到達
+  - from: 進行中
+    to: 已結束
+    trigger: 洗分／出金／分數歸 0
+  - from: 進行中
+    to: 逾時結束
+    trigger: 逾時（定義於開發包③）
+  - from: 已結束
+    to: 進行中
+    trigger: 不可逆
+    allowed: false
+  history:
+  - at: '2026-09-13T11:05:07Z'
+    from_status: null
+    to_status: DRAFT
+    by: system
+    trigger: ART-RM-01M2D72FB77WAP7PFRAKC54QCR
+    run_id: RUN-20260913-001
+  - at: '2026-09-13T11:05:07Z'
+    from_status: DRAFT
+    to_status: ACTIVE
+    by: system
+    trigger: G-SPEC PASS
+    run_id: RUN-20260913-001
