@@ -669,3 +669,110 @@ def test_b2_04_same_second_legitimate_repeat_gets_its_own_handoff(real_sm, fake_
     ids = [h["id"] for h in _handoffs(read_handoff)]
     assert len(ids) == 3 and len(set(ids)) == 3
     assert sorted(r["handoff_id"] for r in sb.qaos_exec.executions("CLR-B2-2")) == sorted(ids)
+
+
+# ================================================================ 第 02 輪複審（原 B2-03 部分寫入、原 B2-04 新草稿）
+def _partial_write_then_fail(sb):
+    """模擬 handoff.jsonl 寫到一半失敗：留下沒有換行的殘行，再丟 OSError。"""
+    def partial(rec):
+        sb.qaos_exec.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(sb.qaos_exec.HANDOFF_FILE, "a", encoding="utf-8") as f:
+            f.write('{"kind":"handoff","id":"')
+        raise OSError("disk full after partial write")
+    return partial
+
+
+def test_b2_03_bug_partial_handoff_write_is_repaired_on_retry(bug_sandbox, write_registry_tc, fake_qaos, write_run, read_handoff, monkeypatch):
+    sb = bug_sandbox
+    rid, res_id = _make_result(sb, write_registry_tc)
+    _fake_cli(sb, fake_qaos["calls"], write_run)
+    real = sb.qaos_exec._append_handoff
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", _partial_write_then_fail(sb))
+    with pytest.raises(sb.qaos_bug.BugFileError):
+        sb.qaos_bug.execute(rid, res_id)
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", real)
+    res = sb.qaos_bug.execute(rid, res_id)
+    assert res["ok"]
+    hid = sb.qaos_exec.stable_handoff_id("bug_filing", "RUN-20261009-001")
+    assert sb.qaos_exec.handoff_recorded(hid)                                   # 補寫的紀錄讀得回來
+    assert [h["id"] for h in sb.qaos_exec.handoff_tail()] == [hid]               # relay／面板用的讀法也看得到
+    assert _row(sb, rid, res_id)["bug_handoff_id"] == hid
+
+
+def test_b2_03_ticket_partial_handoff_write_is_repaired_on_retry(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    qe = sandbox.qaos_exec
+    real = qe._append_handoff
+    monkeypatch.setattr(qe, "_append_handoff", _partial_write_then_fail(sandbox))
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    monkeypatch.setattr(qe, "_append_handoff", real)
+    res = qe.execute("APR-0100")
+    assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
+    assert qe.handoff_recorded(res["handoff_id"]) and [h["id"] for h in qe.handoff_tail()] == [res["handoff_id"]]
+
+
+def test_b2_03_append_leaves_each_record_on_its_own_line_after_a_torn_tail(sandbox):
+    qe = sandbox.qaos_exec
+    qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"torn', encoding="utf-8")
+    qe._append_handoff({"kind": "handoff", "id": "abc123", "ts": "t"})
+    lines = qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2 and json.loads(lines[1])["id"] == "abc123"
+    qe._append_handoff({"kind": "handoff", "id": "def456", "ts": "t"})              # 正常尾端不多補空行
+    assert len(qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()) == 3
+
+
+def test_b2_03_completion_is_not_recorded_when_the_handoff_cannot_be_read_back(bug_sandbox, write_registry_tc, fake_qaos, write_run, monkeypatch):
+    sb = bug_sandbox
+    rid, res_id = _make_result(sb, write_registry_tc)
+    _fake_cli(sb, fake_qaos["calls"], write_run)
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", lambda rec: None)         # 「成功」但什麼都沒寫
+    with pytest.raises(sb.qaos_bug.BugFileError) as ei:
+        sb.qaos_bug.execute(rid, res_id)
+    assert ei.value.status == 500
+    assert not _row(sb, rid, res_id)["bug_handoff_id"] and _filing_rows(sb, rid, res_id) == []
+
+
+def test_b2_04_draft_cannot_be_changed_while_the_command_is_running(sandbox, fake_qaos, write_run, write_approval):
+    """執行期間保存新草稿會讓收尾的 mark_sent 標到新草稿：改為執行期間直接拒絕（409），草稿與 sent_command 維持原決定。"""
+    advance = _approval_ready(sandbox, write_run, write_approval)
+    seen = {}
+
+    def effect(cmd):
+        advance(cmd)
+        try:
+            sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "後來改的", None, None)
+            seen["saved"] = True
+        except sandbox.tickets.DraftLocked as e:
+            seen["locked"] = str(e)
+    fake_qaos["side_effect"] = effect
+    res = sandbox.qaos_exec.execute("APR-0100")
+    assert res["ok"] and "正在執行" in seen.get("locked", "") and "saved" not in seen
+    d = sandbox.tickets.get_draft("APR-0100")
+    assert d["decision"] == "approve" and d["sent_at"] is not None and d["sent_command"] == res["command"]
+    sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "之後改", None, None)      # 執行結束後可以改（控制）
+    assert sandbox.tickets.get_draft("APR-0100")["decision"] == "reject"
+
+
+def test_b2_04_new_draft_is_refused_while_a_pending_completion_exists_and_not_marked_sent(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    qe = sandbox.qaos_exec
+    real = qe._append_handoff
+    monkeypatch.setattr(qe, "_append_handoff", lambda rec: (_ for _ in ()).throw(OSError("disk full")))
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    with pytest.raises(sandbox.tickets.DraftLocked) as ei:
+        sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "新決定", None, None)
+    assert "還沒補齊" in str(ei.value)
+    from backend.routers import tickets as router
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as hi:
+        router.DraftIn(decision="reject").save("APR-0100", "approval")
+    assert hi.value.status_code == 409
+    monkeypatch.setattr(qe, "_append_handoff", real)
+    res = qe.execute("APR-0100")                                         # 補完的是原本那次決定
+    assert res["ok"] and res["completed_pending"]
+    d = sandbox.tickets.get_draft("APR-0100")
+    assert d["decision"] == "approve" and d["sent_command"] == res["command"]
+    sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "補完後再改", None, None)  # 補完後解除

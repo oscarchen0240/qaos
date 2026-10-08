@@ -183,8 +183,15 @@ def _owner_session(run_id: str | None) -> str | None:
 
 def _append_handoff(rec: dict):
     WARROOM_DIR.mkdir(parents=True, exist_ok=True)
-    with open(HANDOFF_FILE, "a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    line = (json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8")
+    with open(HANDOFF_FILE, "ab") as f:
+        # 上一次寫到一半失敗會留下沒有換行的殘行；新紀錄接在殘行後面會變成同一行、整行都讀不出來。先補行界線，讓新紀錄獨立成行
+        if f.tell() > 0:
+            with open(HANDOFF_FILE, "rb") as r:
+                r.seek(-1, os.SEEK_END)
+                if r.read(1) != b"\n":
+                    f.write(b"\n")
+        f.write(line)
 
 
 def handoff_tail(n: int = 50) -> list[dict]:
@@ -227,6 +234,8 @@ def append_handoff_once(rec: dict):
     """冪等：同一個 ID 已經在 handoff.jsonl 裡就不再寫。補做交接時前一次可能其實已寫成功、只是後面的步驟失敗。"""
     if not handoff_recorded(rec["id"]):
         _append_handoff(rec)
+        if not handoff_recorded(rec["id"]):      # 寫完要讀得回來才算數；否則後面會把交接標成完成、卻沒有任何有效紀錄
+            raise OSError(f"handoff {rec['id']} 寫入後讀不回來（{HANDOFF_FILE}）")
 
 
 def _unfinished_execution(ticket_id: str) -> dict | None:
@@ -271,6 +280,8 @@ def _abandon(row: dict):
 def execute(ticket_id: str) -> dict:
     if not _lock.acquire(blocking=False):
         raise ExecError(409, "另一條 bin/qaos 正在執行，稍後再試")
+    with tk.draft_lock:
+        tk.INFLIGHT.add(ticket_id)       # 執行期間不能改這張單的草稿，收尾的 mark_sent 才不會標到後來的新決定
     try:
         # 草稿、預檢、組指令與執行都在同一把鎖內：兩個請求交錯時，後取得鎖的一定讀到前一個請求寫入後的最新狀態，
         # 重複的回答（--new-request 擋不住的合法自轉換）才擋得住；預檢放在鎖外會讓兩個請求都通過舊狀態的預檢。
@@ -315,6 +326,8 @@ def execute(ticket_id: str) -> dict:
             raise ExecError(500, f"指令已成功執行（QAOS 已改變），但執行紀錄寫入失敗：{e}。再按一次「執行」會補寫紀錄並完成交接，不會重跑指令。") from e
         return _finish_success(row_id, ticket_id, kind, action, cmd_out["command"], run_id, res, [], started, ended, hid, resumed=False)
     finally:
+        with tk.draft_lock:
+            tk.INFLIGHT.discard(ticket_id)
         _lock.release()
 
 

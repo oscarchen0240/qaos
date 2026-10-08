@@ -6,6 +6,7 @@ M5b 才會在平台直接執行；本檔不寫入 QAOS 任何檔案。
 import json
 import re
 import shlex
+import threading
 
 import yaml
 
@@ -78,6 +79,15 @@ def set_operator(email: str):
 
 
 # ---------- drafts ----------
+class DraftLocked(Exception):
+    """草稿現在不能改（B2 R04）：指令正在執行，或上一次已成功執行、後段還沒補完。"""
+
+
+# qaos_exec.execute 正在處理的單據（process 內）。執行期間若能改草稿，收尾時的 mark_sent 會把「後來的新決定」誤標成已送出。
+INFLIGHT: set[str] = set()
+draft_lock = threading.Lock()
+
+
 def get_draft(ticket_id: str) -> dict | None:
     with db.connect() as con:
         r = db.one(con.execute("SELECT * FROM ticket_drafts WHERE ticket_id=?", (ticket_id,)))
@@ -89,6 +99,22 @@ def get_draft(ticket_id: str) -> dict | None:
 
 def save_draft(ticket_id: str, kind: str, decision: str | None, option: str | None, rationale: str | None,
                per_item: dict | None, extra: dict | None) -> dict:
+    with draft_lock:
+        _assert_draft_unlocked(ticket_id)
+        return _save_draft_locked(ticket_id, kind, decision, option, rationale, per_item, extra)
+
+
+def _assert_draft_unlocked(ticket_id: str):
+    if ticket_id in INFLIGHT:
+        raise DraftLocked(f"{ticket_id} 的指令正在執行，執行結束前不能改決定；請稍後再試")
+    with db.connect() as con:
+        pending = con.execute("SELECT 1 FROM ticket_executions WHERE ticket_id=? AND completion='pending'", (ticket_id,)).fetchone()
+    if pending:
+        raise DraftLocked(f"{ticket_id} 上一次的指令已成功執行（QAOS 已改變），但交接與紀錄還沒補齊；請先按「執行」補完，再改決定")
+
+
+def _save_draft_locked(ticket_id: str, kind: str, decision: str | None, option: str | None, rationale: str | None,
+                       per_item: dict | None, extra: dict | None) -> dict:
     cur = get_draft(ticket_id) or {}
     now = db.now()
     merged = {
