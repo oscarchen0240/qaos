@@ -88,7 +88,8 @@ def ac_id_issues(spec_id, requirements, skip=frozenset()) -> list[str]:
             n = rm.derived_ac_seq(aid, rid)
             if n is None:
                 prefix = "AC-" + rid[len("REQ-"):]
-                out.append(f"{aid} 不符合推導規則：{rid} 的 AC 必須是 {prefix}<AC 序號>（序號從 1 起、不補 0）；新增 AC 不可用舊 3 位數格式（{rid} 歷史最大序號 {hw}）")
+                old = "；新增 AC 不可用舊 3 位數格式" if re.fullmatch(r"AC-[A-Z0-9]+-[0-9]{3}", aid) else ""
+                out.append(f"{aid} 不符合推導規則：{rid} 的 AC 必須是 {prefix}<AC 序號>（序號從 1 起、不補 0）{old}（{rid} 歷史最大序號 {hw}）")
             elif n <= hw:
                 out.append(f"{aid} 的 AC 序號 {n} 不大於 {rid} 的歷史最大序號 {hw}（已用過或已刪除的序號不重用；新增 AC 取 {hw + 1} 起）")
     return out

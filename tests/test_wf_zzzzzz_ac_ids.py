@@ -118,6 +118,17 @@ def test_06_high_water_spans_other_spec_versions_and_packet_matches():
     out = gates.ac_id_issues(SPEC, _rm(ver="1.1", req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"])
     assert len(out) == 1 and "已從" in out[0]                                                             # 1.0 R002 已刪除 0019
 
+def test_06b_new_ac_must_exceed_high_water_even_if_sequence_never_used():
+    """歷史最大序號在另一個 spec_version：1.0 的 REQ-004 只用過 0041、0043（0042 從未出現）→ 在 1.1 新增 0042 也 FAIL（序號不大於 3），0044 PASS。"""
+    reqs = _latest_reqs(SPEC, "1.0"); r4 = next(r for r in reqs if r["requirement_id"] == f"REQ-{AREA}-004")
+    r4["acceptance_criteria"] = [{**r4["acceptance_criteria"][0], "ac_id": f"AC-{AREA}-0041"}, {**r4["acceptance_criteria"][0], "ac_id": f"AC-{AREA}-0043"}]
+    _save_rev(SPEC, "1.0", reqs)
+    m = _rm(ver="1.1", req1_acs=TEN[:8])["requirements"]
+    with_r4 = lambda *acs: [r if r["requirement_id"] != f"REQ-{AREA}-004" else {**r, "acceptance_criteria": [_ac(a) for a in acs]} for r in m]
+    out = gates.ac_id_issues(SPEC, with_r4(f"AC-{AREA}-0041", f"AC-{AREA}-0042"))
+    assert len(out) == 1 and f"AC-{AREA}-0042 的 AC 序號 2 不大於 REQ-{AREA}-004 的歷史最大序號 3" in out[0], out
+    assert gates.ac_id_issues(SPEC, with_r4(f"AC-{AREA}-0041", f"AC-{AREA}-0043", f"AC-{AREA}-0044")) == []
+
 def test_07_legacy_three_digit_ac_reused_as_is_but_new_ones_must_be_derived(fixtures):
     """舊格式（MEMBER 這類）：先持久化一份 3 位數 AC 的舊資料，重新分析時原樣沿用 → 通過；新增 3 位數 → FAIL；新增推導格式 → 通過。"""
     sid, area = "SPEC-ACLEG-001", "ACLEG"
@@ -150,3 +161,13 @@ def test_09_id_ac_is_rejected_and_counter_unchanged():
     with pytest.raises(ValueError, match="AC 不由計數器配發"):
         ids.alloc("AC", AREA)
     assert ids._load()["counters"].get(f"AC-{AREA}") == before
+
+def test_10_missing_latest_revision_fails_closed():
+    """最新 revision 檔遺失時不退回較舊的 revision 判定（否則已刪除的 AC 會變回可用）。"""
+    sid = "SPEC-ACLEG-001"; latest = rm_mod.index(sid, "1.0")[-1]["path"]
+    p = store.ROOT / latest; data = p.read_bytes(); p.unlink()
+    try:
+        with pytest.raises(rm_mod.RMError, match="最新 revision 檔"):
+            rm_mod.ac_history(sid)
+    finally:
+        p.write_bytes(data)

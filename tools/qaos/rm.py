@@ -93,8 +93,11 @@ def ac_history(spec_id) -> dict:
     live＝各 spec_version 最新 revision 中的 ac_id（只出現在較舊 revision 的 AC 視為已刪除）。"""
     owners, high, live = {}, {}, set()
     for ip in store.glob(f"artifacts/requirements/{spec_id}/v*/revisions/index.yaml"):
-        entries = [e for e in store.load(ip).get("revisions") or [] if store.exists(e["path"])]
+        entries = store.load(ip).get("revisions") or []
+        if entries and not store.exists(entries[-1]["path"]):          # 最新 revision 遺失時不退回較舊的 revision 判定（與 latest_pin 一致，fail closed）
+            raise RMError(f"{ip} 的最新 revision 檔 {entries[-1]['path']} 不存在")
         for i, e in enumerate(entries):
+            if not store.exists(e["path"]): continue
             for r in store.load(e["path"]).get("requirements") or []:
                 rid = r["requirement_id"]
                 for a in r.get("acceptance_criteria") or []:
