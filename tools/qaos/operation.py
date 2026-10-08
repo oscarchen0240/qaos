@@ -19,6 +19,8 @@ GLOBAL = "_global"
 INDEX_DIR = f"operations/{GLOBAL}/index.d"
 STATUS_DIR = f"operations/{GLOBAL}/status.d"
 STAGING_DIR = "operations/_global/staging.d"   # 計畫保存前的寫入清單（executor 擁有權的證據）
+REQUEST_KEY_DIR = f"operations/{GLOBAL}/request_keys.d"   # request_key → op_id 索引（ADR-011）
+REQUEST_KEY_RE = re.compile(r"[A-Za-z0-9:._/-]{1,128}")
 
 CONTROL_ACTIONS = {"maintenance_start", "maintenance_end", "migrate", "migrate_rollback"}
 TERMINAL = ("aborted_for_rollback", "rolled_back")
@@ -29,6 +31,11 @@ class LockHeld(OperationError): pass
 class ContextInvalid(OperationError): pass
 class Refused(OperationError): pass
 class EvidenceConflict(OperationError): pass
+class IncompletePlan(Refused):
+    """存在未完成的計畫（第 3b 步、續做的 V3）；ops 是未完成的 op_id 清單。"""
+    def __init__(self, msg: str, ops: list[str]): super().__init__(msg); self.ops = list(ops)
+class InMaintenance(Refused): pass
+class KeyConflict(Refused): pass
 
 # ---------------------------------------------------------------- 故障注入（只供測試）
 def _faults() -> set[str]:
@@ -62,7 +69,7 @@ class Context:
     op_id: str | None = None
 
 _EXECUTOR: Context | None = None
-LAST_OUTCOME: dict = {}     # 最近一次 run_operation 的結果類型：new | completed | resumed（CLI 用來提示）
+LAST_OUTCOME: dict = {}     # 最近一次 run_operation 的結果：kind（new | completed | resumed | diagnostic）、op_id、action、request_key、result、allocated_ids（CLI 用來提示與輸出 --json）
 _HOOK_REGISTERED = False
 
 def _drop_inherited_lock():
@@ -438,7 +445,7 @@ def admit(action: str, state: str):
     if action == "maintenance_end": reason = "不在維護中"
     if action == "migrate" and state == "S_maint": reason = "已移轉（移轉標記已存在）"
     if action in ("migrate", "migrate_rollback") and state != "S_maint": reason = "必須先進入維護（maintenance start）"
-    raise Refused(f"{action} 在目前狀態 {state} 不允許：{reason}")
+    raise (InMaintenance if state == "S_maint" else Refused)(f"{action} 在目前狀態 {state} 不允許：{reason}")
 
 def resume_states_for(action: str, state: str) -> dict:
     """建立計畫時記錄續做時接受的狀態。"""
@@ -738,10 +745,11 @@ def _resume(plan: dict, *, request_hash: str | None):
     if request_hash is not None and request_hash != plan["request_hash"]:
         raise EvidenceConflict("V1：請求和計畫的 request_hash 不符")
     others = [o for o in incomplete_plans() if o not in (plan["op_id"], plan.get("takeover_of"))]
-    if others: raise Refused(f"V3：存在其他未完成的計畫 {others}（不合法狀態），需人工處理")
+    if others: raise IncompletePlan(f"V3：存在其他未完成的計畫 {others}（不合法狀態），需人工處理", others)
     check_resume_state(plan)
+    _bind_request_key(plan)
     execute_plan(plan)
-    LAST_OUTCOME.update(kind="resumed", op_id=plan["op_id"])
+    _outcome("resumed", plan)
     return plan.get("result")
 
 def _write_diagnostics(cap: store.Capture):
@@ -806,12 +814,49 @@ def _check_diagnostic(cap: store.Capture):
             if tb.get("started_at") != ta.get("started_at") and not _same_ts(ta.get("started_at"), cap.clock):
                 bad("started_at 只能設為本次時間（task 重新進入 RUNNING）")
 
-def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, resume_op: str | None = None,
-                  post_plan=None, planner=None):
+# ---------------------------------------------------------------- request_key（ADR-011）
+def check_request_key(key: str):
+    if not isinstance(key, str) or not REQUEST_KEY_RE.fullmatch(key):
+        raise ValueError(f"--request-key 格式不符（只能是 1～128 個 A-Z a-z 0-9 : . _ / -）：{key!r}")
+
+def request_key_path(key: str) -> str:
+    return f"{REQUEST_KEY_DIR}/{hashlib.sha256(key.encode('utf-8')).hexdigest()}.yaml"
+
+def _key_record(key: str, op: str) -> bytes:
+    return store.dump({"request_key": key, "op_id": op})
+
+def _bound_op(key: str) -> str | None:
+    """索引中 key 已綁定的 op_id；沒有綁定回傳 None。索引檔以 link 一次建立，內容不符 → 證據衝突。"""
+    p = store.ROOT / request_key_path(key)
+    if not p.is_file(): return None
+    rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    if set(rec) != {"request_key", "op_id"} or rec["request_key"] != key or not _HEX64.fullmatch(str(rec["op_id"])):
+        raise EvidenceConflict(f"request key 索引 {request_key_path(key)} 的內容不符，需人工處理")
+    return rec["op_id"]
+
+def _bind_request_key(plan: dict):
+    """計畫登錄之後（或續做、回報已完成時補齊）建立 request_key → op_id 索引；沒有 key 的計畫不寫。"""
+    key = (plan.get("canonical_request") or {}).get("request_key")
+    if key is None: return
+    _link_create(request_key_path(key), _key_record(key, plan["op_id"]), tag=plan["op_id"][:16])
+
+def _outcome(kind: str, plan: dict | None, *, op_id=None, action=None, request=None, result=None):
+    req = (plan or {}).get("canonical_request") or request or {}
+    LAST_OUTCOME.update(kind=kind, op_id=(plan or {}).get("op_id", op_id), action=(plan or {}).get("action", action or req.get("action")),
+                        request_key=req.get("request_key"), result=(plan or {}).get("result", result) if plan is not None else result,
+                        allocated_ids=list((plan or {}).get("allocated_ids") or []))
+
+def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_request: bool = False, request_key: str | None = None,
+                  resume_op: str | None = None, post_plan=None, planner=None):
     """寫入操作的唯一入口。request：可呼叫物件，在取得鎖之後計算 CanonicalRequest（不含 new_request_token）。
+    request_key（ADR-011）：呼叫端給的穩定請求身分，放進 CanonicalRequest（不加 new_request_token）；同 key、同內容 → 同一 op
+    （已完成回報、未完成續做）；key 已綁定其他 op → KeyConflict。和 new_request 互斥。
     post_plan(plan, blobs) → (plan, blobs)：保存計畫前補充步驟（migrate 的清單與 backup）。
     planner(op_id, request, state, clock) → (plan, blobs)：不經擷取、直接建立計畫（migrate rollback）。"""
     LAST_OUTCOME.clear()
+    if request_key is not None:
+        if new_request: raise ValueError("--request-key 和 --new-request 不能同時使用")
+        check_request_key(request_key)
     ctx = acquire()
     pause("after_lock")
     try:
@@ -824,33 +869,43 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
             if plan is None or resume_op not in registrations(): raise Refused(f"op {resume_op} 不存在")
             return _existing(plan, request_hash=None)
         req = {"request_schema": 1, "action": action, **(request() if request else {})}
-        if new_request: req["new_request_token"] = uuid.uuid4().hex
+        if request_key is not None: req["request_key"] = request_key
+        elif new_request: req["new_request_token"] = uuid.uuid4().hex
         op = op_id_of(req); ctx.op_id = op; _write_owner(ctx)
+        if request_key is not None:                                            # key 已用於不同內容 → 拒絕（在第 2 步之前，不寫任何東西）
+            bound = _bound_op(request_key)
+            if bound is not None and bound != op:
+                raise KeyConflict(f"request key {request_key!r} 已用於不同內容的請求（op={bound[:12]}…）；內容改變時請換一個新的 key")
         plan = load_plan(op)
         if plan is not None: return _existing(plan, request_hash=op)          # 第 2 步
         if incomplete_plans() and planner is None:                             # 3b（rollback 接管在 planner 中以 T2、T3 判斷：3a）
-            raise Refused(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`")
+            raise IncompletePlan(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`", incomplete_plans())
         state = system_state(); admit(action, state)                           # 3c
         clock = store.real_now(); today = store.real_today()
         if planner is not None:
             plan, blobs = planner(op, req, state, clock)
             data = _save_plan(plan, blobs)
             _register(plan, data); fault("after_register")
+            _bind_request_key(plan); fault("after_bind_key")
             execute_plan(plan)
-            LAST_OUTCOME.update(kind="new", op_id=op)
+            _outcome("new", plan)
             return plan.get("result")
         cap = store.begin_capture(clock, today, op, owner_token=ctx.token)
-        try: result = fn()
+        try:
+            result = fn()
+            if request_key is not None and not cap.diagnostic:                 # audit：本次使用的 request key（ADR-011）
+                store.audit(None, "system", "REQUEST_KEY", f"{request_key} → {action}")
         finally: store.end_capture()
         if cap.diagnostic:
             _check_diagnostic(cap)
-            _write_diagnostics(cap); LAST_OUTCOME.update(kind="diagnostic", op_id=None); return result
+            _write_diagnostics(cap); _outcome("diagnostic", None, action=action, request=req, result=result); return result
         plan, blobs = build_plan(cap, op_id=op, request=req, action=action, scope=scope, state=state, result=result)
         if post_plan is not None: plan, blobs = post_plan(plan, blobs)
         data = _save_plan(plan, blobs)
         _register(plan, data); fault("after_register")
+        _bind_request_key(plan); fault("after_bind_key")
         execute_plan(plan)
-        LAST_OUTCOME.update(kind="new", op_id=op)
+        _outcome("new", plan)
         return result
     finally:
         if current() is ctx: release(ctx)
@@ -858,12 +913,13 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
 def _existing(plan: dict, *, request_hash: str | None):
     op = plan["op_id"]
     st = plan_state(op)
-    if st in TERMINAL: raise Refused(f"op {op} 已終結（{st}）；要重做請以 --new-request 建立新 op")
+    if st in TERMINAL: raise Refused(f"op {op} 已終結（{st}）；要重做請以 --new-request（或新的 --request-key）建立新 op")
     r = _takeover_target(op)                                       # 被未完成的 R 接管：不論 X 是否已完成都拒絕（第 5 章 §13.10）
     if r: raise Refused(f"op {op} 已被 rollback 計畫 {r} 接管；請續做 {r}")
     if st == "completed":
         verify_registration(op)
-        LAST_OUTCOME.update(kind="completed", op_id=op); return plan.get("result")
+        _bind_request_key(plan)                                    # 補齊：登錄後、建立索引前中止的計畫（續做時也會補）
+        _outcome("completed", plan); return plan.get("result")
     return _resume(plan, request_hash=request_hash)
 
 def in_operation() -> bool:
@@ -874,11 +930,11 @@ def operation(action: str, request=None, scope=None):
     request(*args, **kwargs) → dict：CanonicalRequest 的 targets／params／inputs（在取得鎖之後計算）。"""
     def deco(fn):
         @functools.wraps(fn)
-        def wrapper(*args, new_request: bool = False, **kwargs):
+        def wrapper(*args, new_request: bool = False, request_key: str | None = None, **kwargs):
             if in_operation(): return fn(*args, **kwargs)
             req = (lambda: request(*args, **kwargs)) if request else (lambda: {"params": normalize({"args": list(args), "kwargs": kwargs})})
             sc = scope(*args, **kwargs) if scope else GLOBAL
-            return run_operation(action, lambda: fn(*args, **kwargs), request=req, scope=sc or GLOBAL, new_request=new_request)
+            return run_operation(action, lambda: fn(*args, **kwargs), request=req, scope=sc or GLOBAL, new_request=new_request, request_key=request_key)
         wrapper.__wrapped_operation__ = action
         return wrapper
     return deco
@@ -910,16 +966,16 @@ def _maint_end():
     store.audit(None, "system", "MAINTENANCE_END", "")
     return {"state": "S_post" if (store.ROOT / MARKER_PATH).is_file() else "S_pre"}
 
-def maintenance_start(by: str, new_request: bool = False):
-    return run_operation("maintenance_start", _maint_start, request=lambda: {"params": {"by": by}}, new_request=new_request)
+def maintenance_start(by: str, new_request: bool = False, request_key: str | None = None):
+    return run_operation("maintenance_start", _maint_start, request=lambda: {"params": {"by": by}}, new_request=new_request, request_key=request_key)
 
-def maintenance_end(by: str, new_request: bool = False):
-    return run_operation("maintenance_end", _maint_end, request=lambda: {"params": {"by": by}}, new_request=new_request)
+def maintenance_end(by: str, new_request: bool = False, request_key: str | None = None):
+    return run_operation("maintenance_end", _maint_end, request=lambda: {"params": {"by": by}}, new_request=new_request, request_key=request_key)
 
-def migrate(by: str, acknowledge_idle: list[str] | None = None, cancel_run: list[str] | None = None, new_request: bool = False):
+def migrate(by: str, acknowledge_idle: list[str] | None = None, cancel_run: list[str] | None = None, new_request: bool = False, request_key: str | None = None):
     """移轉（實作在 tools/qaos/migrate.py）。"""
     from . import migrate as m
-    return m.migrate(by, acknowledge_idle or [], cancel_run or [], new_request=new_request)
+    return m.migrate(by, acknowledge_idle or [], cancel_run or [], new_request=new_request, request_key=request_key)
 
 def _audit_render(target: str | None):
     mk = marker()
@@ -931,5 +987,5 @@ def _audit_render(target: str | None):
         store.write_derived(lg, data.decode("utf-8"))
     return {"rendered": logs}
 
-def audit_render(target: str | None = None, new_request: bool = False):
-    return run_operation("audit_render", lambda: _audit_render(target), request=lambda: {"params": {"target": target or "--global"}}, new_request=new_request)
+def audit_render(target: str | None = None, new_request: bool = False, request_key: str | None = None):
+    return run_operation("audit_render", lambda: _audit_render(target), request=lambda: {"params": {"target": target or "--global"}}, new_request=new_request, request_key=request_key)

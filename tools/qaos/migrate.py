@@ -210,10 +210,10 @@ def post_plan(plan: dict, blobs: dict) -> tuple[dict, dict]:
     plan["steps"] = new_steps; plan["manifest_sha256"] = msha
     return plan, blobs
 
-def migrate(by: str, ack: list[str], cancel: list[str], new_request: bool = False):
+def migrate(by: str, ack: list[str], cancel: list[str], new_request: bool = False, request_key: str | None = None):
     ack, cancel = sorted(ack), sorted(cancel)
     return op.run_operation("migrate", lambda: _body(by, ack, cancel), request=lambda: {"params": {"by": by, "acknowledge_idle": ack, "cancel_run": cancel}},
-                            new_request=new_request, post_plan=post_plan)
+                            new_request=new_request, request_key=request_key, post_plan=post_plan)
 
 def load_manifest(x: str) -> dict:
     p = manifest_path(x)
@@ -401,9 +401,9 @@ def plan_rollback(x: str, allow_later: bool):
         return plan, blobs
     return planner
 
-def rollback(x: str, by: str, allow_later_ops: bool = False, new_request: bool = False):
+def rollback(x: str, by: str, allow_later_ops: bool = False, new_request: bool = False, request_key: str | None = None):
     return op.run_operation("migrate_rollback", None, request=lambda: {"params": {"op": x, "allow_later_ops": bool(allow_later_ops), "by": by}},
-                            new_request=new_request, planner=plan_rollback(x, allow_later_ops))
+                            new_request=new_request, request_key=request_key, planner=plan_rollback(x, allow_later_ops))
 
 # ---------------------------------------------------------------- rollback：執行（群組與檢查 A、B）
 def _groups(plan): return {g: [s for s in plan["steps"] if s.get("group") == g] for g in ("takeover", "restore", "marker", "terminal")}
