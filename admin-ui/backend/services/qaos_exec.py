@@ -4,7 +4,9 @@
 - 只跑 tickets.py 組出來的 `bin/qaos …` 指令，args[0] 必須是 bin/qaos；不接受任意指令。
 - 同時間只跑一條（process 內鎖），逾時 60 秒；執行前再做一次狀態預檢，不符就拒絕、不重試。
 - 執行後把交接紀錄 append 到 `.warroom/handoff.jsonl`（append-only），給 QA session 的 relay hook 與人看。
-- 釐清／Bug 動作後順帶跑 `bin/qaos clarification list` / `bin/qaos bug index` 重建 index.md（也是 QAOS 自己的指令）。
+- 釐清／Bug 動作後順帶跑 `bin/qaos clarification index --new-request` / `bin/qaos bug index --new-request` 重建 index.md（也是 QAOS 自己的指令）。
+  需求 A 後寫入指令以「請求內容」算 op_id，內容相同的重送會被當成先前已完成而不再寫入，所以重建 index 一定要帶 --new-request；
+  `clarification list` 已改為唯讀，不會重建 index。
 - 寫入的 QAOS 路徑清單見 README「單據 › M5b」。
 """
 from __future__ import annotations
@@ -75,16 +77,33 @@ def _preflight(ticket_id: str, kind: str, draft: dict) -> tuple[dict, str, str |
 
 
 # ---------- 執行 ----------
+def _write_guard() -> None:
+    """bin/qaos 只能在主 checkout 執行。linked worktree 的 .git 是「檔案」；在那裡跑寫入指令會落到 worktree 副本，
+    與主資料夾的 QAOS 資料分岔（需求 A 部署後這會讓兩邊各有一份「正式」資料）。"""
+    if (PROJECT_ROOT / ".git").is_file():
+        raise ExecError(409, f"PROJECT_ROOT（{PROJECT_ROOT}）是 git worktree，不是主資料夾；為避免寫入落到副本，已拒絕執行 bin/qaos。"
+                             "請用 QAOS_ADMIN_PROJECT_ROOT 指向主資料夾後重啟指揮台。")
+
+
 def _run(cmd: str) -> dict:
     args = shlex.split(cmd)
     if not args or args[0] != "bin/qaos":
         raise ExecError(400, "只允許執行 bin/qaos")
+    _write_guard()
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": os.environ.get("HOME", ""), "LANG": "en_US.UTF-8", "LC_ALL": "en_US.UTF-8", "PYTHONIOENCODING": "utf-8"}
     try:
         r = subprocess.run(args, cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=TIMEOUT, env=env)
         return {"command": cmd, "exit_code": r.returncode, "stdout": r.stdout[-4000:], "stderr": r.stderr[-4000:]}
     except subprocess.TimeoutExpired:
         return {"command": cmd, "exit_code": -1, "stdout": "", "stderr": f"逾時 {TIMEOUT}s"}
+
+
+def _index_note(post: list[dict], index_path: str) -> str:
+    """順帶重建 index 的結果要照實說：重建指令失敗時不能宣稱已重建。"""
+    bad = [x for x in post if x["exit_code"] != 0]
+    if not bad:
+        return f"{index_path} 已重建。"
+    return f"但 {index_path} 重建失敗（{(bad[0]['stderr'] or bad[0]['stdout'] or '無訊息').strip()[-200:]}），請在終端機執行 {bad[0]['command']}。"
 
 
 def _owner_session(run_id: str | None) -> str | None:
@@ -139,9 +158,9 @@ def execute(ticket_id: str) -> dict:
         post: list[dict] = []
         if res["exit_code"] == 0:
             if kind == "clarification":
-                post.append(_run("bin/qaos clarification list"))
+                post.append(_run("bin/qaos clarification index --new-request"))
             elif kind == "bug":
-                post.append(_run("bin/qaos bug index"))
+                post.append(_run("bin/qaos bug index --new-request"))
     finally:
         _lock.release()
     ended = db.now()
@@ -171,9 +190,9 @@ def execute(ticket_id: str) -> dict:
         else:
             hint = f"run {run_id} 現在 {st}。"
     elif kind == "clarification":
-        hint = "釐清單已更新，clarifications/index.md 已重建。" + ("若已回答且有對應 RESOLVE_AMBIGUITY 核准單，回核准頁套用。" if action == "answer" else "")
+        hint = "釐清單已更新，" + _index_note(post, "clarifications/index.md") + ("若已回答且有對應 RESOLVE_AMBIGUITY 核准單，回核准頁套用。" if action == "answer" else "")
     elif kind == "bug":
-        hint = "Bug 已更新，bugs/index.md 已重建。"
+        hint = "Bug 已更新，" + _index_note(post, "bugs/index.md")
 
     handoff_id = None
     if res["exit_code"] == 0:

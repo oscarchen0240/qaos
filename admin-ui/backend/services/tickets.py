@@ -325,6 +325,9 @@ def approval_command(apr_id: str, draft: dict) -> dict:
 
 
 # ---------- clarifications ----------
+CLR_ACTIVE = ("OPEN", "ASKED", "ANSWERED", "INCORPORATED")      # 還需要人處理的狀態（終止狀態只有 APPLIED、WITHDRAWN）
+
+
 def clarifications(open_only: bool = False) -> list[dict]:
     out = []
     if not CLR_DIR.exists():
@@ -333,14 +336,15 @@ def clarifications(open_only: bool = False) -> list[dict]:
         d = _load(p)
         if not d:
             continue
-        if open_only and d.get("status") not in ("OPEN", "ASKED", "ANSWERED"):
+        if open_only and d.get("status") not in CLR_ACTIVE:
             continue
         out.append({**{k: d.get(k) for k in ("clarification_id", "product", "functional_area", "spec_id", "spec_version", "status", "question", "requirement_id",
                                               "raised_by", "raised_at", "asked_to", "asked_at", "answered_by", "answered_at", "resolution", "run_id", "approval_id", "impact")},
+                    "kind": d.get("kind") or "spec_question",
                     "answer": d.get("answer"), "options": d.get("options") or [], "context": d.get("context") or "",
                     "impact": d.get("impact") or d.get("impact_if_unanswered"),
                     "path": str(p.relative_to(PROJECT_ROOT))})
-    order = {"OPEN": 0, "ASKED": 1, "ANSWERED": 2, "APPLIED": 3, "WITHDRAWN": 4}
+    order = {"OPEN": 0, "ASKED": 1, "ANSWERED": 2, "INCORPORATED": 3, "APPLIED": 4, "WITHDRAWN": 5}
     out.sort(key=lambda c: (order.get(c["status"], 9), c.get("raised_at") or ""), reverse=False)
     return out
 
@@ -350,14 +354,17 @@ def clarification_detail(clr_id: str) -> dict | None:
         if c["clarification_id"] == clr_id:
             d = _load(PROJECT_ROOT / c["path"]) or {}
             return {**c, "history": d.get("history") or [], "spec_reference": d.get("spec_reference"), "draft": get_draft(clr_id),
-                    "allowed": _clr_allowed(c["status"])}
+                    "allowed": _clr_allowed(c["status"], c["kind"])}
     return None
 
 
-def _clr_allowed(status: str) -> list[str]:
+def _clr_allowed(status: str, kind: str = "spec_question") -> list[str]:
+    """人可以做的轉換目標。轉換帶 kinds 時只適用於那幾種單（例如文件索取單的 OPEN→APPLIED 是逐項 fulfill／waive-item，
+    不是 apply；spec_question 的 ANSWERED 等轉換不適用文件索取單）。"""
     sm = _load(SM_PATH) or {}
     m = (sm.get("machines") or {}).get("clarification") or {}
-    return sorted({t["to"] for t in m.get("transitions") or [] if t.get("from") == status and "human" in (t.get("by") or [])})
+    return sorted({t["to"] for t in m.get("transitions") or []
+                   if t.get("from") == status and "human" in (t.get("by") or []) and (not t.get("kinds") or kind in t["kinds"])})
 
 
 def clarification_command(clr_id: str, draft: dict) -> dict:
@@ -370,7 +377,7 @@ def clarification_command(clr_id: str, draft: dict) -> dict:
         to = ex.get("asked_to") or ""
         if not to:
             warnings.append("需要填「問誰」（--to）")
-        parts = ["bin/qaos", "clarification", "ask", clr_id, "--to", to, "--by", who]
+        parts = ["bin/qaos", "clarification", "ask", clr_id, "--to", to, "--by", who, "--new-request"]
     elif action == "answer":
         ans = (draft.get("rationale") or "").strip()
         res = ex.get("resolution") or "requirement_clarified"
@@ -380,11 +387,22 @@ def clarification_command(clr_id: str, draft: dict) -> dict:
         parts = ["bin/qaos", "clarification", "answer", clr_id, "--answer", ans, "--answered-by", by2, "--resolution", res]
         if ex.get("spec_version"):
             parts += ["--spec-version", str(ex["spec_version"])]
-        parts += ["--by", who]
-    elif action in ("apply", "withdraw"):
-        parts = ["bin/qaos", "clarification", action, clr_id, "--by", who]
-        if draft.get("rationale"):
-            parts += ["--note", draft["rationale"]]
+        parts += ["--by", who, "--new-request"]
+    elif action == "withdraw":
+        reason = (draft.get("rationale") or "").strip()
+        if not reason:
+            warnings.append("需要填撤回原因（--reason）")
+        parts = ["bin/qaos", "clarification", "withdraw", clr_id, "--reason", reason, "--by", who, "--new-request"]
+    elif action == "apply":
+        # 需求 A 後 apply 要選落地路徑（--path a6|a6b|a7），並對重新掃描出的每一張候選 TC 下結論（--tc-conclusion），
+        # 是 ADR-008 規定由 QA session 逐條判定的動作，不適合做成指揮台表單；這裡只給指令骨架，不讓平台執行。
+        kind = next((c["kind"] for c in clarifications() if c["clarification_id"] == clr_id), "spec_question")
+        if kind == "document_request":
+            warnings.append("文件索取單不是用 apply 結案，而是逐項 fulfill／waive-item；指揮台不支援，請在 QA session／終端機依 clarification --help 執行")
+        else:
+            warnings.append("套用（apply）需要 --path {a6,a6b,a7}、--impact-reviewed，以及對每張候選 TC 的 --tc-conclusion；指揮台不支援，"
+                            "請框選下方指令骨架，到 QA session／終端機依 clarification apply --help 補齊後執行")
+        parts = ["bin/qaos", "clarification", "apply", clr_id, "--path", "<a6|a6b|a7>", "--impact-reviewed", "<整體說明>", "--by", who, "--new-request"]
     else:
         return {"command": "", "warnings": [f"未知動作 {action}"]}
     return {"command": " ".join(shlex.quote(x) for x in parts), "warnings": warnings}
@@ -452,6 +470,10 @@ def bug_command(bug_id: str, draft: dict) -> dict:
         parts = ["bin/qaos", "bug", "transition", bug_id, "--to", to, "--by", who]
         if ex.get("trigger"): parts += ["--trigger", ex["trigger"]]
         if note: parts += ["--note", note]
+    # Bug 有重開迴圈（RESOLVED→OPEN→IN_PROGRESS…），同一個 bug 會合法地再次出現內容完全相同的請求；
+    # 需求 A 後 CLI 會把它當成先前已完成而「印成功訊息卻不寫入」，所以人工決定的指令一律帶 --new-request
+    # （狀態預檢與單飛鎖由 qaos_exec 負責，狀態機本身仍會拒絕不合法的轉換）。
+    parts.append("--new-request")
     return {"command": " ".join(shlex.quote(x) for x in parts), "warnings": warnings}
 
 
