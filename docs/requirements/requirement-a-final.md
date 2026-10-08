@@ -28,7 +28,7 @@
 |---|---|---|
 | P1 | 第 4 章的 executor 基礎設施；第 5 章移轉中「空 root 也需要的部分」（凍結 legacy audit、標記、第一次 render），讓新安裝的 root 能以正式流程進入 `S_post` | AC-07-8、9a～9n 等可獨立驗證的部分、13～19、22～29 中 P1 的類型、36～49、64～79（含 77a～77k）、80～89、94～100 |
 | P2 | 第 2 章 FIX-01、02；第 3 章 FIX-08、FIX-06 的 schema 與來源 | AC-01、AC-02、AC-08（含 35～38）、AC-06 中可獨立驗證的部分 |
-| P3 | 第 5 章其餘部分：revision、資料移轉、綁定、閉包、過時判定、同版本 CIA、CIA 候選 G1～G8、cancel、manual、testcase-revision、`migrate verify`、`migrate rollback` | AC-09-1～50、54、55～91；AC-07-90～93；AC-A-B1-7、8 |
+| P3 | 第 5 章其餘部分：revision、資料移轉、綁定、閉包、過時判定、同版本 CIA、CIA 候選 G1～G8、cancel、manual、testcase-revision、`migrate verify`、`migrate rollback` | AC-09-1～50、54、55～95；AC-07-90～93；AC-A-B1-7、8 |
 | P4 | 第 1 章 FIX-04、05，以及 agent 契約與指示 | AC-04-1～5、AC-05-1～15 |
 | P5 | 第 3 章去重與開單關卡；第 6 章 FIX-10；ADR-010 | AC-07-1～7、10、11、101～104；AC-10A-1～69 |
 | P6 | 整合驗收 | AC-A-B1-1～17；所有標「待 Pn」的項目 |
@@ -2664,6 +2664,7 @@ manifest:
 - 所以每一個步驟（含事件檔、清單、backup、衍生輸出、登錄與狀態紀錄）都有建立計畫時就能算出的 `expected_after` sha256；續做時事件檔一律以完整 sha256 核對。
 - `expected_before` 等於 `expected_after` 的路徑不成為步驟，改列計畫的 `no_change[]: {path, kind, content_sha256 | absent}`；因此每一步都滿足 before ≠ after。
 - 每一步依序：(1) 寫輸出 → (2) fsync → (3) link 完成紀錄；三件事都完成才進入下一步。最後一步是 `status.d/<X>-completed.yaml`，它沒有完成紀錄，本身就是完成證據。
+- 計畫的內容檔（`operations/_global/<X>/blobs/<sha256>`）**只保存被計畫步驟引用的最終內容**：建立計畫過程中的中間版本（例如移轉標記補上 `manifest_sha256` 之前的草稿）不寫入 blobs。因此 `blobs/` 的檔案集合恰好等於計畫步驟的 `blob` 集合（附錄 A 5-18）。
 
 #### 11.5 步驟順序
 
@@ -2721,20 +2722,55 @@ manifest:
 ### 12. `migrate verify`
 
 - `migrate verify`（移轉後）與 `migrate verify --rolled-back`（回復後）是唯讀指令，不取鎖；輸出標明「讀取期間如果有寫入，結果可能不一致」。在維護窗口中執行時結果一致。
+- 「移轉後」核對的是 **X 完成時的狀態**。X 之後的合法操作會重新 render `audit.log`（§11.7、第 4 章 §10.2），所以 audit 檢視依 §12.1 判定；其他路徑仍以 X 完成時的值判定（§12.3）。
 - 依類別核對：
 
 | 類別 | 移轉後 | 回復後 |
 |---|---|---|
-| `restore` | 等於 `planned_post_sha256` | 等於 `pre_sha256` |
-| `remove` | 等於 `planned_post_sha256` | 不存在 |
+| `restore` | 等於 `planned_post_sha256`；audit 檢視依 §12.1 | 等於 `pre_sha256` |
+| `remove` | 等於 `planned_post_sha256`；audit 檢視依 §12.1 | 不存在 |
+| X 的 `no_change` 中的 audit 檢視 | 依 §12.1（計畫值是 `content_sha256`） | — |
 | `retain_audit`（X） | X 已完成：全部存在；sha256 等於計畫值 | 依 R 凍結的 `x_progress`：`done` 的稽核物（含 `content_tail`）存在、sha256 等於凍結值；缺失或竄改 → **失敗**（證據衝突） |
 | `planned_audit`（X） | X 已完成：全部已落盤 | `not_executed` 步驟的預定事件、完成紀錄，以及 `status.d/<X>-completed`（X 未完成時）**必須不存在**；出現 → 列為證據衝突 |
 | `retain_audit`（R） | — | R 的計畫檔、登錄紀錄、完成紀錄、接管事件、回復事件、狀態紀錄全部存在，sha256 等於 R 計畫中的值 |
 | `shared_control` | 鎖檔存在；清單列出的既有 `index.d`、`status.d` 紀錄不變 | 同左；另有 `status.d/<X>-rolled_back` 或 `<X>-aborted_for_rollback`（只有一個，內容 `by: R`），以及 `status.d/<R>-completed` |
 | `untouched` | 等於 `pre_sha256` | 等於 `pre_sha256` |
+| 事件檔 | 依 §12.2 全部能對應 | — |
 | 其他 | 標記存在，而且 `migrate_op_id` 等於 X | 標記不存在；沒有未完成的計畫 |
 
 - 發現終態不一致的 R（§13.8）時，`migrate verify` 與 `operation list` 回報該不一致。
+- 有登錄中 X 之後的已完成操作時，移轉後的輸出另列這些操作（`op_id`、action），供人工對照；只是列出，不改變判定。
+
+#### 12.1 audit 檢視在 X 之後的合法追加（移轉後）
+
+- **audit 檢視**：`runs/_audit.log`（全域）與 `runs/<run_id>/audit.log`（run）。
+- **適用路徑**：X 計畫中 render 步驟的 audit 檢視（`restore`、`remove` 類），以及 X 的 `no_change` 中的 audit 檢視。**計畫值 P**：render 步驟的 `expected_after`，或 `no_change` 的 `content_sha256`。
+- **後續操作 Y**：登錄紀錄中 `plan_seq` 大於 X 的操作。Y 的事件只有在 Y **已完成**、而且 Y 通過登錄核對（附錄 A 4-11：登錄紀錄與計畫檔一致、completed 紀錄相符）時才算有出處。
+- 目前內容 C 符合下列其一才通過：
+  1. `sha256(C) = P`。
+  2. `C = H ⧺ T`，其中 `sha256(H) = P`（H 就是 X 完成時的內容，逐位元），T 是下列事件依第 4 章 §10 的行格式產生、依 `(at, op_id, step)` 排序後串接的行：
+     - (a) **必含**：每個已完成的後續操作 Y，其計畫 `audit_events` 中屬於這個檢視的事件（全域檢視：全部；run 檢視：`run_id` 等於該 run）。每個事件的事件檔都必須存在，sha256 等於 Y 計畫中對應事件步驟的 `expected_after`。
+     - (b) **可含**：屬於這個檢視、`at` 晚於 X 的 `clock` 的**診斷事件**（第 4 章 §13：驗證失敗時不經計畫寫入的 `adhoc-<uuid>` 事件，沒有登錄紀錄）。只有格式完全符合才算：檔名 `adhoc-<32 位小寫 hex>-0.yaml`；位於 `runs/_audit.d/`（`run_id` 為 null）或 `runs/<run_id>/audit.d/`（`run_id` 等於該 run）；欄位恰好是 `{at, actor, action, detail, op_id, step, run_id}`，`op_id` 等於檔名中的 `adhoc-<uuid>`，`step` 為 0。診斷寫入不 render，最後一次 render 之後才寫的診斷事件不會出現在 T 中，所以 (b) 是「可含」，沒有出現不算失敗。
+     - T 不能有其他任何行：未完成（`in_progress`）操作的事件、沒有登錄的非診斷事件、`plan_seq` 不大於 X 的操作的事件、重複或順序不符的行，都使 C 不符。
+  3. 其他 → **失敗**。回報計畫值 P 與目前的 sha256。
+- **前提**：後續操作的 `clock` 晚於 X 時的所有事件，render 才會把新事件接在 H 之後。系統時間倒退等原因使新事件排進 H 的中間時，C 不以 H 開頭 → 失敗（不會誤放行），交人工核對（§18）。
+- **為什麼不比對「依目前事件重新 render 的結果」**（附錄 A 5-13 的 T7 判定）：verify 要證明的是「X 完成時的內容沒有被改動，而且追加的每一行都有出處」。只比對重新 render 的結果，事件檔本身被偽造或改動時仍會一致。
+- X 計畫逐步核對（每一步的輸出等於計畫值）中的 audit 檢視步驟，以及 `restore`、`remove` 的 audit 檢視，都改依本條；其他路徑不變。
+
+#### 12.2 事件檔核對（移轉後）
+
+`runs/_audit.d/*.yaml`、`runs/<run_id>/audit.d/*.yaml` 的每個事件檔（排除 `.qaos-tmp` 暫存檔）都必須能對應下列其一，否則**失敗**：
+
+- 登錄紀錄中某個操作計畫的事件步驟：路徑相同，sha256 等於該步驟的 `expected_after`，而且該操作通過登錄核對；
+- 符合 §12.1 (b) 格式的診斷事件（不限 `at`：X 之前的診斷事件已包含在 H 中）。
+
+理由：偽造或被改動的事件檔即使還沒被 render 進 `audit.log`，下一次 render 也會把它帶入。未完成操作的事件檔可以對應（它是該計畫的步驟），但不屬於 §12.1 的 T。
+
+#### 12.3 範圍與限制
+
+- §12.1、§12.2 只處理 audit 檢視與事件檔。後續操作改寫的**其他**清單路徑，例如 `run cancel` 改寫 `untouched` 的 `run.yaml`、`clarification answer` 改寫 `restore` 的 CLR，`migrate verify` 仍回報失敗：這些修改是否可以接受，屬於回復時的判斷（§13.1 T6、T7），不由 verify 判定。
+- 回復後（`--rolled-back`）的判定不變：標記移除後不再 render。
+- 計畫中沒有被任何步驟引用的內容檔（附錄 A 5-18 修正之前的移轉留下的標記草稿）不影響判定，也不刪除（`operations/` 是稽核紀錄）。
 
 ---
 
@@ -2973,7 +3009,7 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
 | **M2 merge 與部署** | merge；本機 `main` 的 working tree 切換到新程式；立刻執行 `maintenance start` | Oscar merge |
 | **M3 移轉** | 重新讀取業務現況（RUNNING／WAITING_HUMAN 的 run、PENDING APR）→ `migrate --acknowledge-idle\|--cancel-run …` → `migrate verify` | Oscar 明確授權（含 RUNNING run 的處理方式） |
 | **M4 驗證** | 標記存在、第一次 render 成功；原本存在的 `audit.log` 開頭逐位元等於移轉前的原檔；`untouched` 全部吻合；抽查 sidecar；pytest、`validate_phase1` 通過 | 回報 |
-| **W2 結束維護窗口** | `maintenance end`；通知 admin-ui 恢復 | Oscar 宣告 |
+| **W2 結束維護窗口** | `maintenance end`；之後 `migrate verify` 依 §12.1 仍通過（`runs/_audit.log` 以計畫值開頭、尾端是 `MAINTENANCE_END` 事件）；通知 admin-ui 恢復 | Oscar 宣告 |
 | **M5 資料 commit** | 記錄移轉結果 | Oscar 當下明確授權 |
 
 #### 15.2 程式 revert 與資料回復（R0～R6）
@@ -3084,7 +3120,7 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
 - **AC-09-50**：有 PENDING APR 的 RUNNING run（fixture），`migrate --cancel-run`。預期：所有 PENDING APR 都改成 CANCELLED。
 - **AC-09-54**：移轉前（沒有移轉標記）以 `operation resume` 續做各種未完成計畫。預期：只有 `resume_states` 包含目前狀態的計畫可以續做（S_pre 的 `run cancel`；S_maint 的 `migrate`、`migrate rollback`；維護控制操作依其 `resume_states`）；業務寫入計畫一律拒絕續做（V4）。
 
-#### 17.3 移轉清單、verify、rollback、稽核證據、回復可行性、終態、目標宣告變動與 legacy pin（AC-09-55～91）
+#### 17.3 移轉清單、verify、rollback、稽核證據、回復可行性、終態、目標宣告變動與 legacy pin（AC-09-55～95）
 
 - **AC-09-55**：acknowledge-idle；原本有 `audit.log`、有 CLR render → 移轉 → rollback。預期：
   - `restore`：CLR yaml、CLR md、audit.log 都回到 `pre_sha256`；
@@ -3206,6 +3242,25 @@ R 的每個步驟在計畫中帶一個建立時決定、之後不變的 `group`�
   - ⑥g：照常執行；`operation list` 回報 R 終態不一致；`verify --rolled-back` 失敗並列出缺少的 Rt1；
   - ⑥ 不屬於正式流程，只證明第 0 步的攔截範圍；
   - ①②③⑤ 的 `verify --rolled-back` 都通過。
+- **AC-09-92**（§12.1，合法追加）：以完成的 X 為起點，全部用正式指令。預期：
+  - ① `maintenance end` 之後 `migrate verify` 通過（部署 W2 的情境）；
+  - ② 再執行一個只寫清單以外路徑、會產生事件的業務操作（例如 `spec import`）→ 通過；
+  - ③ 移轉後新建 run，對它提交不合格的產出，觸發診斷事件；之後再執行一個會 render 全域 log 的操作 → 通過（診斷事件在 T 中）；診斷事件寫在最後一次 render 之後（不在 T 中）→ 也通過；
+  - ④ 對 X 中 render 過的 run 執行後續操作（`run cancel` 該 run）→ 該 run 的 `audit.log` 與全域 `audit.log` 都不被回報；verify 只回報 `untouched` 的 `run.yaml`（§12.3），並列出後續操作。
+- **AC-09-93**（§12.1、§12.2，竄改仍失敗；測試中故意修改，各例還原後 verify 再次通過）：在 AC-09-92 ② 的狀態上：
+  - ① 全域 `audit.log` 尾端加一行沒有事件來源的行；
+  - ② 改動 H 範圍內的一個位元組，尾端保持合法；
+  - ③ 刪掉一行必含事件；
+  - ④ 兩行必含事件對調順序；重複一行；
+  - ⑤ 改動一個後續操作的事件檔內容，並把 `audit.log` 改成與它一致；
+  - ⑥ 新增一個無法對應的事件檔（不存在的 op_id）：(a) 只新增、不 render；(b) 以 `audit render --global` 讓它進入 `audit.log`；
+  - ⑦ 刪除一個後續操作的 `completed` 紀錄（它變成未完成，但事件仍在 `audit.log` 中）；
+  - ⑧ 改動一個後續操作的登錄紀錄（`plan_sha256`）；
+  - ⑨ 格式不符的診斷事件：欄位多一個、`step` 不是 0、`run_id` 與所在目錄不符、檔名的 uuid 與 `op_id` 不符；
+  - ⑩ 改動 X 的 `no_change` 中某個 run 的 `audit.log`（修正前 verify 不核對這類路徑）。
+  - 預期：每例 verify 失敗，輸出列出被竄改的路徑。
+- **AC-09-94**（§12.1 前提）：以測試專用的故障注入，讓一個後續操作的 `clock` 早於 X 的 `clock`。預期：該事件排進 H 的中間，verify 失敗，不誤放行。
+- **AC-09-95**（附錄 A 5-18）：完成的 X 與完成的 R，`operations/_global/<op>/blobs/` 的檔案集合各自恰好等於計畫步驟的 `blob` 集合；X 中沒有 `manifest_sha256: null` 的標記草稿。
 
 #### 17.4 第一批整合驗收
 
@@ -3225,6 +3280,9 @@ AC-A-B1-7（CIA 候選完整性）、AC-A-B1-8（manual）列在第 6 章 §12 �
 8. **R6 是人工步驟**：程式 revert 後以人工移除維護檔，需授權並記錄。
 9. **終態不一致沒有自動出口**：第 0 步拒絕所有寫入，只能由人處理。
 10. 直接寫 `requirements.yaml` 的偵測（`req verify`）與 `spec outdated` 報表在第二批；第一批只提供判定函式。
+11. **`migrate verify` 對 audit 檢視的放寬以時間單調為前提**（§12.1）：後續操作的事件排進 X 時內容的中間（例如系統時間倒退）時一律失敗，需人工核對「去掉追加部分後等於計畫值」。
+12. **診斷事件沒有計畫可以核對**：§12.1 (b)、§12.2 只檢查格式與位置，偽造一個格式正確的診斷事件不會被 verify 發現；它只影響稽核檢視的內容，不影響業務檔。從 audit 檢視中刪掉診斷事件的行也不會被發現（事件檔本身仍在，仍是權威紀錄）。
+13. **後續業務操作改寫的清單路徑仍使 `migrate verify` 失敗**（§12.3），需人工對照 verify 列出的後續操作判斷。
 
 
 ---
@@ -4021,6 +4079,8 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 5-14 | P3 實作補充的定義 | 新分析的 revision 從 R001 起編號，R000 只由移轉建立。run.yaml 的 `requirement_model_revision` 是目標端（spec-change-impact 時是 to 端），另有 `from_requirement_model_revision`、testcase-revision 的 `testcase_pin`（被修訂 TC 的舊 pin）。移轉 sidecar 的 `legacy_binding` 在 testcase-revision、manual 與 TC sidecar 為 true，其他為 false。清單中會造成循環的項目只列路徑、不列 sha（清單自己那一步與標記那一步的完成紀錄、標記的 remove 項、計畫檔、登錄紀錄），verify 與 rollback 改依計畫步驟或登錄紀錄核對。`untouched` 涵蓋 spec.yaml、TC 版本、registry、其他 run.yaml、需求模型檢視、核准單、CLR、移轉前已存在的登錄與狀態紀錄。R 寫兩個事件：接管（R2）與回復摘要。`req accept-declaration` 需要 `--by`（只能由人），`--rev` 必須是最新 revision。revision 的 `decision_snapshot_hashes` 與派發包一起在 P4 加入。R000 的 `reason=decision_applied` 判定：revision 引用的 CLR 有任何 applied landing 即成立（R000 沒有建立時間） | I |
 | 5-15 | AC-09-85 ⑤ 與 §13.7 續做表 | 部分移轉（`marker` 群組為空）的 R 在檢查 B 通過後、`terminal` 寫入前中止時，R 沒有可落盤的「檢查 B 已通過」證據，續做無法與「還沒做檢查 A」區分，依 §13.7 該列重新執行檢查 A。兩個檢查此時的條件相同（標記必須不存在），沒有安全差異；AC-09-85 ⑤ 原寫「不執行檢查 A」與續做表矛盾，改依續做表。P6 驗收時發現 | R |
 | 5-16 | AC-09-64 R5 的舊 validate 判定 | 改為 baseline 比對，不改程式。**W1 對照**：W1 資料 commit 之後、M2 之前（仍是舊程式），對「舊 `schema.infer` 能推斷 schema 的全部 yaml」逐檔執行舊 `bin/qaos validate` 的結果（排除定義層 schemas、agents、workflows、permissions、tools、tests、admin-ui、docs、bin 與隱藏目錄——W1 與 R5 時它們都是舊程式本身；推斷不出 schema 的檔案舊 validate 本來就不判定；`locks/`、`operations/` 在舊 `PATH_RULES` 推斷為 None）。回復後以同一範圍再執行一次，判定：(1) **W1 對照中有的路徑**：逐檔的退出碼與輸出全文（去除 root 的絕對路徑）都與 W1 對照相同；W1 對照中既有的失敗不算新失敗。(2) **W1 對照中沒有的路徑**：只允許是回復後保留的稽核事件檔——X、R 的 `retain_audit`，以及 M2 之後的控制類操作（`maintenance start|end`）寫入的 `runs/_audit.d/*`、`runs/<run>/audit.d/*` 事件檔（路徑樣式只用來界定範圍，不是清單；清單路徑仍一律具體，§11.3）；每個檔案都必須能由檔名的 op_id 對應到登錄紀錄（`index.d`）中的 X、R 或上述控制類操作，只因路徑落在 `audit.d/` 不算。符合 (2) 的檔案不在舊 validate 的判定範圍。(3) 其他情況（W1 對照中有的路徑結果不同；W1 對照中沒有的路徑不符合 (2)）都視為不符，停止並交人處理。後續業務操作寫入的檔案不屬於 (2)，依下方的前提處理。**理由**：舊 `schema.infer` 的 `PATH_RULES` 把 `runs/` 下所有 yaml 推斷成 `workflow/workflow-run.schema.json`，這是舊程式的推斷限制——W1 時既有的 `runs/*/entities/*.yaml` 也因此失敗，保留的事件檔指定給舊 validate 時同樣失敗；舊程式的正常流程不掃描 `runs/_audit.d/`。**前提**：比對以 `later_ops_snapshot` 為空為前提；使用 `--allow-later-ops`（§13.11）時，後續操作報告列出的路徑另依該報告人工判定，本條只是有限的相容性判定，不能宣稱資料全部回到 W1 的狀態。**W1 對照的保存**（§15.1 W1 列）：逐檔結果（路徑、推斷的 schema、退出碼、輸出全文）、逐檔 sha256、資料 commit、舊程式 SHA 與工具版本，記在回復報告；未追蹤的業務檔要納入該資料 commit 或另存快照。工具：`tools/legacy_validate_snapshot.py`——`snapshot` 取得 W1 對照與回復後的結果（以舊程式的 `bin/qaos validate` 逐檔執行、保存全文），`compare --op X`（X 必填）依 (1)～(3) 判定：先核對中繼資料——兩份結果的資料 root 都必須等於比對時的 `--root`（不借用其他 root 的登錄紀錄），兩份結果都由目前版本的工具產生且中繼資料齊全，舊程式內容的雜湊、資料 root 實際使用的 schemas 的雜湊（舊程式從資料 root 讀 schemas）、工具的 sha256、舊程式所用 `python3` 環境的 jsonschema／PyYAML／referencing 與 Python 版本都相同（W1 與 R5 以同一個 canonical 路徑執行）；X 必須是登錄紀錄中的 migrate，接管 X 的 R 恰好一份，X 與 R 的計畫檔 sha256 都等於登錄紀錄的 `plan_sha256`；(2) 只豁免 W1 時尚未登錄的 op，migrate 只限 X、migrate_rollback 只限該 R；一律讀 R 的計畫確認 `later_ops_snapshot` 為空（找不到 R 或非空即不符）。`snapshot` 在舊程式環境或範圍異常（輸出含 Traceback，或沒有任何 VALID，包含範圍內一個檔案都沒有）時不寫結果。本條的 baseline 是舊程式的判定，與 6-38（新程式的 schema 驗證）不同。M1（2026-10-08）：對照組是主資料夾工作目錄的原樣複本（相當於 W1 對照），23 檔既有失敗，回復後逐檔相同（M1 比對的是退出碼、輸出首行與輸出末 600 字元）；4 個對照組中沒有的事件檔（X 1、`maintenance start` 1、R 2）被判 INVALID，三個 op 都在 `index.d` 中，屬 (2)。2026-10-08 Oscar 決定（D-M1-1） | R |
+| 5-17 | `migrate verify` 在 X 之後的合法操作 | 部署（2026-10-08）的 W2：`maintenance end` 依 §11.7 重新 render `runs/_audit.log`，舊的 verify 對它回報「不等於計畫值」「restore 不等於移轉後的值」兩項失敗；人工核對確認目前內容等於計畫值加上 `MAINTENANCE_END` 一行。任何 X 之後會 render 的操作都會造成同樣的誤報。修正：audit 檢視改依第 5 章 §12.1——`以計畫值開頭，追加的部分全部來自登錄中 X 之後已完成操作的事件`（加上格式符合的診斷事件，可含）；另以 §12.2 核對全部事件檔都有出處，並把 X 的 `no_change` 中的 audit 檢視納入核對（修正前沒有核對）。不採用「目前內容等於重新 render 的結果」（5-13），因為它不能發現偽造的事件檔。後續業務操作改寫的其他清單路徑仍回報失敗（§12.3）。驗收 AC-09-92～94 | R |
+| 5-18 | 移轉標記的孤兒 blob | 部署時發現 X 的 `blobs/` 有 1 個沒有被計畫引用的檔案：移轉標記在補上 `manifest_sha256` 之前的草稿（`manifest_sha256: null`），M1 預演也有。原因是建立計畫時替換標記內容，沒有移除舊的內容檔。不影響正確性（沒有任何步驟讀取它）。修正：只保存被步驟引用的最終內容（第 5 章 §11.4）。已移轉資料中既有的孤兒 blob 保留、不刪除，verify 不以它判定（§12.3）。驗收 AC-09-95 | I |
 
 ### A.6 CLR 生命週期（第 6 章）
 
