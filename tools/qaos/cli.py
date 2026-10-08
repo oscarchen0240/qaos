@@ -81,8 +81,9 @@ def cmd_validate(a):
 def cmd_id(a):
     new_id = ids.alloc_cmd(a.kind, a.area, **_nr(a))
     if _replayed():    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
-        op = operation.LAST_OUTCOME["op_id"]; operation.LAST_OUTCOME.clear()
-        raise operation.Refused(f"這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請加 --new-request")
+        op, key = operation.LAST_OUTCOME["op_id"], operation.LAST_OUTCOME.get("request_key"); operation.LAST_OUTCOME.clear()
+        how = "換一個新的 --request-key" if key else "加 --new-request"
+        raise operation.Refused(f"這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請{how}")
     print(new_id)
 
 def cmd_run_new(a):
@@ -437,7 +438,7 @@ def main(argv=None):
 
 # ---------------------------------------------------------------- --json（ADR-011）
 ID_NAMES = {"EVD": "evidence_id", "EXE": "execution_id", "RUN": "run_id", "APR": "approval_id", "BUG": "bug_id", "CLR": "clarification_id",
-            "TC": "testcase_id", "REQ": "requirement_id", "AC": "acceptance_criteria_id"}
+            "TC": "testcase_id", "REQ": "requirement_id", "AC": "acceptance_criteria_id", "MAN": "manual_record_id"}
 
 def _ids(allocated: list[str]) -> dict:
     """本 op 配發的 ID（計畫的 allocated_ids）依種類命名；同一種類配發多個時不放進 ids，只在 allocated_ids 中列出。"""

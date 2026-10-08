@@ -445,7 +445,8 @@ def admit(action: str, state: str):
     if action == "maintenance_end": reason = "不在維護中"
     if action == "migrate" and state == "S_maint": reason = "已移轉（移轉標記已存在）"
     if action in ("migrate", "migrate_rollback") and state != "S_maint": reason = "必須先進入維護（maintenance start）"
-    raise (InMaintenance if state == "S_maint" else Refused)(f"{action} 在目前狀態 {state} 不允許：{reason}")
+    temporary = state == "S_maint" and action not in CONTROL_ACTIONS     # 一般寫入因維護暫時禁止；控制指令的前置條件不符是持久的拒絕
+    raise (InMaintenance if temporary else Refused)(f"{action} 在目前狀態 {state} 不允許：{reason}")
 
 def resume_states_for(action: str, state: str) -> dict:
     """建立計畫時記錄續做時接受的狀態。"""
@@ -747,7 +748,7 @@ def _resume(plan: dict, *, request_hash: str | None):
     others = [o for o in incomplete_plans() if o not in (plan["op_id"], plan.get("takeover_of"))]
     if others: raise IncompletePlan(f"V3：存在其他未完成的計畫 {others}（不合法狀態），需人工處理", others)
     check_resume_state(plan)
-    _bind_request_key(plan)
+    _bind_request_key(plan)                                        # 核對綁定（見 _bind_request_key；冪等）
     execute_plan(plan)
     _outcome("resumed", plan)
     return plan.get("result")
@@ -826,19 +827,35 @@ def _key_record(key: str, op: str) -> bytes:
     return store.dump({"request_key": key, "op_id": op})
 
 def _bound_op(key: str) -> str | None:
-    """索引中 key 已綁定的 op_id；沒有綁定回傳 None。索引檔以 link 一次建立，內容不符 → 證據衝突。"""
+    """key 目前綁定的 op（持鎖時呼叫；登錄補齊、殘留清理之後，計畫檔存在 ⇔ 已登錄）。
+    - 索引不存在，或指向沒有計畫檔的 op（綁定之後、計畫保存之前中止，該 op 從未建立）→ None（可以重新綁定）；
+    - 索引形狀不符，或指向的計畫沒有帶同一個 key → 證據衝突。"""
     p = store.ROOT / request_key_path(key)
     if not p.is_file(): return None
     rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
     if set(rec) != {"request_key", "op_id"} or rec["request_key"] != key or not _HEX64.fullmatch(str(rec["op_id"])):
         raise EvidenceConflict(f"request key 索引 {request_key_path(key)} 的內容不符，需人工處理")
+    plan = load_plan(rec["op_id"])
+    if plan is None: return None
+    if (plan.get("canonical_request") or {}).get("request_key") != key:
+        raise EvidenceConflict(f"request key 索引 {request_key_path(key)} 指向的計畫 {rec['op_id'][:12]}… 沒有帶這個 key，需人工處理")
     return rec["op_id"]
 
 def _bind_request_key(plan: dict):
-    """計畫登錄之後（或續做、回報已完成時補齊）建立 request_key → op_id 索引；沒有 key 的計畫不寫。"""
+    """在計畫保存**之前**建立（或改綁）request_key → op_id 索引（ADR-011）：之後任何時點中止，key 都已綁定這個 op，
+    rollback 接管或終結它也不會讓 key 變成未綁定。沒有 key 的計畫不寫。"""
     key = (plan.get("canonical_request") or {}).get("request_key")
     if key is None: return
-    _link_create(request_key_path(key), _key_record(key, plan["op_id"]), tag=plan["op_id"][:16])
+    op = plan["op_id"]; rel = request_key_path(key); t = store.ROOT / rel
+    bound = _bound_op(key)
+    if bound is not None and bound != op:
+        raise EvidenceConflict(f"request key {key!r} 已綁定另一份計畫 {bound[:12]}…，不能再綁定 {op[:12]}…，需人工處理")
+    if t.parent.is_dir():                                                   # 本 op 先前綁定途中中止留下的暫存檔（只清本 op、本 key 的）
+        for f in t.parent.glob(f".qaos-tmp-{op[:16]}-{t.name}-*"): f.unlink()
+    data = _key_record(key, op)
+    if t.is_file() and t.read_bytes() == data: return
+    if t.is_file(): _atomic_replace(rel, data, tag=op[:16])               # 指向從未建立的 op（見 _bound_op）→ 改綁
+    else: _link_create(rel, data, tag=op[:16], point="bind_key")
 
 def _outcome(kind: str, plan: dict | None, *, op_id=None, action=None, request=None, result=None):
     req = (plan or {}).get("canonical_request") or request or {}
@@ -884,9 +901,9 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
         clock = store.real_now(); today = store.real_today()
         if planner is not None:
             plan, blobs = planner(op, req, state, clock)
+            _bind_request_key(plan); fault("after_bind_key")
             data = _save_plan(plan, blobs)
             _register(plan, data); fault("after_register")
-            _bind_request_key(plan); fault("after_bind_key")
             execute_plan(plan)
             _outcome("new", plan)
             return plan.get("result")
@@ -901,9 +918,9 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
             _write_diagnostics(cap); _outcome("diagnostic", None, action=action, request=req, result=result); return result
         plan, blobs = build_plan(cap, op_id=op, request=req, action=action, scope=scope, state=state, result=result)
         if post_plan is not None: plan, blobs = post_plan(plan, blobs)
+        _bind_request_key(plan); fault("after_bind_key")
         data = _save_plan(plan, blobs)
         _register(plan, data); fault("after_register")
-        _bind_request_key(plan); fault("after_bind_key")
         execute_plan(plan)
         _outcome("new", plan)
         return result
@@ -918,7 +935,7 @@ def _existing(plan: dict, *, request_hash: str | None):
     if r: raise Refused(f"op {op} 已被 rollback 計畫 {r} 接管；請續做 {r}")
     if st == "completed":
         verify_registration(op)
-        _bind_request_key(plan)                                    # 補齊：登錄後、建立索引前中止的計畫（續做時也會補）
+        _bind_request_key(plan)                                    # 核對綁定（冪等）
         _outcome("completed", plan); return plan.get("result")
     return _resume(plan, request_hash=request_hash)
 

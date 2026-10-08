@@ -46,28 +46,82 @@ def test_same_key_completed_replay_no_write():
     assert len(list((root / "executions").rglob("EXE-*.yaml"))) == 1
 
 # ---------------------------------------------------------------- 2. 中斷後同 key 重送 → resumed，不被 3b 擋
-@pytest.mark.parametrize("point", ["after_register", "after_bind_key", "after_output:1"])
+@pytest.mark.parametrize("point", ["after_plan_save", "after_register", "after_output:1", "before_completed"])
 def test_same_key_resumes_after_crash(point):
     root = U.mkroot()
     r = exe(root, "--request-key", "k1", fault=point); assert r.returncode == 86, (r.stdout, r.stderr)
     blocked = js(evd(root, "--json"))                                                # 沒有 key 的其他請求被 3b 擋下，附上未完成的 op
     assert blocked["ok"] is False and blocked["error_kind"] == "incomplete_plan" and len(blocked["incomplete_ops"]) == 1
     op = blocked["incomplete_ops"][0]
-    if point == "after_register": assert key_index(root, "k1") is None             # 登錄之後、建立索引之前中止
+    assert key_index(root, "k1") == {"request_key": "k1", "op_id": op}             # 計畫保存之前就已綁定
     out = js(exe(root, "--request-key", "k1", "--json"))
     assert out["ok"] and out["outcome"] == "resumed" and out["op_id"] == op and out["ids"]["execution_id"].startswith("EXE-")
-    assert key_index(root, "k1") == {"request_key": "k1", "op_id": op}             # 續做時補齊索引
     assert len(list((root / "executions").rglob("EXE-*.yaml"))) == 1
     assert U.q(root, "operation", "list", "--incomplete").stdout.count(op) == 0
 
-def test_operation_resume_binds_key_then_conflict_detected():
+def test_crash_after_bind_before_plan_save():
+    """綁定之後、計畫保存之前中止：該 op 從未建立。同 key 同內容 → 新建同一個 op；同 key 不同內容 → 改綁到新的 op（ADR-011）。"""
+    root = U.mkroot()
+    assert exe(root, "--request-key", "kb", fault="after_bind_key").returncode == 86
+    first = key_index(root, "kb")["op_id"]
+    assert not list((root / "operations").glob(f"*/{first}.yaml"))                 # 沒有計畫
+    a = js(exe(root, "--request-key", "kb", "--json"))
+    assert a["outcome"] == "new" and a["op_id"] == first
+    root2 = U.mkroot()
+    assert exe(root2, "--request-key", "kb", fault="after_bind_key").returncode == 86
+    stale = key_index(root2, "kb")["op_id"]
+    b = js(exe(root2, "--request-key", "kb", "--json", actual="changed"))
+    assert b["outcome"] == "new" and b["op_id"] != stale and key_index(root2, "kb")["op_id"] == b["op_id"]
+    c = js(exe(root2, "--request-key", "kb", "--json"))                              # 改綁之後，原內容才是「不同內容」
+    assert c["error_kind"] == "key_conflict"
+
+def test_bind_tmp_residue_cleaned():
+    """綁定途中（暫存檔寫到一半）中止：同一 op 下次綁定時清除本 op、本 key 的暫存檔（故障以 short: 注入）。"""
+    root = U.mkroot()
+    assert exe(root, "--request-key", "kt", fault="short:bind_key").returncode == 86
+    d = root / operation.REQUEST_KEY_DIR
+    assert [p for p in d.iterdir() if p.name.startswith(".qaos-tmp-")] and not key_index(root, "kt")
+    other = d / ".qaos-tmp-0123456789abcdef-x.yaml-deadbeef"; other.write_text("x")     # 不屬於本 op 的暫存檔：不動
+    assert js(exe(root, "--request-key", "kt", "--json"))["outcome"] == "new"
+    assert [p.name for p in d.iterdir() if p.name.startswith(".qaos-tmp-")] == [other.name] and key_index(root, "kt")
+
+def test_operation_resume_then_conflict_detected():
     root = U.mkroot()
     assert exe(root, "--request-key", "k2", fault="after_register").returncode == 86
+    assert js(exe(root, "--request-key", "k2", "--json", actual="changed"))["error_kind"] == "key_conflict"   # 未完成時就能偵測
     op = [l.split()[-1] for l in U.q(root, "operation", "list", "--incomplete").stdout.splitlines()[1:]][0]
     U.q(root, "operation", "resume", op, check=True)
     assert key_index(root, "k2")["op_id"] == op
-    c = js(exe(root, "--request-key", "k2", "--json", actual="changed"))
-    assert c["error_kind"] == "key_conflict"
+    assert js(exe(root, "--request-key", "k2", "--json", actual="changed"))["error_kind"] == "key_conflict"
+
+# ---------------------------------------------------------------- 2b. rollback 接管後 key 仍綁定原 op（第 01 輪 R01）
+@pytest.mark.parametrize("point", ["after_plan_save", "after_register"])
+def test_key_survives_rollback_takeover(point):
+    root = U.mkroot(migrated=False)
+    U.q(root, "maintenance", "start", "--by", "t", check=True)
+    assert U.q(root, "migrate", "--by", "t", "--request-key", "m1", fault=point).returncode == 86
+    x = key_index(root, "m1")["op_id"]                                               # 計畫保存之前就已綁定
+    plan = yaml.safe_load(next(root.glob(f"operations/*/{x}.yaml")).read_text(encoding="utf-8"))
+    assert plan["action"] == "migrate" and plan["canonical_request"]["request_key"] == "m1"
+    same_key_rb = js(U.q(root, "migrate", "rollback", "--op", x, "--by", "t", "--request-key", "m1", "--json"))   # 以 X 的 key 發 rollback
+    assert same_key_rb["error_kind"] == "key_conflict"
+    U.q(root, "migrate", "rollback", "--op", x, "--by", "t", "--request-key", "r1", check=True)
+    assert key_index(root, "m1")["op_id"] == x
+    changed = js(U.q(root, "migrate", "--by", "changed", "--request-key", "m1", "--json"))
+    assert changed["ok"] is False and changed["error_kind"] == "key_conflict"
+    same = js(U.q(root, "migrate", "--by", "t", "--request-key", "m1", "--json"))  # 同內容：X 已終結 → 拒絕
+    assert same["ok"] is False and same["error_kind"] == "refused" and "已終結" in same["message"]
+
+def test_index_pointing_to_plan_without_key_is_evidence_conflict():
+    """索引指向的計畫沒有帶同一個 key（竄改）→ 證據衝突（internal）；指向不存在的 op → 視為未綁定，同內容重送時改回（竄改）。"""
+    root = U.mkroot()
+    a = js(exe(root, "--request-key", "kx", "--json")); plain = js(evd(root, "--json"))
+    p = root / operation.request_key_path("kx")
+    p.write_text(yaml.safe_dump({"request_key": "kx", "op_id": plain["op_id"]}), encoding="utf-8")   # 竄改：指向沒有 key 的計畫
+    o = js(exe(root, "--request-key", "kx", "--json")); assert o["error_kind"] == "internal" and "沒有帶這個 key" in o["message"]
+    p.write_text(yaml.safe_dump({"request_key": "kx", "op_id": "a" * 64}), encoding="utf-8")         # 竄改：指向不存在的 op
+    r = js(exe(root, "--request-key", "kx", "--json"))
+    assert r["outcome"] == "completed" and r["op_id"] == a["op_id"] and key_index(root, "kx")["op_id"] == a["op_id"]
 
 # ---------------------------------------------------------------- 3. 同 key 不同內容 → key_conflict、沒有寫入
 def test_same_key_different_content_conflict_no_write():
@@ -83,7 +137,7 @@ def test_same_key_different_content_conflict_no_write():
 def test_key_conflict_checked_before_incomplete_plan():
     """key 已綁定一個未完成的 op 時，改內容重送 → key_conflict（而不是被 3b 擋下時才發現）。"""
     root = U.mkroot()
-    assert exe(root, "--request-key", "k4", fault="after_bind_key").returncode == 86
+    assert exe(root, "--request-key", "k4", fault="after_register").returncode == 86
     c = js(exe(root, "--request-key", "k4", "--json", actual="changed"))
     assert c["error_kind"] == "key_conflict"
 
@@ -196,3 +250,43 @@ def test_without_new_flags_unchanged():
     a = exe(root); assert a.returncode == 0 and a.stdout.strip().startswith("EXE-")
     b = exe(root); assert b.stdout.strip() == a.stdout.strip() and "先前已完成的同一請求" in b.stderr and "加 --new-request" in b.stderr
     assert not (root / operation.REQUEST_KEY_DIR).exists()
+
+# ---------------------------------------------------------------- 第 01 輪 R02～R05
+def test_manual_record_id_and_all_counter_kinds_named():
+    import re
+    from tools.qaos import cli
+    kinds = set(re.findall(r'"([A-Z]+)"', re.search(r"def alloc\(.*?raise ValueError", (U.REPO / "tools/qaos/ids.py").read_text(encoding="utf-8"), re.S).group(0)))
+    assert kinds - {"ART"} <= set(cli.ID_NAMES), kinds - set(cli.ID_NAMES)            # 每一種計數器 ID 都有名稱
+    root = U.mkroot()
+    args = ["manual", "new", "--title", "x", "--product", "demo", "--area", "AUTH", "--step", "s", "--observed", "o", "--outcome", "pass", "--by", "t", "--request-key", "rec", "--json"]
+    a = js(U.q(root, *args)); assert a["ids"]["manual_record_id"].startswith("MAN-")
+    b = js(U.q(root, *args)); assert b["outcome"] == "completed" and b["ids"] == a["ids"]
+    m = js(U.q(root, "id", "MAN", "--request-key", "man", "--json")); assert m["ids"]["manual_record_id"] == m["result"]
+
+def test_keyed_id_replay_hint_says_new_key():
+    root = U.mkroot()
+    U.q(root, "id", "REQ", "--area", "RX", "--request-key", "id1", check=True)
+    r = U.q(root, "id", "REQ", "--area", "RX", "--request-key", "id1"); assert r.returncode == 1 and r.stdout == ""
+    assert "換一個新的 --request-key" in r.stderr and "--new-request" not in r.stderr
+    o = js(U.q(root, "id", "REQ", "--area", "RX", "--request-key", "id1", "--json"))
+    assert o["error_kind"] == "refused" and "換一個新的 --request-key" in o["message"]
+
+def test_json_replay_that_reads_current_state_can_fail():
+    """ADR-011 §3：回放時人看的輸出讀目前狀態，讀取失敗 → 和不帶 --json 一樣以錯誤結束（validation）；op 仍是 completed。"""
+    root = U.mkroot()
+    args = ["run", "new", "regression-generation", "--input", 'target_suites=["smoke"]', "--input", "scope=all", "--input", "trigger=manual", "--by", BY, "--request-key", "run1"]
+    a = js(U.q(root, *args, "--json"))
+    (root / "runs" / a["ids"]["run_id"] / "run.yaml").unlink()                      # 故障情境：實體檔不存在
+    r = U.q(root, *args, "--json"); o = js(r)
+    assert r.returncode == 1 and o["ok"] is False and o["error_kind"] == "validation"
+    assert U.q(root, *args).returncode == 1                                          # 不帶 --json：同樣失敗
+    assert "completed" in [l.split()[1] for l in U.q(root, "operation", "list").stdout.splitlines()[1:] if l.split()[-1] == a["op_id"]]
+
+def test_control_precondition_is_refused_not_maintenance():
+    root = U.mkroot()                                                                  # 已移轉
+    U.q(root, "maintenance", "start", "--by", "t", "--request-key", "maint2", check=True)
+    o = js(U.q(root, "migrate", "--by", "t", "--request-key", "migrate2", "--json"))
+    assert o["error_kind"] == "refused" and "已移轉" in o["message"]
+    assert js(evd(root, "--json"))["error_kind"] == "maintenance"                     # 一般寫入：維護中
+    again = js(U.q(root, "maintenance", "start", "--by", "t2", "--json"))
+    assert again["error_kind"] == "refused" and "已在維護中" in again["message"]
