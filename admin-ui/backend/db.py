@@ -185,6 +185,7 @@ CREATE TABLE IF NOT EXISTS test_results (
   executed_by TEXT,
   qaos_execution_id TEXT,
   qaos_evidence_ids TEXT NOT NULL DEFAULT '[]',
+  qaos_import_request TEXT,
   bug_run_id TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT ''
@@ -268,7 +269,7 @@ def _migrate_testruns(con):
                 "title": "TEXT NOT NULL DEFAULT ''", "priority": "TEXT", "risk": "TEXT", "requirement_ids": "TEXT NOT NULL DEFAULT '[]'", "preconditions": "TEXT NOT NULL DEFAULT '[]'",
                 "steps": "TEXT NOT NULL DEFAULT '[]'", "expected_result": "TEXT NOT NULL DEFAULT ''", "actual_result": "TEXT NOT NULL DEFAULT ''", "notes": "TEXT NOT NULL DEFAULT ''",
                 "evidence": "TEXT NOT NULL DEFAULT '[]'", "executed_at": "TEXT", "executed_by": "TEXT", "qaos_execution_id": "TEXT", "qaos_evidence_ids": "TEXT NOT NULL DEFAULT '[]'",
-                "bug_run_id": "TEXT", "updated_at": "TEXT NOT NULL DEFAULT ''"}
+                "qaos_import_request": "TEXT", "bug_run_id": "TEXT", "updated_at": "TEXT NOT NULL DEFAULT ''"}
     for table, want in (("test_runs", want_runs), ("test_results", want_res)):
         cols = [r["name"] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
         if not cols:
