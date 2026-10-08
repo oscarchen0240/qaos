@@ -157,8 +157,20 @@ def patch_run(run_id: int, fields: dict) -> dict:
 
 
 def delete_run(run_id: int):
-    """刪回合連同它的測試報告與證據檔（報告的 source_key 就是 run id，留著會變孤兒）。"""
+    """刪回合連同它的測試報告與證據檔（報告的 source_key 就是 run id，留著會變孤兒）。
+
+    B2（R03）：回合裡只要有結果已匯入 QAOS（EXE／bug run），或正在送 QAOS，就不能刪——刪回合會連帶刪掉結果與證據，
+    平台就失去對應 QAOS 紀錄的唯一線索，送出中的 execute 也會在 CLI 成功後找不到結果可存。"""
     with db.connect() as con:
+        con.execute("BEGIN IMMEDIATE")
+        rows = db.rows(con.execute("SELECT id, qaos_execution_id, bug_run_id FROM test_results WHERE run_id=?", (run_id,)))
+        with _busy_lock:
+            busy = [r["id"] for r in rows if r["id"] in _busy]
+        if busy:
+            raise TestRunError(409, "這個回合有結果正在送 QAOS，請等它完成後再刪")
+        imported = [r for r in rows if r["qaos_execution_id"] or r["bug_run_id"]]
+        if imported:
+            raise TestRunError(409, f"這個回合有 {len(imported)} 條結果已匯入 QAOS，刪除會失去與 QAOS 紀錄的對應，不能刪；要保留請改用「結束回合」。")
         con.execute("DELETE FROM reports WHERE kind='automation' AND source_key=?", (str(run_id),))
         con.execute("DELETE FROM test_runs WHERE id=?", (run_id,))
     d = EVIDENCE_DIR / str(run_id)

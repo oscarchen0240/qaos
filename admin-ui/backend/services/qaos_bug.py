@@ -109,6 +109,11 @@ def _evidence_mismatch(r: dict) -> str | None:
             "請把清單還原成當初登記的內容，或在回合裡重開一筆")
 
 
+def _has_filing_record(run_id: int, result_id: int) -> bool:
+    with db.connect() as con:
+        return con.execute("SELECT 1 FROM ticket_executions WHERE ticket_id=? AND kind IN ('execution_import','bug_filing')", (f"TESTRUN-{run_id}/{result_id}",)).fetchone() is not None
+
+
 def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     """組出要跑的指令與預檢警告，不執行。mode=bug（Fail → 開 bug）或 execution（只匯 execution，給 Pass 用）。"""
     if mode not in MODES:
@@ -119,7 +124,11 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     if mode == "bug" and r.get("bug_run_id") and not r.get("bug_handoff_id"):
         # R04：run 已經開了、交接或執行紀錄沒補齊：重試只補這兩樣，不重跑任何 CLI
         return {"mode": mode, "steps": [{"kind": "handoff", "label": f"補做交接與執行紀錄（{r['bug_run_id']} 已開，不會重開）", "command": r.get("bug_run_command") or ""}],
-                "warnings": [], "writes": [".warroom/handoff.jsonl（平台）"], "meta": {}, "operator": who, "pending_handoff": True, "result": summary}
+                "warnings": [], "writes": [".warroom/handoff.jsonl（平台）"], "meta": {}, "operator": who, "pending_handoff": True, "pending_record": False, "result": summary}
+    if mode == "execution" and r.get("qaos_execution_id") and not _has_filing_record(run_id, result_id):
+        # 已匯入 QAOS、但平台的執行紀錄沒寫成（例如 DB 暫時鎖住）：重試只補紀錄，不重跑 CLI
+        return {"mode": mode, "steps": [{"kind": "record", "label": f"補做執行紀錄（{r['qaos_execution_id']} 已匯入，不會重匯）", "command": r.get("qaos_import_request") or ""}],
+                "warnings": [], "writes": [], "meta": {}, "operator": who, "pending_handoff": False, "pending_record": True, "result": summary}
     warnings: list[str] = []
     if mode == "bug":
         if r["result"] != "fail":
@@ -165,7 +174,7 @@ def plan(run_id: int, result_id: int, mode: str = "bug") -> dict:
     writes = ["evidence/testrun-%d/EVD-*.{ext,yaml}" % run_id, "executions/YYYY-MM/EXE-*.yaml", "testcases/registry/_counters.yaml", "runs/_audit.log"]
     if mode == "bug":
         writes += ["runs/RUN-*/run.yaml（新 spec-to-bug run）", ".warroom/handoff.jsonl（平台）"]
-    return {"mode": mode, "steps": steps, "warnings": warnings, "writes": writes, "meta": meta, "operator": who, "pending_handoff": False, "result": summary}
+    return {"mode": mode, "steps": steps, "warnings": warnings, "writes": writes, "meta": meta, "operator": who, "pending_handoff": False, "pending_record": False, "result": summary}
 
 
 def _target_session() -> str | None:
@@ -215,7 +224,12 @@ def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
             run, r = _result(run_id, result_id)
             who = p["operator"]; meta = p["meta"]
             bug_run = None; bug_cmd = ""
-            if p["pending_handoff"]:
+            if p["pending_record"]:
+                # 只補執行紀錄：沒有這次的 CLI 紀錄，留下當初匯入的請求與 EXE 編號
+                evd_ids = list(r.get("qaos_evidence_ids") or []); exe_id = r["qaos_execution_id"]
+                log.append({"what": "匯入執行紀錄（補做紀錄）", "command": r.get("qaos_import_request") or "", "exit_code": 0, "stdout": exe_id, "stderr": ""})
+                hint = f"已匯入 QAOS：{exe_id}，這次補做執行紀錄。"
+            elif p["pending_handoff"]:
                 # R04：run 已開、交接未補齊。只補後段，不重跑任何 CLI
                 evd_ids = list(r.get("qaos_evidence_ids") or []); exe_id = r.get("qaos_execution_id")
                 bug_run = r["bug_run_id"]; bug_cmd = r.get("bug_run_command") or ""
@@ -263,8 +277,8 @@ def execute(run_id: int, result_id: int, mode: str = "bug") -> dict:
                     with db.connect() as con:
                         _insert_filing_row(con, run_id, result_id, mode, log, None, None, hint, started, ended)
             except (OSError, sqlite3.Error) as e:
-                raise BugFileError(500, f"{bug_run + ' 已開，但' if bug_run else ''}交接或執行紀錄寫入失敗：{e}。"
-                                        "再按一次「送 QAOS」只會補做交接與紀錄，不會重跑 CLI、不會重開 run。") from e
+                raise BugFileError(500, f"QAOS 端已完成（{bug_run or exe_id}），但{'交接或' if bug_run else ''}執行紀錄寫入失敗：{e}。"
+                                        "再按一次「送 QAOS」只會補做" + ("交接與紀錄，不會重跑 CLI、不會重開 run。" if bug_run else "執行紀錄，不會重匯。")) from e
     finally:
         qaos_exec._lock.release()
     if run.get("status") in ("done", "aborted"):
@@ -335,4 +349,7 @@ def _save(result_id: int, **fields):
     sets = {k: (json.dumps(v, ensure_ascii=False) if isinstance(v, list) else v) for k, v in fields.items()}
     sets["updated_at"] = db.now()
     with db.connect() as con:
-        con.execute(f"UPDATE test_results SET {', '.join(f'{k}=?' for k in sets)} WHERE id=?", (*sets.values(), result_id))
+        cur = con.execute(f"UPDATE test_results SET {', '.join(f'{k}=?' for k in sets)} WHERE id=?", (*sets.values(), result_id))
+        if cur.rowcount == 0:
+            # 結果在送出途中消失（例如回合被刪）：不能當成儲存成功，否則 QAOS 已執行的步驟會變成沒有任何平台紀錄
+            raise BugFileError(409, f"結果 #{result_id} 已不存在（回合可能在送出途中被刪除）；QAOS 端已執行的步驟請用 bin/qaos operation list --incomplete 與 evidence／execution 清單對帳")
