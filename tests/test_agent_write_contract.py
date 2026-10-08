@@ -44,7 +44,11 @@ def test_validator_assumption_rule_matches_3_6():
     md = _md("test-validator")
     for text in (rule, md):
         assert "§3.6" in text and "E3～E5" in text and "resolved_by_approval" in text
+        # 歷史核准例外只限原封沿用：核對被沿用版本、逐項有效決定、assumption 內容
+        assert all(k in text for k in ("supersedes_testcase", "ACTIVATE_TESTCASE", "per_item", "batch_items", "requirement_id")), text[:60]
     assert "任何未被 ApprovalDecision(RESOLVE_AMBIGUITY) 覆蓋的假設 → blocker" not in rule
+    gates_doc = (REPO / "docs/architecture/04-quality-gates.md").read_text(encoding="utf-8")
+    assert "Validator 必須 FAIL 除非 Human 已決定" not in gates_doc and "§3.6" in gates_doc
 
 # ---- REDPACKET 的 spec-to-testcase run 會插入風險抽查 task
 def test_redpacket_run_gets_risk_review(monkeypatch):

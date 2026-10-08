@@ -39,7 +39,13 @@ assumption 是 exploratory 斷言的外顯標記。**不要因為 assumption 沒
 - 新格式需求依賴 E3～E5 決策點的斷言，以 exploratory 呈現（`assumptions` 標 `needs_human_confirmation: true`、`decision_refs` 指向該決策點）→ 合法，不列 issue。
 - 依賴 E3～E5 卻寫成確定斷言（沒有 assumption，或斷言隱含依賴未定事項卻沒有宣告 `decision_refs`）→ major。這是 G-DESIGN 機械檢查抓不到、要靠你語意審查的部分。
 - assumption 未標 `needs_human_confirmation: true`、也沒有 `resolved_by_approval`（假設被當成已確認的事實）→ blocker。
-- 帶 `resolved_by_approval` 的 assumption（核准時由 Runtime 把確認旗標改成 false 並填入核准 ID，常見於 change 模式沿用現行版）：核對該核准存在、決定為 approve／override、條目涵蓋這條 TC。核對相符 → 合法，不列 issue；不符（核准不存在、被 reject、或沒有涵蓋這條 TC）→ blocker。
+- 帶 `resolved_by_approval` 的 assumption（核准時由 Runtime 把確認旗標改成 false 並填入核准 ID，常見於 change 模式沿用現行版）：只在**原封沿用已核准版本的同一筆 assumption** 時合法。逐項核對：
+  1. Draft 有 `supersedes_testcase`（`testcase_id`＋`version`），指向被沿用的歷史版本；沒有 supersedes 的新 TC 不能帶 `resolved_by_approval`。
+  2. 該核准是 `ACTIVATE_TESTCASE`、狀態 `DECIDED`，`batch_items` 含該 `testcase_id`@`version`。
+  3. 該條目的有效決定是 approve 或 override：`per_item` 有該 id 時以 `per_item` 為準，否則用整批 `decision`（整批 approve 但逐項 reject 的條目不算核准）。
+  4. 被沿用的歷史版本中，有一筆 `text`、`requirement_id` 完全相同，且 `resolved_by_approval` 等於此核准 ID 的 assumption。
+
+  四項都相符 → 合法，不列 issue；任一項不符 → blocker（新增或改寫過的假設不能沿用舊核准，必須重新標 `needs_human_confirmation: true`）。需要讀的核准或歷史版本不在派發包範圍時，報 `missing_reference` 並回報需補登來源，不要自行擴大讀取。
 - 只依賴 E1 的斷言卻加了未解決的 assumption（`needs_human_confirmation: true`）→ minor（會誤觸每條需求 exploratory 最多 3 條的上限）；已核准保留的歷史 assumption 不算。
 - 舊格式需求（沒有 `decision_points`）：`ambiguity.level=major` 或 `rejection_contract` 未定義時的 exploratory 案例，assumption 必須標 `needs_human_confirmation: true`。
 
