@@ -2,7 +2,7 @@
 
 legacy 資料沿用 P3 的範本（舊程式以正式流程產生）；之後全部以新程式的正式指令操作。
 標明「竄改」的子例才在流程後故意修改檔案；「故障注入」「時鐘注入」只用測試專用的環境變數（QAOS_FAULT、QAOS_TEST_CLOCK）。"""
-import pathlib, shutil, tempfile, uuid, yaml, pytest
+import datetime, pathlib, shutil, tempfile, uuid, yaml, pytest
 from tests import p1_util as U, p3_legacy as L
 from tests.test_p3_migrate import legacy, x_of, ok, plans
 
@@ -84,7 +84,8 @@ def rich():
 def test_ac_09_92_1_2_maintenance_end_and_business_op():
     root, info = migrated(); x = x_of(root)
     vok(root)
-    ok(U.q(root, "maintenance", "end", "--by", "m"))
+    later = (datetime.datetime.strptime(clock(root, x), "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ok(U.q(root, "maintenance", "end", "--by", "m", extra_env={"QAOS_TEST_CLOCK": later}))   # 確定晚於 X：一般情況（同秒另由 ⑤ 驗證）
     r = vok(root)                                                                   # ①：部署 W2 的情境（舊程式回報 2 項失敗）
     assert "maintenance_end" in r.stdout and "X 之後的已完成操作" in r.stdout
     xs = next(s for s in U.plan_of(root, x)["steps"] if s["path"] == GLOBAL)
