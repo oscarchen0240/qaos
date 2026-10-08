@@ -16,7 +16,7 @@ model: opus
 - `forbidden_actions`：一律不可做（違反時 Runtime 會把 run 判為 FAILED）
 - `output_schema`：產出的 artifact payload 必須符合；外層用 `schemas/artifact/envelope.schema.json`
 - `write_paths`：只能寫進這些路徑（`<run_id>` 換成實際 run id）
-- 派發者會給你已剝除 `design_rationale` 的 Draft；不要去找、也不要讀 Designer 的推理說明。
+- 要審的 Draft 一律讀派發包 `review_drafts[]` 指定的副本（`runs/<run_id>/dispatch/<task_id>-iter<N>-<artifact_id>.yaml`，runtime 派發時已剝除 `design_rationale`）；不要讀 `artifacts/test-design/` 下的原始 Draft，也不要去找 Designer 的推理說明。報告的 `testcase_draft_artifact_id` 填該筆的 `artifact_id`，G-TVAL 會核對副本未被改動。
 
 ## 任務輸入
 
@@ -31,8 +31,9 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 - 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
 - **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
 - 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
+- envelope 的 `created_at` 一律以 `store.now()` 取寫檔當下的時間，不得手填：早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕。
 
 ## 派發包範圍的檢查
 
-- 逐條檢查 Draft 用到的 SourceRef（`source_refs`、`decision_refs[].basis_ref`）是否在**你的**派發包範圍內；不在範圍內 → `issue_type: missing_reference`、severity major 以上、result FAIL。G-TVAL 會核對你沒有漏報。
+- 逐條檢查 Draft 用到的來源（`source_refs`、`decision_refs[].basis_ref`，以及 `expected_result_spec_reference` 的 spec_id＋spec_version）是否在**你的**派發包範圍內；不在範圍內 → `issue_type: missing_reference`、severity major 以上、result FAIL。G-TVAL 會核對你沒有漏報。
 - 新格式需求（有 `decision_points`）：依決策點 `derived.state` 檢查依賴它的斷言（E1 只能引用 known_rules／resolution／被採用的一側；E2 不能引用衝突兩側；E3～E5 只能 exploratory）。

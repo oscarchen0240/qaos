@@ -1,6 +1,6 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
-import hashlib, json
-from . import store, refs, rm, dispatch, decisions, sources, spec_ops
+import hashlib, json, re
+from . import store, refs, rm, dispatch, decisions, sources, spec_ops, ids as ids_mod
 
 def _payload(art): return art["payload"]
 
@@ -29,6 +29,7 @@ def g_spec(run, task, arts) -> list[str]:
     if sa:
         for rid in _payload(sa).get("requirement_ids", []):
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
+    issues += requirement_id_issues(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
     if issues: return issues
     ctx, more = spec_context(run, task, arts)
     if ctx is None: return issues + more
@@ -41,6 +42,32 @@ def g_spec(run, task, arts) -> list[str]:
             issues += [f"X10：{r['requirement_id']} source_refs[{i}]：{e}" for e in errs]
         issues += decisions.check(r, ctx)[0]
     return issues
+
+def _persisted_requirement_owners(area) -> dict:
+    """同 area 各 spec 已持久化（任一版本、任一 revision）的 requirement_id → spec_id 集合。"""
+    out = {}
+    for sp in store.glob(f"specs/*/{area}/*/spec.yaml"):
+        sid = sp.parent.name
+        for ip in store.glob(f"artifacts/requirements/{sid}/v*/revisions/index.yaml"):
+            for e in store.load(ip).get("revisions") or []:
+                if not store.exists(e["path"]): continue
+                for r in store.load(e["path"]).get("requirements") or []: out.setdefault(r["requirement_id"], set()).add(sid)
+    return out
+
+def requirement_id_issues(spec_id, area, rids) -> list[str]:
+    """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
+    格式為 REQ-<本 spec 的 area>-<序號>；同一 spec 先前已持久化的 ID 可沿用；其餘新 ID 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
+    counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
+    owners = _persisted_requirement_owners(area); out = []
+    for rid in rids:
+        m = re.fullmatch(rf"REQ-{re.escape(area)}-(\d+)", rid)
+        if not m: out.append(f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
+        mine = owners.get(rid, set())
+        if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
+        if spec_id in mine: continue
+        if int(m.group(1)) > counter:
+            out.append(f"{rid} 未經計數器配發（REQ-{area} 計數器目前為 {counter}）；REQ ID 必須以 bin/qaos id REQ --area {area} 配發，不得自行編號")
+    return out
 
 def spec_context(run, task, arts):
     """G-SPEC 的派發包檢查（第 1 章 §2.7 第 1～3 點）；回傳 (decisions.Ctx 或 None, issues)。"""
@@ -250,12 +277,22 @@ def source_ref_issues(tc, target, packet=None) -> list[str]:
         out += [f"{tag}：{e}" for e in errs]
     return out
 
+def _spec_version_in_scope(packet, spec_id, spec_version) -> bool:
+    """spec 版本是否為派發包的目標、閉包或登記的額外 spec（不比 hash：用於沒有 content_hash 的舊式引用）。"""
+    pins = ([packet["target"]] if packet.get("target") else []) + list(packet.get("closure") or [])
+    pins += [x["pin"] for x in packet.get("extra_inputs") or [] if x["kind"] == "spec_pin"]
+    return any((p["spec_id"], str(p["spec_version"])) == (spec_id, str(spec_version)) for p in pins)
+
 def draft_out_of_scope(draft_payload, packet) -> dict:
-    """Draft 用到、但不在派發包範圍內的 SourceRef（第 1 章 §2.6）：{draft_id: [身分]}。"""
+    """Draft 用到、但不在派發包範圍內的來源（第 1 章 §2.6）：{draft_id: [身分]}。
+    expected_result_spec_reference 沒有 content_hash，以 spec_id＋spec_version 核對是否為派發包內的 spec 版本（spec 版本內容不可變，hash 由派發包釘選）。"""
     out = {}
     for tc in draft_payload["testcases"]:
         refs_ = list(tc.get("source_refs") or []) + [r["basis_ref"] for r in tc.get("decision_refs") or [] if r.get("basis_ref")]
         bad = [dispatch.basis_ref(r) for r in refs_ if not dispatch.in_scope(packet, r)]
+        er = tc.get("expected_result_spec_reference")
+        if er and not _spec_version_in_scope(packet, er.get("spec_id"), er.get("spec_version")):
+            bad.append({"type": "expected_result_spec_reference", "spec_id": er.get("spec_id"), "spec_version": str(er.get("spec_version")), "location": er.get("location")})
         if bad: out[tc["draft_id"]] = bad
     return out
 
@@ -296,6 +333,12 @@ def g_tval(run, task, arts) -> list[str]:
     if e is not None:
         try: packet = dispatch.load_packet(e)
         except dispatch.DispatchError as ex: return issues + [str(ex)]
+        if "review_drafts" in packet:                                       # 派發包提供剝除推理說明的 Draft 副本：報告必須審查那一份（舊派發包沒有此欄位，不核對）
+            entry = next((r for r in packet["review_drafts"] if r["artifact_id"] == p["testcase_draft_artifact_id"]), None)
+            if entry is None: issues.append(f"報告審查的 {p['testcase_draft_artifact_id']} 不是派發包提供的 Draft（{', '.join(r['artifact_id'] for r in packet['review_drafts']) or '無'}）")
+            else:
+                try: dispatch.load_review_draft(entry)
+                except dispatch.DispatchError as ex: issues.append(str(ex))
         for did, bad in draft_out_of_scope(store.load(draft)["payload"], packet).items():
             if not any(i["issue_type"] == "missing_reference" and i["testcase_id"] in (did, "*") and i["severity"] in ("blocker", "major") for i in p["issues"]):
                 issues.append(f"{did} 用到派發包範圍外的來源 {bad}，Validator 沒有以 missing_reference 回報")

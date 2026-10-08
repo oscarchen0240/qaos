@@ -41,15 +41,15 @@
 
 ## 待辦（程式／規則缺陷，走 MR，本次未修）
 
-1. Spec Analyst 自行編 REQ ID 未經計數器，G-SPEC 落地不檢查。
+1. Spec Analyst 自行編 REQ ID 未經計數器，G-SPEC 落地不檢查。（已修：分支 qaos/gate-integrity）
 2. `store.save` 在 agent 環境丟 `NoExecutorContext`，agent 定義未更新。
 3. G-DESIGN 抓不到未宣告的隱含依賴；decision_refs 無法跨需求宣告。
 4. Validator 合約「未被 RESOLVE_AMBIGUITY 覆蓋的 assumption → blocker」與需求 A §3.6 衝突。
-5. 派給 Validator 的 Draft 未剝除 design_rationale。
+5. 派給 Validator 的 Draft 未剝除 design_rationale。（已修：分支 qaos/gate-integrity）
 6. Test Designer agent 定義仍寫「自己 submit／gate」。
 7. `bin/qaos id` 不加 `--new-request` 會回傳上次配發的同一 ID，有覆寫 artifact 風險。
-8. G-TVAL 範圍檢查不看 `expected_result_spec_reference`，該欄位無 hash。
-9. 自動開 CLR 後 `clarifications/index.md` 未重建。
+8. G-TVAL 範圍檢查不看 `expected_result_spec_reference`，該欄位無 hash。（已修：分支 qaos/gate-integrity）
+9. 自動開 CLR 後 `clarifications/index.md` 未重建。（已修：分支 qaos/gate-integrity）
 10. TC Risk Reviewer 的 applies_to_areas 未含 REDPACKET（涉入帳、餘額、稽核）。
 11. 派發包決議快照納入閉包內其他 spec 的全部 CLR（含舊版本）。
 
@@ -93,7 +93,7 @@
 13. G-IMPACT／CIA 不檢查共用前置條件受需求變更的影響。
 14. `run new`、`tc-export`、`tc-final` 等以參數判定重送：參數相同時只回放舊輸出（含過時狀態，如 run 已 CANCELLED 仍顯示 RUNNING）、不重新產生；匯出類指令資料變更後必須加 `--new-request`。
 15. `bin/qaos tc-final` 產出的 html 缺樣式（只有 `body{font-family:sans-serif}`），與既有 final 版不一致。
-16. agent 可自填 envelope status 與 created_at（submit 有擋 status，但 created_at 未驗）。
+16. agent 可自填 envelope status 與 created_at（submit 有擋 status，但 created_at 未驗）。（已修：分支 qaos/gate-integrity）
 
 ## 待處理
 
