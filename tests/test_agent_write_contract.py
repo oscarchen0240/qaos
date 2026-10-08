@@ -33,10 +33,37 @@ def test_agent_forbids_self_submit_gate_commit(name):
     assert "NoExecutorContext" in md and "store.save(" not in md, name
     assert "寫完後用 `bin/qaos submit" not in md and "然後 `bin/qaos gate" not in md, name
 
-def test_new_formal_ids_are_not_self_numbered():
-    assert any("REQ／AC 正式 ID" in f and "不得猜號" in f for f in _contract("spec-analyst")["forbidden_actions"])
+def test_req_ids_come_from_main_session_and_ac_ids_are_derived():
+    forbidden = _contract("spec-analyst")["forbidden_actions"]
+    assert any("REQ 正式 ID" in f and "不得猜號" in f for f in forbidden)
+    assert any("bin/qaos id AC" in f and "推導" in f for f in forbidden)
     for name in AGENTS:
-        assert "照既有編號規則填寫" not in _md(name), name
+        md = _md(name)
+        assert "照既有編號規則填寫" not in md and "正式 ID（REQ、AC" not in md, name
+        assert "不得執行 `bin/qaos id AC`" in md, name
+    sa = _md("spec-analyst")
+    assert all(k in sa for k in ("AC-<AREA>-<REQ 序號><AC 序號>", "不重編號", "歷史最大序號 + 1", "考慮拆分需求"))
+    for name in set(AGENTS) - {"spec-analyst"}:
+        assert "不產生、不配發、不重編 AC ID" in _md(name), name
+
+def _req_ac_pairs():
+    for f in (REPO / "artifacts/requirements").rglob("*.yaml"):
+        d = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        for r in d.get("requirements") or (d.get("payload") or {}).get("requirements") or []:
+            yield f, r.get("requirement_id", ""), [a["ac_id"] for a in r.get("acceptance_criteria") or []]
+
+def test_existing_ac_ids_follow_derivation_rule():
+    """4 位數以上的 AC 一律是「所屬 REQ 序號＋從 1 起的序號」；3 位數為舊計數器格式，沿用不檢查。"""
+    import re
+    bad, checked = [], 0
+    for f, rid, acs in _req_ac_pairs():
+        m = re.fullmatch(r"REQ-([A-Z0-9]+)-(\d{3})", rid)
+        for ac in acs:
+            if re.fullmatch(r"AC-[A-Z0-9]+-\d{3}", ac): continue
+            checked += 1
+            am = m and re.fullmatch(rf"AC-{m.group(1)}-{m.group(2)}([1-9]\d*)", ac)
+            if not am: bad.append(f"{f.relative_to(REPO)} {rid} {ac}")
+    assert checked > 0 and not bad, bad[:10]
 
 # ---- Validator：E3～E5 的 exploratory 合法；已核准的 assumption 例外；舊 blanket blocker 不再出現
 def test_validator_assumption_rule_matches_3_6():
