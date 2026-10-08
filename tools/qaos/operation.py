@@ -831,7 +831,7 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
         if incomplete_plans() and planner is None:                             # 3b（rollback 接管在 planner 中以 T2、T3 判斷：3a）
             raise Refused(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`")
         state = system_state(); admit(action, state)                           # 3c
-        clock = store.real_now(); today = store.real_today()
+        clock = os.environ.get("QAOS_TEST_CLOCK") or store.real_now(); today = store.real_today()   # QAOS_TEST_CLOCK：只供測試的時鐘注入（計畫建立前固定 clock）
         if planner is not None:
             plan, blobs = planner(op, req, state, clock)
             data = _save_plan(plan, blobs)
