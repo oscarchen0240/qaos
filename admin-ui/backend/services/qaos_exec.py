@@ -181,52 +181,38 @@ def _owner_session(run_id: str | None) -> str | None:
         return None
 
 
-def _repair_torn_tail():
-    """handoff.jsonl 是 append-only 的逐行 JSON。上一次寫到一半失敗會留下沒有換行的殘行（可能還切在多位元組字元中間，是非法 UTF-8）：
-    之後任何 append 都會接在殘行後面、整行讀不出來，嚴格解碼的 reader（relay hook）還會整檔失敗。
-    殘行本身若是完整的 JSON 物件，只補換行；否則把殘行搬到旁邊的 .torn 檔留存（不丟資料），主檔截回最後一個換行，讓主檔永遠是完整的行。"""
+def _tail_lacks_newline() -> bool:
     if not HANDOFF_FILE.exists():
-        return
-    with open(HANDOFF_FILE, "r+b") as f:
+        return False
+    with open(HANDOFF_FILE, "rb") as f:
         size = f.seek(0, os.SEEK_END)
         if size == 0:
-            return
+            return False
         f.seek(size - 1)
-        if f.read(1) == b"\n":
-            return
-        pos, chunk = size, b""
-        while pos > 0:                                   # 往回找最後一個換行
-            step = min(65536, pos)
-            pos -= step
-            f.seek(pos)
-            chunk = f.read(step) + chunk
-            if b"\n" in chunk:
-                break
-        cut = pos + chunk.rfind(b"\n") + 1 if b"\n" in chunk else 0
-        f.seek(cut)
-        frag = f.read()
-        try:
-            ok = isinstance(json.loads(frag.decode("utf-8")), dict)
-        except (UnicodeDecodeError, ValueError):
-            ok = False
-        if ok:
-            f.seek(0, os.SEEK_END)
-            f.write(b"\n")
-            return
-        with open(str(HANDOFF_FILE) + ".torn", "ab") as t:
-            t.write(frag + b"\n")
-        if os.fstat(f.fileno()).st_size == size:         # 期間沒有別人又寫入才截；否則留著殘行，由下面的 append 補換行
-            f.truncate(cut)
-        else:
-            f.seek(0, os.SEEK_END)
-            f.write(b"\n")
+        return f.read(1) != b"\n"
 
 
 def _append_handoff(rec: dict):
+    """append-only 寫一行 JSON。
+
+    - 一律 ensure_ascii：中文等非 ASCII 字元存成 \\uXXXX。這樣就算寫到一半失敗，留下的殘行也只會是純 ASCII 的殘缺 JSON，
+      不會切在多位元組字元中間而變成非法 UTF-8（那會讓嚴格解碼整檔的 reader——例如 relay hook——整檔讀不出來）。
+    - 上一次若留下沒有換行的殘行，在『同一次 append』前面加一個換行，讓新紀錄獨立成行；多寫一個空行無害（reader 會略過空行），
+      而且這個檔案還有 relay 在 append consumed：不截斷、不改寫既有位元組，才不會吃掉別的 writer 剛寫入的紀錄。"""
     WARROOM_DIR.mkdir(parents=True, exist_ok=True)
-    _repair_torn_tail()
+    data = (json.dumps(rec, ensure_ascii=True) + "\n").encode("ascii")
+    if _tail_lacks_newline():
+        data = b"\n" + data
     with open(HANDOFF_FILE, "ab") as f:
-        f.write((json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8"))
+        f.write(data)
+
+
+def _ensure_line_boundary():
+    """同 ID 的交接已經在檔案裡、不需要再寫時，仍要確保尾端有行界線（上一次可能是完整 JSON 但沒寫到換行）：
+    否則 relay 之後 append 的 consumed 會黏在同一行，兩筆都讀不出來。"""
+    if _tail_lacks_newline():
+        with open(HANDOFF_FILE, "ab") as f:
+            f.write(b"\n")
 
 
 def _handoff_records() -> list[dict]:
@@ -266,7 +252,9 @@ def handoff_recorded(handoff_id: str) -> bool:
 
 def append_handoff_once(rec: dict):
     """冪等：同一個 ID 已經在 handoff.jsonl 裡就不再寫。補做交接時前一次可能其實已寫成功、只是後面的步驟失敗。"""
-    if not handoff_recorded(rec["id"]):
+    if handoff_recorded(rec["id"]):
+        _ensure_line_boundary()
+    else:
         _append_handoff(rec)
         if not handoff_recorded(rec["id"]):      # 寫完要讀得回來才算數；否則後面會把交接標成完成、卻沒有任何有效紀錄
             raise OSError(f"handoff {rec['id']} 寫入後讀不回來（{HANDOFF_FILE}）")

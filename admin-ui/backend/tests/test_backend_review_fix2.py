@@ -713,65 +713,106 @@ def test_b2_03_ticket_partial_handoff_write_is_repaired_on_retry(sandbox, fake_q
     assert qe.handoff_recorded(res["handoff_id"]) and [h["id"] for h in qe.handoff_tail()] == [res["handoff_id"]]
 
 
-def test_b2_03_append_quarantines_a_torn_tail_and_keeps_every_record_on_its_own_line(sandbox):
+def test_b2_03_append_after_a_torn_tail_separates_the_record_and_never_rewrites_existing_bytes(sandbox):
     qe = sandbox.qaos_exec
     qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
     qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"ok1","ts":"t"}\n{"kind":"handoff","id":"torn', encoding="utf-8")
+    before = qe.HANDOFF_FILE.read_bytes()
     qe._append_handoff({"kind": "handoff", "id": "abc123", "ts": "t"})
-    lines = qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()
-    assert [json.loads(l)["id"] for l in lines] == ["ok1", "abc123"]                 # 殘行不在主檔裡
-    assert b'"id":"torn' in pathlib.Path(str(qe.HANDOFF_FILE) + ".torn").read_bytes()  # 但沒有丟：搬到 .torn 留存
-    qe._append_handoff({"kind": "handoff", "id": "def456", "ts": "t"})              # 正常尾端不多補空行、不產生 .torn 新內容
-    assert len(qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()) == 3
+    after = qe.HANDOFF_FILE.read_bytes()
+    assert after.startswith(before)                                              # append-only：既有位元組完全不動（relay 也在 append，不能截斷）
+    assert qe.handoff_recorded("ok1") and qe.handoff_recorded("abc123") and not qe.handoff_recorded("torn")
+    qe._append_handoff({"kind": "handoff", "id": "def456", "ts": "t"})              # 正常尾端不再多補換行
+    raw = qe.HANDOFF_FILE.read_bytes()
+    assert b"\n\n" not in raw and len(raw.splitlines()) == 4                       # 前置換行只是結束殘行；之後不再多補
 
 
-def test_b2_03_complete_json_without_trailing_newline_is_kept_not_quarantined(sandbox):
+def test_b2_03_complete_json_without_trailing_newline_is_kept(sandbox):
     qe = sandbox.qaos_exec
     qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
     qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"nolf","ts":"t"}', encoding="utf-8")
     qe._append_handoff({"kind": "handoff", "id": "next", "ts": "t"})
-    assert [json.loads(l)["id"] for l in qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()] == ["nolf", "next"]
-    assert not pathlib.Path(str(qe.HANDOFF_FILE) + ".torn").exists()
+    assert [json.loads(l)["id"] for l in qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines() if l.strip()] == ["nolf", "next"]
 
 
-def _utf8_torn_write_then_fail(sb):
-    """寫到一半、切在多位元組字元中間（「中」只留前兩個位元組）後失敗。"""
+def test_b2_03_records_are_written_ascii_only_so_a_torn_write_can_never_split_a_multibyte_char(sandbox):
+    qe = sandbox.qaos_exec
+    qe._append_handoff({"kind": "handoff", "id": "zh1", "ts": "t", "hint": "中文提示：已推進到 T5"})
+    raw = qe.HANDOFF_FILE.read_bytes()
+    assert raw.isascii()                                                          # 殘行因此只可能是純 ASCII 的殘缺 JSON，不會是非法 UTF-8
+    assert qe.handoff_tail()[0]["hint"] == "中文提示：已推進到 T5"                   # 讀回來內容不變
+
+
+def _torn_real_write_then_fail(sb):
+    """寫到一半失敗：留下『真正的序列化結果』的前半段（含中文的 hint），沒有換行。"""
     def partial(rec):
         sb.qaos_exec.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(rec, ensure_ascii=True)
         with open(sb.qaos_exec.HANDOFF_FILE, "ab") as f:
-            f.write(b'{"hint":"' + "中".encode("utf-8")[:2])
+            f.write(text[: len(text) // 2].encode("ascii"))
         raise OSError("disk full after partial write")
     return partial
 
 
-def test_b2_03_bug_utf8_torn_handoff_is_recoverable_and_leaves_a_strictly_readable_file(bug_sandbox, write_registry_tc, fake_qaos, write_run, monkeypatch):
+def test_b2_03_bug_torn_handoff_with_chinese_hint_is_recoverable_and_strictly_readable(bug_sandbox, write_registry_tc, fake_qaos, write_run, monkeypatch):
     sb = bug_sandbox
     rid, res_id = _make_result(sb, write_registry_tc)
     _fake_cli(sb, fake_qaos["calls"], write_run)
     real = sb.qaos_exec._append_handoff
-    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", _utf8_torn_write_then_fail(sb))
+    monkeypatch.setattr(sb.qaos_exec, "_append_handoff", _torn_real_write_then_fail(sb))
     with pytest.raises(sb.qaos_bug.BugFileError):
         sb.qaos_bug.execute(rid, res_id)
     n = len(fake_qaos["calls"])
     monkeypatch.setattr(sb.qaos_exec, "_append_handoff", real)
-    res = sb.qaos_bug.execute(rid, res_id)                       # 舊程式：在 handoff_recorded 就因 UnicodeDecodeError 失敗
+    res = sb.qaos_bug.execute(rid, res_id)
     assert res["ok"] and len(fake_qaos["calls"]) == n
-    text = sb.qaos_exec.HANDOFF_FILE.read_text(encoding="utf-8")   # 嚴格解碼（relay 的讀法）不會丟例外
-    assert [json.loads(l)["id"] for l in text.splitlines()] == [res["handoff_id"]]
+    text = sb.qaos_exec.HANDOFF_FILE.read_text(encoding="utf-8")                  # 嚴格解碼（relay 的讀法）不會丟例外
+    good = []
+    for line in text.splitlines():
+        try:
+            good.append(json.loads(line)["id"])
+        except ValueError:
+            pass
+    assert good == [res["handoff_id"]]
     assert [h["id"] for h in sb.qaos_exec.handoff_tail()] == [res["handoff_id"]]
 
 
-def test_b2_03_ticket_utf8_torn_handoff_is_recoverable(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+def test_b2_03_ticket_torn_handoff_with_chinese_hint_is_recoverable(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
     fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
     qe = sandbox.qaos_exec
     real = qe._append_handoff
-    monkeypatch.setattr(qe, "_append_handoff", _utf8_torn_write_then_fail(sandbox))
+    monkeypatch.setattr(qe, "_append_handoff", _torn_real_write_then_fail(sandbox))
     with pytest.raises(qe.ExecError):
         qe.execute("APR-0100")
     monkeypatch.setattr(qe, "_append_handoff", real)
     res = qe.execute("APR-0100")
     assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
-    assert [json.loads(l)["id"] for l in qe.HANDOFF_FILE.read_text(encoding="utf-8").splitlines()] == [res["handoff_id"]]
+    qe.HANDOFF_FILE.read_text(encoding="utf-8")                                    # 不丟 UnicodeDecodeError
+    assert [h["id"] for h in qe.handoff_tail()] == [res["handoff_id"]]
+
+
+def test_b2_03_same_id_retry_after_json_missing_only_the_newline_still_fixes_the_line_boundary(sandbox, fake_qaos, write_run, write_approval, monkeypatch):
+    """完整 JSON 寫完、只差換行就失敗；重試時同 ID 已存在而略過寫入，但仍要補行界線，否則 relay 的 consumed 會黏在它後面。"""
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    qe = sandbox.qaos_exec
+    real = qe._append_handoff
+
+    def no_newline_then_fail(rec):
+        qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(qe.HANDOFF_FILE, "ab") as f:
+            f.write(json.dumps(rec, ensure_ascii=True).encode("ascii"))
+        raise OSError("failed before the newline")
+    monkeypatch.setattr(qe, "_append_handoff", no_newline_then_fail)
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    monkeypatch.setattr(qe, "_append_handoff", real)
+    res = qe.execute("APR-0100")
+    assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
+    assert qe.HANDOFF_FILE.read_bytes().endswith(b"\n")
+    with open(qe.HANDOFF_FILE, "a", encoding="utf-8") as f:                         # relay 之後 append consumed（同它的寫法）
+        f.write(json.dumps({"kind": "consumed", "handoff_id": res["handoff_id"], "by": "relay"}) + "\n")
+    assert qe.handoff_recorded(res["handoff_id"])
+    assert [h["id"] for h in qe.handoff_tail()] == [res["handoff_id"]] and qe.handoff_tail()[0]["consumed"] is True
 
 
 def test_b2_03_readers_skip_undecodable_lines_in_the_middle_of_the_file(sandbox):
