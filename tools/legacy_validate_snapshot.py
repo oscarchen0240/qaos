@@ -25,9 +25,9 @@
       前提：`later_ops_snapshot` 為空。工具一律讀 R 的計畫檔確認；找不到 R 或非空時列為不符，後續操作寫入的路徑依後續操作報告人工判定。
       `--op` 必填：沒有指定本次的 X，就無法確認豁免的事件屬於本次的 X、R，也無法核對前提。
 """
-import argparse, concurrent.futures as cf, datetime, hashlib, json, os, pathlib, platform, re, subprocess, sys
+import argparse, concurrent.futures as cf, datetime, hashlib, json, os, pathlib, platform, re, shutil, subprocess, sys
 
-TOOL_VERSION = "1"
+TOOL_VERSION = "2"
 DEF_LAYER = ("schemas", "agents", "workflows", "permissions", "tools", "tests", "admin-ui", "docs", "bin")
 SKIP_PARTS = {".git", "node_modules", ".venv", "__pycache__"}
 EXEMPT_ACTIONS = {"migrate", "migrate_rollback", "maintenance_start", "maintenance_end"}
@@ -65,10 +65,13 @@ def _candidates(root: pathlib.Path) -> list[str]:
 def _inferred(root: pathlib.Path, program: pathlib.Path, rels: list[str]) -> dict:
     """以舊程式自己的 schema.infer 決定範圍（在舊程式目錄以子程序執行；stdin 傳入路徑清單）。"""
     code = ("import sys, json, importlib.metadata as md\nfrom tools.qaos import schema\n"
-            "v = {k: md.version(k) for k in ('jsonschema', 'PyYAML')}\n"
+            "def ver(k):\n    try: return md.version(k)\n    except md.PackageNotFoundError: return None\n"
+            "v = {k: ver(k) for k in ('jsonschema', 'PyYAML', 'referencing')}\n"
+            "import sys as _s; v['python'] = _s.version.split()[0]; v['executable'] = _s.executable\n"
             "print(json.dumps({'infer': {r: schema.infer(r) for r in json.load(sys.stdin)}, 'versions': v}))")
     env = dict(os.environ, QAOS_ROOT=str(root), PYTHONDONTWRITEBYTECODE="1")
-    r = subprocess.run([sys.executable, "-c", code], cwd=program, env=env, input=json.dumps(rels), capture_output=True, text=True)
+    py = shutil.which("python3", path=env.get("PATH")) or sys.executable                       # 與 bin/qaos 相同的直譯器（`python3`），版本才和實際驗證一致
+    r = subprocess.run([py, "-c", code], cwd=program, env=env, input=json.dumps(rels), capture_output=True, text=True)
     if r.returncode != 0: raise SystemExit(f"舊程式的 schema.infer 執行失敗：\n{r.stderr[-2000:]}")
     return json.loads(r.stdout.strip().splitlines()[-1])
 
@@ -100,12 +103,14 @@ def _abort(broken):
     raise SystemExit(2)
 
 def _registered(root: pathlib.Path) -> dict:
+    """登錄紀錄：{op_id: (action, plan_sha256)}。"""
     out = {}
     d = root / "operations/_global/index.d"
     for p in sorted(d.glob("*.yaml")) if d.is_dir() else []:
         txt = p.read_text(encoding="utf-8")
         op = re.search(r"^op_id:\s*(\S+)", txt, re.M); act = re.search(r"^action:\s*(\S+)", txt, re.M)
-        if op and act: out[op.group(1)] = act.group(1)
+        sha = re.search(r"^plan_sha256:\s*(\S+)", txt, re.M)
+        if op and act: out[op.group(1)] = (act.group(1), sha.group(1) if sha else None)
     return out
 
 META = ("program_sha256", "root_schemas_sha256", "tool_version", "tool_sha256", "env_versions")
@@ -115,17 +120,27 @@ def _plan_text(root: pathlib.Path, op: str) -> str:
     return p.read_text(encoding="utf-8") if p.is_file() else ""
 
 def compare(w1: dict, after: dict, root: pathlib.Path, x: str) -> dict:
-    a, b = w1["files"], after["files"]; root = root.resolve(); regs = _registered(root)
+    a, b = w1["files"], after["files"]; root = root.resolve(); reg = _registered(root); regs = {op: v[0] for op, v in reg.items()}
     problems, exempt = [], []
     for name, d in (("W1 對照", w1), ("回復後", after)):
         if not d.get("root") or pathlib.Path(d["root"]).resolve() != root:
             problems.append({"path": "-", "rule": "(meta)", "reason": f"{name}結果的資料 root 不是 --root", "snapshot_root": d.get("root"), "root": str(root)})
+    for name, d in (("W1 對照", w1), ("回復後", after)):
+        if d.get("tool_version") != TOOL_VERSION:
+            problems.append({"path": "-", "rule": "(meta)", "reason": f"{name}結果的 tool_version 是 {d.get('tool_version')}，不是目前的 {TOOL_VERSION}（請以目前的工具重新取得）"})
+        miss = [k for k in META if not d.get(k)]
+        if miss: problems.append({"path": "-", "rule": "(meta)", "reason": f"{name}結果缺少中繼資料：{', '.join(miss)}"})
     for k in META:
         if w1.get(k) != after.get(k): problems.append({"path": "-", "rule": "(meta)", "reason": f"兩份結果的 {k} 不同", "w1": w1.get(k), "after": after.get(k)})
     pre_ops = set(w1.get("registered_ops") or [])
     if regs.get(x) != "migrate": problems.append({"path": "-", "rule": "(前提)", "reason": f"--op {x} 不是登錄紀錄中的 migrate 計畫"})
     rs = [op for op, act in regs.items() if act == "migrate_rollback" and re.search(rf"^takeover_of:\s*{re.escape(x)}\s*$", _plan_text(root, op), re.M)]
     allowed = {x, *rs}
+    if len(rs) > 1: problems.append({"path": "-", "rule": "(前提)", "reason": f"有 {len(rs)} 份 rollback 計畫接管 {x}（正式流程只允許一份）：{rs}"})
+    for op in [x, *rs]:
+        pf = root / f"operations/_global/{op}.yaml"
+        if op in regs and (not pf.is_file() or _sha(pf) != reg[op][1]):
+            problems.append({"path": f"operations/_global/{op}.yaml", "rule": "(前提)", "reason": "計畫檔不存在，或 sha256 不等於登錄紀錄的 plan_sha256"})
     for r in rs:
         if not re.search(r"^later_ops_snapshot:\s*\[\]\s*$", _plan_text(root, r), re.M):
             problems.append({"path": f"operations/_global/{r}.yaml", "rule": "(前提)", "reason": "R 的 later_ops_snapshot 不是空的：後續操作寫入的路徑另依後續操作報告人工判定"})

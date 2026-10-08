@@ -75,7 +75,7 @@ def test_snapshot_keeps_full_output_and_metadata(world):
     norm = lambda s: s.replace(str(root), "<ROOT>")
     assert e["rc"] == r.returncode != 0 and e["stdout"] == norm(r.stdout) and e["stderr"] == norm(r.stderr)
     assert e["stdout"].count("\n") > 5 and len(e["stdout"]) > 600, (len(e["stdout"]), e["stdout"][:200])
-    assert len(d["program_sha256"]) == 64 and len(d["root_schemas_sha256"]) == 64 and set(d["env_versions"]) == {"jsonschema", "PyYAML"} and d["registered_ops"] == []
+    assert len(d["program_sha256"]) == 64 and len(d["root_schemas_sha256"]) == 64 and set(d["env_versions"]) == {"jsonschema", "PyYAML", "referencing", "python", "executable"} and d["env_versions"]["jsonschema"] and d["registered_ops"] == []
     assert all(len(v["sha256"]) == 64 for v in d["files"].values()) and d["summary"]["files"] == len(d["files"])
 
 def test_rollback_passes_with_control_events_exempt(world, tmp_path):
@@ -95,9 +95,12 @@ def test_compare_requires_op(world, tmp_path):
 
 CASES = ["result_changed", "output_changed", "stderr_changed", "w1_path_removed", "event_unregistered", "event_business_op",
          "non_event_new_yaml", "meta_program_changed", "meta_schemas_changed", "cli_root_mismatch", "event_op_registered_at_w1",
-         "event_other_migrate", "later_ops_not_empty", "op_not_migrate"]
+         "event_other_migrate", "later_ops_not_empty", "op_not_migrate", "meta_missing", "old_tool_version", "second_rollback",
+         "plan_tampered", "op_is_maintenance"]
 RULE = {"result_changed": ["(1)"], "output_changed": ["(1)"], "stderr_changed": ["(1)"], "w1_path_removed": ["(1)"], "meta_program_changed": ["(meta)"],
-        "meta_schemas_changed": ["(meta)"], "cli_root_mismatch": ["(meta)", "(meta)"], "later_ops_not_empty": ["(前提)"], "op_not_migrate": ["(前提)", "(前提)", "(3)", "(3)", "(3)"]}
+        "meta_schemas_changed": ["(meta)"], "cli_root_mismatch": ["(meta)", "(meta)"], "later_ops_not_empty": ["(前提)"], "op_not_migrate": ["(前提)", "(前提)", "(3)", "(3)", "(3)"],
+        "meta_missing": ["(meta)", "(meta)"], "old_tool_version": ["(meta)", "(meta)"], "second_rollback": ["(前提)"], "plan_tampered": ["(前提)"],
+        "op_is_maintenance": ["(前提)", "(前提)", "(3)", "(3)", "(3)"]}
 
 @pytest.mark.parametrize("case", CASES)
 def test_compare_reports_mismatch(world, tmp_path, case):
@@ -107,8 +110,15 @@ def test_compare_reports_mismatch(world, tmp_path, case):
     regs = tmp_path / "root"; shutil.copytree(root / "operations", regs / "operations")     # 登錄紀錄與計畫檔的複本（compare 只讀 operations/）
     w["root"] = d["root"] = str(regs.resolve())
     run_yaml = f"runs/{info['done']}/run.yaml"; bad = info["bad"]; x = info["x"]
-    def reg(op, action):
-        (regs / "operations/_global/index.d" / f"99999999-{op}.yaml").write_text(f"plan_seq: 99999999\nop_id: {op}\naction: {action}\n", encoding="utf-8")
+    def reg(op, action, plan_sha=None):
+        (regs / "operations/_global/index.d" / f"99999999-{op}.yaml").write_text(f"plan_seq: 99999999\nop_id: {op}\naction: {action}\n"
+                                                                                + (f"plan_sha256: {plan_sha}\n" if plan_sha else ""), encoding="utf-8")
+    def reindex(op):                                                                            # 計畫檔改動後同步登錄紀錄的 plan_sha256（只讓目標檢查觸發）
+        ip = next((regs / "operations/_global/index.d").glob(f"*-{op}.yaml")); pf = regs / f"operations/_global/{op}.yaml"
+        import hashlib, re as _re
+        ip.write_text(_re.sub(r"(?m)^plan_sha256:.*$", "plan_sha256: " + hashlib.sha256(pf.read_bytes()).hexdigest(), ip.read_text(encoding="utf-8")), encoding="utf-8")
+    def ops(action): return [p_.read_text(encoding="utf-8").split("op_id: ")[1].split()[0] for p_ in (regs / "operations/_global/index.d").glob("*.yaml")
+                             if f"action: {action}\n" in p_.read_text(encoding="utf-8")]
     if case == "result_changed": f[run_yaml] = dict(f[run_yaml], rc=1, stdout="INVALID (workflow/workflow-run.schema.json)\n")
     elif case == "output_changed": f[bad] = dict(f[bad], stdout=f[bad]["stdout"] + " - $: 多一行錯誤\n")        # 退出碼相同、只有 stdout 不同
     elif case == "stderr_changed": f[bad] = dict(f[bad], stderr=f[bad]["stderr"] + "warning\n")              # 退出碼與 stdout 相同、只有 stderr 不同
@@ -120,7 +130,16 @@ def test_compare_reports_mismatch(world, tmp_path, case):
     elif case == "meta_program_changed": d["program_sha256"] = "0" * 64
     elif case == "meta_schemas_changed": d["root_schemas_sha256"] = "0" * 64
     elif case == "cli_root_mismatch": w["root"] = d["root"] = str(root.resolve())                 # 兩份結果屬於 root，卻以另一個 root（regs）的登錄紀錄判定
-    elif case == "op_not_migrate": x = "d" * 64                                                    # --op 指到不存在的 migrate：X 與 R 都找不到，X 的事件也不再豁免
+    elif case == "op_not_migrate": x = "d" * 64
+    elif case == "op_is_maintenance": x = ops("maintenance_start")[0]                              # --op 指向已登錄、但不是 migrate 的 op
+    elif case == "meta_missing": del d["root_schemas_sha256"]                                     # 舊格式的結果：缺欄位不能以 None == None 通過
+    elif case == "old_tool_version": w["tool_version"] = d["tool_version"] = "1"
+    elif case == "plan_tampered":
+        xp = regs / f"operations/_global/{x}.yaml"; xp.write_text(xp.read_text(encoding="utf-8") + "# tampered\n", encoding="utf-8")
+    elif case == "second_rollback":                                                              # 正式流程不允許第二份 R 接管同一個 X
+        op = "f" * 64; pf = regs / f"operations/_global/{op}.yaml"
+        pf.write_text(f"op_id: {op}\naction: migrate_rollback\ntakeover_of: {x}\nlater_ops_snapshot: []\n", encoding="utf-8")
+        import hashlib; reg(op, "migrate_rollback", hashlib.sha256(pf.read_bytes()).hexdigest()); f[f"runs/_audit.d/{op}-1.yaml"] = dict(f[run_yaml])                                                    # --op 指到不存在的 migrate：X 與 R 都找不到，X 的事件也不再豁免
     elif case == "event_op_registered_at_w1":
         op = next(e for e in f if e.startswith("runs/_audit.d/") and info["x"] in e)
         w["registered_ops"] = [info["x"]]                                                        # W1 時已登錄的 op 不能當成 M2 之後的操作豁免
@@ -129,6 +148,7 @@ def test_compare_reports_mismatch(world, tmp_path, case):
     else:
         rp = next(p for p in (regs / "operations/_global").glob("*.yaml") if "action: migrate_rollback" in p.read_text(encoding="utf-8"))
         rp.write_text(rp.read_text(encoding="utf-8").replace("later_ops_snapshot: []", "later_ops_snapshot:\n- op_id: x"), encoding="utf-8")
+        reindex(rp.stem)
     w1b, afterb = tmp_path / "w1-bad.json", tmp_path / "after-bad.json"
     w1b.write_text(json.dumps(w, ensure_ascii=False), encoding="utf-8"); afterb.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
     r, rep = cmp(regs, w1b, afterb, tmp_path, x)
