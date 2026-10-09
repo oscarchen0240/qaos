@@ -256,6 +256,7 @@ def verify_registration(op: str, reg: dict | None = None) -> dict:
     p = plan_files().get(op)
     if reg is None or p is None: raise EvidenceConflict(f"op {op} 缺少登錄紀錄或計畫檔")
     data = p.read_bytes(); plan = yaml.safe_load(data.decode("utf-8")) or {}
+    if not isinstance(plan, dict): plan = {}                         # 被改成清單、純量等：下方各項一律不符 → 證據衝突
     bad = [k for k, ok in (("plan_sha256", reg["plan_sha256"] == store.sha256_bytes(data)), ("action", reg["action"] == plan.get("action")),
                            ("registered_at", reg["registered_at"] == plan.get("clock")), ("op_id", plan.get("op_id") == op)) if not ok]
     if bad: raise EvidenceConflict(f"V1：op {op} 的登錄紀錄和計畫不符（{', '.join(bad)}）")
@@ -828,16 +829,17 @@ def _key_record(key: str, op: str) -> bytes:
 
 def _bound_op(key: str) -> str | None:
     """key 目前綁定的 op（持鎖時呼叫；登錄補齊、殘留清理之後，計畫檔存在 ⇔ 已登錄）。
-    - 索引不存在，或指向沒有計畫檔的 op（綁定之後、計畫保存之前中止，該 op 從未建立）→ None（可以重新綁定）；
-    - 索引形狀不符，或指向的計畫沒有帶同一個 key → 證據衝突。"""
+    - 索引不存在，或指向的 op **沒有計畫檔路徑**（綁定之後、計畫保存之前中止，該 op 從未建立）→ None（可以重新綁定）；
+    - 索引形狀不符；計畫檔路徑存在但和登錄紀錄不符（例如被改成空檔或 null，`verify_registration`）；或計畫沒有帶同一個 key → 證據衝突。
+    「從未建立」只看路徑是否存在，不看解析結果（D03）。"""
     p = store.ROOT / request_key_path(key)
     if not p.is_file(): return None
-    rec = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-    if set(rec) != {"request_key", "op_id"} or rec["request_key"] != key or not _HEX64.fullmatch(str(rec["op_id"])):
+    rec = yaml.safe_load(p.read_text(encoding="utf-8"))
+    if not isinstance(rec, dict) or set(rec) != {"request_key", "op_id"} or rec["request_key"] != key or not _HEX64.fullmatch(str(rec["op_id"])):
         raise EvidenceConflict(f"request key 索引 {request_key_path(key)} 的內容不符，需人工處理")
-    plan = load_plan(rec["op_id"])
-    if plan is None: return None
-    if (plan.get("canonical_request") or {}).get("request_key") != key:
+    if rec["op_id"] not in plan_files(): return None
+    plan = verify_registration(rec["op_id"])
+    if not isinstance(plan, dict) or (plan.get("canonical_request") or {}).get("request_key") != key:
         raise EvidenceConflict(f"request key 索引 {request_key_path(key)} 指向的計畫 {rec['op_id'][:12]}… 沒有帶這個 key，需人工處理")
     return rec["op_id"]
 
