@@ -145,6 +145,25 @@ def test_plan_replaced_by_empty_or_null_is_evidence_conflict(state, content):
     r = evd(root, "--request-key", "kd", text="new")                                  # 不帶 --json：一般錯誤訊息、沒有 traceback
     assert r.returncode == 1 and "Traceback" not in r.stderr and snapshot(root) == before
 
+@pytest.mark.parametrize("content", ["", "null\n", "- a\n"])
+@pytest.mark.parametrize("state", ["completed", "in_progress"])
+def test_resume_and_resend_of_tampered_plan_is_evidence_conflict(state, content):
+    """D04：計畫檔被外部改成空檔、null、清單（竄改）後，直接 `operation resume <op>` 與不帶 key 的同請求重送 →
+    證據衝突（不是「不存在」、沒有 traceback），root 內容不變；真正不存在的 op 仍回報「不存在」。"""
+    root = U.mkroot()
+    if state == "completed": assert evd(root, text="old").returncode == 0
+    else: assert evd(root, text="old", fault="after_register").returncode == 86
+    op = U.last_plan(root)["op_id"]
+    p = next(root.glob(f"operations/*/{op}.yaml")); p.write_text(content, encoding="utf-8")      # 竄改
+    before = snapshot(root)
+    r = U.q(root, "operation", "resume", op)
+    assert r.returncode == 1 and "Traceback" not in r.stderr and "不存在" not in r.stderr and "不符" in r.stderr, r.stderr
+    r = evd(root, text="old")                                                          # 同請求重送（第 2 步）
+    assert r.returncode == 1 and "Traceback" not in r.stderr and "不符" in r.stderr, r.stderr
+    o = js(evd(root, "--json", text="old")); assert o["error_kind"] == "internal"
+    assert snapshot(root) == before
+    m = U.q(root, "operation", "resume", "f" * 64); assert m.returncode == 1 and "不存在" in m.stderr
+
 # ---------------------------------------------------------------- 3. 同 key 不同內容 → key_conflict、沒有寫入
 def test_same_key_different_content_conflict_no_write():
     root = U.mkroot()
