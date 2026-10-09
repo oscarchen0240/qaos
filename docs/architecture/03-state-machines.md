@@ -106,6 +106,7 @@ Task 狀態：`PENDING → READY → RUNNING → ARTIFACT_INVALID | GATE_FAILED 
 - `dispatch`：派發分析 task 時，同一 `spec_id` 不得有另一個 run 的分析在本 iteration 已派發、還沒落地。這涵蓋已落地的 run 被退回重開分析的情況：先派發的先落地，READY 但還沒派發的 run 不互相阻擋。
 - 已落地（分析 task DONE）而在等人工的 run 不擋：它恢復時讀自己綁定的 revision（需求 A AC-09-2、09-3）。分析被略過的 run（DONE 且沒有產出）不擋，也不被擋。testcase-revision、manual-test-to-regression、regression-generation 沒有分析 task，不受影響。
 - 不提供強制放行：被擋下時，等占用的 run 落地，或以 `bin/qaos run cancel <run_id> --by <你>` 取消。
+- **已知限制**：這條規則只保證兩個分析不會同時進行，不保證後落地的一方看得到先落地者的結果。已落地的 run 被退回重開分析時，派發包仍是它自己綁定的 revision（需求 A AC-09-3），看不到期間另一個 run 落地的新 revision；而 G-SPEC 把同一 spec 已持久化的任何 ID 都視為沿用（`gates.requirement_id_issues`）。因此重開的分析若用到對方新增的 REQ ID、表達另一種語意，不會被擋。前提是 agent 違反指示自行取用計數器範圍內的號碼（主 session 配發的新 ID 一定大於計數器，不會撞號）。根本修法（G-SPEC 的沿用只認派發包可見 revision 中的 ID）另案處理。
 
 ## 5. Artifact
 
