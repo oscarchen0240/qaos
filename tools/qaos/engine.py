@@ -90,7 +90,9 @@ def unlanded_analyses(spec_id: str, *, exclude_run: str | None = None, dispatche
     out = []
     for p in store.glob("runs/*/run.yaml"):
         r = store.load(p)
-        if r["run_id"] == exclude_run or r["status"] in run_term or r["input"].get("spec_id") != spec_id: continue
+        if not isinstance(r, dict) or (r.get("input") or {}).get("spec_id") != spec_id: continue          # 先依 spec 篩選：其他 spec 的殘缺 run.yaml 不影響
+        if r.get("run_id") == exclude_run or r.get("status") in run_term: continue
+        if not isinstance(r.get("tasks"), list): raise EngineError(f"{p.relative_to(store.ROOT)} 缺 tasks，無法判斷 {spec_id} 是否有分析還沒落地的 run")
         t = analysis_task(r)
         if t is None or t["status"] in task_term or (dispatched_only and not dispatch.current_entry(t)): continue
         out.append(r)
