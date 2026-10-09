@@ -1,6 +1,7 @@
 """AC ID 推導規則（docs/architecture/02-data-model.md §5；B+ 調整版 v2 核心 1、1b、2）：
 - G-SPEC 以 ac_id_issues 檢查：新 AC 必須是 AC-<AREA>-<所屬 REQ 序號><AC 序號>（從 1 起、不補 0）、序號大於歷史最大值；
-  既有 AC 不得改掛 REQ；已刪除的 AC 不得重用；同一份 model 內不得重複；新增 AC 不得用舊 3 位數格式。
+  任一 revision 出現過、且掛在同一個 REQ 的 AC 可沿用（同一條驗收條件恢復時沿用原 ID）；既有 AC 不得改掛 REQ；
+  已用過的序號不得給新的驗收條件；REQ 序號超過 999 時新 AC 一律 FAIL；同一份 model 內不得重複；新增 AC 不得用舊 3 位數格式。
 - 一條 REQ 有 10 個以上 AC：G-SPEC 不擋，寫 audit 與 gate_results 的 advisory 紀錄（D3）。
 - bin/qaos id AC 一律拒絕，計數器不變（D2）。
 - Spec Analyst 的派發包附 ac_seq_high_water（同 spec 所有版本、所有 revision，只計推導格式）；其他 agent 的派發包不帶。"""
@@ -202,6 +203,9 @@ def test_13_req_issues_are_keyed_by_requirement_and_skip_their_acs():
     mp = gates.requirement_id_issue_map(SPEC, AREA, rids)
     assert set(mp) == {f"REQ-{AREA}-ABC", f"REQ-{AREA}-999"} and all(len(v) == 1 for v in mp.values())
     assert gates.requirement_id_issues(SPEC, AREA, rids) == [m for ms in mp.values() for m in ms]
+    inter = [f"REQ-{AREA}-ABC", f"REQ-{AREA}-999", f"REQ-{AREA}-ABC"]                                  # 交錯的重複 rid：維持輸入順序
+    flat = gates.requirement_id_issues(SPEC, AREA, inter)
+    assert [m.split(" ")[0] for m in flat] == inter and len(flat) == 3
     bad = [{"requirement_id": f"REQ-{AREA}-ABC", "acceptance_criteria": [_ac("AC-WRONG-1")]}]
     assert gates.ac_id_issues(SPEC, bad, skip=set(mp)) == []                                          # REQ 已有 issue：其 AC 不重複報
     assert gates.ac_id_issues(SPEC, bad) != []

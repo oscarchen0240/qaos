@@ -29,9 +29,9 @@ def g_spec(run, task, arts) -> list[str]:
     if sa:
         for rid in _payload(sa).get("requirement_ids", []):
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
-    req_issues = requirement_id_issue_map(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
-    issues += [m for ms in req_issues.values() for m in ms]
-    issues += ac_id_issues(p["spec_id"], p["requirements"], skip=set(req_issues))   # REQ 本身有問題時不再檢查其 AC（避免一個錯誤報兩次）
+    req_issues = requirement_id_issue_pairs(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
+    issues += [m for _, m in req_issues]                                       # 依輸入順序（與原 requirement_id_issues 相同）
+    issues += ac_id_issues(p["spec_id"], p["requirements"], skip={rid for rid, _ in req_issues})   # REQ 本身有問題時不再檢查其 AC（避免一個錯誤報兩次）
     if issues: return issues
     ctx, more = spec_context(run, task, arts)
     if ctx is None: return issues + more
@@ -46,15 +46,21 @@ def g_spec(run, task, arts) -> list[str]:
     return issues
 
 def requirement_id_issues(spec_id, area, rids) -> list[str]:
-    """requirement_id_issue_map 的扁平版本（維持原介面與訊息順序）。"""
-    return [m for ms in requirement_id_issue_map(spec_id, area, rids).values() for m in ms]
+    """原介面：訊息清單，依輸入 rids 的順序。"""
+    return [m for _, m in requirement_id_issue_pairs(spec_id, area, rids)]
 
 def requirement_id_issue_map(spec_id, area, rids) -> dict[str, list[str]]:
+    """以 requirement_id 為 key 的訊息（g_spec 用 key 判定要跳過哪些 REQ 的 AC 檢查，不比對訊息字串）。"""
+    out = {}
+    for rid, m in requirement_id_issue_pairs(spec_id, area, rids): out.setdefault(rid, []).append(m)
+    return out
+
+def requirement_id_issue_pairs(spec_id, area, rids) -> list[tuple[str, str]]:
     """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
     同一 spec 先前已持久化的 ID 可沿用（不論格式，舊資料可能不同）；其餘新 ID 必須是計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）， 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
     counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
-    owners = rm.requirement_owners(area); out = {}
-    add = lambda rid, msg: out.setdefault(rid, []).append(msg)
+    owners = rm.requirement_owners(area); out = []
+    add = lambda rid, msg: out.append((rid, msg))                          # 依輸入順序，每筆附所屬 rid
     for rid in rids:
         mine = owners.get(rid, set())
         if mine - {spec_id}: add(rid, f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
