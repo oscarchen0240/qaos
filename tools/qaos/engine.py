@@ -75,6 +75,43 @@ def _skip_decision(wf: dict, wt: dict, inputs: dict) -> tuple[bool, str | None]:
 def _skip(wf: dict, wt: dict, inputs: dict) -> bool:
     return _skip_decision(wf, wt, inputs)[0]
 
+def _is_analysis(agent: str | None, gate: str | None) -> bool:
+    """需求分析 task：Spec Analyst、gate G-SPEC（spec-to-testcase 是 T1，spec-change-impact、spec-to-bug 是 T0）。"""
+    return agent == "agent-spec-analyst" and (gate or "").split(".")[0] == "G-SPEC"
+
+def analysis_task(run: dict) -> dict | None:
+    return next((t for t in run["tasks"] if _is_analysis(t.get("agent_id"), t.get("gate"))), None)
+
+def unlanded_analyses(spec_id: str, *, exclude_run: str | None = None, dispatched_only: bool = False) -> list[dict]:
+    """同一 spec_id（不分版本）分析還沒落地的進行中 run：run 非終止、分析 task 不在終止狀態（被略過或通過 G-SPEC 落地後是 DONE）。
+    dispatched_only：只算本 iteration 已派發的（dispatch 用：先派發的先落地，READY 但還沒派發的不互擋）。
+    已落地、在等人工的 run 不算——需求 A AC-09-2、09-3 允許它暫停時由另一個 run 重新分析，它恢復時讀自己綁定的 revision。"""
+    run_term = set(state.machines()["workflow_run"]["terminal"]); task_term = set(state.machines()["task"]["terminal"])
+    out = []
+    for p in store.glob("runs/*/run.yaml"):
+        r = store.load(p)
+        if not isinstance(r, dict) or (r.get("input") or {}).get("spec_id") != spec_id: continue          # 先依 spec 篩選：其他 spec 的殘缺 run.yaml 不影響
+        if r.get("run_id") == exclude_run or r.get("status") in run_term: continue
+        if not isinstance(r.get("tasks"), list): raise EngineError(f"{p.relative_to(store.ROOT)} 缺 tasks，無法判斷 {spec_id} 是否有分析還沒落地的 run")
+        t = analysis_task(r)
+        if t is None or t["status"] in task_term or (dispatched_only and not dispatch.current_entry(t)): continue
+        out.append(r)
+    return sorted(out, key=lambda r: r["run_id"])
+
+def busy_message(spec_id: str, busy: list[dict]) -> str:
+    return (f"{spec_id} 已有分析還沒落地的進行中 run：" + "、".join(f"{r['run_id']}（{r['workflow_id']}，{r['status']}，{analysis_task(r)['task_id']} {analysis_task(r)['status']}）" for r in busy)
+            + "；同一 spec 同時只能有一個 run 在分析需求（兩邊都還沒落地時，後落地的一方會把先落地者的 REQ ID 當成沿用而通過 G-SPEC）。"
+            + "請等它的分析通過 G-SPEC 落地，或以 bin/qaos run cancel <run_id> --by <你> 取消")
+
+def _require_single_analysis(wf: dict, inputs: dict):
+    """新 run 會執行需求分析（依 _skip_decision，與 _advance 同一個 operation、同一份 RM 狀態）時，同一 spec 不得有分析還沒落地的進行中 run。
+    分析被略過的 run 不擋，也不被擋。不提供強制放行。"""
+    wt = next((t for t in wf["tasks"] if _is_analysis(t.get("agent"), t.get("gate"))), None)
+    sid = inputs.get("spec_id")
+    if wt is None or not sid or _skip(wf, wt, inputs): return
+    busy = unlanded_analyses(sid)
+    if busy: raise EngineError(busy_message(sid, busy))
+
 def _require_fresh(pin: dict, label: str):
     """沒有 T0 的流程（testcase-revision、manual）在 run new 時凍結 revision：過時或有非 ACTIVE 需求 → 拒絕，提示先重新分析（§4.3）。"""
     o = rm.outdated(pin); why = [k for k in ("declaration_changed", "decision_revised") if o[k]]
@@ -169,6 +206,7 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
                 if err: raise EngineError(err)
     _require_analyzable(workflow_id, inputs)
     pins = _bind_at_new_run(workflow_id, inputs)
+    _require_single_analysis(wf, inputs)
     run_id = ids.alloc("RUN")
     run = {"run_id": run_id, "workflow_id": workflow_id, "workflow_version": wf["version"], "status": None,
            "input": {**inputs, "initiated_by": by}, "initiated_by": by, "created_at": store.now(), "updated_at": store.now(),

@@ -118,9 +118,11 @@ cases = {{
                                                                      "decided_at": "2026-10-07", "adopted_side_index": None}})], ambiguity=F.amb("none", "minor")),
 }}
 res = {{}}
+g = F.analyze(rid, [cases.pop("waiver_sha")]); res["waiver_sha"] = [g["result"], g["issues"]]
+engine.cancel(rid, F.BY, new_request=True)                                     # 同一 spec 同時只能有一個 run 在分析需求：rid 的分析沒有落地，取消後才能開 rid2
 rid2 = F.new_run()
 for n, r in cases.items():
-    g = F.analyze(rid if n == "waiver_sha" else rid2, [r]); res[n] = [g["result"], g["issues"]]
+    g = F.analyze(rid2, [r]); res[n] = [g["result"], g["issues"]]
 print(json.dumps(res))""")
     expect = {"waiver_sha": "X14：", "status": "references_status", "cited_text": "第 12 行沒有", "consulted": "不在派發包的閉包內", "x18_star": "X18：", "x15_open": "X15："}
     for n, needle in expect.items():
