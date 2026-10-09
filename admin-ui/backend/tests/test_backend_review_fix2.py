@@ -903,3 +903,65 @@ def test_b2_04_draft_stays_locked_when_the_known_success_has_not_been_saved_yet(
     d = sandbox.tickets.get_draft("APR-0100")
     assert d["decision"] == "approve" and d["sent_command"] == res["command"]
     sandbox.tickets.save_draft("APR-0100", "approval", "reject", None, "補完後再改", None, None)
+
+
+# ================================================================ 第 05 輪複審（relay 共同行界線協議；經 Oscar 核准擴及 admin-ui/hooks/handoff_relay.py）
+def _consumed_ids(sb):
+    return {r["handoff_id"] for r in sb.qaos_exec._handoff_records() if r.get("kind") == "consumed"}
+
+
+def test_b2_03_relay_consume_after_a_torn_tail_stays_on_its_own_line(sandbox, run_hook, write_run, write_handoff):
+    write_run("RUN-B", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("old", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    with open(sandbox.qaos_exec.HANDOFF_FILE, "a", encoding="utf-8") as f:
+        f.write('{"kind":"handoff","id":"half')                                    # 後端寫到一半失敗的殘行（沒有換行）
+    rc, out, _ = run_hook("handoff_relay.py", {"hook_event_name": "UserPromptSubmit", "session_id": "sess-A"})
+    assert rc == 0 and "APR-0001" in out
+    assert "old" in _consumed_ids(sandbox)                                         # 舊版：consumed 黏在殘行後面，讀不到
+    assert [h["id"] for h in sandbox.qaos_exec.handoff_tail()] == ["old"] and sandbox.qaos_exec.handoff_tail()[0]["consumed"] is True
+
+
+def test_b2_03_relay_consume_after_complete_json_missing_newline_keeps_both_records(sandbox, run_hook, write_run, write_handoff):
+    write_run("RUN-B", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("old", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    f = sandbox.qaos_exec.HANDOFF_FILE
+    f.write_bytes(f.read_bytes().rstrip(b"\n"))                                    # 完整 JSON、只缺最後的換行
+    run_hook("handoff_relay.py", {"hook_event_name": "UserPromptSubmit", "session_id": "sess-A"})
+    assert sandbox.qaos_exec.handoff_recorded("old") and "old" in _consumed_ids(sandbox)
+
+
+def test_b2_03_relay_skips_an_undecodable_line_instead_of_losing_the_whole_file(sandbox, run_hook, write_run, write_handoff):
+    write_run("RUN-B", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("a", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    with open(sandbox.qaos_exec.HANDOFF_FILE, "ab") as f:
+        f.write(b'{"x":"' + "中".encode("utf-8")[:2] + b'\n')                    # 歷史上留下的非法 UTF-8 行
+    write_handoff("b", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    rc, out, _ = run_hook("handoff_relay.py", {"hook_event_name": "UserPromptSubmit", "session_id": "sess-A"})
+    assert rc == 0 and out.strip() != ""                                           # 舊版：整檔解碼失敗、靜默 exit 0、沒有任何輸出
+    assert _consumed_ids(sandbox) == {"a", "b"}
+
+
+def test_b2_03_relay_normal_append_adds_no_blank_line(sandbox, run_hook, write_run, write_handoff):  # 控制案例
+    write_run("RUN-B", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("a", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    run_hook("handoff_relay.py", {"hook_event_name": "UserPromptSubmit", "session_id": "sess-A"})
+    raw = sandbox.qaos_exec.HANDOFF_FILE.read_bytes()
+    assert b"\n\n" not in raw and raw.endswith(b"\n") and len(raw.splitlines()) == 2
+
+
+def test_b2_03_backend_retry_after_relay_consumed_an_older_handoff_keeps_the_consume(sandbox, run_hook, fake_qaos, write_run, write_approval, write_handoff, monkeypatch):
+    """殘行 → relay 先 consume 舊交接 → 後端重試補寫新交接：舊交接仍是 consumed、新交接可讀、CLI 只跑一次。"""
+    qe = sandbox.qaos_exec
+    write_run("RUN-OLD", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("old", "sess-A", "RUN-OLD", run_status_after="COMPLETED", handoff_kind="notify_only")
+    fake_qaos["side_effect"] = _approval_ready(sandbox, write_run, write_approval)
+    real = qe._append_handoff
+    monkeypatch.setattr(qe, "_append_handoff", _torn_real_write_then_fail(sandbox))
+    with pytest.raises(qe.ExecError):
+        qe.execute("APR-0100")
+    run_hook("handoff_relay.py", {"hook_event_name": "UserPromptSubmit", "session_id": "sess-A"})   # 在重試之前 relay 先 append
+    monkeypatch.setattr(qe, "_append_handoff", real)
+    res = qe.execute("APR-0100")
+    assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
+    assert "old" in _consumed_ids(sandbox) and qe.handoff_recorded(res["handoff_id"])
+    qe.HANDOFF_FILE.read_text(encoding="utf-8")                                                        # 仍可嚴格解碼
