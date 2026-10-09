@@ -545,6 +545,7 @@
 | 未完成或 `operation resume` 之後，以同 key 不同內容送出 | `key_conflict` |
 | migrate 中止後被 rollback 接管（含以同一 key 發 rollback） | key 仍綁定原 op：同 key 不同內容與同 key 的 rollback → `key_conflict`；同內容 → 已終結、`refused` |
 | 索引被竄改（指向沒有該 key 的計畫／不存在的 op） | `internal`／同內容重送時改回 |
+| 已登錄的計畫檔被竄改成空檔、YAML null 或清單（completed、未完成各一） | 同 key 不論內容 → `internal`；沒有第二個 op，索引與業務檔不變；不帶 `--json` 也沒有 traceback |
 | 同 key 不同內容（含 key 綁定的 op 尚未完成） | `key_conflict`、root 內容不變 |
 | 不同 key、相同內容的 `execution import` | 兩個 op、兩筆 EXE（R02） |
 | `--request-key` 與 `--new-request` 同時使用、key 格式不符 | argparse 錯誤（結束碼 2）／`validation`；沒有寫入 |
