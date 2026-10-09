@@ -1,0 +1,109 @@
+clarification_id: CLR-SITELIST-020
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.7'
+question: 額度上限的允許範圍：負數如何拒絕（前端提示與後端回應）、上限值、可否帶小數。CLR-SITELIST-002 rev 0（針對 v0.4）答「前端顯示『值必須大於或等於 0』，後端也拒絕」，但 v0.7 原文未載，且答案 basis
+  不同（X16），需以 applicability 綁定到 v0.7 或重新確認
+context: REQ-SITELIST-005：額度上限為場館層級設定，該場館底下所有機台帳號共用同一份額度，開分／入金時以全場館機台分數餘額合計檢核；設為 0 代表不限制；修改後即時生效，不影響既有餘額。管理員與站長可設定，操作員唯讀（開發包⑧）。負數、上限與小數位等邊界的拒絕行為
+  v0.7 未載（前版依 CLR-SITELIST-002 記載負數雙層驗證，本版列為待綁定決策點 Q02）。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-09T08:06:55Z'
+status: ANSWERED
+history:
+- at: '2026-10-09T08:06:55Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261009-001
+- at: '2026-10-09T08:32:41Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM（2026-09-14，經 Oscar 轉達；沿用 CLR-SITELIST-002 rev 0）
+requirement_id: REQ-SITELIST-005
+spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  location: §站台類型與機台專屬欄位/額度上限 L84 + §業務規則與驗證/額度上限（場館） L232
+  quote: 設為 0 代表不限制；修改後即時生效，不影響既有餘額
+run_id: RUN-20261009-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q02
+topic: boundary_value
+subject: sitelist.venue.credit_limit.input_range
+params: {}
+role_scope:
+- '*'
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §業務規則與驗證 額度上限（場館）（第 232 行）
+  quote: 設為 0 代表不限制
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-ADMINSYS-001
+    spec_version: '0.3'
+    content_hash: 6d22cafaa1cec37e139719958ec7b5e02cf5e7c21ed45e09e42b2bc663b34a61
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 額度上限的允許範圍：負數如何拒絕（前端提示與後端回應）、上限值、可否帶小數。CLR-SITELIST-002 rev 0（針對 v0.4）答「前端顯示『值必須大於或等於 0』，後端也拒絕」，但 v0.7 原文未載，且答案
+  basis 不同（X16），需以 applicability 綁定到 v0.7 或重新確認
+detail_gaps:
+- negative_value_reject
+- max_value
+- decimal_places
+issue_key: bac4a96a76e4b00bee7f5b903de98f806b385faef21ed29d638611b51cfa4475
+related_clarifications:
+- id: CLR-SITELIST-002
+  relation: possible_duplicate
+answer_revisions:
+- rev: 0
+  answer: 負數拒絕：額度上限輸入負數時，前端顯示「值必須大於或等於 0」，後端也會拒絕（雙層驗證）。上限值、可否帶小數，原答覆未定義，另開 CLR 追問。沿用 CLR-SITELIST-002 rev 0。
+  answered_by: PM（2026-09-14，經 Oscar 轉達；沿用 CLR-SITELIST-002 rev 0）
+  answered_at: '2026-10-09T08:32:41Z'
+  resolution: requirement_clarified
+  answer_sources:
+  - type: message
+    channel: Oscar 轉達（記錄於 CLR-SITELIST-002 rev 0）
+    sent_by: PM
+    at: '2026-09-14'
+  basis:
+    target:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.7'
+      content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+    target_decl_rev: 3
+    closure:
+    - spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+      decl_rev: 0
+    - spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      decl_rev: 0
+  basis_hash: c2d58a12dd274a678be25a4d5cbfaa75b5e5067d4db2759f6069b5b287a8e906
+  sha256: 3d49dd7294f5d7d0808331349d6e769cecb3f40ac4d48d2253f25f0df5eb4645
+  op_id: 775ae6377ba584c3ac2608f659d31ad4a430a6e7111843de9277f7f48bfa6385
+answer: 負數拒絕：額度上限輸入負數時，前端顯示「值必須大於或等於 0」，後端也會拒絕（雙層驗證）。上限值、可否帶小數，原答覆未定義，另開 CLR 追問。沿用 CLR-SITELIST-002 rev 0。
+answered_by: PM（2026-09-14，經 Oscar 轉達；沿用 CLR-SITELIST-002 rev 0）
+answered_at: '2026-10-09T08:32:41Z'
+resolution: requirement_clarified
