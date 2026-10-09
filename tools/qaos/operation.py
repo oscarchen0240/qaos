@@ -884,9 +884,8 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
         reconcile_registrations()                            # 登錄補齊
         if resume_op is not None:                            # operation resume <op>
             ctx.op_id = resume_op; _write_owner(ctx)
-            plan = load_plan(resume_op)
-            if plan is None or resume_op not in registrations(): raise Refused(f"op {resume_op} 不存在")
-            return _existing(plan, request_hash=None)
+            if resume_op not in plan_files() or resume_op not in registrations(): raise Refused(f"op {resume_op} 不存在")
+            return _existing(verify_registration(resume_op), request_hash=None)    # 路徑存在 → 一律以核對過的計畫續做（D04）
         req = {"request_schema": 1, "action": action, **(request() if request else {})}
         if request_key is not None: req["request_key"] = request_key
         elif new_request: req["new_request_token"] = uuid.uuid4().hex
@@ -895,8 +894,7 @@ def run_operation(action: str, fn, *, request=None, scope: str = GLOBAL, new_req
             bound = _bound_op(request_key)
             if bound is not None and bound != op:
                 raise KeyConflict(f"request key {request_key!r} 已用於不同內容的請求（op={bound[:12]}…）；內容改變時請換一個新的 key")
-        plan = load_plan(op)
-        if plan is not None: return _existing(plan, request_hash=op)          # 第 2 步
+        if op in plan_files(): return _existing(verify_registration(op), request_hash=op)   # 第 2 步（計畫路徑存在 → 以核對過的計畫處理，D04）
         if incomplete_plans() and planner is None:                             # 3b（rollback 接管在 planner 中以 T2、T3 判斷：3a）
             raise IncompletePlan(f"存在未完成的計畫 {incomplete_plans()}；請先 `operation resume <op_id>`", incomplete_plans())
         state = system_state(); admit(action, state)                           # 3c
@@ -971,7 +969,9 @@ def list_operations(incomplete_only: bool = False) -> list[dict]:
         if incomplete_only and st != "in_progress": continue
         out.append({"plan_seq": reg["plan_seq"], "op_id": op, "action": reg["action"], "state": st, "registered_at": reg["registered_at"]})
     for op in plan_files():
-        if op not in regs: out.append({"plan_seq": None, "op_id": op, "action": (load_plan(op) or {}).get("action"), "state": "unregistered"})
+        if op not in regs:
+            d = load_plan(op)
+            out.append({"plan_seq": None, "op_id": op, "action": d.get("action") if isinstance(d, dict) else None, "state": "unregistered"})
     return out
 
 # ---------------------------------------------------------------- 控制類操作（§5.2）與移轉（P1：空 root 也需要的部分）
