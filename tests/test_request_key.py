@@ -126,6 +126,25 @@ def test_index_pointing_to_plan_without_key_is_evidence_conflict():
     r = js(exe(root, "--request-key", "kx", "--json"))
     assert r["outcome"] == "completed" and r["op_id"] == a["op_id"] and key_index(root, "kx")["op_id"] == a["op_id"]
 
+@pytest.mark.parametrize("content", ["", "null\n", "- a\n"])
+@pytest.mark.parametrize("state", ["completed", "in_progress"])
+def test_plan_replaced_by_empty_or_null_is_evidence_conflict(state, content):
+    """D03：已登錄的計畫檔被外部改成空檔、YAML null 或清單（竄改）→ 不能當成「從未建立」而改綁；同 key 不論內容 → internal，
+    沒有第二個 op、索引與業務檔不變。"""
+    root = U.mkroot()
+    if state == "completed": a = js(evd(root, "--request-key", "kd", "--json", text="old")); op = a["op_id"]
+    else:
+        assert evd(root, "--request-key", "kd", text="old", fault="after_register").returncode == 86
+        op = key_index(root, "kd")["op_id"]
+    p = next(root.glob(f"operations/*/{op}.yaml")); p.write_text(content, encoding="utf-8")      # 竄改
+    before = snapshot(root)
+    for text in ("new", "old"):
+        r = evd(root, "--request-key", "kd", "--json", text=text); o = js(r)
+        assert r.returncode == 1 and o["ok"] is False and o["error_kind"] == "internal", o
+        assert snapshot(root) == before and key_index(root, "kd")["op_id"] == op
+    r = evd(root, "--request-key", "kd", text="new")                                  # 不帶 --json：一般錯誤訊息、沒有 traceback
+    assert r.returncode == 1 and "Traceback" not in r.stderr and snapshot(root) == before
+
 # ---------------------------------------------------------------- 3. 同 key 不同內容 → key_conflict、沒有寫入
 def test_same_key_different_content_conflict_no_write():
     root = U.mkroot()
