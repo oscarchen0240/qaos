@@ -17,14 +17,14 @@ def _spec_ref(loc, quote=""): return {"spec_id": SPEC, "spec_version": VER, "loc
 def _requirement_model():
     req = {"requirement_id": "REQ-OVR-001", "version": 1, "spec_id": SPEC, "spec_version": VER, "type": "functional", "title": "優惠券每人限兌換一次",
            "statement": "同一張優惠券每位會員只能兌換一次", "acceptance_criteria": [
-               {"ac_id": "AC-OVR-001", "given": "會員已兌換過該優惠券", "when": "再次兌換同一張優惠券", "then": "系統拒絕並提示「已兌換」"}],
+               {"ac_id": "AC-OVR-0011", "given": "會員已兌換過該優惠券", "when": "再次兌換同一張優惠券", "then": "系統拒絕並提示「已兌換」"}],
            "spec_reference": _spec_ref("§3.1 R1", "同一張優惠券每位會員只能兌換一次"), "ambiguity": None, "risk": "medium", "status": "DRAFT", "history": []}
     return {"spec_id": SPEC, "spec_version": VER, "requirements": [req], "traceability": [{"requirement_id": req["requirement_id"], "spec_reference": req["spec_reference"]}]}
 
 def _bug_draft(evd):
     return {"draft_id": "BUG-DRAFT-01ARZ3NDEKTSV4RRFFQ69G5OVR", "title": "同一張優惠券可重複兌換", "product": "demo", "functional_area": "OVR",
             "severity_proposed": "major", "priority_proposed": "high", "severity_rationale": "優惠被重複使用", "environment": {"name": "stage"},
-            "spec_id": SPEC, "spec_version": VER, "requirement_id": "REQ-OVR-001", "acceptance_criteria_ids": ["AC-OVR-001"], "preconditions": ["會員已兌換過優惠券"],
+            "spec_id": SPEC, "spec_version": VER, "requirement_id": "REQ-OVR-001", "acceptance_criteria_ids": ["AC-OVR-0011"], "preconditions": ["會員已兌換過優惠券"],
             "reproduction_steps": ["再次兌換同一張優惠券"], "expected_result": "系統拒絕並提示「已兌換」", "expected_result_spec_reference": _spec_ref("§3.1 R1"),
             "actual_result": "第二次兌換同一張優惠券仍回傳兌換成功", "actual_result_evidence_map": [{"claim": "第二次兌換回 redeemed=true", "evidence_id": evd}],
             "evidence_ids": [evd], "impact": "優惠被重複使用", "suspected_area": "coupon api", "ambiguity_suspected": False, "duplicate_candidates": []}

@@ -628,7 +628,7 @@ def test_verify_after_partial_rollback_planned_audit_must_stay_absent():
 T2_T3 = """
 from tools.qaos import engine, store
 from tests import helpers as H
-tcs, _ = H.draft_set(prefix="01CX5ZZKBKACTAV9WEVGEMMVR")
+tcs, _ = H.draft_set(prefix="01CX5ZZKBKACTAV9WEVGEMMVR"); H.legacy_acs(tcs)                  # run 綁 legacy R000
 rmid = store.load("artifacts/requirements/SPEC-AUTH-001/v1.0/requirements.yaml")["source_artifact_id"]
 refs_ = [{{"entity_type": "Requirement", "id": r}} for r in ["REQ-AUTH-001", "REQ-AUTH-002", "REQ-AUTH-003", "REQ-AUTH-004"]]
 did, pd = H.write_artifact("{rid}", "T2", "agent-test-designer", "TestCaseDraft", {{"mode": "spec", "spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "testcases": tcs}}, refs_, {{"type": "RequirementModel", "ids": [rmid]}}, "test-design")

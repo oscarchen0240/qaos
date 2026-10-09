@@ -56,11 +56,11 @@ def _arts(tcs, mode="spec", report_override=None):
 def gate_model(tmp_path_factory):
     """一份含各種特殊狀態 requirement 的 RequirementModel，只讀不改。"""
     _persist_gate_model(tmp=tmp_path_factory.mktemp("gate"), reqs=[
-        _req("REQ-GATE-001", "AC-GATE-001"),
-        _req("REQ-GATE-002", "AC-GATE-002", status="RETIRED"),
-        _req("REQ-GATE-003", "AC-GATE-003", ambiguity={"level": "critical", "description": "未決"}),
-        _req("REQ-GATE-004", "AC-GATE-004", behavior_kind="rejection"),
-        _req("REQ-GATE-005", "AC-GATE-005", rejection_contract={"defined": False, "description": "spec 未定義拒絕行為"}),
+        _req("REQ-GATE-001", "AC-GATE-0011"),
+        _req("REQ-GATE-002", "AC-GATE-0021", status="RETIRED"),
+        _req("REQ-GATE-003", "AC-GATE-0031", ambiguity={"level": "critical", "description": "未決"}),
+        _req("REQ-GATE-004", "AC-GATE-0041", behavior_kind="rejection"),
+        _req("REQ-GATE-005", "AC-GATE-0051", rejection_contract={"defined": False, "description": "spec 未定義拒絕行為"}),
     ])
     yield
     import shutil; shutil.rmtree(store.ROOT / f"artifacts/requirements/{GATE_SPEC}", ignore_errors=True)   # 只清本測試建立的需求模型
@@ -70,31 +70,31 @@ def gate_model(tmp_path_factory):
 
 def test_50_g_design_rejects_tc_referencing_non_active_requirement(gate_model):
     """L62：TC 引用 RETIRED 的 requirement → 擋。"""
-    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000A", "REQ-GATE-002", "AC-GATE-002", ["negative"], ["negative"])]
+    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000A", "REQ-GATE-002", "AC-GATE-0021", ["negative"], ["negative"])]
     issues = gates.g_design(RUN, None, _arts(tcs))
     assert any("非 ACTIVE" in i and "REQ-GATE-002" in i and "RETIRED" in i for i in issues)
 
 
 def test_51_g_design_rejects_tc_for_critical_ambiguity_requirement(gate_model):
     """L64：requirement 有 critical ambiguity 且未被 approval 解決 → 不得為它設計 TC。"""
-    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000B", "REQ-GATE-003", "AC-GATE-003", ["negative"], ["negative"])]
+    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000B", "REQ-GATE-003", "AC-GATE-0031", ["negative"], ["negative"])]
     issues = gates.g_design(RUN, None, _arts(tcs))
     assert any("critical ambiguity" in i and "REQ-GATE-003" in i for i in issues)
 
 
 def test_52_g_design_rejects_change_mode_tc_without_supersedes(gate_model):
     """L73：mode=change 的 TC 既無 supersedes_testcase、source_ref 也不以 new_required 開頭 → 擋。"""
-    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000C", "REQ-GATE-001", "AC-GATE-001", ["negative"], ["negative"], mode="change")]
+    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000C", "REQ-GATE-001", "AC-GATE-0011", ["negative"], ["negative"], mode="change")]
     issues = gates.g_design(RUN, None, _arts(tcs, mode="change"))
     assert any("mode=change 但無 supersedes_testcase" in i for i in issues)
     # 對照：帶 source_ref=new_required:* 的新 TC 可以不 supersede
-    ok = [_gtc("TC-DRAFT-01GATE0000000000000000000D", "REQ-GATE-001", "AC-GATE-001", ["negative"], ["negative"], mode="change", source_ref="new_required:CLR-X")]
+    ok = [_gtc("TC-DRAFT-01GATE0000000000000000000D", "REQ-GATE-001", "AC-GATE-0011", ["negative"], ["negative"], mode="change", source_ref="new_required:CLR-X")]
     assert not any("supersedes_testcase" in i for i in gates.g_design(RUN, None, _arts(ok, mode="change")))
 
 
 def test_53_g_design_rejects_rejection_kind_requirement_without_negative_case(gate_model):
     """L103：behavior_kind=rejection 的 requirement 有 TC，但沒有一條 test_types 含 negative → 擋。"""
-    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000E", "REQ-GATE-004", "AC-GATE-004", ["functional"], ["error_guessing"])]
+    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000E", "REQ-GATE-004", "AC-GATE-0041", ["functional"], ["error_guessing"])]
     issues = gates.g_design(RUN, None, _arts(tcs))
     assert any("rejection 類需求" in i and "REQ-GATE-004" in i for i in issues)
 
@@ -102,17 +102,17 @@ def test_53_g_design_rejects_rejection_kind_requirement_without_negative_case(ga
 def test_54_g_design_rejects_negative_case_written_as_certain_when_rejection_contract_undefined(gate_model):
     """L113：rejection_contract.defined=False 的 requirement，用 negative/error_guessing 寫成確定規則（無 assumptions）→ 擋；
     加上 assumptions（exploratory）後該條不再出現。這條規則正是本專案多次踩過的 exploratory 誤判來源。"""
-    certain = [_gtc("TC-DRAFT-01GATE0000000000000000000F", "REQ-GATE-005", "AC-GATE-005", ["negative"], ["negative"])]
+    certain = [_gtc("TC-DRAFT-01GATE0000000000000000000F", "REQ-GATE-005", "AC-GATE-0051", ["negative"], ["negative"])]
     issues = gates.g_design(RUN, None, _arts(certain))
     assert any("rejection_contract 未定義" in i and "必須是 exploratory" in i for i in issues)
-    exploratory = [_gtc("TC-DRAFT-01GATE0000000000000000000G", "REQ-GATE-005", "AC-GATE-005", ["negative"], ["negative"],
+    exploratory = [_gtc("TC-DRAFT-01GATE0000000000000000000G", "REQ-GATE-005", "AC-GATE-0051", ["negative"], ["negative"],
                         assumptions=[{"text": "拒絕行為待確認", "requirement_id": "REQ-GATE-005", "needs_human_confirmation": True}])]
     assert not any("rejection_contract 未定義" in i for i in gates.g_design(RUN, None, _arts(exploratory)))
 
 
 def test_55_g_design_rejects_draft_with_no_non_happy_case_at_all(gate_model):
     """L117：整份 Draft 全是 happy path（無 negative/boundary/error_guessing）→ 擋。"""
-    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000H", "REQ-GATE-001", "AC-GATE-001", ["functional"], ["requirement_based"])]
+    tcs = [_gtc("TC-DRAFT-01GATE0000000000000000000H", "REQ-GATE-001", "AC-GATE-0011", ["functional"], ["requirement_based"])]
     issues = gates.g_design(RUN, None, _arts(tcs))
     assert any("整份 Draft 沒有任何 negative / boundary / error_guessing 案例" in i for i in issues)
 
@@ -122,26 +122,26 @@ def test_58_g_design_rejects_ac_not_owned_by_tc_requirements(gate_model):
     Validator 對抗性 eval v1 的 E6 揭示：舊規則只驗 AC 存在於全域集合，掛錯 requirement 仍 structural PASS，
     只能靠 LLM Validator 兜底——這是能寫成 deterministic 規則的事。"""
     # 掛 REQ-GATE-001 卻引用屬於 REQ-GATE-004 的 AC → 擋，訊息帶實際 owner
-    wrong = [_gtc("TC-DRAFT-01GATE0000000000000000000I", "REQ-GATE-001", "AC-GATE-004", ["negative"], ["negative"])]
+    wrong = [_gtc("TC-DRAFT-01GATE0000000000000000000I", "REQ-GATE-001", "AC-GATE-0041", ["negative"], ["negative"])]
     issues = gates.g_design(RUN, None, _arts(wrong))
-    assert any("AC-GATE-004" in i and "屬於 REQ-GATE-004" in i and "不在本 TC 的 requirement_ids 內" in i for i in issues)
+    assert any("AC-GATE-0041" in i and "屬於 REQ-GATE-004" in i and "不在本 TC 的 requirement_ids 內" in i for i in issues)
     # 對照 1：正確配對 → 不擋
-    ok = [_gtc("TC-DRAFT-01GATE0000000000000000000J", "REQ-GATE-001", "AC-GATE-001", ["negative"], ["negative"])]
+    ok = [_gtc("TC-DRAFT-01GATE0000000000000000000J", "REQ-GATE-001", "AC-GATE-0011", ["negative"], ["negative"])]
     assert not any("不在本 TC 的 requirement_ids 內" in i for i in gates.g_design(RUN, None, _arts(ok)))
     # 對照 2：合法的跨 requirement TC（掛兩個 req、引用各自的 AC）→ 不擋
-    multi = [_gtc("TC-DRAFT-01GATE0000000000000000000K", "REQ-GATE-001", "AC-GATE-001", ["negative"], ["negative"],
-                  requirement_ids=["REQ-GATE-001", "REQ-GATE-004"], acceptance_criteria_ids=["AC-GATE-001", "AC-GATE-004"])]
+    multi = [_gtc("TC-DRAFT-01GATE0000000000000000000K", "REQ-GATE-001", "AC-GATE-0011", ["negative"], ["negative"],
+                  requirement_ids=["REQ-GATE-001", "REQ-GATE-004"], acceptance_criteria_ids=["AC-GATE-0011", "AC-GATE-0041"])]
     assert not any("不在本 TC 的 requirement_ids 內" in i for i in gates.g_design(RUN, None, _arts(multi)))
     # 對照 3：AC 根本不存在 → 走原本的「不存在」訊息，不誤報歸屬、不 KeyError
-    missing = [_gtc("TC-DRAFT-01GATE0000000000000000000L", "REQ-GATE-001", "AC-GATE-009", ["negative"], ["negative"])]
+    missing = [_gtc("TC-DRAFT-01GATE0000000000000000000L", "REQ-GATE-001", "AC-GATE-0091", ["negative"], ["negative"])]
     issues = gates.g_design(RUN, None, _arts(missing))
-    assert any("引用不存在的 AC AC-GATE-009" in i for i in issues) and not any("不在本 TC 的 requirement_ids 內" in i for i in issues)
+    assert any("引用不存在的 AC AC-GATE-0091" in i for i in issues) and not any("不在本 TC 的 requirement_ids 內" in i for i in issues)
 
 
 def test_59_resolved_assumption_need_not_flag_human_confirmation(gate_model):
     """L75：assumption 未標 needs_human_confirmation: true 會擋；但已由核准解決（resolved_by_approval）者豁免——
     change 模式沿用現行 ACTIVE 版的已核准假設時，不該被迫翻成「需人工確認」造成與 resolved_by_approval 自相矛盾（CLR-012 修訂 TC-054 踩到）。"""
-    def mk(did, assumptions): return _gtc(did, "REQ-GATE-001", "AC-GATE-001", ["negative"], ["negative"], assumptions=assumptions)
+    def mk(did, assumptions): return _gtc(did, "REQ-GATE-001", "AC-GATE-0011", ["negative"], ["negative"], assumptions=assumptions)
     flagged = mk("TC-DRAFT-01GATE59AAAAAAAAAAAAAAAAAA", [{"text": "a", "requirement_id": "REQ-GATE-001", "needs_human_confirmation": False}])
     resolved = mk("TC-DRAFT-01GATE59BBBBBBBBBBBBBBBBBB", [{"text": "a", "requirement_id": "REQ-GATE-001", "needs_human_confirmation": False, "resolved_by_approval": "APR-0007"}])
     explicit = mk("TC-DRAFT-01GATE59CCCCCCCCCCCCCCCCCC", [{"text": "a", "requirement_id": "REQ-GATE-001", "needs_human_confirmation": True}])

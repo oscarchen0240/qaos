@@ -117,7 +117,7 @@ def cia_new(from_rev, reason, ver="1.0"):
     return engine.new_run("spec-change-impact", {"spec_id": SPEC, "from_version": ver, "to_version": ver, "from_revision": from_rev, "reason": reason}, BY, new_request=True)["run_id"]
 def t0(rid, changes, ver="1.0"):
     '''T0 Spec Analyst：重新分析同一版本；changes = {requirement_id: 新 statement}（spec 內容相同、分析結論改變）。'''
-    m = H.requirement_model(ver)
+    m = H.legacy_rm(H.requirement_model(ver), set(rm.ac_history(SPEC)["owners"]))   # 既有 AC 沿用原 ID（legacy R000 為舊 3 位數）
     for r in m["requirements"]:
         if r["requirement_id"] in changes: r["statement"] = changes[r["requirement_id"]]
     ch = next(v for v in store.load(store.spec_dir(SPEC) / "spec.yaml")["versions"] if v["spec_version"] == ver)["content_hash"]
@@ -165,7 +165,7 @@ def impact(rid, cir):
     return cid, engine.evaluate_gate(rid, "T1")
 def design(rid, cid, cir, prefix, it=0, extra=()):
     '''T2 Designer（change）：只重產 affected 的 TC，supersedes 舊 ACTIVE 版本；extra 為 new_required 的新 TC。回傳 (draft artifact, 新稿)。'''
-    base, _ = H.draft_set(prefix=prefix); new = []
+    base, _ = H.draft_set(prefix=prefix); H.legacy_acs(base, set(rm.ac_history(SPEC)["owners"])); new = []
     for i in cir["testcase_impact"]:
         if i["impact"] != "affected": continue
         old = store.load(store.tc_version_path(i["testcase_id"], i["active_version"]))
@@ -288,7 +288,7 @@ print(json.dumps({"bad1": bad1, "bad2": bad2, "ok": ok1["result"], "ok_issues": 
 PLATFORM = """
 from tools.qaos import clarification as clr
 R5 = {"requirement_id": "REQ-AUTH-005", "version": 1, "spec_id": SPEC, "spec_version": "1.0", "type": "functional", "title": "密碼需含英文字母（PM 裁決）",
-      "statement": "密碼必須包含至少一個英文字母", "acceptance_criteria": [{"ac_id": "AC-AUTH-006", "given": "使用者在設定密碼", "when": "輸入只有數字的密碼", "then": "系統拒絕並提示需含英文字母"}],
+      "statement": "密碼必須包含至少一個英文字母", "acceptance_criteria": [{"ac_id": "AC-AUTH-0051", "given": "使用者在設定密碼", "when": "輸入只有數字的密碼", "then": "系統拒絕並提示需含英文字母"}],
       "spec_reference": {"spec_id": SPEC, "spec_version": "1.0", "location": "§3.1 R2", "quote": ""}, "ambiguity": None, "risk": "medium", "status": "DRAFT", "history": []}
 _orig_rm = H.requirement_model
 def rm_with_ruling(ver="1.0", min_len="8"):
@@ -332,7 +332,7 @@ for blk in [viewish["requirement_diff"]] + [g["requirement_diff"] for g in viewi
     blk[:] = [d for d in blk if d["requirement_id"] != "REQ-AUTH-005"]
 _, bad = impact(rid, viewish)
 cid, ok = impact(rid, good)
-nt = H.tc("TC-DRAFT-01DX5ZZKBKACTAV9WEVGEMMVZZ", "只有數字的密碼被拒（PM 裁決）", "REQ-AUTH-005", "AC-AUTH-006", "api", ["negative"], ["negative"],
+nt = H.tc("TC-DRAFT-01DX5ZZKBKACTAV9WEVGEMMVZZ", "只有數字的密碼被拒（PM 裁決）", "REQ-AUTH-005", "AC-AUTH-0051", "api", ["negative"], ["negative"],
           ["輸入長度 10 但只有數字的密碼", "送出"], "系統拒絕，提示需含英文字母", "§3.1 R2", prio="medium", risk="medium", mode="change", source_ref="new_required:REQ-AUTH-005")
 did, new = design(rid, cid, good, "01DX5ZZKBKACTAV9WEVGEMMVR", extra=[nt]); validate(rid, did, rmid); _, g4 = compare(rid, cid, good, new)
 apr = engine.load_run(rid)["waiting_on_approval_id"]; engine.approve(apr, "approve", BY, rationale="套用", new_request=True)
