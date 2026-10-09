@@ -16,5 +16,14 @@
 - Codex 提出的問題須全部修正並再送複審，直到問題清零才可 merge；Oscar 明確決定延後的項目需記錄在交接區，不算未清零
 - 未經 Oscar 確認，不得自行 merge 回 main
 
+## GitLab／GitHub 雙邊同步
+- GitLab（remote `origin`，公司）與 GitHub（remote `github`，個人）必須保持同一版：功能分支兩邊都 push，GitLab 開 MR（`glab`）的同時也在 GitHub 開 PR（`gh pr create -R oscarchen0240/qaos`），兩邊用同一份說明
+- 必須在 merge 之前開 PR；GitLab 先 merge 後，GitHub 就無法再開 PR，紀錄會缺漏
+- CI 只在 GitHub Actions 執行（GitLab CI/CD 未開放）；merge 前確認 GitHub PR 的 CI 綠燈
+- merge 前先 `git fetch origin`，確認 `origin/main` 是分支的祖先；main 已前進時，先 rebase 或合併最新 main、重跑測試，再請 Oscar 確認，fetch 與 merge 不可寫在同一個指令裡
+- 在 GitLab merge MR 後，立即 `git push github origin/main:refs/heads/main` 同步 GitHub main（PR 會自動變成 MERGED），並確認 main 的 CI 結果
+- 避開 21:00～21:30（每晚資料 push 排程）；QAOS 資料 commit 直接在本機 main，由排程同時推兩邊，不開 MR／PR
+- 交辦給其他 session 的 prompt 必須寫明「GitLab MR 與 GitHub PR 都要開」
+
 ## 注意事項
 - 本專案避免用 Codex Desktop 匯入 Claude 對話；若有匯入，事後檢查 `git status` 與 `.codex/`、`AGENTS.md` 是否被重新產生或覆寫
