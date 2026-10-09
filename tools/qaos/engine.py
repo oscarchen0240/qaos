@@ -896,7 +896,9 @@ def _after_ambiguity(run, task, apr, decision, by):
     if decision in ("approve", "override") and apr.get("requirement_model_revision"):
         # 第 6 章 §3.4：核准不再 apply 任何 CLR（新舊資料皆同；ADR-010 取消 ADR-008 Decision 3）；文件索取單套用 waive_missing 後做最後判定（A8、A9）
         _apply_waivers(apr, by)
-    if run["workflow_id"] == "spec-to-bug":
+    # spec-to-bug 有兩種 RESOLVE_AMBIGUITY：Bug Validator 判定的（T2，bug entity 已存在）走 bug 路徑；
+    # T0（Spec Analyst、G-SPEC）分析層的發生在 Bug Analyst 之前，還沒有 bug entity，和 spec 類流程一樣重開 T0（第 6 章 §3.4）
+    if run["workflow_id"] == "spec-to-bug" and task.get("agent_id") == "agent-bug-validator":
         if decision == "reject":
             _bug_entity_transition(run, "REJECTED", apr["approval_id"], by=by)
             for t in run["tasks"]:
