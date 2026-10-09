@@ -15,6 +15,11 @@ import os
 import sys
 import time
 
+try:
+    import fcntl
+except ImportError:      # 非 POSIX：沒有 flock
+    fcntl = None
+
 from _hostenv import project_dir
 
 MAX_LINES_SCAN = 500
@@ -39,20 +44,20 @@ def _read(path):
 
 
 def _append_consumed(path, recs):
-    """append consumed。檔尾沒有換行（上一個 writer 寫到一半失敗的殘行，或只差換行的完整 JSON）時，在同一次 append 前面加一個換行，
-    consumed 才不會黏在別人那一行後面、兩筆都讀不出來。只 append，不改寫既有位元組。"""
+    """append consumed，與後端 qaos_exec._locked_append 是同一套協議：
+    先對檔案取 flock(LOCK_EX)，取得鎖之後才讀最後一個位元組；不是換行（別的 writer 寫到一半失敗留下的殘行，或只差換行的完整 JSON）
+    就在同一次 write 前面加一個換行，consumed 才不會黏在別人那一行後面。只 append、不改寫既有位元組，flush 後解鎖。"""
     data = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in recs).encode("utf-8")
-    try:
-        with open(path, "rb") as f:
-            size = f.seek(0, os.SEEK_END)
-            if size:
-                f.seek(size - 1)
-                if f.read(1) != b"\n":
-                    data = b"\n" + data
-    except OSError:
-        pass
-    with open(path, "ab") as f:
+    with open(path, "a+b") as f:
+        if fcntl is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        size = f.seek(0, os.SEEK_END)
+        if size:
+            f.seek(size - 1)
+            if f.read(1) != b"\n":
+                data = b"\n" + data
         f.write(data)
+        f.flush()
 
 
 def _run_state(project, run_id):

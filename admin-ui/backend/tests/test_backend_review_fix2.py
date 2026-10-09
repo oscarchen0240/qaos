@@ -965,3 +965,72 @@ def test_b2_03_backend_retry_after_relay_consumed_an_older_handoff_keeps_the_con
     assert res["ok"] and res["completed_pending"] and len(fake_qaos["calls"]) == 1
     assert "old" in _consumed_ids(sandbox) and qe.handoff_recorded(res["handoff_id"])
     qe.HANDOFF_FILE.read_text(encoding="utf-8")                                                        # 仍可嚴格解碼
+
+
+# ================================================================ 第 06 輪複審：兩個 writer 共用 flock，「檢查尾端」與「append」不再被插隊
+def _relay_popen(qaos_root, event="UserPromptSubmit", sid="sess-A"):
+    import os, subprocess, sys
+    from .conftest import HOOKS_DIR
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(qaos_root)}
+    p = subprocess.Popen([sys.executable, str(HOOKS_DIR / "handoff_relay.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    p.stdin.write(json.dumps({"hook_event_name": event, "session_id": sid}))
+    p.stdin.close()                    # 先送完 EOF：relay 若還沒結束，就只可能是卡在鎖上（不是在等 stdin）
+    return p
+
+
+def test_b2_03_relay_waits_for_the_writer_lock_so_a_writer_failing_mid_append_cannot_swallow_its_consumed(sandbox, write_run, write_handoff):
+    """第 06 輪的情境：relay 讀尾端時一切正常，另一個 writer 在 relay 實際 append 之前寫到一半失敗留下殘行。
+    有 flock：relay 要等 writer 放掉鎖才會「讀尾端並 append」，所以一定看得到殘行並補換行；舊版（先檢查後寫入、無鎖）consumed 會黏在殘行後面。"""
+    import fcntl, time
+    write_run("RUN-B", "COMPLETED", "T5", [("T5", "DONE", "agent-supervisor")])
+    write_handoff("old", "sess-A", "RUN-B", run_status_after="COMPLETED", handoff_kind="notify_only")
+    with open(sandbox.qaos_exec.HANDOFF_FILE, "a+b") as w:
+        fcntl.flock(w.fileno(), fcntl.LOCK_EX)                    # 這個測試扮演「正在寫、之後失敗」的 writer
+        proc = _relay_popen(sandbox.root)
+        time.sleep(1.0)
+        assert proc.poll() is None, "relay 沒有等寫入鎖"           # 沒有鎖的話 relay 早就結束了（失敗方向安全）
+        w.write(b'{"kind":"handoff","id":"half')                  # 寫到一半失敗，殘行沒有換行
+        w.flush()
+    out = proc.stdout.read(); proc.wait(timeout=20)
+    assert proc.returncode == 0 and "APR-0001" in out
+    assert "old" in _consumed_ids(sandbox)
+    assert sandbox.qaos_exec.handoff_tail()[0]["consumed"] is True
+    assert sandbox.qaos_exec.HANDOFF_FILE.read_bytes().count(b"half") == 1
+
+
+def test_b2_03_backend_append_takes_the_exclusive_lock_before_it_reads_the_tail_or_writes(sandbox, monkeypatch):
+    qe = sandbox.qaos_exec
+    qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"a","ts":"t"}\n', encoding="utf-8")
+    seen = []
+    real = qe.fcntl.flock
+
+    def spy(fd, op):
+        seen.append((op, qe.HANDOFF_FILE.stat().st_size))          # 取鎖當下檔案還沒被這次 append 改過
+        return real(fd, op)
+    monkeypatch.setattr(qe.fcntl, "flock", spy)
+    size_before = qe.HANDOFF_FILE.stat().st_size
+    qe._append_handoff({"kind": "handoff", "id": "b", "ts": "t"})
+    assert seen == [(qe.fcntl.LOCK_EX, size_before)]
+    qe._ensure_line_boundary()                                     # 尾端正常：不寫入，但同樣先取鎖
+    assert len(seen) == 2 and qe.HANDOFF_FILE.read_bytes().endswith(b"\n")
+
+
+def test_b2_03_backend_waits_for_a_lock_held_by_another_writer(sandbox):
+    """反方向：別的 writer（例如 relay）持鎖時，後端不能插進去；放鎖後才 append，且看得到對方留下的殘行並補換行。"""
+    import fcntl, threading, time
+    qe = sandbox.qaos_exec
+    qe.HANDOFF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    qe.HANDOFF_FILE.write_text('{"kind":"handoff","id":"a","ts":"t"}\n', encoding="utf-8")
+    done = threading.Event()
+    with open(qe.HANDOFF_FILE, "a+b") as other:
+        fcntl.flock(other.fileno(), fcntl.LOCK_EX)
+        t = threading.Thread(target=lambda: (qe._append_handoff({"kind": "handoff", "id": "b", "ts": "t"}), done.set()))
+        t.start()
+        assert not done.wait(1.0), "後端沒有等鎖"
+        other.write(b'{"kind":"consumed","handoff_id":"a')          # 對方寫到一半失敗
+        other.flush()
+    t.join(10)
+    assert done.is_set() and qe.handoff_recorded("a") and qe.handoff_recorded("b")
+    lines = qe.HANDOFF_FILE.read_bytes().splitlines()
+    assert lines[1] == b'{"kind":"consumed","handoff_id":"a' and json.loads(lines[2])["id"] == "b"      # 殘行自成一行，新紀錄在它後面

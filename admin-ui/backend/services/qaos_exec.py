@@ -19,6 +19,11 @@ import sqlite3
 import subprocess
 import threading
 
+try:
+    import fcntl
+except ImportError:      # 非 POSIX：沒有 flock
+    fcntl = None
+
 from .. import db
 from ..config import PROJECT_ROOT, WARROOM_DIR
 from . import runs as run_svc
@@ -181,38 +186,39 @@ def _owner_session(run_id: str | None) -> str | None:
         return None
 
 
-def _tail_lacks_newline() -> bool:
-    if not HANDOFF_FILE.exists():
-        return False
-    with open(HANDOFF_FILE, "rb") as f:
+def _locked_append(data: bytes):
+    """handoff.jsonl 的共同 append 協議（relay 的 _append_consumed 是同一套）：
+    1) 對檔案取 flock(LOCK_EX)——「讀尾端、補行界線、append」整段在同一把鎖內，另一個 writer 不能在檢查與寫入之間插進來
+       （過期的尾端檢查會讓前一個 writer 寫到一半失敗留下的殘行被黏上新紀錄）；
+    2) 取得鎖之後才讀最後一個位元組，不是換行就在同一次 write 前面加一個換行；
+    3) 只 append、不改寫既有位元組；flush 後才解鎖（關閉檔案）。
+    reader 不取鎖（逐行容錯）。沒有 fcntl 的平台退化成沒有鎖。"""
+    with open(HANDOFF_FILE, "a+b") as f:
+        if fcntl is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         size = f.seek(0, os.SEEK_END)
-        if size == 0:
-            return False
-        f.seek(size - 1)
-        return f.read(1) != b"\n"
+        prefix = b""
+        if size:
+            f.seek(size - 1)
+            if f.read(1) != b"\n":
+                prefix = b"\n"
+        if prefix or data:
+            f.write(prefix + data)       # a+ 模式的寫入一律在檔尾
+            f.flush()
 
 
 def _append_handoff(rec: dict):
-    """append-only 寫一行 JSON。
-
-    - 一律 ensure_ascii：中文等非 ASCII 字元存成 \\uXXXX。這樣就算寫到一半失敗，留下的殘行也只會是純 ASCII 的殘缺 JSON，
-      不會切在多位元組字元中間而變成非法 UTF-8（那會讓嚴格解碼整檔的 reader——例如 relay hook——整檔讀不出來）。
-    - 上一次若留下沒有換行的殘行，在『同一次 append』前面加一個換行，讓新紀錄獨立成行；多寫一個空行無害（reader 會略過空行），
-      而且這個檔案還有 relay 在 append consumed：不截斷、不改寫既有位元組，才不會吃掉別的 writer 剛寫入的紀錄。"""
+    """append-only 寫一行 JSON。一律 ensure_ascii：中文等存成 \\uXXXX，寫到一半失敗留下的殘行只會是純 ASCII 的殘缺 JSON，
+    不會切在多位元組字元中間而變成非法 UTF-8。行界線與排他見 _locked_append。"""
     WARROOM_DIR.mkdir(parents=True, exist_ok=True)
-    data = (json.dumps(rec, ensure_ascii=True) + "\n").encode("ascii")
-    if _tail_lacks_newline():
-        data = b"\n" + data
-    with open(HANDOFF_FILE, "ab") as f:
-        f.write(data)
+    _locked_append((json.dumps(rec, ensure_ascii=True) + "\n").encode("ascii"))
 
 
 def _ensure_line_boundary():
     """同 ID 的交接已經在檔案裡、不需要再寫時，仍要確保尾端有行界線（上一次可能是完整 JSON 但沒寫到換行）：
     否則 relay 之後 append 的 consumed 會黏在同一行，兩筆都讀不出來。"""
-    if _tail_lacks_newline():
-        with open(HANDOFF_FILE, "ab") as f:
-            f.write(b"\n")
+    if HANDOFF_FILE.exists():
+        _locked_append(b"")
 
 
 def _handoff_records() -> list[dict]:
