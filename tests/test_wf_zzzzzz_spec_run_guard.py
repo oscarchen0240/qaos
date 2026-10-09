@@ -106,9 +106,45 @@ print(json.dumps([t1["status"], t1["iteration"], rid2, d1, d2[0]]))""")
     assert d1[0] == "refused" and rid2 in d1[1] and "分析還沒落地" in d1[1]
     assert d2 == "ok"
 
-def test_function_level_unlanded_rules():
-    """函式層：分析 task 依 agent 與 gate 認定，不寫死 task_id。"""
-    from tools.qaos import engine
-    assert engine.analysis_task({"tasks": [{"task_id": "T0", "agent_id": "agent-spec-analyst", "gate": "G-SPEC"}]})["task_id"] == "T0"
-    assert engine.analysis_task({"tasks": [{"task_id": "T1", "agent_id": "agent-bug-analyst", "gate": "G-BVAL"}]}) is None
-    assert engine._is_analysis("agent-spec-analyst", "G-SPEC") and not engine._is_analysis("agent-spec-analyst", "G-DESIGN")
+def test_reopened_run_dispatched_first_blocks_the_other():
+    """反向：rid1 重開後先派發，READY 未派發的 rid2 派發被拒；兩個 READY 的 run 都還沒落地時，第三個 run new 也被擋。"""
+    root = root_with_auth()
+    out = py(root, """
+rid1 = F.new_run(); F.analyze(rid1, crit=True); apr = engine.load_run(rid1)["waiting_on_approval_id"]
+rid2 = F.new_run()                                                             # READY，未派發
+engine.approve(apr, "reject", F.BY, rationale="重新分析", new_request=True)    # rid1 的 T1 重開（READY，未派發）
+r3 = tryit(F.new_run)                                                          # rid1、rid2 都還沒落地
+d1 = tryit(lambda: dispatch.dispatch(rid1, "T1", by=F.BY, new_request=True)["path"])
+d2 = tryit(lambda: dispatch.dispatch(rid2, "T1", by=F.BY, new_request=True)["path"])
+print(json.dumps([rid1, rid2, r3, d1[0], d2]))""")
+    rid1, rid2, r3, d1, d2 = out
+    assert r3[0] == "refused" and rid1 in r3[1] and rid2 in r3[1]
+    assert d1 == "ok" and d2[0] == "refused" and rid1 in d2[1]
+
+def test_gate_failed_analysis_keeps_blocking():
+    """已派發的分析 G-SPEC 失敗後回到 READY（同一 iteration、仍有派發紀錄），仍然沒有落地：繼續擋 run new 與其他 run 的派發。"""
+    root = root_with_auth()
+    out = py(root, """
+rid1 = F.new_run()
+refs_ = [{"entity_type": "SpecVersion", "id": F.SPEC, "version": F.VER}]
+sa = {"spec_id": F.SPEC, "spec_version": F.VER, "content_hash": "0" * 64, "summary": "s", "scope": {"in_scope": ["x"], "out_of_scope": []},
+      "requirement_ids": ["REQ-AUTH-001", "REQ-AUTH-002", "REQ-AUTH-003", "REQ-AUTH-004"], "ambiguities": [], "constraints": [], "edge_case_candidates": [], "open_questions": []}
+_, p1 = H.write_artifact(rid1, "T1", "agent-spec-analyst", "SpecAnalysis", sa, refs_, {"type": "SpecVersion", "ids": [f"{F.SPEC}@{F.VER}"]}, "spec-analysis")
+_, p2 = H.write_artifact(rid1, "T1", "agent-spec-analyst", "RequirementModel", H.requirement_model(), refs_, {"type": "SpecVersion", "ids": [f"{F.SPEC}@{F.VER}"]}, "requirements")
+engine.submit(rid1, "T1", str(p1)); engine.submit(rid1, "T1", str(p2))
+g = tryit(lambda: engine.evaluate_gate(rid1, "T1", new_request=True)["result"])  # content_hash 不符 → G-SPEC FAIL
+t1 = engine.load_run(rid1)["tasks"][0]
+r2 = tryit(F.new_run)
+print(json.dumps([g, t1["status"], t1["iteration"], bool(dispatch.current_entry(t1)), r2[0]]))""")
+    g, st, it, dispatched, r2 = out
+    assert g == ["ok", "FAIL"] and st != "DONE" and it == 0 and dispatched and r2 == "refused"
+
+def test_broken_run_file_of_other_spec_does_not_block(tmp_path):
+    """其他 spec 的殘缺 run.yaml 不影響；同一 spec 的 run.yaml 缺 tasks 時明確指出是哪個檔。"""
+    root = root_with_auth()
+    d = root / "runs" / "RUN-20200101-001"; d.mkdir(parents=True)
+    (d / "run.yaml").write_text("run_id: RUN-20200101-001\nstatus: RUNNING\ninput: {spec_id: SPEC-OTHER-001}\n", encoding="utf-8")
+    assert py(root, "print(json.dumps(tryit(F.new_run)[0]))") == "ok"
+    (d / "run.yaml").write_text("run_id: RUN-20200101-001\nstatus: RUNNING\ninput: {spec_id: SPEC-AUTH-001}\n", encoding="utf-8")
+    r = py(root, "print(json.dumps(tryit(F.new_run)))")
+    assert r[0] == "refused" and "runs/RUN-20200101-001/run.yaml 缺 tasks" in r[1]

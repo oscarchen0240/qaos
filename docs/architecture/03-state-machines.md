@@ -105,7 +105,7 @@ Task 狀態：`PENDING → READY → RUNNING → ARTIFACT_INVALID | GATE_FAILED 
 - `run new`：新 run 會執行需求分析（依 `_skip_decision`，與 Task Graph 展開時的判斷相同）時，同一 `spec_id`（不分版本）不得有「分析還沒落地」的進行中 run，也就是 run 不在終止狀態、分析 task 也不在終止狀態。
 - `dispatch`：派發分析 task 時，同一 `spec_id` 不得有另一個 run 的分析在本 iteration 已派發、還沒落地。這涵蓋已落地的 run 被退回重開分析的情況：先派發的先落地，READY 但還沒派發的 run 不互相阻擋。
 - 已落地（分析 task DONE）而在等人工的 run 不擋：它恢復時讀自己綁定的 revision（需求 A AC-09-2、09-3）。分析被略過的 run（DONE 且沒有產出）不擋，也不被擋。testcase-revision、manual-test-to-regression、regression-generation 沒有分析 task，不受影響。
-- 不提供強制放行：被擋下時，等占用的 run 落地，或以 `bin/qaos run cancel <run_id>` 取消。
+- 不提供強制放行：被擋下時，等占用的 run 落地，或以 `bin/qaos run cancel <run_id> --by <你>` 取消。
 
 ## 5. Artifact
 
