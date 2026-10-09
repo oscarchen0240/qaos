@@ -21,7 +21,7 @@ def bug_run():
 def bug_draft(rid, evd, srcs=None, drefs=None):
     d = {"draft_id": "BUG-DRAFT-01ARZ3NDEKTSV4RRFFQ69G5FAV", "title": "站長可以刪除自己站台的子站台", "product": "demo", "functional_area": "DEMO",
          "severity_proposed": "major", "priority_proposed": "high", "severity_rationale": "違反刪除規則", "environment": {"name": "stage"},
-         "spec_id": F.SPEC, "spec_version": F.VER, "requirement_id": "REQ-DEMO-001", "acceptance_criteria_ids": ["AC-DEMO-001"], "preconditions": ["以站長登入"],
+         "spec_id": F.SPEC, "spec_version": F.VER, "requirement_id": "REQ-DEMO-001", "acceptance_criteria_ids": ["AC-DEMO-0011"], "preconditions": ["以站長登入"],
          "reproduction_steps": ["進入站台列表", "刪除子站台"], "expected_result": "系統拒絕刪除", "expected_result_spec_reference": {"spec_id": F.SPEC, "spec_version": F.VER, "location": "§刪除規則"},
          "actual_result": "子站台被刪除", "actual_result_evidence_map": [{"claim": "回 deleted=true", "evidence_id": evd}], "evidence_ids": [evd], "impact": "資料遺失",
          "suspected_area": "site api", "ambiguity_suspected": False, "duplicate_candidates": []}

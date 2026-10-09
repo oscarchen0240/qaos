@@ -76,6 +76,7 @@ def cmd_validate(a):
     print(f"VALID ({rel})")
 
 def cmd_id(a):
+    if a.kind == "AC": raise ValueError(ids.AC_REJECTED)   # 進入操作前就拒絕，不留下操作紀錄
     new_id = ids.alloc_cmd(a.kind, a.area, **_nr(a))
     if _replayed():    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
         op = operation.LAST_OUTCOME["op_id"]; operation.LAST_OUTCOME.clear()

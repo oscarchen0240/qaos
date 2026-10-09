@@ -422,6 +422,10 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
     if missing: raise EngineError(f"尚缺 VALID artifact：{missing}")
     gate = task.get("gate")
     issues = gates.GATES[gate](run, task, arts) if gate else []
+    notes = gates.advisories(gate, run, task, arts) if gate and not issues else []
+    if notes:   # 不擋流程的提示（D3）：放在 structural 結果之前，讓最後一筆仍是本次 gate 的判定
+        task.setdefault("gate_results", []).append({"at": store.now(), "layer": "advisory", "result": "WARN", "details": notes[:20]})
+        store.audit(run_id, SYSTEM, "GATE_ADVISORY", f"{gate}: " + "; ".join(notes)[:300])
     task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL" if issues else "PASS", "details": issues[:20] or [f"{gate} structural PASS"]})
     if issues:
         store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫

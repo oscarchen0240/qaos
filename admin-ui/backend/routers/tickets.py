@@ -23,7 +23,10 @@ class DraftIn(BaseModel):
 
     def save(self, ticket_id: str, kind: str) -> dict:
         per = {k: v.model_dump(exclude_none=True) for k, v in self.per_item.items()} if self.per_item is not None else None
-        return svc.save_draft(ticket_id, kind, self.decision, self.option, self.rationale, per, self.extra)
+        try:
+            return svc.save_draft(ticket_id, kind, self.decision, self.option, self.rationale, per, self.extra)
+        except svc.DraftLocked as e:
+            raise HTTPException(409, str(e))
 
 
 class SentIn(BaseModel):
