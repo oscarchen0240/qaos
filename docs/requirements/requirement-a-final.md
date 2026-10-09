@@ -1578,7 +1578,8 @@ QAOS 的每一個會寫入 repo 的操作，都必須：
          （例如 document_pin、landed_in、resolution、decision、resolutions、per_item、
           impact_reviewed 的 sha256、reason 的 sha256 …）,
  inputs: {artifact_sha256s[]（排序）, dispatch_packet_sha256?},
- new_request_token?: 只有使用者明示 --new-request 時才存在（uuid）}
+ new_request_token?: 只有使用者明示 --new-request 時才存在（uuid）,
+ request_key?: 呼叫端明示 --request-key 時才存在（ADR-011；和 new_request_token 互斥）}
 ```
 
 - `op_id = sha256(canonical JSON)`。canonical JSON：鍵依字典序、不含空白、UTF-8（和 issue key 相同的規則）。
@@ -1593,11 +1594,13 @@ QAOS 的每一個會寫入 repo 的操作，都必須：
 | 同一請求重送，計畫已是終態（`aborted_for_rollback`、`rolled_back`） | 拒絕；提示要重做必須以 `--new-request` 建立新 op |
 | 刻意再發一次相同內容的請求 | 必須加 `--new-request`：產生新 token → 新 op_id；之後仍要通過該動作本身的狀態檢查 |
 | `--new-request` 之後要續做 | 用 `operation resume <op_id>`（token 只在第一次發出時產生） |
+| 呼叫端有穩定的請求身分（ADR-011） | 加 `--request-key <key>`：同 key 同內容 → 同一 op（已完成回報、未完成續做，不被第 3b 步擋下）；同 key 不同內容 → 拒絕（`key_conflict`）；不同 key 同內容 → 不同 op。key 索引在 `operations/_global/request_keys.d/` |
 
 #### 3.3 CLI
 
 - `bin/qaos operation list`：唯讀，不取鎖；直接讀 `index.d`、`status.d` 列出所有計畫與狀態（含未完成計畫），並回報終態不一致（§6.1）。
 - `bin/qaos operation resume <op_id>`：寫入入口；取得鎖後依 §6 的判斷順序，只能進入第 2 步的續做驗證。
+- 寫入指令的 `--json`（ADR-011）：stdout 只輸出一個 JSON 物件（成功：`outcome`、`op_id`、`ids`、`result`；失敗：`error_kind`、`incomplete_ops`），其他訊息改到 stderr。`completed` 回放的是當時存下的結果，不是實體目前的狀態。
 - 各寫入指令的 `--new-request` 旗標。
 - 沒有 `operation break-lock`：flock 沒有殘留鎖，不需要斷鎖（§4.2）。
 
@@ -1758,7 +1761,7 @@ require_context(ctx):
 
 | 入口 | 目標計畫 |
 |---|---|
-| 一般寫入指令 | 由 CanonicalRequest 計算 op_id（帶 `--new-request` 時產生新 op） |
+| 一般寫入指令 | 由 CanonicalRequest 計算 op_id（帶 `--new-request` 時產生新 op；帶 `--request-key` 時 key 是請求的一部分，並先核對 key 索引：已綁定其他 op → 拒絕，ADR-011） |
 | `operation resume <op>` | 指定的 op；這個 op 不存在 → 拒絕 |
 
 #### 6.4 第 2 步：目標計畫已存在

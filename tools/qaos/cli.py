@@ -1,9 +1,9 @@
 """qaos CLI。用法：python3 -m tools.qaos <command> ...  （或 bin/qaos）
 
 寫入指令一律經過 executor（tools/qaos/operation.py）：取得 flock、產生操作計畫、依序寫入；同一請求重送會續做或回報已完成，
-要刻意再執行一次相同內容的請求請加 --new-request。唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，
-也不保證跨檔一致的快照。"""
-import argparse, json, sys, pathlib
+要刻意再執行一次相同內容的請求請加 --new-request。呼叫端可用 --request-key 給穩定的請求身分、--json 取得機器可讀的結果（ADR-011）。
+唯讀指令（list、show、trace、approvals、--stdout 版 export、operation list）不取鎖，也不保證跨檔一致的快照。"""
+import argparse, contextlib, json, re, sys, pathlib
 from . import store, schema, ids, engine, trace, operation, spec_ops, rm, dispatch, clr_lifecycle, clarification as clr, bugindex, approval_render, tc_export, bug_lifecycle, req_export, tc_ops, final_export, state
 from .engine import EngineError
 from .state import TransitionError
@@ -15,7 +15,9 @@ def _print(obj):
     else: print(obj)
 
 def _nr(a) -> dict:
-    return {"new_request": bool(getattr(a, "new_request", False))}
+    out = {"new_request": bool(getattr(a, "new_request", False))}
+    if getattr(a, "request_key", None) is not None: out["request_key"] = a.request_key
+    return out
 
 def _replayed() -> bool:
     """最近一次寫入是「同一請求重送且已完成」：executor 回傳的是當時存下的結果，不是重新執行的結果。"""
@@ -24,7 +26,8 @@ def _replayed() -> bool:
 def _notice():
     o = operation.LAST_OUTCOME
     if o.get("kind") == "completed":
-        print(f"（這是先前已完成的同一請求 op={o['op_id'][:12]}…，沒有再次寫入；要再執行一次請加 --new-request）", file=sys.stderr)
+        how = "換一個新的 --request-key" if o.get("request_key") else "加 --new-request"
+        print(f"（這是先前已完成的同一請求 op={o['op_id'][:12]}…，沒有再次寫入；要再執行一次請{how}）", file=sys.stderr)
     elif o.get("kind") == "resumed":
         print(f"（已續做未完成的計畫 op={o['op_id'][:12]}…）", file=sys.stderr)
 
@@ -78,8 +81,9 @@ def cmd_validate(a):
 def cmd_id(a):
     new_id = ids.alloc_cmd(a.kind, a.area, **_nr(a))
     if _replayed():    # 同一請求已完成：舊 ID 不印到 stdout，避免被當成新 ID 使用
-        op = operation.LAST_OUTCOME["op_id"]; operation.LAST_OUTCOME.clear()
-        sys.exit(f"qaos: 這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請加 --new-request")
+        op, key = operation.LAST_OUTCOME["op_id"], operation.LAST_OUTCOME.get("request_key"); operation.LAST_OUTCOME.clear()
+        how = "換一個新的 --request-key" if key else "加 --new-request"
+        raise operation.Refused(f"這是先前已完成的同一請求 op={op[:12]}…，當時配發的 {new_id} 已經用過，不是新的 ID；要再配發一個新的 ID 請{how}")
     print(new_id)
 
 def cmd_run_new(a):
@@ -298,7 +302,12 @@ def cmd_audit_render(a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="qaos", description="QAOS Deterministic Runtime"); sp = ap.add_subparsers(dest="cmd", required=True)
-    W = argparse.ArgumentParser(add_help=False); W.add_argument("--new-request", action="store_true", help="刻意再執行一次相同內容的請求（產生新的 op）")
+    W = argparse.ArgumentParser(add_help=False); WG = W.add_mutually_exclusive_group()
+    WG.add_argument("--new-request", action="store_true", help="刻意再執行一次相同內容的請求（產生新的 op）")
+    WG.add_argument("--request-key", metavar="KEY", help="穩定的請求身分（1～128 個 A-Z a-z 0-9 : . _ / -）：同 key 同內容重送 → 回報已完成或續做；"
+                    "同 key 不同內容 → 拒絕（ADR-011）")
+    W.add_argument("--json", action="store_true", help="stdout 只輸出一個 JSON 物件（ok、outcome、op_id、ids、result 或 error_kind），其他訊息改到 stderr。"
+                   "outcome=completed 時 result 是當時存下的結果，不是實體目前的狀態（ADR-011）")
     p = sp.add_parser("validate"); p.add_argument("file"); p.add_argument("--schema"); p.set_defaults(f=cmd_validate)
     p = sp.add_parser("id", parents=[W]); p.add_argument("kind"); p.add_argument("--area"); p.set_defaults(f=cmd_id)
     r = sp.add_parser("run"); rs = r.add_subparsers(dest="sub", required=True)
@@ -420,11 +429,65 @@ def main(argv=None):
     p = aus.add_parser("render", parents=[W], help="重建 audit.log（<run_id>；不給或 --global 為全域 runs/_audit.log）")
     p.add_argument("target", nargs="?", metavar="RUN_ID"); p.add_argument("--global", dest="global_", action="store_true"); p.set_defaults(f=cmd_audit_render)
     a = ap.parse_args(argv)
+    if getattr(a, "json", False): return _main_json(a)
     try:
         try: a.f(a)
         except SystemExit: _notice(); raise     # gate FAIL 等以非零結束的指令，也要提示「先前已完成」
         _notice()
     except (EngineError, TransitionError, FileNotFoundError, ValueError, operation.OperationError, store.NoExecutorContext) as e:
         sys.exit(f"qaos: {e}")
+
+# ---------------------------------------------------------------- --json（ADR-011）
+ID_NAMES = {"EVD": "evidence_id", "EXE": "execution_id", "RUN": "run_id", "APR": "approval_id", "BUG": "bug_id", "CLR": "clarification_id",
+            "TC": "testcase_id", "REQ": "requirement_id", "AC": "acceptance_criteria_id", "MAN": "manual_record_id"}
+
+def _ids(allocated: list[str]) -> dict:
+    """本 op 配發的 ID（計畫的 allocated_ids）依種類命名；同一種類配發多個時不放進 ids，只在 allocated_ids 中列出。"""
+    by = {}
+    for x in allocated:
+        name = ID_NAMES.get(x.split("-", 1)[0])
+        if name: by.setdefault(name, []).append(x)
+    return {k: v[0] for k, v in by.items() if len(v) == 1}
+
+def _error_kind(e: BaseException) -> str:
+    if isinstance(e, operation.KeyConflict): return "key_conflict"
+    if isinstance(e, operation.IncompletePlan): return "incomplete_plan"
+    if isinstance(e, operation.InMaintenance): return "maintenance"
+    if isinstance(e, operation.LockHeld): return "locked"
+    if isinstance(e, (ValueError, FileNotFoundError)): return "validation"
+    if isinstance(e, (operation.Refused, EngineError, TransitionError)): return "refused"
+    return "internal"      # 證據衝突、executor context 失效、未預期的例外：結果不明，需人工確認
+
+def _emit(obj: dict, out):
+    out.write(json.dumps(obj, ensure_ascii=False, default=str) + "\n"); out.flush()
+
+def _main_json(a):
+    """stdout 只輸出一個 JSON 物件；給人看的輸出（含提示）一律改到 stderr。結束碼和不帶 --json 時相同。"""
+    out = sys.stdout
+    if getattr(a, "stdout", False) or (getattr(a, "cmd", None) == "migrate" and getattr(a, "action", None) == "verify"):
+        _emit({"ok": False, "error_kind": "validation", "message": "--json 只用於寫入指令（--stdout 版 export、migrate verify 是唯讀）", "incomplete_ops": []}, out); sys.exit(2)
+    code, err = 0, None
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
+            try: a.f(a)
+            except SystemExit as e:
+                _notice()
+                if isinstance(e.code, str): err = ("validation", e.code)     # 指令層的輸入檢查（例如缺 --file／--inline）
+                else: code = e.code or 0
+            else: _notice()
+        except (EngineError, TransitionError, FileNotFoundError, ValueError, operation.OperationError, store.NoExecutorContext) as e:
+            err = (_error_kind(e), str(e)); code = 1
+            if isinstance(e, operation.IncompletePlan): err += (e.ops,)
+        except Exception as e:                                       # 未預期的例外：仍輸出 JSON，結果不明
+            err = ("internal", f"{type(e).__name__}: {e}"); code = 1
+    if err is not None:
+        kind, msg, *ops = err
+        _emit({"ok": False, "error_kind": kind, "message": re.sub(r"^qaos: ", "", msg), "incomplete_ops": ops[0] if ops else []}, out)
+        sys.exit(code or 1)
+    o = dict(operation.LAST_OUTCOME)
+    _emit({"ok": True, "outcome": o.get("kind"), "op_id": o.get("op_id"), "action": o.get("action"), "request_key": o.get("request_key"),
+           "ids": _ids(o.get("allocated_ids") or []), "allocated_ids": o.get("allocated_ids") or [], "result": o.get("result"),
+           **({"exit_code": code} if code else {})}, out)
+    if code: sys.exit(code)
 
 if __name__ == "__main__": main()
