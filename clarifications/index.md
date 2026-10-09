@@ -55,7 +55,7 @@
 | [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ |  |
 | [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
 | [CLR-DAILYREPORT-013](ba-admin/DAILYREPORT/CLR-DAILYREPORT-013.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表對「進行中場次」的處理：CLR-DAILYREPORT-012 的定案（2026-09-22，B）與 spec 2026-09-17 修訂相反，以哪一個為準？①「依場次明細」是否列出進行中場次？②「期末餘額」是否計入進行中場次累計到查詢當下的分數？ | A：以 spec 2026-09-17 為準。①依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢 |
-| [CLR-DAILYREPORT-014](ba-admin/DAILYREPORT/CLR-DAILYREPORT-014.md) | OPEN | SPEC-DAILYREPORT-001 v0.2 | REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
+| [CLR-DAILYREPORT-014](ba-admin/DAILYREPORT/CLR-DAILYREPORT-014.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.2 | REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項， |
 
 ## ba-admin / PLATFORMRULE
 
@@ -144,11 +144,11 @@
 | [CLR-SITELIST-010](ba-admin/SITELIST/CLR-SITELIST-010.md) | APPLIED | SPEC-SITELIST-001 v0.4 | REQ-SITELIST-002「子站台強制跟隨主站台型別」規則，是否對根層站台（無上層站台，隱含上層為 admin）有例外？ | admin 例外規則為 PM 最終決定，非資料錯誤或臆測：根層站台（無上層站台）建立時，型別可自由選擇（機台或線上），核 |
 | [CLR-SITELIST-011](ba-admin/SITELIST/CLR-SITELIST-011.md) | APPLIED | SPEC-SITELIST-001 v0.4 | AC-SITELIST-0023「核心貨幣依所選類型連動建立，不需admin自身的鏈上錢包管理預先啟用該幣別」這句話裡，鏈上錢包管理跟站台核心貨幣是什麼關係？ | 鏈上錢包管理與站台核心貨幣是兩個完全不同、互不相依的概念。鏈上錢包管理管理的是「此平台整體能使用的幣種有哪些」，啟用/禁 |
 | [CLR-SITELIST-012](ba-admin/SITELIST/CLR-SITELIST-012.md) | APPLIED | SPEC-SITELIST-001 v0.4 | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣的精確關係為何？ | 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣不是「完全無關」，而是「性質不同但有連動關係」。(1)鏈 |
-| [CLR-SITELIST-013](ba-admin/SITELIST/CLR-SITELIST-013.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-035 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
-| [CLR-SITELIST-014](ba-admin/SITELIST/CLR-SITELIST-014.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-036 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
-| [CLR-SITELIST-015](ba-admin/SITELIST/CLR-SITELIST-015.md) | OPEN | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-037 不符合時系統應如何反應？（Spec 未定義拒絕行為） |  |
-| [CLR-SITELIST-016](ba-admin/SITELIST/CLR-SITELIST-016.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | v0.6 原文與已落地的 CLR 定案直接牴觸，本 RM 不自行裁定。v0.6（版本日期 2026-09-04）§角色與權限「子站台：刪除｜可操作｜可操作」、§列表欄位「操作｜編輯、刪除」、§操作/刪除站台（確認彈窗、二次確認、不可復原）、§業務規則/刪除確認，皆定義管理員與站長可刪除管轄範圍內的子站台（僅自身站台與根站台不可刪除）；CLR-SITELIST-008／009（2026-09-14，PM 與後端共同確認，晚於 v0.6 版本日期）定案「任何類型的站台皆不提供刪除操作，前後端皆拒絕，只能暫停／關閉」，原因是刪除會影響站台樹狀結構。v0.6 取自 ba-spec main 2026-09-29 快照仍保留刪除敘述，QA 增補草稿要求移除該節亦未合入正本，無法判斷是 spec 未同步 CLR，還是產品方向已改回可刪除。 | 以 CLR-SITELIST-008／009 為準：任何站台（不論線上或機台類型、不論是否為子站台）皆不提供刪除操作，前 |
-| [CLR-SITELIST-017](ba-admin/SITELIST/CLR-SITELIST-017.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | 與 REQ-SITELIST-022 同一衝突（v0.6 原文可刪除子站台 vs CLR-SITELIST-008／009 任何站台皆不可刪除），應一併裁定；若採 v0.6 原文，刪除仍有子站台的站台時子樹如何處理 v0.6 亦未定義。 | 採 CLR-SITELIST-008／009：任何站台皆不提供刪除，因此「刪除仍有子站台的站台時子樹如何處理」的情境不會 |
+| [CLR-SITELIST-013](ba-admin/SITELIST/CLR-SITELIST-013.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-035 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 選 A：前端限制，後端也拒絕，資料不變；所有權限限制都在後端每一支 API 強制執行（開發包⑧既有規則，站台列表已補註） |
+| [CLR-SITELIST-014](ba-admin/SITELIST/CLR-SITELIST-014.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-036 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 站長不可指派站長，也不可指派管理員：角色下拉選單依操作者自身角色過濾，站長的畫面不會出現「管理員」與「站長」選項；直接呼 |
+| [CLR-SITELIST-015](ba-admin/SITELIST/CLR-SITELIST-015.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | REQ-SITELIST-037 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 選 A：後端拒絕並回傳「無權限」錯誤，資料不變；不採用「當作不存在／回空結果」。spec 只規定「無權限」這個語意，錯誤 |
+| [CLR-SITELIST-016](ba-admin/SITELIST/CLR-SITELIST-016.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | v0.6 原文與已落地的 CLR 定案直接牴觸，本 RM 不自行裁定。v0.6（版本日期 2026-09-04）§角色與權限「子站台：刪除｜可操作｜可操作」、§列表欄位「操作｜編輯、刪除」、§操作/刪除站台（確認彈窗、二次確認、不可復原）、§業務規則/刪除確認，皆定義管理員與站長可刪除管轄範圍內的子站台（僅自身站台與根站台不可刪除）；CLR-SITELIST-008／009（2026-09-14，PM 與後端共同確認，晚於 v0.6 版本日期）定案「任何類型的站台皆不提供刪除操作，前後端皆拒絕，只能暫停／關閉」，原因是刪除會影響站台樹狀結構。v0.6 取自 ba-spec main 2026-09-29 快照仍保留刪除敘述，QA 增補草稿要求移除該節亦未合入正本，無法判斷是 spec 未同步 CLR，還是產品方向已改回可刪除。 | 選 A：任何站台都不能刪除，線上、機台、根站台皆同。畫面沒有刪除按鈕，以 API 直接呼叫後端也拒絕；要停止服務一律切「 |
+| [CLR-SITELIST-017](ba-admin/SITELIST/CLR-SITELIST-017.md) | ANSWERED | SPEC-SITELIST-001 v0.6 | 與 REQ-SITELIST-022 同一衝突（v0.6 原文可刪除子站台 vs CLR-SITELIST-008／009 任何站台皆不可刪除），應一併裁定；若採 v0.6 原文，刪除仍有子站台的站台時子樹如何處理 v0.6 亦未定義。 | 選 A：任何站台都不能刪除，因此「刪除仍有子站台的站台時子樹如何處理」的情境不會發生，B1～B3 的追問不適用，本條僅供 |
 
 ## ba-admin / TXLOG
 

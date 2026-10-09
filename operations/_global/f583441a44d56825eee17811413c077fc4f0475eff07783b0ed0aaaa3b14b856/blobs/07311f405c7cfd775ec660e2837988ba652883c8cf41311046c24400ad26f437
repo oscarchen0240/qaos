@@ -1,0 +1,67 @@
+clarification_id: CLR-SITELIST-015
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.6'
+question: REQ-SITELIST-037 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+context: '「管理員」為每個站台皆有的角色，權限範圍跟著所屬站台走（自身站台及其所有子站台），層級高於同站台的站長；管理員與站長可見範圍相同，差別在操作深度——管理員可操作管轄範圍內的所有欄位並指派角色，站長部分欄位唯讀。根站台 admin
+  的管理員因其子樹即全平台而等同看到全部站台，是所屬站台的位置造成，不是角色本身有跨站權限；v0.4「Admin 為平台方最高管理者、可見全部站台」作廢。角色層級為管理員＞站長＞操作員，可見範圍由所屬站台決定、權限層級由角色決定（CLR-PLATFORMRULE-001，與
+  v0.6 一致）。
+
+  v0.6 未定義管理員對管轄範圍外站台（例如平行主站台）執行編輯、狀態切換等操作（含直接呼叫 API）時系統的反應；CLR-SITELIST-004 只涵蓋站長查詢平行／上層站台'
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-02T05:30:22Z'
+status: ANSWERED
+history:
+- at: '2026-10-02T05:30:22Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261002-001
+- at: '2026-10-09T06:57:10Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+requirement_id: REQ-SITELIST-037
+spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  location: §角色與權限（角色定義附註）+ §功能說明/權限分層（角色層級與範圍原則與 CLR-PLATFORMRULE-001 一致）
+  quote: 「管理員」**每個站台皆有**，權限範圍跟著所屬站台走（自身站台及其所有子站台），層級高於同站台的站長
+run_id: RUN-20261002-001
+impact_if_unanswered: Test Designer 只能以 exploratory（假設）方式撰寫此需求的負向案例，expected 需 Human 確認
+answer_revisions:
+- rev: 0
+  answer: 選 A：後端拒絕並回傳「無權限」錯誤，資料不變；不採用「當作不存在／回空結果」。spec 只規定「無權限」這個語意，錯誤代碼由後端定義（截至 2026-10-09 後端尚未定案），實際代碼須向後端確認後再寫入預期結果。全系統的越權處理一致。
+  answered_by: PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+  answered_at: '2026-10-09T06:57:10Z'
+  resolution: spec_updated
+  answer_sources:
+  - type: document
+    file_name: 問題單回覆.html
+    sha256: 16c59e6280f53015673182e92efa6189adac92df8eac2adbf395220f18b6894d
+    package_sha256: 00a6cd752ea9f2e38e2c81081fd5b8ed07d822c88078053b960974d07b208a7e
+    location: 站台列表問題單／CLR-SITELIST-015：操作管轄範圍外的站台 選 A
+  - type: spec
+    spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+    location: 第 59 行（權限一律由後端強制）；第 223 行（業務規則「越權操作」）
+  basis:
+    target:
+      spec_id: SPEC-SITELIST-001
+      spec_version: '0.6'
+      content_hash: b57f48c699cccfbebb7d3a7ad506685c17778aabf973df98145b5c82329d66ca
+    target_decl_rev: 0
+    closure: []
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  sha256: 860eeb8f957afe6bea18f8b7423b061d17d185420a50c5728db465fe5c91f86c
+  op_id: f583441a44d56825eee17811413c077fc4f0475eff07783b0ed0aaaa3b14b856
+answer: 選 A：後端拒絕並回傳「無權限」錯誤，資料不變；不採用「當作不存在／回空結果」。spec 只規定「無權限」這個語意，錯誤代碼由後端定義（截至 2026-10-09 後端尚未定案），實際代碼須向後端確認後再寫入預期結果。全系統的越權處理一致。
+answered_by: PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+answered_at: '2026-10-09T06:57:10Z'
+resolution: spec_updated
+resulting_spec_version: '0.7'
