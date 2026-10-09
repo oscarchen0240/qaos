@@ -96,15 +96,15 @@ def _save_rev(sid, ver, reqs):
 def _latest_reqs(sid, ver):
     return copy.deepcopy(store.load(rm_mod.index(sid, ver)[-1]["path"])["requirements"])
 
-def test_05_deleted_sequence_cannot_be_reused_and_new_must_exceed_high_water():
-    """新 revision 刪掉 0019、00110：已刪除的 AC 不得重用；新 AC 必須 > 歷史最大 10。"""
+def test_05_deleted_ac_restored_with_original_id_and_new_must_exceed_high_water():
+    """新 revision 刪掉 0019、00110：同一條驗收條件恢復時沿用原 ID → 通過（任一 revision 出現過、同一個 REQ）；
+    已用過的序號不得給新的驗收條件：新 AC 必須 > 歷史最大 10，被刪除的序號不會降低最大值。"""
     reqs = _latest_reqs(SPEC, "1.0"); reqs[0]["acceptance_criteria"] = reqs[0]["acceptance_criteria"][:8]
     _save_rev(SPEC, "1.0", reqs)
     req1 = lambda acs: _rm(req1_acs=acs)["requirements"]
-    out = gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00110"]))
-    assert len(out) == 1 and f"AC-{AREA}-00110 已從 {SPEC} 的最新 revision 刪除，序號不得重用（REQ-{AREA}-001 歷史最大序號 10，新增 AC 取 11 起）" in out[0]
-    assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-0019"]))[0].startswith(f"AC-{AREA}-0019 已從")
-    assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00111"])) == []
+    assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00110"])) == []                          # 恢復 00110
+    assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-0019"])) == []                           # 恢復 0019
+    assert gates.ac_id_issues(SPEC, req1(TEN[:8] + [f"AC-{AREA}-00111"])) == []                          # 新 AC 取 11
     assert rm_mod.ac_history(SPEC)["high_water"][f"REQ-{AREA}-001"] == 10
 
 def test_06_high_water_spans_other_spec_versions_and_packet_matches():
@@ -115,8 +115,7 @@ def test_06_high_water_spans_other_spec_versions_and_packet_matches():
     pk = _packet(rid, "T1")
     assert pk["ac_seq_high_water"] == {f"REQ-{AREA}-001": 10, f"REQ-{AREA}-002": 1, f"REQ-{AREA}-003": 1, f"REQ-{AREA}-004": 1}
     assert pk["ac_seq_high_water"] == dict(sorted(rm_mod.ac_history(SPEC)["high_water"].items()))
-    out = gates.ac_id_issues(SPEC, _rm(ver="1.1", req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"])
-    assert len(out) == 1 and "已從" in out[0]                                                             # 1.0 R002 已刪除 0019
+    assert gates.ac_id_issues(SPEC, _rm(ver="1.1", req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"]) == []   # 1.0 R001 的 0019 在 1.1 恢復
 
 def test_06b_new_ac_must_exceed_high_water_even_if_sequence_never_used():
     """歷史最大序號在另一個 spec_version：1.0 的 REQ-004 只用過 0041、0043（0042 從未出現）→ 在 1.1 新增 0042 也 FAIL（序號不大於 3），0044 PASS。"""
@@ -184,7 +183,25 @@ def test_11_every_ac_message_names_the_requirement_high_water():
     dup = next(x for x in out if "重複" in x)
     assert f"REQ-{AREA}-001 歷史最大序號 10" in moved
     assert f"REQ-{AREA}-001（歷史最大序號 10）與 REQ-{AREA}-002（歷史最大序號 1）" in dup
-    gone = gates.ac_id_issues(SPEC, _rm(req1_acs=TEN[:8] + [f"AC-{AREA}-0019"])["requirements"])
-    assert f"REQ-{AREA}-001 歷史最大序號 10，新增 AC 取 11 起" in gone[0]
+    r4 = [r if r["requirement_id"] != f"REQ-{AREA}-004" else {**r, "acceptance_criteria": [_ac(f"AC-{AREA}-0042")]} for r in _rm()["requirements"]]
+    low = next(x for x in gates.ac_id_issues(SPEC, r4) if x.startswith(f"AC-{AREA}-0042"))         # 0042 從未用過，但 ≤ 歷史最大 3（test_06b）
+    assert f"REQ-{AREA}-004 的歷史最大序號 3" in low and "新增 AC 取 4 起" in low
     odd = gates.ac_id_issues(SPEC, [{"requirement_id": "REQ-OLD", "acceptance_criteria": [_ac("AC-OLD-1")]}])
     assert "REQ-OLD 歷史最大序號 0" in odd[0]
+
+def test_12_four_digit_req_sequence_has_no_derived_ac_format():
+    """REQ 序號固定 3 位數；超過 999 的 REQ 推導格式未定義，新 AC 一律 FAIL（避免 AC-X-10011 這類兩種讀法）。"""
+    out = gates.ac_id_issues(SPEC, [{"requirement_id": f"REQ-{AREA}-1000", "acceptance_criteria": [_ac(f"AC-{AREA}-10001")]}])
+    assert len(out) == 1 and f"REQ-{AREA}-1000 的 REQ 序號超過 999，AC 推導格式未定義" in out[0]
+    assert rm_mod.derived_ac_seq(f"AC-{AREA}-10001", f"REQ-{AREA}-1000") is None
+    assert rm_mod.derived_ac_seq(f"AC-{AREA}-10011", f"REQ-{AREA}-100") == 11
+
+def test_13_req_issues_are_keyed_by_requirement_and_skip_their_acs():
+    """g_spec 以 requirement_id_issue_map 的 key 決定跳過哪些 REQ 的 AC 檢查（不依賴訊息字串格式）；扁平版維持原介面與順序。"""
+    rids = [f"REQ-{AREA}-001", f"REQ-{AREA}-ABC", f"REQ-{AREA}-999"]
+    mp = gates.requirement_id_issue_map(SPEC, AREA, rids)
+    assert set(mp) == {f"REQ-{AREA}-ABC", f"REQ-{AREA}-999"} and all(len(v) == 1 for v in mp.values())
+    assert gates.requirement_id_issues(SPEC, AREA, rids) == [m for ms in mp.values() for m in ms]
+    bad = [{"requirement_id": f"REQ-{AREA}-ABC", "acceptance_criteria": [_ac("AC-WRONG-1")]}]
+    assert gates.ac_id_issues(SPEC, bad, skip=set(mp)) == []                                          # REQ 已有 issue：其 AC 不重複報
+    assert gates.ac_id_issues(SPEC, bad) != []

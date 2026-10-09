@@ -81,31 +81,29 @@ def requirement_owners(area) -> dict:
 
 def derived_ac_seq(ac_id: str, requirement_id: str) -> int | None:
     """AC 是否為所屬 REQ 的推導格式 AC-<AREA>-<REQ 序號><AC 序號>（docs/architecture/02-data-model.md §5）：是 → AC 序號；否則 None。
-    AC 序號從 1 起、不補 0；REQ 序號照抄所屬 REQ（REQ 不是 REQ-<AREA>-<數字> 格式時無從推導）。"""
-    m = re.fullmatch(r"REQ-([A-Z0-9]+)-([0-9]{3,})", requirement_id)
+    AC 序號從 1 起、不補 0；REQ 序號照抄所屬 REQ 的 3 位數序號（REQ 不是 REQ-<AREA>-<3 位數> 格式時無從推導；序號超過 999 時格式未定義）。"""
+    m = re.fullmatch(r"REQ-([A-Z0-9]+)-([0-9]{3})", requirement_id)
     if not m: return None
     a = re.fullmatch(rf"AC-{m.group(1)}-{m.group(2)}([1-9][0-9]*)", ac_id)
     return int(a.group(1)) if a else None
 
 def ac_history(spec_id) -> dict:
     """同一 spec 已持久化（任一版本、任一 revision）的 AC：
-    owners＝ac_id → 所屬 requirement_id 集合；high_water＝requirement_id → 用過的最大推導格式 AC 序號（舊 3 位數 AC 不計入）；
-    live＝各 spec_version 最新 revision 中的 ac_id（只出現在較舊 revision 的 AC 視為已刪除）。"""
-    owners, high, live = {}, {}, set()
+    owners＝ac_id → 所屬 requirement_id 集合；high_water＝requirement_id → 用過的最大推導格式 AC 序號（舊 3 位數 AC 不計入）。"""
+    owners, high = {}, {}
     for ip in store.glob(f"artifacts/requirements/{spec_id}/v*/revisions/index.yaml"):
         entries = store.load(ip).get("revisions") or []
         missing = [e["path"] for e in entries if not store.exists(e["path"])]
         if missing:                                                     # 任一 revision 遺失：歷史不完整（刪除的號碼與最大序號會漏算），不以殘缺歷史判定（fail closed）
             raise RMError(f"{ip} 列出的 revision 檔不存在：{', '.join(missing)}；AC 歷史不完整，無法判定")
-        for i, e in enumerate(entries):
+        for e in entries:
             for r in store.load(e["path"]).get("requirements") or []:
                 rid = r["requirement_id"]
                 for a in r.get("acceptance_criteria") or []:
                     owners.setdefault(a["ac_id"], set()).add(rid)
-                    if i == len(entries) - 1: live.add(a["ac_id"])
                     n = derived_ac_seq(a["ac_id"], rid)
                     if n is not None: high[rid] = max(high.get(rid, 0), n)
-    return {"owners": owners, "high_water": high, "live": live}
+    return {"owners": owners, "high_water": high}
 
 def max_requirement_seq(area) -> int:
     """同 area 已持久化的 REQ-<AREA>-<序號> 的最大序號（沒有 → 0）。"""

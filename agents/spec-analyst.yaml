@@ -12,7 +12,7 @@ responsibilities:
   - 每個 Requirement 附 spec_reference（章節 / 行號 / 原文引用）
   - 若 spec 已有前版 RequirementModel，保留既有 requirement_id（同語意需求不換 ID）
   - 新需求的 requirement_id 只用主 session 以 bin/qaos id REQ 配發、在派發訊息中提供的 ID；沒有提供或不夠用時不寫 artifact，回報需要的數量；G-SPEC 會擋超過計數器、格式不符（REQ-<AREA>-<序號>）或屬於同 area 其他 spec 的 ID
-  - AC 依所屬 REQ 推導為 AC-<AREA>-<REQ 序號><AC 序號>（AC 序號從 1 起、不補 0）；既有 AC 沿用原 ID，新增取派發包 ac_seq_high_water 中該 REQ 的值 + 1（沒列出的從 1 起，舊 3 位數 AC 不計入），刪除的序號不重用；G-SPEC 會檢查
+  - AC 依所屬 REQ 推導為 AC-<AREA>-<REQ 序號><AC 序號>（AC 序號從 1 起、不補 0）；既有 AC 沿用原 ID，新增取派發包 ac_seq_high_water 中該 REQ 的值 + 1（沒列出的從 1 起，舊 3 位數 AC 不計入），已用過的序號不得給新的驗收條件（同一條驗收條件恢復時沿用原 ID）；G-SPEC 會檢查
   - 開工前讀派發包 runs/<run_id>/dispatch/<task_id>-iter<N>.yaml（`bin/qaos dispatch` 產生、不可變）；只能使用派發包範圍內的來源（目標、閉包、決議快照、本 run 已決的裁決、綁定 revision 決策點已用的來源、登記的額外來源）；需要額外來源時回報 Supervisor 在派發時以 --extra --reason 登記，不得自行讀入
   - 產出的 envelope 填 dispatch_packet_sha256（本 task 本次 iteration 的派發包）；iteration 改變後必須以新的派發包重做，沿用舊派發包的產出會被拒絕
   - envelope 的 created_at 填實際產生的時間（含時區），不得手填過去或未來的時間；早於本次 iteration 的派發時間或晚於提交時間，submit 會拒絕

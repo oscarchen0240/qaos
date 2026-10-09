@@ -29,10 +29,9 @@ def g_spec(run, task, arts) -> list[str]:
     if sa:
         for rid in _payload(sa).get("requirement_ids", []):
             if rid not in ids: issues.append(f"SpecAnalysis.requirement_ids 含不存在的 {rid}")
-    req_issues = requirement_id_issues(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
-    issues += req_issues
-    bad_reqs = {r["requirement_id"] for r in p["requirements"] if any(i.startswith(f"{r['requirement_id']} ") for i in req_issues)}
-    issues += ac_id_issues(p["spec_id"], p["requirements"], skip=bad_reqs)   # REQ 本身有問題時不再檢查其 AC（避免一個錯誤報兩次）
+    req_issues = requirement_id_issue_map(p["spec_id"], spec["functional_area"], [r["requirement_id"] for r in p["requirements"]])
+    issues += [m for ms in req_issues.values() for m in ms]
+    issues += ac_id_issues(p["spec_id"], p["requirements"], skip=set(req_issues))   # REQ 本身有問題時不再檢查其 AC（避免一個錯誤報兩次）
     if issues: return issues
     ctx, more = spec_context(run, task, arts)
     if ctx is None: return issues + more
@@ -47,27 +46,33 @@ def g_spec(run, task, arts) -> list[str]:
     return issues
 
 def requirement_id_issues(spec_id, area, rids) -> list[str]:
+    """requirement_id_issue_map 的扁平版本（維持原介面與訊息順序）。"""
+    return [m for ms in requirement_id_issue_map(spec_id, area, rids).values() for m in ms]
+
+def requirement_id_issue_map(spec_id, area, rids) -> dict[str, list[str]]:
     """REQ ID 必須由計數器配發（bin/qaos id REQ --area <AREA>；docs/architecture/02-data-model.md：Agent 不得自行編號）：
     同一 spec 先前已持久化的 ID 可沿用（不論格式，舊資料可能不同）；其餘新 ID 必須是計數器會發出的 REQ-<本 spec 的 area>-<序號>（序號 ≥ 1、至少三位、不多補零）， 的序號不得超過計數器，也不得是同 area 其他 spec 的需求。"""
     counter = (ids_mod._load()["counters"]).get(f"REQ-{area}", 0)
-    owners = rm.requirement_owners(area); out = []
+    owners = rm.requirement_owners(area); out = {}
+    add = lambda rid, msg: out.setdefault(rid, []).append(msg)
     for rid in rids:
         mine = owners.get(rid, set())
-        if mine - {spec_id}: out.append(f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
+        if mine - {spec_id}: add(rid, f"{rid} 已是 {'/'.join(sorted(mine - {spec_id}))} 的需求，不能用在 {spec_id}"); continue
         if spec_id in mine: continue                                         # 沿用同一 spec 已持久化的 ID（舊資料的 ID 格式可能不同，不再檢查）
         m = re.fullmatch(rf"REQ-{re.escape(area)}-(\d+)", rid)
         if m and (int(m.group(1)) < 1 or m.group(1) != f"{int(m.group(1)):03d}"): m = None
-        if not m: out.append(f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
+        if not m: add(rid, f"{rid} 不是 REQ-{area}-<序號> 格式（REQ ID 必須以 bin/qaos id REQ --area {area} 配發）"); continue
         if int(m.group(1)) > counter:
-            out.append(f"{rid} 未經計數器配發（REQ-{area} 計數器目前為 {counter}）；REQ ID 必須以 bin/qaos id REQ --area {area} 配發，不得自行編號")
+            add(rid, f"{rid} 未經計數器配發（REQ-{area} 計數器目前為 {counter}）；REQ ID 必須以 bin/qaos id REQ --area {area} 配發，不得自行編號")
     return out
 
 def ac_id_issues(spec_id, requirements, skip=frozenset()) -> list[str]:
     """AC ID 不經計數器，從所屬 REQ 推導（docs/architecture/02-data-model.md §5）：
-    同一 spec 各版本最新 revision 中的 AC 可沿用，但必須掛在同一個 REQ 底下（不論格式，舊 3 位數也沿用）；只出現在較舊 revision 的 AC 已刪除，不得再用；
-    新 AC 必須是 AC-<AREA>-<所屬 REQ 序號><AC 序號>（序號從 1 起、不補 0），且序號大於該 REQ 的歷史最大推導序號（刪除的序號不重用）；
+    同一 spec 任一 revision 出現過、且掛在同一個 REQ 底下的 AC 可沿用（不論格式，舊 3 位數也沿用；同一條驗收條件恢復時沿用原 ID）；
+    新 AC 必須是 AC-<AREA>-<所屬 REQ 的 3 位數序號><AC 序號>（序號從 1 起、不補 0），且序號大於該 REQ 的歷史最大推導序號（已用過的序號不得給新的驗收條件）；
+    所屬 REQ 序號超過 999 時推導格式未定義，新 AC 一律 FAIL；
     同一份 model 內 ac_id 不得重複。歷史最大序號在此重新計算，不信任派發包的 ac_seq_high_water。"""
-    hist = rm.ac_history(spec_id); owners, high, live = hist["owners"], hist["high_water"], hist["live"]
+    hist = rm.ac_history(spec_id); owners, high = hist["owners"], hist["high_water"]
     out, seen = [], {}
     for r in requirements:
         rid = r["requirement_id"]
@@ -80,10 +85,10 @@ def ac_id_issues(spec_id, requirements, skip=frozenset()) -> list[str]:
             if aid in owners:
                 if rid not in owners[aid]:
                     out.append(f"{aid} 在 {spec_id} 歷史上屬於 {'/'.join(sorted(owners[aid]))}，不能改掛到 {rid}（既有 AC 一律沿用原 REQ；{rid} 歷史最大序號 {hw}）")
-                elif aid not in live:
-                    out.append(f"{aid} 已從 {spec_id} 的最新 revision 刪除，序號不得重用（{rid} 歷史最大序號 {hw}，新增 AC 取 {hw + 1} 起）")
                 continue
-            if not re.fullmatch(r"REQ-[A-Z0-9]+-[0-9]{3,}", rid):
+            if re.fullmatch(r"REQ-[A-Z0-9]+-[0-9]{4,}", rid):
+                out.append(f"{aid}：所屬 {rid} 的 REQ 序號超過 999，AC 推導格式未定義（{rid} 歷史最大序號 {hw}）"); continue
+            if not re.fullmatch(r"REQ-[A-Z0-9]+-[0-9]{3}", rid):
                 out.append(f"{aid}：所屬 {rid} 不是 REQ-<AREA>-<序號> 格式，新 AC 無法依推導規則編號（{rid} 歷史最大序號 {hw}）"); continue
             n = rm.derived_ac_seq(aid, rid)
             if n is None:
@@ -91,7 +96,7 @@ def ac_id_issues(spec_id, requirements, skip=frozenset()) -> list[str]:
                 old = "；新增 AC 不可用舊 3 位數格式" if re.fullmatch(r"AC-[A-Z0-9]+-[0-9]{3}", aid) else ""
                 out.append(f"{aid} 不符合推導規則：{rid} 的 AC 必須是 {prefix}<AC 序號>（序號從 1 起、不補 0）{old}（{rid} 歷史最大序號 {hw}）")
             elif n <= hw:
-                out.append(f"{aid} 的 AC 序號 {n} 不大於 {rid} 的歷史最大序號 {hw}（已用過或已刪除的序號不重用；新增 AC 取 {hw + 1} 起）")
+                out.append(f"{aid} 的 AC 序號 {n} 不大於 {rid} 的歷史最大序號 {hw}（已用過的序號不得給新的驗收條件；新增 AC 取 {hw + 1} 起）")
     return out
 
 AC_ADVISORY_THRESHOLD = 10

@@ -45,11 +45,11 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
   - 新需求只用主 session 以 `bin/qaos id REQ --area <AREA>` 配發後、在派發訊息中提供的 ID，不得自行編號或猜號。沒有提供或不夠用時，先不要寫出 artifact，回報需要的數量，由主 session 配發後再繼續。
   - G-SPEC 會擋：不是 `REQ-<AREA>-<序號>` 格式、序號超過計數器、已屬於同 area 其他 spec 的 ID。
 - AC 編號（從所屬 REQ 推導，不經計數器；不向主 session 要 AC ID，也不得執行 `bin/qaos id AC`）：
-  - 格式 `AC-<AREA>-<REQ 序號><AC 序號>`：REQ 序號照抄所屬 REQ 的 3 位數序號；AC 序號從 1 開始、不補 0，第 10 個以後直接往上加（REQ-001 的第 10 個 AC 是 `AC-<AREA>-00110`）。
-  - **不重編號**：既有 AC 一律沿用原 ID；刪掉的序號不得重複使用，中間插入的 AC 不得把後面的 AC 往後推（否則既有 TC 的 `acceptance_criteria_ids` 會指錯 AC）。
+  - 格式 `AC-<AREA>-<REQ 序號><AC 序號>`：REQ 序號照抄所屬 REQ 的 3 位數序號（序號超過 999 的 REQ 推導格式未定義，遇到時回報）；AC 序號從 1 開始、不補 0，第 10 個以後直接往上加（REQ-001 的第 10 個 AC 是 `AC-<AREA>-00110`）。
+  - **不重編號**：既有 AC 一律沿用原 ID；已用過的序號不得給新的驗收條件，同一條驗收條件恢復時沿用原 ID；中間插入的 AC 不得把後面的 AC 往後推（否則既有 TC 的 `acceptance_criteria_ids` 會指錯 AC）。
   - **新增 AC 取歷史最大序號 + 1**：取派發包 `ac_seq_high_water` 中該 REQ 的值 + 1；沒列出的 REQ 從 1 開始。舊 3 位數 AC 不計入。
   - MEMBER、BONUSCCY、ARCADE 既有的 3 位數 AC（如 `AC-MEMBER-025`）照樣沿用、不遷移；這三區新增的 AC 改用推導格式。
   - 一條 REQ 的 AC 達 10 個以上時，代表需求可能太大，考慮拆分需求（G-SPEC 不擋，但會留下 advisory 提示）。
-  - G-SPEC 會檢查 AC 是否符合推導規則：前綴是否為所屬 REQ、序號是否補 0、是否重用歷史序號、既有 AC 是否改掛到別的 REQ、同一份 model 內是否重複、新增 AC 是否用了舊 3 位數格式。
+  - G-SPEC 會檢查 AC 是否符合推導規則：前綴是否為所屬 REQ、序號是否補 0、新 AC 的序號是否大於歷史最大值、既有 AC 是否改掛到別的 REQ、同一份 model 內是否重複、新增 AC 是否用了舊 3 位數格式。
 - envelope 的 `status` 填 `DRAFT`、`created_at` 填實際產生的時間（含時區）；由 Runtime 決定的狀態（如 `VALID`）不要自填。`created_at` 不得手填過去或未來的時間：早於本次 iteration 的派發時間（不需要派發包的 task 為 run 的建立時間）或晚於提交時間，submit 會拒絕。
 - 主 session 送出或關卡失敗時，會把錯誤訊息交回給你；修正時用新的 artifact_id 產生新檔，不要刪除或覆寫已寫出的檔案。"""
