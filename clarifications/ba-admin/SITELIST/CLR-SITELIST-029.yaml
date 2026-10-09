@@ -1,0 +1,76 @@
+clarification_id: CLR-SITELIST-029
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.7'
+question: 根站台 admin 新增或刪除網域時：(A) 不觸發更新待審、維持開通；(B) 觸發更新待審（則由誰、如何切回開通）；(C) 根站台的網域不可異動
+context: REQ-SITELIST-032：根站台 admin 狀態不可變更、恆為「開通」：列表與編輯視窗的狀態欄唯讀，不可切為暫停／關閉／更新待審；此保護規則後端須一併實作（根站台為全平台單一失效點）。根站台網域異動是否觸發「更新待審」與本條衝突（Q02）。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-09T08:06:55Z'
+status: OPEN
+history:
+- at: '2026-10-09T08:06:55Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261009-001
+requirement_id: REQ-SITELIST-032
+spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  location: §根站台/狀態 L107 + §業務規則與驗證/根站台狀態鎖定 L224
+  quote: 根站台狀態恆為「開通」，不可切為暫停／關閉／更新待審；列表與編輯視窗唯讀
+run_id: RUN-20261009-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: conflict_resolution
+question_id: Q02
+topic: state_transition
+subject: sitelist.root_site.domain_change_update_pending
+params: {}
+role_scope:
+- '*'
+level: major
+known_rules:
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §根站台 網域／模板（第 110 行）
+  quote: 可設定，行為與一般站台相同
+conflict_sides:
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §業務規則與驗證 網域異動觸發（第 216 行）
+  quote: 站台為「開通」或「更新待審」時，儲存若有網域新增或刪除，系統自動切為「更新待審」；適用於所有角色
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §根站台 狀態（第 107 行）
+  quote: 不可變更，恆為「開通」；列表與編輯視窗的狀態欄唯讀，不可切為暫停／關閉／更新待審
+conflict_note: 根站台恆為「開通」且網域「行為與一般站台相同」；一般站台「開通」時網域異動會被系統自動切為「更新待審」（適用於所有角色），但根站台不可切為更新待審。兩條規則在根站台網域新增或刪除時互相牴觸；若觸發，根站台無上層、無人能切回開通。開發包⑧
+  2.2 與 5.3 寫法相同，未解決
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-ADMINSYS-001
+    spec_version: '0.3'
+    content_hash: 6d22cafaa1cec37e139719958ec7b5e02cf5e7c21ed45e09e42b2bc663b34a61
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 根站台 admin 新增或刪除網域時：(A) 不觸發更新待審、維持開通；(B) 觸發更新待審（則由誰、如何切回開通）；(C) 根站台的網域不可異動
+issue_key: 53bc7f1521a9ee2a01f8e4baf97e2c34f9cf72afd00c4d9b0488ea31b447552e

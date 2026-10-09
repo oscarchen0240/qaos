@@ -1,0 +1,66 @@
+clarification_id: CLR-SITELIST-031
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.7'
+question: 「每個站台皆有管理員」的管理員帳號由誰、在什麼時機建立：(a) 沿用現行流程（自行註冊後由上層站台的管理員指派）；(b) 站台建立時由系統一併產生。若為 (b)，站台列表「新增站台」流程須多一步（產生帳號並一次性顯示帳密），SPEC-SITELIST-001
+  需再進版（開發包⑧第九節，不阻擋開工）
+context: REQ-SITELIST-037：「管理員」為每個站台皆有的角色，權限範圍跟著所屬站台走（自身站台及其所有子站台），層級高於同站台的站長；管理員與站長可見範圍相同，差別在操作深度。根站台 admin 的管理員等同看到全部站台，是所屬站台的位置造成，不是角色本身有跨站權限。所有權限限制由後端每一支
+  API 強制，畫面上的唯讀、隱藏只是輔助；越權操作（範圍外站台、自身站台限制、越級指派角色）一律拒絕並回傳「無權限」錯誤、資料不變，不採「當作不存在／回空結果」；錯誤代碼由後端定義，尚未定案（Q03；CLR-SITELIST-015）。管理員帳號的建立方式於開發包⑧列為尚未定案（Q04）。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-09T08:06:55Z'
+status: OPEN
+history:
+- at: '2026-10-09T08:06:55Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261009-001
+requirement_id: REQ-SITELIST-037
+spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  location: §角色與權限（角色定義附註） L39 + 權限一律由後端強制 L59 + §業務規則與驗證/越權操作 L223
+  quote: 權限範圍跟著所屬站台走（自身站台及其所有子站台），層級高於同站台的站長
+run_id: RUN-20261009-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q04
+topic: other
+subject: sitelist.admin_role.account_creation
+params: {}
+role_scope:
+- admin
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §九、尚未定案 管理員帳號的建立方式（第 252 行）
+  quote: 站台建立時由系統一併產生該站台的管理員帳號
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-ADMINSYS-001
+    spec_version: '0.3'
+    content_hash: 6d22cafaa1cec37e139719958ec7b5e02cf5e7c21ed45e09e42b2bc663b34a61
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 「每個站台皆有管理員」的管理員帳號由誰、在什麼時機建立：(a) 沿用現行流程（自行註冊後由上層站台的管理員指派）；(b) 站台建立時由系統一併產生。若為 (b)，站台列表「新增站台」流程須多一步（產生帳號並一次性顯示帳密），SPEC-SITELIST-001
+  需再進版（開發包⑧第九節，不阻擋開工）
+detail_gaps:
+- admin_account_creation_flow
+issue_key: 58f667803f92107f3e3afd991410152539734788f2e9a15d1cf4789169514f1c

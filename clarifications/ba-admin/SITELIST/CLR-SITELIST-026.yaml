@@ -1,0 +1,70 @@
+clarification_id: CLR-SITELIST-026
+product: ba-admin
+functional_area: SITELIST
+spec_id: SPEC-SITELIST-001
+spec_version: '0.7'
+question: 「上層站台的管理員」是僅指直屬上層站台的管理員，還是任一管轄範圍涵蓋該站台的祖先站台管理員（例如根站台 admin 的管理員對孫層站台）；§角色與權限寫管理員對管轄範圍內所有子站台可切任意狀態
+context: REQ-SITELIST-016：管理員對其管轄範圍內的子站台可切換為任意可手動選取的狀態（待開通／開通／暫停／關閉；「更新待審」僅由系統觸發、不開放手動選取）。站長不論對子站台或自身站台，僅可切換為「暫停」或「關閉」，其他狀態顯示但不可選，選取則阻擋儲存；站長以
+  API 送出其他狀態時後端拒絕並回傳「無權限」、資料不變（v0.7 第 59 行）。管理員對自身所屬站台僅可切「暫停」「關閉」，不可切為「開通」（見 REQ-SITELIST-035）。依 §站台狀態：「開通」由上層站台的管理員手動切換；「暫停」「關閉」可由該站台的管理員或站長切換，上層站台的管理員亦可。場館站台（含自行經營的機台主站台）不是「開通」時，該場館所有機台一律無法運作。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-09T08:06:55Z'
+status: OPEN
+history:
+- at: '2026-10-09T08:06:55Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261009-001
+requirement_id: REQ-SITELIST-016
+spec_reference:
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  location: §角色與權限/子站台：狀態切換 L49 + §站台狀態 L65-73 + §業務規則與驗證/狀態（站長編輯） L213、場館站台狀態 L235
+  quote: 僅可切換為「暫停」或「關閉」；選取其他狀態時阻擋儲存
+run_id: RUN-20261009-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q03
+topic: permission
+subject: sitelist.status.activate_by_upper_admin
+params: {}
+role_scope:
+- admin
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §站台狀態 開通（第 68 行）
+  quote: 上層站台的管理員手動切換
+- type: spec
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  location: §角色與權限 子站台：狀態切換（第 49 行）
+  quote: 可切換為任意狀態（含「開通」）
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-ADMINSYS-001
+    spec_version: '0.3'
+    content_hash: 6d22cafaa1cec37e139719958ec7b5e02cf5e7c21ed45e09e42b2bc663b34a61
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 「上層站台的管理員」是僅指直屬上層站台的管理員，還是任一管轄範圍涵蓋該站台的祖先站台管理員（例如根站台 admin 的管理員對孫層站台）；§角色與權限寫管理員對管轄範圍內所有子站台可切任意狀態
+detail_gaps:
+- ancestor_admin_activation
+issue_key: f023dba6b356c1c33efd7df78576e328f6d40db1085187943104154928dd709c
