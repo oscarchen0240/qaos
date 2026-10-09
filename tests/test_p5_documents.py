@@ -125,7 +125,9 @@ print(json.dumps([rid, c["clarification_id"], F.waiting(rid)]))""")
 p = F.pin()
 items = [{{"cited_at": {{**p, "line": 13}}, "name": "手冊 7.1.1 角色說明"}}] + ([{{"cited_at": {{**p, "line": 3}}, "name": "後台角色與權限_spec_vNN.md"}}] if {both} else [])
 F.approve("{apr}", resolutions=[{{"requirement_id": "REQ-DEMO-00{n}", "question_id": "Q01", "outcome": "waive_missing", "waived": items, "rationale": "改向 PM 直接確認"}}])
-c = clr.load("{cid}"); print(json.dumps([c["status"], [i["status"] for i in c["document_items"]], len([l for l in c.get("landings") or [] if l["type"] == "applied"])]))""")
+c = clr.load("{cid}"); print(json.dumps([c["status"], [i["status"] for i in c["document_items"]], len([l for l in c.get("landings") or [] if l["type"] == "applied"])]))
+from tools.qaos import engine
+if engine.load_run("{rid}")["status"] not in ("COMPLETED", "FAILED", "CANCELLED"): engine.cancel("{rid}", F.BY, new_request=True)   # 同一 spec 同時只能有一個 run 在分析需求：下一個案例要開新 run""")
         results[case] = out
         if case == "69b":
             U.q(root, "spec", "reference", "add", "SPEC-DEMO-001@1.0", "--ref", "SPEC-ROLE-001@1.0", "--role", "informative", "--by", "oscar", "--new-request", check=True)

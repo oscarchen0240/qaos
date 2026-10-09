@@ -100,6 +100,13 @@ stateDiagram-v2
 
 Task 狀態：`PENDING → READY → RUNNING → ARTIFACT_INVALID | GATE_FAILED | DONE | FAILED`；`ARTIFACT_INVALID` 與 `GATE_FAILED` 可回到 `READY`（受 `max_iterations` 限制）；`RUNNING → FAILED` 只在 permission violation 時發生，並使 Run 進入 FAILED。機器可讀定義：`workflows/state-machines.yaml`。
 
+**同一 spec 同時只能有一個 run 在分析需求**（`engine.unlanded_analyses`）。需求分析 task 是 Spec Analyst、gate 為 G-SPEC 的 task（spec-to-testcase 的 T1，spec-change-impact、spec-to-bug 的 T0）。兩個 run 的分析都還沒落地時，後落地的一方會把先落地者的 REQ ID 當成沿用而通過 G-SPEC，造成同一個 ID 對應兩種語意，所以：
+
+- `run new`：新 run 會執行需求分析（依 `_skip_decision`，與 Task Graph 展開時的判斷相同）時，同一 `spec_id`（不分版本）不得有「分析還沒落地」的進行中 run，也就是 run 不在終止狀態、分析 task 也不在終止狀態。
+- `dispatch`：派發分析 task 時，同一 `spec_id` 不得有另一個 run 的分析在本 iteration 已派發、還沒落地。這涵蓋已落地的 run 被退回重開分析的情況：先派發的先落地，READY 但還沒派發的 run 不互相阻擋。
+- 已落地（分析 task DONE）而在等人工的 run 不擋：它恢復時讀自己綁定的 revision（需求 A AC-09-2、09-3）。分析被略過的 run（DONE 且沒有產出）不擋，也不被擋。testcase-revision、manual-test-to-regression、regression-generation 沒有分析 task，不受影響。
+- 不提供強制放行：被擋下時，等占用的 run 落地，或以 `bin/qaos run cancel <run_id>` 取消。
+
 ## 5. Artifact
 
 `DRAFT → SUBMITTED → VALID | INVALID`；`VALID → SUPERSEDED`（同 task 產生新版本時）。只有 `VALID` 的 Artifact 可以作為下游 Agent 的 input。

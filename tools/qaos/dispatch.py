@@ -183,7 +183,7 @@ def _request(run_id, task_id, extras=(), by="system"):
 @operation.operation("dispatch", request=_request, scope=lambda run_id, *a, **k: run_id)
 def dispatch(run_id: str, task_id: str, extras=(), by: str = "system") -> dict:
     """產生 runs/<run>/dispatch/<task>-iter<N>.yaml，並把路徑與 sha256 記在 task.dispatch_packets[]。"""
-    from .engine import load_run, _task, _save_run
+    from .engine import load_run, _task, _save_run, analysis_task, unlanded_analyses, busy_message
     run = load_run(run_id)
     try: task = _task(run, task_id)
     except StopIteration: raise DispatchError(f"{run_id} 沒有 task {task_id}")
@@ -192,6 +192,9 @@ def dispatch(run_id: str, task_id: str, extras=(), by: str = "system") -> dict:
     if task["status"] not in ("READY", "RUNNING"): raise DispatchError(f"{task_id} 狀態 {task['status']}，不能派發")
     if current_entry(task) or store.exists(packet_path(run_id, task_id, task["iteration"])):
         raise DispatchError(f"{task_id} iteration {task['iteration']} 已經派發過；同一 iteration 只能派發一次，要改輸入必須進入新的 iteration")
+    if analysis_task(run) is task and run["input"].get("spec_id"):          # 已落地的 run 被退回重開分析時，可能和另一個 run 的分析同時進行：先派發的先落地
+        busy = unlanded_analyses(run["input"]["spec_id"], exclude_run=run_id, dispatched_only=True)
+        if busy: raise DispatchError(busy_message(run["input"]["spec_id"], busy))
     review, copies = _review_drafts(run, task)
     doc = build(run, task, list(extras), review=review)
     errs = schema.errors(doc, "workflow/dispatch-packet.schema.json")

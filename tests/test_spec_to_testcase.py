@@ -17,15 +17,8 @@ def test_00_spec_import(fixtures):
     with pytest.raises(SystemExit):  # 同版本不可覆蓋
         cli(["spec", "import", str(fixtures / "SPEC-AUTH-001-v1.0.md"), "--spec-id", "SPEC-AUTH-001", "--version", "1.0", "--product", "demo", "--area", "AUTH", "--by", "x"])
 
-def test_01_new_run_requires_valid_spec_version():
-    with pytest.raises(EngineError): engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "9.9"}, "oscar@example.com", new_request=True)
-    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
-    RUN["id"] = run["run_id"]
-    assert run["status"] == "RUNNING" and run["current_task_id"] == "T1"
-    assert [t["status"] for t in run["tasks"]] == ["READY", "PENDING", "PENDING", "PENDING", "PENDING"]
-
-def test_02_permission_guard_rejects_wrong_agent_and_type():
-    rid = RUN["id"]
+def test_00b_permission_guard_rejects_wrong_agent_and_type():
+    # 排在 test_01 建立共用 run 之前：同一 spec 同時只能有一個 run 在分析需求，這裡的 run 都以 FAILED 結束
     # Test Designer 冒充在 T1 提交（created_by 不符）→ permission violation → run FAILED
     bad = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
     aid, p = H.write_artifact(bad["run_id"], "T1", "agent-test-designer", "RequirementModel", H.requirement_model(),
@@ -46,6 +39,14 @@ def test_02_permission_guard_rejects_wrong_agent_and_type():
                               [{"entity_type": "SpecVersion", "id": "SPEC-AUTH-001", "version": "1.0"}], {"type": "SpecVersion", "ids": []}, "test-design")
     ok, problems = engine.submit(bad2["run_id"], "T1", str(p))
     assert not ok and any("write_paths" in x for x in problems)
+    assert engine.load_run(bad2["run_id"])["status"] == "FAILED"
+
+def test_01_new_run_requires_valid_spec_version():
+    with pytest.raises(EngineError): engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "9.9"}, "oscar@example.com", new_request=True)
+    run = engine.new_run("spec-to-testcase", {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0"}, "oscar@example.com", new_request=True)
+    RUN["id"] = run["run_id"]
+    assert run["status"] == "RUNNING" and run["current_task_id"] == "T1"
+    assert [t["status"] for t in run["tasks"]] == ["READY", "PENDING", "PENDING", "PENDING", "PENDING"]
 
 def test_03_T1_spec_analyst_structural_gate():
     rid = RUN["id"]; rm = H.requirement_model()
