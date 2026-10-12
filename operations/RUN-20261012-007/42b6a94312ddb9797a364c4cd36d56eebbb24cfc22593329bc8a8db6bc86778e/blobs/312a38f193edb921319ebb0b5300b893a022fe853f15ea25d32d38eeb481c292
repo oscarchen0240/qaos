@@ -1,0 +1,119 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 未兌現金額以出收據那天歸屬：某日出的待核實收據 1000 只計入該日列，之後沒有出金的兩天列未兌現為 0，不往後累計
+requirement_ids:
+- REQ-DAILYREPORT-011
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0116
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- （歷史資料佈置）本規格未定義如何造出過去營業日的資料，也未定義如何建立指定日期的出金收據；我推測出金（收據）由機台端（前台）交易產生、後台沒有直接建立指定日期出金的入口，此點需環境負責人確認。因此由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的
+  AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日的場次、交易、收據與其核實狀態、結算時點的分數）作為預期值的比對來源
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），須在該管理員管轄範圍內的機台場館；需要第二台機台時另選一台不同的既有機台帳號
+- 機台 A 在營業日 D（AC 範例 2026-09-10）出了一筆收據，面額 1000，截至查詢當下仍為待核實；A 在 D 之後的兩個營業日 D+1、D+2（AC 範例 9/11、9/12）沒有任何出金；A 沒有其他待核實的出金收據。（A
+  沒有其他待核實收據，是為了在舊的『截至查詢當下累計』行為與新的『依出收據日歸屬』行為之間有可區分的結果：舊行為下 D+1、D+2 列也會顯示 1000。）測試期間不要對這張收據做核實或作廢
+test_data:
+- name: 待核實收據（營業日 D）
+  value: 1000
+- name: 預期未兌現（D／D+1／D+2）
+  value: 1000／0／0
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」、統計週期選「按日」、機台帳號填機台 A、結算日期設為 D～D+2，搜尋
+- n: 2
+  action: 記錄 D、D+1、D+2 三列的「未兌現金額」
+expected_result: D 列未兌現金額 1000；D+1 列與 D+2 列未兌現金額皆為 0（出收據的日期歸屬到 D，不累計到之後沒有出金的日期）。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／未兌現金額（第 53 行）
+  quote: 當日出金的收據中，截至查詢當下仍為待核實者的金額合計；以出收據的日期歸屬（2026-10-05 定案，原為「截至查詢當下全部待核實收據的累計」）
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-011
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／未兌現金額（第 53 行）
+- requirement_id: REQ-DAILYREPORT-011
+  question_id: Q04
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-DAILYREPORT-015
+    answer_rev: 0
+    answer_sha256: b40db737b492e2dc4b8add3a201608c75de6a0ccaf773345033d01da166d01ab
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／未兌現金額（第 53 行）
+  quote: 當日出金的收據中，截至查詢當下仍為待核實者的金額合計；以出收據的日期歸屬（2026-10-05 定案，原為「截至查詢當下全部待核實收據的累計」）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-015
+  answer_rev: 0
+  answer_sha256: b40db737b492e2dc4b8add3a201608c75de6a0ccaf773345033d01da166d01ab
+  quote: 未兌現金額以出收據的日期歸屬
+hotfix_eligible: false
+execution_cost: medium
+source_ref: new_required:REQ-DAILYREPORT-011 AC-DAILYREPORT-0116
+testcase_id: TC-DAILYREPORT-147
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:21:30Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:21:30Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e

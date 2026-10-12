@@ -1,7 +1,7 @@
 run_id: RUN-20261012-007
 workflow_id: spec-change-impact
 workflow_version: 1.0.0
-status: RUNNING
+status: WAITING_HUMAN
 input:
   spec_id: SPEC-DAILYREPORT-001
   from_version: '0.2'
@@ -9,7 +9,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-12T14:22:23Z'
-updated_at: '2026-10-12T16:20:13Z'
+updated_at: '2026-10-12T16:21:30Z'
 tasks:
 - task_id: T0
   type: agent
@@ -369,11 +369,12 @@ tasks:
   ended_at: '2026-10-12T16:20:04Z'
 - task_id: T4
   type: agent
-  status: READY
+  status: DONE
   iteration: 0
   input_artifact_ids: []
   input_entity_refs: []
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-VCR-01M4RENW35393FNBT3Y6RM18HB
   agent_id: agent-change-impact-analyst
   mode: compare
   gate: G-COMPARE
@@ -383,18 +384,119 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-12T16:21:27Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T16:21:30Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-COMPARE PASS
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261012-007/dispatch/T4-iter0.yaml
     sha256: 4bf34d890e434618f6d58dbedfdfd24afcdffd34c71e680776801b47066b4f1e
     at: '2026-10-12T16:20:13Z'
+  started_at: '2026-10-12T16:21:27Z'
+  gate_results:
+  - at: '2026-10-12T16:21:27Z'
+    layer: structural
+    result: PASS
+    details:
+    - VersionComparisonReport ART-VCR-01M4RENW35393FNBT3Y6RM18HB VALID
+  - at: '2026-10-12T16:21:30Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-COMPARE structural PASS
+  ended_at: '2026-10-12T16:21:30Z'
 - task_id: T5
   type: approval
-  status: PENDING
+  status: RUNNING
   iteration: 0
   input_artifact_ids: []
-  input_entity_refs: []
+  input_entity_refs:
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-045
+    version: 3
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-046
+    version: 3
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-128
+    version: 2
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-140
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-141
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-142
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-143
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-144
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-145
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-146
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-147
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-148
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-149
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-150
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-151
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-152
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-153
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-154
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-155
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-156
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-157
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-158
+    version: 1
   output_artifact_ids: []
+  history:
+  - at: '2026-10-12T16:21:30Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-10-12T16:21:30Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: advance
+  approval_id: APR-0200
 - task_id: T6
   type: agent
   status: PENDING
@@ -416,6 +518,12 @@ history:
   by: system
   trigger: task graph expanded
   run_id: RUN-20261012-007
+- at: '2026-10-12T16:21:30Z'
+  from_status: RUNNING
+  to_status: WAITING_HUMAN
+  by: system
+  trigger: APR-0200
+  run_id: RUN-20261012-007
 from_requirement_model_revision:
   spec_id: SPEC-DAILYREPORT-001
   spec_version: '0.2'
@@ -427,3 +535,4 @@ requirement_model_revision:
   spec_version: '0.3'
   revision: R001
   sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+waiting_on_approval_id: APR-0200
