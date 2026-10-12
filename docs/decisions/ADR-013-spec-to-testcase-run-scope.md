@@ -1,7 +1,7 @@
 # ADR-013 · spec-to-testcase 的 run scope 可機器解析，G-DESIGN 依 scope 判定覆蓋範圍
 
 - **Status**: Proposed——merge 後生效，Accepted 日期由 Oscar 於合併時確認。
-- **範圍**：`workflows/spec-to-testcase.yaml` 的 `input.scope`；程式：`tools/qaos/run_scope.py`（解析）、`engine.new_run`（語法檢查）、`dispatch.build`（派發包 `run_scope`）、`gates.g_design`（`design_scope`、`run_scope_issues`）；`schemas/workflow/dispatch-packet.schema.json` 新增選填欄位 `run_scope`。
+- **範圍**：`workflows/spec-to-testcase.yaml` 的 `input.scope`；程式：`tools/qaos/run_scope.py`（解析）、`engine.new_run`（語法檢查；已綁定 revision 時核對需求）、`dispatch.build`（派發包 `run_scope`）、`gates.g_design`（`design_scope`、`run_scope_issues`）；`schemas/workflow/dispatch-packet.schema.json` 新增選填欄位 `run_scope`。
 
 ## Context
 
@@ -17,10 +17,10 @@
 
 `<REQ 清單>[（說明）]`：
 
-- REQ 清單以 `,`／`，`／`、` 分隔；每一項是完整 ID（`REQ-<AREA>-<序號>`），或只寫序號（沿用前一個完整 ID 的 `REQ-<AREA>-` 前綴）。例：`REQ-DAILYREPORT-001,005,007` ＝ 001、005、007。
-- 說明放在第一個 `（` 或 `(` 之後，不參與解析。
+- REQ 清單以 `,`／`，`／`、` 分隔；每一項是完整 ID（`REQ-<AREA>-<序號>`，序號至少三位，與 RequirementId schema 一致），或只寫序號（至少三位，沿用前一個完整 ID 的 `REQ-<AREA>-` 前綴）。例：`REQ-DAILYREPORT-001,005,007` ＝ 001、005、007。
+- 說明只能是結尾的一段括號：從第一個 `（`／`(` 開始，到 scope 最後一個字元才閉合（說明內可有成對括號），不參與解析。括號中途閉合又接著文字（例如 `REQ-X-001（補 AC）、REQ-X-002（補 AC）`）→ 不合語法；否則後面的需求會被靜默丟掉。
 - 不以 `REQ-` 開頭的 scope（functional area 或其他自由文字）**不是需求範圍**：沿用原本的行為（全部需求）。
-- 以 `REQ-`（不分大小寫）開頭卻不符語法 → `run new` 拒絕（例如 `REQ-X-001 補強` 要寫成 `REQ-X-001（補強）`）。
+- 以 `REQ-`（不分大小寫）開頭卻不符語法 → `run new` 拒絕，錯誤訊息附正確寫法（例如 `REQ-X-001 補強` 要寫成 `REQ-X-001（補強）`；JSON 陣列 `--input 'scope=["REQ-X-001"]'` 也拒絕，改寫成逗號分隔）。
 
 既有 run 的三種寫法都相容：`REQ-ARCADE-004`、`REQ-DAILYREPORT-008,REQ-DAILYREPORT-014（…）`、`REQ-DAILYREPORT-001,005,…（…）`。本變更之前建立、以 `REQ-` 開頭卻不合語法的 run（目前沒有）沿用原本的行為。
 
@@ -33,19 +33,23 @@
 | 必須覆蓋或列 `uncovered_with_reason` | 只有 scope 內的需求 |
 | 行為契約規則（high-risk 負向、rejection、邊界、狀態、exploratory 上限、整份沒有負向案例） | scope 內的需求，加上 TC 實際涉及的需求（`requirement_ids` 或 coverage_matrix 有 draft 的） |
 | scope 外、沒有 TC 涉及的需求 | 不檢查；列在 `uncovered_with_reason` 也不檢查（相容舊報告） |
-| 新增 FAIL | scope 列的需求不在綁定的 revision；某條 TC 的 `requirement_ids` 全部在 scope 外 |
+| 新增 FAIL | scope 列的需求不在綁定的 revision，或 scope 內沒有任何可設計的需求（非 ACTIVE 或未解決的 critical ambiguity）；某條 TC 的 `requirement_ids` 全部在 scope 外 |
 
 scope 不是需求清單、或沒有 scope：行為不變（全部需求）。`mode=change`／`manual` 不受影響。
 
-### 3. 派發包
+### 3. 派發包與提早檢查
 
-Test Designer、Test Validator、TC Risk Reviewer 的派發包新增 `run_scope: {raw, requirement_ids}`（run 有 `scope` 才寫入；`requirement_ids: null` 代表不是需求清單）。Spec Analyst 仍分析整份 spec，不帶 scope。
+Test Designer、Test Validator 的派發包新增 `run_scope: {raw, requirement_ids}`（run 有 `scope` 才寫入；`requirement_ids: null` 代表不是需求清單）。Spec Analyst 仍分析整份 spec，不帶 scope；TC Risk Reviewer 抽查的是 Draft 本身，不帶 scope。ADR-013 之前產生的派發包沒有這個欄位，gate 一律以 run 的 `input.scope` 判定，agent 指示也要求此時讀 run 的 `input.scope`。
 
-run 已綁定 revision 時，scope 列的需求不在該 revision → `dispatch` 拒絕（打錯 ID 或 spec 不符，不讓 Designer 白做），須取消 run 以正確的 scope 重開。T1 尚未產生 revision 時不檢查；T1 之後的派發才檢查，G-DESIGN 另有同一條防線。
+scope 對不上綁定的 revision（列了 revision 沒有的需求，或沒有任何可設計的需求——G-DESIGN 不可能 PASS）時盡早拒絕，不讓 Designer 白做：
+- `run new` 建立時已綁定 revision（T1 跳過）→ 拒絕建立 run（整個操作不寫入）；
+- T1 要重新分析的 run，revision 在 T1 之後才有 → Designer／Validator 的 `dispatch` 拒絕，須取消 run 以正確的 scope 重開；
+- G-DESIGN 另有同一條防線（`run_scope.pin_issues` 共用）。
 
 ## Consequences
 
 - 範圍外需求不再需要 `NO_REJECTION_CONTRACT:`；這個前綴回到原本的意義（spec 沒有定義拒絕契約）。
 - Designer 若在 scope 外設計 TC（TC 只涉及 scope 外需求）會被 G-DESIGN 擋下；要擴大範圍須重開 run。
 - 用真實資料比對：既有 spec-to-testcase run 的最後一份設計產出在新舊規則下 G-DESIGN 結果相同；RUN-20261013-002～004 的報告拿掉範圍外的 uncovered 條目後，新規則 PASS（舊規則各報 28～59 條「未被覆蓋」）。
+- 未處理（待 Oscar 決定）：CLR 落地的「run 範圍」（`clr_lifecycle._run_scope`，需求 A 第 6 章 §5.6）對 spec-to-testcase 仍是整份 revision，沒有跟著 scope 收斂；改動涉及需求 A 的定義，另案處理。
 - 測試：`tests/test_design_run_scope.py`。

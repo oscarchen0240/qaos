@@ -131,7 +131,7 @@ def _extra(item: dict) -> dict:
 
 REVIEW_AGENTS = ("agent-test-validator", "agent-tc-risk-reviewer")
 SPEC_AGENTS = ("agent-spec-analyst",)                 # 會經過 G-SPEC 的 task：派發包附 ac_seq_high_water
-SCOPE_AGENTS = ("agent-test-designer", "agent-test-validator", "agent-tc-risk-reviewer")   # 派發包附 run_scope（ADR-013）
+SCOPE_AGENTS = ("agent-test-designer", "agent-test-validator")         # 派發包附 run_scope（ADR-013）
 STRIPPED_FIELDS = ("design_rationale",)
 
 def review_draft_path(run_id: str, task_id: str, iteration: int, artifact_id: str) -> str:
@@ -175,10 +175,10 @@ def build(run: dict, task: dict, extras: list[dict], review: list[dict] | None =
     if task.get("agent_id") in REVIEW_AGENTS: doc["review_drafts"] = review if review is not None else _review_drafts(run, task)[0]
     sc = run_scope.packet_field(run) if task.get("agent_id") in SCOPE_AGENTS else None
     if sc is not None:
-        if sc["requirement_ids"] and pins["target"]:                     # scope 列的需求必須在綁定的 revision 中（打錯或換了 spec → 派發時就擋，不讓 Designer 白做）
-            reqs = rm.requirements_of(pins["target"])
-            unknown = [r for r in sc["requirement_ids"] if r not in reqs]
-            if unknown: raise DispatchError(f"run 的 scope 列出的 {', '.join(unknown)} 不在綁定的 {pins['target']['spec_id']}@{pins['target']['spec_version']} {pins['target']['revision']}；請取消此 run，以正確的 scope 重開")
+        if sc["requirement_ids"] and pins["target"]:                     # scope 必須對得上綁定的 revision（打錯、換了 spec、全部不可設計 → 派發時就擋，不讓 Designer 白做）
+            t = pins["target"]
+            errs = run_scope.pin_issues(sc["requirement_ids"], rm.requirements_of(t), f"{t['spec_id']}@{t['spec_version']} {t['revision']}")
+            if errs: raise DispatchError(errs[0] + "；請取消此 run，以正確的 scope 重開")
         doc["run_scope"] = sc
     if task.get("agent_id") in SPEC_AGENTS and tgt:                     # 各 REQ 用過的最大推導格式 AC 序號（同 spec 所有版本、所有 revision；新增 AC 取此值 + 1）
         doc["ac_seq_high_water"] = dict(sorted(rm.ac_history(tgt[0])["high_water"].items()))

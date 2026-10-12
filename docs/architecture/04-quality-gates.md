@@ -42,10 +42,10 @@ spec-to-testcase 的 `input.scope` 寫成需求清單（`REQ-<AREA>-<序號>,<�
 
 - 必須覆蓋或列 `uncovered_with_reason` 的只有 scope 內的需求；scope 外的需求不必列，列了也不檢查（不需要再用 `NO_REJECTION_CONTRACT:` 前綴豁免範圍外的 high-risk 需求）。
 - 上表的行為契約規則套用到 scope 內的需求，加上 TC 實際涉及的需求。
-- `gates.run_scope_issues` 另外 FAIL：scope 列的需求不在綁定的 revision；某條 TC 的 `requirement_ids` 全部在 scope 外。
+- `gates.run_scope_issues` 另外 FAIL：scope 列的需求不在綁定的 revision、或 scope 內沒有任何可設計的需求（非 ACTIVE 或未解決的 critical ambiguity）；某條 TC 的 `requirement_ids` 全部在 scope 外。
 - scope 不是需求清單（functional area 或其他文字）或沒有 scope：全部需求（原本的行為）。
 
-Designer、Validator、TC Risk Reviewer 的派發包帶 `run_scope: {raw, requirement_ids}`；scope 的需求不在已綁定的 revision 時 `dispatch` 直接拒絕。測試：`tests/test_design_run_scope.py`。
+Designer、Validator 的派發包帶 `run_scope: {raw, requirement_ids}`。scope 對不上綁定的 revision（同上兩種情況）時，`run new` 在建立時已綁定 revision（T1 跳過）就拒絕建立；T1 重新分析的 run 由 `dispatch` 拒絕。測試：`tests/test_design_run_scope.py`。
 
 ## change 模式的取代範圍（2026-10-12 新增，RUN-20261012-001 事故）
 

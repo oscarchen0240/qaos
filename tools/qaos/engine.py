@@ -241,7 +241,18 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
         note = _decision_added_note(run.get("requirement_model_revision"))
         if note: store.audit(run_id, by, "WARN_DECISION_ADDED", note)
     _advance(run)
+    _check_scope_pin(run)
     return run
+
+def _check_scope_pin(run: dict):
+    """建立時已綁定 revision（T1 跳過）就核對 scope 的需求（ADR-013）：不在 revision 或全部不可設計 → 拒絕建立（整個操作不寫入），
+    不讓 run 建好後才在派發時卡住。T1 要重新分析時 revision 尚未產生，留給派發時檢查。"""
+    rs = run_scope.requirement_ids(run)
+    if not rs: return
+    try: pin = rm.run_pin(run)
+    except rm.RMError: return
+    errs = run_scope.pin_issues(rs, rm.requirements_of(pin), f"{pin['spec_id']}@{pin['spec_version']} {pin['revision']}")
+    if errs: raise EngineError(errs[0])
 
 def load_run(run_id: str) -> dict:
     return store.load(f"runs/{run_id}/run.yaml")

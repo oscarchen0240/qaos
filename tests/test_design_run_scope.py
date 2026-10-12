@@ -44,15 +44,36 @@ def _packet(rid, task_id):
     ("REQ-DAILYREPORT-001,005,007,010（T3RR 風險抽查補強：RUN-20261012-007 RF-02/03）", ["REQ-DAILYREPORT-001", "REQ-DAILYREPORT-005", "REQ-DAILYREPORT-007", "REQ-DAILYREPORT-010"]),
     ("  REQ-A-001， 002、REQ-B-010, 011 (note, with comma)", ["REQ-A-001", "REQ-A-002", "REQ-B-010", "REQ-B-011"]),
     ("REQ-A-001,001,REQ-A-001", ["REQ-A-001"]),
+    ("REQ-A-001,002（說明（含括號）與 REQ-A-009 的關係）", ["REQ-A-001", "REQ-A-002"]),
+    # 主目錄既有 run 的實際寫法
+    ("REQ-REDPACKET-008,010,011,013,014,015,016,017,023,024,025,031,032,036,039（T3RR 風險抽查補強：RUN-20261012-002 RF-01/02/03/05/07/08/09/11/12/15/16）",
+     [f"REQ-REDPACKET-{n}" for n in "008 010 011 013 014 015 016 017 023 024 025 031 032 036 039".split()]),
+    ("REQ-CASHOUT-001,006,018,022,024,028,029,031,032（T3RR 風險抽查補強：RUN-20261012-006 RF-03/04/05/12/14/15/17/18）",
+     [f"REQ-CASHOUT-{n}" for n in "001 006 018 022 024 028 029 031 032".split()]),
     ("DAILYREPORT", None), ("日結報表全部需求", None), ("", None), (None, None),
 ])
 def test_parse_formats(text, want):
     assert run_scope.parse(text) == want
 
-@pytest.mark.parametrize("text", ["REQ-A-001 補強", "REQ-A-001,abc", "REQ-A-001,", "req-a-001", "REQ-A-001,,002", "REQ-（說明）", 5])
+@pytest.mark.parametrize("text", ["REQ-A-001 補強", "REQ-A-001,abc", "REQ-A-001,", "req-a-001", "REQ-A-001,,002", "REQ-（說明）", 5, ["REQ-A-001"],
+    "REQ-A-001（補 AC-0011）、REQ-A-002（補 AC-0021）", "REQ-A-001 (x) REQ-A-002", "REQ-A-001（說明", "REQ-A-001）", "REQ-A-001（a（b）",
+    "REQ-A-001,5", "REQ-A-1", "REQ-A-01,002"])
 def test_parse_rejects_malformed_req_list(text):
     with pytest.raises(run_scope.ScopeError):
         run_scope.parse(text)
+
+def test_parse_error_message_shows_correct_form():
+    with pytest.raises(run_scope.ScopeError, match="REQ-DAILYREPORT-001,005（T3RR 補強）"):
+        run_scope.parse("REQ-A-001（x）、REQ-A-002")
+
+def test_pin_issues_unknown_and_not_designable():
+    act = {"status": "ACTIVE", "ambiguity": None}
+    crit = {"status": "ACTIVE", "ambiguity": {"level": "critical"}}
+    resolved = {"status": "ACTIVE", "ambiguity": {"level": "critical", "resolved_by_approval": "APR-0001"}}
+    dep = {"status": "DEPRECATED"}
+    assert run_scope.pin_issues(["REQ-A-001", "REQ-A-009"], {"REQ-A-001": act}, "R") == ["run 的 scope 列出的 REQ-A-009 不在綁定的 R"]
+    assert "沒有任何可設計的需求" in run_scope.pin_issues(["REQ-A-001", "REQ-A-002"], {"REQ-A-001": crit, "REQ-A-002": dep}, "R")[0]
+    assert run_scope.pin_issues(["REQ-A-001", "REQ-A-002"], {"REQ-A-001": crit, "REQ-A-002": resolved}, "R") == []
 
 def test_requirement_ids_only_for_spec_to_testcase_and_tolerates_legacy():
     assert run_scope.requirement_ids({"workflow_id": "spec-to-testcase", "input": {"scope": "REQ-A-001,002"}}) == ["REQ-A-001", "REQ-A-002"]
@@ -117,12 +138,23 @@ def test_14_no_scope_or_free_text_keeps_full_coverage():
         pk = _packet(rid, "T2")
         assert pk.get("run_scope") == ({"raw": "DSC 全面補強", "requirement_ids": None} if inputs else None)
 
-def test_15_unknown_requirement_in_scope_blocks_dispatch():
-    run = engine.new_run("spec-to-testcase", {"spec_id": SPEC, "spec_version": "1.0", "scope": "REQ-DSC-002,099"}, BY, new_request=True)
+def test_15_unknown_requirement_in_scope_rejected_at_new_run_when_bound():
+    before = sorted(p.name for p in (store.ROOT / "runs").iterdir())
+    with pytest.raises(engine.EngineError, match="REQ-DSC-099 不在綁定的 SPEC-DSC-001@1.0"):
+        engine.new_run("spec-to-testcase", {"spec_id": SPEC, "spec_version": "1.0", "scope": "REQ-DSC-002,099"}, BY, new_request=True)
+    assert sorted(p.name for p in (store.ROOT / "runs").iterdir()) == before          # 整個操作不寫入
+
+def test_16_unknown_requirement_blocks_dispatch_for_run_created_before_check():
+    """建立時還沒有 revision（或本變更前建立）的 run：派發 Designer 時才擋。以外部寫入模擬 scope 與 revision 對不上的既有 run。"""
+    run = engine.new_run("spec-to-testcase", {"spec_id": SPEC, "spec_version": "1.0", "scope": "REQ-DSC-002"}, BY, new_request=True)
+    data = engine.load_run(run["run_id"]); data["input"]["scope"] = "REQ-DSC-002,099"
+    H.raw_save(f"runs/{run['run_id']}/run.yaml", data)
     with pytest.raises(dispatch.DispatchError, match="REQ-DSC-099 不在綁定的"):
         dispatch.dispatch(run["run_id"], "T2")
     assert not dispatch.current_entry(engine._task(engine.load_run(run["run_id"]), "T2"))
-    # 防線：g_design 直接呼叫時同樣報出（例如派發之後 scope 的需求才不在 revision 中）
-    reqs = {"REQ-DSC-002": {}}
-    msgs = gates.run_scope_issues(["REQ-DSC-002", "REQ-DSC-099"], "REQ-DSC-002,099", {"testcases": []}, reqs)
-    assert len(msgs) == 1 and "REQ-DSC-099 不在綁定的 revision 中" in msgs[0]
+    # 防線：g_design 直接呼叫時同樣報出
+    msgs = gates.run_scope_issues(["REQ-DSC-002", "REQ-DSC-099"], "REQ-DSC-002,099", {"testcases": []}, {"REQ-DSC-002": {"status": "ACTIVE"}})
+    assert len(msgs) == 1 and "REQ-DSC-099 不在綁定的 revision" in msgs[0]
+
+def test_17_risk_reviewer_packet_has_no_scope():
+    assert "agent-tc-risk-reviewer" not in dispatch.SCOPE_AGENTS and "agent-test-designer" in dispatch.SCOPE_AGENTS

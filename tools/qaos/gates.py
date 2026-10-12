@@ -275,7 +275,7 @@ def design_scope(p, reqs, covered, uncovered, by_req, rs) -> tuple[set, set]:
 
 def run_scope_issues(rs, raw, p, reqs) -> list[str]:
     """run scope 是需求清單時：scope 的需求必須在綁定的 revision 中；每條 TC 至少涉及一個 scope 內的需求（不得設計本 run 範圍外的 TC）。"""
-    out = [f"run 的 scope 列出的 {rid} 不在綁定的 revision 中（scope：{raw}）；Designer 無法修正，請取消此 run 以正確的 scope 重開" for rid in rs if rid not in reqs]
+    out = [f"{m}（scope：{raw}）；Designer 無法修正，請取消此 run 以正確的 scope 重開" for m in run_scope.pin_issues(rs, reqs, "revision")]
     for tc in p["testcases"]:
         if not set(tc["requirement_ids"]) & set(rs):
             out.append(f"{tc['draft_id']} 的 requirement_ids（{', '.join(tc['requirement_ids'])}）都不在本 run 的 scope 內（scope：{raw}）")
