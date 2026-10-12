@@ -1,0 +1,207 @@
+title: 線上前台紅包視窗：有待開啟時進度滿格『已達有效流水門檻』、領完後改顯示距下一個紅包的進度與尚差、本期已獲得；升級後改以新規則顯示
+description: 線上前台紅包視窗：有待開啟時進度滿格『已達有效流水門檻』、領完後改顯示距下一個紅包的進度與尚差、本期已獲得；升級後改以新規則顯示
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-031
+- REQ-REDPACKET-035
+- REQ-REDPACKET-037
+acceptance_criteria_ids:
+- AC-REDPACKET-0311
+- AC-REDPACKET-0312
+- AC-REDPACKET-0314
+- AC-REDPACKET-0358
+- AC-REDPACKET-0374
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義】需有可立即改變指定測試會員 VIP 等級序號的辦法（6.2 僅定義自動升降的評估週期；變動結果可於『各式報表 > 會員等級異動紀錄』核對），由環境負責人提供；下文『會員升級／降級』均指此辦法
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A，等級序號 b，未被任何等級規則勾選）及升級目標序號 s（s ≠ b）；玩家 A 本週期無注單計入累計
+- 後台新增活動時，於『活動名稱／說明欄』選預設語系（繁體中文），填活動名稱『RP-ENTRY』與說明欄『RP-ENTRY 活動說明』；玩家 A 的前台語系使用繁體中文
+test_data:
+- name: 下注
+  value: '1084'
+- name: 預設規則 / 等級規則 1（序號 s）
+  value: 1000/5/10 / 800/8/30
+steps:
+- n: 1
+  action: 建立活動『RP-ENTRY』（活動時間『永久』，名稱與說明欄如前置條件）：活動幣種 USDT；預設規則門檻 1000／上限 5／固定 10／稽核 1；等級規則 1 勾選序號 s（門檻 800／上限 8／固定 30／稽核 1）；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 結算有效流水貢獻 1084
+  expected: 產生 1 個待開啟紅包
+- n: 3
+  action: 玩家 A 於前台點右側亮起的紅包圖示，開啟紅包視窗
+  expected: 顯示活動名稱『RP-ENTRY』與活動說明『RP-ENTRY 活動說明』；累計進度顯示滿格（1,000 ／ 1,000）並標示『已達有效流水門檻』；本期已獲得 1 ／ 5；領取按鈕『領取獎勵（1）』；不顯示規則名稱（如『預設規則』）
+- n: 4
+  action: 玩家 A 依領取流程領取該紅包（已無其他待開啟紅包），再開啟紅包視窗
+  expected: 累計進度改顯示 84 ／ 1,000（距下一個紅包已累計的 84，不是累計總額 1,084）並顯示尚差 916；本期已獲得仍為 1 ／ 5；紅包金額顯示『最高 ＄10』
+- n: 5
+  action: 把玩家 A 升級至序號 s，重新整理並開啟紅包視窗
+  expected: 紅包金額改顯示『最高 ＄30』；進度與上限改以等級規則 1 顯示（門檻 800、本期已獲得 1 ／ 8）；不顯示規則名稱『等級規則 1』
+- n: 6
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 前台紅包視窗：有待開啟紅包時累計進度顯示滿格『1,000 ／ 1,000』並標示『已達有效流水門檻』，本期已獲得 1 ／ 5，顯示活動名稱與活動說明、不顯示規則名稱；領完後改顯示『84 ／ 1,000』與尚差
+  916，本期已獲得仍 1 ／ 5；升級至等級規則 1 後金額改顯示『最高 ＄30』、進度與上限改以門檻 800、上限 8 顯示。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §前台呈現說明（第 184 行）
+  quote: 全部領完後改顯示距下一個紅包的進度：目前累計 ／ 適用規則的累積門檻，並顯示尚差多少。目前累計＝本週期累計扣除已產生紅包所用掉的門檻
+decision_refs:
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 184 行）
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 188 行）
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 203 行）
+- requirement_id: REQ-REDPACKET-035
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 189 行）
+- requirement_id: REQ-REDPACKET-035
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 183 行）
+- requirement_id: REQ-REDPACKET-037
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 203 行）
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 178 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 184 行）
+  quote: 全部領完後改顯示距下一個紅包的進度：目前累計 ／ 適用規則的累積門檻，並顯示尚差多少。目前累計＝本週期累計扣除已產生紅包所用掉的門檻
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 188 行）
+  quote: 本週期已產生數 ／ 適用規則的單週期發放上限；已產生數含待開啟、已入帳與已作廢
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 203 行）
+  quote: 會員等級變動後，進度、上限與紅包金額即改以新規則顯示
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 189 行）
+  quote: 取自後台「說明欄」（依語系）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 183 行）
+  quote: 無待開啟紅包時：一律加「最高」——固定金額顯示「最高 ＄該金額」；隨機金額（權重表）顯示「最高 ＄最大獎項金額」（例：權重表 8／18／88 顯示「最高 88」）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 178 行）
+  quote: 線上與機台使用同一個紅包活動視窗，顯示以下資料；不顯示規則名稱
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-073 v2（CI-SPEC-REDPACKET-001-0.1-0.2，R002→R001）'
+testcase_id: TC-REDPACKET-073
+version: 4
+supersedes: 2
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

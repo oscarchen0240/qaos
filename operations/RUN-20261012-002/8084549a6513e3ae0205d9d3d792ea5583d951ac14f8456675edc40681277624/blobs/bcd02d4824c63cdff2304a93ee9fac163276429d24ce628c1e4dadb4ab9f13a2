@@ -1,0 +1,171 @@
+title: 追加預算：視窗顯示、即時生效並寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前後金額）、用罄活動恢復產生且不補發
+description: 追加預算：視窗顯示、即時生效並寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前後金額）、用罄活動恢復產生且不補發
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-016
+- REQ-REDPACKET-015
+- REQ-REDPACKET-018
+acceptance_criteria_ids:
+- AC-REDPACKET-0161
+- AC-REDPACKET-0162
+- AC-REDPACKET-0186
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+- 【環境前提，spec 未定義，需環境負責人確認】7.4 操作紀錄是實體機台正本規劃新增的頁面（手冊 v01 尚未定義），其選單路徑與可檢視的角色隨該頁定義、目前 spec 未載明；由環境負責人告知入口，並確認本案登入角色可檢視該頁
+test_data:
+- name: 總預算
+  value: 36 → 54
+- name: 固定金額
+  value: 18
+steps:
+- n: 1
+  action: 建立活動『RP-TOPUP』（活動時間『永久』）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 18／稽核 1；總預算 36；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 結算有效流水貢獻 300（跨 3 個門檻）
+  expected: 產生 2 個紅包（預算用完），第 3 個因預算不足不產生；列表該活動的狀態欄顯示『進行中』，並於狀態旁標示『預算用罄』
+- n: 3
+  action: 於『活動排程 > 紅包活動』該活動列的操作欄點『追加預算』
+  expected: 視窗顯示目前總預算 36、已占用 36、剩餘 0
+- n: 4
+  action: 輸入新總預算 54，點『確認』（記下操作時間與登入帳號）
+  expected: 視窗關閉；新預算即時生效；活動列預算使用顯示 36 ／ 54；狀態旁的『預算用罄』消失（提示訊息的文字只記錄，不判定）
+- n: 5
+  action: 檢視紅包明細筆數與頁面內容
+  expected: 仍為 2 筆（追加預算本身不補發用罄期間未產生的紅包）；紅包明細不另顯示追加預算的歷程（沒有調整前後金額、操作人員等追加紀錄）；頂部總預算顯示最新值 54
+- n: 6
+  action: 進入 7.4 操作紀錄頁（入口依環境前提），找到本次追加預算的紀錄
+  expected: 新增 1 筆：操作人員為本次登入帳號、時間為步驟 4 的操作時間附近、活動名稱『RP-TOPUP』、調整前 36、調整後 54
+- n: 7
+  action: 玩家 A 再結算 100
+  expected: 活動恢復產生：新增 1 個紅包（共 3 筆）；新增的紅包由追加後的預算支應（預算使用 54 ／ 54）
+expected_result: 追加預算視窗顯示目前總預算／已占用／剩餘；輸入更大的新總預算確認後即時生效，狀態旁的『預算用罄』消失，用罄的活動恢復產生紅包，且不補發用罄期間未產生的那一個；每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱『RP-TOPUP』、調整前
+  36、調整後 54），紅包明細不另顯示追加歷程。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §活動排程（第 247 行）
+  quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程。7.4 操作紀錄為實體機台正本規劃新增的頁面（手冊 v01 尚未定義），可檢視角色隨該頁定義
+decision_refs:
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 247 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 243 行）
+- requirement_id: REQ-REDPACKET-015
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 392 行）
+- requirement_id: REQ-REDPACKET-018
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 229 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 247 行）
+  quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程。7.4 操作紀錄為實體機台正本規劃新增的頁面（手冊 v01 尚未定義），可檢視角色隨該頁定義
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 243 行）
+  quote: 點擊「確認」，新預算即時生效；原本預算用罄的活動恢復產生紅包
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 392 行）
+  quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包；用罄期間帳號累計照常推進，達標的門檻不產生、不補發
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 229 行）
+  quote: 預算用罄不是獨立狀態，於狀態旁另加標示
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-040 v2（CI-SPEC-REDPACKET-001-0.1-0.2，R002→R001）'
+testcase_id: TC-REDPACKET-040
+version: 4
+supersedes: 2
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

@@ -1,0 +1,133 @@
+title: 洗分／出金後才達標的紅包直接以已作廢建立（機台洗分／機台出金）：照常抽定金額並計入已產生數、不占預算、圖示不亮；場次因歸零等結束者則照常產生待開啟紅包
+description: 洗分／出金後才達標的紅包直接以已作廢建立（機台洗分／機台出金）：照常抽定金額並計入已產生數、不占預算、圖示不亮；場次因歸零等結束者則照常產生待開啟紅包
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-038
+acceptance_criteria_ids:
+- AC-REDPACKET-0381
+- AC-REDPACKET-0382
+- AC-REDPACKET-0383
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- negative
+- functional
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分與洗分；機台端洗分門檻為已知的正值或 0（機台端設定，後台無此設定）
+- 【環境前提】機台目前為過渡期（暫無印表機，SPEC-ARCADE-001 出金段 2026-09-03）：按結算鍵後由前台自行完成整筆出金，扣分時點為前台回報完成、平台扣分成功當下；本案以此流程執行。若環境已改為印表機流程，扣分時點改為收據送入列印佇列之後，本案斷言以『扣分成功』為準，步驟不變
+- 機台帳號 M1（自行從環境中選定，本週期無注單；分數餘額可在『會員與加盟商 > 會員列表』帳號類型篩「機台」、所屬站台選該場館時，由 M1 的餘額欄查看；結算出金前餘額須大於 0，若為 0 先由店員對 M1 開分補足）
+- 機台端洗分門檻 W 為已知值且 W ≤ 100（若 W 較大，Run A 的開分改為 200＋W）
+- 【環境前提，spec 未定義佈置方式，需環境負責人／工程確認】可『暫緩某一局注單的結算』（機台遊戲商模擬器／代理：下注後保留該局不結算，待測試人員指示才送出結算，結算結果可指定為輸局）的測試手段，使最後一局在洗分／出金／歸零之後才結算
+- 領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+test_data:
+- name: 活動
+  value: 門檻 100／上限 5／固定 20／稽核 0；總預算 1000；每日重置
+- name: Run A 開分
+  value: 300（結算 100、壓住 100 後餘額約 100 以上，仍大於洗分門檻 W）
+- name: Run B 開分
+  value: 300（出金前餘額須大於 0）
+- name: Run C 開分
+  value: 100：下注 100 並暫緩結算 → 分數 0 → 場次因歸零結束；若平台在注單未結算前不判定歸零，改為開分 110、壓住 100 後以 10 小額輸光（小額下注的累計流水 10 低於門檻 100，不會在壓住的那一局結算前先達標）
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-LATE』（永久）：每日重置；預設規則門檻 100／上限 5／固定 20／稽核 0；總預算 1000；儲存
+  expected: 建立成功，預算使用 0 ／ 1,000
+- n: 2
+  action: 【Run A 洗分】店員對 M1 開分 300；M1 結算有效流水貢獻 100（產生 P0，待開啟，預算使用 20 ／ 1,000）；M1 再下注一局（有效流水貢獻 100）但暫緩結算；確認 M1 餘額仍大於洗分門檻 W；店員洗分
+    M1（『指定金額』，確認視窗選［繼續結算］）並完成
+  expected: 洗分完成，場次結束；P0 作廢（機台洗分），預算使用回到 0 ／ 1,000
+- n: 3
+  action: 讓暫緩的那一局結算（累計達門檻）
+  expected: 新紅包 P1 直接以『已作廢』建立，作廢原因『機台洗分』；金額照常抽定（20）；本週期已產生數為 2（P0、P1）；預算使用仍 0 ／ 1,000（不占預算）；機台紅包圖示不亮起；累計照常（超出部分續計）
+- n: 4
+  action: 【Run B 出金】店員對 M1 開分 300（補足餘額）；M1 結算有效流水貢獻 100（產生 P2 待開啟）；再下注一局暫緩結算；玩家按『結算』鍵出金，在確認視窗選［繼續結算］並完成（過渡期前台完成）
+  expected: 出金完成，場次結束；P2 作廢（機台出金）
+- n: 5
+  action: 讓暫緩的那一局結算
+  expected: 新紅包 P3 直接以『已作廢』建立，作廢原因『機台出金』；不占預算；圖示不亮起
+- n: 6
+  action: 【Run C 歸零結束】店員對 M1 開分 100；M1 下注一局有效流水貢獻 100 並暫緩結算（下注後分數 0）；確認 M1 場次因歸零結束（『各式報表 > 場館日結報表』依場次明細：該場次已結束、M1 沒有進行中場次）；讓暫緩的那一局以輸局結算使累計達門檻（備援佈置見測試資料）
+  expected: 紅包照常產生為『待開啟』並占用預算（預算使用增加 20）；紅包圖示亮起（場次因歸零結束者不適用『直接作廢』）
+- n: 7
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 觸發達標的注單所屬場次已因洗分／出金結束時，紅包直接以『已作廢』建立（作廢原因機台洗分／機台出金）：照常抽定金額並計入本週期已產生數、不占用預算、圖示不亮起；場次因歸零（逾時、日結結算）結束者不適用，照常產生待開啟紅包、占用預算、圖示亮起。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 399 行）
+  quote: 觸發達標的注單所屬場次已因洗分或出金結束時，紅包直接以「已作廢」建立（作廢原因：機台洗分／機台出金）：照常抽定金額並計入本週期已產生數，不占用預算、紅包圖示不亮起；累計照常、不歸零。場次因逾時、日結結算或歸零結束者不適用，照常產生待開啟紅包
+decision_refs:
+- requirement_id: REQ-REDPACKET-038
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 399 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 399 行）
+  quote: 觸發達標的注單所屬場次已因洗分或出金結束時，紅包直接以「已作廢」建立（作廢原因：機台洗分／機台出金）：照常抽定金額並計入本週期已產生數，不占用預算、紅包圖示不亮起；累計照常、不歸零。場次因逾時、日結結算或歸零結束者不適用，照常產生待開啟紅包
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-038/AC-0381,AC-0382,AC-0383（前台調整清單 四-3）'
+testcase_id: TC-REDPACKET-204
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

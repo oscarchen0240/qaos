@@ -1,0 +1,131 @@
+title: 各站台獨立：子站台的會員注單不計入主站台的紅包活動；子站台可在主站台已有進行中活動時各自建立重疊時段的活動並涵蓋自己的會員
+description: 各站台獨立：子站台的會員注單不計入主站台的紅包活動；子站台可在主站台已有進行中活動時各自建立重疊時段的活動並涵蓋自己的會員
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-017
+acceptance_criteria_ids:
+- AC-REDPACKET-0176
+- AC-REDPACKET-0177
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員角色登入後台（管轄範圍含主站台 A 及其子站台 A1，皆為線上站台、核心貨幣 USDT），可用站台切換下拉選單在 A 與 A1 之間切換
+- 主站台 A 與子站台 A1 目前都沒有進行中或排程中的紅包活動（先於各站台『活動排程 > 紅包活動』逐一取消排程）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員屬於子站台 A1（玩家 S1），本週期無注單計入累計
+test_data:
+- name: 活動
+  value: 門檻 100／上限 5／固定 10／稽核 1；永久
+- name: 下注
+  value: 玩家 S1 100、100
+steps:
+- n: 1
+  action: 站台切換選到主站台 A，建立活動『RP-SITE-A』（永久）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 10／稽核 1；每日重置；儲存
+  expected: 建立成功，A 有進行中的紅包活動；子站台 A1 沒有紅包活動
+- n: 2
+  action: 玩家 S1（子站台 A1 的會員）結算有效流水貢獻 100
+  expected: 不計入主站台 A 活動的累計、不產生紅包：A 的『RP-SITE-A』紅包明細沒有玩家 S1 的任何紅包
+- n: 3
+  action: 站台切換選到子站台 A1，建立活動『RP-SITE-A1』（永久，與 RP-SITE-A 時段重疊）：其餘同上；儲存
+  expected: 各站台獨立判斷，可成功建立（不會被 A 的進行中活動阻擋）；A 的 RP-SITE-A 仍為進行中
+- n: 4
+  action: 玩家 S1 再結算有效流水貢獻 100
+  expected: 產生 1 個紅包，出現在子站台 A1 的『RP-SITE-A1』紅包明細；A 的 RP-SITE-A 紅包明細仍沒有玩家 S1 的紅包
+- n: 5
+  action: 清理：站台切換到 A 與 A1，分別對各自活動點『取消排程』，於確認視窗點『確認取消』
+  expected: 已取消排程
+expected_result: 活動只涵蓋建立活動之站台的會員、不涵蓋子站台：子站台會員的注單不計入主站台活動；子站台可在主站台已有進行中活動時各自建立重疊時段的活動（各站台獨立判斷），並只涵蓋自己的會員。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 405 行）
+  quote: 各站台獨立判斷——主站台與子站台各自計算、可各自辦一個；活動只涵蓋建立活動之站台的會員，不涵蓋子站台
+decision_refs:
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 405 行）
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 405 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 405 行）
+  quote: 各站台獨立判斷——主站台與子站台各自計算、可各自辦一個；活動只涵蓋建立活動之站台的會員，不涵蓋子站台
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 405 行）
+  quote: 排程時間重疊時阻擋儲存
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-017/AC-0176,AC-0177'
+testcase_id: TC-REDPACKET-174
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

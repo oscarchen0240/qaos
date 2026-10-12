@@ -1,0 +1,127 @@
+title: 權重表機率分布統計：大量產生紅包（10,000 個）後各獎項金額的比例接近設定機率（60%／30%／10%）
+description: 權重表機率分布統計：大量產生紅包（10,000 個）後各獎項金額的比例接近設定機率（60%／30%／10%）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-012
+acceptance_criteria_ids:
+- AC-REDPACKET-0122
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: automated
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【自動化／API 層，人工不執行】需要可程式化的測試工具：能以 API 對測試帳號批次灌入有效流水貢獻（使一次產生大量紅包），並能查詢或匯出該活動全部紅包的金額（紅包明細匯出 CSV 或查詢 API）
+- 【測試環境專用】請使用獨立的測試站台，避免大量紅包影響其他資料；總預算不設限
+test_data:
+- name: 權重表
+  value: 8 USDT（60%）／18 USDT（30%）／88 USDT（10%）
+- name: 樣本數
+  value: 10,000 個紅包（門檻 1、上限 10,000）
+- name: 統計判準（QA 的判定標準，非產品規則）
+  value: 各金額比例與設定機率相差不超過 ±3 個百分點：10,000 個樣本、p＝0.6 時標準差約 0.49 個百分點、3σ 約 1.5 個百分點，±3 個百分點留有餘裕；若 QA 內部審核要更嚴，可改為 3σ
+steps:
+- n: 1
+  action: 建立活動『RP-DIST』（永久）：活動幣種 USDT；預設規則門檻 1／上限 10000／獎勵方式『隨機金額』權重表 8／60%、18／30%、88／10%／稽核倍數 0；不設總預算；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 以測試工具對測試帳號灌入有效流水貢獻 10,000（門檻 1，使一次或分批產生 10,000 個紅包）
+  expected: 紅包明細共 10,000 筆（皆為 8／18／88 之一）
+- n: 3
+  action: 匯出紅包明細 CSV 或以查詢 API 取得全部 10,000 筆金額，統計 8、18、88 各自的筆數與比例
+  expected: 每筆金額皆為 8、18 或 88；三者比例分別接近 60%、30%、10%（偏差不超過測試資料列出的統計判準）
+- n: 4
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 大量產生紅包後，所有紅包金額皆為權重表的 8／18／88 之一，各金額比例接近設定機率（60%／30%／10%）：與設定值相差不超過 ±3 個百分點（QA 統計判準，見測試資料）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §新增優惠活動 — 紅包（第 107 行）
+  quote: 設定各獎項金額與中獎機率，紅包產生時依機率抽出其中一項
+decision_refs:
+- requirement_id: REQ-REDPACKET-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §新增優惠活動 — 紅包（第 107 行）
+- requirement_id: REQ-REDPACKET-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 390 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 107 行）
+  quote: 設定各獎項金額與中獎機率，紅包產生時依機率抽出其中一項
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 390 行）
+  quote: 紅包產生當下抽定金額並記錄，開啟時不重抽
+assumptions: []
+automation_status: planned
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-012（整合評估 RE-G-05）（權重表機率分布統計）'
+testcase_id: TC-REDPACKET-210
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

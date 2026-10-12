@@ -1,0 +1,179 @@
+title: 匯出 CSV 格式：欄位與順序同列表、狀態與作廢原因為畫面文字、未入帳／未作廢輸出『—』、時間為 UTC+0 YYYY-MM-DD HH:mm:ss、不含總計列
+description: 匯出 CSV 格式：欄位與順序同列表、狀態與作廢原因為畫面文字、未入帳／未作廢輸出『—』、時間為 UTC+0 YYYY-MM-DD HH:mm:ss、不含總計列
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-022
+acceptance_criteria_ids:
+- AC-REDPACKET-0226
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+test_data:
+- name: 活動
+  value: 門檻 10／上限 5／固定 10／稽核 1
+- name: 下注
+  value: 玩家 A 20
+steps:
+- n: 1
+  action: 建立活動『RP-CSVFMT』（永久）：活動幣種 USDT；預設規則門檻 10／上限 5／固定 10／稽核 1；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 結算有效流水貢獻 20，並依領取流程只領取其中 1 個紅包
+  expected: 共 2 個紅包：1 個『已入帳』、1 個『待開啟』
+- n: 3
+  action: 進入該活動的紅包明細，記下列表的欄位名稱順序、兩筆紅包的各欄位顯示值與列表底部的金額總計；點右上角『匯出 CSV』
+  expected: 下載 CSV
+- n: 4
+  action: 開啟 CSV，檢視標題列與兩筆資料列
+  expected: 標題列欄位與順序同列表：紅包編號、會員編號、適用規則、場次編號、產生時間、週期累計、紅包金額、稽核倍數、狀態、入帳時間、作廢原因；沒有總計列（只有標題列＋2 筆資料列）
+- n: 5
+  action: 逐欄比對已入帳那筆
+  expected: 狀態輸出畫面文字『已入帳』；入帳時間為 UTC+0、格式 YYYY-MM-DD HH:mm:ss；作廢原因輸出『—』；場次編號（線上帳號）輸出『—』
+- n: 6
+  action: 逐欄比對待開啟那筆
+  expected: 狀態輸出『待開啟』；入帳時間輸出『—』；作廢原因輸出『—』；產生時間格式 YYYY-MM-DD HH:mm:ss（UTC+0）
+- n: 7
+  action: 回後台對該活動點『取消排程』並確認；重新進入紅包明細、再匯出一次 CSV，檢視原待開啟那筆
+  expected: 狀態輸出『已作廢』、作廢原因輸出畫面文字『活動結束』；入帳時間仍輸出『—』
+expected_result: CSV 欄位與順序同列表（紅包編號 → 作廢原因）、不含總計列；狀態與作廢原因為畫面文字；未入帳者入帳時間、未作廢者作廢原因輸出『—』；時間為 UTC+0、格式 YYYY-MM-DD HH:mm:ss。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §紅包明細（第 299 行）
+  quote: 狀態與作廢原因輸出畫面上的文字；未入帳、未作廢者輸出「—」
+decision_refs:
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包明細（第 298 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包明細（第 299 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包明細（第 300 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包明細（第 301 行）
+- requirement_id: REQ-REDPACKET-022
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包明細（第 287 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 298 行）
+  quote: 欄位與順序同列表（紅包編號 → 作廢原因）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 299 行）
+  quote: 狀態與作廢原因輸出畫面上的文字；未入帳、未作廢者輸出「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 300 行）
+  quote: 時間以 UTC+0、格式 `YYYY-MM-DD HH:mm:ss` 輸出
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 301 行）
+  quote: 不含總計列
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 287 行）
+  quote: 紅包產生當下的場次（僅供現場爭議追溯，與入帳歸屬的場次可能不同，見業務規則「機台入帳場次」）；線上帳號顯示「—」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-022/AC-0226'
+testcase_id: TC-REDPACKET-175
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

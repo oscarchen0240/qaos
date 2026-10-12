@@ -1,0 +1,130 @@
+title: 機台場館『每週一』重置：週期自週一的營業日（日結時間）起算，在日結時間、而非日曆午夜歸零
+description: 機台場館『每週一』重置：週期自週一的營業日（日結時間）起算，在日結時間、而非日曆午夜歸零
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-011
+acceptance_criteria_ids:
+- AC-REDPACKET-0119
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- boundary
+- functional
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館日結時間為 UTC+0 20:00（台灣時間 04:00）（如不同，請於站台列表調整並依實際值換算下方時間）；M1 機台帳號（自行選定）；店員可對 M1 開分，使 M1 在整個測試期間分數大於 0
+- 【時間窗】本案必須橫跨一個週日的日結時間：於週日 UTC+0 16:00 之前建立活動並產生紅包；觀察點為週日 UTC+0 16:30（台灣週一 00:30，日曆已過午夜）、19:50（日結前）、20:10（日結後）
+test_data:
+- name: 活動
+  value: 每週一重置；門檻 300／上限 5／固定 20／稽核 0
+- name: 日結時間
+  value: UTC+0 20:00＝台灣時間 04:00
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-WEEK-ARC』（永久）：重置方式『每週一』；預設規則門檻 300／上限 5／固定 20／稽核 0；儲存；M1 結算有效流水貢獻 350
+  expected: 產生 1 個待開啟紅包 P1，餘量 50
+- n: 2
+  action: 週日 UTC+0 16:30（台灣週一 00:30，日曆午夜已過、日結時間未到）檢視紅包明細與 M1 紅包視窗
+  expected: 沒有重置：P1 仍為『待開啟』（每週一的週期不以日曆午夜切分）
+- n: 3
+  action: 週日 UTC+0 19:50（日結時間前 10 分鐘）檢視
+  expected: 仍沒有重置：P1 『待開啟』
+- n: 4
+  action: 週日 UTC+0 20:10（日結時間後 10 分鐘，台灣週一 04:10）檢視紅包明細與 M1 紅包視窗
+  expected: 週期已重置：P1 狀態『已作廢』、作廢原因『週期重置』；紅包視窗累計進度顯示 0 ／ 300（新週期自週一的營業日起算）
+- n: 5
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 機台場館重置方式『每週一』的週期自週一的營業日起算，在場館日結時間（UTC+0 20:00）歸零，而不是日曆午夜：週日 UTC+0 16:30 與 19:50 時紅包與累計保留，20:10 時待開啟紅包作廢（週期重置）、累計歸零。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 382 行）
+  quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+decision_refs:
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 382 行）
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 397 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 382 行）
+  quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 397 行）
+  quote: 週期重置時該帳號所有待開啟紅包作廢；已入帳紀錄不受影響
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-011/AC-0119'
+testcase_id: TC-REDPACKET-165
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:09:35Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
