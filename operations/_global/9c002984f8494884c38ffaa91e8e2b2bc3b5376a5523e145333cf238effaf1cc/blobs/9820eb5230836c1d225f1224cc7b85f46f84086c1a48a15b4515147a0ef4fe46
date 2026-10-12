@@ -1,0 +1,140 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: 操作員在匯出 CSV 的請求中把站台／場館參數改成非自身場館：後端拒絕，不回傳含非自身場館資料的檔案
+description: 補上操作員匯出 API 的越權案例（既有 TC-DAILYREPORT-004 只驗證查詢 API；RUN-20261012-007 T3RR RF-15）。
+requirement_ids:
+- REQ-DAILYREPORT-001
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0013
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_cost: medium
+preconditions:
+- 環境負責人提供一個既有的操作員帳號（其自身場館記為 V1），以及一個『非自身場館』V2：確實存在於系統、不是 V1，且在同一個查詢條件（見下）下有日結資料列，作為越權目標
+- 操作員自身場館 V1 在某個單一營業日 d 有報表資料，作為對照（自身場館）的查詢條件
+- 瀏覽器可開啟開發者工具擷取請求；匯出請求的路徑與代表站台／場館的參數名稱本 spec 未載明，由步驟 3 現場擷取，不預設。若匯出沒有獨立請求（例如前端自行由查詢結果產生檔案），如實記錄此事實並跳過步驟 4～6
+- CLR-DAILYREPORT-001（2026-09-14 補充）只說明『後端會拒絕』，沒有定義拒絕的 HTTP 狀態碼、錯誤訊息或錯誤代碼；本案只判定『被拒絕且不含非自身場館資料』，這些具體值只記錄、不作判準，也不套用管理員／站長適用的『無權限』錯誤（CLR-DAILYREPORT-014
+  的適用對象不含操作員）
+- 進入 各式報表 > 場館日結報表（以操作員登入後）
+test_data:
+- name: 越權目標 V2
+  value: 由環境負責人提供，不寫死
+  note: 非操作員自身場館、確實存在、於查詢條件下有資料
+- name: 查詢條件
+  value: 依場館彙總（或依機台明細）、按日、結算日期 d ～ d、機台帳號留空
+steps:
+- n: 1
+  action: 以操作員帳號登入後台，進入 各式報表 > 場館日結報表；展開頁面標題下方的站台切換下拉選單，逐項檢視所有選項
+  expected: 選單只提供操作員自身場館 V1，不含 V2（前端已擋）
+- n: 2
+  action: 以前述查詢條件（結算日期 d ～ d）搜尋一次
+  expected: 列表正常列出 V1 的資料
+- n: 3
+  action: 開啟瀏覽器開發者工具的 Network 頁籤，點頁面右上角『匯出 CSV』，找到該次匯出所送出的請求，記下請求方法、路徑、代表站台／場館的參數名稱與目前值（V1），並把下載的檔案另存為 F0
+  expected: 取得匯出請求資訊；F0 只含 V1 的資料
+- n: 4
+  action: 以同一個登入 session 重送該匯出請求，僅把代表站台／場館的參數值改為 V2，其餘參數不變；檢視回應的狀態碼、回應內容，以及是否產生可下載的檔案
+  expected: 請求被後端拒絕（以回應是錯誤而非成功的檔案內容判定）；不產生含 V2 任何日結資料列的檔案或回應內容；狀態碼、錯誤訊息與錯誤代碼只記錄，不作判準
+- n: 5
+  action: （資料不變的確認）重新整理報表頁，以操作員身分再搜尋同一條件
+  expected: 仍只顯示 V1 的資料，與步驟 2 相同
+- n: 6
+  action: （對照）把匯出請求改回原本的參數值 V1 重送
+  expected: 可正常取得檔案，內容與 F0 相同；排除請求格式錯誤造成的假拒絕
+expected_result: 操作員將匯出 CSV 請求中的站台／場館參數改為非自身場館 V2 時，後端拒絕，不回傳任何含 V2 日結資料的檔案或內容；站台切換選單只提供自身場館；以原本參數（V1）重送的對照請求可正常取得檔案。拒絕的具體形式（狀態碼、訊息、錯誤代碼）CLR-DAILYREPORT-001
+  未定義，不作判準。（依據：操作員只能看自身場館為 v0.3 第 25 行原文；後端拒絕為 CLR-DAILYREPORT-001 2026-09-14 補充，列於 source_refs，非 v0.3 本文。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §功能說明／權限表（第 25 行）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §功能說明／權限表（第 25 行）
+- requirement_id: REQ-DAILYREPORT-001
+  question_id: Q02
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-DAILYREPORT-001
+    answer_rev: 0
+    answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §功能說明／權限表（第 25 行）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-001
+  answer_rev: 0
+  answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+  quote: 後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕
+source_ref: T3RR:RUN-20261012-007 RF-15
+testcase_id: TC-DAILYREPORT-165
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+created_at: '2026-10-12T17:10:47Z'
+updated_at: '2026-10-12T17:22:36Z'
+history:
+- at: '2026-10-12T17:10:47Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:19:21Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:22:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0202
+  run_id: RUN-20261013-004
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e

@@ -1,0 +1,164 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: hybrid
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: 機台對同一筆入金與出金重送第二階段完成回報（同 TXID）後，若機台交易紀錄中該 TXID 各只有一筆，報表的進鈔金額、收據金額與未兌現金額與重送前相同
+description: 驗證機台重送完成回報後，報表仍與交易層一致：以機台交易紀錄的 TXID 筆數作為前置判定，只有交易層無重複紀錄時才判定報表（RUN-20261012-007 T3RR RF-13）。
+requirement_ids:
+- REQ-DAILYREPORT-010
+- REQ-DAILYREPORT-011
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0101
+- AC-DAILYREPORT-0116
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_cost: high
+preconditions:
+- 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+- 進入 各式報表 > 場館日結報表
+- 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入
+  9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），屬於上述場館；A 在『目前營業日』（以查詢當下依 T 判定）沒有其他入金與出金，餘額為 0，沒有進行中場次，且整個測試在同一個營業日內完成（不要跨過日結時刻）
+- 重送完成回報的方式：由環境負責人提供可對指定機台的指定交易重送第二階段完成回報（end-cashin／end-cashout，內容與 TXID 與原回報完全相同）的機台模擬器或請求重放工具。重送機制與請求格式不在本 spec 內，本案不預設；入金／出金的
+  TXID 由該工具或『機台交易紀錄』取得
+- 本案不假設重送在交易層會被如何處理（忽略、冪等或另記一筆皆有可能），也不斷言重送時機台金流端的回應。判定分兩段：先以『機台交易紀錄』確認該 TXID 的紀錄筆數；只有各只有一筆時，才斷言報表重送前後相同。出現多筆代表交易層問題，記錄後停止，不判報表
+  FAIL（報表依第 50、51 行是當日入金／出金交易的合計，交易層多記一筆時報表加總是正確行為）
+- 收據只做『出金』，不核實也不作廢（維持待核實，以便觀察未兌現）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+  > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 → 收據面額帶小數）
+test_data:
+- name: 入金
+  value: 500（一次，正常完成兩階段）
+- name: 出金
+  value: 一次，收據面額 F（入金 500 後出金，餘額 500，故 F=500）
+- name: 重送
+  value: 入金的第二階段完成回報重送 3 次、出金的第二階段完成回報重送 3 次（同一 TXID，內容相同）
+steps:
+- n: 1
+  action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號填機台 A、結算日期為目前營業日 ～ 目前營業日，搜尋；記錄 A 當日列的『開分』『洗分』『進鈔』『收據』『已兌現』『未兌現』『已作廢』（基準
+    Z0）
+  expected: 取得基準 Z0（預期進鈔 0、收據 0、未兌現 0，若不為 0 代表前提 A 當日無其他入金／出金不成立，更換機台）
+- n: 2
+  action: 對機台 A 進行一次入金 500（兩階段皆正常完成），再進行一次出金（餘額 500 清空，收據面額 F=500，維持待核實）；從『機台交易紀錄』或測試工具記下入金與出金各自的 TXID 與面額
+  expected: 入金、出金各完成一次；取得 TXID_in 與 TXID_out
+- n: 3
+  action: 以步驟 1 相同條件重新查詢，記錄同樣七欄（記為 Z1）
+  expected: 相對 Z0：進鈔金額增加 500、收據金額增加 500、未兌現金額增加 500；開分、洗分、已兌現、已作廢不變
+- n: 4
+  action: 用前提的重送工具，對 TXID_in 的第二階段完成回報重送 3 次，對 TXID_out 的第二階段完成回報重送 3 次（內容與 TXID 與原回報相同）；記錄每次重送的回應（只記錄，不判定）。接著到『機台交易紀錄』查看機台
+    A 當日 TXID_in 與 TXID_out 各有幾筆紀錄，以及 A 當日入金與出金的紀錄總筆數
+  expected: 分支判定：(a) TXID_in 與 TXID_out 各只有一筆紀錄 → 繼續步驟 5 並依其判定報表；(b) 任一 TXID 出現多筆紀錄 → 記錄為交易層問題（附紀錄截圖與筆數），停止本案並回報，不判定報表 FAIL，也不執行步驟
+    5 的判定
+- n: 5
+  action: （僅在步驟 4 為分支 (a) 時）以步驟 1 相同條件重新查詢，記錄同樣七欄（記為 Z2）
+  expected: Z2 與 Z1 完全相同：進鈔金額仍只增加 500（不是 1000 或 2000）、收據金額仍只增加 500、未兌現金額仍只增加 500（只有一筆面額 500）；開分、洗分、已兌現、已作廢仍不變
+expected_result: 當機台交易紀錄中重送的入金 TXID 與出金 TXID 各只有一筆時：報表在重送前後完全相同——進鈔金額相對基準只增加該筆入金的 500，收據金額與未兌現金額各只增加該筆出金的收據面額 500，重送前後（Z1、Z2）各金額欄不變。若任一
+  TXID 在機台交易紀錄出現多筆，則為交易層問題，記錄後停止，不判定報表（此時報表應等於交易紀錄的合計，不屬本案判準）。（原文：第 50 行『進鈔金額＝當日入金總額』、第 51 行『收據金額＝當日出金總額』、第 53 行未兌現為當日出金收據中仍待核實者的合計；本案的斷言只建立在『報表各欄＝當日交易紀錄的合計』這個不變量上，沒有假設重送是否構成新交易。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／進鈔金額（第 50 行）；收據金額（第 51 行）
+  quote: 當日入金總額（紙鈔機收現）
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-010
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／進鈔金額（第 50 行）
+- requirement_id: REQ-DAILYREPORT-010
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／收據金額（第 51 行）
+- requirement_id: REQ-DAILYREPORT-011
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／未兌現金額（第 53 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／進鈔金額（第 50 行）
+  quote: 當日入金總額（紙鈔機收現）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／收據金額（第 51 行）
+  quote: 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／未兌現金額（第 53 行）
+  quote: 當日出金的收據中，截至查詢當下仍為待核實者的金額合計；以出收據的日期歸屬（2026-10-05 定案，原為「截至查詢當下全部待核實收據的累計」）
+source_ref: T3RR:RUN-20261012-007 RF-13
+testcase_id: TC-DAILYREPORT-164
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+created_at: '2026-10-12T17:10:47Z'
+updated_at: '2026-10-12T17:22:36Z'
+history:
+- at: '2026-10-12T17:10:47Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:19:21Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:22:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0202
+  run_id: RUN-20261013-004
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e

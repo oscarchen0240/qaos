@@ -1,0 +1,805 @@
+packet_version: 1
+run_id: RUN-20261013-004
+task_id: T2
+iteration: 2
+agent_id: agent-test-designer
+workflow_id: spec-to-testcase
+created_at: '2026-10-12T17:22:38Z'
+target:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+target_decl_rev: 0
+closure: []
+basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+rm_pins:
+  target:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    revision: R001
+    sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+  from: null
+  pin_groups: []
+resolutions:
+- clarification_id: CLR-DAILYREPORT-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+  answer: '操作員無權限切換到非自身的場館，前端已擋（站台切換選單不提供其他場館）。註：未回答直接呼叫 API 帶其他站台參數的後端行為，TC-DAILYREPORT-004 的假設仍待確認。
+
+    【2026-09-14 補充】後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕。→ TC-DAILYREPORT-004 的假設已解。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-001
+      subject: dailyreport.access.out_of_scope_venue
+      role_scope:
+      - operator
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:12Z'
+    op_id: 12a23e778ac5bb9da4ef2aa3844a15308f2633d13b3beb7ae12c918e6b8d5b33
+    sha256: d9935c498118a86a6440c0f2855e88c409298a15e6a8b9f7dd2deadd5ccb3f36
+- clarification_id: CLR-DAILYREPORT-002
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-003
+  question_id: null
+  answer_rev: 0
+  answer_sha256: f235f3dd41624d829006324395b0da2c57d830b60860fe021f95412f4816c060
+  answer: '輸入不存在或非本場館的機台帳號：找不到用戶即可，API 回 rows: []（空列表，不報錯）。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-003
+      subject: dailyreport.filter.machine_account_not_found
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:26Z'
+    op_id: 38fba07a7b350cd6df78de54cc3646b46ccb1d6c0d52d3b1e97462206e0222c6
+    sha256: d332c3dbb3a069c3cf857fd426358745084fce208f7cea3c82f9a62ea636c98f
+- clarification_id: CLR-DAILYREPORT-003
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-004
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 2458cd0e03f998bebd08732838c212fc1bf46538cee1d40116a71f6f0dd89eeb
+  answer: '結算日期異常（起日晚於迄日等）：找不到資料即可，API 回 rows: []。註：與 Spec「必填」的關係——未填時是否也回空列表而非阻擋，建議 spec v0.2 明寫。
+
+    【2026-09-14 補充】未填結算日期時，前端 popup 警示「失敗：結算日期為必填」（截圖）；不送出查詢。→ TC-DAILYREPORT-009 的假設已解（阻擋方式＝popup）。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-004
+      subject: dailyreport.filter.settle_date_invalid
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:30Z'
+    op_id: faddf583d7b6afb8aec51d55984293530014f68f3450f1968326e47baf793fec
+    sha256: 35bdb0422044238297de44e19029cd708aaafe315340f47b7f1eba3ec3f4a5a3
+- clarification_id: CLR-DAILYREPORT-004
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-007
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 6dcaec8f8873e6a2f5c5e30b408467f7e5ad821901e145767d7ae293f66cb6af
+  answer: 日結時間為場館設定欄位（每日結算的截止時刻，UTC+0），畫面截圖顯示欄位有預設值「上午 12:00」（即 00:00 UTC+0）。→ 未設定時以 00:00 UTC+0 切分營業日。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-007
+      subject: dailyreport.business_day.default_cutoff
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:40Z'
+    op_id: 4f4627d51a319b960197ff2a1fcf314b81b2f3b4b4afb060883c2dceeb1db4dc
+    sha256: 4cacd793675c313a90e777d4890ddb3618d9cfecd3d5ae40421f705b77a9fa2c
+- clarification_id: CLR-DAILYREPORT-005
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 359e0362135c06c5224efca5517a09b53dc2f2c85ad685c331b4e6c600f56ac8
+  answer: 提醒標示的呈現方式如截圖：交易列表中待核實的機台洗分列顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」；已核實者為綠色「已核實」。報表的待核實洗分提醒沿用同款黃色警示標籤。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-011
+      subject: dailyreport.washout.pending_reminder_style
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:43Z'
+    op_id: 0db744b1dbec3b762b4c36a96860b0fbe4f9e2585d831aa557e23207307665a6
+    sha256: d9c1f5dab5e68b2de691e0f084f409f47699f1a9c2af7f3653a2b623a2e36302
+- clarification_id: CLR-DAILYREPORT-006
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 50eeeed9f7247bcab8e7160a12ac5df8385e6c65f34258508f561e19f9ea696b
+  answer: 無資料時列表仍列出，日期正常顯示、各欄位顯示 0。欄位清單（PM 提供）：場館、場次數、開分金額、洗分金額、已核實洗分、待核實洗分、進鈔金額、收據金額、已兌現金額、未兌現金額、現金淨收、注單數、有效投注額、損益、期末餘額。註：此清單含「注單數」，Spec
+    v0.1 列表欄位無此欄 → spec 需補；匯出 CSV 無資料時的行為未明說，推定同列表（一列 0）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-007
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-009
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 0ecb66079c64cb54fe57c01c8511e0654958afb4b9b57149b9c9ba234aa7203c
+  answer: 逾時結束的時間會超過日結時間；而 Spec 規定日結時間到達時強制結束所有進行中的場次，因此當日內場次只會以「已結束」或「日結結算」收尾，兩者都計入當日場次數（場次數計算在今日）。→ TC-DAILYREPORT-031 的假設「含所有非進行中狀態、日結結算歸屬開始的營業日」已確認。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-008
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-005
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 93118bcd237fa1fc198d157363d85e311ae8361d441b838bb15c62fd4da5d85e
+  answer: 不完整週照實際範圍顯示（截圖：結算日期 09-03 起、按週 → 列出「2026-09-07 ~ 2026-09-13」與「2026-09-03 ~ 2026-09-06」兩列），只要完整週以週一為週起即可；範圍外的營業日（08-31～09-02）不計入第一列合計。→
+    TC-014 的兩條假設已確認（顯示格式＝實際起迄；只計結算日期範圍內）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-005
+      subject: dailyreport.period.partial_period_range
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:36Z'
+    op_id: bda18717794a1f20903ddb3e18adcd13473a514cdf157e4349528c541d167db7
+    sha256: 870aee91b40267d0cccd1633696028aeb8b6b44637741dab742196757dd03cb7
+- clarification_id: CLR-DAILYREPORT-009
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-015
+  question_id: null
+  answer_rev: 0
+  answer_sha256: acff34834ada1db42a387f922eb05396a36c1c38ad151b0b69c15a8069445ce7
+  answer: 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200；(a) 結算 09-03～09-09 按週 → 09-07～09-09 列未兌現 1000、09-03～09-06
+    列 0；(b) 結算 09-03～09-10 → 09-07～09-10 列 1200、09-03～09-06 列 0。→ **TC-DAILYREPORT-046 的假設（不受結算日期限制）是錯的**，該案 expected 需改為「不包含範圍外的
+    200」；建議 APR-0003 逐項 reject TC-046，待 spec v0.2 走 WF-C 重寫。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-010
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 98800f6b3a1ac5bb86c4045cc4e23acb9a861b36fd6415ae7e8d6e75d1d5a523
+  answer: A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 AC-DAILYREPORT-0113）。因此單列內 收據金額＝已兌現＋未兌現＋已作廢 成立；現金淨收（開分＋進鈔－已核實洗分－已兌現）含未來才付現的收據金額，不是當日實際現金增減。作廢在報表的呈現另見
+    CLR-DAILYREPORT-011（待回）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-011
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 1291e5d88a01595f8b788c86d61ff37237fbc126de16b4febc11a5b33c59ff48
+  answer: 依 SPEC-DAILYREPORT-001 v0.3（2026-10-05 定案，第 53、54 行）：出金在洗分出金核實頁被作廢後，該筆收據金額仍計入出收據那天的「收據金額」，並計入新增的「已作廢金額」欄（以出收據的日期歸屬，不論作廢是哪一天）；每列
+    收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額。即原問題的選項 B。
+  resolution: spec_updated
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-012
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 93a09b95b9590aea15898a41140e25afce3fda35ace31e1b3508f473711690fd
+  answer: B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明細不列進行中）符合。→ AC-DAILYREPORT-0083 作廢、TC-DAILYREPORT-027
+    retire；REQ-008 statement 移除「進行中場次結束時間顯示「—」、時長為累計至查詢當下」。附帶題「會員詳細頁機台資訊區塊的進行中場次摘要是否顯示即時時長」本次未決，留待 ACCOUNT／ARCADE 處理。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-013
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 8fc28e161f226ff67131d4b0a1ac80cdc6e6eb53a94e81f47c567a0a3a9177fd
+  answer: A：以 spec 2026-09-17 為準。①依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢當下的值；②期末餘額一律計入進行中場次累計到查詢當下的分數（已結算的營業日仍為結算時點的值）。CLR-DAILYREPORT-012
+    的 B 作廢。現行實作（進行中場次在日結報表查不到任何資料）為缺陷。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-014
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+  answer: 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項，後端拒絕並回傳「無權限」錯誤、資料不變；不採用「當作不存在／回空結果」。錯誤代碼由後端定義（截至 2026-10-09
+    後端尚未定案）。依 QA 問題單回覆 CLR-SITELIST-015「全系統的越權處理一致，CLR-DAILYREPORT-014 同樣適用」；規則寫在開發包⑧（SPEC-ROLEPERM-001 v0.2），場館日結報表 spec
+    本身未為此改版。
+  resolution: requirement_clarified
+  basis_hash: 9eda473d5ba24446f3468f6a2fd420e698c5aadf2b1ab953aed165e4a39a01fe
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-001
+      subject: dailyreport.access.out_of_scope_venue
+      role_scope:
+      - admin
+      - site_manager
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:22Z'
+    op_id: 9f3f48df792422f9bfdaeb19eed4e4b5b9484198f3b52b5043d3f96f787205aa
+    sha256: a61eb6e0e9deb431dcf38bf8eba154c3114c8c231e7ebebd0c4da0a7130f0f1d
+- clarification_id: CLR-DAILYREPORT-015
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: b40db737b492e2dc4b8add3a201608c75de6a0ccaf773345033d01da166d01ab
+  answer: 以 v0.3 為準：未兌現金額以出收據的日期歸屬——每列只含當日（週期列為該週期內各營業日）出的收據中、截至查詢當下仍為待核實者的金額合計，直到核實或作廢才轉出；與洗分出金核實 REQ-CASHOUT-032 一致。CLR-DAILYREPORT-009「未兌現不受統計週期切分」的結論不再適用（只算結算日期範圍內出的收據、狀態以查詢當下為準這兩點不變）。
+  resolution: requirement_clarified
+  basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+  scope:
+    spec_id: SPEC-DAILYREPORT-001
+    requirement_id: REQ-DAILYREPORT-011
+    subject: dailyreport.unredeemed.row_attribution
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-016
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: d6a13eb9dc6ced8b2888a6cf8a82a18587c816ccd7e15175488f67b292373799
+  answer: 以 v0.3 為準：查詢期間沒有任何交易與場次時，列表仍列出該結算期間，各金額與筆數欄顯示 0；期初／期末餘額依時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）；匯出 CSV 同此規則。CLR-DAILYREPORT-006「各欄位顯示
+    0」對期初／期末餘額不再適用（該 CLR 回答時尚無期初餘額欄），其餘欄位為 0 的結論不變。
+  resolution: requirement_clarified
+  basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+  scope:
+    spec_id: SPEC-DAILYREPORT-001
+    requirement_id: REQ-DAILYREPORT-016
+    subject: dailyreport.empty_period.balance_display
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+run_decisions: []
+open_questions:
+- clarification_id: CLR-DAILYREPORT-017
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-017
+  question_id: Q02
+  question: 「逾時結束」的場次結束後機台仍留有分數時：日結時是否承接成隔日新場次的期初餘額、是否計入期末餘額？（v0.3 第 128 行只列「承接洗分餘數或日結結算轉入者」，第 151 行只涵蓋進行中的場次；可能定義於開發包③ 機台金流與場次
+    v02，本包未宣告引用）
+- clarification_id: CLR-DAILYREPORT-018
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-007
+  question_id: null
+  question: 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4)
+    結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？
+- clarification_id: CLR-DAILYREPORT-019
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: null
+  question: 長區間條件下連點匯出 CSV 或重複送出查詢時，系統是否防連點、有無同時匯出的併發上限？
+- clarification_id: CLR-DAILYREPORT-020
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  question: (1) 操作員能否查看場館日結報表？可看哪些場館？(2) 使用者登入後管轄範圍被調整（站長移出某子站台、操作員改調場館），既有工作階段是否立即套用新範圍、已開啟的報表頁再查詢或匯出會不會取得舊範圍資料？
+- clarification_id: CLR-DAILYREPORT-021
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-021
+  question_id: null
+  question: 櫃檯對機台帳號的人工入金（補分）、人工出金（結清待確認出金），以及被取消（新請求取代、人工出金連動、管理員手動取消）的待確認出金，在日結報表各欄與餘額驗算式中如何計入？
+- clarification_id: CLR-DAILYREPORT-022
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-014
+  question_id: null
+  question: 機台停用、報廢（只停用不刪除）或改歸屬其他場館時，它的留存分數是否繼續計入原場館的期初／期末餘額？歷史列會不會跟著搬？
+- clarification_id: CLR-DAILYREPORT-023
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-028
+  question_id: null
+  question: 注單數是否計入取消或退款的注單？歸屬營業日依下注時間還是結算時間？
+decision_sources:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／期末餘額不加總（第 66 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §業務規則與驗證（第 149 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／期末餘額（第 60 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 127 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（總計與匯出）（第 62 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 134 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-002
+  answer_rev: 0
+  answer_sha256: f235f3dd41624d829006324395b0da2c57d830b60860fe021f95412f4816c060
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／狀態保留（第 88 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／預設排序（第 82 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §操作（第 111 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／上層連結（第 101 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／現金淨收（第 55 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／未兌現金額（第 53 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §業務規則與驗證（第 150 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑（第 106 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／總計列（第 84 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／場次數（第 45 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／點擊切換（第 81 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／可排序欄位（第 80 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 131 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（無資料）（第 64 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／期初餘額（第 59 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器（第 29 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／層級數（第 99 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-007
+  answer_rev: 0
+  answer_sha256: 0ecb66079c64cb54fe57c01c8511e0654958afb4b9b57149b9c9ba234aa7203c
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §功能說明／權限表（第 25 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／第一層場館（第 103 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-015
+  answer_rev: 0
+  answer_sha256: b40db737b492e2dc4b8add3a201608c75de6a0ccaf773345033d01da166d01ab
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器／結算日期（第 34 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-010
+  answer_rev: 0
+  answer_sha256: 98800f6b3a1ac5bb86c4045cc4e23acb9a861b36fd6415ae7e8d6e75d1d5a523
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-004
+  answer_rev: 0
+  answer_sha256: 6dcaec8f8873e6a2f5c5e30b408467f7e5ad821901e145767d7ae293f66cb6af
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器／機台帳號（第 33 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-006
+  answer_rev: 0
+  answer_sha256: 50eeeed9f7247bcab8e7160a12ac5df8385e6c65f34258508f561e19f9ea696b
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §業務規則與驗證（第 151 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／當前層級（第 100 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／分頁列（第 87 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／有效投注額（第 57 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-016
+  answer_rev: 0
+  answer_sha256: d6a13eb9dc6ced8b2888a6cf8a82a18587c816ccd7e15175488f67b292373799
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑（第 93 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-009
+  answer_rev: 0
+  answer_sha256: acff34834ada1db42a387f922eb05396a36c1c38ad151b0b69c15a8069445ce7
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已兌現金額（第 52 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 125 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／餘額驗算（第 72 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／向下鑽取（第 102 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／每頁筆數（第 86 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／收據金額（第 51 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-013
+  answer_rev: 0
+  answer_sha256: 8fc28e161f226ff67131d4b0a1ac80cdc6e6eb53a94e81f47c567a0a3a9177fd
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／開分金額（第 46 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 126 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／損益（第 58 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／洗分金額（第 47 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／場次編號（第 44 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-003
+  answer_rev: 0
+  answer_sha256: 2458cd0e03f998bebd08732838c212fc1bf46538cee1d40116a71f6f0dd89eeb
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已作廢金額（第 54 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §維度鑽取與麵包屑／重設（第 104 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／結算期間（第 42 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器／統計週期（第 35 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §業務規則與驗證（第 152 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器／統計維度（第 36 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／進鈔金額（第 50 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §功能說明／權限（第 21 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／餘額欄提示（第 85 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-008
+  answer_rev: 0
+  answer_sha256: 93118bcd237fa1fc198d157363d85e311ae8361d441b838bb15c62fd4da5d85e
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／注單數（第 56 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-014
+  answer_rev: 0
+  answer_sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／場館／機台（第 43 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §背景：場次資訊（第 128 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已核實洗分（第 48 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §變更記錄 v02（第 169 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-001
+  answer_rev: 0
+  answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／統計週期（第 70 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／排序範圍（第 83 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／待核實洗分（第 49 行）
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-005
+  answer_rev: 0
+  answer_sha256: 359e0362135c06c5224efca5517a09b53dc2f2c85ad685c331b4e6c600f56ac8
+extra_inputs:
+- kind: path
+  ref: artifacts/risk-review/RUN-20261012-007/ART-TRR-01M4REJR4H6PP9TDPBGKTAH3QJ.yaml
+  sha256: cbfff9728aa1dae78ca90365f7ffafee0c19ea653a600a82c838c88a484e627b
+  reason: 原 T3RR 補強建議（RUN-20261012-007）
+- kind: path
+  ref: artifacts/risk-review/RUN-20261013-004/ART-TRR-01M4RHPGRDFBPT99QQ2QGWDM12.yaml
+  sha256: 1d94c78b673480ebb77b03ac76f91f313bb93b7625c13bfd75e523d94c28d14e
+  reason: 補強 TC 的二次風險抽查（Oscar 退回 APR-0202 要求補齊 RF-01～03）
+references_status: undeclared

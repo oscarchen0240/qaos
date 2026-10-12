@@ -1,0 +1,178 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: T 不是 00:00 時按週查詢：週一 00:00 到 T 之間的開分與待核實收據歸前一週（週日營業日）的列，週一 T 起的才歸新的一週
+description: 驗證按週彙總的週界以營業日計：週一的營業日從週一的 T 才開始（RUN-20261012-007 T3RR RF-03）。
+requirement_ids:
+- REQ-DAILYREPORT-005
+- REQ-DAILYREPORT-015
+- REQ-DAILYREPORT-007
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0052
+- AC-DAILYREPORT-0151
+- AC-DAILYREPORT-0155
+- AC-DAILYREPORT-0071
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_cost: high
+preconditions:
+- 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+- 進入 各式報表 > 場館日結報表
+- 測試場館的日結時間 T 不是 00:00，且比 00:00 晚至少 30 分鐘（例如 06:00），讓『週一 00:00 ～ T』有足夠的現場操作時間。營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T
+  起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非
+  UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+- T 的設定在造數之前就已完成，造數到查詢結束期間不得修改（變更 T 對既有營業日的影響 v0.3 未定義，不在本案範圍）
+- 令 M 為某個週一（UTC+0 日曆日）。X1 類交易發生在 M 的 00:00:00 ～ T-1 秒之間（屬於 M 前一日的週日營業日，即前一週）；X2 類交易發生在 M 的 T 起（屬於週一營業日，即新的一週）。若在現場操作，需排在 M
+  當天 UTC+0 的 00:00 ～ T 之間完成 X1 類交易，並在 T 之後完成 X2 類交易；若環境有可指定交易時間的造數工具，則直接指定
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），屬於上述場館；A 在 M-7 ～ M 的營業日（以營業日標示）內沒有下列四筆以外的開分、出金；造數前 A 的機台餘額為 0
+- X1 類：開分 100，隨後出金（出金清空餘額，收據面額＝100，維持待核實）；X2 類：開分 200，隨後出金（收據面額 200，維持待核實）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+  > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 → 收據面額帶小數）；各筆實際交易時間以『機台交易紀錄』為準（欄位名稱以畫面為準）
+- 整個測試不對這兩張收據做核實或作廢（本案只看開分與待核實收據）
+test_data:
+- name: X1（週一 00:00 ～ T 之前）
+  value: 開分 100 → 出金，收據 100，待核實
+- name: X2（週一 T 之後）
+  value: 開分 200 → 出金，收據 200，待核實
+- name: 查詢條件
+  value: 依機台明細、按週、機台帳號＝A、結算日期＝M-7 ～ M（營業日標示）
+- name: 預期（前一週列，週起為 M-7）
+  value: 開分 100、收據 100、未兌現 100
+- name: 預期（新的一週列，週起為 M）
+  value: 開分 200、收據 200、未兌現 200
+steps:
+- n: 1
+  action: 依前提造出 X1 類與 X2 類交易（X1 類在週一 M 的 00:00 ～ T 之前、X2 類在 T 之後）。到『機台交易紀錄』逐筆確認兩組交易的時間，記入執行記錄
+  expected: X1 類兩筆（開分、出金）的交易時間皆早於 M 的 T、不早於 M 的 00:00；X2 類不早於 M 的 T。否則造數失敗，重做，不繼續後續步驟
+- n: 2
+  action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按週』、機台帳號填機台 A、結算日期設為 M-7 ～ M，搜尋
+  expected: 列表出現兩列：週起為 M-7 的前一週列、週起為 M 的新一週列（新一週列只含 M 這個營業日；期間文字的格式以畫面為準，不作判準）
+- n: 3
+  action: 記錄前一週列與新一週列各自的『開分金額』『收據金額』『未兌現金額』
+  expected: 前一週列：開分 100、收據 100、未兌現 100；新一週列：開分 200、收據 200、未兌現 200。X1 類（週一 00:00 ～ T 之前）不出現在新一週列
+expected_result: 按週彙總以營業日為單位：週一 M 的 00:00 ～ T 之間發生的開分 100 與出金收據 100（待核實）屬於週日營業日，計入前一週列（開分 100、收據 100、未兌現 100）；M 的 T 起發生的開分
+  200 與收據 200（待核實）屬於週一營業日，計入新一週列（開分 200、收據 200、未兌現 200）。（原文：第 35 行『按週以週一為週起；非按日時，每列為該週期內各營業日的彙總』、第 70 行三欄依收據日歸屬；推論部分：週一營業日自週一的
+  T 起算，故 M 當日 00:00 ～ T 的交易屬週日營業日，依據是第 42 行營業日依日結時間切分，與 AC-0071 的 05:59 計入前一營業日同一規則。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §篩選器／統計週期（第 35 行）
+  quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-005
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §篩選器／統計週期（第 35 行）
+- requirement_id: REQ-DAILYREPORT-015
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位附註／統計週期（第 70 行）
+- requirement_id: REQ-DAILYREPORT-015
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位附註／統計週期（第 70 行）
+- requirement_id: REQ-DAILYREPORT-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／結算期間（第 42 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §篩選器／統計週期（第 35 行）
+  quote: 按日（預設）／按週／按月／區間合計。按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／統計週期（第 70 行）
+  quote: 各金額與筆數欄為該週期內各營業日的合計
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／統計週期（第 70 行）
+  quote: 「已兌現」「未兌現」「已作廢」三欄同為該週期內各營業日的合計（依收據日歸屬），狀態一律以查詢當下為準
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／結算期間（第 42 行）
+  quote: 按日顯示營業日（依場館日結時間切分）
+source_ref: T3RR:RUN-20261012-007 RF-03
+testcase_id: TC-DAILYREPORT-160
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+created_at: '2026-10-12T17:10:47Z'
+updated_at: '2026-10-12T17:22:36Z'
+history:
+- at: '2026-10-12T17:10:47Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:19:21Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:22:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0202
+  run_id: RUN-20261013-004
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e

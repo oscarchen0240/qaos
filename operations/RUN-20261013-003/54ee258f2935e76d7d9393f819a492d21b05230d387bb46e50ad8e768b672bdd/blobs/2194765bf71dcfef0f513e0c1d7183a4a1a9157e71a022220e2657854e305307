@@ -1,0 +1,130 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+stability: unknown
+source: spec_workflow
+title: 多台機台（含跨場館）同時送出 req-cashout：每筆出金的 order_id 各自一組、全系統不重複，且依 order_id 到洗分出金核實頁各只查到一筆
+requirement_ids:
+- REQ-CASHFLOW-045
+acceptance_criteria_ids:
+- AC-CASHFLOW-0452
+test_level: api
+test_types:
+- functional
+design_techniques:
+- error_guessing
+priority: medium
+risk: high
+execution_mode: hybrid
+execution_cost: high
+critical_path: false
+preconditions:
+- 測試用機台：至少 10 台狀態『啟用』的既有機台（自行從環境中選定，需涵蓋至少 2 個不同場館；站台皆『開通』），逐台取得各自現行有效的機台憑證（JWT，Bearer 帶入），稱 M1…Mn。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。機台不足
+  10 台時，改以多輪補足 order_id 總筆數 ≥ 10，並在結果註明『單輪最大併發台數』，不得宣稱已達 10 台併發
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與『洗分出金核實』頁；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 對每一台機台所屬場館，把『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案，動手前先記下各場館原值；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原各場館原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout；本案以直接呼叫機台 API 等效驗證平台端行為
+- 【環境前提】需要能讓多個 HTTP 請求『同時』送出的工具或腳本（例如 bash 多個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』
+- 【環境前提】櫃檯依 order_id 查詢的位置：spec 指向『洗分出金核實』頁的收據核銷（屬另一個規格）；請依該頁實際的查詢欄位，若以其他名稱提供編號查詢以實際為準
+- 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+test_data:
+- name: 併發台數
+  value: 10（至少 2 個場館）
+- name: 每台出金前的開分金額
+  value: 100
+  note: 使核可金額大於 0
+- name: 輪數
+  value: 至少 3 輪
+  note: 每輪都重新開分並同時 req-cashout，累計至少 30 筆 order_id 一併比對
+- name: 同時送出的範例
+  value: "# bash：對每台機台各起一個背景函式（同時起跑），逐請求記錄『送出』與『回應』的絕對時間；macOS 的 date 不支援 %N，故用 python3 取 epoch 秒\nnow() { python3 -c 'import\
+    \ time;print(time.time())'; }\nfire() {   # $1=序號 i\n  s=$(now)\n  w=$(curl -s -o \"r_cashout_$1.json\" -w '%{time_pretransfer}\
+    \ %{time_starttransfer}' -X POST \"$BASE/<req-cashout 路徑>\" -H \"Authorization: Bearer ${TOKEN[$1]}\" -H 'Content-Type:\
+    \ application/json' -d \"${BODY_CASHOUT[$1]}\")\n  echo \"$s $w\" > \"t_cashout_$1.txt\"   # 送出時刻 = s + time_pretransfer；回應時刻\
+    \ = s + time_starttransfer\n}\nfor i in $(seq 1 10); do fire $i & done\nwait\n# 判定式：max(各請求送出時刻) < min(各請求回應時刻) 才算有效重疊，否則該輪作廢重做\n\
+    # 比對：從各回覆取出 order_id，sort | uniq -d 應為空；或改用 Python asyncio.gather 搭配 time.time()"
+steps:
+- n: 1
+  action: 每台機台 Mi 依序送出 req-keyin，金額 100（序列送出即可）；後台讀各機台分數 Bi（開分後）
+  expected: 皆回 0-OK；每台分數 Bi > 0（出金核可金額＝全部餘額，大於 0）
+- n: 2
+  action: 用腳本『同時』對全部機台各送一個 req-cashout（每台一個請求，起跑時點相同）；逐請求記錄送出與回應的絕對時間（範例見 test_data）
+  expected: 有效重疊判定：max(各請求送出時刻) < min(各請求回應時刻)（絕對時間，由 test_data 範例的 t_cashout_*.txt 算出），不成立的輪次作廢重做；每個請求回 0-OK，各取得 TXID_i 與
+    order_id_i（非空）
+- n: 3
+  action: 比對本輪全部 order_id_i（並與 4.1 或洗分出金核實頁中可見的其他既有出金 order_id 抽樣比對）
+  expected: 每筆出金各有一組 order_id，兩兩不重複（本輪 10 筆互不相同，與抽樣的既有 order_id 也不相同）
+- n: 4
+  action: 每台機台 Mi 送出 end-cashout（TXID_i）完成該筆出金
+  expected: 皆回 0-OK
+- n: 5
+  action: 到後台『洗分出金核實』頁，逐一以 order_id_i 查詢
+  expected: 每個 order_id_i 只查到一筆，且該筆是對應機台 Mi 的出金、金額等於該機台出金時的全部餘額 Bi
+- n: 6
+  action: 重複步驟 1～5 共至少 3 輪；把所有輪次的 order_id 合併再比對一次
+  expected: 累計至少 30 筆 order_id 兩兩不重複；每個 order_id 在核實頁都只查到一筆
+- n: 7
+  action: 還原：各場館額度上限改回原值
+expected_result: 多台機台（含不同場館）同時送出 req-cashout 時，平台為每筆出金產生各自一組、全系統不重複的 order_id；依任一 order_id 到洗分出金核實頁查詢，都只查到對應的那一筆出金，不會查到兩筆或查到別台的出金。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+  quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一'
+decision_refs:
+- requirement_id: REQ-CASHFLOW-045
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+  quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一'
+source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-14
+assumptions: []
+testcase_id: TC-CASHFLOW-138
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+created_at: '2026-10-12T17:22:45Z'
+updated_at: '2026-10-12T17:22:45Z'
+history:
+- at: '2026-10-12T17:22:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

@@ -1,0 +1,164 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: hybrid
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: 日結執行當下持續有開分交易進來：每筆交易只計入一個營業日（依其交易時間在 T 之前或之後），各機台 D 列期末餘額＝D+1 列期初餘額，兩日開分合計等於送出總額
+description: 驗證日結時刻前後持續送入交易時，營業日歸屬不漏不重，且相鄰營業日的餘額銜接（RUN-20261012-007 T3RR RF-12）。不使用注單，也不涉及逾時結束的場次。
+requirement_ids:
+- REQ-DAILYREPORT-007
+- REQ-DAILYREPORT-020
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0071
+- AC-DAILYREPORT-0072
+- AC-DAILYREPORT-0201
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_cost: high
+preconditions:
+- 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+- 進入 各式報表 > 場館日結報表
+- 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入
+  9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+- T 的設定在造數之前就已完成，造數到查詢結束期間不得修改（變更 T 對既有營業日的影響 v0.3 未定義，不在本案範圍）。本案在 T0（造數當天的日結時刻）前後現場執行，需提前安排時間；T 可以是任何時刻（含 00:00）。令 D 為 T0
+  之前的營業日（造數當天 T0 之前正在進行的營業日），D+1 為自 T0 起的營業日
+- 機台 A、機台 B 為自行從環境中選定的兩台不同的既有機台帳號（會員編號），屬於上述場館；A、B 在 D 與 D+1 都沒有逾時結束的場次，且流量開始前 A、B 的分數為 0（若 A、B 有留存分數，先各做一次出金清空，出金一律清空餘額，第
+  128 行），以免分數來自逾時結束場次的餘分——該情況下『相鄰列前後相接』是否成立未定義（CLR-DAILYREPORT-017 未決，不依賴）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+  > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 → 收據面額帶小數）
+- 送出交易的方式：由環境負責人提供可對指定機台連續送出『開分 10』的機台模擬器或測試腳本（每秒每台機台 1 筆）。本 spec 沒有定義送出機制，下列迴圈中的〈送出機台 X 開分 10〉為環境提供的指令
+- 『機台交易紀錄』可查到每一筆開分的交易時間（欄位名稱以畫面為準），本案以該時間（早於 T0 或不早於 T0）判定每筆交易所屬的營業日（AC-0071／0072：交易時間早於 T 計入前一營業日，等於 T 計入當日營業日）
+- A、B 在 D+1 沒有本案送出的開分以外的任何交易；D 的開分基準值於步驟 1 另行記錄
+test_data:
+- name: 交易流
+  value: T0-30 秒 ～ T0+30 秒，每秒對機台 A 與機台 B 各送開分 10
+- name: D 列開分基準 bA、bB
+  value: 步驟 1 查得的 A、B 在 D 的開分金額（送入前）
+- name: nA_before / nA_after / nB_before / nB_after
+  value: 步驟 3 從機台交易紀錄數出的送入筆數（交易時間早於 T0／不早於 T0）
+steps:
+- n: 1
+  action: 在 T0 前至少 2 分鐘，以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期選 D ～ D，搜尋；記錄機台 A 與機台 B 在 D 列的『開分金額』（基準值 bA、bB）
+  expected: 取得基準值
+- n: 2
+  action: 在 T0 前 30 秒開始，於終端機啟動：end=$((T0 的 epoch 秒 + 30)); while [ $(date +%s) -le $end ]; do 〈送出機台 A 開分 10〉; 〈送出機台 B 開分 10〉;
+    sleep 1; done，持續到 T0 後 30 秒結束（約 60 秒，各 60 筆上下）。送出期間不要對 A、B 做其他任何操作
+  expected: 迴圈期間每筆開分都被接受；日結時刻 T0 在流量中途到達。記錄任何被拒絕或逾時的請求
+- n: 3
+  action: 流量停止並等待日結完成後，到『機台交易紀錄』篩選機台 A、再篩選機台 B 在 T0-60 秒 ～ T0+60 秒內的開分，依交易時間數出『早於 T0』與『不早於 T0』各自的筆數（nA_before、nA_after、nB_before、nB_after）及各筆面額
+  expected: 每台機台的開分筆數＝送出筆數；每筆的面額為 10；兩個計數的和等於該機台送出的總筆數（沒有遺失、沒有重複的交易紀錄）。若紀錄筆數與送出筆數不符，這是交易層的問題，記錄後停止本案並回報，不判定報表
+- n: 4
+  action: 重新查詢報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期 D ～ D+1，搜尋。記錄機台 A 與機台 B 在 D 列與 D+1 列的『開分金額』『期初餘額』『期末餘額』
+  expected: A 的 D 列開分＝bA＋10×nA_before，D+1 列開分＝10×nA_after；B 同理（bB＋10×nB_before、10×nB_after）；A、B 在 D 與 D+1 兩列開分之和（扣除基準）＝10×各自送出的總筆數
+- n: 5
+  action: 比對相鄰兩列的餘額（依預設排序 D+1 列在上、D 列在下）
+  expected: 機台 A：D 列期末餘額＝D+1 列期初餘額；機台 B：D 列期末餘額＝D+1 列期初餘額
+expected_result: 日結時刻 T0 在持續進入的開分流量中途到達時：每筆開分只計入一個營業日——交易時間早於 T0 的計入 D、不早於 T0 的計入 D+1，兩日的開分金額合計等於送出總額，沒有漏算或重複；且每台機台 D 列的期末餘額等於
+  D+1 列的期初餘額。（原文：第 68 行『較早一期的期末餘額即次一期的期初餘額』、第 42 行營業日依日結時間切分；AC-0071／0072 的交易歸屬規則。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+  quote: 故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／結算期間（第 42 行）
+- requirement_id: REQ-DAILYREPORT-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §業務規則與驗證（第 152 行）
+- requirement_id: REQ-DAILYREPORT-020
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／結算期間（第 42 行）
+  quote: 按日顯示營業日（依場館日結時間切分）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §業務規則與驗證（第 152 行）
+  quote: 為場館設定欄位：每日結算的截止時刻（UTC+0），用於場館日結報表分日
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+  quote: 故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額
+source_ref: T3RR:RUN-20261012-007 RF-12
+testcase_id: TC-DAILYREPORT-163
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+created_at: '2026-10-12T17:10:47Z'
+updated_at: '2026-10-12T17:22:36Z'
+history:
+- at: '2026-10-12T17:10:47Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:10:47Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:19:21Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:22:36Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0202
+  run_id: RUN-20261013-004
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
