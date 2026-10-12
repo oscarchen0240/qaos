@@ -9,7 +9,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-12T13:27:22Z'
-updated_at: '2026-10-12T14:13:03Z'
+updated_at: '2026-10-12T14:36:22Z'
 tasks:
 - task_id: T0
   type: agent
@@ -171,11 +171,13 @@ tasks:
   ended_at: '2026-10-12T14:12:57Z'
 - task_id: T2
   type: agent
-  status: READY
+  status: DONE
   iteration: 0
   input_artifact_ids: []
   input_entity_refs: []
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-TCD-01M4R8KRPGVV2G1FV8R0322CWK
+  - ART-TDR-01M4R8KRPGV97YRE92A3YQ0ACX
   agent_id: agent-test-designer
   mode: change
   gate: G-DESIGN
@@ -185,20 +187,54 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-12T14:36:06Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T14:36:22Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-DESIGN PASS
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261012-004/dispatch/T2-iter0.yaml
     sha256: b9713e45922629def220bfd8574e38f2c25438730cd02870f4c81d3a4e0542e4
     at: '2026-10-12T14:13:03Z'
+  started_at: '2026-10-12T14:36:06Z'
+  gate_results:
+  - at: '2026-10-12T14:36:06Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestCaseDraft ART-TCD-01M4R8KRPGVV2G1FV8R0322CWK VALID
+  - at: '2026-10-12T14:36:17Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestDesignReport ART-TDR-01M4R8KRPGV97YRE92A3YQ0ACX VALID
+  - at: '2026-10-12T14:36:22Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-DESIGN structural PASS
+  ended_at: '2026-10-12T14:36:22Z'
 - task_id: T3
   type: agent
-  status: PENDING
+  status: READY
   iteration: 0
   input_artifact_ids: []
   input_entity_refs: []
   output_artifact_ids: []
   agent_id: agent-test-validator
   gate: G-TVAL
+  history:
+  - at: '2026-10-12T14:36:22Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
 - task_id: T3RR
   type: agent
   agent_id: agent-tc-risk-reviewer
@@ -251,7 +287,7 @@ from_requirement_model_revision:
   spec_version: '0.1'
   revision: R000
   sha256: f29abff1bca0b41d9a3c94bfc75111a20be696eab377928679e34535222919e8
-current_task_id: T2
+current_task_id: T3
 requirement_model_revision:
   spec_id: SPEC-CASHFLOW-001
   spec_version: '0.2'

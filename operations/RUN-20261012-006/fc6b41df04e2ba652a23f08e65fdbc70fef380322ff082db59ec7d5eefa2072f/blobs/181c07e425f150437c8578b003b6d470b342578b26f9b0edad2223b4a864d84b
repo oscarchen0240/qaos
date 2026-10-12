@@ -1,0 +1,123 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+test_level: ui_e2e
+priority: high
+risk: high
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 機台餘額帶小數（399.6）出金：洗分出金核實頁的實際金額欄顯示收據面額 399.60，不取整
+description: 驗證出金收據面額照記含小數餘額，本頁實際金額欄照實顯示含小數的面額，不取整至個位數（AC-CASHOUT-0183）
+requirement_ids:
+- REQ-CASHOUT-018
+acceptance_criteria_ids:
+- AC-CASHOUT-0183
+test_types:
+- functional
+design_techniques:
+- requirement_based
+preconditions:
+- 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+- 【環境前提，spec 與派發包均未定義佈置方式，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為恰好 399.6，且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。『如何把機台餘額調到
+  399.6』（遊戲結果、人工開分、機台端測試工具等）不在 spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為恰好 399.6，請回報環境負責人，不要以其他金額替代後逕行判定。
+- 測試期間不需任何其他機台帳號的交易；本案產生的出金紀錄保持待核實，不需核實或作廢（核實不可撤銷，本案不需要）
+test_data:
+- name: 機台餘額（出金前）
+  value: '399.6'
+- name: 預期收據面額／實際金額欄
+  value: '399.60'
+- name: 不應出現的取整結果
+  value: 399、400（個位數）
+steps:
+- n: 1
+  action: 在機台端以選定的機台帳號確認機台餘額為 399.6；由玩家在前台遊戲畫面按『結算』鍵執行出金（出金一律全額且清空餘額）
+  expected: 出金完成。記下收據（機台暫無印表機的過渡期為前台結算結果畫面）上的訂單編號、時間與面額；面額應為 399.60（此為本案前提，若不是 399.60 代表前提不成立，停止並回報，不要繼續判定）
+- n: 2
+  action: 到後台『帳務管理 > 洗分出金核實』，確認站台切換選單在本案場館所屬站台；在『訂單編號』篩選欄輸入步驟 1 記下的訂單編號並搜尋
+  expected: 列表出現該筆：交易類型『機台出金』、核實狀態『待核實』（藍色）、機台帳號為選定帳號的會員編號
+- n: 3
+  action: 檢視該筆的『實際金額』欄
+  expected: 顯示 399.60（含小數的收據面額），不是 399，也不是 400
+expected_result: 機台餘額 399.6 出金後，洗分出金核實頁該筆出金的『實際金額』欄顯示 399.60（含小數的面額），不取整為 399 或 400。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §收據兌現的櫃檯流程（第 118 行）；§列表欄位（第 67 行）
+  quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+decision_refs:
+- requirement_id: REQ-CASHOUT-018
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §列表欄位（第 67 行）
+- requirement_id: REQ-CASHOUT-018
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §列表欄位（第 67 行）
+  quote: 實際異動的金額。洗分因門檻計算可能小於店員輸入的金額，付現一律以本欄為準；出金即收據面額
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+source_ref: 'new_required: REQ-CASHOUT-018 AC-CASHOUT-0183（CI-SPEC-CASHOUT-001-0.1-0.2）'
+testcase_id: TC-CASHOUT-128
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+created_at: '2026-10-12T14:35:44Z'
+updated_at: '2026-10-12T14:35:44Z'
+history:
+- at: '2026-10-12T14:35:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+  run_id: RUN-20261012-006
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd
