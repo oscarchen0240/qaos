@@ -1,0 +1,98 @@
+clarification_id: CLR-REDPACKET-054
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+question: 線上站台的站長能否檢視、操作（新增、追加預算、取消排程、紅包明細、匯出 CSV）其子站台的紅包活動：依目標限自身站台，或依 SPEC-ROLEPERM-001@0.2 含整棵子樹
+context: REQ-REDPACKET-023：線上站台沿用 6.5 優惠活動管理既有權限（系統管理模組：財務、站長；另含內部角色管理員）；追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限。可見與操作範圍依管轄範圍，管理員含其子站台；站長的範圍目標寫「自身站台」，與
+  SPEC-ROLEPERM-001@0.2 的管轄範圍定義不一致（見 Q04）。越權操作（含直接呼叫 API）由後端拒絕並回傳「無權限」、資料不變（SPEC-ROLEPERM-001@0.2 越權回應；錯誤代碼由後端定義）。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-12T08:01:14Z'
+status: OPEN
+history:
+- at: '2026-10-12T08:01:14Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261012-001
+requirement_id: REQ-REDPACKET-023
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §角色與權限（第 305 行）
+  quote: 沿用 6.5 優惠活動管理既有權限（系統管理模組：財務、站長；另含內部角色管理員）
+run_id: RUN-20261012-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: conflict_resolution
+question_id: Q04
+topic: permission
+subject: redpacket.permission.online_site_manager_scope
+params: {}
+role_scope:
+- site_manager
+level: major
+known_rules: []
+conflict_sides:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 305 行）
+  quote: 可見與操作範圍依管轄範圍（管理員含其子站台；站長為自身站台）
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §2.3 主站台（第 67 行）
+  quote: 站長的管轄範圍即自身所屬的主站台及其所有子站台
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §四、管轄範圍（scope）（第 104 行）
+  quote: 管理員與站長的可見範圍相同，差別在能操作到什麼深度（見第五節）
+conflict_note: 目標第 305 行把線上站台的範圍寫成「管理員含其子站台；站長為自身站台」，並指明判定方式見後台角色與權限 spec；SPEC-ROLEPERM-001@0.2（角色與權限模型以該檔為準）第 67、103～104
+  行定義站長的管轄範圍為自身所屬站台及其所有子站台，且管理員與站長的可見範圍相同。目標自己的機台場館權限表（第 312 行）站長也寫「管轄範圍」。兩者對站長能否檢視、操作子站台的紅包活動結果不同
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.2'
+    content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 線上站台的站長能否檢視、操作（新增、追加預算、取消排程、紅包明細、匯出 CSV）其子站台的紅包活動：依目標限自身站台，或依 SPEC-ROLEPERM-001@0.2 含整棵子樹
+issue_key: 41d537136af5945f78e995dc27774d1fb150268baca34a1f548d3b3856826083

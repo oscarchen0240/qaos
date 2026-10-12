@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-10-09
+- 更新：2026-10-12
 
 ## ba-admin / ACCOUNT
 
@@ -120,6 +120,13 @@
 | [CLR-REDPACKET-048](ba-admin/REDPACKET/CLR-REDPACKET-048.md) | OPEN | SPEC-REDPACKET-001 v0.1 | 機台紅包稽核倍數大於 0 時，紅包產生的未完成稽核是否扣減洗分／出金的核可金額。SPEC-CASHFLOW-001@0.1 的扣除規則以「出金設定的 TWD 稽核倍數大於 0」為觸發條件（第 245、363 行），計入交易只有開分與入金（第 57 行），未提到紅包：(1) 出金設定為 0 倍、紅包倍數大於 0 時是否仍扣除；(2) 出金一律以全部餘額核可、清空餘額（第 332 行），扣除稽核後的出金如何處理（核可金額減少後餘額是否仍清空、剩餘分數去向） |  |
 | [CLR-REDPACKET-049](ba-admin/REDPACKET/CLR-REDPACKET-049.md) | OPEN | SPEC-REDPACKET-001 v0.1 | 「週期即將重置」提示從重置前多久開始顯示（SPEC-REDPACKET-002@0.1 不含前台）；「目前累計」的定義見 Q03 |  |
 | [CLR-REDPACKET-050](ba-admin/REDPACKET/CLR-REDPACKET-050.md) | OPEN | SPEC-REDPACKET-001 v0.1 | 紅包金額欄在列表中的位置；「依場次明細」維度的紅包金額與期初／期末餘額如何計入（依 REQ-REDPACKET-025 Q02 的場次歸屬）。營業日依入帳歸屬（第 350 行「當日已入帳」）見 Q01，總計列與 CSV 見 Q03 |  |
+| [CLR-REDPACKET-051](ba-admin/REDPACKET/CLR-REDPACKET-051.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義 |  |
+| [CLR-REDPACKET-052](ba-admin/REDPACKET/CLR-REDPACKET-052.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 紅包明細「實際平均紅包金額」差異百分比：差異恰為 0 時顯示「0.0%」或「+0.0%」；差異絕對值小於 0.005% 時以紅／綠（依高低）或灰色標示 |  |
+| [CLR-REDPACKET-053](ba-admin/REDPACKET/CLR-REDPACKET-053.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 預設規則關閉且只有一組等級規則的活動，紅包明細是否顯示「規則」篩選 |  |
+| [CLR-REDPACKET-054](ba-admin/REDPACKET/CLR-REDPACKET-054.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 線上站台的站長能否檢視、操作（新增、追加預算、取消排程、紅包明細、匯出 CSV）其子站台的紅包活動：依目標限自身站台，或依 SPEC-ROLEPERM-001@0.2 含整棵子樹 |  |
+| [CLR-REDPACKET-055](ba-admin/REDPACKET/CLR-REDPACKET-055.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 待確認出金能否由管理員手動取消（並因此使紅包恢復可開啟），以 spec 原文（目標、SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8）或 CLR-CASHFLOW-004 為準；若存在，操作入口為何 |  |
+| [CLR-REDPACKET-056](ba-admin/REDPACKET/CLR-REDPACKET-056.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 機台扣除「未完成稽核的部分」的計算與出金後的處理：(1) 扣除的是什麼金額——剩餘未達的所需有效投注額、尚未完成稽核的紅包金額，或其他（例：30 TWD 紅包、稽核 1 倍、已打 10，扣 20 或 30）；(2) 出金依 SPEC-CASHFLOW-001@0.2 一律清空餘額，扣除後核可金額小於餘額時，被扣除的分數留在機台（不清空、不結束場次？）或作廢；洗分扣除後的餘數是否照洗分留餘數規則開新場次承接。目標與 SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8 皆未定義（原機台預設 0 倍不會觸發，紅包稽核使其可達） |  |
+| [CLR-REDPACKET-057](ba-admin/REDPACKET/CLR-REDPACKET-057.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 表單驗證提示文字以目標第 415 行或 SPEC-REDPACKET-002@0.2 為準（等級規則缺漏、適用等級未勾、權重表三處）；「此等級已屬於其他規則」「活動名稱最多 25 字元」在前端何時顯示（或僅為後端回應） |  |
 
 ## ba-admin / SCREENMGMT
 

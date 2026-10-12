@@ -1,0 +1,103 @@
+clarification_id: CLR-REDPACKET-051
+product: ba-admin
+functional_area: REDPACKET
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+question: 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義
+context: REQ-REDPACKET-014：玩家開啟紅包即以核心貨幣入帳至錢包（機台為分數增加；不經 3.3 優惠彩金審核、不提供線下給付）；入帳時寫入 4.1 交易紀錄（交易類型「紅包」，正值，線上與機台皆有），所需有效投注額增加
+  紅包金額 × 稽核倍數（稽核倍數取自產生當下適用的規則），寫入 4.4 稽核明細（類型「紅包」）。機台帳號：4.1 機台視角（開發包④）的交易類型下拉新增「紅包」，紅包列的場次編號為入帳歸屬的場次、交易狀態固定「已完成」、核實狀態「不適用」，其餘機台專屬欄位顯示「—」；4.4
+  稽核明細中機台帳號的紅包列單位為 TWD。
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-12T08:01:14Z'
+status: OPEN
+history:
+- at: '2026-10-12T08:01:14Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261012-001
+requirement_id: REQ-REDPACKET-014
+spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 394 行）
+  quote: 開啟即入錢包，不經 3.3 優惠彩金審核
+run_id: RUN-20261012-001
+impact_if_unanswered: 依賴此決策點的斷言只能 exploratory，或不能引用衝突的任何一側
+kind: spec_question
+question_id: Q04
+topic: display_format
+subject: redpacket.credit.arcade_txlog_other_columns
+params: {}
+role_scope:
+- admin
+- site_manager
+- operator
+level: minor
+known_rules:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 425 行）
+  quote: 其餘機台專屬欄位顯示「—」
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §列表欄位（第 73 行）
+  quote: 機台送出的金額；出金則為平台核算的可出金額
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §列表欄位（第 74 行）
+  quote: 實際異動的金額
+coverage:
+  references_status: declared
+  consulted:
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  - spec_id: SPEC-REDPACKET-002
+    spec_version: '0.2'
+    content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  - spec_id: SPEC-SYSADMIN-001
+    spec_version: '0.1'
+    content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  - spec_id: SPEC-REPORTS-001
+    spec_version: '0.1'
+    content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  - spec_id: SPEC-SITELIST-001
+    spec_version: '0.7'
+    content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  - spec_id: SPEC-PLATFORMRULE-001
+    spec_version: '0.2'
+    content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  - spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  - spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  - spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  unconsulted_normative: []
+  missing_sources: []
+  waivers: []
+decision_needed: 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義
+detail_gaps:
+- request_amount
+- actual_amount
+- completed_at
+- source
+issue_key: 78a0986fc9a22a5385d4472340cb6e17d50d64c4e316775a7b4447f220e3e0ef
