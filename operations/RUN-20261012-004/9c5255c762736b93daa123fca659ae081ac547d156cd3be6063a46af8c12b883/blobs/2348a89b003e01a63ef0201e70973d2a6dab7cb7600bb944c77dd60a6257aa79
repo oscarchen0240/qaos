@@ -1,0 +1,139 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-045
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+- requirement_id: REQ-CASHFLOW-045
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+- requirement_id: REQ-CASHFLOW-045
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（第 169 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+  quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一，印於收據上，並作為櫃檯核銷時的查詢鍵'
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+  quote: 格式須為人工可朗讀、可輸入的短碼
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 169 行）
+  quote: 收據上會印出訂單編號，玩家持收據到櫃檯，櫃檯依此編號查詢並付現
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+  quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一，印於收據上，並作為櫃檯核銷時的查詢鍵'
+steps:
+- n: 1
+  action: 後台讀 M 目前分數，記為 B0；M 送出 req-keyin，金額 100
+  expected: 回 0-OK；M 分數 = B0 + 100（核可金額將大於 0；出金一律以全部餘額為核可金額）
+- n: 2
+  action: M 送出 req-cashout
+  expected: 回 0-OK；回覆中含平台產生的 order_id（非空）。記下 order_id 的值、長度與字元組成（數字／英文字母），由執行者判斷是否為『人工可朗讀、可輸入的短碼』——spec 未定義長度與字元集，無量化門檻，只記錄與主觀判斷
+- n: 3
+  action: M 送出 end-cashout 完成該筆出金
+  expected: 回 0-OK
+- n: 4
+  action: 到後台『洗分出金核實』頁，以步驟 2 的 order_id 查詢（櫃檯核銷時的查詢方式）
+  expected: 查得該筆出金（金額 B0 + 100，即出金時的全部餘額）
+test_data:
+- name: 開分金額
+  value: 100
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-045/AC-0451'
+title: req-cashout 核可金額大於 0 時，平台產生該筆出金的 order_id（短碼）並回覆機台，櫃檯可依此編號查得該筆出金
+requirement_ids:
+- REQ-CASHFLOW-045
+acceptance_criteria_ids:
+- AC-CASHFLOW-0451
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout；本案以直接呼叫機台 API 等效驗證平台端行為
+- 【環境前提】櫃檯依 order_id 查詢的位置：spec 指向『洗分出金核實』頁的收據核銷（屬另一個規格）；請依該頁實際的查詢欄位，若以其他名稱提供編號查詢以實際為準
+expected_result: 核可金額大於 0 的 req-cashout 建立出金 PENDING 時，平台產生該筆出金的 order_id（人工可朗讀、可輸入的短碼）並回覆機台；櫃檯可依此編號查得該筆出金。
+testcase_id: TC-CASHFLOW-118
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:36:56Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:36:56Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

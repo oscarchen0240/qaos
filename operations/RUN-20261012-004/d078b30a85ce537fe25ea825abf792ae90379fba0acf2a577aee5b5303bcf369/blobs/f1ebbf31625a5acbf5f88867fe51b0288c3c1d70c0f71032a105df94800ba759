@@ -1,0 +1,823 @@
+artifact_id: ART-VCR-01M4RC3SDK76NTKCR5MC63CYWR
+artifact_type: VersionComparisonReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-004
+task_id: T4
+iteration: 0
+created_by: agent-change-impact-analyst
+created_at: '2026-10-12T15:36:16Z'
+status: VALID
+source:
+  type: ChangeImpactReport
+  ids:
+  - ART-CIR-01M4R79SMGTEBTDV1B1ZEZ99H8
+  - ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+references:
+- entity_type: Artifact
+  id: ART-CIR-01M4R79SMGTEBTDV1B1ZEZ99H8
+- entity_type: Artifact
+  id: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+dispatch_packet_sha256: 445e0ff2a74e2a97f8a4d4b41f457f3aa39bc8c209a00a9b53f9edab1bd51a06
+payload:
+  change_impact_id: CI-SPEC-CASHFLOW-001-0.1-0.2
+  comparisons:
+  - testcase_id: TC-CASHFLOW-005
+    old_version: 3
+    new_draft_id: TC-DRAFT-01M4RBDBYMSX6BPHXJMAQWJHME
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 開分加計後恰等於場館額度上限可成立；超過 1 單位則被拒絕，不寫入帳務異動、也不寫入交易紀錄
+      new: 開分加計後恰等於場館額度上限可成立、超過 1 單位被 1-OVER LIMIT 拒絕且不寫帳務異動與交易紀錄；同場館未完成的入金 PENDING 不計入判定
+    - field: requirement_ids
+      old:
+      - REQ-CASHFLOW-004
+      - REQ-CASHFLOW-030
+      new:
+      - REQ-CASHFLOW-004
+      - REQ-CASHFLOW-030
+      - REQ-CASHFLOW-007
+    - field: acceptance_criteria_ids
+      old:
+      - AC-CASHFLOW-0041
+      - AC-CASHFLOW-0301
+      - AC-CASHFLOW-0302
+      new:
+      - AC-CASHFLOW-0041
+      - AC-CASHFLOW-0302
+      - AC-CASHFLOW-0071
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: test_types
+      old:
+      - functional
+      - negative
+      new:
+      - functional
+      - negative
+      - boundary
+    - field: design_techniques
+      old:
+      - decision_table
+      new:
+      - boundary_value
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      - 調整場館額度上限為一已知值 A，另建構一筆已預留未入帳的入金 PENDING，使目前「全場館機台分數餘額合計＋已預留未入帳入金金額」恰為 A-100
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）；【環境前提，需環境負責人確認】
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 記下當下『全場館所有機台帳號分數餘額的合計』S（逐一讀出該場館每個機台帳號的分數後加總，讀法見前一條環境前提），並記下 M 目前分數 B0
+      - 將 M 所屬場館的『額度上限』設為 A = S + 100（額度上限屬站台列表的場館設定；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效）。例：S = 250 則 A = 350
+    - field: test_data
+      old:
+      - name: 第一筆開分金額
+        value: 100（使加計後恰等於上限 A）
+      - name: 第二筆開分金額
+        value: 1（使加計後超過上限 A）
+      new:
+      - name: S（全場館分數合計，讀值）
+        value: 依環境讀出，下文 A = S + 100
+      - name: 未完成入金 PENDING 金額
+        value: 50
+      - name: 第一筆開分金額（加計後恰等於 A）
+        value: 100
+      - name: 第二筆開分金額（加計後超過 A 共 1 單位）
+        value: 1
+    - field: steps
+      old:
+      - n: 1
+        action: 送出開分請求（req-keyin），金額 100，使「全場館機台分數餘額合計＋已預留未入帳入金金額＋本筆金額」恰等於額度上限 A
+      - n: 2
+        action: 確認回覆為 0-OK，分數正常增加，交易紀錄正常寫入
+      - n: 3
+        action: 再送出開分請求（req-keyin），金額 1，使加計後超過額度上限 A
+      - n: 4
+        action: 確認此筆的回覆、分數變化，並查詢交易紀錄（不篩選狀態）確認查無此筆
+      new:
+      - n: 1
+        action: 探測新額度已生效：M 送出 req-keyin，金額 101（剩餘額度只有 100）
+        expected: 回 1-OVER LIMIT，M 分數維持 B0（確認上列額度上限 A 已生效；若回 0-OK 表示額度尚未生效或讀值有誤，先向環境負責人確認，不要往下做）
+      - n: 2
+        action: M 送出 req-cashin，金額 50；之後不送 end-cashin（讓這筆入金停在待確認）
+        expected: 回 0-OK 並取得 TXID，後台 4.1 出現該筆『待確認』入金 50，M 分數仍為 B0；req-cashin 階段不判定額度、不預留額度（AC-0071）
+      - n: 3
+        action: 後台 4.1 以 M 的機台帳號篩選（不篩選交易狀態），記下目前列出的交易筆數 N1
+        expected: N1 為此後比對『被拒絕的開分有沒有留下紀錄』的基準筆數（步驟 1 被拒絕的探測請求依 CLR-006 也不會留下紀錄，所以它不影響 N1）
+      - n: 4
+        action: M 送出 req-keyin，金額 100（加計後全場館合計 = S + 100，恰等於額度上限 A）
+        expected: 回 0-OK，M 分數 = B0 + 100。若步驟 2 未完成的入金 PENDING（50）被計入判定，合計會變成 S + 150 而被拒絕，所以本步成立即代表該 PENDING 不計入、不預留
+      - n: 5
+        action: 後台 4.1 重新查詢（不篩選交易狀態），記下交易筆數 N2
+        expected: 新增 1 筆已完成的開分 100；N2 = N1 + 1
+      - n: 6
+        action: M 送出 req-keyin，金額 1（加計後合計 = S + 101，超過 A 共 1 單位）
+        expected: 回 1-OVER LIMIT；M 分數維持 B0 + 100，不變
+      - n: 7
+        action: 後台 4.1 重新查詢（不篩選交易狀態，涵蓋所有狀態）
+        expected: 筆數仍為 N2，查無這次被拒絕的金額 1 的開分紀錄，也沒有任何『未成立』狀態的紀錄（對照基準：步驟 5 的 N2）
+      - n: 8
+        action: 還原：把場館額度上限改回原值。步驟 2 的入金 PENDING 因入金沒有手動取消，不需處理，24 小時後自動轉為已逾時
+    - field: expected_result
+      old: 第一筆恰等於上限：成立，回 0-OK，分數正常增加，交易紀錄正常寫入；第二筆使合計超過上限：平台回 1-OVER LIMIT，機台畫面顯示失敗，分數不變、不寫入任何帳務異動，且查無此次拒絕的交易紀錄（CLR-CASHFLOW-006：額度上限不再屬於「其他未成立原因會留紀錄」，與餘額不足同一待遇）
+      new: 恰等於額度上限的開分（100）成立，回 0-OK、分數增加 100，且同場館尚未完成的入金 PENDING（50）不計入判定、req-cashin 不預留額度；超過額度上限 1 單位的開分（1）被拒絕：回 1-OVER LIMIT、分數不變、不寫入任何帳務異動，且交易紀錄查無此次拒絕的紀錄、不會以『未成立』狀態出現。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: SPEC-CASHFLOW-001 v0.1（依 RM 回寫，2026-09-23 依 CLR-CASHFLOW-006；spec.md 正本待更新）
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §開分（`req-keyin`）（第 352 行）
+        quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-004
+    - REQ-CASHFLOW-030
+    - REQ-CASHFLOW-007
+    recommendation: 前置與公式去掉『已預留未入帳入金』（v0.2 入金不預留、不計入）：改以已入帳餘額合計 S 構成額度邊界，並新增未完成入金 PENDING 對照其不計入；保留恰等於上限成立、超過 1 單位回 1-OVER
+      LIMIT 且不寫帳務異動與交易紀錄；補掛 REQ-007／AC-0071，移除未實際驗證的 AC-0301
+  - testcase_id: TC-CASHFLOW-010
+    old_version: 2
+    new_draft_id: TC-DRAFT-01M4RBDBYNBPDNBXBG42AGHHB7
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 入帳成功時，PENDING 的預留額度轉為實際分數餘額
+      new: 待確認入金（req-cashin 未預留額度）經 end-cashin 成功入帳：分數入帳、該筆轉為已完成
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: test_types
+      old:
+      - functional
+      - boundary
+      new:
+      - functional
+    - field: design_techniques
+      old:
+      - decision_table
+      - state_transition
+      new:
+      - state_transition
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - field: test_data
+      old: []
+      new:
+      - name: 入金金額（req-cashin 與 end-cashin 實際清點金額相同）
+        value: 200
+    - field: steps
+      old:
+      - n: 1
+        action: PENDING 有預留額度
+      - n: 2
+        action: 機台送出 end-cashin 成功入帳
+      new:
+      - n: 1
+        action: 後台讀出 M 目前分數，記為 B0
+        expected: 取得入帳前基準 B0
+      - n: 2
+        action: M 送出 req-cashin，金額 200
+        expected: 回 0-OK 並取得 TXID_1
+      - n: 3
+        action: 後台 4.1 以 M 的機台帳號篩選，找到 TXID_1 那筆入金；再讀 M 分數
+        expected: 該筆狀態為『待確認』；M 分數仍為 B0（入帳前基準，確認尚未入帳）
+      - n: 4
+        action: M 送出 end-cashin，帶 TXID_1 與入鈔機實際清點金額 200（欄位名稱依廠商 API 文件）
+        expected: 回 0-OK
+      - n: 5
+        action: 後台讀 M 分數；重新整理 4.1 查看 TXID_1 那筆
+        expected: M 分數 = B0 + 200；該筆狀態由『待確認』轉為『已完成』
+    - field: expected_result
+      old: 預留轉為實際分數餘額，額度不再被此筆佔用
+      new: 待確認入金經 end-cashin 成功入帳後，M 分數增加 200（B0 變為 B0 + 200），該筆由『待確認』轉為『已完成』；入金在 req-cashin 階段未預留額度，入帳不涉及預留額度的轉換。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §入金（`req-cashin` → `end-cashin`）（第 327 行）
+        quote: 收到 `end-cashin` 且 TXID 相符時，關閉 PENDING、更新帳務
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-008
+    recommendation: 改為待確認入金（req-cashin 未預留額度）經 end-cashin 入帳：分數入帳、該筆轉為已完成；移除『預留轉實際餘額』斷言（REQ-008 AC-0081 改寫）
+  - testcase_id: TC-CASHFLOW-014
+    old_version: 1
+    new_draft_id: TC-DRAFT-01M4RBDBYNMFGQX9B9AFFPQ0HR
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 入金 PENDING 保留 24 小時，逾期自動轉為已逾時並釋放預留額度
+      new: 入金 PENDING 建立滿 24 小時後由排程自動轉為已逾時、分數不增加（未滿 24 小時仍為待確認）
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: design_techniques
+      old:
+      - state_transition
+      new:
+      - state_transition
+      - boundary_value
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+      - 本案需跨 24 小時。可與 TC-CASHFLOW-053、本批『待確認出金超過 24 小時不逾時』案例在同一時間各自建立專用 PENDING、共用同一段等待時間（每案使用自己的 TXID）
+      - 【環境前提，spec 未定義】系統排程的執行頻率 spec 未載明；若環境提供縮短逾時或調整時間的方式，須由環境負責人說明，本案預設以真實等待為準
+    - field: test_data
+      old: []
+      new:
+      - name: 入金金額
+        value: 100
+      - name: 未滿 24 小時的檢查時點
+        value: 建立後約 23 小時 50 分
+      - name: 超過 24 小時的檢查時點
+        value: 建立後 24 小時起，每隔一段時間重新整理，直到轉為已逾時
+    - field: steps
+      old:
+      - n: 1
+        action: 入金 PENDING 已建立超過 24 小時仍未收到 end-cashin
+      - n: 2
+        action: 系統排程檢查該 PENDING
+      new:
+      - n: 1
+        action: 後台讀 M 分數，記為 B0；M 送出 req-cashin，金額 100，之後不送 end-cashin；記下後台 4.1 該筆的建立時間 T0（UTC+0）
+        expected: 回 0-OK 取得 TXID_A；該筆狀態『待確認』
+      - n: 2
+        action: 在 T0 + 23 小時 50 分左右（尚未滿 24 小時）重新查詢 4.1 該筆，並讀 M 分數
+        expected: 仍為『待確認』（尚未滿 24 小時不應逾時）；M 分數 = B0
+      - n: 3
+        action: T0 + 24 小時之後，每隔一段時間重新整理 4.1 該筆，記錄實際看到轉為『已逾時』的時間；轉換後讀 M 分數
+        expected: 該筆轉為『已逾時』；M 分數仍為 B0，沒有增加
+    - field: expected_result
+      old: 該 PENDING 自動轉為已逾時，預留額度釋放
+      new: 入金 PENDING 建立滿 24 小時且經系統排程檢查後，自動轉為『已逾時』，M 分數不增加（入金不預留額度，無預留需釋放）。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-PENDING 保留期限
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §PENDING 保留期限（第 375 行）
+        quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 `end-cashin` 一律回 `1-NO RECORD`，機台停止重送，流程收斂
+    - field: execution_cost
+      old: medium
+      new: high
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-012
+    recommendation: 入金 PENDING 滿 24 小時由排程轉為已逾時、分數不增加，移除『釋放預留額度』斷言（REQ-012 AC-0121 改寫）；補未滿 24 小時仍為待確認的對照
+  - testcase_id: TC-CASHFLOW-031
+    old_version: 2
+    new_draft_id: TC-DRAFT-01M4RBDBYND4WM6YVKF2A19S2W
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: req-cashout 已建立 PENDING 後機台 15 秒逾時結束程序，該 PENDING 不會自動結束，需新請求取代或人工出金連動取消
+      new: 出金 req-cashout 建立 PENDING 後機台 15 秒逾時結束程序：PENDING 不會自動結束，只會被新的 req-cashout 取代或管理員手動取消而收斂
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: test_level
+      old: api
+      new: integration
+    - field: test_types
+      old:
+      - negative
+      new:
+      - functional
+      - negative
+    - field: design_techniques
+      old:
+      - error_guessing
+      new:
+      - state_transition
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+      - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+      - 【前端受阻註記】管理員『手動取消』的 UI 入口在 4.1 交易紀錄查詢（機台視角），前端尚未開發（BUG-TXLOG-001 OPEN；後端已完成）。前端上線前，涉及該入口的步驟無法以 UI 執行，執行結果記為『受阻』（不是
+        FAIL）；可改以後端手動取消 API 驗證，API 的路徑、認證與參數 spec 未定義，需由開發提供
+      - 管理員帳號須能進入 4.1 交易紀錄查詢（機台視角）；步驟 6 僅管理員可執行（站長不可，見 AC-0265 案例）
+    - field: test_data
+      old: []
+      new:
+      - name: 開分金額
+        value: 100
+      - name: 觀察等待時間
+        value: 至少 10 分鐘（本案自訂的『足夠長』，spec 未規定觀察時長）
+    - field: steps
+      old:
+      - n: 1
+        action: 機台送出 req-cashout，平台已建立 PENDING
+      - n: 2
+        action: 機台 15 秒內未收到回覆，直接結束程序（不印收據）
+      - n: 3
+        action: 檢視該筆 PENDING 的狀態
+      new:
+      - n: 1
+        action: M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1
+        expected: 回 0-OK；M 分數 = B1（> 0，使後續出金有可核可金額）
+      - n: 2
+        action: M 送出 req-cashout（金額為當下全部餘額 B1）；接著模擬機台 15 秒內收不到回覆而結束程序：不送 end-cashout、忽略回覆
+        expected: 平台已建立出金 PENDING（TXID_1），核可金額 B1
+      - n: 3
+        action: 後台 4.1 篩選 M、交易類型『機台出金』、交易狀態『待確認』，找到 TXID_1；讀 M 分數
+        expected: TXID_1 狀態『待確認』；M 分數仍為 B1（未扣）
+      - n: 4
+        action: 等待至少 10 分鐘（遠超過 15 秒）後重新整理 4.1，再讀 M 分數
+        expected: TXID_1 仍為『待確認』，沒有自動轉為已取消／已完成／已逾時；M 分數仍為 B1
+      - n: 5
+        action: 收斂路徑一（新請求取代）：M 再送出 req-cashout
+        expected: 回 0-OK 與新的 TXID_2；4.1：TXID_1 轉為『已取消』，TXID_2 為『待確認』
+      - n: 6
+        action: 收斂路徑二（管理員手動取消，UI 流程）：管理員在 4.1（機台視角）篩選待確認出金，找到 TXID_2 那列，執行『手動取消』（若出現二次確認視窗則確認）
+        expected: TXID_2 轉為『已取消』，M 分數仍為 B1（分數不異動）。前端未上線時此步記為『受阻』，改以後端手動取消 API 驗證
+    - field: expected_result
+      old: 該 PENDING 持續停留在待確認，不會自動結束；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依 REQ-CASHFLOW-027 連動取消既有 PENDING）才能收斂——交易紀錄查詢頁不存在手動取消操作，已由
+        Oscar 2026-09-15 確認（CLR-CASHFLOW-004）
+      new: 機台送出 req-cashout 後 15 秒未收到回覆而結束程序時，平台已建立的出金 PENDING 持續停留在待確認、不會自動結束；它只會因新的 req-cashout 取代（原 PENDING 轉為『已取消』）、櫃檯人工出金連動取消，或管理員手動取消（轉為『已取消』、分數不異動）而收斂。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-出金
+        quote: 須由新的 req-cashout 取代或 Admin 手動取消收斂（spec.md原文，2026-09-15已由Oscar確認「Admin手動取消」此路徑不存在於現行產品，見REQ-CASHFLOW-026 statement/CLR-CASHFLOW-004）
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §出金（`req-cashout` → `end-cashout`）（第 345 行）
+        quote: 平台此時已建立 PENDING，該筆將永遠等不到 `end-cashout`，須由新的 `req-cashout` 取代或 管理員 手動取消收斂
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-026
+    recommendation: 待確認出金收斂路徑改為三條（新 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消），移除『交易紀錄查詢頁不存在手動取消』（REQ-026／CLR-008 rev 1）；管理員手動取消前端未開發（BUG-TXLOG-001），相關步驟須以後端
+      API 驗證或標註受阻；入金部分維持沒有手動取消
+  - testcase_id: TC-CASHFLOW-034
+    old_version: 2
+    new_draft_id: TC-DRAFT-01M4RBDBYNMQVF4E1RKHDX3566
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 加計後將超過場館額度上限時回 1-OVER LIMIT
+      new: 加計後將超過場館額度上限時：開分 req-keyin 與入金 end-cashin 皆回 1-OVER LIMIT
+    - field: requirement_ids
+      old:
+      - REQ-CASHFLOW-029
+      new:
+      - REQ-CASHFLOW-029
+      - REQ-CASHFLOW-007
+    - field: acceptance_criteria_ids
+      old:
+      - AC-CASHFLOW-0291
+      new:
+      - AC-CASHFLOW-0291
+      - AC-CASHFLOW-0072
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: design_techniques
+      old:
+      - decision_table
+      new:
+      - requirement_based
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）；【環境前提，需環境負責人確認】
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 記下全場館所有機台帳號分數餘額合計 S，並將 M 所屬場館的『額度上限』設為 A = S + 100（剩餘額度 100；修改後是否即時套用 spec 未載明，請向環境負責人確認）
+    - field: test_data
+      old: []
+      new:
+      - name: 剩餘額度
+        value: 100
+      - name: 開分金額（加計後超過 A）
+        value: 150
+      - name: 入金 req-cashin 金額與 end-cashin 實際清點金額
+        value: 150
+    - field: steps
+      old:
+      - n: 1
+        action: 機台正常啟用、場館開通
+      - n: 2
+        action: 加計後將超過場館額度上限，送出開分或入金請求
+      new:
+      - n: 1
+        action: 探測新額度已生效：M 送出 req-keyin，金額 101（剩餘額度只有 100）
+        expected: 回 1-OVER LIMIT（確認上列額度上限 A 已生效；若回 0-OK 表示額度尚未生效或讀值有誤，先向環境負責人確認，不要往下做）
+      - n: 2
+        action: M 送出 req-keyin，金額 150（加計後 S + 150 超過 A）
+        expected: 回 1-OVER LIMIT
+      - n: 3
+        action: 入金前置：M 送出 req-cashin，金額 150，取得 TXID_1（本步只是建立 PENDING 的前置；AC-0291 只規範開分與 end-cashin 的回應，req-cashin 階段不判額度屬
+          REQ-CASHFLOW-007）
+        expected: 取得 TXID_1（建立 PENDING 的前置）
+      - n: 4
+        action: M 送出 end-cashin，帶 TXID_1 與入鈔機實際清點金額 150（加計後 S + 150 超過 A）
+        expected: 回 1-OVER LIMIT
+      - n: 5
+        action: 還原：把場館額度上限改回原值（步驟 3 的入金 PENDING 不需處理）
+    - field: expected_result
+      old: 平台回 1-OVER LIMIT
+      new: 加計後將超過場館額度上限時，開分 req-keyin 與入金的 end-cashin 都回 1-OVER LIMIT。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-狀態碼對照
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §狀態碼對照（第 313 行）
+        quote: 本次金額加計後，全場館機台分數餘額合計將超過場館額度上限（額度為全場館共用）
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-029
+    - REQ-CASHFLOW-007
+    recommendation: 拆為開分 req-keyin 與入金 end-cashin 兩種情境皆回 1-OVER LIMIT，明確 req-cashin 階段不判額度（REQ-029 AC-0291 改寫、CLR-005）；補掛
+      REQ-007
+  - testcase_id: TC-CASHFLOW-043
+    old_version: 1
+    new_draft_id: TC-DRAFT-01M4RBDBYN2EMDWEW055ZHZTJA
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 分數因投注輸完歸 0 時，場次結束並標記為歸零結束
+      new: 分數因投注輸完歸 0 時場次結束：場次狀態為『已結束』（沒有獨立的『歸零結束』狀態值），期末餘額為 0
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: test_level
+      old: api
+      new: integration
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+      - 【環境前提，spec 未定義】spec 的『場次』小節只列出場次資訊的呈現位置（會員詳細頁『機台資訊』區塊顯示進行中場次摘要、機台交易紀錄可依場次編號篩選、場館日結報表可選『依場次明細』），未載明『場次狀態』『期末餘額』等欄位在哪個頁面逐欄可見；請環境負責人指定查看場次資訊的頁面，執行者以該頁為準（下文稱『場次資訊頁』）
+      - 【環境前提，spec 未定義】需能在機台前台（機台本身的遊戲畫面或模擬器，以 M 的機台帳號登入前台；帳密由環境負責人提供）下注，並在小額餘額下把分數輸到 0。spec 沒有規定如何製造歸零；遊戲結果不可控，請執行者自行選擇高風險投注或多次下注，直到分數歸
+        0
+    - field: test_data
+      old: []
+      new:
+      - name: 開分金額
+        value: 20
+      - name: 場次狀態列舉（spec）
+        value: 進行中／已結束／逾時結束／日結結算
+    - field: steps
+      old:
+      - n: 1
+        action: 場次進行中，玩家持續投注
+      - n: 2
+        action: 分數因投注輸完歸 0
+      new:
+      - n: 1
+        action: 確認 M 分數為 0（若有餘額，先以 req-keyout mode=all、throshold=0 洗到 0）；M 送出 req-keyin，金額 20
+        expected: 回 0-OK；M 分數 20，建立新場次 SES（會員詳細頁『機台資訊』區塊顯示進行中場次摘要，記下場次編號）
+      - n: 2
+        action: 在機台前台遊戲下注，直到 M 分數因投注輸完歸 0（過程中不洗分、不出金、不再開分）
+        expected: M 分數為 0
+      - n: 3
+        action: 在場次資訊頁查詢場次 SES
+        expected: 場次狀態為『已結束』；期末餘額為 0；狀態欄沒有出現『歸零結束』這個值
+    - field: expected_result
+      old: 場次結束，標記為歸零結束，期末餘額為 0
+      new: 分數因投注輸完歸 0 時場次結束；場次狀態列舉只有進行中／已結束／逾時結束／日結結算，歸零結束的場次狀態為『已結束』，期末餘額為 0。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §場次/場次如何開始與結束
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §場次資訊（第 223 行）
+        quote: 進行中 / 已結束 / 逾時結束 / 日結結算
+    - field: execution_cost
+      old: medium
+      new: high
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-036
+    recommendation: 場次狀態改為『已結束』（沒有獨立的『歸零結束』標記），期末餘額為 0（REQ-036 AC-0361 補註）
+  - testcase_id: TC-CASHFLOW-053
+    old_version: 1
+    new_draft_id: TC-DRAFT-01M4RBDBYQ72506GXWZT78FCKJ
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: PENDING 超過 24 小時未完成，預留額度隨排程自動釋放
+      new: 待確認入金逾時轉為已逾時時分數不增加，且不憑空釋放額度：逾時前後場館剩餘額度不變
+    - field: spec_version
+      old: '0.1'
+      new: '0.2'
+    - field: design_techniques
+      old:
+      - decision_table
+      - state_transition
+      new:
+      - boundary_value
+      - state_transition
+    - field: preconditions
+      old:
+      - 機台已透過憑證通過認證
+      - 機台所屬場館為開通狀態，機台為啟用狀態
+      new:
+      - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+        M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+      - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+      - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）；【環境前提，需環境負責人確認】
+      - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+      - 專用場館：整段觀察期（超過 24 小時）內該場館不得有本案以外的任何交易（含其他機台的開分、入金、洗分、出金），否則下方剩餘額度探測值會失準；【環境前提，需環境負責人確認】
+      - 本案需跨 24 小時，可與 TC-CASHFLOW-014 等案例同時間各自建立專用 PENDING、共用等待時間；但本案必須獨佔場館（其他案例的 PENDING 不得在同場館造成入帳或開分）
+      - 【環境前提，spec 未定義】系統排程的執行頻率 spec 未載明，本案不設時限，記錄實際轉換時間
+    - field: test_data
+      old: []
+      new:
+      - name: 剩餘額度 H（A − S）
+        value: 100
+      - name: 未完成入金金額
+        value: 100
+      - name: 逾時前探測：開分
+        value: 1
+      - name: 逾時後探測：開分（超過剩餘額度 99 共 1）
+        value: 100
+      - name: 逾時後探測：開分（恰等於剩餘額度 99）
+        value: 99
+    - field: steps
+      old:
+      - n: 1
+        action: PENDING 有預留額度
+      - n: 2
+        action: 超過 24 小時未收到 end-cashin
+      - n: 3
+        action: 系統排程檢查該 PENDING
+      new:
+      - n: 1
+        action: 記下全場館所有機台帳號分數合計 S 與 M 分數 B0；將 M 所屬場館額度上限設為 A = S + 100（剩餘額度 H = 100）
+        expected: 額度上限已設為 A；M 分數 B0
+      - n: 2
+        action: 探測新額度已生效：M 送出 req-keyin，金額 101（剩餘額度只有 100）
+        expected: 回 1-OVER LIMIT，M 分數維持 B0（確認上列額度上限 A 已生效；若回 0-OK 表示額度尚未生效或讀值有誤，先向環境負責人確認，不要往下做）
+      - n: 3
+        action: M 送出 req-cashin，金額 100，之後不送 end-cashin；後台 4.1 查看該筆
+        expected: 回 0-OK 取得 TXID_B；該筆『待確認』
+      - n: 4
+        action: 逾時前探測：M 送出 req-keyin，金額 1
+        expected: 回 0-OK，M 分數 = B0 + 1（入金 PENDING 100 並未預留額度，否則剩餘額度為 0、此筆會被拒）；此後剩餘額度 = 99
+      - n: 5
+        action: 等到 TXID_B 建立後超過 24 小時，每隔一段時間重新整理 4.1，記錄轉換時間（期間場館內不得有其他交易）
+        expected: TXID_B 轉為『已逾時』
+      - n: 6
+        action: 讀 M 分數
+        expected: M 分數仍為 B0 + 1，沒有增加（逾時不入帳）
+      - n: 7
+        action: 逾時後探測：M 送出 req-keyin，金額 100（超過剩餘額度 99 共 1）
+        expected: 回 1-OVER LIMIT。若逾時時把從未預留的 100 當成預留額度釋放，剩餘額度會變成 199，此筆會誤成立
+      - n: 8
+        action: M 送出 req-keyin，金額 99（恰等於剩餘額度）
+        expected: 回 0-OK（剩餘額度恰為 99，與逾時前一致）
+      - n: 9
+        action: 還原：把場館額度上限改回原值
+    - field: expected_result
+      old: 自動轉為已逾時，預留額度釋放，不再佔用額度
+      new: 待確認入金超過 24 小時未完成，自動轉為『已逾時』，分數不增加；入金不預留額度，因此逾時時沒有預留額度被釋放——逾時前後場館剩餘額度保持不變（本案以開分探測：逾時前 H−1 = 99、逾時後仍為 99）。
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        location: §附錄-入金
+      new:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        location: §PENDING 保留期限（第 375 行）
+        quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」
+    - field: execution_cost
+      old: low
+      new: high
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-008
+    recommendation: 入金 PENDING 逾時轉為已逾時、分數不增加，且逾時前後場館剩餘額度不變（不憑空釋放額度）；移除『預留額度釋放』斷言（REQ-008 AC-0082 改寫）
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYQ8MSZ2XGAA0HWY164
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-008
+    recommendation: 全新 TC（REQ-008，優先度 high）：待確認入金沒有手動取消操作：管理員與站長於交易紀錄查詢該筆皆無『手動取消』，該筆只能等 end-cashin 完成或 24 小時逾時
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYQ7V1TNS278YAHS2RZ
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-013
+    recommendation: 全新 TC（REQ-013，優先度 high）：洗分門檻為 0 且餘額帶小數 399.6：全洗核可金額照記含小數 399.6（不取整），機台餘額歸 0
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYQZZNMETG2W1BV24ZH
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-013
+    recommendation: 全新 TC（REQ-013，優先度 high）：洗分門檻為 100 且餘額帶小數 399.6：全洗核可金額以門檻為單位捨去為 300，餘數 99.6 留在機台帳號上
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYQNEEAQF9AKM6F991Z
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-020
+    recommendation: 全新 TC（REQ-020，優先度 high）：出金餘額帶小數 399.6：核可金額與收據面額照記 399.6（含小數、不取整），機台餘額歸 0，交易紀錄金額 -399.6
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYRFDNCNHFJ3E4SB8E1
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-020
+    recommendation: 全新 TC（REQ-020，優先度 high）：已完成的面額 399.6 出金：實付金額由場館自訂，交易紀錄、洗分出金核實、場館日結報表一律以面額計，平台不記錄實付金額與差額
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYRBJ031JR8R5KTACDQ
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-026
+    recommendation: 全新 TC（REQ-026，優先度 high）：管理員對待確認出金執行手動取消：交易標記為『已取消』、機台分數不異動；之後該 TXID 的 end-cashout 回 1-NO RECORD
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYR23NH8S15ZHENKCMK
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-026
+    recommendation: 全新 TC（REQ-026，優先度 high）：機台 Operator Reset 後停止重送：出金 PENDING 停在待確認、不會自動結束，由管理員手動取消後轉為『已取消』
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYREA5MXRBTBCTT6VV0
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-026
+    recommendation: 全新 TC（REQ-026，優先度 medium）：待確認出金超過 24 小時不轉為已逾時、仍為待確認（逾時只適用入金）；同時建立的入金 PENDING 於同一時段轉為已逾時作為對照
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYR2V0CB2P5PYCJQ0MY
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-026
+    recommendation: 全新 TC（REQ-026，優先度 high）：站長（非管理員）不可手動取消待確認出金：待確認出金的手動取消僅限管理員
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYSP1GA8QAYF04FD01R
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-045
+    recommendation: 全新 TC（REQ-045，優先度 high）：req-cashout 核可金額大於 0 時，平台產生該筆出金的 order_id（短碼）並回覆機台，櫃檯可依此編號查得該筆出金
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYS31R7E5V22VYSY9XD
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-045
+    recommendation: 全新 TC（REQ-045，優先度 high）：多筆出金（同機台連續、同場館不同機台、不同場館）的 order_id 各自一組，全系統不重複
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYSJKWFTGG9FC1RD7RN
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-045
+    recommendation: 全新 TC（REQ-045，優先度 medium）：入金交易帶 order_id（來源待確認，exploratory）：只記錄 req-cashin 後入金是否帶有 order_id 及其在後台的呈現，不斷言來源、格式與唯一性
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYSAPBGJ6MCGB4DT94C
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-046
+    recommendation: 全新 TC（REQ-046，優先度 medium）：進行中場次的場次資訊：期末餘額顯示累計至查詢當下的分數（1,250）、結束時間顯示『—』、場次時長累計至查詢當下
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYSY9YT8HYPKNT29GTQ
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-046
+    recommendation: 全新 TC（REQ-046，優先度 medium）：場次切換的期末／期初餘額：開分起始的場次期初 0、洗分結束留餘數 21 時期末 21；承接餘數的新場次期初 21、出金結束時期末 0
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYSDDDSHFRN9NQNYZFP
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-047
+    recommendation: 全新 TC（REQ-047，優先度 high）：機台前台注單與遊戲紀錄僅顯示當前進行中場次：場次切換後看不到前一場次的任何紀錄，無進行中場次時為空
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYT1PZ00CT7Q7XYZATP
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-048
+    recommendation: 全新 TC（REQ-048，優先度 high）：機台入金完成：交易類型『機台入金』金額為正值，且當下累計存款次數 +1、存款金額加上該筆（不需核實）
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYTND6XVNNDAGE1EEXD
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-048
+    recommendation: 全新 TC（REQ-048，優先度 high）：機台洗分／出金完成但未核實：類型與負值正確、提款次數與金額尚未累計；核實當下才累計，待核實與已作廢不計
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYTS2J5HE792FVVMN3B
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-048
+    recommendation: 全新 TC（REQ-048，優先度 high）：櫃檯對機台帳號人工入金或人工出金：存款次數／金額與提款次數／金額皆不變
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYTH00EJG3EJS8BKBBW
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-049
+    recommendation: 全新 TC（REQ-049，優先度 high）：機台憑證被重置後，舊 token 呼叫任一機台 API 一律回 9-OTHER ERROR 且不寫入任何帳務異動；新 token 正常受理
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYTAY2TZ78G5N03CH9Q
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-049
+    recommendation: 全新 TC（REQ-049，優先度 medium）：簽發已久且未被重置的有效 token 呼叫機台 API：因憑證不設有效期限，驗證通過、正常受理
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4RBDBYT9X043QMG3Z1C3C8F
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-CASHFLOW-049
+    recommendation: 全新 TC（REQ-049，優先度 high）：token 簽章無效（遭竄改或非平台簽發）一律回 9-OTHER ERROR
+  retire_recommendations: []
+  summary:
+    unchanged: 0
+    changed: 7
+    added: 21
+    removed: 0
+history:
+- at: '2026-10-12T15:36:49Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-004

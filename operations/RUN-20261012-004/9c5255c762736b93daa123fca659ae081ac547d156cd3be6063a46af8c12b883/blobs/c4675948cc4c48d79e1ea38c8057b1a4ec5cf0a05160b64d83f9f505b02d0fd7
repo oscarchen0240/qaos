@@ -1,0 +1,147 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-020
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（第 168 行）
+- requirement_id: REQ-CASHFLOW-020
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+- requirement_id: REQ-CASHFLOW-020
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 168 行）
+  quote: 餘額帶小數時，收據面額照記實際餘額（含小數）（2026-10-05 定案）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+  quote: 餘額帶小數時核可金額照記含小數（例 399.6），不取整（2026-10-05 定案）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+  quote: 核可金額 ＝ `req-cashout` 當下的全部餘額（清空餘額、不套門檻——2026-09-01 廠商定義出金即清空餘額）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §出金（第 168 行）
+  quote: 餘額帶小數時，收據面額照記實際餘額（含小數）（2026-10-05 定案）
+steps:
+- n: 1
+  action: 確認 M 後台分數恰為 399.6
+  expected: M 分數 = 399.6
+- n: 2
+  action: M 送出 req-cashout
+  expected: 回 0-OK；核可金額為 399.6（含小數，不取整為 399 或 400），並回覆該筆出金的 TXID_1
+- n: 3
+  action: M 送出 end-cashout，帶 TXID_1
+  expected: 回 0-OK
+- n: 4
+  action: 後台讀 M 分數
+  expected: M 分數為 0（機台餘額歸 0）
+- n: 5
+  action: 查看收據面額：過渡期為前台結算結果畫面的『結算分數』（若僅以 API 驗證，以 req-cashout 回覆的核可金額為準）
+  expected: 面額數值等於 399.6（收據例示 399.60）。小數位數與顯示格式 spec 未定義，只比對數值相等，不斷言字串寫成 399.6 或 399.60
+- n: 6
+  action: 後台 4.1 查看這筆機台出金
+  expected: 金額為 -399.6
+test_data:
+- name: 機台餘額
+  value: 399.6
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-020/AC-0203'
+title: 出金餘額帶小數 399.6：核可金額與收據面額照記 399.6（含小數、不取整），機台餘額歸 0，交易紀錄金額 -399.6
+requirement_ids:
+- REQ-CASHFLOW-020
+acceptance_criteria_ids:
+- AC-CASHFLOW-0203
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】使 M 的分數餘額恰為 399.6：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額、也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec
+  證實）：先把 M 餘額清到 0（清空請用洗分：req-keyout mode=all、throshold=0，且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表），再試送 req-keyin 金額 399.6，若回
+  0-OK 且後台顯示 M 分數為 399.6 即可；若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定把餘額設為 399.6。無法取得恰為 399.6 的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+- 出金不套門檻、不需要 throshold；過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout；本案以直接呼叫機台 API 等效驗證平台端行為
+expected_result: 餘額 399.6 時出金：核可金額與收據面額為 399.6（含小數、不取整，收據例示 399.60），機台餘額歸 0，交易紀錄金額為 -399.6。
+testcase_id: TC-CASHFLOW-112
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:36:56Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:36:56Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
