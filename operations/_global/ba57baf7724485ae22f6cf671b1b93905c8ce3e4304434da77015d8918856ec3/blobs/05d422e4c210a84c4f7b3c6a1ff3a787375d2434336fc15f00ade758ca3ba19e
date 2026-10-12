@@ -1,0 +1,131 @@
+title: 本期已達上限：已產生數達單週期發放上限且全部領取後，紅包視窗顯示『本期已達上限』（對照：達上限前一個不顯示）
+description: 本期已達上限：已產生數達單週期發放上限且全部領取後，紅包視窗顯示『本期已達上限』（對照：達上限前一個不顯示）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-031
+acceptance_criteria_ids:
+- AC-REDPACKET-0317
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- boundary
+- functional
+design_techniques:
+- boundary_value
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+test_data:
+- name: 活動
+  value: 門檻 100／上限 2／固定 10／稽核 1
+- name: 下注
+  value: 100、100
+steps:
+- n: 1
+  action: 建立活動『RP-CAPMSG』（永久）：活動幣種 USDT；預設規則門檻 100／上限 2／固定 10／稽核 1；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 結算有效流水貢獻 100，產生 P1，依領取流程領取 P1；開啟紅包視窗
+  expected: 本期已獲得 1 ／ 2；不顯示『本期已達上限』（尚差 1 個才達上限）
+- n: 3
+  action: 玩家 A 再結算有效流水貢獻 100，產生 P2（達上限 2），依領取流程領取 P2；開啟紅包視窗
+  expected: 本期已獲得 2 ／ 2；顯示『本期已達上限』
+- n: 4
+  action: 玩家 A 再結算有效流水貢獻 100
+  expected: 沒有新紅包（已達上限停止累計）；視窗仍顯示『本期已達上限』
+- n: 5
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 已產生數達適用規則的單週期發放上限且已全部領取時，紅包視窗顯示『本期已達上限』；未達上限（1 ／ 2）時不顯示。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §前台呈現說明（第 198 行）
+  quote: 累計因注單取消／重結算暫時為負時，進度顯示 0；本週期已達發放上限時顯示「本期已達上限」
+decision_refs:
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 198 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 198 行）
+  quote: 累計因注單取消／重結算暫時為負時，進度顯示 0；本週期已達發放上限時顯示「本期已達上限」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-031/AC-0317'
+testcase_id: TC-REDPACKET-189
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:17:04Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0196
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0196

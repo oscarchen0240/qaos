@@ -1,0 +1,153 @@
+title: 機台帳號領取紅包後 4.4 稽核明細新增『紅包』紀錄：金額與所需有效投注額單位為 TWD
+description: 機台帳號領取紅包後 4.4 稽核明細新增『紅包』紀錄：金額與所需有效投注額單位為 TWD
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-014
+- REQ-REDPACKET-030
+acceptance_criteria_ids:
+- AC-REDPACKET-0144
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 機台帳號 M1（自行從環境中選定，本週期無注單）
+- 領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+test_data:
+- name: 活動
+  value: 門檻 100／上限 5／固定 30 TWD／稽核 1（機台場館大於 0 會顯示稽核警告）
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-ARC-AUDIT』（永久）：每日重置；預設規則門檻 100／上限 5／固定 30／稽核倍數 1；點『儲存』
+  expected: 顯示機台稽核警告（稽核倍數大於 0）；站長確認後可儲存，建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 100
+  expected: 產生 1 個待開啟紅包
+- n: 3
+  action: M1 依領取流程領取該紅包
+  expected: M1 分數 +30（TWD）
+- n: 4
+  action: 至『各式報表 > 稽核明細』（機台場館視角），篩選 M1 的帳號、類型『紅包』
+  expected: 類型選項含『紅包』；出現 1 筆類型『紅包』的紀錄：金額 30、所需有效投注額增加 30，單位為 TWD
+expected_result: 機台帳號領取 30 TWD、稽核倍數 1 的紅包後，稽核明細新增類型『紅包』的紀錄，金額與所需有效投注額為 30，單位為 TWD。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §對既有章節的影響（第 424 行）
+  quote: 機台帳號的紅包列單位為 TWD
+decision_refs:
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 424 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 395 行）
+- requirement_id: REQ-REDPACKET-030
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §新增優惠活動 — 紅包（第 98 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 424 行）
+  quote: 機台帳號的紅包列單位為 TWD
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 395 行）
+  quote: 入帳時所需有效投注額增加 紅包金額 × 稽核倍數，寫入 4.4 稽核明細（類型「紅包」）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 98 行）
+  quote: 機台場館預設 0，大於 0 時顯示稽核警告
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-014/AC-0144'
+testcase_id: TC-REDPACKET-170
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:17:04Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0196
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0196

@@ -1,0 +1,173 @@
+title: 機台場館活動期間調早日結時間：新重置時點尚未經過者本週期延至該時點結束；已經過者視同到達重置點、立即重置（累計歸零、待開啟紅包作廢『週期重置』）
+description: 機台場館活動期間調早日結時間：新重置時點尚未經過者本週期延至該時點結束；已經過者視同到達重置點、立即重置（累計歸零、待開啟紅包作廢『週期重置』）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-011
+acceptance_criteria_ids:
+- AC-REDPACKET-0114
+- AC-REDPACKET-0115
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- boundary
+- functional
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 管理員或站長可於『後台管理員系統 > 站台列表』找到該機台站台，點『編輯』開啟 Modal，修改『日結時間』欄（UTC+0）後點『儲存變更』（欄位路徑依站台列表 spec）
+- 以下『日結時間』皆為 UTC+0；本案每個 Run 的起始條件依『現在時間』而定，請在符合條件的時段執行（各 Run 彼此獨立，可在不同時段分次執行）；每次調整日結時間都會立即影響該場館的日結報表營業日與紅包重置週期，請在專用測試場館操作
+- 機台帳號 M1（自行從環境中選定）；店員可對 M1 開分，使 M1 分數大於 0
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 名詞：本週期起點 P＝最近一次到達（舊）日結時間 C0 的時刻；新日結時間 C1；Q＝P 之後第一次到達 C1 的時刻。判定（第 383 行）：Q 已經過（Q ≤ 現在）→ 立即重置；Q 尚未經過 → 本週期延至 Q 結束
+test_data:
+- name: Run A（尚未經過）
+  value: C0＝現在－2 小時、C1＝C0－1 小時（即現在－3 小時）→ Q＝明天的 C1（約 21 小時後）
+- name: Run B（已經過）
+  value: C0＝現在＋1 小時、C1＝現在－1 小時 → P＝昨天的 C0，Q＝今天的 C1（已過）
+- name: 活動
+  value: 門檻 300／上限 5／固定 20／稽核 0；每日重置
+steps:
+- n: 1
+  action: 【Run A 準備】於站台列表把該機台站台的日結時間設為 C0＝現在－2 小時（UTC+0，整點取近似即可）並儲存；建立機台場館紅包活動『RP-ADJ-EARLY』（永久、每日重置、預設規則門檻 300／上限 5／固定 20／稽核
+    0）；M1 結算有效流水貢獻 350
+  expected: 產生 1 個待開啟紅包 P1，餘量 50；M1 紅包圖示亮起
+- n: 2
+  action: 【Run A 調整】於站台列表把日結時間改為 C1＝C0－1 小時並儲存（調早；C1 在本週期起點 P 之前，P 之後第一次 C1 是明天）
+  expected: 儲存成功
+- n: 3
+  action: 檢視後台紅包明細，並在 M1 前台點紅包圖示開啟紅包視窗，檢視『重置時間』
+  expected: 沒有立即重置：P1 仍為『待開啟』、未被作廢；紅包視窗『重置時間』顯示明天的 C1（約 21 小時後，時區顯示方式沿用前台既有優惠活動，只比對時刻）
+- n: 4
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額；並把日結時間改回環境原值
+  expected: 已取消排程
+- n: 5
+  action: 【Run B 準備】於站台列表把日結時間設為 C0＝現在＋1 小時並儲存；建立機台場館紅包活動『RP-ADJ-EARLY-B』（同上設定）；M1 結算有效流水貢獻 350
+  expected: 產生 1 個待開啟紅包 P1，餘量 50（C0 在現在＋1 小時，所以本週期起點 P 是昨天的 C0）
+- n: 6
+  action: 【Run B 調整】於站台列表把日結時間改為 C1＝現在－1 小時並儲存（調早；P 之後第一次 C1 是今天的 C1，現在已過）
+  expected: 儲存成功
+- n: 7
+  action: 檢視後台紅包明細，並在 M1 前台開啟紅包視窗
+  expected: 視同到達重置點、立即重置：P1 狀態『已作廢』、作廢原因『週期重置』；紅包視窗累計進度顯示 0 ／ 300（累計歸零）
+- n: 8
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額；並把日結時間改回環境原值
+  expected: 已取消排程
+expected_result: 調早日結時間時：本週期起點之後新的重置時點尚未經過者（Run A），本週期延至該時點結束（約 21 小時後），不立即重置、紅包與累計保留；已經過者（Run B），視同到達重置點、立即重置，累計歸零，待開啟紅包作廢（作廢原因『週期重置』）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 383 行）
+  quote: 週期只往前、不倒退：調早時，本週期起點之後已經過新的重置時點者，視同到達重置點、立即重置，尚未經過者延至該重置時點結束；調晚時，本週期一律延至原結束點之後的第一個新重置時點結束（不立即重置、不產生短週期）。已重置過的週期不重來
+decision_refs:
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 383 行）
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 383 行）
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 397 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 383 行）
+  quote: 週期只往前、不倒退：調早時，本週期起點之後已經過新的重置時點者，視同到達重置點、立即重置，尚未經過者延至該重置時點結束；調晚時，本週期一律延至原結束點之後的第一個新重置時點結束（不立即重置、不產生短週期）。已重置過的週期不重來
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 383 行）
+  quote: 活動期間場館修改日結時間時立即生效（與場次日結、場館日結報表同步）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 397 行）
+  quote: 週期重置時該帳號所有待開啟紅包作廢；已入帳紀錄不受影響
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-011/AC-0114,AC-0115'
+testcase_id: TC-REDPACKET-162
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:17:04Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0196
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0196

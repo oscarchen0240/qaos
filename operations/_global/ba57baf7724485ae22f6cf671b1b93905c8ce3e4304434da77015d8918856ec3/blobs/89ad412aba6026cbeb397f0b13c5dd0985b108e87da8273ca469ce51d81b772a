@@ -1,0 +1,198 @@
+title: 所有機台帳號適用預設規則；紅包以 TWD 入帳；機台視角交易紀錄含『紅包』類型（場次編號、交易狀態『已完成』、核實狀態『不適用』）
+description: 所有機台帳號適用預設規則；紅包以 TWD 入帳；機台視角交易紀錄含『紅包』類型（場次編號、交易狀態『已完成』、核實狀態『不適用』）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-025
+- REQ-REDPACKET-014
+- REQ-REDPACKET-036
+acceptance_criteria_ids:
+- AC-REDPACKET-0252
+- AC-REDPACKET-0253
+- AC-REDPACKET-0143
+- AC-REDPACKET-0365
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分與洗分；機台端洗分門檻為已知的正值或 0（機台端設定，後台無此設定）；記下兩台機台的目前分數餘額
+- 場館內兩台不同的機台帳號 M1、M2，皆無本週期注單；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+test_data:
+- name: 下注
+  value: M1 300；M2 300
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-ARC-TWD』（活動時間『永久』）：每日重置；預設規則門檻 300／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 300；M2 結算有效流水貢獻 300
+  expected: 兩台各產生 1 個紅包（皆適用預設規則，金額 20），兩台的紅包圖示亮起
+- n: 3
+  action: 後台『各式報表 > 交易紀錄查詢』（機台視角），只篩選 M1 的會員編號，記下 M1 當前場次的場次編號（例如 M1 最近一筆機台交易的場次編號）
+  expected: 已記錄 M1 目前進行中的場次編號 S
+- n: 4
+  action: M1 依領取流程領取紅包（M2 的紅包保持不開啟）
+  expected: M1 分數 +20（TWD）
+- n: 5
+  action: 回到交易紀錄查詢，只篩選 M1，檢視交易類型下拉選單，並選交易類型『紅包』查詢
+  expected: 交易類型下拉含『紅包』；出現 1 筆：金額 20（單位 TWD）、場次編號為 S（入帳當下進行中的場次）、交易狀態『已完成』、核實狀態『不適用』
+- n: 6
+  action: 檢視該紅包列的其餘機台專屬欄位（訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源）
+  expected: 【僅記錄，不判定】逐欄記錄實際顯示內容（含請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或為『—』）；CLR-REDPACKET-051 尚未回答，其餘欄位如何顯示未定案
+- n: 7
+  action: 只篩選 M2 的會員編號，檢視 M2 的交易列表
+  expected: 沒有交易類型為『紅包』的紀錄（M2 的紅包尚未開啟）
+- n: 8
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 場館內所有機台帳號（M1、M2）都以預設規則產生紅包（金額 20）；M1 領取後以 TWD 入帳（分數 +20）；機台視角交易紀錄的交易類型下拉含『紅包』，M1 的紅包列場次編號為入帳當下的場次、交易狀態『已完成』、核實狀態『不適用』，未開啟的
+  M2 沒有紅包紀錄；其餘機台專屬欄位的顯示只記錄、不判定。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §對既有章節的影響（第 425 行）
+  quote: 4.1 機台視角的交易類型下拉新增「紅包」；紅包列：場次編號為入帳歸屬的場次（見業務規則「機台入帳場次」）、交易狀態固定「已完成」、核實狀態「不適用」，其餘機台專屬欄位顯示「—」
+decision_refs:
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 425 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §線上與機台的差異（第 36 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §線上與機台的差異（第 38 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 424 行）
+- requirement_id: REQ-REDPACKET-036
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 196 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 425 行）
+  quote: 4.1 機台視角的交易類型下拉新增「紅包」；紅包列：場次編號為入帳歸屬的場次（見業務規則「機台入帳場次」）、交易狀態固定「已完成」、核實狀態「不適用」，其餘機台專屬欄位顯示「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 36 行）
+  quote: 該場館所有機台帳號（機台帳號不參與會員等級）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 38 行）
+  quote: 固定 TWD（場館僅此一種），不顯示選項
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 424 行）
+  quote: 機台帳號的紅包列單位為 TWD
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 196 行）
+  quote: 送出後按鈕顯示「處理中…」，完成即入帳（線上入錢包、機台分數增加）；仍有待開啟紅包時，紅包視窗改顯示下一個紅包的金額，可再次領取
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-061 v1（CI-SPEC-REDPACKET-001-0.1-0.2，R002→R001）'
+testcase_id: TC-REDPACKET-061
+version: 3
+supersedes: 1
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:17:04Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:09:35Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0196
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:17:04Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0196
