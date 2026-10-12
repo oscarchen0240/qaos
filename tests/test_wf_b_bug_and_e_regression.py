@@ -37,7 +37,7 @@ def test_11_no_evidence_no_formal_bug():
 def _bug_draft(evd, tc):
     return {"draft_id": "BUG-DRAFT-01ARZ3NDEKTSV4RRFFQ69G5FAV", "title": "長度 7 的密碼被接受，違反最小長度 8", "product": "demo", "functional_area": "AUTH",
             "severity_proposed": "major", "priority_proposed": "high", "severity_rationale": "核心驗證規則失效", "environment": {"name": "stage"},
-            "spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "requirement_id": "REQ-AUTH-001", "acceptance_criteria_ids": ["AC-AUTH-002"],
+            "spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "requirement_id": "REQ-AUTH-001", "acceptance_criteria_ids": ["AC-AUTH-0012"],
             "testcase_id": tc[0], "testcase_version": tc[1], "execution_id": S["exe"], "preconditions": ["使用者在密碼設定頁"],
             "reproduction_steps": ["輸入長度 7 且含數字的密碼", "送出"], "expected_result": "系統拒絕，提示長度不足",
             "expected_result_spec_reference": {"spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "location": "§3.1 R1"},

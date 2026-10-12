@@ -115,7 +115,7 @@ def oa_run(cid, k):
     dp = F.dp("Q01", "defined_by_decision", "none", subject="site.child.delete", role=["admin"], known=[src],
               coverage={"references_status": "undeclared", "consulted": [oa_pin()], "unconsulted_normative": [], "missing_sources": [], "waivers": []})
     req = {"requirement_id": "REQ-OTH-001", "version": 1, "spec_id": OA, "spec_version": VER, "type": "functional", "title": "營運區站台刪除", "statement": "營運區站台刪除規則",
-           "acceptance_criteria": [{"ac_id": "AC-OA-001", "given": "已登入", "when": "刪除子站台", "then": "依規則"}],
+           "acceptance_criteria": [{"ac_id": "AC-OTH-0011", "given": "已登入", "when": "刪除子站台", "then": "依規則"}],
            "spec_reference": {"spec_id": OA, "spec_version": VER, "location": "§刪除", "quote": "營運區的站台刪除規則依總規格辦理。"}, "ambiguity": None, "risk": "medium",
            "status": "DRAFT", "history": [], "decision_points": [dp]}
     rid = engine.new_run("spec-to-testcase", {"spec_id": OA, "spec_version": VER}, F.BY, new_request=True)["run_id"]
@@ -129,7 +129,7 @@ def oa_run(cid, k):
     g = engine.evaluate_gate(rid, "T1"); assert g["result"] == "PASS", g
     tc = F.tc(1, "REQ-OTH-001", f"營運區刪除子站台被拒（第 {k} 輪）", techs=["negative"], types=["negative"],
               drefs=[{"requirement_id": "REQ-OTH-001", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])
-    tc.update({"functional_area": "OTH", "spec_id": OA, "acceptance_criteria_ids": ["AC-OA-001"], "expected_result_spec_reference": {"spec_id": OA, "spec_version": VER, "location": "§刪除"},
+    tc.update({"functional_area": "OTH", "spec_id": OA, "acceptance_criteria_ids": ["AC-OTH-0011"], "expected_result_spec_reference": {"spec_id": OA, "spec_version": VER, "location": "§刪除"},
                "draft_id": f"TC-DRAFT-01ARZ3NDEKTSV4RRFFQ69GOA0{k}"})
     did, pd = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": OA, "spec_version": VER, "testcases": [tc]},
                                [{"entity_type": "Requirement", "id": "REQ-OTH-001"}], {"type": "RequirementModel", "ids": []}, "test-design")

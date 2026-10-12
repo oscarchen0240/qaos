@@ -130,6 +130,7 @@ def _extra(item: dict) -> dict:
     return {"kind": "path", "ref": rel, "sha256": store.sha256_file(rel), "reason": reason}
 
 REVIEW_AGENTS = ("agent-test-validator", "agent-tc-risk-reviewer")
+SPEC_AGENTS = ("agent-spec-analyst",)                 # 會經過 G-SPEC 的 task：派發包附 ac_seq_high_water
 STRIPPED_FIELDS = ("design_rationale",)
 
 def review_draft_path(run_id: str, task_id: str, iteration: int, artifact_id: str) -> str:
@@ -171,6 +172,8 @@ def build(run: dict, task: dict, extras: list[dict], review: list[dict] | None =
     bound = [p for p in (pins["target"], pins["from"]) if p] + doc["rm_pins"]["pin_groups"]
     doc["decision_sources"] = _decision_sources(bound)
     if task.get("agent_id") in REVIEW_AGENTS: doc["review_drafts"] = review if review is not None else _review_drafts(run, task)[0]
+    if task.get("agent_id") in SPEC_AGENTS and tgt:                     # 各 REQ 用過的最大推導格式 AC 序號（同 spec 所有版本、所有 revision；新增 AC 取此值 + 1）
+        doc["ac_seq_high_water"] = dict(sorted(rm.ac_history(tgt[0])["high_water"].items()))
     return doc
 
 # ---------------------------------------------------------------- 寫入指令

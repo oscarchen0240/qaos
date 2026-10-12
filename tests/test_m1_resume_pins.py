@@ -162,7 +162,7 @@ from tests import helpers as H
 rid, tc = "{rid}", "{info['tc']}"
 rmid = store.load("{SPEC_DIR}/revisions/R000.yaml")["source_artifact_id"]
 it = engine._task(engine.load_run(rid), "T1")["iteration"]
-t = copy.deepcopy(H.draft_set(prefix="01CX5ZZKBKACTAV9WEVGEMMVS")[0][4])
+t = copy.deepcopy(H.legacy_acs(H.draft_set(prefix="01CX5ZZKBKACTAV9WEVGEMMVS")[0])[4])                  # run 綁 legacy R000
 t.update(source="change_workflow", supersedes_testcase={{"testcase_id": tc, "version": 1}}, title="正確帳密登入成功（修訂二）", design_techniques=["scenario", "error_guessing"])
 d, pd = H.write_artifact(rid, "T1", "agent-test-designer", "TestCaseDraft", {{"mode": "change", "spec_id": "SPEC-AUTH-001", "spec_version": "1.0", "testcases": [t]}},
                          [{{"entity_type": "Requirement", "id": "REQ-AUTH-004"}}], {{"type": "RequirementModel", "ids": [rmid]}}, "test-design", iteration=it)

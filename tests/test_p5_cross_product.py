@@ -18,7 +18,7 @@ def sb_run(cid):
     dp = F.dp("Q01", "defined_by_decision", "none", subject="site.child.delete", role=["admin"], known=[src],
               coverage={"references_status": "undeclared", "consulted": [sb_pin()], "unconsulted_normative": [], "missing_sources": [], "waivers": []})
     req = {"requirement_id": "REQ-DEMO-020", "version": 1, "spec_id": SB, "spec_version": VER, "type": "functional", "title": "另一產品的站台刪除", "statement": "另一產品的站台刪除規則",
-           "acceptance_criteria": [{"ac_id": "AC-SB-001", "given": "已登入", "when": "刪除子站台", "then": "依規則"}],
+           "acceptance_criteria": [{"ac_id": "AC-DEMO-0201", "given": "已登入", "when": "刪除子站台", "then": "依規則"}],
            "spec_reference": {"spec_id": SB, "spec_version": VER, "location": "§刪除", "quote": "站台刪除規則依總規格辦理。"}, "ambiguity": None, "risk": "medium", "status": "DRAFT", "history": [],
            "decision_points": [dp]}
     rid = engine.new_run("spec-to-testcase", {"spec_id": SB, "spec_version": VER}, F.BY, new_request=True)["run_id"]
@@ -31,7 +31,7 @@ def sb_run(cid):
     assert engine.submit(rid, "T1", str(p1))[0] and engine.submit(rid, "T1", str(p2))[0]
     g = engine.evaluate_gate(rid, "T1"); assert g["result"] == "PASS", g
     tc = F.tc(1, "REQ-DEMO-020", "另一產品刪除子站台被拒", techs=["negative"], types=["negative"], drefs=[{"requirement_id": "REQ-DEMO-020", "question_id": "Q01", "basis_ref": F.ident(src)}], srcs=[src])
-    tc.update({"product": "other", "spec_id": SB, "acceptance_criteria_ids": ["AC-SB-001"], "expected_result_spec_reference": {"spec_id": SB, "spec_version": VER, "location": "§刪除"},
+    tc.update({"product": "other", "spec_id": SB, "acceptance_criteria_ids": ["AC-DEMO-0201"], "expected_result_spec_reference": {"spec_id": SB, "spec_version": VER, "location": "§刪除"},
                "draft_id": "TC-DRAFT-01ARZ3NDEKTSV4RRFFQ69GSB01"})
     did, pd = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": SB, "spec_version": VER, "testcases": [tc]},
                                [{"entity_type": "Requirement", "id": "REQ-DEMO-020"}], {"type": "RequirementModel", "ids": []}, "test-design")

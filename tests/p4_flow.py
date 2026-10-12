@@ -72,7 +72,7 @@ def amb(level, raised, desc="決策點推導"):
 def req(n, dps=(), ambiguity=None, rc=None, statement="站台刪除規則", risk="medium"):
     rid = f"REQ-DEMO-{n:03d}"
     r = {"requirement_id": rid, "version": 1, "spec_id": SPEC, "spec_version": VER, "type": "functional", "title": statement, "statement": statement,
-         "acceptance_criteria": [{"ac_id": f"AC-DEMO-{n:03d}", "given": "已登入後台", "when": "操作", "then": "依規則"}],
+         "acceptance_criteria": [{"ac_id": f"AC-DEMO-{n:03d}1", "given": "已登入後台", "when": "操作", "then": "依規則"}],
          "spec_reference": {"spec_id": SPEC, "spec_version": VER, "location": "§刪除規則", "quote": "任何站台都不能刪除。"},
          "ambiguity": ambiguity, "risk": risk, "status": "DRAFT", "history": []}
     if dps: r["decision_points"] = list(dps)
@@ -99,7 +99,7 @@ def analyze(rid, reqs, consulted="auto", packet="auto", task="T1") -> dict:
     return {**engine.evaluate_gate(rid, task), "rmid": rmid}
 
 def tc(n, rid, title, techs=("requirement_based",), types=("functional",), drefs=None, srcs=None, assumptions=None, expected="依規則顯示", mode="spec"):
-    t = H.tc(f"TC-DRAFT-01ARZ3NDEKTSV4RRFFQ69G{n:04d}", title, rid, "AC-DEMO-" + rid[-3:], "ui_e2e", list(types), list(techs), [f"步驟 {title}"], expected,
+    t = H.tc(f"TC-DRAFT-01ARZ3NDEKTSV4RRFFQ69G{n:04d}", title, rid, "AC-DEMO-" + rid[-3:] + "1", "ui_e2e", list(types), list(techs), [f"步驟 {title}"], expected,
              "§刪除規則", prio="medium", risk="medium", functional_area="DEMO", spec_id=SPEC,
              expected_result_spec_reference={"spec_id": SPEC, "spec_version": VER, "location": "§刪除規則"}, mode=mode)
     if drefs is not None: t["decision_refs"] = drefs

@@ -89,7 +89,10 @@ def patch_run(run_id: int, body: RunPatch):
 
 @router.delete("/{run_id}", status_code=204)
 def delete_run(run_id: int):
-    svc.delete_run(run_id)
+    try:
+        svc.delete_run(run_id)
+    except svc.TestRunError as e:
+        _err(e)
 
 
 @router.patch("/{run_id}/results/{result_id}")

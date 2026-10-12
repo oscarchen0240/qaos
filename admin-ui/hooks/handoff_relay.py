@@ -15,24 +15,49 @@ import os
 import sys
 import time
 
+try:
+    import fcntl
+except ImportError:      # 非 POSIX：沒有 flock
+    fcntl = None
+
 from _hostenv import project_dir
 
 MAX_LINES_SCAN = 500
 
 
 def _read(path):
+    """逐行（位元組）解碼：某一行是非法 UTF-8 或殘缺 JSON（例如後端寫到一半失敗留下的殘行）只略過那一行，不讓整檔讀不出來。"""
     try:
-        with open(path, encoding="utf-8") as f:
-            lines = f.readlines()[-MAX_LINES_SCAN:]
+        with open(path, "rb") as f:
+            lines = f.read().splitlines()[-MAX_LINES_SCAN:]
     except OSError:
         return []
     out = []
     for ln in lines:
         try:
-            out.append(json.loads(ln))
-        except ValueError:
+            r = json.loads(ln.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
             continue
+        if isinstance(r, dict):
+            out.append(r)
     return out
+
+
+def _append_consumed(path, recs):
+    """append consumed，與後端 qaos_exec._locked_append 是同一套協議：
+    先對檔案取 flock(LOCK_EX)，取得鎖之後才讀最後一個位元組；不是換行（別的 writer 寫到一半失敗留下的殘行，或只差換行的完整 JSON）
+    就在同一次 write 前面加一個換行，consumed 才不會黏在別人那一行後面。只 append、不改寫既有位元組，flush 後解鎖。"""
+    data = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in recs).encode("utf-8")
+    with open(path, "a+b") as f:
+        if fcntl is not None:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        size = f.seek(0, os.SEEK_END)
+        if size:
+            f.seek(size - 1)
+            if f.read(1) != b"\n":
+                data = b"\n" + data
+        f.write(data)
+        f.flush()
 
 
 def _run_state(project, run_id):
@@ -99,9 +124,7 @@ def main():
             if _resumable(r) is None:
                 notified.append(r["id"])
         if notified:
-            with open(hpath, "a", encoding="utf-8") as f:
-                for hid in notified:
-                    f.write(json.dumps({"kind": "consumed", "handoff_id": hid, "ts": ts, "by": "relay", "note": "notified"}, ensure_ascii=False) + "\n")
+            _append_consumed(hpath, [{"kind": "consumed", "handoff_id": hid, "ts": ts, "by": "relay", "note": "notified"} for hid in notified])
         print("\n".join(lines))
         return
 
@@ -111,8 +134,7 @@ def main():
     todo = next((x for x in (_resumable(r) for r in pending) if x), None)
     if not todo:
         return
-    with open(hpath, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"kind": "consumed", "handoff_id": todo[0]["id"], "ts": ts, "by": "relay", "note": "resumed"}, ensure_ascii=False) + "\n")
+    _append_consumed(hpath, [{"kind": "consumed", "handoff_id": todo[0]["id"], "ts": ts, "by": "relay", "note": "resumed"}])
     r, st = todo
     reason = (f"QAOS 指揮台已對 {r.get('ticket_id')} 執行「{r.get('action')}」（{r.get('by')}）。"
               f"run {r.get('run_id')} 現在 {st['status']}，current_task_id={st['current_task_id']}（{st.get('agent_id') or ''}，狀態 READY）。"

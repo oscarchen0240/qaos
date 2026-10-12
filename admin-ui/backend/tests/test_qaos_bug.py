@@ -105,6 +105,6 @@ def test_execute_stops_at_first_failure_and_keeps_partial_ids(bug_sandbox, write
 
 def test_already_filed_is_rejected(bug_sandbox, write_registry_tc):
     rid, res_id = _make_run_with_fail(bug_sandbox, write_registry_tc)
-    bug_sandbox.qaos_bug._save(res_id, bug_run_id="RUN-20260918-031")
+    bug_sandbox.qaos_bug._save(res_id, bug_run_id="RUN-20260918-031", bug_handoff_id="h1")   # 交接完成才算「已送過」（B2 R04）
     p = bug_sandbox.qaos_bug.plan(rid, res_id)
     assert any("已經送過" in w for w in p["warnings"])

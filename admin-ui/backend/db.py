@@ -269,11 +269,22 @@ def _migrate_testruns(con):
                 "title": "TEXT NOT NULL DEFAULT ''", "priority": "TEXT", "risk": "TEXT", "requirement_ids": "TEXT NOT NULL DEFAULT '[]'", "preconditions": "TEXT NOT NULL DEFAULT '[]'",
                 "steps": "TEXT NOT NULL DEFAULT '[]'", "expected_result": "TEXT NOT NULL DEFAULT ''", "actual_result": "TEXT NOT NULL DEFAULT ''", "notes": "TEXT NOT NULL DEFAULT ''",
                 "evidence": "TEXT NOT NULL DEFAULT '[]'", "executed_at": "TEXT", "executed_by": "TEXT", "qaos_execution_id": "TEXT", "qaos_evidence_ids": "TEXT NOT NULL DEFAULT '[]'",
-                "qaos_import_request": "TEXT", "bug_run_id": "TEXT", "updated_at": "TEXT NOT NULL DEFAULT ''"}
-    for table, want in (("test_runs", want_runs), ("test_results", want_res)):
+                "qaos_import_request": "TEXT", "bug_run_id": "TEXT", "updated_at": "TEXT NOT NULL DEFAULT ''",
+                # B2（R03／R04）：登記證據時的清單快照、開 bug 的指令、交接與執行紀錄是否補齊
+                "qaos_evidence_snapshot": "TEXT", "bug_run_command": "TEXT", "bug_handoff_id": "TEXT"}
+    # B2（R04）：單據 execute 先落一筆 pending 的執行紀錄，交接與 mark_sent 完成後才改 done；'done' 是既有資料的預設值
+    want_exec = {"completion": "TEXT NOT NULL DEFAULT 'done'"}
+    for table, want in (("test_runs", want_runs), ("test_results", want_res), ("ticket_executions", want_exec)):
         cols = [r["name"] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
         if not cols:
             continue
         for c, ddl in want.items():
             if c not in cols:
                 con.execute(f"ALTER TABLE {table} ADD COLUMN {c} {ddl}")
+                if (table, c) == ("test_results", "bug_handoff_id"):
+                    # 新欄位只回填新欄位本身：此前開過 bug 且已寫過執行紀錄（含 handoff_id）的結果視為交接完成，
+                    # 否則升級後它們都會被當成「待補交接」而重送一筆交接
+                    con.execute("""UPDATE test_results SET bug_handoff_id = (SELECT handoff_id FROM ticket_executions e
+                                       WHERE e.ticket_id = 'TESTRUN-' || test_results.run_id || '/' || test_results.id AND e.kind = 'bug_filing' AND e.handoff_id IS NOT NULL
+                                       ORDER BY e.id DESC LIMIT 1)
+                                   WHERE bug_run_id IS NOT NULL""")

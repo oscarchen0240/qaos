@@ -152,7 +152,7 @@ cli(["spec", "import", "tests/fixtures/SPEC-AUTH-001-v1.2.md", "--spec-id", SPEC
 rid = engine.new_run("spec-change-impact", {"spec_id": SPEC, "from_version": FROM, "to_version": TO}, BY, new_request=True)["run_id"]
 run = engine.load_run(rid); out = {"rid": rid, "current_after_new": run["current_task_id"], "from_pin": run.get("from_requirement_model_revision")}
 # T0 Spec Analyst：1.2 的 RM（REQ-AUTH-003 改變）
-m = H.requirement_model(TO, "12")
+m = H.legacy_rm(H.requirement_model(TO, "12"))                                    # 既有 AC 沿用 legacy R000 的原 ID
 for r in m["requirements"]:
     if r["requirement_id"] == "REQ-AUTH-003":
         r["statement"] = NEW_R3; r["acceptance_criteria"][0]["then"] = "帳號鎖定 30 分鐘，後續登入回「帳號已鎖定」"

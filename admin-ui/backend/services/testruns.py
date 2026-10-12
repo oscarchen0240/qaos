@@ -9,7 +9,9 @@ import hashlib
 import json
 import pathlib
 import re
+import threading
 import uuid
+from contextlib import contextmanager
 
 from .. import db
 from ..config import DATA_DIR
@@ -35,7 +37,7 @@ def _row_run(r: dict) -> dict:
 
 
 def _row_result(r: dict) -> dict:
-    for k in ("requirement_ids", "preconditions", "steps", "evidence", "qaos_evidence_ids"):
+    for k in ("requirement_ids", "preconditions", "steps", "evidence", "qaos_evidence_ids", "qaos_evidence_snapshot"):
         try:
             r[k] = json.loads(r.get(k) or "[]")
         except ValueError:
@@ -155,8 +157,20 @@ def patch_run(run_id: int, fields: dict) -> dict:
 
 
 def delete_run(run_id: int):
-    """刪回合連同它的測試報告與證據檔（報告的 source_key 就是 run id，留著會變孤兒）。"""
+    """刪回合連同它的測試報告與證據檔（報告的 source_key 就是 run id，留著會變孤兒）。
+
+    B2（R03）：回合裡只要有結果已匯入 QAOS（EXE／bug run），或正在送 QAOS，就不能刪——刪回合會連帶刪掉結果與證據，
+    平台就失去對應 QAOS 紀錄的唯一線索，送出中的 execute 也會在 CLI 成功後找不到結果可存。"""
     with db.connect() as con:
+        con.execute("BEGIN IMMEDIATE")
+        rows = db.rows(con.execute("SELECT id, qaos_execution_id, bug_run_id FROM test_results WHERE run_id=?", (run_id,)))
+        with _busy_lock:
+            busy = [r["id"] for r in rows if r["id"] in _busy]
+        if busy:
+            raise TestRunError(409, "這個回合有結果正在送 QAOS，請等它完成後再刪")
+        imported = [r for r in rows if r["qaos_execution_id"] or r["bug_run_id"]]
+        if imported:
+            raise TestRunError(409, f"這個回合有 {len(imported)} 條結果已匯入 QAOS，刪除會失去與 QAOS 紀錄的對應，不能刪；要保留請改用「結束回合」。")
         con.execute("DELETE FROM reports WHERE kind='automation' AND source_key=?", (str(run_id),))
         con.execute("DELETE FROM test_runs WHERE id=?", (run_id,))
     d = EVIDENCE_DIR / str(run_id)
@@ -167,6 +181,47 @@ def delete_run(run_id: int):
 
 
 # ---------- 記結果 ----------
+# R03：結果一旦匯入 QAOS（有 EXE 或開過 bug run），QAOS 那邊的 execution／evidence 紀錄已經固定，平台上再改只會讓兩邊不一致，
+# 後續「送 QAOS」還會沿用舊的 EVD／EXE。所以匯入後一律不能改；要改請在新回合重開一筆。
+_busy: set[int] = set()            # 正在送 QAOS 的結果（process 內）；送出期間不能改，否則登記的證據與目前清單會錯開
+_busy_lock = threading.Lock()
+
+
+def evidence_signature(evidence: list[dict]) -> list[dict]:
+    """證據清單的指紋（id＋內容雜湊）：登記到 QAOS 時存一份，之後比對目前清單有沒有被改過。"""
+    return [{"id": e.get("id"), "sha256": e.get("sha256")} for e in evidence or []]
+
+
+@contextmanager
+def sending(result_id: int):
+    """標記某筆結果正在送 QAOS。標記後先跑一次 BEGIN IMMEDIATE 當屏障：等已經通過檢查、還在寫入的修改提交完，呼叫端之後讀到的就是定案的內容。"""
+    with _busy_lock:
+        _busy.add(result_id)
+    try:
+        with db.connect() as con:
+            con.execute("BEGIN IMMEDIATE")
+        yield
+    finally:
+        with _busy_lock:
+            _busy.discard(result_id)
+
+
+def _locked_result(con, run_id: int, result_id: int, columns: str = "*") -> dict:
+    """在 BEGIN IMMEDIATE 內取得寫入鎖後讀結果，並確認它還能修改。讀、檢查、寫在同一個交易，併發的修改不會互相覆蓋。"""
+    if not con.in_transaction:
+        con.execute("BEGIN IMMEDIATE")
+    r = db.one(con.execute(f"SELECT {columns}, qaos_execution_id, bug_run_id FROM test_results WHERE id=? AND run_id=?", (result_id, run_id)))
+    if not r:
+        raise TestRunError(404, "結果不存在")
+    if r.get("qaos_execution_id") or r.get("bug_run_id"):
+        ids = "、".join(x for x in (r.get("qaos_execution_id"), r.get("bug_run_id")) if x)
+        raise TestRunError(409, f"這條結果已匯入 QAOS（{ids}），結果與證據不能再改；要改請在回合裡重開一筆。")
+    with _busy_lock:
+        if result_id in _busy:
+            raise TestRunError(409, "這條結果正在送 QAOS，請等它完成後再改")
+    return r
+
+
 def set_result(run_id: int, result_id: int, fields: dict, by: str) -> dict:
     allowed = {"result", "actual_result", "notes", "duration_ms"}
     sets = {k: v for k, v in fields.items() if k in allowed and v is not None}
@@ -174,11 +229,13 @@ def set_result(run_id: int, result_id: int, fields: dict, by: str) -> dict:
         raise TestRunError(400, f"result 必須是 {', '.join(RESULTS)}")
     now = db.now()
     with db.connect() as con:
+        con.execute("BEGIN IMMEDIATE")
         run = db.one(con.execute("SELECT status FROM test_runs WHERE id=?", (run_id,)))
         if not run:
             raise TestRunError(404, "回合不存在")
         if run["status"] in ("done", "aborted"):
             raise TestRunError(409, "回合已結束，不能再改結果")
+        _locked_result(con, run_id, result_id, "id")
         if "result" in sets:
             sets["executed_at"] = now if sets["result"] != "untested" else None
             sets["executed_by"] = by if sets["result"] != "untested" else None
@@ -187,8 +244,6 @@ def set_result(run_id: int, result_id: int, fields: dict, by: str) -> dict:
         if run["status"] == "planned":
             con.execute("UPDATE test_runs SET status='running', started_at=COALESCE(started_at, ?), updated_at=? WHERE id=?", (now, now, run_id))
         r = db.one(con.execute("SELECT * FROM test_results WHERE id=? AND run_id=?", (result_id, run_id)))
-        if not r:
-            raise TestRunError(404, "結果不存在")
         return {"result": _row_result(r), "counts": counts_for(con, run_id)}
 
 
@@ -206,20 +261,21 @@ def add_evidence(run_id: int, result_id: int, filename: str, data: bytes, ev_typ
     path.write_bytes(data)
     rec = {"id": eid, "filename": filename, "stored": str(path.relative_to(DATA_DIR)), "type": ev_type, "description": description,
            "size": len(data), "sha256": hashlib.sha256(data).hexdigest(), "added_at": db.now(), "added_by": by}
-    with db.connect() as con:
-        r = db.one(con.execute("SELECT evidence FROM test_results WHERE id=? AND run_id=?", (result_id, run_id)))
-        if not r:
-            path.unlink(missing_ok=True); raise TestRunError(404, "結果不存在")
-        ev = json.loads(r["evidence"] or "[]"); ev.append(rec)
-        con.execute("UPDATE test_results SET evidence=?, updated_at=? WHERE id=?", (json.dumps(ev, ensure_ascii=False), db.now(), result_id))
+    try:
+        with db.connect() as con:
+            # R08：讀—改—寫在同一個 BEGIN IMMEDIATE 交易內；兩個併發的新增／刪除不會讀到同一份舊清單而互相覆蓋
+            r = _locked_result(con, run_id, result_id, "evidence")
+            ev = json.loads(r["evidence"] or "[]"); ev.append(rec)
+            con.execute("UPDATE test_results SET evidence=?, updated_at=? WHERE id=?", (json.dumps(ev, ensure_ascii=False), db.now(), result_id))
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
     return rec
 
 
 def remove_evidence(run_id: int, result_id: int, eid: str):
     with db.connect() as con:
-        r = db.one(con.execute("SELECT evidence FROM test_results WHERE id=? AND run_id=?", (result_id, run_id)))
-        if not r:
-            raise TestRunError(404, "結果不存在")
+        r = _locked_result(con, run_id, result_id, "evidence")
         ev = json.loads(r["evidence"] or "[]")
         keep = [e for e in ev if e["id"] != eid]
         gone = [e for e in ev if e["id"] == eid]
