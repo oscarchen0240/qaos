@@ -1,0 +1,111 @@
+title: '[後台][Arcade][前端][交易紀錄查詢] 機台視角缺少待確認機台出金的管理員「手動取消」操作入口（列表操作欄僅有「明細」、明細面板標示「本頁只讀」）'
+product: ba-admin
+functional_area: TXLOG
+severity_rationale: 建議 major／high，最終由 Human 決定。理由：(1) 缺陷是整個功能入口缺失，而非畫面小瑕疵：機台出金一旦停在「待確認」（Operator Reset 後機台停止重送、機台報廢、15 秒逾時後機台不再補送完成回報等死單），出金不設逾時（REQ-TXLOG-017／AC-TXLOG-0171），死單不會自行收斂，在管理員手動取消缺席的情況下，只剩被新
+  req-cashout 取代、櫃檯人工出金連動取消、轉介洗分出金核實頁三條路徑（CLR-CASHFLOW-008 恢復的第四條「管理員手動取消」無法經 UI 使用）；(2) 影響下游：待確認出金會讓該帳號持續被鎖（本單證據未直接驗證，依 CLR-CASHFLOW-008
+  與 CLR-REDPACKET-055 的業務描述），紅包待確認出金鎖也無法由 TC-REDPACKET-090 的手動取消路徑釋放，影響機台金流與紅包兩個功能；(3) 已有明確產品決議（CLR-TXLOG-002 rev 0，Oscar
+  2026-10-12，角色經 RD 確認；後端已完成、前端未開發），預期行為無模糊地帶；(4) 僅出金、僅管理員操作，且僅在機台故障造成卡單時才需要，頻率不高，且本單未驗證是否另有後端／維運層面的繞過手段，因此不建議 critical／blocker：不涉及資金錯帳或資料損毀，屬『清理工具缺失』。若
+  Human 判斷現場沒有任何其他可行的死單清理手段（需實際查證）、或死單已在營運中造成帳號長期鎖定，可上調為 critical。
+environment:
+  name: stage
+  site: Arcade（機台場館）
+  account: ZZAA00012（管理員）；列表中可見機台帳號 ACAA00563 的出鈔交易
+  timezone: UTC+0（後台時區 UTC+00:00）
+  ui_language: 简体中文
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+requirement_id: REQ-TXLOG-028
+preconditions:
+- stage 環境後台，以管理員（Admin，例如 ZZAA00012）登入，站台切換下拉選單選定 Arcade（機台類型站台）
+- 機台場館內有一筆機台出金（交易類型「出鈔」）停在交易狀態「待確認」（本單提供的截圖當下列表沒有此類交易，需先製造；製造方式見重現步驟 1）
+- 管理員帳號具備進入 4.1 交易紀錄查詢（機台視角）頁面的權限
+reproduction_steps:
+- 製造待確認的機台出金：於機台前台以有分數的機台帳號觸發出金（req-cashout），讓機台在送出出金結算後、補送完成回報（end-cashout）前斷線；或對該機台執行 Operator Reset，使出金停在「待確認」（此為建議製造方式，截圖證據未涵蓋此步驟）
+- 以管理員登入後台，進入 交易紀錄查詢（4.1，機台視角），站台選 Arcade
+- 於篩選區「交易狀態」選「待確認」，交易類型選「出鈔」，按「搜尋」，找到步驟 1 製造的待確認出金列
+- 檢視該列最右側「操作」欄：只有「明細」按鈕，沒有「手動取消」操作（EVD-0099 已顯示列表操作欄每列僅有「明細」，但截圖當下列表沒有待確認狀態的出鈔，本步驟需待確認列實際出現後才能直接驗證）
+- 點該列「明細」開啟右側面板：標題下方標示「交易明細，本頁只讀，核實一律在賬務管理的洗分出金核實頁執行」，面板內沒有「手動取消」或任何操作按鈕（EVD-0100 以已處理狀態的出鈔 8799312 為例，顯示面板無操作按鈕與「本頁只讀」標示）
+expected_result: 以 SPEC-TXLOG-001 v0.1 §操作（第 89 行）原文與 CLR-TXLOG-002 rev 0（Oscar 2026-10-12，角色經 RD 確認）為準：交易紀錄查詢（4.1 機台視角）須對『交易狀態為待確認的機台出金』提供「手動取消」操作入口，僅管理員（Admin）可見且可操作；點擊後須二次確認，確認後該筆交易標記為「已取消」，玩家分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+  24 小時逾時轉「已逾時」）；非管理員、非待確認狀態的交易不應可執行手動取消（REQ-TXLOG-029 限制恢復為有效需求）。【REQ-TXLOG-028 文字已過時，請 Validator 勿據以判定無違反】RequirementModel
+  目前的 REQ-TXLOG-028（標題「本頁不提供手動取消操作」）與 AC-TXLOG-0281 仍是 2026-09-14（CLR-TXLOG-001）／2026-09-15（CLR-CASHFLOW-004）的舊寫法，該確認已被 CLR-TXLOG-002
+  rev 0 明文推翻（『2026-09-14 與 2026-09-15「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028 改回提供（限出金、限管理員），REQ-TXLOG-029 的限制恢復為有效需求』）。REQ-TXLOG-028
+  的需求修訂尚未落地（框架目前沒有同版本落地新 CLR 的路徑，另案處理），因此本單以 spec 第 89 行原文＋CLR-TXLOG-002 為 expected 依據，REQ-TXLOG-028 僅作為對應需求編號；REQ-TXLOG-028
+  現行 statement 與 AC-TXLOG-0281 的『不存在任何手動取消操作』不得作為 expected 依據，AC-TXLOG-0281 亦不列入本單 acceptance_criteria_ids。
+expected_result_spec_reference:
+  type: clarification
+  clarification_id: CLR-TXLOG-002
+  answer_rev: 0
+  answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+  quote: 交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理
+source_refs:
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 89 行）
+  quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+actual_result: 4.1 交易紀錄查詢（Arcade 場館，管理員 ZZAA00012）機台交易列表（含出鈔、開分、洗分、紅包、轉移等交易）的操作欄每列只有「明細」按鈕，沒有「手動取消」操作；交易明細面板（以出鈔 8799312 為例）標題下方標示「交易明細，本頁只讀，核實一律在賬務管理的洗分出金核實頁執行」，面板內沒有任何操作按鈕。證據限制：截圖當下列表沒有交易狀態為「待確認」的出鈔（可見出鈔皆為「已處理」），因此證據只能證明『操作欄只有明細』與『面板無操作按鈕、標示本頁只讀』，無法直接證明『待確認出金那一列沒有手動取消』；後者是以整頁（列表操作欄與明細面板）皆無操作入口為佐證，並由
+  Oscar 2026-10-12 確認（CLR-TXLOG-002：後端已開發完成，前端尚未開發）。
+actual_result_evidence_map:
+- claim: 4.1 交易紀錄查詢（Arcade，管理員 ZZAA00012）機台交易列表的操作欄每列只有「明細」按鈕，無手動取消操作
+  evidence_id: EVD-0099
+- claim: 列表當下可見的出鈔交易（$-109.60、$-146.00）交易狀態皆為「已處理」，沒有「待確認」狀態的出鈔；故本證據無法直接呈現待確認列的操作欄
+  evidence_id: EVD-0099
+- claim: 出鈔 8799312（ACAA00563，已處理、待核實）的明細面板標題下方標示「交易明細，本頁只讀，核實一律在賬務管理的洗分出金核實頁執行」
+  evidence_id: EVD-0100
+- claim: 明細面板內（交易摘要、往來紀錄、技術欄位）沒有任何操作按鈕，包含手動取消
+  evidence_id: EVD-0100
+evidence_ids:
+- EVD-0099
+- EVD-0100
+impact: 管理員無法透過後台 UI 清理機台出金死單：Operator Reset 後機台停止重送、機台報廢、機台不再補送完成回報等情境造成的待確認出金會一直保留（出金不設逾時，AC-TXLOG-0171），沒有可操作的『手動取消』入口。影響範圍：(1)
+  機台金流（CLR-CASHFLOW-008 恢復的出金 PENDING 三條收斂路徑之一，『管理員手動取消』無法由前端使用，待確認出金依據該 CLR 的業務描述會使該帳號持續被鎖）；(2) 紅包（CLR-REDPACKET-055 rev
+  1）待確認出金鎖：TC-REDPACKET-090 涵蓋的『手動取消』路徑無法在前端驗證或使用，紅包無法因手動取消而恢復可開啟；(3) 引用手動取消的 TXLOG TC（CLR-TXLOG-002 估約 14 張）目前無法在前端執行。僅影響出金；入金沒有手動取消，不受影響。後端已完成，影響限於前端缺口；後端取消
+  API 本身的行為（二次確認後標已取消、分數不異動、非管理員拒絕）本單證據未涵蓋，不在本單範圍。
+suspected_area: 前端（後台 admin 交易紀錄查詢頁，機台視角）：尚未開發『手動取消』操作按鈕、二次確認對話框，及僅管理員、僅待確認出金的顯示條件。責任方依 Oscar 2026-10-12 確認（CLR-TXLOG-002）為前端，後端已開發完成；本單未截取後端手動取消
+  API 的請求／回應，後端『已完成』為 Oscar 確認的說法，非本單證據驗證結果。
+ambiguity_suspected: false
+bug_id: BUG-TXLOG-001
+version: 1
+severity: major
+priority: high
+duplicate_of: null
+status: OPEN
+created_by: agent-bug-analyst
+validated_by: agent-bug-validator
+validation_report_id: ART-BVR-01M4R3GG0D1GX8KHNKWY9KR2N5
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0197
+created_at: '2026-10-12T13:18:06Z'
+updated_at: '2026-10-12T13:18:06Z'
+history:
+- at: '2026-10-12T13:03:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-BD-01M4R3AAFQA9MNBJV05BWZZYAF
+  run_id: RUN-20261012-003
+- at: '2026-10-12T13:03:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-003
+- at: '2026-10-12T13:09:01Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-BVR-01M4R3GG0D1GX8KHNKWY9KR2N5
+  run_id: RUN-20261012-003
+- at: '2026-10-12T13:09:01Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-003
+- at: '2026-10-12T13:18:06Z'
+  from_status: PENDING_APPROVAL
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: APR-0197
+  run_id: RUN-20261012-003

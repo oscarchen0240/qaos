@@ -1,6 +1,6 @@
 # Bug Repository 總索引
 
-- 更新：2026-10-01  · 共 9 筆
+- 更新：2026-10-12  · 共 10 筆
 
 | 產品 / 功能 | ID | 狀態 | 嚴重度 | 標題 |
 |---|---|---|---|---|
@@ -11,5 +11,6 @@
 | [ba-admin/DAILYREPORT](ba-admin/DAILYREPORT/index.md) | BUG-DAILYREPORT-003 | CLOSED | major | [後台][Arcade][後端][場館日結報表] 結算日期起日晚於迄日時 API 仍回傳資料，未依定案回空列表 |
 | [ba-admin/DAILYREPORT](ba-admin/DAILYREPORT/index.md) | BUG-DAILYREPORT-004 | OPEN | critical | [後台][Arcade][後端][場館日結報表] 跨場次切換點的注單被拆成投注與派彩兩半分記不同場次／營業日，且日結結算場次歸到結束日而非開始的營業日 |
 | [ba-admin/DAILYREPORT](ba-admin/DAILYREPORT/index.md) | BUG-DAILYREPORT-005 | OPEN | major | [後台][Arcade][後端][場館日結報表] 依場次明細未列出進行中場次，總計列期末餘額亦未計入進行中場次的分數 |
+| [ba-admin/TXLOG](ba-admin/TXLOG/index.md) | BUG-TXLOG-001 | OPEN | major | [後台][Arcade][前端][交易紀錄查詢] 機台視角缺少待確認機台出金的管理員「手動取消」操作入口（列表操作欄僅有「明細」、明細面板標示「本頁只讀」） |
 | [ba-admin/UPDATEPACK](ba-admin/UPDATEPACK/index.md) | BUG-UPDATEPACK-001 | CLOSED | major | [前端/後端][多幣別錢包展開] 帳戶餘額展開清單未依鏈上錢包管理實際啟用狀態產生，出現不存在/未啟用幣別、漏列已啟用幣別 |
 | [ba-admin/UPDATEPACK](ba-admin/UPDATEPACK/index.md) | BUG-UPDATEPACK-002 | OPEN | major | [後台][arcade][前端/後端][注單查詢] 注單查詢列表缺少「場次編號」欄位，機台帳號注單無法顯示所屬場次編號 |
