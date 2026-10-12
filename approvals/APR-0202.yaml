@@ -1,0 +1,84 @@
+approval_id: APR-0202
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261013-004
+task_id: T4
+status: PENDING
+summary: 7 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（高風險抽查 ART-TRR-01M4RHPGRDFBPT99QQ2QGWDM12：3 條補充建議，high 0、需澄清
+  0；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-159
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-160
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-161
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-162
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-163
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-164
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-165
+  version: 1
+artifact_ids:
+- ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+- ART-TRR-01M4RHPGRDFBPT99QQ2QGWDM12
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-159
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-160
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-161
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-162
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-163
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-164
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-DAILYREPORT-165
+  version: 1
+requested_by: agent-supervisor
+requested_at: '2026-10-12T17:19:21Z'
+diff_summary: '[risk-review] 複查 7 張補強 TC 是否補到上次日結報表 TRR（ART-TRR-01M4REJR4H6PP9TDPBGKTAH3QJ）的 RF-02、03、04、10、12、13、15。7 條都有對應案例，其中
+  RF-02、03、04、10、15 補得完整，RF-12、13 方向正確但涵蓋不足。新列 3 條：high 0、medium 3、low 0，3 條都有 spec 依據，不需另開 Clarification：RF-01 併發與小數案例沒有驗證現金淨收與已兌現在同一次回應內是否自洽、小數是否精確；RF-02
+  日結當下的併發只測開分，沒有測出金與洗分（兩階段出金在日結時刻完成時的營業日歸屬最容易出錯）；RF-03 收據已核實或已作廢之後才遲到重送完成回報時，報表不得重新出現未兌現。已開 CLR 的項目（CLR-DAILYREPORT-017～023、CLR-CASHOUT-003／005，即上次的
+  RF-01、05、06、07、08、09、11、14、16）與 BUG-DAILYREPORT-004 依指示不重複列；Validator 已列的事項也不重複。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+
+  [RF-01/medium/concurrency] TC-DRAFT-…FWDT（對應上次的 RF-10）在核實／作廢進行中重放查詢與匯出，只檢查每列收據金額＝三欄之和、收據金額不變、總計＝各列之和，沒有檢查『現金淨收』。現金淨收會隨核實即時減少（第
+  55 行：開分＋進鈔－已核實洗分－已兌現），而它是報表最關鍵的財務數字。若它和已兌現金額在同一次回應裡不是取自同一時點，就會出現『已兌現已增加、現金淨收卻還沒扣』的不自洽。TC-DRAFT-…EFT4（RF-04）同樣只驗證四個收據欄，沒有驗證已兌現
+  0.30 帶小數時，現金淨收是否精確（不出現浮點尾數）。 → 建議：在 TC-DRAFT-…FWDT 的造數中，讓各營業日另有開分（例如每日開分 10000），並在步驟 4 補一項檢查 (d)：每個成功的查詢回應與 CSV 中，每列的現金淨收＝開分＋進鈔－已核實洗分－已兌現（同一次回應內的值），總計列的現金淨收＝各列之和。在
+  …EFT4 的機台 A 也補一筆開分（例如 1000），斷言 A 列現金淨收＝1000－0.30＝999.70，數值精確，沒有尾數。（相關 TC-DRAFT-01M4RHBRR2YZBQGWE6PQE5FWDT, TC-DRAFT-01M4RHBRR26HK5YC320520EFT4,
+  TC-DAILYREPORT-038）
+
+  [RF-02/medium/concurrency] TC-DRAFT-…D7NY（對應上次的 RF-12）在日結時刻前後只送『開分』。開分是單階段、沒有後續狀態，是最單純的一種。上次建議的出金、洗分都沒有涵蓋：出金是兩階段交易，第二階段完成（扣分）若剛好落在日結強制結束場次的同一刻，收據金額與未兌現金額該歸
+  D 還是 D+1、期末與期初是否仍前後相接，最容易出錯；洗分則牽涉待核實洗分。TC-DRAFT-…EMN 驗證的是靜態造數下的收據 T 邊界，不是日結執行當下的併發。 → 建議：延伸 TC-DRAFT-…D7NY：在 T0 前後 30 秒的流量中，對機台
+  A 交錯送出『開分 100 → 出金（清空）』循環，對機台 B 交錯送出『開分 100 → 洗分』循環。流量結束後，以機台交易紀錄中出金完成（扣分）與洗分的交易時間判定所屬營業日，核對 D／D+1 兩列的收據金額、未兌現金額、洗分金額、待核實洗分各只計入一次，且每台機台
+  D 列期末＝D+1 列期初。注單請避開跨越 T0 的情況（注單跨切換點的歸屬屬 BUG-DAILYREPORT-004，不在此驗證）。（相關 TC-DRAFT-01M4RHBRR30H00RDGJX2Z8D7NY, TC-DRAFT-01M4RHBRR2JJ3CT46BC9XN3EMN,
+  TC-DAILYREPORT-119, TC-DAILYREPORT-051）
+
+  [RF-03/medium/duplicate_submission] TC-DRAFT-…R91H（對應上次的 RF-13）只在收據仍為待核實時重送完成回報。最危險的情況是：收據已核實（已兌現）或已作廢之後，遲到的完成回報才到。若上游把它當成新的一筆，報表收據日那一列會再出現一筆未兌現、收據金額加倍，收據金額＝三欄之和雖然仍成立，卻會讓場館以為還有一筆負債沒付。這是洗分出金核實那邊同一個風險在報表端的表現，目前沒有案例。
+  → 建議：在 TC-DRAFT-…R91H 補一個變體：出金收據先在洗分出金核實頁核實（或作廢）後，再重送該 TXID 的出金完成回報 3 次。沿用相同的分支判定：機台交易紀錄中該 TXID 只有一筆時，報表該列的收據金額、已兌現（或已作廢）不變，未兌現維持
+  0，不會重新出現。（相關 TC-DRAFT-01M4RHBRR3MSE8J02H58WDR91H, TC-DAILYREPORT-098）'

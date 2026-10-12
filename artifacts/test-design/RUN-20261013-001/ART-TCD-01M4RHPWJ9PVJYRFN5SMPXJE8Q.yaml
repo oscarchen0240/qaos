@@ -1,0 +1,2704 @@
+artifact_id: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-001
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-12T17:14:04Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+references:
+- entity_type: Requirement
+  id: REQ-REDPACKET-008
+- entity_type: Requirement
+  id: REQ-REDPACKET-010
+- entity_type: Requirement
+  id: REQ-REDPACKET-011
+- entity_type: Requirement
+  id: REQ-REDPACKET-013
+- entity_type: Requirement
+  id: REQ-REDPACKET-014
+- entity_type: Requirement
+  id: REQ-REDPACKET-015
+- entity_type: Requirement
+  id: REQ-REDPACKET-016
+- entity_type: Requirement
+  id: REQ-REDPACKET-017
+- entity_type: Requirement
+  id: REQ-REDPACKET-023
+- entity_type: Requirement
+  id: REQ-REDPACKET-024
+- entity_type: Requirement
+  id: REQ-REDPACKET-025
+- entity_type: Requirement
+  id: REQ-REDPACKET-031
+- entity_type: Requirement
+  id: REQ-REDPACKET-032
+- entity_type: Requirement
+  id: REQ-REDPACKET-036
+- entity_type: Requirement
+  id: REQ-REDPACKET-039
+- entity_type: Artifact
+  id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+requires_approval: null
+dispatch_packet_sha256: 7e48c55ebf35e5b18650596d8e257419475da1fa9ca3941c58515998e4a27d79
+payload:
+  mode: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  testcases:
+  - draft_id: TC-DRAFT-01M4RHPTP9SB71J9FF2H303DD6
+    title: 機台場館紅包金額帶 1 位小數（固定 10.5 TWD）：入帳後機台分數 +10.5、4.4 稽核明細金額 10.5 TWD、日結報表紅包金額與餘額驗算成立
+    description: 機台場館紅包金額帶 1 位小數（固定 10.5 TWD）：入帳後機台分數 +10.5、4.4 稽核明細金額 10.5 TWD、日結報表紅包金額與餘額驗算成立
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-025
+    - REQ-REDPACKET-014
+    - REQ-REDPACKET-032
+    - REQ-REDPACKET-039
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0253
+    - AC-REDPACKET-0143
+    - AC-REDPACKET-0144
+    - AC-REDPACKET-0321
+    - AC-REDPACKET-0391
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    - negative
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+    - 整個測試須在同一個營業日內完成，且避開場館日結時間前後 30 分鐘（日結時間見『後台管理員系統 > 站台列表』該機台站台的『日結時間』），否則日結結算會結束進行中的場次、每日重置會干擾累計與待開啟紅包
+    - 【範圍註記】本案只驗紅包入帳後的機台分數、4.1／4.4 與場館日結報表；玩家之後以帶小數的餘額結算出金（收據面額、付現、小數殘值）屬機台金流範圍（CLR-CASHFLOW-007 的收據小數處理），不在本案斷言範圍
+    test_data:
+    - name: 紅包金額
+      value: 固定 10.5 TWD（1 位小數）
+    - name: 活動
+      value: 門檻 100／單週期上限 5／稽核倍數 1／每日重置
+    - name: 下注
+      value: M1 有效流水貢獻 100（入帳前）；領取後不再下注
+    steps:
+    - n: 1
+      action: 【精度上限的另一側】進入機台場館『優惠活動管理 > 新增優惠活動』建立紅包活動『RP-ARC-DEC』（永久）：每日重置；預設規則門檻 100／單週期上限 5／獎勵方式『固定金額』紅包金額填 10.55（2 位小數）／稽核倍數
+        0；點『儲存』
+      expected: 紅包金額欄標紅框、下方提示『最多 1 位小數』，不建立活動（AC-0391）
+    - n: 2
+      action: 把紅包金額改為 10.5、稽核倍數改為 1，再點『儲存』
+      expected: 紅包金額 10.5 為 1 位小數，該欄不再出現『最多 1 位小數』提示；因機台場館稽核倍數大於 0 顯示機台稽核警告，站長確認後儲存成功（警告視窗按鈕文字 spec 未載明，依畫面）
+    - n: 3
+      action: 店員對 M1 開分 200，使 M1 進入進行中場次；M1 結算有效流水貢獻 100（下注輸贏使分數增減屬正常）
+      expected: 產生 1 個待開啟紅包 P1；後台『優惠活動管理 > 活動排程 > 紅包活動』點該活動名稱進紅包明細，P1 的『紅包金額』顯示 10.5、狀態『待開啟』
+    - n: 4
+      action: 【入帳前基準】記下 M1 目前分數 S1（機台畫面；分數的顯示位置與小數位呈現方式 spec 未定義，只要求數值）。至『各式報表 > 場館日結報表』：統計維度『依場次明細』、機台帳號填 M1、結算日期選今天（含此刻）；找到
+        M1 進行中場次那一列，記下該列的『紅包金額』R0，以及期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額
+      expected: 已記錄基準值 S1、R0 與各欄；待開啟的 P1 不計入『紅包金額』（只計已入帳）。自此步驟起到最後一次查詢日結報表為止，M1 不再下注、不洗分、不出金
+    - n: 5
+      action: M1 依領取流程領取 P1
+      expected: 機台分數變為 S1＋10.5（恰好增加 10.5，不取整、不四捨五入；畫面顯示的小數位只記錄）；紅包以 TWD 入帳
+    - n: 6
+      action: 回到紅包明細檢視 P1
+      expected: P1 狀態『已入帳』、紅包金額 10.5、稽核倍數 1、入帳時間有值
+    - n: 7
+      action: 至『各式報表 > 交易紀錄查詢』（機台視角），只篩選 M1 的會員編號，檢視交易類型下拉選單，並選交易類型『紅包』查詢
+      expected: 交易類型下拉含『紅包』；M1 的『紅包』紀錄新增 1 筆，場次編號為入帳當下進行中的場次、交易狀態『已完成』、核實狀態『不適用』；該列若有顯示金額，應為正值 10.5，但機台視角的哪些欄位顯示紅包金額 spec
+        未定義（REQ-REDPACKET-014 Q04），只記錄各欄實際內容，不判定
+    - n: 8
+      action: 至『各式報表 > 稽核明細』（機台場館視角），篩選 M1 的帳號、類型『紅包』
+      expected: 新增 1 筆類型『紅包』的紀錄：金額 10.5、所需有效投注額增加 10.5（10.5 × 稽核倍數 1），單位為 TWD
+    - n: 9
+      action: 回到『場館日結報表』，以『入帳前基準』步驟相同的條件重新查詢，找到同一個場次列，記下『紅包金額』R1 與各欄
+      expected: 『紅包金額』R1 ＝ R0 ＋ 10.5（該場次入帳的紅包合計，含小數）；以該列顯示的數字驗算 期初餘額＋開分金額＋進鈔金額＋紅包金額＋損益－洗分金額－收據金額 ＝ 期末餘額，等式成立（小數運算以實際顯示值為準，不得因
+        .5 被取整而差 0.5）
+    - n: 10
+      action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 機台場館固定金額 10.5 TWD 的紅包可建立（1 位小數合法）；M1 領取後機台分數恰好增加 10.5（不取整）；4.4 稽核明細新增『紅包』紀錄，金額與所需有效投注額為 10.5 TWD；4.1
+      機台視角新增『紅包』列（場次編號為入帳當下的場次、已完成、核實狀態不適用）；場館日結報表該場次的『紅包金額』增加 10.5，期末餘額 ＝ 期初餘額＋開分＋進鈔＋紅包金額＋損益－洗分－收據 成立。紅包金額 10.55（2 位小數）則被擋下、不建立活動。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 410 行）
+      quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-039
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 410 行）
+    - requirement_id: REQ-REDPACKET-039
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 415 行）
+    - requirement_id: REQ-REDPACKET-025
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §線上與機台的差異（第 38 行）
+    - requirement_id: REQ-REDPACKET-025
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 401 行）
+    - requirement_id: REQ-REDPACKET-014
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 395 行）
+    - requirement_id: REQ-REDPACKET-014
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 396 行）
+    - requirement_id: REQ-REDPACKET-014
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §對既有章節的影響（第 425 行）
+    - requirement_id: REQ-REDPACKET-014
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §對既有章節的影響（第 424 行）
+    - requirement_id: REQ-REDPACKET-032
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §對既有章節的影響（第 431 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 410 行）
+      quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 415 行）
+      quote: 以上驗證不通過時，前端於該欄位標紅框並於下方提示，點擊「儲存」時整體再檢查一次並捲動至第一個錯誤欄位
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §線上與機台的差異（第 38 行）
+      quote: 固定 TWD（場館僅此一種），不顯示選項
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 401 行）
+      quote: 紅包入帳歸屬入帳當下進行中的場次（不是紅包產生當下的場次）；場館日結報表「依場次明細」該場次的紅包金額、期末餘額與餘額驗算皆含此筆
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 395 行）
+      quote: 入帳時所需有效投注額增加 紅包金額 × 稽核倍數，寫入 4.4 稽核明細（類型「紅包」）
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 396 行）
+      quote: 入帳時寫入 4.1 交易紀錄查詢，交易類型「紅包」，正值
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 425 行）
+      quote: 4.1 機台視角的交易類型下拉新增「紅包」；紅包列：場次編號為入帳歸屬的場次（見業務規則「機台入帳場次」）、交易狀態固定「已完成」、核實狀態「不適用」，其餘機台專屬欄位顯示「—」
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 424 行）
+      quote: 機台帳號的紅包列單位為 TWD
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 431 行）
+      quote: 餘額驗算式改為 期末餘額 ＝ 期初餘額 ＋ 開分 ＋ 進鈔 ＋ 紅包金額 ＋ 損益 － 洗分 － 收據；現金淨收不變
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 431 行）
+      quote: 當日已入帳紅包合計，營業日依入帳時間歸屬
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-01（部分）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-01（RUN-20261012-002 風險抽查）指出機台所有 TC 都用整數紅包金額，小數紅包入帳後的分數、4.4 金額、日結報表紅包金額與餘額驗算沒有驗證。spec 明定紅包金額最多 1 位小數（第
+      410 行），所以 10.5 是精度上限的有效值、10.55 是另一側，標 boundary_value；步驟 1 的 10.55 被擋與 TC-REDPACKET-205 同一條規則，這裡只在機台場館表單上取邊界對（10.55 擋／10.5
+      過），不重做 205 的全欄位覆蓋，也讓 REQ-039（rejection 類）有 negative 案例。擋下時只斷言 AC-0391 的『標紅框＋最多 1 位小數＋不建立』，不涉及 REQ-039 Q03（提示文字衝突，限權重表）。斷言只取
+      spec 有定義的部分：入帳後分數增加＝紅包金額（AC-0365/第 196 行）、4.4 金額與所需有效投注額（第 395 行、第 424 行單位 TWD）、日結報表紅包金額＝入帳紅包合計與餘額驗算式（第 431 行）、入帳歸屬場次（第
+      401 行）。4.1 機台視角的紅包列『其餘機台專屬欄位』是 REQ-014 Q04（E4，spec 未定義），所以只斷言 AC-0143 列出的場次編號／交易狀態／核實狀態，金額顯示欄位只記錄、不判定。出金收據面額、付現與小數殘值屬
+      CLR-CASHFLOW-007／機台金流範圍，依派發要求不斷言。入帳前後各查一次日結報表紅包金額（R0→R1）是為了不依賴『M1 當日沒有其他紅包』這個無法保證的前提。『開分 200』步驟是為了讓 M1 有進行中場次，數字是我選的，非
+      spec 值。
+  - draft_id: TC-DRAFT-01M4RHPTS5QZ6ZXA44PK7D8FC6
+    title: 機台場館權重表紅包金額帶 1 位小數（0.5／10.5 TWD）：入帳增加的分數與日結報表紅包金額＝紅包明細金額，待開啟不計入
+    description: 機台場館權重表紅包金額帶 1 位小數（0.5／10.5 TWD）：入帳增加的分數與日結報表紅包金額＝紅包明細金額，待開啟不計入
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-025
+    - REQ-REDPACKET-032
+    - REQ-REDPACKET-039
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0253
+    - AC-REDPACKET-0321
+    - AC-REDPACKET-0323
+    - AC-REDPACKET-0391
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+    - 整個測試須在同一個營業日內完成，且避開場館日結時間前後 30 分鐘（日結時間見『後台管理員系統 > 站台列表』該機台站台的『日結時間』），否則日結結算會結束進行中的場次、每日重置會干擾累計與待開啟紅包
+    - 【範圍註記】本案只驗紅包入帳後的機台分數、4.1／4.4 與場館日結報表；玩家之後以帶小數的餘額結算出金（收據面額、付現、小數殘值）屬機台金流範圍（CLR-CASHFLOW-007 的收據小數處理），不在本案斷言範圍
+    test_data:
+    - name: 權重表
+      value: 0.5（50.0%）／10.5（50.0%）
+    - name: 活動
+      value: 門檻 100／單週期上限 5／稽核倍數 0／每日重置
+    - name: 下注
+      value: M1 有效流水貢獻 200（產生 2 個紅包）
+    steps:
+    - n: 1
+      action: 建立機台場館紅包活動『RP-ARC-DEC-W』（永久）：每日重置；預設規則門檻 100／單週期上限 5／獎勵方式『隨機金額』權重表兩列：紅包金額 0.5 機率 50.0%、紅包金額 10.5 機率 50.0%；稽核倍數
+        0；點『儲存』
+      expected: 權重表金額 0.5 與 10.5 皆為大於 0 的 1 位小數、機率合計 100%，不出現驗證提示；稽核倍數 0 不顯示機台稽核警告；建立成功
+    - n: 2
+      action: 店員對 M1 開分 200，使 M1 進入進行中場次；M1 結算有效流水貢獻 200（跨 2 個門檻）
+      expected: 產生 2 個待開啟紅包 P1、P2；紅包明細中兩筆的『紅包金額』各為 0.5 或 10.5 其中之一（產生當下已抽定），分別記為 a1、a2（抽到哪個金額不判定，以紅包明細顯示為準）
+    - n: 3
+      action: 記下 M1 目前分數 S1；至『各式報表 > 場館日結報表』（統計維度『依場次明細』、機台帳號 M1、結算日期含此刻），找到 M1 進行中場次那一列，記下『紅包金額』R0、期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額
+      expected: 已記錄；待開啟的 P1、P2 不計入『紅包金額』。自此步驟起 M1 不再下注、不洗分、不出金
+    - n: 4
+      action: M1 依領取流程只領取一個紅包（領取獎勵（2）→ 確認領取），再看紅包明細確認被領取的是 P1 或 P2，記為已入帳紅包 Pk（金額 ak）；另一個保持待開啟
+      expected: 機台分數＝S1＋ak（ak 為 0.5 或 10.5，恰好增加該金額，不取整）；紅包明細：Pk『已入帳』，另一個仍『待開啟』
+    - n: 5
+      action: 重新查詢『場館日結報表』（同步驟 3 條件、同一個場次列）
+      expected: 『紅包金額』＝R0＋ak（只計已入帳；待開啟的另一個紅包不計入）；以該列顯示的數字驗算 期初餘額＋開分金額＋進鈔金額＋紅包金額＋損益－洗分金額－收據金額 ＝ 期末餘額，等式成立
+    - n: 6
+      action: M1 領取剩下的紅包（金額 a'）後，再次查詢同一列
+      expected: 機台分數再增加 a'；『紅包金額』＝R0＋a1＋a2；餘額驗算仍成立
+    - n: 7
+      action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 權重表 0.5／10.5 的機台紅包可建立；每次領取後機台分數增加的金額恰為該紅包在紅包明細顯示的金額（0.5 或 10.5，不取整）；場館日結報表該場次的『紅包金額』只計已入帳紅包（待開啟不計），且餘額驗算式
+      期末餘額 ＝ 期初餘額＋開分＋進鈔＋紅包金額＋損益－洗分－收據 在帶小數時仍成立。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 410 行）
+      quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-039
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 410 行）
+    - requirement_id: REQ-REDPACKET-025
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §線上與機台的差異（第 38 行）
+    - requirement_id: REQ-REDPACKET-025
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 401 行）
+    - requirement_id: REQ-REDPACKET-032
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §對既有章節的影響（第 431 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 410 行）
+      quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §線上與機台的差異（第 38 行）
+      quote: 固定 TWD（場館僅此一種），不顯示選項
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 401 行）
+      quote: 紅包入帳歸屬入帳當下進行中的場次（不是紅包產生當下的場次）；場館日結報表「依場次明細」該場次的紅包金額、期末餘額與餘額驗算皆含此筆
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 431 行）
+      quote: 餘額驗算式改為 期末餘額 ＝ 期初餘額 ＋ 開分 ＋ 進鈔 ＋ 紅包金額 ＋ 損益 － 洗分 － 收據；現金淨收不變
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 431 行）
+      quote: 當日已入帳紅包合計，營業日依入帳時間歸屬
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-01（部分，權重表輪）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-01 的第二輪：機台權重表各列也允許 1 位小數（第 113 行、第 410 行）。權重表的抽出結果是隨機的，所以本案不指定抽到哪個金額，斷言全部以『紅包明細顯示的金額』為準：入帳增加的分數＝該紅包明細金額、日結報表紅包金額＝已入帳紅包金額合計。刻意只先領一個紅包：一個
+      0.5 或 10.5 的小數累計不會被『兩個 .5 相加變整數』掩蓋，同時再驗『待開啟不計入紅包金額』（AC-0323，第 431 行『當日已入帳紅包合計』）。0.5 是大於 0 的小數值（第 113 行『須大於 0』）。技術標 boundary_value：金額邊界取
+      spec 的精度上限與大於 0 的小數。不斷言出金收據小數處理（CLR-CASHFLOW-007 範圍）。稽核倍數用 0 以避免機台稽核警告干擾，4.4 金額已由 T01 驗證。
+  - draft_id: TC-DRAFT-01M4RHPTW51QK4XBCP56C5Y0MD
+    title: 機台場館重置前 1 小時起提示：有待開啟紅包時，距場館日結時間 62 分鐘不提示、59 分鐘提示『未開啟的紅包將於重置時作廢』；領完後不提示
+    description: 機台場館重置前 1 小時起提示：有待開啟紅包時，距場館日結時間 62 分鐘不提示、59 分鐘提示『未開啟的紅包將於重置時作廢』；領完後不提示
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-031
+    - REQ-REDPACKET-011
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0318
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+    - 【時間窗】本案必須在場館日結時間（記為 Tc，於『後台管理員系統 > 站台列表』該機台站台查得，單位 UTC+0）前約 1 小時內完成，且不得更動日結時間。下文以 Tc＝UTC+0 20:00 為例，觀察點為 Tc−62 分鐘（18:58）與
+      Tc−59 分鐘（19:01）；Tc 不同時依實際值換算。請於 Tc−70 分鐘前備妥活動與待開啟紅包，並在 Tc 之前結束（不要等到重置）
+    - 使用專用的測試場館或確認該場館沒有其他進行中的紅包活動；M1 在整個測試期間保持分數足以下注（不足時由店員補開分）
+    test_data:
+    - name: 場館日結時間 Tc
+      value: 以 UTC+0 20:00 為例（依站台列表實際值換算）
+    - name: 觀察點
+      value: Tc−62 分鐘（不提示）、Tc−59 分鐘（提示）
+    - name: 活動
+      value: 每日重置；門檻 100／上限 5／固定 20／稽核 0
+    steps:
+    - n: 1
+      action: （Tc−70 分鐘前，例 UTC+0 18:50 前）建立機台場館紅包活動『RP-WARN-ARC』（永久）：重置方式『每日』；預設規則門檻 100／單週期上限 5／固定 20／稽核倍數 0；儲存；店員對 M1 開分
+        200；M1 結算有效流水貢獻 100
+      expected: 產生 1 個待開啟紅包 P1；M1 紅包圖示亮起
+    - n: 2
+      action: （Tc−62 分鐘，例 UTC+0 18:58）M1 點紅包圖示開啟紅包視窗，檢視視窗內容
+      expected: 視窗不顯示『未開啟的紅包將於重置時作廢』提示（距重置超過 1 小時）；視窗內其他資料只記錄
+    - n: 3
+      action: （Tc−59 分鐘，例 UTC+0 19:01）M1 再開啟紅包視窗
+      expected: 視窗顯示提示『未開啟的紅包將於重置時作廢』（重置前 1 小時內、有待開啟紅包）
+    - n: 4
+      action: M1 依領取流程領取 P1（已無其他待開啟紅包），再開啟紅包視窗
+      expected: 視窗不再顯示該提示（無待開啟紅包時不提示）
+    - n: 5
+      action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 機台場館有待開啟紅包時，距場館日結時間（重置點）62 分鐘開啟紅包視窗不顯示作廢提示，59 分鐘內開啟顯示『未開啟的紅包將於重置時作廢』；無待開啟紅包時不提示。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §前台呈現說明（第 199 行）
+      quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」；重置方式為「不重置」的活動，於活動結束前 1 小時起提示
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-031
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 199 行）
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 382 行）
+    - requirement_id: REQ-REDPACKET-031
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 178 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 199 行）
+      quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」；重置方式為「不重置」的活動，於活動結束前 1 小時起提示
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 382 行）
+      quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 178 行）
+      quote: 線上與機台使用同一個紅包活動視窗，顯示以下資料；不顯示規則名稱
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-02（機台提示邊界）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-02：重置前 1 小時提示目前只有線上站台 UTC+0 00:00 的 61／59 分鐘邊界（TC-REDPACKET-190），機台場館的重置點是場館日結時間（第 40 行、第 186 行），計算路徑不同、沒有
+      TC。依據：第 199 行『有待開啟紅包時，於重置前 1 小時起提示』，紅包視窗線上與機台共用（第 176～178 行），機台的重置時間為場館日結時間；所以機台是以日結時間前 1 小時為提示起點。取 62／59 分鐘是 1 小時（60
+      分鐘）邊界兩側各留 1～2 分鐘的人為操作誤差，沿用 TC-190 的取法；技術 boundary_value。日結時間不可在案內變更，因為變更後的提示起點屬 T04 的範圍；Tc＝20:00 只是舉例，非 spec 值。
+  - draft_id: TC-DRAFT-01M4RHPTZBRMG78Z6J7JVXM3DB
+    title: 機台場館日結時間調晚後，重置前 1 小時提示改以新的重置點計：調晚前提示、調晚後原提示窗內不提示、新重置點前 1 小時內才提示，且待開啟紅包不被原重置點作廢
+    description: 機台場館日結時間調晚後，重置前 1 小時提示改以新的重置點計：調晚前提示、調晚後原提示窗內不提示、新重置點前 1 小時內才提示，且待開啟紅包不被原重置點作廢
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-011
+    - REQ-REDPACKET-031
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0116
+    - AC-REDPACKET-0318
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - scenario
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+    - 【時間窗與專用場館】本案要在場館日結時間（記為 Tc，於『後台管理員系統 > 站台列表』該機台站台查得，UTC+0）前後完成，並會暫時把日結時間調晚 2 小時。下文以 Tc＝UTC+0 20:00、調晚為 22:00 為例（Tc 不同時依實際值換算，新時點須晚於
+      Tc 且在同一天）；變更日結時間會立即影響該場館的日結報表營業日切分與其他紅包活動，請使用專用的測試場館
+    - 【時間表】備妥活動與待開啟紅包在 Tc−40 分鐘前（19:20 前）；19:25 檢視一次、19:30 變更日結時間、19:50／20:10／21:05 各檢視一次；全程在新重置時點（22:00）之前完成
+    - M1 在整個測試期間保持分數足以下注（不足時由店員補開分）
+    test_data:
+    - name: 日結時間
+      value: 20:00 → 22:00（UTC+0，調晚）
+    - name: 觀察點
+      value: 19:25（提示）、19:50（不提示）、20:10（未重置）、21:05（提示）
+    - name: 活動
+      value: 每日重置；門檻 100／上限 5／固定 20／稽核 0
+    steps:
+    - n: 1
+      action: （19:20 前）建立機台場館紅包活動『RP-WARN-ARC2』（永久）：重置方式『每日』；預設規則門檻 100／單週期上限 5／固定 20／稽核倍數 0；儲存；店員對 M1 開分 200；M1 結算有效流水貢獻
+        100
+      expected: 產生 1 個待開啟紅包 P1
+    - n: 2
+      action: （19:25，距原重置點 Tc 35 分鐘）M1 點紅包圖示開啟紅包視窗
+      expected: 顯示提示『未開啟的紅包將於重置時作廢』（原重置點前 1 小時內）
+    - n: 3
+      action: （19:30）於『後台管理員系統 > 站台列表』編輯該機台站台，把『日結時間』由 20:00 改為 22:00（調晚），儲存
+      expected: 編輯時提示『變更將立即影響場館日結報表的營業日切分與紅包重置週期』；儲存成功。依日結時間變更規則（調晚）：本週期延至原結束點（今日 20:00）之後的第一個新重置時點（今日 22:00）結束，不立即重置
+    - n: 4
+      action: （19:50，已調晚、距新重置點 22:00 尚有 130 分鐘，但落在原本的『最後 1 小時』內）M1 開啟紅包視窗
+      expected: 不顯示『未開啟的紅包將於重置時作廢』提示（提示改以新的重置點 22:00 計）；P1 仍為『待開啟』
+    - n: 5
+      action: （20:10，原重置點 20:00 已過）檢視後台紅包明細的 P1，並讓 M1 開啟紅包視窗
+      expected: P1 仍為『待開啟』、未被週期重置作廢（調晚不立即重置、不產生短週期）；M1 的『領取獎勵（1）』按鈕可用
+    - n: 6
+      action: （21:05，距新重置點 22:00 為 55 分鐘）M1 開啟紅包視窗
+      expected: 顯示提示『未開啟的紅包將於重置時作廢』
+    - n: 7
+      action: 清理：先於『活動排程 > 紅包活動』取消該活動排程（確認視窗點『確認取消』），再回『站台列表』把日結時間改回環境原值（此為調早且原時點已過，會依規則立即重置，因活動已取消，無待開啟紅包受影響）
+      expected: 活動已取消排程；日結時間已還原
+    expected_result: 機台場館把日結時間調晚後：本週期延至原結束點之後的第一個新重置時點，不立即重置（待開啟紅包在原重置點之後仍可領取）；重置前 1 小時的作廢提示以新的重置點為準——調晚前原提示窗內會提示，調晚後在原提示窗內不再提示，新重置點前
+      1 小時內才提示。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 383 行）
+      quote: 週期只往前、不倒退：調早時，本週期起點之後已經過新的重置時點者，視同到達重置點、立即重置，尚未經過者延至該重置時點結束；調晚時，本週期一律延至原結束點之後的第一個新重置時點結束（不立即重置、不產生短週期）。已重置過的週期不重來
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 383 行）
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q04
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 383 行）
+    - requirement_id: REQ-REDPACKET-031
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 199 行）
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q05
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §對既有章節的影響（第 429 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 383 行）
+      quote: 週期只往前、不倒退：調早時，本週期起點之後已經過新的重置時點者，視同到達重置點、立即重置，尚未經過者延至該重置時點結束；調晚時，本週期一律延至原結束點之後的第一個新重置時點結束（不立即重置、不產生短週期）。已重置過的週期不重來
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 383 行）
+      quote: 活動期間場館修改日結時間時立即生效（與場次日結、場館日結報表同步）
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 199 行）
+      quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」；重置方式為「不重置」的活動，於活動結束前 1 小時起提示
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §對既有章節的影響（第 429 行）
+      quote: 編輯機台站台的「日結時間」時，一律提示「變更將立即影響場館日結報表的營業日切分與紅包重置週期」（不論有無進行中的紅包活動）
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-02（日結時間調晚後的提示）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-02 第二部分：日結時間變更後，提示是否跟著新的週期結束點走。這是兩條 spec 規則的組合：第 383 行『調晚時，本週期一律延至原結束點之後的第一個新重置時點結束』決定重置點移到 22:00；第
+      199 行『有待開啟紅包時，於重置前 1 小時起提示』以『重置』為基準。『提示以新重置點計』是我由這兩條組合推得的結論，spec 沒有一句話直接寫『日結時間變更後提示起點隨之改變』，這點在此明講；若提示仍照舊重置點計，會出現 19:50
+      仍提示或 21:05 不提示，兩者皆與『重置前 1 小時』矛盾。19:25 的對照檢視（調晚前確實提示）讓『19:50 不提示』是因為變更而非提示功能失效。P1 於 20:10 仍待開啟是調晚規則的直接結果（AC-0116：不立即重置）。技術標
+      scenario（多步驟時序流程，不是單一邊界）。還原日結時間的副作用已在清理步驟註明；時間點（19:20、19:30、22:00）是我為了讓全案在 2 小時內完成而選的，非 spec 值。
+  - draft_id: TC-DRAFT-01M4RHPV266FDMD6M80Y1HW7XG
+    title: 機台場館『每月 1 日』重置：日結時間 UTC+0 20:00 時，於月底最後一天的日結時間（台灣 1 日 04:00）歸零、待開啟紅包作廢，不在 UTC+0 日曆換月時重置
+    description: 機台場館『每月 1 日』重置：日結時間 UTC+0 20:00 時，於月底最後一天的日結時間（台灣 1 日 04:00）歸零、待開啟紅包作廢，不在 UTC+0 日曆換月時重置
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-011
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0111
+    - AC-REDPACKET-0119
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+    - 場館日結時間為 UTC+0 20:00（台灣時間 04:00）（如不同，請於站台列表調整並依實際值換算下方時間）；M1 在整個測試期間保持分數足以下注（不足時由店員補開分）；整個測試期間 M1 不洗分、不出金（洗分／出金會作廢待開啟紅包，干擾判斷）
+    - 【時間窗】本案必須橫跨 UTC+0 某個月份最後一天 D 的日結時間（以 10 月 31 日為例，D＝10/31，台灣時間 11/1 04:00 是新營業日的起點）與接下來的 UTC+0 日曆換月（D+1 00:00）。觀察點為 D
+      19:50（日結前）、D 20:10（日結後）、D 20:30、D+1 00:10、D+1 00:20；D 當天 19:30 前備妥活動與待開啟紅包
+    - 【對應規則】營業日『1 日』的起點依 spec 範例（第 361 行『台灣時間今日 04:00 至次日 04:00』、AC-0119 週一從『台灣時間週一 04:00』起）以台灣日期標記；D 20:00（UTC+0）＝台灣時間 1
+      日 04:00。此對應沿用既有 ACTIVE TC（TC-REDPACKET-165）的做法
+    test_data:
+    - name: 場館日結時間
+      value: UTC+0 20:00（台灣時間 04:00）
+    - name: 重置方式
+      value: 每月 1 日
+    - name: 觀察點（UTC+0）
+      value: D 19:50、D 20:10、D 20:30、D+1 00:10、D+1 00:20（D＝月底最後一天）
+    - name: 下注
+      value: M1 150（備妥）、50、50、100
+    steps:
+    - n: 1
+      action: （D 19:30 前）建立機台場館紅包活動『RP-MONTH-ARC』（永久）：重置方式『每月 1 日』；預設規則門檻 100／單週期上限 5／固定 20／稽核倍數 0；儲存；店員對 M1 開分 500；M1 結算有效流水貢獻
+        150
+      expected: 產生 1 個待開啟紅包 P1，累計餘量 50
+    - n: 2
+      action: （D 19:50，日結時間前 10 分鐘，台灣時間 1 日 03:50）檢視紅包明細與 M1 紅包視窗
+      expected: 尚未重置：P1 仍為『待開啟』；M1 紅包視窗『本期已獲得』顯示 1 ／ 5
+    - n: 3
+      action: （D 20:10，日結時間後 10 分鐘，台灣時間 1 日 04:10）檢視紅包明細與 M1 紅包視窗
+      expected: 新月份的營業日已開始，週期已重置：P1 狀態『已作廢』、作廢原因『週期重置』；紅包視窗『本期已獲得』顯示 0 ／ 5
+    - n: 4
+      action: （D 20:15 起）M1 結算有效流水貢獻 50，檢視紅包明細
+      expected: 沒有新紅包（若上月餘量 50 未歸零，50＋50 會達門檻 100 而誤產生紅包；新週期累計為 50）
+    - n: 5
+      action: （D 20:30）M1 再結算有效流水貢獻 50，檢視紅包明細
+      expected: 新週期累計 100 達門檻：產生 1 個待開啟紅包 P2，紅包明細『週期累計』顯示 100
+    - n: 6
+      action: （D+1 00:10，UTC+0 日曆已換月）檢視紅包明細與 M1 紅包視窗
+      expected: 不因 UTC+0 日曆換月重置：P2 仍為『待開啟』，『本期已獲得』仍為 1 ／ 5
+    - n: 7
+      action: （D+1 00:20）M1 結算有效流水貢獻 100，檢視紅包明細
+      expected: 產生第 2 個紅包 P3，紅包明細『週期累計』顯示 200（累計沿用 D 20:30 之後的新週期，未在 UTC+0 換月時歸零）
+    - n: 8
+      action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 機台場館重置方式『每月 1 日』的週期自 1 日的營業日（日結時間，台灣時間 1 日 04:00＝UTC+0 月底最後一天 20:00）起算：在該時點待開啟紅包作廢（原因『週期重置』）、累計與已產生數歸零（餘量不帶入）；UTC+0
+      日曆換月（D+1 00:00）時不另外重置。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 382 行）
+      quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 382 行）
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 397 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 382 行）
+      quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 397 行）
+      quote: 週期重置時該帳號所有待開啟紅包作廢；已入帳紀錄不受影響
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-03；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-03：機台『每月 1 日』重置沒有 TC。TC-165 只驗每週一、TC-167 只驗線上 UTC+0 00:00 的月切分；日結時間 UTC+0 20:00 時，新月份的營業日起點落在 UTC+0
+      月底最後一天 20:00，是日期跨月邊界最容易算錯之處。依據第 382 行『每月自 1 日的營業日起算』與第 361 行的機台範例。取 D 19:50／20:10 為日結時間兩側各 10 分鐘（沿用 TC-165 的取法），技術 boundary_value。三個鑑別點：(1)
+      19:50 未重置、20:10 重置（不在 UTC 日曆換月時才重置）；(2) 重置後再結算 50＋50 才產生紅包，鑑別『累計是否真的歸零』（若餘量 50 被帶入，第一個 50 就會產生紅包）；(3) D+1 00:10／00:20
+      仍未重置且累計延續 200，鑑別『是否另外在 UTC 日曆換月再重置一次』。『營業日 1 日＝台灣日期 1 日（D 20:00 UTC+0 起）』是依第 361 行與 AC-0119 的台灣時間寫法對應，spec 未對『月』另寫範例，已在前置條件揭露，本案沿用
+      TC-165 同一對應。此案受日曆限制，一個月只能執行一次。
+  - draft_id: TC-DRAFT-01M4RHPV50HPMZJ069HMK6029D
+    title: 舊活動的注單在新活動期間被取消：取消排程後立即以相同設定重建新活動，舊活動注單的 －300 不扣到新活動的累計
+    description: 舊活動的注單在新活動期間被取消：取消排程後立即以相同設定重建新活動，舊活動注單的 －300 不扣到新活動的累計
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-008
+    - REQ-REDPACKET-017
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0087
+    - AC-REDPACKET-0173
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包（本案要鑑別『活動已結束』這個不扣的原因，若中途跨過 UTC+0 00:00，『原週期已重置』會混入而無法鑑別）
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】可模擬遊戲商對已結算的指定注單送來『取消』（負值有效流水貢獻）的測試手段，並可指定是哪一筆注單
+    test_data:
+    - name: 活動
+      value: RP-OLD、RP-NEW：門檻 1000／上限 5／固定 10／稽核 1；每日重置；永久
+    - name: 注單
+      value: Y＝300（RP-OLD 期間，之後被取消）；Z＝500（RP-NEW 期間）；補注 499、1
+    steps:
+    - n: 1
+      action: 建立活動『RP-OLD』（活動時間『永久』）：活動幣種 USDT；預設規則門檻 1000／上限 5／固定 10／稽核 1；每日重置；儲存
+      expected: 建立成功
+    - n: 2
+      action: 玩家 A 結算注單 Y（有效流水貢獻 300）
+      expected: RP-OLD 累計 300，沒有紅包
+    - n: 3
+      action: 於『活動排程 > 紅包活動』對 RP-OLD 點『取消排程』，於確認視窗點『確認取消』
+      expected: RP-OLD 狀態變為『已取消』
+    - n: 4
+      action: 立即新增活動『RP-NEW』（活動時間『永久』，其餘設定與 RP-OLD 完全相同）並儲存；建立後等狀態變為『進行中』
+      expected: 儲存成功（已取消的活動不占用時段，可立即以相同時段重建）；RP-NEW 的累計從 0 起算，不含注單 Y（Y 結算時 RP-NEW 尚不存在）
+    - n: 5
+      action: 玩家 A 結算注單 Z（有效流水貢獻 500）；玩家 A 於前台點紅包圖示開啟紅包視窗
+      expected: RP-NEW 累計 500：紅包視窗累計進度顯示 500 ／ 1,000（尚差 500），沒有紅包
+    - n: 6
+      action: 對屬於 RP-OLD 期間的注單 Y 觸發遊戲商『取消』（－300）；玩家 A 重新開啟紅包視窗
+      expected: RP-NEW 的累計不被扣減（原注單所屬的活動已結束，不扣）：累計進度仍為 500 ／ 1,000；RP-OLD 的紅包明細（若有）不受影響
+    - n: 7
+      action: 玩家 A 結算有效流水貢獻 499
+      expected: 累計 999，沒有紅包（若 Y 的 －300 被誤扣到 RP-NEW，累計會是 699）
+    - n: 8
+      action: 玩家 A 結算有效流水貢獻 1
+      expected: 累計 1,000 達標：產生恰 1 個紅包，紅包明細『週期累計』顯示 1,000
+    - n: 9
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 原注單所屬的活動已結束（取消排程）後，該注單被遊戲商取消的負值有效流水貢獻不扣到新活動的累計：新活動累計維持 500，補 499 仍未達標、再補 1 恰好達標並產生 1 個紅包（週期累計 1,000）。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 378 行）
+      quote: 遊戲商取消或重結算注單送來的負值有效流水貢獻照實扣減，累計可暫時為負（之後須先補回）；只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣。已產生的紅包（待開啟、已入帳）不受影響、不追回；前台進度最低顯示 0
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-008
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 378 行）
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    - requirement_id: REQ-REDPACKET-008
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 377 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 378 行）
+      quote: 遊戲商取消或重結算注單送來的負值有效流水貢獻照實扣減，累計可暫時為負（之後須先補回）；只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣。已產生的紅包（待開啟、已入帳）不受影響、不追回；前台進度最低顯示 0
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 377 行）
+      quote: 有效流水貢獻（有效投注額 × 貢獻系數），以注單結算時點計入；只計以「活動幣種」下注的注單
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-05；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-05：注單取消『活動已結束時不扣』目前只驗證了『原週期已重置』那一半（TC-REDPACKET-157），『原活動已結束』沒有 TC。依據第 378 行『只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣』；『活動結束』包含取消排程（第
+      160 行『活動結束（到期或取消排程）』）；已取消活動不占用時段、可立即以相同時段重建（第 405 行）。用 499→1 的邊界是鑑別性斷言：若 −300 被誤扣到 RP-NEW，累計會是 699，補 499 不會是 999。AC
+      對應：AC-0087 是『原週期已重置』的版本，本案是『活動已結束』的同一條規則，沒有專屬 AC，故借用 AC-0087 並在此揭露。『同日內完成』是為了排除週期重置混入，非 spec 要求。累計用前台進度（第 184 行：無待開啟紅包時顯示目前累計／門檻）觀察，不需要後台額外入口。
+  - draft_id: TC-DRAFT-01M4RHPV880S0GKYTE230BSKRW
+    title: 多帳號同時達標爭用同一池總預算（剩餘只夠一個）：只產生 1 個紅包、預算占用不超過總預算、用罄標示、其餘不補發（重複 5 輪）
+    description: 多帳號同時達標爭用同一池總預算（剩餘只夠一個）：只產生 1 個紅包、預算占用不超過總預算、用罄標示、其餘不補發（重複 5 輪）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-015
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0152
+    - AC-REDPACKET-0153
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+      100% 的遊戲，有效投注額＝有效流水貢獻）
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定三名既有線上會員（玩家 A、B、C，彼此不同），本週期皆無注單計入累計
+    - 本案重複 5 輪；每一輪用一個全新的活動（上一輪的活動取消排程後立即以相同設定重建，使三人的累計從 0 重新起算）。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 活動
+      value: 門檻 100／上限 5／固定 30／稽核 0／總預算 30／每日重置
+    - name: 玩家累計
+      value: A、B、C 各 90，再各結算 10（同時）
+    - name: 輪數
+      value: 5 輪
+    steps:
+    - n: 1
+      action: 【每一輪】建立活動『RP-POOL-n』（n 為輪次；活動時間『永久』）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 30／稽核 0；總預算 30；每日重置；儲存
+      expected: 建立成功；預算使用 0 ／ 30
+    - n: 2
+      action: 【每一輪】玩家 A、B、C 各自依序結算有效流水貢獻 90（共 3 筆，逐筆完成，不同時）
+      expected: 三人累計各 90，沒有任何紅包；預算使用仍 0 ／ 30
+    - n: 3
+      action: 【每一輪】以腳本讓三人各一筆有效流水貢獻 10 的注單『幾乎同時』結算（三人的累計同時恰好達到門檻 100）
+      expected: 請求送出
+    - n: 4
+      action: 【每一輪】檢視 RP-POOL-n 的紅包明細，以及『活動排程 > 紅包活動』列表該活動的預算使用與狀態旁標示
+      expected: 紅包明細恰 1 筆紅包（金額 30、狀態『待開啟』），由 A、B、C 其中一人取得（誰取得不判定）；預算使用 30 ／ 30，占用任何時候都不得大於總預算 30；狀態旁標示『預算用罄』
+    - n: 5
+      action: 【每一輪】另外兩名未取得紅包的玩家各再結算有效流水貢獻 100
+      expected: 仍不產生紅包（預算用罄期間達標的門檻不產生、不補發）；紅包明細仍 1 筆；預算使用 30 ／ 30
+    - n: 6
+      action: 【每一輪結束】於『活動排程 > 紅包活動』對該輪活動點『取消排程』並於確認視窗點『確認取消』，再回到步驟 1 進入下一輪
+      expected: 已取消排程
+    expected_result: A、B、C 三人同時達標、剩餘預算只夠一個紅包時，每一輪都只產生 1 個紅包（金額 30）、預算使用恰為 30 ／ 30（不得大於總預算）、活動標示『預算用罄』；其餘兩人該門檻不產生紅包且之後不補發。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 392 行）
+      quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包；用罄期間帳號累計照常推進，達標的門檻不產生、不補發
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-015
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 392 行）
+    - requirement_id: REQ-REDPACKET-015
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 391 行）
+    - requirement_id: REQ-REDPACKET-015
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §新增優惠活動 — 紅包（第 68 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 392 行）
+      quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包；用罄期間帳號累計照常推進，達標的門檻不產生、不補發
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 391 行）
+      quote: 設有總預算時，預算占用＝已入帳＋待開啟紅包金額；紅包作廢即釋放占用
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §新增優惠活動 — 紅包（第 68 行）
+      quote: 所有規則共用一池
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-07；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-07：總預算是整個活動共用一池（第 68 行），但預算邊界目前只用單一帳號依序結算測試（TC-REDPACKET-038／039／171）。多個帳號幾乎同時達標而剩餘預算只夠其中一個時，若『抽出金額與剩餘預算比較、占用扣除』不是原子操作，會超發。預期完全由
+      spec 推出，不需新假設：第 392 行『抽出的金額大於剩餘預算時，不產生該紅包』＋第 391 行『占用＝已入帳＋待開啟』⇒ 占用不可能大於總預算；固定 30 對剩餘 30 恰好足夠一次，之後剩餘 0 小於 30，所以恰 1 個。用盡後其餘兩人該門檻不產生且不補發（第
+      392 行）。不指定誰取得紅包、不指定先後。技術標 error_guessing（競態推測）；同時送出無法保證每輪都撞上競態，故 5 輪，缺陷只要出現任一輪就成立。『三人先各 90、再各 10』是我為了讓三筆注單在同一瞬間恰好達標而設計的佈置，非
+      spec 值；它依賴『有效流水貢獻 10 的注單可被精準結算』這個環境前提，已揭露。
+  - draft_id: TC-DRAFT-01M4RHPVBC1DR76836FG6P5EPC
+    title: 同一帳號 5 筆注單同時結算：不遺失累計、恰產生 5 個紅包，週期累計分別為 100～500，之後單獨結算的第 6 個紅包週期累計為 600（重複 3 輪）
+    description: 同一帳號 5 筆注單同時結算：不遺失累計、恰產生 5 個紅包，週期累計分別為 100～500，之後單獨結算的第 6 個紅包週期累計為 600（重複 3 輪）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-010
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0101
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+      100% 的遊戲，有效投注額＝有效流水貢獻）
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計；每一輪開始時玩家 A 的累計都必須從 0 起算（每輪用全新的活動）
+    - 本案重複 3 輪。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 活動
+      value: 門檻 100／上限 10／固定 10／稽核 0／每日重置
+    - name: 同時結算
+      value: 玩家 A 5 筆各 100
+    - name: 輪數
+      value: 3 輪
+    steps:
+    - n: 1
+      action: 【每一輪】建立活動『RP-CONC-n』（永久）：活動幣種 USDT；預設規則門檻 100／上限 10／固定 10／稽核 0；每日重置；儲存
+      expected: 建立成功
+    - n: 2
+      action: 【每一輪】以腳本讓玩家 A 的 5 筆注單（每筆有效流水貢獻 100）『幾乎同時』結算
+      expected: 請求送出
+    - n: 3
+      action: 【每一輪】檢視 RP-CONC-n 的紅包明細（篩選玩家 A）
+      expected: 恰 5 筆紅包（皆『待開啟』、金額 10），沒有第 6 筆；5 筆的『週期累計』各不相同，分別為 100、200、300、400、500（不論結算順序）
+    - n: 4
+      action: 【每一輪】玩家 A 再單獨結算 1 筆有效流水貢獻 100，檢視紅包明細與紅包視窗
+      expected: 產生第 6 筆紅包，其『週期累計』為 600（若同時結算時累計有遺失，這裡會少於 600）；紅包視窗『本期已獲得』顯示 6 ／ 10
+    - n: 5
+      action: 【每一輪結束】對該輪活動點『取消排程』並於確認視窗點『確認取消』，再進入下一輪
+      expected: 已取消排程
+    expected_result: 同一帳號多筆有效流水貢獻各 100 的注單同時結算：每筆各剛好滿一個門檻，恰產生 5 個紅包（沒有少產生、沒有多產生），週期累計為 100、200、300、400、500；之後單獨結算 100 產生第
+      6 個紅包、週期累計 600。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 388 行）
+      quote: 每累計滿門檻產生一個紅包，超出部分續計入下一個
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-010
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 388 行）
+    - requirement_id: REQ-REDPACKET-010
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包明細（第 289 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 388 行）
+      quote: 每累計滿門檻產生一個紅包，超出部分續計入下一個
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包明細（第 289 行）
+      quote: 產生當下該帳號本週期的累計有效流水貢獻
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-08 (1)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-08 (1)：循環發放目前只用依序結算測試（TC-REDPACKET-027／028）。同一帳號多筆注單同時結算時，累計若有遺失更新，會少計或少產生紅包。預期由 spec 的循環計算推出：每累計滿門檻產生一個、超出續計（第
+      388 行）；每筆注單恰 100＝每筆都剛好滿一個門檻，所以第 k 個紅包產生時的『週期累計』必為 100k（明細『週期累計』＝產生當下的本週期累計，第 289 行）。再單獨結算一筆 100 得第 6 筆、週期累計 600，是為了偵測『同時結算後累計是否正確留存』（遺失更新不一定在同時那一步就看得出紅包數）。技術標
+      error_guessing；3 輪是因為競態不保證每輪都撞上。
+  - draft_id: TC-DRAFT-01M4RHPVFFNTZND8N9PNFTPNN1
+    title: 單週期上限邊界（上限 2、已產生 1）下同一帳號 5 筆注單同時結算：只再產生 1 個紅包（週期累計 290）、不超過上限，之後不再計入（重複 3 輪）
+    description: 單週期上限邊界（上限 2、已產生 1）下同一帳號 5 筆注單同時結算：只再產生 1 個紅包（週期累計 290）、不超過上限，之後不再計入（重複 3 輪）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-010
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0102
+    - AC-REDPACKET-0104
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+      100% 的遊戲，有效投注額＝有效流水貢獻）
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計；每一輪開始時玩家 A 的累計都必須從 0 起算（每輪用全新的活動）
+    - 本案重複 3 輪。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 活動
+      value: 門檻 100／上限 2／固定 10／稽核 0／每日重置
+    - name: 起始累計
+      value: 100 → 產生 1 個；再 90 → 累計 190
+    - name: 同時結算
+      value: 玩家 A 5 筆各 100
+    - name: 輪數
+      value: 3 輪
+    steps:
+    - n: 1
+      action: 【每一輪】建立活動『RP-CAPC-n』（永久）：活動幣種 USDT；預設規則門檻 100／上限 2／固定 10／稽核 0；每日重置；儲存
+      expected: 建立成功
+    - n: 2
+      action: 【每一輪】玩家 A 單獨結算有效流水貢獻 100，再單獨結算有效流水貢獻 90
+      expected: 已產生 1 個紅包（週期累計 100）；累計 190（距下一個門檻 90），沒有第 2 個紅包
+    - n: 3
+      action: 【每一輪】以腳本讓玩家 A 的 5 筆注單（每筆有效流水貢獻 100）『幾乎同時』結算
+      expected: 請求送出
+    - n: 4
+      action: 【每一輪】檢視紅包明細（篩選玩家 A）與紅包視窗
+      expected: 紅包明細恰 2 筆（沒有第 3 筆）；第 2 筆的『週期累計』為 290（190＋100，產生達上限的那一個紅包時餘數 90 保留；其餘 4 筆不再計入）；紅包視窗『本期已獲得』顯示 2 ／ 2
+    - n: 5
+      action: 【每一輪】玩家 A 再單獨結算有效流水貢獻 100，檢視紅包明細
+      expected: 沒有新紅包（本週期產生數已達上限，停止累計直到重置）；紅包明細仍 2 筆
+    - n: 6
+      action: 【每一輪】玩家 A 依領取流程領取 2 個紅包後開啟紅包視窗
+      expected: 顯示『本期已達上限』
+    - n: 7
+      action: 【每一輪結束】對該輪活動點『取消排程』並於確認視窗點『確認取消』，再進入下一輪
+      expected: 已取消排程
+    expected_result: 單週期上限 2、已產生 1 個、距下一門檻 90 時，5 筆各 100 的注單同時結算：只再產生 1 個紅包（達上限，本期已獲得 2 ／ 2），第 2 個紅包的週期累計為 290，其餘注單不再計入；之後再結算也不產生紅包，全部領取後顯示『本期已達上限』。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 389 行）
+      quote: 產生達上限的那一個紅包時，超出門檻的餘數保留（例：門檻 1,000、上限 5 個，第 5 個產生時累計為 1,084，保留 84），之後結算的注單不再計入；會員等級變動使上限調高時，自保留的餘數續計
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-010
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 389 行）
+    - requirement_id: REQ-REDPACKET-010
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §新增優惠活動 — 紅包（第 96 行）
+    - requirement_id: REQ-REDPACKET-010
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包明細（第 289 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 389 行）
+      quote: 產生達上限的那一個紅包時，超出門檻的餘數保留（例：門檻 1,000、上限 5 個，第 5 個產生時累計為 1,084，保留 84），之後結算的注單不再計入；會員等級變動使上限調高時，自保留的餘數續計
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §新增優惠活動 — 紅包（第 96 行）
+      quote: 單一帳號在一個重置週期內最多產生的紅包數；達上限後停止累計，直到下次重置
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包明細（第 289 行）
+      quote: 產生當下該帳號本週期的累計有效流水貢獻
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-08 (2)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-08 (2)：單週期上限目前只用依序結算測試（TC-REDPACKET-028、161）。接近上限時多筆注單同時結算，若上限判斷與累計不是原子操作，可能產生超過上限的紅包。取『上限 2、已產生
+      1、距下一門檻 90』剛好是上限邊界：第 389 行規定產生達上限的那個紅包時餘數保留、之後結算的注單不再計入；所以不論 5 筆如何交錯，只有 1 筆會讓累計跨過第 2 個門檻，第 2 個紅包的『週期累計』必為 190＋100＝290（明細『週期累計』＝產生當下的本週期累計，第
+      289 行；與第 389 行例子 1,084 同口徑）。若出現第 3 個紅包，或第 2 個紅包週期累計大於 290，代表上限被繞過。技術標 boundary_value：上限數值邊界（上限 2、已 1、差 1）。『本期已達上限』顯示規則沿用第
+      198 行與 AC-0317。
+  - draft_id: TC-DRAFT-01M4RHPVJHPTR7D6729GY9M8QB
+    title: 線上玩家在確認領取視窗開著時跨過 UTC+0 00:00 重置才按［確認領取］：不入帳（錢包、交易紀錄、稽核明細不變），紅包已作廢（週期重置）並釋放預算
+    description: 線上玩家在確認領取視窗開著時跨過 UTC+0 00:00 重置才按［確認領取］：不入帳（錢包、交易紀錄、稽核明細不變），紅包已作廢（週期重置）並釋放預算
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-013
+    - REQ-REDPACKET-036
+    - REQ-REDPACKET-011
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0133
+    - AC-REDPACKET-0111
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額 W0
+    - 【時間窗】本案必須橫跨一次 UTC+0 00:00（與其他案例『避開 00:00 前後』相反）：請在 UTC+0 23:40 前備妥活動與待開啟紅包，23:59:30 前後打開確認領取視窗，並預留到 UTC+0 00:01 之後繼續
+    - 記下玩家 A 的『各式報表 > 交易紀錄查詢』類型『紅包』筆數 N0 與『各式報表 > 稽核明細』類型『紅包』筆數 H0（備妥紅包前）
+    test_data:
+    - name: 活動
+      value: 門檻 100／上限 5／固定 10／稽核 1／總預算 100／每日重置
+    - name: 時間點
+      value: 確認視窗於 UTC+0 23:59:30 開啟、00:00:05 之後按［確認領取］
+    steps:
+    - n: 1
+      action: （UTC+0 23:40 前）建立活動『RP-CLAIMRESET』（永久）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 10／稽核 1；總預算 100；每日重置；儲存
+      expected: 建立成功；預算使用 0 ／ 100
+    - n: 2
+      action: 玩家 A 結算有效流水貢獻 100
+      expected: 產生 1 個待開啟紅包 P1；『活動排程 > 紅包活動』預算使用 10 ／ 100
+    - n: 3
+      action: （UTC+0 23:59:30 前後）玩家 A 於前台點紅包圖示開啟紅包視窗，點『領取獎勵（1）』，讓『確認領取獎勵』視窗開著，先不按任何鈕
+      expected: 確認領取視窗顯示紅包金額 10 與稽核倍數 x1
+    - n: 4
+      action: 等到 UTC+0 00:00 過後約 5 秒（週期已重置），玩家 A 在同一個確認領取視窗點［確認領取］
+      expected: 紅包已因週期重置作廢、不可開啟：不入帳。前台是否顯示錯誤訊息、視窗是否自動關閉，spec 未定義，只記錄
+    - n: 5
+      action: 檢視玩家 A 的 USDT 錢包餘額、交易紀錄『紅包』筆數、稽核明細『紅包』筆數，並檢視紅包明細與活動預算使用
+      expected: 錢包仍為 W0（沒有增加 10）；交易紀錄『紅包』筆數仍為 N0；稽核明細『紅包』筆數仍為 H0；紅包明細 P1 狀態『已作廢』、作廢原因『週期重置』、入帳時間『—』；預算使用 0 ／ 100（作廢釋放占用）
+    - n: 6
+      action: 玩家 A 重新開啟紅包視窗
+      expected: 沒有待開啟紅包，『領取獎勵』按鈕停用；P1 不補發
+    - n: 7
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 確認領取視窗開啟後週期重置，之後才按［確認領取］：紅包已作廢（原因『週期重置』）、不可開啟也不補發；玩家錢包、交易紀錄『紅包』、稽核明細『紅包』皆不變；作廢釋放所占用的預算（0 ／ 100）。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-013
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包狀態（第 160 行）
+    - requirement_id: REQ-REDPACKET-011
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 397 行）
+    - requirement_id: REQ-REDPACKET-036
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 196 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 397 行）
+      quote: 週期重置時該帳號所有待開啟紅包作廢；已入帳紀錄不受影響
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 196 行）
+      quote: 送出後按鈕顯示「處理中…」，完成即入帳（線上入錢包、機台分數增加）；仍有待開啟紅包時，紅包視窗改顯示下一個紅包的金額，可再次領取
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-09 (1)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-09 (1)：領取與作廢互相競爭目前只測了機台『領取 vs 店員洗分』（TC-REDPACKET-213）；TC-REDPACKET-035／215 只在作廢完成後才依序嘗試開啟。線上『確認領取視窗開著、重置才發生、之後才按確認』沒有
+      TC。預期完全來自 spec：週期重置時該帳號所有待開啟紅包作廢、已入帳不受影響（第 397 行）；已作廢『不可復原、不補發；作廢釋放所占用的預算』（第 160 行）；已作廢的紅包不可開啟（AC-0133）。這一案的作廢發生在按下［確認領取］之前，所以是確定性案例（不是競態）；真正的同時送出在
+      T12。『前台被拒時的訊息』spec 未定義，依 RF-09 建議只記錄。技術標 state_transition：REQ-013 定義了紅包狀態集合與轉換（待開啟→已入帳／已作廢，已作廢不可復原），本案驗證『待開啟→已作廢（週期重置）』之後再嘗試非法轉換『已作廢→已入帳』（按確認領取）被拒。23:59:30／00:00:05
+      的取法是我為操作可行性選的，非 spec 值。
+  - draft_id: TC-DRAFT-01M4RHPVNNQYYF7S7XJBPF5E9Q
+    title: 線上玩家在確認領取視窗開著時活動到期才按［確認領取］：不入帳，紅包已作廢（活動結束）、釋放預算，活動列仍為『已結束』
+    description: 線上玩家在確認領取視窗開著時活動到期才按［確認領取］：不入帳，紅包已作廢（活動結束）、釋放預算，活動列仍為『已結束』
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-013
+    - REQ-REDPACKET-036
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0131
+    - AC-REDPACKET-0133
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - state_transition
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額 W0、交易紀錄『紅包』筆數 N0、稽核明細『紅包』筆數 H0
+    - 此案需等待活動結束（約 15 分鐘），且不得橫跨 UTC+0 00:00
+    test_data:
+    - name: 活動時間
+      value: 區間：+2 分鐘～+14 分鐘（UTC+0）
+    - name: 活動
+      value: 門檻 100／上限 5／固定 10／稽核 1／總預算 100
+    steps:
+    - n: 1
+      action: 建立活動『RP-CLAIMEND』：活動幣種 USDT；活動時間選『區間』，起＝約 2 分鐘後、迄＝約 14 分鐘後（UTC+0）；預設規則門檻 100／上限 5／固定 10／稽核 1；總預算 100；每日重置；儲存
+      expected: 建立成功
+    - n: 2
+      action: 活動進入進行中後，玩家 A 結算有效流水貢獻 100
+      expected: 產生 1 個待開啟紅包 P1；預算使用 10 ／ 100
+    - n: 3
+      action: （結束時間前約 1 分鐘）玩家 A 點紅包圖示開啟紅包視窗，點『領取獎勵（1）』，讓『確認領取獎勵』視窗開著，先不按任何鈕
+      expected: 確認領取視窗顯示紅包金額 10
+    - n: 4
+      action: 等到活動結束時間過後約 1 分鐘，玩家 A 在同一個確認領取視窗點［確認領取］
+      expected: 活動已結束、紅包已作廢：不入帳。前台是否顯示錯誤訊息、視窗是否自動關閉，spec 未定義，只記錄
+    - n: 5
+      action: 檢視玩家 A 的 USDT 錢包餘額、交易紀錄與稽核明細『紅包』筆數，並進入『活動排程 > 紅包活動』檢視該活動列與紅包明細
+      expected: 錢包仍為 W0；交易紀錄、稽核明細『紅包』筆數仍為 N0、H0；活動列仍列出且狀態『已結束』；P1 狀態『已作廢』、作廢原因『活動結束』；紅包明細頂部『總預算（已占用／總預算）』0 ／ 100
+    - n: 6
+      action: 玩家 A 於前台檢視右側紅包圖示
+      expected: 活動結束後紅包圖示已移除（活動結束後立即從前台移除）
+    - n: 7
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 活動到期後才按［確認領取］：紅包已作廢（原因『活動結束』）、不入帳也不補發；玩家錢包、交易紀錄、稽核明細不變；占用釋放為 0 ／ 100；活動轉『已結束』仍列於活動排程，前台紅包圖示已移除。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-013
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包狀態（第 160 行）
+    - requirement_id: REQ-REDPACKET-036
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 196 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 196 行）
+      quote: 送出後按鈕顯示「處理中…」，完成即入帳（線上入錢包、機台分數增加）；仍有待開啟紅包時，紅包視窗改顯示下一個紅包的金額，可再次領取
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 173 行）
+      quote: 活動結束（到期或取消排程）後**立即從前台移除**圖示
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-09 (1)（活動到期變體）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-09 (1)（活動到期的變體）：RF-09 的 gap 同時提到『取消排程／活動到期』與領取的競爭，TC-REDPACKET-034 只在到期後依序檢視、嘗試開啟，沒有『確認視窗開著、到期後才按確認』。預期來自
+      spec：活動結束（到期或取消排程）時待開啟紅包作廢、作廢釋放預算（第 160 行）；已作廢不可開啟（AC-0133）；AC-0131 活動到期作廢原因『活動結束』；活動結束後立即從前台移除圖示（第 173 行）。與 T10 相同，作廢發生在按下確認之前，是確定性案例。技術標
+      state_transition：驗證『待開啟→已作廢（活動結束）』之後再嘗試非法轉換『已作廢→已入帳』被拒。
+  - draft_id: TC-DRAFT-01M4RHPVSCTFSRR7AHH2RBPPR0
+    title: 線上玩家［確認領取］與後台［確認取消排程］同時送出：紅包不會既入帳又作廢，錢包、交易紀錄、稽核明細與預算占用彼此一致（重複 5 輪）
+    description: 線上玩家［確認領取］與後台［確認取消排程］同時送出：紅包不會既入帳又作廢，錢包、交易紀錄、稽核明細與預算占用彼此一致（重複 5 輪）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-013
+    - REQ-REDPACKET-036
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0132
+    - AC-REDPACKET-0133
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - state_transition
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計；每一輪開始時玩家 A 的累計都必須從 0 起算（每輪用全新的活動）
+    - 【同時送出的兩個動作】後台的『取消排程』確認（［確認取消］）與玩家 A 前台的［確認領取］。可由兩人各自備妥畫面後以同一個口令同時按下，或由腳本同時送出兩個對應的 API 請求
+    - 本案重複 5 輪。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 活動
+      value: 門檻 100／上限 5／固定 10／稽核 1／總預算 100／每日重置
+    - name: 同時動作
+      value: 後台［確認取消］ vs 玩家 A［確認領取］
+    - name: 輪數
+      value: 5 輪
+    steps:
+    - n: 1
+      action: 【每一輪】建立活動『RP-RACE-n』（永久）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 10／稽核 1；總預算 100；每日重置；儲存。記下玩家 A 的 USDT 錢包餘額 W0、交易紀錄『紅包』筆數
+        N0、稽核明細『紅包』筆數 H0
+      expected: 建立成功
+    - n: 2
+      action: 【每一輪】玩家 A 結算有效流水貢獻 100
+      expected: 產生 1 個待開啟紅包 P；預算使用 10 ／ 100
+    - n: 3
+      action: 【每一輪】玩家 A 開啟紅包視窗，點『領取獎勵（1）』，讓『確認領取獎勵』視窗開著；後台在『活動排程 > 紅包活動』該活動列點『取消排程』，讓確認視窗開著
+      expected: 兩邊都停在確認畫面
+    - n: 4
+      action: 【每一輪】讓後台［確認取消］與玩家 A［確認領取］幾乎同時送出
+      expected: 請求送出；前台被拒絕時的訊息 spec 未定義，只記錄
+    - n: 5
+      action: 【每一輪】檢視玩家 A 的錢包餘額、交易紀錄『紅包』與稽核明細『紅包』筆數、該活動的狀態與紅包明細（P 的狀態、作廢原因、頂部『總預算（已占用／總預算）』）
+      expected: 活動狀態『已取消』。結果只有兩種：(甲) 領取先成立：P『已入帳』（沒有被作廢）、錢包＝W0＋10、交易紀錄『紅包』＝N0＋1、稽核明細『紅包』＝H0＋1（所需有效投注額增加 10）、已占用 10 ／ 100；(乙)
+        取消先成立：P『已作廢』、作廢原因『活動結束』、錢包＝W0、交易紀錄與稽核明細筆數不變、已占用 0 ／ 100。不得出現其他組合（P 既『已入帳』又『已作廢』、錢包增加但 P 為已作廢、錢包未增加但 P 已入帳、交易紀錄或稽核明細只寫一邊、占用與狀態不符）
+    - n: 6
+      action: 【每一輪結束】回到步驟 1 進入下一輪（上一輪活動已取消，可立即以相同時段重建）
+      expected: 進入下一輪
+    expected_result: 領取與取消排程同時送出時只有一方先成立：(甲) 領取先成立＝紅包已入帳、錢包＋10、交易紀錄與稽核明細各 +1、預算仍占用 10；(乙) 取消先成立＝紅包已作廢（活動結束）、錢包與交易紀錄、稽核明細皆不變、預算釋放為
+      0。不會既入帳又作廢，也不會只寫入其中一部分。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-013
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包狀態（第 160 行）
+    - requirement_id: REQ-REDPACKET-013
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §紅包狀態（第 159 行）
+    - requirement_id: REQ-REDPACKET-036
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §前台呈現說明（第 196 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包狀態（第 160 行）
+      quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §紅包狀態（第 159 行）
+      quote: 金額已入錢包、稽核已掛上、已寫入交易紀錄
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §前台呈現說明（第 196 行）
+      quote: 送出後按鈕顯示「處理中…」，完成即入帳（線上入錢包、機台分數增加）；仍有待開啟紅包時，紅包視窗改顯示下一個紅包的金額，可再次領取
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 217 行）
+      quote: 取消排程後活動停止累計與產生紅包，已產生未開啟的紅包一併作廢
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-09 (2)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-09 (2)：線上『領取 vs 取消排程』同時發生沒有 TC。預期只用 spec 的狀態規則：待開啟→已入帳（領取）與待開啟→已作廢（活動結束）是互斥的終態；已作廢『不可復原』（第 160 行）、已入帳不受重置／作廢影響（第
+      397 行）、取消排程時『已產生未開啟的紅包一併作廢』（第 217 行）。所以只可能(甲)領取先成立或(乙)取消先成立，且各自的錢包、交易紀錄、稽核明細、預算占用必須一致。作廢釋放預算（第 160 行）讓『既入帳又被釋放預算』可從頂部已占用數字偵測。技術標
+      error_guessing（競態推測）；誰先成立不判定。與 TC-REDPACKET-213（機台領取 vs 洗分）、TC-REDPACKET-202（同一紅包重複領取）不重複：此案是線上、對手是取消排程。
+  - draft_id: TC-DRAFT-01M4RHPVW4AME56E8N3E22WFY1
+    title: 追加預算重複送出：連點『確認』、API 重放同一請求、並送 3 個相同請求，總預算只增加一次、7.4 操作紀錄只多一筆
+    description: 追加預算重複送出：連點『確認』、API 重放同一請求、並送 3 個相同請求，總預算只增加一次、7.4 操作紀錄只多一筆
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-016
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0168
+    - AC-REDPACKET-0162
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需環境負責人確認】7.4 操作紀錄是實體機台正本規劃新增的頁面（手冊 v01 尚未定義），其選單路徑與可檢視的角色隨該頁定義、目前 spec 未載明；由環境負責人告知入口，並確認本案登入角色可檢視該頁
+    - 【清空後依序佈置】建立活動『RP-TOPUP-DUP』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後確認狀態為『進行中』
+    - 備妥『追加預算』視窗的快速連點手段（例如快速連按滑鼠左鍵 3 次），並記下 7.4 操作紀錄目前的筆數 L0
+    test_data:
+    - name: 總預算
+      value: 5000 → 6000 → 7000
+    - name: 重送次數
+      value: UI 連點 3 次；API 逐次重送 2 次；並送 3 個
+    steps:
+    - n: 1
+      action: 【UI 連點】於『活動排程 > 紅包活動』該活動列點『追加預算』，輸入新總預算 6000，快速連點『確認』3 次
+      expected: 活動總預算變為 6000（預算使用 x ／ 6000）；7.4 操作紀錄只新增 1 筆：操作人員為本次登入帳號、活動名稱『RP-TOPUP-DUP』、調整前 5000、調整後 6000，筆數＝L0＋1。視窗是否關閉、後
+        2 次點擊是被前端擋下或被後端拒絕及其提示，spec 未定義，只記錄
+    - n: 2
+      action: 【API 重放】以 API 工具用同一個後台帳號，把步驟 1 的追加預算請求（新總預算 6000）逐次重送 2 次
+      expected: 兩次皆被後端拒絕（6000 不大於目前總預算 6000），總預算維持 6000；7.4 操作紀錄筆數仍為 L0＋1，沒有新增調整前 6000、調整後 6000 的紀錄
+    - n: 3
+      action: 【並送】以腳本同時送出 3 個相同的追加預算請求（新總預算 7000，同一帳號）
+      expected: 恰有 1 個請求成功、其餘被拒絕；總預算變為 7000；7.4 操作紀錄筆數＝L0＋2，本步驟新增的只有 1 筆：調整前 6000、調整後 7000（不得出現重複的 6000→7000，也不得出現調整後 7000
+        之外的值）
+    - n: 4
+      action: 回到『活動排程 > 紅包活動』與紅包明細頂部檢視該活動總預算
+      expected: 總預算 7000，活動狀態仍『進行中』
+    - n: 5
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 追加預算被重複送出（連點、重放、並送）時：只有讓總預算變大的第一個請求成功並寫入一筆 7.4 操作紀錄，其餘新預算不大於目前總預算的請求被後端拒絕、資料不變、不寫入紀錄；總預算只增加一次。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §活動排程（第 246 行）
+      quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 246 行）
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q04
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 247 行）
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 245 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 246 行）
+      quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 247 行）
+      quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程。7.4 操作紀錄為實體機台正本規劃新增的頁面（手冊 v01 尚未定義），可檢視角色隨該頁定義
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 245 行）
+      quote: 只能調高、不能調低；未設總預算（不限）的活動不提供此操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-11 (1)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-11 (1)：追加預算目前只測單次送出的合法與不合法金額（TC-REDPACKET-040／041／172）。預期完全由 spec 推出：新預算不大於目前總預算時後端拒絕、資料不變（第 246
+      行），所以第一次成功後，相同金額的後續請求因『不大於目前總預算』而被拒；每次追加（成功者）寫入一筆 7.4 操作紀錄（第 247 行），被拒絕者資料不變、不寫入（AC-0168）。並送 3 個相同請求時，不論誰先到，最終必為『恰 1
+      成功』。前端連點的處理方式（按鈕停用、視窗關閉）spec 只定義『輸入值小於或等於目前總預算時確認鈕停用』，連點本身未定義，所以只斷言最終資料。7.4 操作紀錄的入口與可檢視角色 spec 未載明（第 247 行），已列為環境前提，沿用
+      TC-REDPACKET-040 的寫法。技術標 error_guessing。
+  - draft_id: TC-DRAFT-01M4RHPVZ5EVSTT9PXS4BYR1S7
+    title: 兩位管理員同時追加預算：後送的較小值不得覆蓋較大值，總預算只升不降，7.4 操作紀錄調整前後連續
+    description: 兩位管理員同時追加預算：後送的較小值不得覆蓋較大值，總預算只升不降，7.4 操作紀錄調整前後連續
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-016
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0168
+    - AC-REDPACKET-0162
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需環境負責人確認】7.4 操作紀錄是實體機台正本規劃新增的頁面（手冊 v01 尚未定義），其選單路徑與可檢視的角色隨該頁定義、目前 spec 未載明；由環境負責人告知入口，並確認本案登入角色可檢視該頁
+    - 【清空後依序佈置】建立活動『RP-TOPUP-RACE』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後確認狀態為『進行中』
+    - 備妥兩個具追加預算權限的不同後台帳號（甲、乙；皆為該站台的管理員或站長，自行從環境中選定），兩人各用獨立的瀏覽器（或無痕視窗）登入；記下 7.4 操作紀錄目前的筆數 L0
+    - 本案後半的並送重複 3 輪。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 起始總預算
+      value: 5000
+    - name: 甲／乙金額
+      value: 7000／6000；8000（乙先）→9000（甲後）；並送 B+2000／B+1000
+    - name: 輪數
+      value: 並送 3 輪
+    steps:
+    - n: 1
+      action: 甲、乙各自開啟該活動的『追加預算』視窗（兩邊都顯示目前總預算 5000），先不輸入
+      expected: 兩個視窗都停留在總預算 5000 的畫面
+    - n: 2
+      action: 【乙晚到、值較小】甲輸入 7000 並確認；之後乙（視窗仍顯示過期的 5000）輸入 6000 並確認（若乙的『確認』鈕被前端停用導致無法送出，改以 API 工具送出同內容的請求）
+      expected: 甲成功，總預算 7000；乙的請求被後端拒絕（6000 不大於目前總預算 7000），總預算維持 7000、不得被覆蓋成 6000；7.4 操作紀錄只新增 1 筆：調整前 5000、調整後 7000（筆數＝L0＋1）。乙畫面上的提示
+        spec 未定義，只記錄
+    - n: 3
+      action: 【乙先、甲後，皆成功】甲、乙重新開啟『追加預算』視窗（兩邊都顯示 7000）；乙輸入 8000 並確認；之後甲（視窗仍顯示過期的 7000）輸入 9000 並確認
+      expected: 兩筆皆成功，總預算 9000；7.4 操作紀錄再新增 2 筆，依序為：調整前 7000、調整後 8000（乙）；調整前 8000、調整後 9000（甲）（筆數＝L0＋3）
+    - n: 4
+      action: 【並送，每輪一次】甲、乙重新開啟視窗（顯示目前總預算 B）；以腳本同時送出：甲追加為 B＋2000、乙追加為 B＋1000（第 1 輪 B＝9000：11000／10000；第 2 輪 B 為上一輪結果：13000／12000；第
+        3 輪：15000／14000）
+      expected: 每一輪最終總預算＝較大值（B＋2000），任何時點查詢到的總預算都不低於前一時點（不得出現總預算下降）。7.4 操作紀錄本輪新增 1 或 2 筆：若較小值先成立，為『B→B＋1000』『B＋1000→B＋2000』兩筆；若較大值先成立，只有『B→B＋2000』一筆（較小值被拒絕）；不得出現調整後不大於調整前的紀錄，也不得出現前後不連續的紀錄（某筆的調整前不等於前一筆的調整後）
+    - n: 5
+      action: 回到『活動排程 > 紅包活動』檢視該活動預算使用
+      expected: 總預算 15000（三輪後），狀態『進行中』
+    - n: 6
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 兩位管理員從相同的『目前總預算』出發各自追加時，後端以最新的總預算檢查：新預算不大於目前總預算者被拒絕、資料不變；總預算只會升高（最終為較大值），7.4 操作紀錄每筆的調整前等於前一筆的調整後，沒有調整後不大於調整前的紀錄。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §活動排程（第 246 行）
+      quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 246 行）
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q04
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 247 行）
+    - requirement_id: REQ-REDPACKET-016
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §活動排程（第 245 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 246 行）
+      quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 247 行）
+      quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程。7.4 操作紀錄為實體機台正本規劃新增的頁面（手冊 v01 尚未定義），可檢視角色隨該頁定義
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §活動排程（第 245 行）
+      quote: 只能調高、不能調低；未設總預算（不限）的活動不提供此操作
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-11 (2)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-11 (2)：兩位管理員同時從相同的『目前總預算』出發各自追加，處理不當會讓後送的較小值覆蓋較大值（等於調低總預算，違反第 245 行『只能調高、不能調低』）。預期只用 spec：後端以『目前』總預算檢查，新預算不大於目前總預算時拒絕、資料不變（第
+      246 行）；每次成功追加寫入一筆含調整前後金額的 7.4 紀錄（第 247 行）。步驟 2、3 是確定性的兩種到達順序（過期畫面 vs 目前資料），步驟 4 是真正的並送，且預期只寫成『不論先後都成立的不變量』（最終＝較大值、總預算不下降、紀錄鏈連續），不指定誰先成立。『過期畫面的前端行為』（確認鈕是否停用）spec
+      只定義了『輸入值小於或等於目前總預算時停用』，未定義是否依即時資料重新判斷，所以步驟 2 預先備了 API 工具的退路。技術標 error_guessing。
+  - draft_id: TC-DRAFT-01M4RHPW27ATVSAE9V9D0NB215
+    title: 線上站台建立紅包活動重複送出：連點『儲存』、API 重放、並送 3 個請求，只建立 1 個活動，玩家結算只產生 1 個紅包
+    description: 線上站台建立紅包活動重複送出：連點『儲存』、API 重放、並送 3 個請求，只建立 1 個活動，玩家結算只產生 1 個紅包
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-017
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0172
+    - AC-REDPACKET-0171
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+      100% 的遊戲，有效投注額＝有效流水貢獻）
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計
+    - 備妥『儲存』鈕的快速連點手段（例如快速連按滑鼠左鍵或連按 Enter 3 次）
+    test_data:
+    - name: 活動
+      value: 永久／每日重置／門檻 100／上限 5／固定 10／稽核 1
+    - name: 重送次數
+      value: UI 連點 3 次；API 逐次重送 2 次；並送 3 個
+    steps:
+    - n: 1
+      action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，新增優惠活動、活動類型『紅包』，填妥合法表單：活動幣種 USDT；活動時間『永久』；重置方式每日；預設規則門檻 100／上限 5／固定 10／稽核 1，活動名稱『RP-DUP-CREATE』；先不按儲存
+      expected: 表單已填妥
+    - n: 2
+      action: 【UI 連點】快速連點『儲存』3 次
+      expected: 進入『活動排程 > 紅包活動』，狀態為『進行中』或『排程中』的活動恰 1 個（『RP-DUP-CREATE』），沒有第 2、3 個活動；連點被擋下時的提示 spec 未定義，只記錄
+    - n: 3
+      action: 【API 重放】以 API 工具對『新增紅包活動』逐次重送與步驟 1 完全相同的建立請求 2 次
+      expected: 兩次皆被阻擋（站台已有進行中的永久活動，任何時段皆重疊）；活動排程中進行中／排程中的活動仍恰 1 個
+    - n: 4
+      action: 取消 RP-DUP-CREATE 的排程（確認視窗點『確認取消』）後，以腳本同時送出 3 個相同的『新增紅包活動』請求（活動名稱『RP-DUP-CREATE-2』、永久，其餘設定同步驟 1）
+      expected: 恰有 1 個請求成功建立；其餘 2 個因時段重疊被阻擋；活動排程中狀態為『進行中』或『排程中』的活動恰 1 個（已取消的 RP-DUP-CREATE 仍列於列表，不算）
+    - n: 5
+      action: 等 RP-DUP-CREATE-2 變為『進行中』後，玩家 A 結算有效流水貢獻 100
+      expected: 只產生 1 個紅包（紅包明細 1 筆；玩家 A 紅包視窗『本期已獲得』1 ／ 5）；若同時存在兩個進行中的活動，同一筆流水會被兩個活動各算一次而產生 2 個紅包
+    - n: 6
+      action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 建立活動被重複送出時：站台同一時間只存在 1 個進行中或排程中的紅包活動，其餘重複請求因時段重疊被阻擋、資料不寫入；之後玩家結算達門檻只產生 1 個紅包。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-12 (1)(2)（線上）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-12 (1)(2)：時段重疊阻擋目前只用『既有活動已存在後再新增』測試（TC-REDPACKET-044／045／082）。若重疊檢查與寫入不是原子操作，連點、重放或並送會同時存在多個進行中活動。預期來自第
+      405 行『同一站台同一時間僅能有一個進行中的紅包活動（排程時間重疊時阻擋儲存）』與 AC-0172（已有永久進行中活動則任何時段皆阻擋）：第一個建立成功後，相同的後續請求必然重疊而被阻擋；並送時恰 1 成功。最後用玩家結算 100
+      檢查『只產生 1 個紅包』，是因為多個進行中活動的實際後果是重複累計與發放。連點的前端行為與被擋時的提示 spec 未定義，只斷言最終資料。技術標 error_guessing。
+  - draft_id: TC-DRAFT-01M4RHPW69PH4EPP344S7GZ8VA
+    title: 管理員與站長同時在同一線上站台建立時段重疊的紅包活動：最終只存在 1 個活動，另一個被阻擋（重複 3 輪）
+    description: 管理員與站長同時在同一線上站台建立時段重疊的紅包活動：最終只存在 1 個活動，另一個被阻擋（重複 3 輪）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-017
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0171
+    - AC-REDPACKET-0172
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 備妥兩個後台帳號：甲＝管理員、乙＝站長（皆具優惠活動管理權限、所屬同一線上站台），分別用獨立瀏覽器登入，並各自把頁面標題下方的站台切換下拉選單選到該線上站台（核心貨幣 USDT）
+    - 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+      100% 的遊戲，有效投注額＝有效流水貢獻）
+    - 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+    - 選定一名既有線上會員（玩家 A），本週期無注單計入累計
+    - 本案重複 3 輪；每輪開始前站台不得有進行中或排程中的紅包活動（上一輪留下的活動要取消排程）。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+    test_data:
+    - name: 甲／乙活動
+      value: RP-RACE-ADM（永久）／RP-RACE-MGR（約 2 分鐘後～約 30 天後）
+    - name: 輪數
+      value: 3 輪
+    steps:
+    - n: 1
+      action: 【每一輪】甲、乙各自進入『新增優惠活動』、活動類型『紅包』，各填妥合法表單：甲＝活動名稱『RP-RACE-ADM』、活動時間『永久』；乙＝活動名稱『RP-RACE-MGR』、活動時間『區間』起＝約 2 分鐘後、迄＝約
+        30 天後（UTC+0）；兩者其餘設定相同（活動幣種 USDT；每日重置；預設規則門檻 100／上限 5／固定 10／稽核 1）。先不按儲存
+      expected: 兩份表單都已填妥，兩人的時段重疊
+    - n: 2
+      action: 【每一輪】讓甲、乙的『儲存』（或對應的『新增紅包活動』API 請求）幾乎同時送出
+      expected: 請求送出
+    - n: 3
+      action: 【每一輪】檢視『活動排程 > 紅包活動』
+      expected: 狀態為『進行中』或『排程中』的活動恰 1 個（RP-RACE-ADM 或 RP-RACE-MGR 其中之一，誰成立不判定）；另一個沒有被建立。落敗者畫面的提示（是否為『與「…」的活動時間重疊…』）spec 對並送情境未定義，只記錄
+    - n: 4
+      action: 【每一輪】待存活的活動變為『進行中』後，玩家 A 結算有效流水貢獻 100
+      expected: 只產生 1 個紅包（紅包明細 1 筆）；兩個活動同時進行中時才會重複累計與重複發放
+    - n: 5
+      action: 【每一輪結束】對存活的活動點『取消排程』並於確認視窗點『確認取消』，再進入下一輪（玩家 A 的累計隨新活動重新起算）
+      expected: 已取消排程
+    expected_result: 兩人同時建立時段重疊的紅包活動時，每一輪最終只有 1 個活動成立（進行中或排程中），另一個因時段重疊被阻擋、未建立；之後玩家結算達門檻只產生 1 個紅包。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-12 (3)（線上）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-12 (3)：兩位管理員／站長同時在同一站台建立時段重疊的活動，是重疊檢查與寫入非原子時最典型的競態。預期同 T15：第 405 行『同一站台同一時間僅能有一個進行中的紅包活動』，所以最終必恰
+      1 個存在、另一個被阻擋；不指定誰成立。落敗者的提示文字：AC-0171 只定義了『既有活動已存在』時的提示，並送時哪一方看到什麼 spec 未定義，故只記錄。一個永久、一個區間，只是讓兩者的時段必定重疊（永久與任何時段皆重疊，AC-0172），並非要驗證永久／區間的差異。技術標
+      error_guessing。
+  - draft_id: TC-DRAFT-01M4RHPW97HCC4A0FK80ECX20A
+    title: 機台場館建立紅包活動重複送出與兩人並送：連點、API 重放、管理員與站長同時建立重疊活動，最終只存在 1 個活動，M1 結算只產生 1 個紅包
+    description: 機台場館建立紅包活動重複送出與兩人並送：連點、API 重放、管理員與站長同時建立重疊活動，最終只存在 1 個活動，M1 結算只產生 1 個紅包
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-017
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0172
+    - AC-REDPACKET-0171
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+    - 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+      未明講，狀態文字與位置只記錄）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+    - 機台帳號 M1（自行從環境中選定，本週期無注單）；另備兩個後台帳號：甲＝管理員、乙＝站長（皆可管轄該機台場館），分別用獨立瀏覽器登入；備妥『儲存』鈕的快速連點手段
+    - 整個測試須在同一個營業日內完成，且避開場館日結時間前後 30 分鐘（日結時間見『後台管理員系統 > 站台列表』該機台站台的『日結時間』），否則日結結算與每日重置會干擾累計與待開啟紅包
+    test_data:
+    - name: 活動
+      value: 永久／每日重置／門檻 100／上限 5／固定 20／稽核倍數 0
+    - name: 重送次數
+      value: UI 連點 3 次；API 逐次重送 2 次；兩人並送 2 輪
+    steps:
+    - n: 1
+      action: 進入該機台場館『優惠活動管理 > 新增優惠活動』（活動類型僅『紅包』），填妥合法表單：活動名稱『RP-DUP-ARC』、活動時間『永久』、重置方式每日、預設規則門檻 100／上限 5／固定 20／稽核倍數 0，先不按儲存
+      expected: 表單已填妥
+    - n: 2
+      action: 【UI 連點】快速連點『儲存』3 次
+      expected: 『活動排程 > 紅包活動』狀態為『進行中』或『排程中』的活動恰 1 個，沒有重複建立
+    - n: 3
+      action: 【API 重放】以 API 工具逐次重送與步驟 1 相同的『新增紅包活動』請求 2 次
+      expected: 兩次皆被阻擋（時段重疊）；進行中／排程中的活動仍恰 1 個
+    - n: 4
+      action: 取消 RP-DUP-ARC 的排程（確認視窗點『確認取消』）。【兩人並送，共 2 輪】甲、乙各填妥一份時段重疊的表單（甲＝『RP-RACE-ARC-ADM』永久；乙＝『RP-RACE-ARC-MGR』區間約 2 分鐘後～約
+        30 天後；其餘設定同步驟 1），讓兩份『儲存』（或對應 API 請求）幾乎同時送出；第 1 輪結束後取消存活活動的排程再進行第 2 輪，第 2 輪結束後不取消
+      expected: 每一輪進行中／排程中的活動恰 1 個，另一個被阻擋、未建立（誰成立不判定）
+    - n: 5
+      action: （上一步最後一輪不取消存活的活動，等它變為『進行中』）店員對 M1 開分 200；M1 結算有效流水貢獻 100
+      expected: 只產生 1 個紅包（紅包明細 1 筆；M1 紅包視窗『本期已獲得』1 ／ 5）
+    - n: 6
+      action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+      expected: 已取消排程
+    expected_result: 機台場館建立活動被重複送出或兩人同時建立時段重疊的活動時：同一時間只存在 1 個進行中或排程中的紅包活動，其餘請求被阻擋、資料不寫入；M1 結算達門檻只產生 1 個紅包。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    - requirement_id: REQ-REDPACKET-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §業務規則與驗證（第 405 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 排程時間重疊時阻擋儲存
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §業務規則與驗證（第 405 行）
+      quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-12（機台場館輪）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-12（機台場館輪）：RF 建議線上與機台各做一輪。機台場館同樣適用第 405 行（各站台獨立、同一站台同一時間僅一個進行中的紅包活動）。機台版表單沒有活動幣種、只有預設規則（第 37、38 行），稽核倍數填
+      0 以避免大於 0 時的機台稽核警告打斷連點與並送。預期與 T15、T16 相同，只在機台上最終用 M1 結算 100 檢查只產生 1 個紅包（機台累計對象為機台帳號，第 35 行）。技術標 error_guessing；與 T15／T16
+      的差異是站台類型與表單欄位不同，非重複案例（機台與線上為不同站台類型，檢查與寫入路徑可能不同）。
+  - draft_id: TC-DRAFT-01M4RHPW9HS02NM83P6FGKJE2J
+    title: 線上站長以 API 直接操作子站台的紅包活動：追加預算、取消排程、查詢紅包明細、匯出 CSV、新增活動一律被後端拒絕『無權限』、A1 資料不變
+    description: 線上站長以 API 直接操作子站台的紅包活動：追加預算、取消排程、查詢紅包明細、匯出 CSV、新增活動一律被後端拒絕『無權限』、A1 資料不變
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-023
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0235
+    - AC-REDPACKET-0234
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: api
+    test_types:
+    - security
+    - negative
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 主站台 A（線上、核心貨幣 USDT）底下有子站台 A1；備妥 A 的『站長』與『管理員』後台帳號各一（所屬站台皆為 A）。A1 目前沒有進行中或排程中的紅包活動
+    - 由 A 的管理員切到 A1 建立活動『RP-SUB』（永久、活動幣種 USDT、預設規則門檻 100／上限 5／固定 10／稽核 1、總預算 5000），並讓 A1 的一名既有會員結算有效流水貢獻 100，使紅包明細至少有 1 筆紅包；記下
+      RP-SUB 的活動識別（供 API 呼叫使用，取得方式由工程告知）
+    - 【環境註記】CLR-REDPACKET-054 已回答：線上站長在紅包功能的範圍為自身站台、不含子站台，與 SPEC-ROLEPERM-001@0.2 通則（站長管轄含子站台）不一致，PM 以文件問題另行處理中；本案依 CLR-054
+      的回答設計（沿用 TC-REDPACKET-178 的做法）。若 PM 最後改採通則，本案步驟 2～6 的預期需修訂
+    test_data:
+    - name: RP-SUB
+      value: A1、永久、門檻 100／上限 5／固定 10／稽核 1／總預算 5000
+    - name: 站長 API 動作
+      value: 追加預算 6000、取消排程、查詢紅包明細、匯出 CSV、新增活動（目標站台 A1）
+    steps:
+    - n: 1
+      action: 【對照組】以 A 的管理員身分用 API 工具對 RP-SUB 呼叫『查詢紅包明細』API
+      expected: 成功回傳 RP-SUB 的紅包資料（至少 1 筆）——管理員範圍含其子站台，並確認 API 呼叫方式正確（之後的拒絕不是因為請求格式錯誤）
+    - n: 2
+      action: 以 A 的站長身分，用 API 工具對 RP-SUB 呼叫『追加預算』API（新總預算 6000）
+      expected: 後端拒絕並回傳『無權限』；RP-SUB 總預算仍 5000
+    - n: 3
+      action: 站長身分對 RP-SUB 呼叫『取消排程』API
+      expected: 後端拒絕並回傳『無權限』；RP-SUB 仍為進行中
+    - n: 4
+      action: 站長身分對 RP-SUB 呼叫『查詢紅包明細』API
+      expected: 後端拒絕並回傳『無權限』，不回傳任何紅包資料
+    - n: 5
+      action: 站長身分對 RP-SUB 呼叫『匯出 CSV』API
+      expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+    - n: 6
+      action: 站長身分呼叫『新增紅包活動』API，目標站台為 A1（合法資料：活動名稱『RP-SUB-NEW』、區間約 100 天後～約 130 天後、其餘設定同 RP-SUB，時段不與 RP-SUB 重疊）
+      expected: 後端拒絕並回傳『無權限』；A1 沒有新增活動
+    - n: 7
+      action: 以 A 的管理員切到 A1，檢視『活動排程 > 紅包活動』與 RP-SUB 紅包明細
+      expected: RP-SUB 總預算 5000、狀態『進行中』、紅包明細筆數與步驟 1 相同；沒有『RP-SUB-NEW』（資料不變）
+    - n: 8
+      action: 清理：A 的管理員於 A1 對 RP-SUB 點『取消排程』並於確認視窗點『確認取消』
+      expected: 已取消排程
+    expected_result: 線上站長在紅包功能的範圍為自身站台、不含子站台（CLR-REDPACKET-054）：略過畫面直接以 API 對子站台 A1 的紅包活動追加預算、取消排程、查詢紅包明細、匯出 CSV、新增活動，後端一律拒絕並回傳『無權限』，A1
+      的活動資料不變、不回傳資料；對照組中管理員可查詢 A1。
+    expected_result_spec_reference:
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      location: §十、業務規則（第 265 行）
+      quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §十、業務規則（第 265 行）
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 305 行）
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §四、管轄範圍（scope）（第 120 行）
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q04
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-REDPACKET-054
+        answer_rev: 0
+        answer_sha256: 69116d15d17ce9ff5b5ae9017ff34b4e6294ffceda1bae181521b986c17c5f0c
+    source_refs:
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §十、業務規則（第 265 行）
+      quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 305 行）
+      quote: 管理員含其子站台
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §四、管轄範圍（scope）（第 120 行）
+      quote: 越權操作一律回「無權限」
+    - type: clarification
+      clarification_id: CLR-REDPACKET-054
+      answer_rev: 0
+      answer_sha256: 69116d15d17ce9ff5b5ae9017ff34b4e6294ffceda1bae181521b986c17c5f0c
+      quote: 線上站長在紅包功能的範圍為自身站台、不含子站台
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-15；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-15：TC-REDPACKET-178 只從畫面測站長對子站台（選單不提供或不顯示只記錄），TC-REDPACKET-179 的越權 API 只測子站台管理員對上層站台與無權限角色；站長略過畫面直接以
+      API 操作子站台的情況沒有 TC。預期的依據：CLR-REDPACKET-054（線上站長在紅包功能的範圍為自身站台、不含子站台）＋越權操作一律由後端拒絕並回『無權限』、資料不變（SPEC-ROLEPERM-001 第 265 行，REQ-023
+      Q03）。揭露：REQ-023 Q04 在 R001 仍標為 conflict（E2，尚無採用結論），本案的『站長 × 子站台 ＝ 不可』是引用 CLR-054 的已回答結論，與 TC-178 同一做法，並未引用 Q04 的任一衝突一側；文件不一致已由
+      PM 另案處理，一旦 PM 改採通則本案需修訂。步驟 1 的對照組（管理員可查子站台，Q02『管理員含其子站台』）用來證明 API 工具與識別正確，使後面的拒絕可歸因於權限而非請求錯誤；步驟 7 驗證資料不變。與 TC-179 的差異：身分是站長、動作多了匯出
+      CSV 與新增活動。
+  - draft_id: TC-DRAFT-01M4RHPWCHQT8FGJCR280XK1NP
+    title: 無權限帳號與管轄範圍外的帳號以 API 呼叫紅包明細『匯出 CSV』：被後端拒絕『無權限』、不回傳資料
+    description: 無權限帳號與管轄範圍外的帳號以 API 呼叫紅包明細『匯出 CSV』：被後端拒絕『無權限』、不回傳資料
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-023
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0235
+    - AC-REDPACKET-0233
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: api
+    test_types:
+    - security
+    - negative
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+      遊戲』
+    - 主站台 A（線上、核心貨幣 USDT）底下有子站台 A1；A 目前沒有進行中或排程中的紅包活動。由 A 的管理員在 A 建立活動『RP-CSV-A』（永久、活動幣種 USDT、預設規則門檻 100／上限 5／固定 10／稽核 1、總預算
+      5000），並讓 A 的一名既有會員結算有效流水貢獻 100，使紅包明細至少有 1 筆紅包；記下 RP-CSV-A 的活動識別（取得方式由工程告知）
+    - 【身分一】無優惠活動管理權限的後台帳號（自行從環境中選定，例如 TC-REDPACKET-056 使用的角色），所屬站台為 A
+    - 【身分二】子站台 A1 的管理員帳號（其管轄範圍不含上層站台 A，A 對它是管轄範圍外）
+    - 【對照組身分】A 的管理員帳號
+    test_data:
+    - name: 身分一
+      value: 無優惠活動管理權限的後台帳號（所屬站台 A）
+    - name: 身分二
+      value: 子站台 A1 的管理員（對 A 為管轄範圍外）
+    - name: 動作
+      value: 匯出 CSV API
+    steps:
+    - n: 1
+      action: 【對照組】以 A 的管理員身分用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+      expected: 成功，CSV 資料列數等於紅包明細筆數（至少 1 筆）；確認 API 呼叫方式正確
+    - n: 2
+      action: 以身分一（無權限帳號）用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+      expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+    - n: 3
+      action: 以身分二（子站台 A1 的管理員，對 A 是管轄範圍外）用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+      expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+    - n: 4
+      action: 以 A 的管理員檢視 RP-CSV-A 的狀態與紅包明細筆數
+      expected: 狀態『進行中』、紅包明細筆數與步驟 1 相同（資料不變）
+    - n: 5
+      action: 清理：A 的管理員對 RP-CSV-A 點『取消排程』並於確認視窗點『確認取消』
+      expected: 已取消排程
+    expected_result: 匯出 CSV 與新增活動同權限：無優惠活動管理權限的帳號、以及管轄範圍外的帳號（子站台 A1 的管理員對上層站台 A）直接呼叫匯出 CSV API，後端拒絕並回傳『無權限』、不回傳資料；有權限的管理員（對照組）可匯出。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §角色與權限（第 305 行）
+      quote: 追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 305 行）
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §十、業務規則（第 265 行）
+    - requirement_id: REQ-REDPACKET-023
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §四、管轄範圍（scope）（第 120 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 305 行）
+      quote: 追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §十、業務規則（第 265 行）
+      quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §四、管轄範圍（scope）（第 120 行）
+      quote: 越權操作一律回「無權限」
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-15（匯出 CSV API）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-15 後半：TC-REDPACKET-179 的越權 API 只測了新增／追加預算／取消排程／查詢紅包明細，沒有『匯出 CSV』API。依據：匯出 CSV 與新增活動同權限（第 305 行，REQ-023
+      Q02），以及越權操作一律由後端拒絕並回『無權限』、資料不變（SPEC-ROLEPERM-001 第 265、120 行，REQ-023 Q03）。揭露：AC-0235 只列出『新增、追加預算、取消排程或紅包明細 API』，匯出 CSV
+      是由第 305 行『皆與新增活動同權限』＋越權規則推得，尚無專屬 AC。對照組用 A 的管理員確認 API 可用，使拒絕可歸因於權限。
+  - draft_id: TC-DRAFT-01M4RHPWFEC6P4SC3DN7ZJS4ND
+    title: 機台場館站長以 API 直接操作管轄範圍外的場館 V3：新增、追加預算、取消排程、查詢紅包明細、匯出 CSV 一律被後端拒絕『無權限』、V3 資料不變
+    description: 機台場館站長以 API 直接操作管轄範圍外的場館 V3：新增、追加預算、取消排程、查詢紅包明細、匯出 CSV 一律被後端拒絕『無權限』、V3 資料不變
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-024
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0243
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: api
+    test_types:
+    - security
+    - negative
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 站長 S 的管轄範圍內有兩個機台場館 V1、V2；另有一個不在 S 管轄範圍內的機台場館 V3（皆自行從環境中選定）；若環境中找不到站長 S 管轄範圍外的機台場館，本案無法執行，記錄為環境不足
+    - V1、V3 兩個場館各一個進行中的紅包活動（各場館建立前先確認沒有進行中或排程中的紅包活動）：V1 的『RP-S-V1』由站長 S 建立；V3 的『RP-S-V3』由可管轄 V3 的角色（例如 V3 所屬的管理員或站長，自行選定）建立；兩者皆為永久、重置方式每日、預設規則門檻
+      300／上限 5／固定 20／稽核 0、總預算 5000；各場館內一台機台帳號結算有效流水貢獻 300，使紅包明細至少有 1 筆紅包；記下兩個活動的識別（取得方式由工程告知）
+    test_data:
+    - name: 場館
+      value: V1、V2 在站長 S 管轄內；V3 在管轄外
+    - name: 站長 API 動作（V3）
+      value: 追加預算 6000、取消排程、查詢紅包明細、匯出 CSV、新增活動
+    steps:
+    - n: 1
+      action: 【對照組】以站長 S 的身分用 API 工具對 V1 的 RP-S-V1 呼叫『查詢紅包明細』API
+      expected: 成功回傳 RP-S-V1 的紅包資料（V1 在 S 的管轄範圍內）；確認 API 呼叫方式正確
+    - n: 2
+      action: 站長 S 用 API 工具對 V3 的 RP-S-V3 呼叫『追加預算』API（新總預算 6000）
+      expected: 後端拒絕並回傳『無權限』；RP-S-V3 總預算仍 5000
+    - n: 3
+      action: 站長 S 對 RP-S-V3 呼叫『取消排程』API
+      expected: 後端拒絕並回傳『無權限』；RP-S-V3 仍為進行中
+    - n: 4
+      action: 站長 S 對 RP-S-V3 呼叫『查詢紅包明細』API
+      expected: 後端拒絕並回傳『無權限』，不回傳任何紅包資料
+    - n: 5
+      action: 站長 S 對 RP-S-V3 呼叫『匯出 CSV』API
+      expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+    - n: 6
+      action: 站長 S 呼叫『新增紅包活動』API，目標為 V3（合法資料：活動名稱『RP-S-V3-NEW』、區間約 100 天後～約 130 天後、其餘設定同 RP-S-V3，時段不與 RP-S-V3 重疊）
+      expected: 後端拒絕並回傳『無權限』；V3 沒有新增活動
+    - n: 7
+      action: 以可管轄 V3 的角色檢視 V3 的『活動排程 > 紅包活動』與 RP-S-V3 紅包明細
+      expected: RP-S-V3 總預算 5000、狀態『進行中』、紅包明細筆數與設定時相同；沒有『RP-S-V3-NEW』（資料不變）
+    - n: 8
+      action: 清理：以各場館有權限的角色，分別對 V1 的 RP-S-V1 與 V3 的 RP-S-V3 取消排程（確認視窗點『確認取消』）
+      expected: 已取消排程
+    expected_result: 機台場館站長的權限範圍為其管轄範圍：對不在管轄範圍內的場館 V3，直接呼叫新增紅包活動、追加預算、取消排程、查詢紅包明細、匯出 CSV API，後端一律拒絕並回傳『無權限』，V3 的活動資料不變、不回傳資料；對管轄範圍內的
+      V1 查詢則可成功。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §角色與權限（第 315 行）
+      quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 312 行）
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 311 行）
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 315 行）
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §十、業務規則（第 265 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 312 行）
+      quote: '| 活動排程列表、紅包明細、匯出 CSV | 管轄範圍 | 管轄範圍 | 自身場館（唯讀，可匯出 CSV） |'
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 311 行）
+      quote: '| 新增紅包活動／追加預算／取消排程 | 可操作 | 可操作 | 不可 |'
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 315 行）
+      quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §十、業務規則（第 265 行）
+      quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: medium
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-16（站長）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-16 前半：機台場館越權 API 目前只測了操作員（TC-REDPACKET-057／058）。站長或管理員對管轄範圍外場館直接呼叫新增、追加預算、取消排程、紅包明細、匯出 CSV 沒有 TC。依據：機台權限表站長的『新增紅包活動／追加預算／取消排程』與『活動排程列表、紅包明細、匯出
+      CSV』都以『管轄範圍』為界（第 311、312 行，REQ-024 Q01）；越權操作（含直接呼叫 API）一律由後端拒絕並回『無權限』、資料不變（第 315 行、SPEC-ROLEPERM-001 第 265 行，REQ-024
+      Q03）。V3 在站長 S 管轄範圍外，所以屬越權。RF 原文以『站長 或 管理員』為例，本案只實測站長（管理員的管轄邊界依其站台樹，環境需另備）；不外推到其他角色。AC-0245 的 given 是操作員，本案是站長的同一規則，沒有專屬
+      AC，已在此揭露。對照組（S 查 V1 成功）與最後的資料不變檢查，使拒絕可歸因於管轄範圍而非請求錯誤。
+  - draft_id: TC-DRAFT-01M4RHPWJ8396FBGQKCPHS0SH2
+    title: 機台場館操作員以 API 匯出非自身場館的紅包明細 CSV：被後端拒絕『無權限』、不回傳資料（對照：匯出自身場館成功）
+    description: 機台場館操作員以 API 匯出非自身場館的紅包明細 CSV：被後端拒絕『無權限』、不回傳資料（對照：匯出自身場館成功）
+    product: ba-admin
+    functional_area: REDPACKET
+    requirement_ids:
+    - REQ-REDPACKET-024
+    acceptance_criteria_ids:
+    - AC-REDPACKET-0245
+    - AC-REDPACKET-0246
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    test_level: api
+    test_types:
+    - security
+    - negative
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    preconditions:
+    - 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與
+      HTTP 狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+    - 機台場館 V1、V2（同一站長可見，自行從環境中選定）；備妥 V1 的操作員後台帳號；V1、V2 各一個進行中的紅包活動（建立前先確認沒有進行中或排程中的紅包活動）：以站長建立『RP-OPX-V1』『RP-OPX-V2』，永久、重置方式每日、預設規則門檻
+      300／上限 5／固定 20／稽核 0、總預算 5000；各場館內一台機台帳號結算有效流水貢獻 300，使紅包明細至少有 1 筆紅包；記下兩個活動的識別（取得方式由工程告知）
+    test_data:
+    - name: 身分
+      value: V1 操作員
+    - name: 動作
+      value: 匯出 CSV API：自身場館 V1（對照）／非自身場館 V2（越權）
+    steps:
+    - n: 1
+      action: 【對照組】以 V1 操作員的身分用 API 工具對 V1 的 RP-OPX-V1 呼叫『匯出 CSV』API
+      expected: 成功，CSV 資料列數等於 V1 該活動紅包明細的筆數（至少 1 筆）——操作員可匯出自身場館的查詢結果；確認 API 呼叫方式正確
+    - n: 2
+      action: 以 V1 操作員的身分用 API 工具對 V2 的 RP-OPX-V2 呼叫『匯出 CSV』API
+      expected: 後端拒絕並回傳『無權限』，不回傳 V2 的 CSV 內容
+    - n: 3
+      action: 以站長檢視 V2 的 RP-OPX-V2 紅包明細與活動狀態
+      expected: RP-OPX-V2 狀態『進行中』、總預算 5000、紅包明細筆數不變（資料不變）
+    - n: 4
+      action: 清理：站長分別對 V1、V2 的活動取消排程（確認視窗點『確認取消』）
+      expected: 已取消排程
+    expected_result: 機台場館操作員只能匯出自身場館的紅包明細 CSV：以 API 匯出自身場館活動成功；匯出非自身場館活動的 CSV，後端拒絕並回傳『無權限』、不回傳資料、對方場館資料不變。
+    expected_result_spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §角色與權限（第 312 行）
+      quote: 自身場館（唯讀，可匯出 CSV）
+    decision_refs:
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 312 行）
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-REDPACKET-001
+        spec_version: '0.2'
+        content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+        location: §角色與權限（第 315 行）
+    - requirement_id: REQ-REDPACKET-024
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-ROLEPERM-001
+        spec_version: '0.2'
+        content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+        location: §十、業務規則（第 265 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 312 行）
+      quote: 自身場館（唯讀，可匯出 CSV）
+    - type: spec
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+      location: §角色與權限（第 315 行）
+      quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+    - type: spec
+      spec_id: SPEC-ROLEPERM-001
+      spec_version: '0.2'
+      content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+      location: §十、業務規則（第 265 行）
+      quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+    assumptions: []
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: low
+    stability: unknown
+    source: spec_workflow
+    source_ref: RF-16（操作員匯出 CSV）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+    design_rationale: RF-16 後半：操作員以 API 匯出非自身場館的紅包明細 CSV 沒有 TC（TC-REDPACKET-058 只測查詢紅包明細的越權）。依據：操作員的『活動排程列表、紅包明細、匯出 CSV』範圍是『自身場館（唯讀，可匯出
+      CSV）』（第 312 行，REQ-024 Q02）；越權操作（含直接呼叫 API）一律由後端拒絕並回『無權限』、資料不變（第 315 行）。揭露：AC-0245 列的越權是『新增紅包活動、追加預算、取消排程 API，或查詢非自身場館的紅包明細』，匯出
+      CSV 是由第 312 行的範圍限定＋第 315 行的越權規則推得，沒有專屬 AC；AC-0246 是自身場館可匯出（本案的對照組）。對照組確保拒絕可歸因於場館範圍。範圍只寫到 CSV，不外推操作員其他頁面權限。
+history:
+- at: '2026-10-12T17:19:52Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-001

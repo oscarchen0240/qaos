@@ -1,0 +1,1443 @@
+artifact_id: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-003
+task_id: T2
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-10-12T17:14:20Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+references:
+- entity_type: Artifact
+  id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+- entity_type: Artifact
+  id: ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1
+- entity_type: Requirement
+  id: REQ-CASHFLOW-004
+- entity_type: Requirement
+  id: REQ-CASHFLOW-007
+- entity_type: Requirement
+  id: REQ-CASHFLOW-009
+- entity_type: Requirement
+  id: REQ-CASHFLOW-014
+- entity_type: Requirement
+  id: REQ-CASHFLOW-020
+- entity_type: Requirement
+  id: REQ-CASHFLOW-026
+- entity_type: Requirement
+  id: REQ-CASHFLOW-041
+- entity_type: Requirement
+  id: REQ-CASHFLOW-045
+- entity_type: Requirement
+  id: REQ-CASHFLOW-049
+requires_approval: null
+dispatch_packet_sha256: bfbc278271e9f71c097c4fc79f9b8201db936af6b8a0dc8f9849ad5d2847a5fe
+payload:
+  mode: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  testcases:
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 場館額度上限設為 0 代表不限制：開分 req-keyin 送出遠大於原額度的金額仍回 0-OK 入帳，不會被當成『上限為 0』而回 1-OVER LIMIT
+    requirement_ids:
+    - REQ-CASHFLOW-004
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0041
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: true
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+    test_data:
+    - name: S（場館所有機台帳號分數合計）
+      value: 依環境讀出
+      note: 下文 A = S + 100，剩餘額度恰為 100
+    - name: 對照開分金額
+      value: 101
+      note: 比剩餘額度 100 多 1，額度上限非 0 時必被拒
+    - name: 大額開分金額
+      value: 1000000
+      note: 遠大於 A；開分是單階段、由平台直接判定，沒有 req-cashin 那種客戶端回報金額的防禦預檢問題
+    - name: 額度上限（步驟 4 之後）
+      value: 0
+    steps:
+    - n: 1
+      action: 後台讀 M 目前分數，記為 B0；逐一讀出 M 所屬場館所有機台帳號的分數並加總，記為 S（含 M 的 B0）；並記下該場館現行的『額度上限』原值 Q_orig
+      expected: 取得 B0、S、Q_orig
+    - n: 2
+      action: 把 M 所屬場館的『額度上限』設為 A = S + 100（非 0；剩餘額度恰為 100）
+      expected: 額度上限 A 已儲存
+    - n: 3
+      action: 對照（額度上限非 0）：M 送出 req-keyin，金額 101（加計後合計 S + 101，超過 A 共 1 單位）
+      expected: 回 1-OVER LIMIT；後台讀 M 分數仍為 B0。同時確認 A 已即時生效；若回 0-OK，表示額度尚未生效或 S 讀值有誤，先向環境負責人確認，不要往下做
+    - n: 4
+      action: 把該場館『額度上限』改為 0
+      expected: 額度上限 0 已儲存
+    - n: 5
+      action: M 送出與步驟 3 完全相同的 req-keyin，金額 101
+      expected: 回 0-OK，M 分數 = B0 + 101。同一筆金額在額度上限非 0 時被拒、改為 0 後成立，差異只來自額度上限的設定值，不是金額本身
+    - n: 6
+      action: M 送出 req-keyin，金額 1000000（遠大於步驟 2 的 A）
+      expected: 回 0-OK，M 分數 = B0 + 101 + 1000000；不回 1-OVER LIMIT（額度上限 0 代表不限制，不是『上限為 0 所以任何金額都超過』）
+    - n: 7
+      action: 還原：把額度上限改回 Q_orig。M 留有的餘額（B0 + 1000101）若需歸零，可送 req-keyout（mode=all、throshold=0）全洗；此為清理，不列入判定
+    expected_result: 場館額度上限為非 0 的 A 時，超過剩餘額度的開分（101）被拒：回 1-OVER LIMIT、分數不變；同場館額度上限改為 0 後，同一筆 101 與遠大於原額度的 1000000 開分都回 0-OK
+      並入帳，不回 1-OVER LIMIT——0 代表不限制，不會被當成上限為 0。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 249 行）
+      quote: 設為 0 代表不限制
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（`req-keyin`）（第 352 行）
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（第 84 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 249 行）
+      quote: 設為 0 代表不限制
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（`req-keyin`）（第 352 行）
+      quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（第 84 行）
+      quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-01（開分路徑）
+    design_rationale: 補 T3RR RF-01：既有 TC-005 只測『額度恰等於上限／超過 1 單位』，沒有任何案例測額度上限 0。若實作把 0 當成真的上限 0，所有開分都被拒、整間場館無法營運。『設為 0 代表不限制』的明文只在
+      spec 第 249 行；RM 的 REQ-004 沒有對應的 AC 或決策點（RF-01 也指出這點），所以本案以 source_refs 引用第 249 行原文，decision_refs 掛 REQ-004 既有的 Q01（超限回
+      1-OVER LIMIT）作為對照步驟的依據。第 249 行同一格內『入金的判定與額度預留於請求階段』已被 CLR-CASHFLOW-005 作廢（Oscar 2026-10-12 決定文件未同步），本案只用『設為 0 代表不限制』這一句，不用入金時點那一句。技術
+      boundary_value：0 是 spec 明文定義的特殊設定值（不限制），與一般正數上限在比較邏輯上是不同分支，因此取 0 與 101／1000000 的前後對照；不是裝飾性標籤。步驟 3 先以非 0 額度探測生效，再用同一筆
+      101 改 0 後重送，避免『額度改了但沒生效』造成的誤判。未斷言的部分：額度上限改 0 是否即時生效（spec 未載明，已在 precondition 與步驟 3 的探測處理）；餘額讀取頁面位置（環境前提）。開分金額 1000000
+      是我選的『遠大於 A』的數值，不是 spec 規定值。與 TC-005 不重複：005 是正數上限的邊界，本案是特殊值 0。
+    draft_id: TC-DRAFT-01M4RHQCNRJ6KRRHTPATQTYR7C
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 場館額度上限設為 0 代表不限制：入金 end-cashin 同一筆實際清點金額在額度上限非 0 時回 1-OVER LIMIT，改為 0 後回 0-OK 入帳（req-cashin 兩次都只建立 PENDING）
+    requirement_ids:
+    - REQ-CASHFLOW-009
+    - REQ-CASHFLOW-007
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0091
+    - AC-CASHFLOW-0071
+    - AC-CASHFLOW-0072
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: true
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+    - 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+    - end-cashin 要帶『入鈔機實際清點金額』（CLR-CASHFLOW-005）；純 API 直連環境沒有實體入鈔機，以請求中帶入的清點金額欄位為準，回覆碼與分數是判定依據，『機台退鈔』只在有實體機台時另行確認
+    test_data:
+    - name: S（場館所有機台帳號分數合計）
+      value: 依環境讀出
+      note: 下文 A = S + 100
+    - name: req-cashin 金額 ＝ end-cashin 實際清點金額
+      value: 101
+      note: 兩者相同，避免觸及『清點金額與聲稱金額不同』的未定義邊界（RF-03 待澄清）
+    - name: 額度上限（步驟 4 之後）
+      value: 0
+    steps:
+    - n: 1
+      action: 後台讀 M 分數 B0；逐一讀出 M 所屬場館所有機台帳號的分數並加總為 S；記下該場館『額度上限』原值 Q_orig；把額度上限設為 A = S + 100（非 0）
+      expected: 取得 B0、S、Q_orig；額度上限 A 已儲存
+    - n: 2
+      action: 對照（額度上限非 0）：M 送出 req-cashin，金額 101
+      expected: 回 0-OK 並取得 TXID_1（req-cashin 階段不判定額度、不預留；AC-0071）；M 分數仍為 B0
+    - n: 3
+      action: M 送出 end-cashin，帶 TXID_1，實際清點金額 101（加計後合計 S + 101，超過 A 共 1 單位）
+      expected: 回 1-OVER LIMIT；後台讀 M 分數仍為 B0（不更新帳務；AC-0072）。同時確認 A 已即時生效。超限後 TXID_1 這筆 PENDING 的去向 spec 未定義（RF-06 待澄清），本案不斷言它的狀態，也不再用
+        TXID_1 重送
+    - n: 4
+      action: 把該場館『額度上限』改為 0
+      expected: 額度上限 0 已儲存
+    - n: 5
+      action: M 送出 req-cashin，金額 101（與步驟 2 相同），取得 TXID_2
+      expected: 回 0-OK 並取得 TXID_2
+    - n: 6
+      action: M 送出 end-cashin，帶 TXID_2，實際清點金額 101（與步驟 3 相同）
+      expected: 回 0-OK；後台讀 M 分數 = B0 + 101；4.1 查 TXID_2 為『已完成』（AC-0091：未超限則更新帳務、關閉 PENDING）。同一筆清點金額在額度上限非 0 時被退、改為 0 後成立，差異只來自額度上限設定值
+    - n: 7
+      action: 還原：把額度上限改回 Q_orig。TXID_1 留下的 PENDING 不處理、不依賴其狀態；M 餘額若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，此為清理，不列入判定
+    expected_result: end-cashin 以入鈔機實際清點金額判定額度上限：額度上限為非 0 的 A 時，同一筆 101 超過剩餘額度，回 1-OVER LIMIT、不更新帳務；額度上限改為 0 後，同一筆 101 回 0-OK、分數增加
+      101、該筆轉為已完成——0 代表不限制，end-cashin 路徑也不會把 0 當成上限 0。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 249 行）（額度判定時點以 CLR-CASHFLOW-005 為準：end-cashin 才判定；該行『入金於 req-cashin 判定並預留』的寫法已過時，只引用『設為 0
+        代表不限制』）
+      quote: 設為 0 代表不限制
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-009
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-005
+        answer_rev: 0
+        answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+    - requirement_id: REQ-CASHFLOW-007
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-005
+        answer_rev: 0
+        answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+    source_refs:
+    - &id001
+      type: clarification
+      clarification_id: CLR-CASHFLOW-005
+      answer_rev: 0
+      answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+      quote: 改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin 才依入鈔機實際清點金額判定額度上限，超限則退鈔
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 249 行）
+      quote: 設為 0 代表不限制
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-01（end-cashin 路徑，依 CLR-CASHFLOW-005）
+    design_rationale: 補 T3RR RF-01 的入金路徑。RF-01 要求 v0.2 起入金改在 end-cashin 判定（CLR-CASHFLOW-005），0＝不限制也要在這條路徑確認。『end-cashin 依實際清點金額判定、超限回
+      1-OVER LIMIT』的依據是 CLR-CASHFLOW-005（REQ-007／009 決策點由它裁決，RM 的 spec 側三處寫法互相衝突已被它取代）；『0 代表不限制』的依據是 spec 第 249 行，該行同一格內的
+      req-cashin 判定寫法已被 CLR-005 推翻，本案不引用那部分。RM 的 REQ-007／009 沒有『0＝不限制』的 AC。技術 boundary_value：理由同 TC-01（0 是明文特殊值，與正數上限是不同分支）。刻意把
+      req-cashin 聲稱金額與 end-cashin 清點金額設成相同的 101：『清點金額大於／小於聲稱金額時以誰為準』CLR 與 spec 都沒寫（RF-03，needs_clarification），不在本案假設。也刻意不用
+      1000000 這類大額：CLR-005 允許 req-cashin 做『極寬鬆的防禦性預檢』但門檻未定義（RF-03），大額可能撞到預檢而與 0＝不限制無關，用 101 與剩餘額度 100 的對照即可證明差異來自設定值。超限後那筆
+      PENDING 的去向與機台重送（RF-06）未定義，所以步驟 3 之後不再用 TXID_1，也不斷言其狀態。未驗證的機制假設：額度改動即時生效（用步驟 3 探測）、end-cashin 的清點金額欄位名稱（依 API 文件）。與
+      TC-008 v3／TC-011 v2 不重複：它們測正數上限的邊界與超限，本案測特殊值 0。
+    draft_id: TC-DRAFT-01M4RHQCNRZZ2QVGRGJQH6408J
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 合計含小數的額度臨界（開分）：同場館另一台留有 99.6、剩餘額度 100.4 時，開分 100.5 回 1-OVER LIMIT，100.4（恰等於上限）成立，成立後再開分 0.1 又回 1-OVER LIMIT
+    requirement_ids:
+    - REQ-CASHFLOW-004
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0041
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經
+      spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+    - 清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻
+      0＝洗出全部餘額』）
+    - 機台 N：與 M 同一場館的另一台既有機台（自行從環境中選定，狀態『啟用』），並取得 N 現行有效的機台憑證；N 用來持有小數餘額 99.6，M 用來送出臨界金額的開分
+    - 場館內除 N 以外的機台帳號分數皆為整數（步驟 4 會核對 S 的小數部分恰為 .6；不符就換一個場館）
+    test_data:
+    - name: N 佈置用的開分金額
+      value: 399.6
+      note: 再以門檻 100 全洗，餘數 99.6 留在 N（沿用 TC-CASHFLOW-111 的佈置手法）
+    - name: S（含 N 的 99.6 與 M 的 B0 在內的場館分數合計）
+      value: 依環境讀出
+      note: 小數部分應為 .6
+    - name: 額度上限 A
+      value: S + 100.4
+      note: S 的小數部分為 .6，所以 A 是整數
+    - name: 臨界開分金額
+      value:
+      - 100.5
+      - 100.4
+      - 0.1
+      note: 依序送出：超過 0.1、恰等於、成立後再加最小單位 0.1
+    steps:
+    - n: 1
+      action: 把 M 所屬場館的額度上限設為 0（排除額度干擾）；記下原值 Q_orig。若 N 目前分數不是 0，先用洗分清空 N（req-keyout，mode=all、throshold=0，不核實）
+      expected: N 分數為 0
+    - n: 2
+      action: 【佈置】N 送出 req-keyin，金額 399.6；記錄回覆碼與 N 分數，作為步驟 7 閘門 G 的依據
+      expected: 回 0-OK，N 分數恰為 399.6（同時證明平台接受一位小數的開分）。若被拒（例如 6-BAD DATA/FORMAT）或被取整，改請環境負責人以工具構造 399.6 並照常繼續佈置，但閘門 G 視為不成立（步驟
+        8～10 記為受阻）；仍無法構造則整案受阻，不可改用其他值
+    - n: 3
+      action: 【佈置】N 送出 req-keyout，mode=all、throshold=100
+      expected: 回 0-OK，value 為 300；N 分數 = 99.6（餘數留在帳號上）。此檢查點只確認佈置成立，不列入本案判定
+    - n: 4
+      action: 後台讀 M 分數 B0；逐一讀出場館所有機台帳號的分數（含 N 的 99.6）並加總為 S
+      expected: S 的小數部分恰為 .6；否則換場館重做
+    - n: 5
+      action: 把額度上限設為 A = S + 100.4（整數；剩餘額度 100.4）
+      expected: 額度上限 A 已儲存
+    - n: 6
+      action: 探測生效：M 送出 req-keyin，金額 101（超過剩餘額度 0.6）
+      expected: 回 1-OVER LIMIT；M 分數仍為 B0。若回 0-OK，表示額度未生效或 S 讀值有誤，先確認，不要往下做
+    - n: 7
+      action: 【閘門 G】判定步驟 2：只有『N 送出 req-keyin 399.6 實際回 0-OK，且 N 分數恰為 399.6』（等於證明平台接受一位小數的開分）才執行步驟 8～10；否則步驟 8～10 一律記為『受阻』，不判定額度缺陷（req-keyin
+        是否接受小數金額 spec 未定義，被拒或取整時回 6-BAD DATA/FORMAT 或金額不符，與額度判定無關）
+      expected: G 成立 → 繼續步驟 8；G 不成立 → 記『受阻』，跳到步驟 11
+    - n: 8
+      action: （G 成立才做）M 送出 req-keyin，金額 100.5（超過剩餘額度 0.1）
+      expected: 回 1-OVER LIMIT；M 分數仍為 B0（不寫入任何帳務異動）
+    - n: 9
+      action: （G 成立才做）M 送出 req-keyin，金額 100.4（加計後合計恰等於 A）
+      expected: 回 0-OK；M 分數 = B0 + 100.4；場館分數合計 = A（恰等於上限不算超過）
+    - n: 10
+      action: （G 成立才做）M 送出 req-keyin，金額 0.1（此時場館已恰在上限，再多 0.1 即超過）
+      expected: 回 1-OVER LIMIT；M 分數仍為 B0 + 100.4
+    - n: 11
+      action: 還原：額度上限改回 Q_orig；清理 M、N 的餘額（req-keyout，mode=all、throshold=0，不核實），不列入判定
+    expected_result: 全場館分數合計含小數（99.6）時，額度判定仍精確：剩餘額度 100.4，開分 100.5（多 0.1）被拒，回 1-OVER LIMIT、分數不變、不寫入任何帳務異動；開分 100.4（加計後恰等於上限）成立，回
+      0-OK；成立後再開分 0.1 又被拒，回 1-OVER LIMIT。不會把恰等於誤判為超過，也不會放行超過 0.1 的一筆。前提：平台接受一位小數的開分（以步驟 2 的 399.6 開分實際回 0-OK 為閘門）；閘門不成立時步驟
+      8～10 記為受阻，不判額度缺陷。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §開分（第 84 行）
+      quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（`req-keyin`）（第 352 行）
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（第 84 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（第 84 行）
+      quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（`req-keyin`）（第 352 行）
+      quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-02（開分路徑）
+    design_rationale: 補 T3RR RF-02：v0.2 起分數可帶小數（399.6），額度判定的基準是全場館分數合計，既有 TC-005 的『恰等於上限』臨界案例全是整數。合計含小數時若以浮點比較，可能把恰等於誤判為超過，或放行超過
+      0.1 的一筆。expected 依據：『合計超過額度上限才拒絕』（第 84 行）與『超過回 1-OVER LIMIT、不寫入任何帳務異動』（第 352 行）；『恰等於上限不算超過』是『超過』一詞的字面推論，已有 TC-005 以整數採同一推論。技術
+      boundary_value：邊界就是 spec 明定的『超過額度上限』比較，測 剩餘額度 0.6（101）、0.1（100.5）、恰等於（100.4）、成立後 +0.1 四個鄰近點。小數佈置的未驗證前提（已寫入 preconditions，非
+      spec 明文）：req-keyin 是否接受帶小數金額、如何構造 99.6 餘額，spec 未定義；採 TC-CASHFLOW-111 的既有佈置手法並要求無法精確構造時記『受阻』。只用一位小數；小數位數上限、進位規則未定義（RF-05
+      待澄清），不在本案斷言。S 小數部分必須是 .6 的核對，是為了讓 A 是整數（額度上限欄位能否填小數 spec 也未定義，所以刻意避免填小數）。【iteration 1 修訂】G-TVAL 指出：受測請求（100.5／100.4／0.1）本身就是小數開分，而
+      spec 沒有定義 req-keyin 是否接受小數；若步驟 2 的小數開分被拒、改用工具佈置 N，平台對步驟 8～10 可能回 6-BAD DATA/FORMAT 或取整，會被誤判成額度缺陷。因此在步驟 7 加閘門 G：只有步驟
+      2 的 399.6 開分實際回 0-OK 且 N 分數恰為 399.6（等於證明平台接受一位小數開分）才執行步驟 8～10，否則記受阻、不判定。步驟 6 的整數探測（101）不依賴小數，仍在閘門之前執行。取捨：未改成整數開分搭配小數剩餘額度，因為那會失去『恰等於上限』的檢查點；整數入鈔版本已由
+      TC-04 涵蓋。RF-02 另提 end-cashin 路徑，拆成 TC-04。與 TC-005 v4 不重複：005 全為整數。
+    draft_id: TC-DRAFT-01M4RHQCNSB3FVAJS1BW49052Y
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 合計含小數的額度臨界（end-cashin）：同場館另一台留有 99.4、剩餘額度 100.6 時，整數清點金額 101 回 1-OVER LIMIT，100 成立，成立後再入 1 回 1-OVER LIMIT
+    requirement_ids:
+    - REQ-CASHFLOW-009
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0091
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經
+      spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+    - 清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻
+      0＝洗出全部餘額』）
+    - 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+    - 機台 N：與 M 同一場館的另一台既有機台（自行從環境中選定，狀態『啟用』），並取得 N 現行有效的機台憑證；N 用來持有小數餘額 99.4，M 用來送出入金
+    - 場館內除 N 以外的機台帳號分數皆為整數（步驟 4 會核對 S 的小數部分恰為 .4；不符就換一個場館）
+    - 實體入鈔機只會清點出整數面額的紙鈔，所以本案的 end-cashin 清點金額一律用整數，小數只出現在『剩餘額度』
+    test_data:
+    - name: N 佈置用的開分金額
+      value: 399.4
+      note: 再以門檻 100 全洗，餘數 99.4 留在 N
+    - name: S（含 N 的 99.4 與 M 的 B0 在內的場館分數合計）
+      value: 依環境讀出
+      note: 小數部分應為 .4
+    - name: 額度上限 A
+      value: S + 100.6
+      note: S 的小數部分為 .4，所以 A 是整數
+    - name: end-cashin 實際清點金額（依序）
+      value:
+      - 101
+      - 100
+      - 1
+      note: 各自對應新的 req-cashin（聲稱金額與清點金額相同）
+    steps:
+    - n: 1
+      action: 把 M 所屬場館的額度上限設為 0（排除額度干擾）；記下原值 Q_orig。若 N 目前分數不是 0，先用洗分清空 N（req-keyout，mode=all、throshold=0，不核實）
+      expected: N 分數為 0
+    - n: 2
+      action: 【佈置】N 送出 req-keyin，金額 399.4
+      expected: 回 0-OK，N 分數 = 399.4；若被拒或被取整，依前提處理（受阻，不可改用其他值）
+    - n: 3
+      action: 【佈置】N 送出 req-keyout，mode=all、throshold=100
+      expected: 回 0-OK，value 為 300；N 分數 = 99.4。此檢查點只確認佈置成立，不列入本案判定
+    - n: 4
+      action: 後台讀 M 分數 B0；逐一讀出場館所有機台帳號的分數（含 N 的 99.4）並加總為 S
+      expected: S 的小數部分恰為 .4；否則換場館重做
+    - n: 5
+      action: 把額度上限設為 A = S + 100.6（整數；剩餘額度 100.6）
+      expected: 額度上限 A 已儲存
+    - n: 6
+      action: M 送出 req-cashin，金額 101，取得 TXID_1；接著送出 end-cashin（TXID_1，實際清點金額 101，超過剩餘額度 0.4）
+      expected: req-cashin 回 0-OK；end-cashin 回 1-OVER LIMIT；M 分數仍為 B0。超限後 TXID_1 的去向 spec 未定義（RF-06），本案不斷言、不再重送
+    - n: 7
+      action: M 送出 req-cashin，金額 100，取得 TXID_2；接著送出 end-cashin（TXID_2，實際清點金額 100，低於剩餘額度 0.6）
+      expected: end-cashin 回 0-OK；M 分數 = B0 + 100；場館分數合計 = A − 0.6
+    - n: 8
+      action: M 送出 req-cashin，金額 1，取得 TXID_3；接著送出 end-cashin（TXID_3，實際清點金額 1，大於此時剩餘額度 0.6）
+      expected: end-cashin 回 1-OVER LIMIT；M 分數仍為 B0 + 100。若回 0-OK，表示剩餘額度 0.6 被四捨五入成 1 之類的取整誤差，記為缺陷
+    - n: 9
+      action: 還原：額度上限改回 Q_orig；清理 M、N 的餘額（req-keyout，mode=all、throshold=0，不核實），不列入判定。TXID_1、TXID_3 留下的 PENDING 不處理
+    expected_result: 全場館分數合計含小數（99.4）、剩餘額度為 100.6 時，end-cashin 依整數實際清點金額精確判定：101（多 0.4）回 1-OVER LIMIT、不更新帳務；100 回 0-OK、分數增加
+      100；成立後剩餘額度 0.6，再入 1 回 1-OVER LIMIT。不會把剩餘額度取整後誤放行。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 249 行）（額度判定時點以 CLR-CASHFLOW-005 為準：end-cashin 才判定；只引用『合計超過上限時拒絕』）
+      quote: 開分與入金加計後，全場館機台分數餘額合計超過上限時拒絕
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-009
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-005
+        answer_rev: 0
+        answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+    source_refs:
+    - *id001
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 249 行）
+      quote: 開分與入金加計後，全場館機台分數餘額合計超過上限時拒絕
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-02（end-cashin 路徑，整數入鈔＋小數剩餘額度）
+    design_rationale: 補 T3RR RF-02 的 end-cashin 路徑（RF-02 原文：若入鈔金額只能是整數，就改用帶小數的剩餘額度搭配整數入鈔）。特意把 N 的餘數設為 99.4（而不是 TC-03 的 99.6），讓剩餘額度的小數部分是
+      .6：這樣整數清點金額 101（差 0.4，應拒）與 1（在剩餘 0.6 時應拒）都能分辨出『四捨五入到最近整數』的取整錯誤，而 TC-03 用 .4 的剩餘額度分辨另一個方向（向下／向上取整），兩案互補而非重複。依據：end-cashin
+      以實際清點金額判定額度的時點來自 CLR-CASHFLOW-005（REQ-009 決策點的裁決來源），『合計超過上限時拒絕』來自第 249 行同一格的前半句，該格後半句『入金於 req-cashin 判定並預留』已被 CLR-005
+      推翻，不引用。技術 boundary_value：邊界是『超過額度上限』比較，取鄰近點 101（超過 0.4）、100（低於 0.6）、1（超過 0.4）。未驗證前提（preconditions 已標）：小數餘額的佈置方式（同 TC-03）、end-cashin
+      清點金額欄位名稱。刻意讓聲稱金額等於清點金額，避開 RF-03（清點與聲稱不同）與 RF-06（超限後 PENDING 去向）的未定義範圍。
+    draft_id: TC-DRAFT-01M4RHQCNSY9PX5M2CSGER5W8T
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 門檻 100 全洗 399.6 後留下的餘數 99.6：再以門檻 100 全洗回 1-NO CREDITS 洗不出，按結算出金則全額領回 99.6（含小數）、餘額歸 0、交易紀錄 -99.6
+    requirement_ids:
+    - REQ-CASHFLOW-014
+    - REQ-CASHFLOW-020
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0142
+    - AC-CASHFLOW-0203
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: medium
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經
+      spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+    - 清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻
+      0＝洗出全部餘額』）
+    - 出金不套門檻、不需要 throshold；過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout，本案以直接呼叫機台 API 等效驗證平台端行為
+    test_data:
+    - name: 佈置用開分金額
+      value: 399.6
+    - name: 洗分門檻 throshold
+      value: 100
+    - name: 預期餘數
+      value: 99.6
+    - name: 預期出金核可金額
+      value: 99.6
+    - name: 預期交易紀錄金額
+      value: -99.6
+    steps:
+    - n: 1
+      action: 若 M 目前分數不是 0，先用洗分清空（req-keyout，mode=all、throshold=0，不核實）
+      expected: M 分數為 0
+    - n: 2
+      action: 【佈置】M 送出 req-keyin，金額 399.6
+      expected: 回 0-OK，M 分數 = 399.6；若被拒或被取整，依前提處理（受阻，不可改用其他值）
+    - n: 3
+      action: 【佈置】M 送出 req-keyout，mode=all、throshold=100
+      expected: 回 0-OK，value 為 300；M 分數 = 99.6。此檢查點只確認佈置成立（情境同 TC-CASHFLOW-111），不列入本案判定
+    - n: 4
+      action: M 再送出 req-keyout，mode=all、throshold=100（餘數 99.6 不足一個門檻單位 100）
+      expected: 回 1-NO CREDITS（可洗金額為 0）；後台讀 M 分數仍為 99.6（餘數沒有被清除或取整）
+    - n: 5
+      action: M 送出 req-cashout
+      expected: 回 0-OK；核可金額為 99.6（含小數；不取整為 99 或 100，也不回 1-NO CREDITS）；取得 TXID_1
+    - n: 6
+      action: M 送出 end-cashout，帶 TXID_1
+      expected: 回 0-OK
+    - n: 7
+      action: 後台讀 M 分數；4.1 查看這筆機台出金（TXID_1）的金額
+      expected: M 分數為 0；這筆機台出金金額為 -99.6
+    - n: 8
+      action: 還原：額度上限改回原值（不影響判定）
+    expected_result: 餘額 399.6、門檻 100 全洗後餘數 99.6 留在機台帳號：再以門檻 100 全洗可洗金額為 0，回 1-NO CREDITS、餘數不變；改按結算出金則核可金額為全部餘額 99.6（含小數、不取整），機台餘額歸
+      0，交易紀錄金額 -99.6。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 252 行）
+      quote: 餘數單獨存在時可洗金額為 0、無法洗出，須待餘額再累積（或按結算出金全額領回）
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-014
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §業務規則與驗證（本包相關）（第 252 行）
+    - requirement_id: REQ-CASHFLOW-020
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+    - requirement_id: REQ-CASHFLOW-020
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（第 168 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 252 行）
+      quote: 餘數單獨存在時可洗金額為 0、無法洗出，須待餘額再累積（或按結算出金全額領回）
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+      quote: 餘額帶小數時核可金額照記含小數（例 399.6），不取整
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（第 168 行）
+      quote: 餘額帶小數時，收據面額照記實際餘額（含小數）
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-04（餘數 99.6）
+    design_rationale: 補 T3RR RF-04：既有 TC-111 只驗證門檻 100 全洗 399.6 後留下 99.6，沒有接著驗證帶小數的餘數如何領回。expected 依據：第 252 行（餘數單獨存在時可洗金額為
+      0、無法洗出，須待餘額再累積或按結算出金全額領回）＋AC-0142；出金核可金額＝全部餘額且含小數（第 336 行、第 168 行，AC-0203 對 399.6 的同一規則）。『交易紀錄 -99.6』是把 AC-0203『交易紀錄金額為
+      -399.6』的同一規則套在 99.6 上，屬於同規則的類推，不是 spec 對 99.6 的逐字規定。技術 requirement_based：這是單一情境→單一結果的順序驗證，沒有條件組合或 spec 明定的數值邊界，所以不標
+      boundary_value（99.6 只是前案留下的餘數，不是刻意取的邊界點）。未驗證前提：小數餘額的佈置（同 TC-03，已標環境前提）；步驟 4 斷言『1-NO CREDITS』且餘額不變，不斷言是否寫入交易紀錄（那是 REQ-016／030
+      的範圍，不超出 AC-0142）。與 TC-111／TC-112 不重複：111 止於留下餘數、112 是 399.6 整筆出金，本案接續餘數的二次洗分與出金。
+    draft_id: TC-DRAFT-01M4RHQCNS6PDYBHDPSDRK9332
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 餘額 0.6（整數部分為 0）：以門檻 100 全洗回 1-NO CREDITS 洗不出，按結算出金核可金額 0.6、不被當成 0 而回 1-NO CREDITS，餘額歸 0、交易紀錄 -0.6
+    requirement_ids:
+    - REQ-CASHFLOW-014
+    - REQ-CASHFLOW-020
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0142
+    - AC-CASHFLOW-0203
+    - AC-CASHFLOW-0202
+    test_level: api
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: medium
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經
+      spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+    - 清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻
+      0＝洗出全部餘額』）
+    - 出金不套門檻、不需要 throshold；過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout，本案以直接呼叫機台 API 等效驗證平台端行為
+    test_data:
+    - name: 佈置用開分金額
+      value: 0.6
+      note: 整數部分為 0 的最小正餘額區
+    - name: 洗分門檻 throshold
+      value: 100
+    - name: 預期出金核可金額
+      value: 0.6
+    - name: 預期交易紀錄金額
+      value: -0.6
+    steps:
+    - n: 1
+      action: 若 M 目前分數不是 0，先用洗分清空（req-keyout，mode=all、throshold=0，不核實）
+      expected: M 分數為 0
+    - n: 2
+      action: 【佈置】M 送出 req-keyin，金額 0.6
+      expected: 回 0-OK，M 分數 = 0.6；若被拒或被取整為 0 或 1，依前提處理（受阻，不可改用其他值）
+    - n: 3
+      action: M 送出 req-keyout，mode=all、throshold=100
+      expected: 回 1-NO CREDITS（0.6 不足一個門檻單位，可洗金額為 0）；後台讀 M 分數仍為 0.6
+    - n: 4
+      action: M 送出 req-cashout
+      expected: 回 0-OK；核可金額為 0.6；不回 1-NO CREDITS（餘額 0.6 不是 0；『核可金額為 0 才回 1-NO CREDITS』）；取得 TXID_1
+    - n: 5
+      action: M 送出 end-cashout，帶 TXID_1
+      expected: 回 0-OK
+    - n: 6
+      action: 後台讀 M 分數；4.1 查看這筆機台出金（TXID_1）的金額
+      expected: M 分數為 0；這筆機台出金金額為 -0.6
+    - n: 7
+      action: 還原：額度上限改回原值（不影響判定）
+    expected_result: 餘額只有 0.6 時：以門檻 100 全洗可洗金額為 0，回 1-NO CREDITS、餘額不變；按結算出金核可金額為全部餘額 0.6（含小數），不會因整數部分為 0 而被當成 0 回 1-NO CREDITS，機台餘額歸
+      0，交易紀錄金額 -0.6。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（`req-cashout` → `end-cashout`）（第 339 行）
+      quote: 核可金額為 0 時回 `1-NO CREDITS`，不建立 PENDING、不寫入交易紀錄
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-014
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §業務規則與驗證（本包相關）（第 252 行）
+    - requirement_id: REQ-CASHFLOW-020
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+    - requirement_id: REQ-CASHFLOW-020
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（第 168 行）
+    - requirement_id: REQ-CASHFLOW-020
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（`req-cashout` → `end-cashout`）（第 339 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 252 行）
+      quote: 餘數單獨存在時可洗金額為 0、無法洗出，須待餘額再累積（或按結算出金全額領回）
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+      quote: 餘額帶小數時核可金額照記含小數（例 399.6），不取整
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（第 168 行）
+      quote: 餘額帶小數時，收據面額照記實際餘額（含小數）
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（`req-cashout` → `end-cashout`）（第 339 行）
+      quote: 核可金額為 0 時回 `1-NO CREDITS`，不建立 PENDING、不寫入交易紀錄
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-04（餘額 0.6）
+    design_rationale: 補 T3RR RF-04 的另一半：餘額整數部分為 0（0.6）。風險是實作若先取整再判斷『核可金額是否為 0』，會把 0.6 當成 0 而回 1-NO CREDITS，玩家就領不回這 0.6。expected
+      依據：洗分可洗金額為 0 → 1-NO CREDITS（第 252 行、AC-0142）；出金核可金額＝全部餘額、含小數（第 336／168 行），且『核可金額為 0 時才回 1-NO CREDITS』（第 339 行、AC-0202）。『0.6
+      不是 0 所以出金成立』是上述兩條規則的直接套用，不是 spec 對 0.6 的逐字規定；『交易紀錄 -0.6』同 TC-05，是 AC-0203 的類推。技術 boundary_value：邊界是 spec 明定的『核可金額為 0』的判斷（AC-0202），0.6
+      取在 0 與最小單位 1 之間，用來區分『等於 0』與『大於 0 但小於 1』。未驗證前提：req-keyin 接受 0.6（環境前提，無法構造則『受阻』）。本案不斷言 req-keyout 的小數門檻行為、小數位數與進位（RF-05
+      待澄清）。與 TC-023 不重複：023 是整數餘額 321 與餘額 0。
+    draft_id: TC-DRAFT-01M4RHQCNSGX441CF047Z5PS6V
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 機台被設為停用後：該機台待確認出金的 end-cashout 回 7-OUT OF SERVICE，PENDING 仍為待確認且分數不變；管理員仍可手動取消，轉為已取消、分數不異動
+    requirement_ids:
+    - REQ-CASHFLOW-041
+    - REQ-CASHFLOW-026
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0411
+    - AC-CASHFLOW-0262
+    test_level: integration
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - state_transition
+    priority: medium
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 【環境前提，spec 未定義】後端『手動取消待確認出金』API：CLR-CASHFLOW-008 說明後端已開發完成、前端（4.1 的『手動取消』入口）尚未開發（BUG-TXLOG-001 OPEN）。API 的路徑、認證方式（各後台角色的登入身分如何帶入）、請求參數與拒絕時的回應內容，spec
+      與 CLR 均未定義，需由開發提供；本案不編造這些細節。取不到 API 規格時，本案記為『受阻』並回報缺口，不得改以 UI 假設通過（前端尚未開發）
+    - 【環境前提，spec 未定義操作位置】後台將機台設為『停用』的入口：spec 只說明機台『在後台被設為停用』，沒有載明在哪個頁面操作；請環境負責人確認，並確認停用後能再改回啟用以便清理
+    - 管理員帳號（Admin 角色）。僅管理員可手動取消待確認出金（CLR-CASHFLOW-008）
+    test_data:
+    - name: 開分金額
+      value: 100
+    steps:
+    - n: 1
+      action: M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1
+      expected: 回 0-OK；M 分數 B1
+    - n: 2
+      action: M 送出 req-cashout，之後不送 end-cashout（模擬機台收不到回覆而結束程序）
+      expected: 回 0-OK 取得 TXID_1；後台 4.1 篩選 M、交易類型『機台出金』、交易狀態『待確認』可找到 TXID_1；M 分數仍為 B1
+    - n: 3
+      action: 管理員在後台將 M 設為『停用』
+      expected: M 狀態為停用
+    - n: 4
+      action: M 送出 end-cashout，帶 TXID_1
+      expected: 回 7-OUT OF SERVICE（停用中的機台任何交易請求都被拒；第 318 行）
+    - n: 5
+      action: 後台讀 M 分數；4.1 重新查詢 TXID_1
+      expected: M 分數仍為 B1（沒有被扣）；TXID_1 仍為『待確認』（停用不影響餘額與尚未完成的交易；第 268 行）
+    - n: 6
+      action: M 仍為停用狀態：管理員以後端手動取消 API 取消 TXID_1（API 規格見前提）；之後 4.1 重新查詢 TXID_1、後台讀 M 分數
+      expected: TXID_1 轉為『已取消』；M 分數仍為 B1（分數不異動）。機台報廢僅停用不刪除，遺留的未完成交易以管理員手動取消收斂（第 376 行）
+    - n: 7
+      action: 清理：後台將 M 改回『啟用』。M 餘額 B1 若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，不核實
+    expected_result: 機台被設為停用後，該機台已存在的待確認出金不受影響：送 end-cashout 回 7-OUT OF SERVICE，PENDING 仍為待確認、分數不變；停用中的機台遺留的這筆待確認出金，仍可由管理員手動取消，轉為已取消，分數不異動。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 268 行）
+      quote: 停用中的機台無法運作；不影響餘額與尚未完成的交易
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-041
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §業務規則與驗證（本包相關）（第 268 行）
+    - requirement_id: REQ-CASHFLOW-041
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §狀態碼對照（第 318 行）
+    - requirement_id: REQ-CASHFLOW-026
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §PENDING 保留期限（第 376 行）
+    - requirement_id: REQ-CASHFLOW-026
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-008
+        answer_rev: 1
+        answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §業務規則與驗證（本包相關）（第 268 行）
+      quote: 停用中的機台無法運作；不影響餘額與尚未完成的交易
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §狀態碼對照（第 318 行）
+      quote: 機台為停用狀態、場館站台非「開通」，或平台維護中
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §PENDING 保留期限（第 376 行）
+      quote: 死單（如機台報廢）由 管理員 手動取消清理——機台報廢僅停用不刪除，遺留的未完成交易即以此路徑收斂
+    - &id002
+      type: clarification
+      clarification_id: CLR-CASHFLOW-008
+      answer_rev: 1
+      answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+      quote: 僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-09
+    design_rationale: 補 T3RR RF-09：AC-0264 的例子是機台報廢（僅停用不刪除）後待確認出金的清理，但既有 TC-116 沒有實際把機台設為停用，TC-049 只驗停用時的新請求被拒、沒有建立待確認出金。expected
+      依據：停用中的機台無法運作、不影響餘額與尚未完成的交易（第 268 行）；7-OUT OF SERVICE 的判定條件（第 318 行）；機台報廢僅停用不刪除、遺留的未完成交易以管理員手動取消收斂（第 376 行）；手動取消後標記已取消、分數不異動（CLR-CASHFLOW-008）。我做的推論（非逐字規定）：把『end-cashout』視為
+      AC-0411『任一交易請求』的一種（出金的第二階段）；以及手動取消對停用中的機台同樣可執行——第 376 行說的是報廢機台的死單以此路徑收斂，等於是這個意思，但沒有逐字寫 API 對停用機台不檢查機台狀態。技術 state_transition：REQ-026
+      定義了 PENDING→已取消 的轉換；本案驗證停用不改變 PENDING 狀態，再驗證待確認→已取消，同一案內不拆成兩個標籤。手動取消只能走後端 API（前端尚未開發，BUG-TXLOG-001），API 路徑、認證、參數 spec
+      未定義（preconditions 已標，取不到則『受阻』）。後台設為停用的入口位置 spec 未載明，同樣標為環境前提，不沿用 TC-035 對『站台列表頁』的描述（那不是 spec 明文）。未涵蓋：AC-0264 的『超過 24
+      小時不轉已逾時』已有 TC-116 專案處理，本案不重做，避免跨 24 小時等待。
+    draft_id: TC-DRAFT-01M4RHQCNSQK1627CFJ4MZKZJA
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 同場館『一台開分 req-keyin』與『另一台入金 end-cashin』同時到達、各自單看不超限但合計超限：恰一筆成立、另一筆回 1-OVER LIMIT，全場館分數合計不超過額度上限
+    requirement_ids:
+    - REQ-CASHFLOW-004
+    - REQ-CASHFLOW-009
+    - REQ-CASHFLOW-007
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0041
+    - AC-CASHFLOW-0091
+    - AC-CASHFLOW-0072
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - boundary
+    design_techniques:
+    - error_guessing
+    priority: high
+    risk: high
+    execution_mode: hybrid
+    execution_cost: high
+    critical_path: true
+    preconditions:
+    - 測試用機台兩台：自行從環境中選定同一場館（站台『開通』）下兩台不同的、狀態『啟用』的既有機台，分別稱 M1、M2，並取得各自現行有效的機台憑證 T1、T2（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文的請求都以機台憑證直接呼叫機台
+      API 送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M1／M2 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+    - 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+    - 【環境前提】需要能讓兩個 HTTP 請求『同時』送出的工具或腳本（例如 bash 兩個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』
+    - end-cashin 要帶『入鈔機實際清點金額』（CLR-CASHFLOW-005）；純 API 直連環境以請求中的清點金額欄位為準，回覆碼與分數是判定依據
+    - 洗分用於每輪結束後把場館分數合計還原：req-keyout（mode=value、throshold=0）。依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』，洗分會立即扣分、場館合計隨之下降
+    test_data:
+    - name: S（場館所有機台帳號分數合計）
+      value: 依環境讀出
+      note: 含 M1、M2
+    - name: 額度上限 A
+      value: S + 100
+      note: 剩餘額度恰為 100
+    - name: M1 end-cashin 實際清點金額（= req-cashin 聲稱金額）
+      value: 100
+      note: 單看不超限（剩餘 100）
+    - name: M2 req-keyin 金額
+      value: 100
+      note: 單看不超限；兩筆合計 200 > 剩餘 100
+    - name: 重複輪數
+      value: 至少 10 輪
+      note: 每輪須以 max(送出時刻) < min(回應時刻) 判定有效重疊，不成立的輪次作廢
+    - name: 同時送出的範例
+      value: "# 兩個請求同時送出，並逐請求記錄『送出』與『回應』的絕對時間（bash；macOS 的 date 不支援 %N，故用 python3 取 epoch 秒）\n# BASE、路徑與 JSON 欄位依機台 API 文件填入；T1、T2\
+        \ 分別是 M1、M2 的機台憑證\nnow() { python3 -c 'import time;print(time.time())'; }\nfire() {   # $1=token $2=路徑 $3=body $4=輸出名稱\n\
+        \  s=$(now)\n  w=$(curl -s -o \"r_$4.json\" -w '%{time_pretransfer} %{time_starttransfer}' -X POST \"$BASE/$2\" -H\
+        \ \"Authorization: Bearer $1\" -H 'Content-Type: application/json' -d \"$3\")\n  echo \"$s $w\" > \"t_$4.txt\"   #\
+        \ 送出時刻 = s + time_pretransfer；回應時刻 = s + time_starttransfer（首個回應位元組）\n}\nfire \"$T1\" '<end-cashin 路徑>' \"$BODY_END_CASHIN\"\
+        \ end &\nfire \"$T2\" '<req-keyin 路徑>'  \"$BODY_KEYIN\"      key &\nwait\n# 判定式：send_i = s_i + pretransfer_i；resp_i\
+        \ = s_i + starttransfer_i；max(send_1, send_2) < min(resp_1, resp_2) 才算有效重疊，否則該輪作廢重做\n# 也可改用 Python asyncio.gather／threading.Barrier\
+        \ 搭配 time.time()，或 k6 兩個同時起跑的 scenario；判定式相同"
+    steps:
+    - n: 1
+      action: 後台讀 M1 分數 B1、M2 分數 B2；逐一讀出場館所有機台帳號的分數並加總為 S；記下額度上限原值 Q_orig；把額度上限設為 A = S + 100
+      expected: 取得 B1、B2、S、Q_orig；額度上限 A 已儲存
+    - n: 2
+      action: 探測生效：M2 送出 req-keyin，金額 101
+      expected: 回 1-OVER LIMIT；M2 分數仍為 B2
+    - n: 3
+      action: 單邊對照（確認兩個請求單獨送出都成立，排除『單邊本來就被拒』造成的誤判）：(a) M2 送出 req-keyin 100；成立後 M2 送出 req-keyout（mode=value、金額 100、throshold=0）還原。(b)
+        M1 送出 req-cashin 100 取得 TXID，再送 end-cashin（清點 100）；成立後 M1 送出 req-keyout（mode=value、金額 100、throshold=0）還原
+      expected: (a) req-keyin 回 0-OK、M2 = B2 + 100；還原洗分回 0-OK、M2 回到 B2。(b) req-cashin 回 0-OK、end-cashin 回 0-OK、M1 = B1 + 100；還原後
+        M1 回到 B1。場館合計回到 S
+    - n: 4
+      action: 【每輪開頭】M1 送出 req-cashin，金額 100，取得 TXID_r（req-cashin 不判額度、不預留，所以此時場館合計仍為 S）
+      expected: 回 0-OK 並取得 TXID_r；M1 分數仍為 B1
+    - n: 5
+      action: 【每輪】用腳本『同時』送出兩個請求：(i) M1 的 end-cashin（TXID_r，清點金額 100）；(ii) M2 的 req-keyin（金額 100）。逐請求記錄送出與回應的絕對時間（範例見 test_data）
+      expected: 有效重疊判定：max(兩請求的送出時刻) < min(兩請求的回應時刻)（絕對時間，由 test_data 範例的 t_*.txt 算出），不成立的輪次作廢重做；兩個回覆中恰一個為 0-OK、另一個為 1-OVER
+        LIMIT。哪一個勝出不限（取決於誰先取得場館鎖）
+    - n: 6
+      action: 【每輪】後台讀 M1、M2 分數與場館分數合計
+      expected: end-cashin 勝出時：M1 = B1 + 100、M2 = B2；開分勝出時：M2 = B2 + 100、M1 = B1。無論哪邊勝出，場館分數合計恰為 S + 100 = A，不會是 S + 200（兩筆都成立）；失敗的一筆不改變分數
+    - n: 7
+      action: 【每輪結尾】對勝出的那台機台送 req-keyout（mode=value、金額 100、throshold=0)，回到下一輪的起點。若是 end-cashin 落敗，TXID_r 的去向 spec 未定義（RF-06），不斷言也不重送，下一輪用新的
+        req-cashin
+      expected: 還原洗分回 0-OK；M1 回到 B1、M2 回到 B2、場館合計回到 S
+    - n: 8
+      action: 重複步驟 4～7 共至少 10 輪；彙整每輪的勝出方、兩個回覆碼與場館合計
+      expected: 每一輪都滿足步驟 5、6 的斷言；沒有任何一輪出現兩筆都成立（合計 A + 100）或兩筆都被拒
+    - n: 9
+      action: 還原：額度上限改回 Q_orig
+    expected_result: 同場館一台開分 req-keyin 與另一台入金 end-cashin 同時到達、各自單看不超限但合計超限時，兩條路徑在同一把場館鎖內序列化：每一輪恰一筆回 0-OK 入帳、另一筆回 1-OVER LIMIT
+      且不改變分數，全場館分數合計恰為額度上限 A，不會出現兩筆都成立使合計超過 A；重複至少 10 輪結果一致。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §開分（`req-keyin`）（第 352 行）（鎖的對象以 REQ-CASHFLOW-004 敘述為準：開分與入金的額度判定共用同一把場館鎖；該行『入金預留』的部分已被 CLR-CASHFLOW-005 取代，不引用）
+      quote: 判定與入帳於場館鎖內執行
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（`req-keyin`）（第 352 行）
+    - requirement_id: REQ-CASHFLOW-004
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §開分（`req-keyin`）（第 352 行）
+    - requirement_id: REQ-CASHFLOW-009
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-005
+        answer_rev: 0
+        answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+    - requirement_id: REQ-CASHFLOW-007
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-005
+        answer_rev: 0
+        answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（`req-keyin`）（第 352 行）
+      quote: 判定與入帳於場館鎖內執行
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §開分（`req-keyin`）（第 352 行）
+      quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+    - *id001
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-12
+    design_rationale: 補 T3RR RF-12：既有 TC-009 v2 只驗證『兩筆 end-cashin 同時到達』的場館鎖序列化。v0.2 起入金額度改在 end-cashin 判定（CLR-CASHFLOW-005），開分
+      req-keyin 仍在場館鎖內判定入帳（REQ-004 statement：與入金的額度判定共用同一把鎖），所以『開分＋另一台 end-cashin』是跨路徑的新組合；若兩條路徑沒有序列化在同一把鎖，兩筆會各自通過，場館合計超過額度。expected
+      的依據：開分判定與入帳於場館鎖內執行（第 352 行）、超限回 1-OVER LIMIT 不寫帳務（第 352 行）、end-cashin 超限回 1-OVER LIMIT（CLR-005）。『恰一筆成立、一筆被拒』是序列化後的必然結果：先取得鎖的一筆看到剩餘額度
+      100 而通過，後者看到 0 而被拒；我沒有假設誰會先贏。第 352 行原文寫的是『與入金的預留共用同一把鎖』，『預留』已被 CLR-005 取代（REQ-004 statement 改寫為『入金的額度判定共用同一把鎖』），我只引用『判定與入帳於場館鎖內執行』這一句。技術
+      error_guessing：依經驗推測最容易出錯的是兩條不同程式路徑沒有共用同一把鎖（race condition），不是從 spec 規則導出的等價類或邊界；不標 boundary_value 或 scenario，以免裝飾。併發觸發方式：以腳本兩個請求同時送出並重複至少
+      10 輪，斷言的是每輪的最終一致結果（恰一筆成立、合計等於 A），而非時序；每輪須用時間戳記確認兩請求確實重疊，否則該輪作廢。還原用的洗分依賴『洗分立即扣分、稽核 0 倍』（spec 明文）；同批 TC 的其他案例對稽核倍數的理解一致（都要求預設
+      0 倍）。超限落敗那筆 PENDING 的去向（RF-06）與清點金額不等於聲稱金額（RF-03）未定義，已刻意避開：清點金額等於聲稱金額，落敗的 TXID 不再重送。與 TC-009 v2 不重複：009 是兩筆 end-cashin，本案是
+      end-cashin＋req-keyin。
+    draft_id: TC-DRAFT-01M4RHQCNS55D8F2YEQ4FM565Y
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 多台機台（含跨場館）同時送出 req-cashout：每筆出金的 order_id 各自一組、全系統不重複，且依 order_id 到洗分出金核實頁各只查到一筆
+    requirement_ids:
+    - REQ-CASHFLOW-045
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0452
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - error_guessing
+    priority: medium
+    risk: high
+    execution_mode: hybrid
+    execution_cost: high
+    critical_path: false
+    preconditions:
+    - 測試用機台：至少 10 台狀態『啟用』的既有機台（自行從環境中選定，需涵蓋至少 2 個不同場館；站台皆『開通』），逐台取得各自現行有效的機台憑證（JWT，Bearer 帶入），稱 M1…Mn。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。機台不足
+      10 台時，改以多輪補足 order_id 總筆數 ≥ 10，並在結果註明『單輪最大併發台數』，不得宣稱已達 10 台併發
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與『洗分出金核實』頁；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 對每一台機台所屬場館，把『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案，動手前先記下各場館原值；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原各場館原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout；本案以直接呼叫機台 API 等效驗證平台端行為
+    - 【環境前提】需要能讓多個 HTTP 請求『同時』送出的工具或腳本（例如 bash 多個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』
+    - 【環境前提】櫃檯依 order_id 查詢的位置：spec 指向『洗分出金核實』頁的收據核銷（屬另一個規格）；請依該頁實際的查詢欄位，若以其他名稱提供編號查詢以實際為準
+    - 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+    test_data:
+    - name: 併發台數
+      value: 10（至少 2 個場館）
+    - name: 每台出金前的開分金額
+      value: 100
+      note: 使核可金額大於 0
+    - name: 輪數
+      value: 至少 3 輪
+      note: 每輪都重新開分並同時 req-cashout，累計至少 30 筆 order_id 一併比對
+    - name: 同時送出的範例
+      value: "# bash：對每台機台各起一個背景函式（同時起跑），逐請求記錄『送出』與『回應』的絕對時間；macOS 的 date 不支援 %N，故用 python3 取 epoch 秒\nnow() { python3 -c\
+        \ 'import time;print(time.time())'; }\nfire() {   # $1=序號 i\n  s=$(now)\n  w=$(curl -s -o \"r_cashout_$1.json\" -w\
+        \ '%{time_pretransfer} %{time_starttransfer}' -X POST \"$BASE/<req-cashout 路徑>\" -H \"Authorization: Bearer ${TOKEN[$1]}\"\
+        \ -H 'Content-Type: application/json' -d \"${BODY_CASHOUT[$1]}\")\n  echo \"$s $w\" > \"t_cashout_$1.txt\"   # 送出時刻\
+        \ = s + time_pretransfer；回應時刻 = s + time_starttransfer\n}\nfor i in $(seq 1 10); do fire $i & done\nwait\n# 判定式：max(各請求送出時刻)\
+        \ < min(各請求回應時刻) 才算有效重疊，否則該輪作廢重做\n# 比對：從各回覆取出 order_id，sort | uniq -d 應為空；或改用 Python asyncio.gather 搭配 time.time()"
+    steps:
+    - n: 1
+      action: 每台機台 Mi 依序送出 req-keyin，金額 100（序列送出即可）；後台讀各機台分數 Bi（開分後）
+      expected: 皆回 0-OK；每台分數 Bi > 0（出金核可金額＝全部餘額，大於 0）
+    - n: 2
+      action: 用腳本『同時』對全部機台各送一個 req-cashout（每台一個請求，起跑時點相同）；逐請求記錄送出與回應的絕對時間（範例見 test_data）
+      expected: 有效重疊判定：max(各請求送出時刻) < min(各請求回應時刻)（絕對時間，由 test_data 範例的 t_cashout_*.txt 算出），不成立的輪次作廢重做；每個請求回 0-OK，各取得 TXID_i
+        與 order_id_i（非空）
+    - n: 3
+      action: 比對本輪全部 order_id_i（並與 4.1 或洗分出金核實頁中可見的其他既有出金 order_id 抽樣比對）
+      expected: 每筆出金各有一組 order_id，兩兩不重複（本輪 10 筆互不相同，與抽樣的既有 order_id 也不相同）
+    - n: 4
+      action: 每台機台 Mi 送出 end-cashout（TXID_i）完成該筆出金
+      expected: 皆回 0-OK
+    - n: 5
+      action: 到後台『洗分出金核實』頁，逐一以 order_id_i 查詢
+      expected: 每個 order_id_i 只查到一筆，且該筆是對應機台 Mi 的出金、金額等於該機台出金時的全部餘額 Bi
+    - n: 6
+      action: 重複步驟 1～5 共至少 3 輪；把所有輪次的 order_id 合併再比對一次
+      expected: 累計至少 30 筆 order_id 兩兩不重複；每個 order_id 在核實頁都只查到一筆
+    - n: 7
+      action: 還原：各場館額度上限改回原值
+    expected_result: 多台機台（含不同場館）同時送出 req-cashout 時，平台為每筆出金產生各自一組、全系統不重複的 order_id；依任一 order_id 到洗分出金核實頁查詢，都只查到對應的那一筆出金，不會查到兩筆或查到別台的出金。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+      quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一'
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-045
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+      quote: '`order_id` 由平台產生，一筆出金一組，全系統唯一'
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-14
+    design_rationale: 補 T3RR RF-14：既有 TC-119 的 order_id 唯一性驗證是依序執行（同機台連續、同場館不同機台、不同場館），沒有測多台同時 req-cashout 時序號產生的競爭。order_id
+      是給人讀的短碼且全系統唯一，最容易出錯的就是序號產生在併發下重號，重號會讓櫃檯以 order_id 核銷時查到兩筆或核銷到錯的一筆。expected 依據：『order_id 由平台產生，一筆出金一組，全系統唯一』（第 335 行、AC-0452）；『依
+      order_id 查詢核銷』是 AC-0451／第 169 行的用途，本案用它確認每個 order_id 只對到一筆，是『唯一』的可觀察結果。技術 error_guessing：併發下的重號是依經驗推測的故障模式，不是 spec 規則的等價類；標此技術同時使
+      high risk 的 REQ-045 有非 happy-path 案例，不是為了湊數（TC-119 是 equivalence_partitioning 的循序版）。『10 台』來自 RF-14 的建議，不是 spec 規定；環境機台不足時以多輪補足總筆數並誠實註明單輪最大併發台數，不得宣稱已達
+      10 台併發。不斷言 order_id 的長度與字元集（spec 只說人工可朗讀可輸入，無量化門檻，TC-118 已記錄主觀判斷）。入金的 order_id 來源仍待確認（CLR-CASHFLOW-011，REQ-045 Q02），本案不涉入金。請求欄位名稱與
+      order_id 在哪個回覆出現（req-cashout 或 end-cashout）依 API 文件／TC-118 的觀察：以回覆中含 order_id 者為準。
+    draft_id: TC-DRAFT-01M4RHQCNSC08SA91ZZA5TNSYJ
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: 後端手動取消 API 驗證權限：站長、操作員（非管理員）呼叫都不能取消待確認出金（TXID 仍為待確認、分數不變），管理員呼叫同一 API 則轉為已取消、分數不異動
+    requirement_ids:
+    - REQ-CASHFLOW-026
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0265
+    - AC-CASHFLOW-0262
+    test_level: api
+    test_types:
+    - functional
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_mode: manual
+    execution_cost: medium
+    critical_path: true
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 【環境前提，spec 未定義】後端『手動取消待確認出金』API：CLR-CASHFLOW-008 說明後端已開發完成、前端（4.1 的『手動取消』入口）尚未開發（BUG-TXLOG-001 OPEN）。API 的路徑、認證方式（各後台角色的登入身分如何帶入）、請求參數與拒絕時的回應內容，spec
+      與 CLR 均未定義，需由開發提供；本案不編造這些細節。取不到 API 規格時，本案記為『受阻』並回報缺口，不得改以 UI 假設通過（前端尚未開發）
+    - 三個後台帳號（自行從環境中選定）：管理員（Admin）角色一個、站長角色一個、操作員角色一個，皆能登入後台並取得各自的 API 身分。'操作員' 角色在環境中的實際名稱與其權限範圍 spec 未定義，請環境負責人指定一個被歸類為非管理員的操作員帳號；環境沒有此角色帳號時，操作員那一步記為『受阻』，其餘步驟照做
+    - 本案以 API 為主要驗證（不是選做）：前端『手動取消』入口尚未開發，既有 TC-CASHFLOW-117 的 UI 步驟無法執行，API 步驟是目前唯一能驗證後端權限的證據。本案只斷言『非管理員不能取消』的結果（TXID 狀態與分數），拒絕時的回應內容（碼、訊息）spec
+      未定義，只記錄不斷言
+    test_data:
+    - name: 開分金額
+      value: 100
+    steps:
+    - n: 1
+      action: M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1
+      expected: 回 0-OK；M 分數 B1
+    - n: 2
+      action: M 送出 req-cashout，之後不送 end-cashout
+      expected: 回 0-OK 取得 TXID_1；後台 4.1 篩選 M、交易類型『機台出金』、交易狀態『待確認』可找到 TXID_1；M 分數仍為 B1
+    - n: 3
+      action: 以站長身分呼叫後端手動取消 API，目標 TXID_1；記錄回應（HTTP 狀態、內容），不斷言內容
+      expected: （只記錄回應）
+    - n: 4
+      action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+      expected: TXID_1 仍為『待確認』（沒有被取消）；M 分數仍為 B1
+    - n: 5
+      action: 以操作員身分呼叫後端手動取消 API，目標 TXID_1；記錄回應，不斷言內容
+      expected: （只記錄回應）
+    - n: 6
+      action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+      expected: TXID_1 仍為『待確認』；M 分數仍為 B1
+    - n: 7
+      action: 對照：以管理員身分呼叫同一個後端手動取消 API，目標 TXID_1
+      expected: 呼叫被受理（對照組成立，證明前面的結果來自角色限制，而不是 API 不可用或 TXID 不正確）
+    - n: 8
+      action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+      expected: TXID_1 轉為『已取消』；M 分數仍為 B1（分數不異動）
+    - n: 9
+      action: 清理：M 餘額 B1 若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，不核實
+    expected_result: 待確認出金的手動取消僅限管理員：站長與操作員透過後端 API 嘗試取消，該筆都不會被取消（仍為待確認）、分數不變；同一 API 以管理員身分呼叫則該筆轉為已取消、分數不異動。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 260 行）（角色限制以 CLR-CASHFLOW-008 rev 1『僅管理員，RD 已確認』為準）
+      quote: 出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-026
+      question_id: Q02
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-008
+        answer_rev: 1
+        answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+    - requirement_id: REQ-CASHFLOW-026
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-CASHFLOW-008
+        answer_rev: 1
+        answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+    source_refs:
+    - *id002
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-17
+    design_rationale: 補 T3RR RF-17（severity high）：前端未上線時，既有 TC-117 唯一能真正驗證權限的 API 步驟是『若開發提供』的選做，且只測了站長，沒有測操作員，等於目前沒有任何案例確實驗證後端會拒絕非管理員。本案把
+      API 驗證改為必做。expected 依據：CLR-CASHFLOW-008 rev 1『待確認出金的手動取消僅管理員，RD 已確認；取消後標記已取消，分數不異動』，AC-0265（站長不可操作）、AC-0262（取消後分數不異動）。把『操作員』也列入拒絕對象，是『僅管理員』的字面推論（操作員不是管理員），RF-17
+      也這樣要求；我沒有擴大到『操作員對所有相關功能都無權限』，只斷言手動取消這一個操作。『站長／操作員』的角色定義 spec 未載明，已在 preconditions 標為環境前提，且環境沒有操作員帳號時該步記『受阻』。API 路徑、認證與參數
+      spec 未定義（BUG-TXLOG-001 只說後端已完成），我沒有編造，已標為環境前提並要求取不到則受阻；拒絕時的回應內容未定義，所以只記錄、斷言最終狀態。步驟 7～8 的管理員對照組，是為了排除『API 對所有人都失敗』造成的假通過。技術
+      security_rule：驗證的是角色權限規則（誰可以／不可以），與 TC-117 同標；本案不重複 117 的 UI 面向。與 TC-114 不重複：114 是管理員取消的 UI 路徑。跨站台範圍（RF-18）、已完成出金為取消目標（RF-08）、重送（RF-15）都需先澄清，不在本案。
+    draft_id: TC-DRAFT-01M4RHQCNTGJMFZ8BQGX0K9SR3
+    assumptions: []
+  - product: ba-admin
+    functional_area: CASHFLOW
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    stability: unknown
+    source: spec_workflow
+    title: JWT 繞過手法一律回 9-OTHER ERROR：header alg=none 去掉簽章、演算法混淆、簽章有效但 claim 指向不存在的機台帳號，各種機台 API 都不處理，分數與交易筆數不變
+    requirement_ids:
+    - REQ-CASHFLOW-049
+    acceptance_criteria_ids:
+    - AC-CASHFLOW-0493
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - error_guessing
+    priority: medium
+    risk: high
+    execution_mode: hybrid
+    execution_cost: medium
+    critical_path: false
+    preconditions:
+    - 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+      M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+    - 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+    - 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+    - 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+    - 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+    - 測試人員可解碼 JWT（拆成 header／payload／signature 三段，base64url）並手動組出新的 JWT（JWT 工具或腳本，例如 Python 的 base64 與 hmac／cryptography 套件）
+    - 取得 M 現行有效憑證 T，解碼 header 記下 alg（記為 X），解碼 payload 找出『標識機台帳號』的 claim（記為 CLAIM_ACCT；claim 名稱 spec 未定義，以實際 T 為準）。本案不重置 M
+      的憑證
+    - 【環境前提】子項 (b-asym)（演算法混淆）僅在 X 為非對稱演算法（RS／ES／PS 系列）且測試人員能取得平台驗簽用的公鑰時才執行；X 為對稱演算法（HS 系列）時改做子項 (b-sym)。子項 (c) 需要能以平台簽章金鑰簽發
+      token（測試環境的簽章金鑰或開發提供的簽發工具）；取不到時 (c) 記為『受阻』，其餘子項照做。這些環境條件 spec 均未定義
+    - 子項 (c) 的『不存在的機台帳號』：自行取一個確定不存在的帳號字串（例如 NOSUCHMACHINE 加隨機尾碼），並先在後台會員搜尋確認查無此帳號
+    test_data:
+    - name: 有效 token
+      value: T（M 現行憑證）
+    - name: 子項 (a) alg=none
+      value:
+      - header {"alg":"none","typ":"JWT"}，簽章段為空（token 結尾保留一個點）
+      - header {"alg":"None","typ":"JWT"}，簽章段為空
+      note: payload 與 T 相同
+    - name: 子項 (b-sym) X 為 HS 系列
+      value:
+      - 把 header alg 改為 RS256，payload 與簽章沿用 T
+      - 把 header alg 改為 HS512，payload 與簽章沿用 T
+    - name: 子項 (b-asym) X 為 RS/ES/PS 系列
+      value: 把 header alg 改為 HS256，以平台公鑰（PEM 原文）當 HMAC 密鑰，對與 T 相同的 payload 重新簽發
+    - name: 子項 (c)
+      value: 以平台簽章金鑰簽發，payload 與 T 相同，只把 CLAIM_ACCT 的值換成不存在的帳號字串
+    - name: 每個偽造 token 送出的請求
+      value:
+      - req-keyin 金額 10
+      - req-cashin 金額 10
+      - req-cashout
+      - req-keyout（mode=all、throshold=0）
+      note: M 先有餘額（步驟 1），這樣若有任何請求被誤放行，分數或交易筆數會改變
+    steps:
+    - n: 1
+      action: 以 T 送 req-keyin，金額 100（對照）；後台記下 M 分數 B1、4.1 以 M 篩選（不篩狀態）的交易筆數 N1
+      expected: 回 0-OK；B1、N1 為此後比對的基準
+    - n: 2
+      action: 子項 (a)：依 test_data 組出兩個 alg=none 的 token，各自分別送出四種請求（req-keyin 10、req-cashin 10、req-cashout、req-keyout mode=all
+        throshold=0）
+      expected: 全部回 9-OTHER ERROR
+    - n: 3
+      action: 子項 (b)：依 X 選擇 (b-sym) 或 (b-asym) 組出 token，各自分別送出四種請求
+      expected: 全部回 9-OTHER ERROR
+    - n: 4
+      action: 子項 (c)：組出簽章有效、CLAIM_ACCT 指向不存在機台帳號的 token，分別送出四種請求（取不到簽發工具則記『受阻』）
+      expected: 全部回 9-OTHER ERROR
+    - n: 5
+      action: 後台讀 M 分數；4.1 重新查詢 M 的交易筆數（不篩狀態）；並到會員搜尋確認沒有出現步驟 4 那個不存在的帳號
+      expected: M 分數仍為 B1；筆數仍為 N1（沒有建立 PENDING 或任何交易）；不存在的帳號沒有被建立
+    - n: 6
+      action: 對照：以原 T 送 req-keyin，金額 10
+      expected: 回 0-OK；M 分數 = B1 + 10（證明前面的拒絕來自偽造的 token，而不是機台或場館狀態）
+    expected_result: token 無效（alg=none 去掉簽章、演算法混淆等偽造簽章）或機台帳號不存在（簽章有效但 claim 指向不存在的帳號）時，平台拒絕並回 9-OTHER ERROR，任何一種機台 API 都不處理，分數與交易筆數不變，也不會因此建立機台帳號。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §狀態碼對照（第 319 行）
+      quote: Token 無效或已重置、機台帳號不存在，或其他未預期錯誤
+    decision_refs:
+    - requirement_id: REQ-CASHFLOW-049
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §狀態碼對照（第 319 行）
+    - requirement_id: REQ-CASHFLOW-049
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.2'
+        content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+        location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §狀態碼對照（第 319 行）
+      quote: Token 無效或已重置、機台帳號不存在，或其他未預期錯誤
+    - type: spec
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+      location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+      quote: 驗證除簽章外須比對該機台現行有效的憑證識別，重置後舊 token 一律拒絕
+    source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-20
+    design_rationale: 補 T3RR RF-20：既有 TC-129 只測了三種無效簽章（改簽章、改 claim、用他人金鑰簽），常見的 JWT 驗證繞過手法沒有覆蓋。expected 依據：第 319 行『Token 無效或已重置、機台帳號不存在，或其他未預期錯誤』回
+      9-OTHER ERROR；第 282 行『驗證除簽章外須比對現行憑證識別』。我的推論（非逐字規定）：alg=none 去簽章、演算法混淆的 token 都屬於『Token 無效』，簽章有效但 claim 指向不存在帳號屬於『機台帳號不存在』——兩者回
+      9 是第 319 行字面套用到這些具體偽造手法上，spec 沒有逐一列舉這些手法。技術 error_guessing：攻擊手法清單來自 JWT 實作的常見弱點經驗，不是從 spec 規則導出的等價類，所以不標 equivalence_partitioning（TC-129
+      才是 spec 導出的簽章無效三類）；同時使 high risk 的 REQ-049 在 TC-127／128／129 之外補上經驗型負向案例。子項的條件分支（X 對稱或非對稱、能否簽發 token）取決於平台 JWT 的實作與環境，spec
+      未定義，已在 preconditions 標為環境前提並指定取不到時『受阻』，不假設平台使用哪種演算法。為使『若被誤放行』能被偵測，步驟 1 先給 M 餘額，四種請求涵蓋開分、入金、出金、洗分。AC 僅掛 AC-0493（簽章無效）；『機台帳號不存在』不在
+      AC 內，依據第 319 行原文。不斷言 9-OTHER ERROR 之外的任何訊息內容或 HTTP 狀態（spec 說平台一律以 status 表達業務結果）。與 TC-127／128／129 不重複。
+    draft_id: TC-DRAFT-01M4RHQCNTE9DTHESTVNNHAHRR
+    assumptions: []
+history:
+- at: '2026-10-12T17:19:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-003
