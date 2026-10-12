@@ -11,6 +11,8 @@
 | **PM 決策** | `待PM確認_站長最高權限定義疑問_精簡版.html`（已結案） | `pm-decisions/` 原檔；`clarifications/ba-admin/PLATFORMRULE/CLR-PLATFORMRULE-001`（ANSWERED，PM 回答已回填） |
 | **RD 修復回報** | `0904files_修復回報.md`、`2026-09-04.md`、`2026-09-04_1500後.md` | `rd-reports/`。對應 MAN-012~014 的 bug 已「已修復待驗」；Phase 3 走 WF-B 開正式 Bug 後由 Human 推 RESOLVED → 驗證 → VERIFIED |
 | **QA 筆記** | `紅利幣別改動_QA整理.md`、`機台與多幣別站台_測試checklist.md`、`機台測試checklist(.html/_v02.html)` | `qa-notes/`。checklist 為人工測試計畫，日後可轉 ManualTestRecord |
+| **紅包開發包_20261010** | `紅包_spec_v02.md`、`紅包_proto_v02.html`、README、`前台調整清單.md`、`前台UI修改清單.md`（對照檔皆為 Registry 既有版本） | spec 與 proto → `specs/ba-admin/REDPACKET/SPEC-REDPACKET-001／002 v0.2`；README 與前台清單 → `package-redpacket-20261010/` |
+| **紅包 TC 差異（同事，2026-10-12）** | `紅包_TestCases_僅我方15條.md` | `qa-notes/`；整合評估 `qa-notes/紅包_TC整合評估_20261012.md`（RUN-20261012-001 T2 額外輸入） |
 | **測試環境** | `機台開發用測試頁.md`（含 test 環境測試帳密） | `docs/environments/ba-admin-arcade-test.md` |
 | Brief | `QA_Agent_Operating_System_Master_Architecture.md` | 已處理（Phase 1） |
 
