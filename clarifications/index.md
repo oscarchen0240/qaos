@@ -29,7 +29,7 @@
 | [CLR-CASHFLOW-004](ba-admin/CASHFLOW/CLR-CASHFLOW-004.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 交易紀錄查詢頁的「手動取消」操作，2026-09-14的確認（REQ-TXLOG-028：此操作不存在）能否請RD重新核實實際畫面？ | 交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分 |
 | [CLR-CASHFLOW-005](ba-admin/CASHFLOW/CLR-CASHFLOW-005.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 入金額度上限的判定時機：req-cashin 階段判定（spec v07 定案文字）還是 end-cashin 階段判定（RD 2026-09-23 確認的實際開發流程）？ | A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-ca |
 | [CLR-CASHFLOW-006](ba-admin/CASHFLOW/CLR-CASHFLOW-006.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 額度上限被拒絕（1-OVER LIMIT）是否比照餘額不足（1-NO CREDITS），不寫入交易紀錄？ | B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種 |
-| [CLR-CASHFLOW-007](ba-admin/CASHFLOW/CLR-CASHFLOW-007.md) | OPEN | SPEC-CASHFLOW-001 v0.1 | 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？ |  |
+| [CLR-CASHFLOW-007](ba-admin/CASHFLOW/CLR-CASHFLOW-007.md) | ANSWERED | SPEC-CASHFLOW-001 v0.1 | 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？ | 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）： |
 | [CLR-CASHFLOW-008](ba-admin/CASHFLOW/CLR-CASHFLOW-008.md) | ANSWERED | SPEC-CASHFLOW-001 v0.1 | 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？ | 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理 |
 
 ## ba-admin / CASHOUT

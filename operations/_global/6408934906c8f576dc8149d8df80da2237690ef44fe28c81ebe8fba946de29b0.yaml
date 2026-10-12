@@ -1,0 +1,143 @@
+plan_schema: 1
+op_id: 6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0
+action: clarification_answer
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_answer
+  params:
+    args:
+    - CLR-CASHFLOW-007
+    - 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）：餘額帶小數時出金照樣全額清空，核可金額與收據面額照記實際餘額含小數、不取整（例：餘額 399.6 → 收據面額
+      399.60，機台餘額歸 0）；平台只記錄面額，不管現場實際付現多少，零頭如何付由場館自行決定，平台也不記錄面額與實付的差額；門檻 0（throshold=0）的全額洗分比照出金，洗分金額照記含小數（例 399.6），機台餘額歸 0。報表一律以面額計。
+    - PM（機台金流與場次 spec v02，2026-10-05 定案；Oscar 2026-10-12 確認以此結案）
+    - spec_updated
+    - oscarchen@blockaction.tech
+    - '0.2'
+    kwargs:
+      answer_sources:
+      - type: message
+        channel: Claude Code 對話（Oscar 2026-10-12）
+        sent_by: Oscar
+        at: '2026-10-12'
+request_hash: 6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T13:59:32Z'
+allocated_ids: []
+steps:
+- seq: 1
+  step_id: s1
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-007.yaml
+  kind: business
+  expected_before: 143eabba917ce1d6aba0c148eb55ae6523103e2100c2e56a40ec22e31b4dd467
+  expected_after: 2fe11166c005432be957c477648c580089ff879d7e7a49f6f1adef656dd865c1
+  blob: 2fe11166c005432be957c477648c580089ff879d7e7a49f6f1adef656dd865c1
+- seq: 2
+  step_id: event1
+  path: runs/_audit.d/6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 2a0e7379a779a3620442c7aa657ef0984dd41f5dd87c276645011bd667f63a03
+  blob: 2a0e7379a779a3620442c7aa657ef0984dd41f5dd87c276645011bd667f63a03
+- seq: 3
+  step_id: derived3
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-007.md
+  kind: business
+  expected_before: 49b56dbfa4d08967649ee1659a5c743e4cc58366874a50f53a92bc69f6e9650c
+  expected_after: aa242d79999340b4e044d31b963b1881e3904a4998c85341e05b7756b08f797d
+  blob: aa242d79999340b4e044d31b963b1881e3904a4998c85341e05b7756b08f797d
+- seq: 4
+  step_id: derived4
+  path: requirements/SPEC-CASHFLOW-001-v0.1.md
+  kind: business
+  expected_before: d136df394dd9ae0fc67f5b8429225cdfe56c908595ba7d89d97eff83cd94b702
+  expected_after: 0463af19a1676fe2f9f4b52358419eb5e7ed275cd81e644eaf0d4816384e9eae
+  blob: 0463af19a1676fe2f9f4b52358419eb5e7ed275cd81e644eaf0d4816384e9eae
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: 7e220b8b5e750cadb1fc41b78b75e4ddccc7f4b45f0620c966e6b52a9c0b39bb
+  expected_after: c21519a4a3be3945ca49ee53d9c95903e70449da2769223f97d682f5c319c518
+  blob: c21519a4a3be3945ca49ee53d9c95903e70449da2769223f97d682f5c319c518
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: e4af087599ba9f1da622ef9efe843630618bd2a28585a929a7ed07d022f415df
+  blob: e4af087599ba9f1da622ef9efe843630618bd2a28585a929a7ed07d022f415df
+no_change: []
+audit_events:
+- at: '2026-10-12T13:59:32Z'
+  actor: oscarchen@blockaction.tech
+  action: ANSWER_CLARIFICATION
+  detail: CLR-CASHFLOW-007 resolution=spec_updated
+  op_id: 6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-007
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  question: 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？
+  context: spec 原文：「出金一律是全額且清空餘額，沒有指定金額的選項，也不套門檻取整：餘額 321 → 收據面額 321，機台餘額歸 0」「收據面額可能含零頭（不像洗分有門檻取整），櫃檯付現須付至個位數」；洗分「throshold=0
+    表示洗出當前全部餘額、不做取整」。spec 舉的「零頭」例子是 321（非整百），沒有考慮餘額帶小數的情況；所有 spec 都沒有規定金額必須是整數或小數如何進位。部分遊戲的派彩會帶小數，機台餘額因此可能出現小數（場館日結報表 10-01
+    列損益 -1,100.4、期末餘額 299.6）。2026-10-02 stage Arcade 實測（EVD-0097、EVD-0098）：機台 ACAA00424 餘額 399.6 出金，交易 8798710 請求金額與實際金額皆為
+    -399.6，餘額歸 0，核實狀態待核實——收據面額為 399.6，櫃檯無法付出 0.6 元（新台幣無角）。若付 399 則 0.6 憑空消失（餘額已清空），若付 400 則場館多付 0.4。洗分門檻大於 0 時，小數會落在不足一個門檻的餘數內、留在機台上，沒有此問題。
+  options:
+  - A. 收據面額維持實際餘額（含小數，即現行做法），付現時小數部分一律捨去（或四捨五入）；請定義差額是否需要記錄、報表的收據金額／已兌現／現金淨收以面額還是實付為準
+  - B. 出金核可金額取整數（無條件捨去），小數部分留在機台帳號上、不清空（比照洗分餘數）；收據面額與付現一致
+  - C. 出金核可金額取整數（四捨五入或無條件進位），餘額照樣清空，差額由場館吸收並記錄
+  - D. 從源頭處理：機台帳號餘額不允許小數（派彩入帳時即取整），出金與洗分自然不會出現小數
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-02T02:22:41Z'
+  status: ANSWERED
+  history:
+  - at: '2026-10-02T02:22:41Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  - at: '2026-10-12T13:59:32Z'
+    from_status: OPEN
+    to_status: ANSWERED
+    by: oscarchen@blockaction.tech
+    trigger: answered by PM（機台金流與場次 spec v02，2026-10-05 定案；Oscar 2026-10-12 確認以此結案）
+  requirement_id: REQ-CASHFLOW-020
+  impact_if_unanswered: 未回覆前：出金與門檻 0 全額洗分的收據面額、付現金額沒有預期依據，相關 TC 無法斷言小數情境；場館日結報表的收據金額、已兌現、未兌現、現金淨收會出現小數，與櫃檯實際付現對不上
+  answer_revisions:
+  - rev: 0
+    answer: 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）：餘額帶小數時出金照樣全額清空，核可金額與收據面額照記實際餘額含小數、不取整（例：餘額 399.6 →
+      收據面額 399.60，機台餘額歸 0）；平台只記錄面額，不管現場實際付現多少，零頭如何付由場館自行決定，平台也不記錄面額與實付的差額；門檻 0（throshold=0）的全額洗分比照出金，洗分金額照記含小數（例 399.6），機台餘額歸
+      0。報表一律以面額計。
+    answered_by: PM（機台金流與場次 spec v02，2026-10-05 定案；Oscar 2026-10-12 確認以此結案）
+    answered_at: '2026-10-12T13:59:32Z'
+    resolution: spec_updated
+    answer_sources:
+    - type: message
+      channel: Claude Code 對話（Oscar 2026-10-12）
+      sent_by: Oscar
+      at: '2026-10-12'
+    basis:
+      target:
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+      target_decl_rev: 0
+      closure: []
+    basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+    sha256: de80663944c912ec96c997b81f9f7ea523f29a87d5b81bfc06ff9bef326478d6
+    op_id: 6408934906c8f576dc8149d8df80da2237690ef44fe28c81ebe8fba946de29b0
+  answer: 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）：餘額帶小數時出金照樣全額清空，核可金額與收據面額照記實際餘額含小數、不取整（例：餘額 399.6 → 收據面額
+    399.60，機台餘額歸 0）；平台只記錄面額，不管現場實際付現多少，零頭如何付由場館自行決定，平台也不記錄面額與實付的差額；門檻 0（throshold=0）的全額洗分比照出金，洗分金額照記含小數（例 399.6），機台餘額歸 0。報表一律以面額計。
+  answered_by: PM（機台金流與場次 spec v02，2026-10-05 定案；Oscar 2026-10-12 確認以此結案）
+  answered_at: '2026-10-12T13:59:32Z'
+  resolution: spec_updated
+  resulting_spec_version: '0.2'

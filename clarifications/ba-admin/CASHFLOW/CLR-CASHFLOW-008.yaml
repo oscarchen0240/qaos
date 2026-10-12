@@ -23,6 +23,11 @@ history:
   to_status: ANSWERED
   by: oscarchen@blockaction.tech
   trigger: answered by Oscar（2026-10-12；角色經 RD 確認）
+- at: '2026-10-12T13:54:55Z'
+  from_status: ANSWERED
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by Oscar（2026-10-12；角色經 RD 確認）
 requirement_id: REQ-CASHFLOW-026
 impact_if_unanswered: REQ-CASHFLOW-026（出金死單收斂路徑）與引用手動取消的 CASHFLOW TC（約 4 張）需重新判定；REQ-CASHFLOW-008 視入金是否適用
 kind: spec_question
@@ -79,9 +84,48 @@ answer_revisions:
   basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
   sha256: ebbbeea4d02092b8516d93140e1b082e583a6552c00799205158ee1d67938f8e
   op_id: 585e7af4acda5b24fa27336f7634511e7ff15f376896558b876de66bab8c3659
+- rev: 1
+  answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
+    Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂；入金額度上限的判定時機依 CLR-CASHFLOW-005（end-cashin
+    依實際清點金額判定、req-cashin 不預留額度），REQ-CASHFLOW-008 維持 2026-09-15 移除「手動取消釋放預留」的結論。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。（rev
+    1：刪除 rev 0 中「預留額度於入帳或逾時釋放」一句，該句與 CLR-CASHFLOW-005 不一致）
+  answered_by: Oscar（2026-10-12；角色經 RD 確認）
+  answered_at: '2026-10-12T13:54:55Z'
+  resolution: requirement_clarified
+  answer_sources:
+  - type: message
+    channel: Claude Code 對話（Oscar 2026-10-12）
+    sent_by: Oscar
+    at: '2026-10-12'
+  basis:
+    target:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+    target_decl_rev: 0
+    closure: []
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  op_id: df4a99c7f0e7961b4857237438622c910864105396271a788e840ad8ff571ce2
 answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
-  Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂，預留額度於入帳或逾時釋放，REQ-CASHFLOW-008 維持 2026-09-15
-  的移除不變。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。
+  Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂；入金額度上限的判定時機依 CLR-CASHFLOW-005（end-cashin
+  依實際清點金額判定、req-cashin 不預留額度），REQ-CASHFLOW-008 維持 2026-09-15 移除「手動取消釋放預留」的結論。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。（rev
+  1：刪除 rev 0 中「預留額度於入帳或逾時釋放」一句，該句與 CLR-CASHFLOW-005 不一致）
 answered_by: Oscar（2026-10-12；角色經 RD 確認）
-answered_at: '2026-10-12T12:58:48Z'
+answered_at: '2026-10-12T13:54:55Z'
 resolution: requirement_clarified
+applicability:
+- answer_rev: 1
+  scope:
+    spec_id: SPEC-CASHFLOW-001
+    requirement_id: REQ-CASHFLOW-008
+    subject: cashflow.cashin.pending_manual_cancel
+    role_scope:
+    - '*'
+    params: {}
+  basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+  rationale: Oscar 2026-10-12 決定：v0.2 第 326、249 行寫管理員／站長可手動取消待確認入金並釋放額度，以 CLR-008 rev 1（入金沒有手動取消）為準
+  by: oscarchen@blockaction.tech
+  at: '2026-10-12T13:55:28Z'
+  op_id: 91b2470ad63ec30221dfcd26d3c04df11bc0151abdf28bcf0bded01281224475
+  sha256: 7a0cd4739e9477b3945e18470fe1ad4d81d2ed43cbe7681ff68aaf4b5a6b59cb
