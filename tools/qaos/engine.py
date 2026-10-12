@@ -158,19 +158,29 @@ def _tc_target(inputs: dict) -> tuple[str, str]:
     if given != tgt: raise EngineError(f"testcase-revision 的 spec 必須是 {tc} v{ptr['active_version']} 自己的 {tgt[0]}@{tgt[1]}（inputs 是 {given[0]}@{given[1]}）；跨版本改動請走 spec-change-impact")
     return tgt
 
+SAME_VERSION_REASONS = ("declaration_changed", "decision_revised", "decision_applied", "decision_added")
+SAME_VERSION_REASON_RULES = {                                               # 拒絕時說明判定條件（第 5 章 §6、§8；附錄 A 5-3；ADR-012）
+    "declaration_changed": "目標或閉包節點的 decl_rev、閉包組成和 revision 記錄的不同",
+    "decision_revised": "revision 引用的 CLR 有更新的 answer_rev，或已撤回",
+    "decision_applied": "revision 引用的 CLR 在 revision 建立之後新增了 applied landing；R000 為有任何 applied landing",
+    "decision_added": "同版本有 ANSWERED／INCORPORATED、最新答案 resolution 為 requirement_clarified 或 spec_updated、revision 沒有引用、"
+                      "而且不在 revision 分析範圍內（R000 一律算；有派發包看決議快照；否則看回答時間）的 CLR",
+}
+
 def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
     """new_run 時就要綁定的 revision（第 5 章 §4.2）：spec-change-impact 的 from 端；沒有 T0 的 testcase-revision、manual 綁目標版本的最新 revision。"""
     out = {}
     if workflow_id == "spec-change-impact":
         if str(inputs["from_version"]) == str(inputs["to_version"]):         # 同版本 CIA（§8）
             if not inputs.get("from_revision") or not inputs.get("reason"):
-                raise EngineError("同版本的 spec-change-impact 必須帶 --input from_revision=R<NNN> 與 --input reason=declaration_changed|decision_revised|decision_applied")
+                raise EngineError(f"同版本的 spec-change-impact 必須帶 --input from_revision=R<NNN> 與 --input reason={'|'.join(SAME_VERSION_REASONS)}")
             try: pin = rm.pin_of(inputs["spec_id"], str(inputs["from_version"]), inputs["from_revision"])
             except rm.RMError as e: raise EngineError(str(e))
             reason = inputs["reason"]
-            if reason not in ("declaration_changed", "decision_revised", "decision_applied"): raise EngineError(f"reason 只能是 declaration_changed、decision_revised 或 decision_applied：{reason!r}")
-            actual = rm.decision_applied(pin) if reason == "decision_applied" else rm.outdated(pin)[reason]
-            if not actual: raise EngineError(f"{inputs['from_revision']} 的判定結果不是 {reason}；不能以這個理由做同版本 CIA")
+            if reason not in SAME_VERSION_REASONS: raise EngineError(f"reason 只能是 {'、'.join(SAME_VERSION_REASONS)}：{reason!r}")
+            try: actual = rm.decision_applied(pin) if reason == "decision_applied" else rm.decision_added(pin) if reason == "decision_added" else rm.outdated(pin)[reason]
+            except rm.RMError as e: raise EngineError(f"{inputs['from_revision']} 無法判定 {reason}：{e}")
+            if not actual: raise EngineError(f"{inputs['from_revision']} 的判定結果不是 {reason}（{SAME_VERSION_REASON_RULES[reason]}）；不能以這個理由做同版本 CIA")
             out["from_requirement_model_revision"] = pin
         else:
             pin = rm.latest_pin(inputs["spec_id"], inputs["from_version"])

@@ -246,6 +246,58 @@ def decision_applied(pin: dict) -> bool:
             if ld.get("type") == "applied" and (created is None or operation.parse_ts(ld["at"]) > created): return True
     return False
 
+ADDED_STATES = ("ANSWERED", "INCORPORATED")
+ADDED_RESOLUTIONS = ("requirement_clarified", "spec_updated")
+
+def _analysis_packet(doc: dict) -> dict:
+    """revision 那次分析所用的派發包：依 revision 的 run_id 與 dispatch_packet_sha256 找 run 上的派發紀錄，位元組 sha256 必須相符。找不到 → 拒絕（不改用時間推定）。"""
+    from . import dispatch
+    where = f"{doc['spec_id']}@{doc['spec_version']} {doc['revision']}"
+    run_p = f"runs/{doc.get('run_id')}/run.yaml"
+    if not doc.get("run_id") or not store.exists(run_p): raise RMError(f"{where} 記錄了派發包 sha256，但找不到產生它的 run（{doc.get('run_id')}）")
+    entry = next((e for t in store.load(run_p).get("tasks") or [] for e in t.get("dispatch_packets") or [] if e.get("sha256") == doc["dispatch_packet_sha256"]), None)
+    if entry is None: raise RMError(f"{where} 的派發包（sha256 {doc['dispatch_packet_sha256'][:12]}…）不在 {doc['run_id']} 的派發紀錄中")
+    try: return dispatch.load_packet(entry)
+    except dispatch.DispatchError as e: raise RMError(f"{where}：{e}")
+
+def _analysis_horizon(pin: dict) -> tuple:
+    """revision 的分析看過哪些答案（ADR-012）：
+    ("none", None)＝R000（沒有分析紀錄，任何答案都算沒看過）；("snapshot", {(clarification_id, answer_rev, answer_sha256)})＝有派發包，依決議快照；
+    ("time", 建立時間)＝沒有派發包的 revision（P4 之前的分析）。accept-declaration 產生的 revision 沒有經過分析，沿用 parent 的判定。"""
+    if pin["revision"] == "R000": return ("none", None)
+    doc = load_revision(pin)
+    if doc.get("accepted_without_analysis"):
+        if not doc.get("parent"): raise RMError(f"{pin['spec_id']}@{pin['spec_version']} {pin['revision']} 是 accept-declaration 產生的 revision，卻沒有 parent")
+        return _analysis_horizon(pin_of(pin["spec_id"], pin["spec_version"], doc["parent"]))
+    if doc.get("dispatch_packet_sha256"):
+        pk = _analysis_packet(doc)
+        return ("snapshot", {(s["clarification_id"], s["answer_rev"], s["answer_sha256"]) for s in pk.get("resolutions") or []})
+    return ("time", operation.parse_ts(doc["created_at"]))
+
+def decision_added(pin: dict) -> list[str]:
+    """reason=decision_added 的判定（ADR-012；需求 A 第 5 章 §8）：回傳成立的 CLR ID（空清單＝不成立）。CLR 同時符合以下條件才算：
+    1. 在 T0 決議快照的範圍內（目標 spec 的 area 與直接參考的 area；同 dispatch._areas），而且 CLR 自身的 spec_id@spec_version 就是本 revision 的版本；
+    2. 狀態為 ANSWERED 或 INCORPORATED（APPLIED 已人工確認落地、WITHDRAWN 已撤回，都不算）；
+    3. 最新 answer_rev 的 resolution 是 requirement_clarified 或 spec_updated（no_change、out_of_scope 不改需求）；
+    4. revision 沒有引用這張 CLR 的任何 answer_rev（引用舊 rev 屬 decision_revised）；
+    5. 最新 answer_rev 不在 revision 的分析範圍內：R000 一律成立（沒有分析紀錄，比照附錄 A 5-14 對 decision_applied 的處理）；
+       有派發包 → 不在決議快照中；沒有派發包 → 回答時間晚於 revision 建立時間；accept-declaration 的 revision 沿用 parent。"""
+    from . import dispatch
+    sid, ver = pin["spec_id"], str(pin["spec_version"])
+    cited = {r["clarification_id"] for r in _clarification_refs(load_revision(pin))}
+    kind, seen = _analysis_horizon(pin)
+    out = []
+    for prod, area in sorted(dispatch._areas((sid, ver))):
+        for p in store.glob(f"clarifications/{prod}/{area}/CLR-*.yaml"):
+            c = store.load(p); revs = c.get("answer_revisions") or []
+            if (c.get("spec_id"), str(c.get("spec_version"))) != (sid, ver) or c.get("status") not in ADDED_STATES or not revs: continue
+            r = revs[-1]
+            if r.get("resolution") not in ADDED_RESOLUTIONS or c["clarification_id"] in cited: continue
+            if kind == "snapshot" and (c["clarification_id"], r["rev"], r["sha256"]) in seen: continue
+            if kind == "time" and operation.parse_ts(r["answered_at"]) <= seen: continue
+            out.append(c["clarification_id"])
+    return sorted(set(out))
+
 # ---------------------------------------------------------------- req accept-declaration（§6）
 def _accept_request(target, rev, reason, by):
     return {"targets": {"spec_pins": [target]}, "params": {"rev": rev, "reason_sha256": store.sha256_text(reason or ""), "by": by}}

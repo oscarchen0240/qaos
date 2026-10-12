@@ -2524,6 +2524,7 @@ FP-M0～M6（migrate）、FP-R0～R5（rollback）見移轉與回復章；對應
 | `declaration_changed` | 目標 spec 版本目前的 `decl_rev` 和 revision 記錄的 `target_decl_rev` 不同；或閉包中**任一節點**目前的 `decl_rev` 和 pins 記錄的不同；或閉包組成改變 | 擋 `_skip`；擋無 T0 流程的 `run new` |
 | `decision_revised` | revision 引用的 CLR 答案已經不是最新的 `answer_rev` | 擋 `_skip`；擋無 T0 流程的 `run new` |
 
+- `decision_applied`、`decision_added` 不是過時判定：只作為同版本 CIA 的 reason（§8），不擋 `_skip`、不擋無 T0 流程的 `run new`。
 - `req accept-declaration <spec_id@ver> --rev R<NNN> --reason`：產生新 revision，需求內容相同、pins 更新，並記錄 `accepted_diff`（新增或移除的節點）與 `accepted_without_analysis: true`，明示新 pins 的文件**沒有經過分析**。
 - references remove → 產生新的 `decl_rev`；舊 revision 的 pins 不變。
 
@@ -2545,10 +2546,26 @@ FP-M0～M6（migrate）、FP-R0～R5（rollback）見移轉與回復章；對應
 
 ### 8. 同版本 CIA
 
-- 指令：`run new spec-change-impact --input spec_id=X --input from_version=V --input to_version=V --input from_revision=R<NNN> --input reason=declaration_changed|decision_revised|decision_applied`。
+- 指令：`run new spec-change-impact --input spec_id=X --input from_version=V --input to_version=V --input from_revision=R<NNN> --input reason=declaration_changed|decision_revised|decision_applied|decision_added`。
 - 同版本時 `from_revision` 和 `reason` **必填**；缺任一 → `run new` 拒絕。
 - `from_revision` 必須是該版本已存在的 revision。
-- `reason` 必須和判定函式的實際結果相符（例如宣稱 `declaration_changed` 時，判定函式必須回報該狀態）；不符 → 拒絕。
+- `reason` 必須和判定函式的實際結果相符（例如宣稱 `declaration_changed` 時，判定函式必須回報該狀態）；不符 → 拒絕，錯誤訊息附上該 reason 的判定條件。
+- 四種 reason 的判定：
+
+  | reason | 判定（from_revision 為準） | 是否擋 `_skip`、無 T0 流程的 `run new` |
+  |---|---|---|
+  | `declaration_changed` | §6 | 擋 |
+  | `decision_revised` | §6 | 擋 |
+  | `decision_applied` | 附錄 A 5-3、5-14 | 不擋 |
+  | `decision_added` | 下方說明；附錄 A 5-19、5-20 | 不擋（附錄 A 5-21） |
+
+- **`decision_added`**（ADR-012）：同版本有新回答、而 from_revision 沒有採用的 CLR。以下全部成立的 CLR 至少一張即成立：
+  1. CLR 位於 T0 決議快照的範圍（目標 spec 的 area 與直接參考的 area），而且 CLR 自身的 `spec_id@spec_version` 就是這個版本；
+  2. 狀態是 ANSWERED 或 INCORPORATED（APPLIED 表示已人工確認落地，WITHDRAWN 已撤回，都不算）；
+  3. 最新 answer_rev 的 resolution 是 `requirement_clarified` 或 `spec_updated`（`no_change`、`out_of_scope` 不改需求）；
+  4. from_revision 沒有引用這張 CLR 的任何 answer_rev（引用的是舊 rev 屬 `decision_revised`，兩者互斥）；
+  5. 最新 answer_rev 不在 from_revision 的分析範圍內：R000 一律成立；有派發包的 revision 看它的決議快照（`resolutions`）；沒有派發包的 revision 看回答時間是否晚於 revision 建立時間；`req accept-declaration` 產生的 revision 沿用 parent 的判定。
+- `decision_added` 的 T0 照常以 clarification 型 SourceRef 採用該 CLR 最新 answer_rev（通過 X16），G-SPEC PASS 時轉 INCORPORATED（A4）；run COMPLETED 後以 `clarification apply --path a6 --landed-in <run>` 結案。
 - 同版本時 T0 **一定執行**（`run_if` 視為成立），產生 `to_revision`。
 - CIR 新增 `from_rm_revision`、`to_rm_revision`（RMPin）；`g_impact` 依 revision 讀需求，不讀檢視。
 - T1、T4 的派發包帶兩端（與全部 pin_groups）的 RMPin。
@@ -4135,6 +4152,9 @@ bin/qaos clarification waive-item <CLR> --item <item_id> --reason <文字> --by 
 | 5-16 | AC-09-64 R5 的舊 validate 判定 | 改為 baseline 比對，不改程式。**W1 對照**：W1 資料 commit 之後、M2 之前（仍是舊程式），對「舊 `schema.infer` 能推斷 schema 的全部 yaml」逐檔執行舊 `bin/qaos validate` 的結果（排除定義層 schemas、agents、workflows、permissions、tools、tests、admin-ui、docs、bin 與隱藏目錄——W1 與 R5 時它們都是舊程式本身；推斷不出 schema 的檔案舊 validate 本來就不判定；`locks/`、`operations/` 在舊 `PATH_RULES` 推斷為 None）。回復後以同一範圍再執行一次，判定：(1) **W1 對照中有的路徑**：逐檔的退出碼與輸出全文（去除 root 的絕對路徑）都與 W1 對照相同；W1 對照中既有的失敗不算新失敗。(2) **W1 對照中沒有的路徑**：只允許是回復後保留的稽核事件檔——X、R 的 `retain_audit`，以及 M2 之後的控制類操作（`maintenance start|end`）寫入的 `runs/_audit.d/*`、`runs/<run>/audit.d/*` 事件檔（路徑樣式只用來界定範圍，不是清單；清單路徑仍一律具體，§11.3）；每個檔案都必須能由檔名的 op_id 對應到登錄紀錄（`index.d`）中的 X、R 或上述控制類操作，只因路徑落在 `audit.d/` 不算。符合 (2) 的檔案不在舊 validate 的判定範圍。(3) 其他情況（W1 對照中有的路徑結果不同；W1 對照中沒有的路徑不符合 (2)）都視為不符，停止並交人處理。後續業務操作寫入的檔案不屬於 (2)，依下方的前提處理。**理由**：舊 `schema.infer` 的 `PATH_RULES` 把 `runs/` 下所有 yaml 推斷成 `workflow/workflow-run.schema.json`，這是舊程式的推斷限制——W1 時既有的 `runs/*/entities/*.yaml` 也因此失敗，保留的事件檔指定給舊 validate 時同樣失敗；舊程式的正常流程不掃描 `runs/_audit.d/`。**前提**：比對以 `later_ops_snapshot` 為空為前提；使用 `--allow-later-ops`（§13.11）時，後續操作報告列出的路徑另依該報告人工判定，本條只是有限的相容性判定，不能宣稱資料全部回到 W1 的狀態。**W1 對照的保存**（§15.1 W1 列）：逐檔結果（路徑、推斷的 schema、退出碼、輸出全文）、逐檔 sha256、資料 commit、舊程式 SHA 與工具版本，記在回復報告；未追蹤的業務檔要納入該資料 commit 或另存快照。工具：`tools/legacy_validate_snapshot.py`——`snapshot` 取得 W1 對照與回復後的結果（以舊程式的 `bin/qaos validate` 逐檔執行、保存全文），`compare --op X`（X 必填）依 (1)～(3) 判定：先核對中繼資料——兩份結果的資料 root 都必須等於比對時的 `--root`（不借用其他 root 的登錄紀錄），兩份結果都由目前版本的工具產生且中繼資料齊全，舊程式內容的雜湊、資料 root 實際使用的 schemas 的雜湊（舊程式從資料 root 讀 schemas）、工具的 sha256、舊程式所用 `python3` 環境的 jsonschema／PyYAML／referencing 與 Python 版本都相同（W1 與 R5 以同一個 canonical 路徑執行）；X 必須是登錄紀錄中的 migrate，接管 X 的 R 恰好一份，X 與 R 的計畫檔 sha256 都等於登錄紀錄的 `plan_sha256`；(2) 只豁免 W1 時尚未登錄的 op，migrate 只限 X、migrate_rollback 只限該 R；一律讀 R 的計畫確認 `later_ops_snapshot` 為空（找不到 R 或非空即不符）。`snapshot` 在舊程式環境或範圍異常（輸出含 Traceback，或沒有任何 VALID，包含範圍內一個檔案都沒有）時不寫結果。本條的 baseline 是舊程式的判定，與 6-38（新程式的 schema 驗證）不同。M1（2026-10-08）：對照組是主資料夾工作目錄的原樣複本（相當於 W1 對照），23 檔既有失敗，回復後逐檔相同（M1 比對的是退出碼、輸出首行與輸出末 600 字元）；4 個對照組中沒有的事件檔（X 1、`maintenance start` 1、R 2）被判 INVALID，三個 op 都在 `index.d` 中，屬 (2)。2026-10-08 Oscar 決定（D-M1-1） | R |
 | 5-17 | `migrate verify` 在 X 之後的合法操作 | 部署（2026-10-08）的 W2：`maintenance end` 依 §11.7 重新 render `runs/_audit.log`，舊的 verify 對它回報「不等於計畫值」「restore 不等於移轉後的值」兩項失敗；人工核對確認目前內容等於計畫值加上 `MAINTENANCE_END` 一行。任何 X 之後會 render 的操作都會造成同樣的誤報。修正（第 5 章 §12.1～12.5）：audit 檢視以「有出處的事件」重建判定——X 時的事件重建結果等於計畫值，目前內容等於 X 時的事件加上 X 之後已完成操作的全部事件（與可含的有效診斷事件）的重建結果；一般情況下等於「以計畫值開頭、追加的部分全部來自登錄中 X 之後已完成操作的事件」；計畫事件以 `plan_seq` 分組，不受同秒操作與時間倒退影響，診斷事件的時間倒退限制見第 5 章 §18 第 11 點。另以 §12.3 雙向核對事件檔（每個事件檔都有出處、應存在的事件都存在），把 X 的 `no_change` 中的 audit 檢視與 X 之後建立的 run 的 log 納入核對，有未完成操作時明確失敗並提示續做（§12.4）。不採用「目前內容等於重新 render 的結果」（5-13），因為它不能發現偽造、刪除或改動的事件檔。後續業務操作改寫的其他清單路徑仍回報失敗（§12.5）。驗收 AC-09-92～94 | R |
 | 5-18 | 移轉標記的孤兒 blob | 部署時發現 X 的 `blobs/` 有 1 個沒有被計畫引用的檔案：移轉標記在補上 `manifest_sha256` 之前的草稿（`manifest_sha256: null`），M1 預演也有。原因是建立計畫時替換標記內容，沒有移除舊的內容檔。不影響正確性（沒有任何步驟讀取它）。修正：只保存被步驟引用的最終內容（第 5 章 §11.4）。已移轉資料中既有的孤兒 blob 保留、不刪除，verify 不以它判定（§12.5）。驗收 AC-09-95 | I |
+| 5-19 | `reason=decision_added` 的判定 | 同版本 CIA 的第四種 reason（ADR-012）：CLR 在 T0 決議快照的範圍內、自身 `spec_id@spec_version` 就是 from_revision 的版本、狀態 ANSWERED 或 INCORPORATED、最新 answer_rev 的 resolution 為 `requirement_clarified` 或 `spec_updated`、from_revision 沒有引用它的任何 answer_rev、而且最新 answer_rev 不在 from_revision 的分析範圍內（見 5-20）。至少一張即成立；`rm.decision_added` 回傳成立的 CLR ID。只看 CLR 自身的版本，不依 applicability 擴及其他 spec（跨 spec 的落地先在目標 spec 另開 CLR，如 CLR-TXLOG-002）。2026-10-12 CLR-TXLOG-002（SPEC-TXLOG-001@0.1 R000）發現：其他三種判定都不成立，新 CLR 無法落地 | R |
+| 5-20 | `decision_added` 的「分析範圍」 | R000 沒有分析紀錄（沒有建立時間與派發包）→ 任何符合 5-19 其餘條件的 CLR 都算，比照 5-14 對 `decision_applied` 的處理。有 `dispatch_packet_sha256` 的 revision → 依 revision 的 `run_id` 在 run 的派發紀錄中找到該派發包（sha256 相符），最新 answer_rev（`clarification_id, answer_rev, answer_sha256`）不在它的 `resolutions` 中才算；找不到派發包 → 拒絕，不改用時間推定。沒有派發包的 revision（P4 之前的分析）→ 回答時間晚於 revision 的 `created_at` 才算。`accepted_without_analysis` 的 revision 沒有經過分析 → 沿用 parent 的判定（遞迴） | R |
+| 5-21 | `decision_added` 不擋 `_skip` 與無 T0 流程的 `run new` | 比照 `decision_applied`，只作為同版本 CIA 的 reason。理由：(1) 它表示「可能需要重新分析」，不像 `decision_revised` 那樣證明 revision 的依據已失效——答案也可能早已人工反映在 legacy 需求中；(2) 2026-10-12 現況有 7 個 spec 版本成立（CASHFLOW 0.1、DAILYREPORT 0.2、REDPACKET 0.1／0.2、SITELIST 0.6／0.7、TXLOG 0.1），擋下會讓這些版本的 testcase-revision、manual 全部停擺，spec-to-testcase 一律重跑 T0；(3) CLR 本身已有未落地的訊號（ANSWERED／INCORPORATED、未 APPLIED），結案必須經 apply 的 impact 掃描。日後若要改為擋下，另以 ADR 決定 | R |
 
 ### A.6 CLR 生命週期（第 6 章）
 
