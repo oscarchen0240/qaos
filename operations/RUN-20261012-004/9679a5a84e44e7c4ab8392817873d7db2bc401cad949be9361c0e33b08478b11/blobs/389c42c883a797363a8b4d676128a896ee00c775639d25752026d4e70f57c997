@@ -1,0 +1,121 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-046
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §場次資訊（第 232 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 232 行）
+  quote: 場次結束時的分數（歸零結束與出金結束為 0；洗分結束留有餘數時為該餘數）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 226 行）
+  quote: 場次開始時的分數（開分／入金起始者為 0；承接洗分餘數或日結結算轉入者為承接金額）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §場次資訊（第 232 行）
+  quote: 場次結束時的分數（歸零結束與出金結束為 0；洗分結束留有餘數時為該餘數）
+steps:
+- n: 1
+  action: 確認 M 分數為 0、沒有進行中場次；M 送出 req-keyin，金額 321
+  expected: 回 0-OK；M 分數 321，建立場次 S1
+- n: 2
+  action: M 送出 req-keyout，mode=all、throshold=100
+  expected: 回 0-OK，核可 300；M 分數 21；S1 結束，新場次 S2 立即承接餘數
+- n: 3
+  action: 在場次資訊頁查詢 S1
+  expected: S1 期初餘額 0（開分起始）、期末餘額 21（洗分結束留有餘數）、場次狀態『已結束』
+- n: 4
+  action: 查詢 S2
+  expected: S2 期初餘額 21（承接餘數）、場次狀態『進行中』
+- n: 5
+  action: M 送出 req-cashout（核可金額 21），再送 end-cashout 完成
+  expected: 回 0-OK；M 分數 0；S2 結束
+- n: 6
+  action: 再次查詢 S2
+  expected: S2 期末餘額 0（出金結束）
+test_data:
+- name: 開分金額
+  value: 321
+- name: 洗分
+  value: mode=all、throshold=100（核可 300、餘數 21）
+- name: 出金
+  value: 餘額 21 全額出金
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-046/AC-0462,AC-0463'
+title: 場次切換的期末／期初餘額：開分起始的場次期初 0、洗分結束留餘數 21 時期末 21；承接餘數的新場次期初 21、出金結束時期末 0
+requirement_ids:
+- REQ-CASHFLOW-046
+acceptance_criteria_ids:
+- AC-CASHFLOW-0462
+- AC-CASHFLOW-0463
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: medium
+risk: medium
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 【環境前提，spec 未定義】spec 的『場次』小節只列出場次資訊的呈現位置（會員詳細頁『機台資訊』區塊顯示進行中場次摘要、機台交易紀錄可依場次編號篩選、場館日結報表可選『依場次明細』），未載明『場次狀態』『期末餘額』等欄位在哪個頁面逐欄可見；請環境負責人指定查看場次資訊的頁面，執行者以該頁為準（下文稱『場次資訊頁』）
+expected_result: 洗分結束且留有餘數 21 的場次期末餘額為 21、出金結束的場次期末餘額為 0；由開分起始的場次期初餘額為 0，承接洗分餘數的場次期初餘額為 21。
+testcase_id: TC-CASHFLOW-122
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:28:04Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

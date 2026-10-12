@@ -1,0 +1,130 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-020
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（第 168 行）
+- requirement_id: REQ-CASHFLOW-020
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §出金（第 168 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 168 行）
+  quote: 平台只記錄面額，不管現場實際付現多少，零頭怎麼付由場館自行決定，平台也不記錄面額與實付的差額；交易紀錄、核實與場館日結報表的收據金額、已兌現金額、現金淨收一律以面額計
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 168 行）
+  quote: 餘額帶小數時，收據面額照記實際餘額（含小數）（2026-10-05 定案）
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §出金（第 168 行）
+  quote: 平台只記錄面額，不管現場實際付現多少，零頭怎麼付由場館自行決定，平台也不記錄面額與實付的差額；交易紀錄、核實與場館日結報表的收據金額、已兌現金額、現金淨收一律以面額計
+steps:
+- n: 1
+  action: 先完成餘額佈置：使 M 餘額恰為 399.6（見前提）。若 M 原有餘額，先以洗分 req-keyout mode=all、throshold=0 清到 0（不要用出金清空，也不要核實這筆洗分），再依前提佈置 399.6。這些佈置交易都會進入同一張場館日結報表，所以必須在記錄基準值之前全部完成
+  expected: M 分數 = 399.6
+- n: 2
+  action: 佈置交易已反映在報表後、送出 req-cashout 之前，才在場館日結報表（該場館、當日）記下『收據金額』『已兌現金額』『現金淨收』三個欄位目前的數值，分別記為 R0、C0、N0（若報表不是即時更新，先向環境負責人確認更新方式，待佈置交易反映後再記）
+  expected: 取得報表基準值（已含佈置交易，此後的差額只包含本筆出金）
+- n: 3
+  action: M 送出 req-cashout，取得核可金額 399.6 與 TXID_1；再送 end-cashout 帶 TXID_1 完成
+  expected: 兩個請求皆回 0-OK；出金完成，面額 399.6，M 分數歸 0
+- n: 4
+  action: 系統外動作：假設櫃檯依收據付現 399（或 400）元，執行者記下自己選的實付值；不要把這個數字輸入系統任何地方
+- n: 5
+  action: 後台『洗分出金核實』頁找到這筆（以機台帳號或訂單編號定位），檢視其收據金額，並將該筆核實（轉為已核實）；檢視該頁與 4.1 該筆明細有沒有『實付金額』或『面額與實付差額』欄位
+  expected: 收據金額顯示 399.6；整個核實流程沒有要求輸入實付金額；4.1 明細與核實頁都沒有實付金額，也沒有面額與實付的差額（例如 0.6 或 0.4）
+- n: 6
+  action: 重新查詢場館日結報表，與步驟 2 的基準值比對（差額只涵蓋 req-cashout 到核實這段期間）
+  expected: 『收據金額』增加 399.6、『已兌現金額』增加 399.6、『現金淨收』的變動量絕對值為 399.6；沒有出現以 399、400 或差額計算的數字
+test_data:
+- name: 出金面額
+  value: 399.6
+- name: 櫃檯實付（系統外動作，場館自訂）
+  value: 399（也可為 400）
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-020/AC-0204'
+title: 已完成的面額 399.6 出金：實付金額由場館自訂，交易紀錄、洗分出金核實、場館日結報表一律以面額計，平台不記錄實付金額與差額
+requirement_ids:
+- REQ-CASHFLOW-020
+acceptance_criteria_ids:
+- AC-CASHFLOW-0204
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】使 M 的分數餘額恰為 399.6：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額、也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec
+  證實）：先把 M 餘額清到 0（清空請用洗分：req-keyout mode=all、throshold=0，且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表），再試送 req-keyin 金額 399.6，若回
+  0-OK 且後台顯示 M 分數為 399.6 即可；若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定把餘額設為 399.6。無法取得恰為 399.6 的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+- 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）；【環境前提，需環境負責人確認】
+- 【環境前提，spec 未在本包定義】需要能查看『洗分出金核實』頁（spec 提及，屬另一個規格）與『場館日結報表』（spec 提及的收據金額、已兌現金額、現金淨收欄位），以及當日該場館報表會即時含入本案交易；欄位位置與是否需先日結，請對照該兩頁的規格或請環境負責人確認。本案以『前後差額』比對，所以測試期間該場館不得有其他交易
+expected_result: 面額 399.6 的出金完成後，不論櫃檯實付 399 或 400：交易紀錄、洗分出金核實與場館日結報表的收據金額、已兌現金額、現金淨收一律以面額 399.6 計；平台不記錄實付金額，也不記錄面額與實付的差額。
+testcase_id: TC-CASHFLOW-113
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:28:04Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

@@ -1,0 +1,142 @@
+artifact_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-004
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-12T15:27:32Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+- entity_type: Artifact
+  id: ART-TDR-01M4RBDDF3Z12N3365CD0NB4X2
+- entity_type: Artifact
+  id: ART-CIR-01M4R79SMGTEBTDV1B1ZEZ99H8
+- entity_type: Artifact
+  id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+requires_approval: null
+dispatch_packet_sha256: 22f81e3fbecc485ceadccf61b3135367a9dcff30710b9d8546786b4ad13c6ea3
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RBDBYNMQVF4E1RKHDX3566
+    issue_type: requirement_mismatch
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-007
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §入金（`req-cashin` → `end-cashin`）（第 325 行）
+      quote: 額度上限於本階段判定並預留（v07 定案）
+    evidence: TC-034 修訂版新增 requirement_ids REQ-CASHFLOW-007、acceptance_criteria_ids AC-CASHFLOW-0072，以及 decision_ref／source_ref
+      CLR-CASHFLOW-005 rev 0（sha 7796efd4…）；但步驟 4（end-cashin 實際清點 150 超限）只斷言『回 1-OVER LIMIT』。AC-0072 的 then 是『回 1-OVER LIMIT，不更新帳務、不關閉為已完成，機台退鈔』。
+    explanation: 上一輪的追溯缺口（沒有引用 CLR-005）已經補上，引用的 answer_rev 與 sha 都正確，沒有引用衝突的另一側。不過這張案例宣稱覆蓋 AC-0072，實際只驗證了回覆碼，『不更新帳務、不關閉為已完成』兩項沒有斷言。AC-0072
+      在 ACTIVE 的 TC-CASHFLOW-008 v3 已完整覆蓋（含帳務未異動），所以沒有覆蓋缺口，只是這張的 AC 對應宣稱過頭，也和 TC-008 部分重疊。另外，REQ-007 Q01 的 detail_gaps 指出超限後
+      PENDING 的去向未定義；本案沒有斷言 PENDING 轉成什麼狀態，這點是正確的。
+    recommended_change: 不阻擋。擇一處理：(a) 步驟 4 之後補斷言『M 分數仍為讀值、TXID_1 不是已完成』，不要斷言它轉成哪個狀態；或 (b) 從 acceptance_criteria_ids 移除 AC-0072，保留
+      REQ-007 Q01 的 decision_ref 作為依據，AC-0072 交給 TC-CASHFLOW-008。
+  - testcase_id: TC-DRAFT-01M4RBDBYTH00EJG3EJS8BKBBW
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-049
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §狀態碼對照（第 319 行）
+      quote: Token 無效或已重置、機台帳號不存在，或其他未預期錯誤
+    evidence: AC-0491 案例（憑證重置後舊 token 回 9-OTHER ERROR、不寫帳務、新 token 正常）在內容上涵蓋 ACTIVE 的 TC-CASHFLOW-059 v1（AC-0294：憑證被重置時回 9-OTHER
+      ERROR）。
+    explanation: 延續上一輪的 advisory。兩案對應的 AC 不同，而且本案的斷言更完整，不算重複，只是證據重疊。
+    recommended_change: 不阻擋。日後整理回歸套件時，可在 TC-CASHFLOW-059 註記已被 AC-0491 案例涵蓋。
+  coverage_summary:
+    requirements_total: 49
+    requirements_covered: 49
+    ac_total: 92
+    ac_covered: 92
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RBDBYMSX6BPHXJMAQWJHME
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYNBPDNBXBG42AGHHB7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYNMFGQX9B9AFFPQ0HR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYND4WM6YVKF2A19S2W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYNMQVF4E1RKHDX3566
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYN2EMDWEW055ZHZTJA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYQ72506GXWZT78FCKJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYQ8MSZ2XGAA0HWY164
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYQ7V1TNS278YAHS2RZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYQZZNMETG2W1BV24ZH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYQNEEAQF9AKM6F991Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYRFDNCNHFJ3E4SB8E1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYRBJ031JR8R5KTACDQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYR23NH8S15ZHENKCMK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYREA5MXRBTBCTT6VV0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYR2V0CB2P5PYCJQ0MY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYSP1GA8QAYF04FD01R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYS31R7E5V22VYSY9XD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYSJKWFTGG9FC1RD7RN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYSAPBGJ6MCGB4DT94C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYSY9YT8HYPKNT29GTQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYSDDDSHFRN9NQNYZFP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYT1PZ00CT7Q7XYZATP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYTND6XVNNDAGE1EEXD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYTS2J5HE792FVVMN3B
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYTH00EJG3EJS8BKBBW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYTAY2TZ78G5N03CH9Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RBDBYT9X043QMG3Z1C3C8F
+    verdict: ok
+history:
+- at: '2026-10-12T15:27:57Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-004

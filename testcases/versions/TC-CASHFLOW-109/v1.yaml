@@ -1,0 +1,113 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-008
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-008
+    answer_rev: 1
+    answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+source_refs:
+- type: clarification
+  clarification_id: CLR-CASHFLOW-008
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  quote: 入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂；入金額度上限的判定時機依 CLR-CASHFLOW-005（end-cashin 依實際清點金額判定、req-cashin 不預留額度），REQ-CASHFLOW-008
+    維持 2026-09-15 移除「手動取消釋放預留」的結論
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（本包相關）（第 260 行）
+  quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止
+steps:
+- n: 1
+  action: M 送出 req-cashin，金額 300，之後暫不送 end-cashin
+  expected: 回 0-OK 取得 TXID_I；該筆為待確認入金
+- n: 2
+  action: 對照組：M 送出 req-keyin 金額 100，再送出 req-cashout（全部餘額），之後不送 end-cashout
+  expected: 平台建立待確認出金 TXID_O（對照組：前端上線後管理員應能在此列看到『手動取消』）
+- n: 3
+  action: 管理員登入後台，進入 4.1 交易紀錄查詢（機台視角），篩選 M、交易狀態『待確認』，找到 TXID_I（入金）與 TXID_O（出金）兩列；檢視 TXID_I 那列的操作欄與明細
+  expected: TXID_I 那列沒有任何『手動取消』（或等同的取消／作廢該筆入金）操作。對照 TXID_O：前端上線前兩列皆無入口（記錄為『前端未上線，入金列無入口屬弱證據』）；前端上線後 TXID_O 應有而 TXID_I 仍沒有
+- n: 4
+  action: 改以站長角色登入，進入同一頁，同樣檢視 TXID_I
+  expected: 站長也沒有手動取消該筆入金的操作
+- n: 5
+  action: （選做，只記錄）若開發提供後端手動取消 API，以管理員身分嘗試對 TXID_I 呼叫取消，記錄回應與 TXID_I 的狀態；API 對『取消入金』的回應 spec 未定義，不斷言回應內容，只記錄
+- n: 6
+  action: 確認 TXID_I 仍可依正常路徑收斂：M 送出 end-cashin，帶 TXID_I 與入鈔機實際清點金額 300
+  expected: 回 0-OK；後台 4.1 該筆轉為『已完成』（證明前面步驟沒有把它取消）
+- n: 7
+  action: 清理對照組：M 送出 end-cashout 完成 TXID_O
+test_data:
+- name: 入金金額
+  value: 300
+- name: 對照組出金：先開分
+  value: 100
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-008/AC-0083'
+title: 待確認入金沒有手動取消操作：管理員與站長於交易紀錄查詢該筆皆無『手動取消』，該筆只能等 end-cashin 完成或 24 小時逾時
+requirement_ids:
+- REQ-CASHFLOW-008
+acceptance_criteria_ids:
+- AC-CASHFLOW-0083
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- state_transition
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 已有兩個後台帳號可用（自行從環境中選定）：一個管理員（Admin）角色、一個站長角色，皆能進入 4.1 交易紀錄查詢（機台視角）。【環境前提】站長角色能否進入該頁 spec 本包未載明；若站長進不了該頁，步驟 4 記錄為『站長無法檢視』，不判定通過
+- 【前端受阻註記】管理員『手動取消』的 UI 入口在 4.1 交易紀錄查詢（機台視角），前端尚未開發（BUG-TXLOG-001 OPEN；後端已完成）。前端上線前，涉及該入口的步驟無法以 UI 執行，執行結果記為『受阻』（不是 FAIL）；可改以後端手動取消
+  API 驗證，API 的路徑、認證與參數 spec 未定義，需由開發提供。本案的對照意義：前端上線前，4.1 連待確認『出金』也沒有手動取消入口，因此『入金列沒有入口』在前端上線前只是弱證據；前端上線後（出金列管理員看得到入口）重跑才有完整對照意義
+expected_result: 待確認入金沒有手動取消操作：管理員與站長在交易紀錄查詢該筆時，都沒有可手動取消入金的操作；該筆只能等 end-cashin 完成（本案以送 end-cashin 驗證）或 24 小時逾時收斂（逾時另見 AC-0082
+  案例）。
+testcase_id: TC-CASHFLOW-109
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:28:04Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

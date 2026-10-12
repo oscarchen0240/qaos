@@ -1,0 +1,134 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: true
+execution_cost: high
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §PENDING 保留期限（第 375 行）
+- requirement_id: REQ-CASHFLOW-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §業務規則與驗證（本包相關）（第 260 行）
+- requirement_id: REQ-CASHFLOW-012
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-008
+    answer_rev: 1
+    answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §PENDING 保留期限（第 375 行）
+  quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 `end-cashin` 一律回 `1-NO RECORD`，機台停止重送，流程收斂
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 260 行）
+  quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」
+- type: clarification
+  clarification_id: CLR-CASHFLOW-008
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  quote: 待確認入金只依 24 小時逾時轉「已逾時」收斂
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §PENDING 保留期限（第 375 行）
+  quote: 入金 PENDING 保留 24 小時，逾期自動轉「已逾時」；之後再收到 `end-cashin` 一律回 `1-NO RECORD`，機台停止重送，流程收斂
+steps:
+- n: 1
+  action: 後台讀 M 分數，記為 B0；M 送出 req-cashin，金額 100，之後不送 end-cashin；記下後台 4.1 該筆的建立時間 T0（UTC+0）
+  expected: 回 0-OK 取得 TXID_A；該筆狀態『待確認』
+- n: 2
+  action: 在 T0 + 23 小時 50 分左右（尚未滿 24 小時）重新查詢 4.1 該筆，並讀 M 分數
+  expected: 仍為『待確認』（尚未滿 24 小時不應逾時）；M 分數 = B0
+- n: 3
+  action: T0 + 24 小時之後，每隔一段時間重新整理 4.1 該筆，記錄實際看到轉為『已逾時』的時間；轉換後讀 M 分數
+  expected: 該筆轉為『已逾時』；M 分數仍為 B0，沒有增加
+test_data:
+- name: 入金金額
+  value: 100
+- name: 未滿 24 小時的檢查時點
+  value: 建立後約 23 小時 50 分
+- name: 超過 24 小時的檢查時點
+  value: 建立後 24 小時起，每隔一段時間重新整理，直到轉為已逾時
+assumptions: []
+title: 入金 PENDING 建立滿 24 小時後由排程自動轉為已逾時、分數不增加（未滿 24 小時仍為待確認）
+requirement_ids:
+- REQ-CASHFLOW-012
+acceptance_criteria_ids:
+- AC-CASHFLOW-0121
+test_level: api
+test_types:
+- functional
+- boundary
+design_techniques:
+- state_transition
+- boundary_value
+priority: high
+risk: medium
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 本案需跨 24 小時。可與 TC-CASHFLOW-053、本批『待確認出金超過 24 小時不逾時』案例在同一時間各自建立專用 PENDING、共用同一段等待時間（每案使用自己的 TXID）
+- 【環境前提，spec 未定義】系統排程的執行頻率 spec 未載明；若環境提供縮短逾時或調整時間的方式，須由環境負責人說明，本案預設以真實等待為準
+expected_result: 入金 PENDING 建立滿 24 小時且經系統排程檢查後，自動轉為『已逾時』，M 分數不增加（入金不預留額度，無預留需釋放）。
+source_ref: 'affected: TC-CASHFLOW-014 v1（CI-SPEC-CASHFLOW-001-0.1-0.2）'
+critical_path: false
+testcase_id: TC-CASHFLOW-014
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:28:04Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

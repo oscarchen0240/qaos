@@ -1,0 +1,167 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（`req-keyin`）（第 352 行）
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（第 84 行）
+- requirement_id: REQ-CASHFLOW-030
+  question_id: Q02
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-006
+    answer_rev: 0
+    answer_sha256: dd8f557b0d7f20ffc857e2b14d50511d948f738beb7e7cf3dd2513f28768673a
+- requirement_id: REQ-CASHFLOW-007
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-005
+    answer_rev: 0
+    answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 352 行）
+  quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（第 84 行）
+  quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+- type: clarification
+  clarification_id: CLR-CASHFLOW-006
+  answer_rev: 0
+  answer_sha256: dd8f557b0d7f20ffc857e2b14d50511d948f738beb7e7cf3dd2513f28768673a
+  quote: 所有未成立原因一律不寫入交易紀錄，不只額度上限
+- type: clarification
+  clarification_id: CLR-CASHFLOW-005
+  answer_rev: 0
+  answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+  quote: 改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin 才依入鈔機實際清點金額判定額度上限，超限則退鈔
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §開分（`req-keyin`）（第 352 行）
+  quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+steps:
+- n: 1
+  action: 探測新額度已生效：M 送出 req-keyin，金額 101（剩餘額度只有 100）
+  expected: 回 1-OVER LIMIT，M 分數維持 B0（確認上列額度上限 A 已生效；若回 0-OK 表示額度尚未生效或讀值有誤，先向環境負責人確認，不要往下做）
+- n: 2
+  action: M 送出 req-cashin，金額 50；之後不送 end-cashin（讓這筆入金停在待確認）
+  expected: 回 0-OK 並取得 TXID，後台 4.1 出現該筆『待確認』入金 50，M 分數仍為 B0；req-cashin 階段不判定額度、不預留額度（AC-0071）
+- n: 3
+  action: 後台 4.1 以 M 的機台帳號篩選（不篩選交易狀態），記下目前列出的交易筆數 N1
+  expected: N1 為此後比對『被拒絕的開分有沒有留下紀錄』的基準筆數（步驟 1 被拒絕的探測請求依 CLR-006 也不會留下紀錄，所以它不影響 N1）
+- n: 4
+  action: M 送出 req-keyin，金額 100（加計後全場館合計 = S + 100，恰等於額度上限 A）
+  expected: 回 0-OK，M 分數 = B0 + 100。若步驟 2 未完成的入金 PENDING（50）被計入判定，合計會變成 S + 150 而被拒絕，所以本步成立即代表該 PENDING 不計入、不預留
+- n: 5
+  action: 後台 4.1 重新查詢（不篩選交易狀態），記下交易筆數 N2
+  expected: 新增 1 筆已完成的開分 100；N2 = N1 + 1
+- n: 6
+  action: M 送出 req-keyin，金額 1（加計後合計 = S + 101，超過 A 共 1 單位）
+  expected: 回 1-OVER LIMIT；M 分數維持 B0 + 100，不變
+- n: 7
+  action: 後台 4.1 重新查詢（不篩選交易狀態，涵蓋所有狀態）
+  expected: 筆數仍為 N2，查無這次被拒絕的金額 1 的開分紀錄，也沒有任何『未成立』狀態的紀錄（對照基準：步驟 5 的 N2）
+- n: 8
+  action: 還原：把場館額度上限改回原值。步驟 2 的入金 PENDING 因入金沒有手動取消，不需處理，24 小時後自動轉為已逾時
+test_data:
+- name: S（全場館分數合計，讀值）
+  value: 依環境讀出，下文 A = S + 100
+- name: 未完成入金 PENDING 金額
+  value: 50
+- name: 第一筆開分金額（加計後恰等於 A）
+  value: 100
+- name: 第二筆開分金額（加計後超過 A 共 1 單位）
+  value: 1
+assumptions: []
+title: 開分加計後恰等於場館額度上限可成立、超過 1 單位被 1-OVER LIMIT 拒絕且不寫帳務異動與交易紀錄；同場館未完成的入金 PENDING 不計入判定
+requirement_ids:
+- REQ-CASHFLOW-004
+- REQ-CASHFLOW-030
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0041
+- AC-CASHFLOW-0302
+- AC-CASHFLOW-0071
+test_level: api
+test_types:
+- functional
+- negative
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）；【環境前提，需環境負責人確認】
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 記下當下『全場館所有機台帳號分數餘額的合計』S（逐一讀出該場館每個機台帳號的分數後加總，讀法見前一條環境前提），並記下 M 目前分數 B0
+- 將 M 所屬場館的『額度上限』設為 A = S + 100（額度上限屬站台列表的場館設定；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效）。例：S = 250 則 A = 350
+expected_result: 恰等於額度上限的開分（100）成立，回 0-OK、分數增加 100，且同場館尚未完成的入金 PENDING（50）不計入判定、req-cashin 不預留額度；超過額度上限 1 單位的開分（1）被拒絕：回 1-OVER
+  LIMIT、分數不變、不寫入任何帳務異動，且交易紀錄查無此次拒絕的紀錄、不會以『未成立』狀態出現。
+source_ref: 'affected: TC-CASHFLOW-005 v3（CI-SPEC-CASHFLOW-001-0.1-0.2）'
+critical_path: true
+testcase_id: TC-CASHFLOW-005
+version: 4
+supersedes: 3
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:28:04Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
