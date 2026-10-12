@@ -1,0 +1,971 @@
+artifact_id: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-004
+task_id: T2
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-10-12T17:08:00Z'
+status: VALID
+source:
+  type: RequirementModel
+  ids:
+  - ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: 25fe502af3efe6bbe58aa5e19b142af390214c896284bec2f3122357869bdeba
+references:
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-001
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-005
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-007
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-010
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-011
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-015
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-016
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-020
+- entity_type: Requirement
+  id: REQ-DAILYREPORT-027
+payload:
+  mode: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  testcases:
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: manual
+    stability: unknown
+    source: spec_workflow
+    assumptions: &id001 []
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR2JJ3CT46BC9XN3EMN
+    title: T 不是 00:00 的場館：日結時刻前後各出的收據，未兌現、已作廢、已兌現三欄都記在收據所屬營業日的列，不依作廢日或核實日
+    description: 驗證日結時間 T 不是 00:00 時，出金收據落在 T 之前與 T 之後（兩個相鄰營業日）時，未兌現、已作廢、已兌現三欄各自歸屬的營業日（RUN-20261012-007 T3RR RF-02）。
+    requirement_ids:
+    - REQ-DAILYREPORT-007
+    - REQ-DAILYREPORT-011
+    - REQ-DAILYREPORT-027
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0071
+    - AC-DAILYREPORT-0072
+    - AC-DAILYREPORT-0115
+    - AC-DAILYREPORT-0116
+    - AC-DAILYREPORT-0271
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 測試場館的日結時間 T 不是 00:00（例如 06:00）。令 T0 為造數當天的日結時刻：D-1 營業日＝T0 之前的那個營業日（前一日 T 至 T0 前），D 營業日＝自 T0 起的營業日。以下以 T=06:00、T0 為 X
+      日 06:00 為例（D-1 標示為 X-1 日、D 標示為 X 日），實際以場館設定為準。營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00
+      時，9/5 05:59 的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - T 的設定在造數之前就已完成，造數到查詢結束期間不得修改（變更 T 對既有營業日的影響 v0.3 未定義，不在本案範圍）
+    - 機台 A 為自行從環境中選定的既有機台帳號（會員編號），屬於上述場館；A 在 D-1 與 D 兩個營業日沒有本案四張收據以外的出金，造數前 A 的機台餘額為 0
+    - 收據 Ra1、Ra2 的出金交易時間在 T0 之前（D-1 營業日）；Rb1、Rb2 的出金交易時間在 T0 之後（D 營業日）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）
+    - 兩種造數方式擇一，並在執行記錄寫明用了哪一種：(a) 環境提供可指定交易時間的造數工具 → Ra1、Ra2 取 T0 前 1 秒（如 05:59:59），Rb1、Rb2 取 T0 整點（如 06:00:00）；(b) 沒有造數工具
+      → 在 T0 前數分鐘內現場操作 Ra1、Ra2，T0 之後現場操作 Rb1、Rb2，以 『機台交易紀錄』 中該筆出金的交易時間（欄位名稱以畫面為準）判定落在 T0 之前或之後。方式 (b) 只驗證 T0 兩側，不驗證 1 秒邊界；開分在
+      T 前 1 秒與整點的歸屬由 TC-DAILYREPORT-021／022 驗證
+    - 核實與作廢改用環境負責人提供的『核實／作廢帳號』（有權限在『帳務管理 > 洗分出金核實』核實與作廢出金的後台帳號；核實與作廢的角色權限不在本 spec，本案不驗證權限）。若與管理員不是同一個，需在核實／作廢步驟切換登入，回到報表查詢步驟時切回管理員並重選站台
+    - 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試場館與測試機台帳號產生的紀錄，不得對正式營運資料執行
+    - 核實／作廢後重新查詢，報表應立即反映最新狀態（第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+    test_data:
+    - name: Ra1（D-1，T0 前）
+      value: 面額 100，之後作廢
+      note: 出金時間 < T0
+    - name: Ra2（D-1，T0 前）
+      value: 面額 200，之後核實（核銷）
+      note: 出金時間 < T0
+    - name: Rb1（D，T0 起）
+      value: 面額 400，之後作廢
+      note: 出金時間 >= T0
+    - name: Rb2（D，T0 起）
+      value: 面額 800，之後核實（核銷）
+      note: 出金時間 >= T0
+    - name: 預期（核實／作廢前）
+      value: D-1 列：收據 300、未兌現 300、已兌現 0、已作廢 0；D 列：收據 1200、未兌現 1200、已兌現 0、已作廢 0
+    - name: 預期（核實／作廢後）
+      value: D-1 列：收據 300、已兌現 200、已作廢 100、未兌現 0；D 列：收據 1200、已兌現 800、已作廢 400、未兌現 0
+    steps:
+    - n: 1
+      action: 依前提造出 Ra1（面額 100）、Ra2（200）、Rb1（400）、Rb2（800）四張機台 A 的出金收據（每張先讓 A 有對應餘額再出金；四張面額互不相同，便於從加總辨識是哪幾張）。到『機台交易紀錄』逐筆確認四筆出金的交易時間與面額，記入執行記錄
+      expected: Ra1、Ra2 的交易時間早於 T0，Rb1、Rb2 的交易時間不早於 T0；四張收據目前皆為待核實。若有任何一筆落在預期的另一側，造數失敗，重做，不繼續後續步驟
+    - n: 2
+      action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號填機台 A、結算日期 D-1 ～ D（以營業日標示），搜尋。記錄 D-1 列與 D 列的『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』
+      expected: D-1 列：收據 300、未兌現 300、已兌現 0、已作廢 0；D 列：收據 1200、未兌現 1200、已兌現 0、已作廢 0（四張皆待核實，各依出收據的營業日歸屬）
+    - n: 3
+      action: 以『核實／作廢帳號』登入（必要時切換並重選站台），到『帳務管理 > 洗分出金核實』：對 Ra1（100）與 Rb1（400）執行作廢；對 Ra2（200）與 Rb2（800）執行核實（核銷）；按鈕名稱與必填欄位以畫面為準。建議在
+        D 之後的下一個營業日才執行本步驟（作廢日／核實日與收據日不同天，才能鑑別 Rb1、Rb2 的歸屬）；若須當日完成，Rb1、Rb2 的作廢日／核實日與其收據日同屬 D，只有 Ra1、Ra2 具鑑別力，請在執行記錄註明
+      expected: Ra1、Rb1 標記為已作廢；Ra2、Rb2 標記為已核實
+    - n: 4
+      action: 以管理員登入（必要時切換並重選站台為前述場館），以步驟 2 完全相同的條件重新查詢，記錄 D-1 列與 D 列的『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』
+      expected: D-1 列：收據 300、已兌現 200、已作廢 100、未兌現 0；D 列：收據 1200、已兌現 800、已作廢 400、未兌現 0。兩列皆滿足 收據金額＝已兌現＋未兌現＋已作廢
+    expected_result: 出金收據依其所屬營業日（出金交易時刻依 T 判定）歸屬，未兌現、已作廢、已兌現三欄都記在收據日那一列，不依作廢日或核實日：核實／作廢前，D-1 列未兌現 300、D 列未兌現 1200；核實／作廢後，D-1
+      列已兌現 200、已作廢 100、未兌現 0，D 列已兌現 800、已作廢 400、未兌現 0，兩列收據金額（300、1200）不變且滿足 收據金額＝已兌現＋未兌現＋已作廢。（原文：第 52～54 行『以出收據的日期歸屬，不論實際付現／作廢是哪一天』；推論部分：把『出收據的日期』解讀為出金交易時刻所屬的營業日。依據的勾稽關係：第
+      51 行把收據金額定義為『當日出金總額』，第 70 行說明『當日』指各列的營業日，營業日依 T 切分（第 42、152 行）並以起算日期標示（AC-0071／0072）；第 54 行規定每列 收據金額＝已兌現＋未兌現＋已作廢，故三欄必須和收據金額採同一個營業日歸屬，也就是出金交易所屬的營業日。本
+      spec 沒有單獨為收據寫 T 邊界的例子。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／已作廢金額（第 54 行）；另見第 42、52、53 行
+      quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-007
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／結算期間（第 42 行）
+    - requirement_id: REQ-DAILYREPORT-007
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §業務規則與驗證（第 152 行）
+    - requirement_id: REQ-DAILYREPORT-011
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已兌現金額（第 52 行）
+    - requirement_id: REQ-DAILYREPORT-011
+      question_id: Q04
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／未兌現金額（第 53 行）
+    - requirement_id: REQ-DAILYREPORT-027
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已作廢金額（第 54 行）
+    source_refs:
+    - &id002
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／結算期間（第 42 行）
+      quote: 按日顯示營業日（依場館日結時間切分）
+    - &id005
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §業務規則與驗證（第 152 行）
+      quote: 為場館設定欄位：每日結算的截止時刻（UTC+0），用於場館日結報表分日
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／已兌現金額（第 52 行）
+      quote: 當日出金的收據中，已核實（核銷）者的金額合計；以出收據的日期歸屬，不論實際付現是哪一天（2026-10-05 定案）
+    - &id007
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／未兌現金額（第 53 行）
+      quote: 當日出金的收據中，截至查詢當下仍為待核實者的金額合計；以出收據的日期歸屬（2026-10-05 定案，原為「截至查詢當下全部待核實收據的累計」）
+    - &id003
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+    design_rationale: 依據：第 53 行（未兌現以出收據日歸屬，CLR-DAILYREPORT-015 已裁決以此為準）、第 52 行（已兌現以收據日歸屬）、第 54 行（已作廢以收據日歸屬、不論作廢哪一天）、第 42／152
+      行（營業日依日結時間切分）；AC-0071／0072（交易在 T 前 1 秒計入前一營業日、T 整點計入當日）、AC-0115／0116／0271。T3RR RF-02 指出：既有 TC-021／022 只用開分驗證 T 兩側，沒有任何案例驗證收據落在切分點時這三欄記到哪一列，且
+      T 不是 00:00 時『出收據那天』若以 UTC+0 日曆日解讀會與營業日不同。技術：boundary_value，邊界是 spec 定義的日結時刻 T（AC-0071／0072 的 T 前／T 整點）；2 個狀態（作廢／核實）×
+      2 側（T 前／T 起）各一張，面額互異，不是條件組合矩陣的 decision_table。資料設計：作廢／核實的動作日期刻意與收據日不同（建議 D 的下一個營業日執行），歸屬錯誤時結果可區分；限定 A 在 D-1、D 無其他出金，避免干擾（負面事實的對照基準＝同一條件下作廢／核實前後各查一次）。我的推測與需確認事項：(1)『出收據的日期』＝出金交易時刻所屬營業日是由第
+      51、54、42、70 行與 AC-0071／0072 的勾稽推得（第 51 行收據金額＝當日出金總額、第 70 行『當日』＝營業日、第 54 行三欄之和須等於收據金額而採同一歸屬），非 spec 逐字；(2) 造數與取得交易時間的方式（造數工具或現場操作、『機台交易紀錄』有交易時間欄）為我的推測，需環境負責人確認；(3)
+      刻意不修改 T（RF-01 變更 T 的效果 spec 未定義，不依賴）；(4) 與 REQ-CASHOUT-032 的『出收據那天』是否同為營業日未知，本案不斷言洗分出金核實頁的呈現。
+    source_ref: T3RR:RUN-20261012-007 RF-02
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: manual
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR2EMVSRY34QHQSTYWZ
+    title: T 不是 00:00 時按週查詢：週一 00:00 到 T 之間的開分與待核實收據歸前一週（週日營業日）的列，週一 T 起的才歸新的一週
+    description: 驗證按週彙總的週界以營業日計：週一的營業日從週一的 T 才開始（RUN-20261012-007 T3RR RF-03）。
+    requirement_ids:
+    - REQ-DAILYREPORT-005
+    - REQ-DAILYREPORT-015
+    - REQ-DAILYREPORT-007
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0052
+    - AC-DAILYREPORT-0151
+    - AC-DAILYREPORT-0155
+    - AC-DAILYREPORT-0071
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 測試場館的日結時間 T 不是 00:00，且比 00:00 晚至少 30 分鐘（例如 06:00），讓『週一 00:00 ～ T』有足夠的現場操作時間。營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日
+      T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非
+      UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - T 的設定在造數之前就已完成，造數到查詢結束期間不得修改（變更 T 對既有營業日的影響 v0.3 未定義，不在本案範圍）
+    - 令 M 為某個週一（UTC+0 日曆日）。X1 類交易發生在 M 的 00:00:00 ～ T-1 秒之間（屬於 M 前一日的週日營業日，即前一週）；X2 類交易發生在 M 的 T 起（屬於週一營業日，即新的一週）。若在現場操作，需排在
+      M 當天 UTC+0 的 00:00 ～ T 之間完成 X1 類交易，並在 T 之後完成 X2 類交易；若環境有可指定交易時間的造數工具，則直接指定
+    - 機台 A 為自行從環境中選定的既有機台帳號（會員編號），屬於上述場館；A 在 M-7 ～ M 的營業日（以營業日標示）內沒有下列四筆以外的開分、出金；造數前 A 的機台餘額為 0
+    - X1 類：開分 100，隨後出金（出金清空餘額，收據面額＝100，維持待核實）；X2 類：開分 200，隨後出金（收據面額 200，維持待核實）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）；各筆實際交易時間以『機台交易紀錄』為準（欄位名稱以畫面為準）
+    - 整個測試不對這兩張收據做核實或作廢（本案只看開分與待核實收據）
+    test_data:
+    - name: X1（週一 00:00 ～ T 之前）
+      value: 開分 100 → 出金，收據 100，待核實
+    - name: X2（週一 T 之後）
+      value: 開分 200 → 出金，收據 200，待核實
+    - name: 查詢條件
+      value: 依機台明細、按週、機台帳號＝A、結算日期＝M-7 ～ M（營業日標示）
+    - name: 預期（前一週列，週起為 M-7）
+      value: 開分 100、收據 100、未兌現 100
+    - name: 預期（新的一週列，週起為 M）
+      value: 開分 200、收據 200、未兌現 200
+    steps:
+    - n: 1
+      action: 依前提造出 X1 類與 X2 類交易（X1 類在週一 M 的 00:00 ～ T 之前、X2 類在 T 之後）。到『機台交易紀錄』逐筆確認兩組交易的時間，記入執行記錄
+      expected: X1 類兩筆（開分、出金）的交易時間皆早於 M 的 T、不早於 M 的 00:00；X2 類不早於 M 的 T。否則造數失敗，重做，不繼續後續步驟
+    - n: 2
+      action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按週』、機台帳號填機台 A、結算日期設為 M-7 ～ M，搜尋
+      expected: 列表出現兩列：週起為 M-7 的前一週列、週起為 M 的新一週列（新一週列只含 M 這個營業日；期間文字的格式以畫面為準，不作判準）
+    - n: 3
+      action: 記錄前一週列與新一週列各自的『開分金額』『收據金額』『未兌現金額』
+      expected: 前一週列：開分 100、收據 100、未兌現 100；新一週列：開分 200、收據 200、未兌現 200。X1 類（週一 00:00 ～ T 之前）不出現在新一週列
+    expected_result: 按週彙總以營業日為單位：週一 M 的 00:00 ～ T 之間發生的開分 100 與出金收據 100（待核實）屬於週日營業日，計入前一週列（開分 100、收據 100、未兌現 100）；M 的 T 起發生的開分
+      200 與收據 200（待核實）屬於週一營業日，計入新一週列（開分 200、收據 200、未兌現 200）。（原文：第 35 行『按週以週一為週起；非按日時，每列為該週期內各營業日的彙總』、第 70 行三欄依收據日歸屬；推論部分：週一營業日自週一的
+      T 起算，故 M 當日 00:00 ～ T 的交易屬週日營業日，依據是第 42 行營業日依日結時間切分，與 AC-0071 的 05:59 計入前一營業日同一規則。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §篩選器／統計週期（第 35 行）
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-005
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §篩選器／統計週期（第 35 行）
+    - requirement_id: REQ-DAILYREPORT-015
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位附註／統計週期（第 70 行）
+    - requirement_id: REQ-DAILYREPORT-015
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位附註／統計週期（第 70 行）
+    - requirement_id: REQ-DAILYREPORT-007
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／結算期間（第 42 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §篩選器／統計週期（第 35 行）
+      quote: 按日（預設）／按週／按月／區間合計。按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位附註／統計週期（第 70 行）
+      quote: 各金額與筆數欄為該週期內各營業日的合計
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位附註／統計週期（第 70 行）
+      quote: 「已兌現」「未兌現」「已作廢」三欄同為該週期內各營業日的合計（依收據日歸屬），狀態一律以查詢當下為準
+    - *id002
+    design_rationale: 依據：第 35 行（按週以週一為週起、每列為各營業日彙總）、第 70 行（非按日時各金額為該週期內各營業日合計、三欄依收據日歸屬）、第 42 行（營業日依日結時間切分）；AC-0052、AC-0151、AC-0155；T3RR
+      RF-03 指出 TC-014 與既有按週 TC 都以 T=00:00 為前提，沒有覆蓋 T 不是 00:00 的週界。技術：boundary_value，邊界是週一 M 的日結時刻 T（兩側各一組交易：T 之前屬前一週、T 起屬新一週）；對照基準是同一機台同一查詢內的兩列，若系統改以日曆週一
+      00:00 切週，X1 的 100 會落入新一週列（開分 300），結果可區分。我的推測與需確認事項：(1)『週一的營業日自週一的 T 起算』是由第 35、42 行推得，非 spec 逐字；(2) 週一 00:00 ～ T 的現場操作窗口與造數方式為我的推測，需環境負責人確認；(3)
+      不測注單（注單跨場次切換點的歸屬已有 BUG-DAILYREPORT-004，不斷言），因此只用開分與待核實收據；(4) 不修改 T（RF-01）。
+    source_ref: T3RR:RUN-20261012-007 RF-03
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: manual
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR26HK5YC320520EFT4
+    title: 多張含小數面額的收據同列加總：收據金額＝已兌現＋未兌現＋已作廢精確成立，總計列為各列的精確合計，匯出 CSV 的數值與畫面逐欄一致
+    description: 驗證含小數面額的收據在同一營業日跨機台、跨狀態加總時，各欄、總計列與 CSV 彼此一致且無浮點尾數（RUN-20261012-007 T3RR RF-04）。不斷言顯示位數。
+    requirement_ids:
+    - REQ-DAILYREPORT-010
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-016
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0104
+    - AC-DAILYREPORT-0272
+    - AC-DAILYREPORT-0161
+    - AC-DAILYREPORT-0162
+    test_level: ui_e2e
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59
+      的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - 同一個已結束的營業日 D（結算日期選 D ～ D）。機台 A、機台 B 為自行從環境中選定的兩台不同的既有機台帳號（會員編號），屬於上述場館；該場館在 D 除 A、B 之外沒有任何機台有出金收據，A、B 在 D 沒有下列收據以外的出金
+    - 機台 A 在 D 有三張收據：面額 0.10（已核實）、0.20（已核實）、399.65（已作廢）；機台 B 在 D 有兩張收據：面額 0.10（待核實）、0.20（待核實）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）。要讓機台餘額恰為 0.10、0.20、399.65 的方式，本 spec 沒有定義（AC-0104 只說餘額可帶小數），需環境負責人造數或挑選符合形狀的既有資料
+    - 0.10＋0.20 是浮點加法常見出現尾數（如 0.30000000000000004）的組合，這是本案刻意選用的資料設計，不是 spec 規則
+    - 核實與作廢改用環境負責人提供的『核實／作廢帳號』（有權限在『帳務管理 > 洗分出金核實』核實與作廢出金的後台帳號；核實與作廢的角色權限不在本 spec，本案不驗證權限）。若與管理員不是同一個，需在核實／作廢步驟切換登入，回到報表查詢步驟時切回管理員並重選站台
+    - 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試場館與測試機台帳號產生的紀錄，不得對正式營運資料執行
+    - 核實／作廢後重新查詢，報表應立即反映最新狀態（第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+    - 本 spec 沒有定義列表與 CSV 的小數顯示位數（REQ-DAILYREPORT-010 Q03 的缺口），本案不斷言顯示位數：數值以畫面／CSV 實際顯示的小數位判讀，若顯示位數太少而無法區分（例如全部取整），如實記錄『無法判讀』，不判通過也不判失敗
+    test_data:
+    - name: 機台 A 收據
+      value: 0.10（已核實）、0.20（已核實）、399.65（已作廢）
+    - name: 機台 B 收據
+      value: 0.10（待核實）、0.20（待核實）
+    - name: 預期（機台 A 列）
+      value: 收據 399.95、已兌現 0.30、未兌現 0、已作廢 399.65
+    - name: 預期（機台 B 列）
+      value: 收據 0.30、已兌現 0、未兌現 0.30、已作廢 0
+    - name: 預期（總計列／依場館彙總列）
+      value: 收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65
+    steps:
+    - n: 1
+      action: 依前提確認 A、B 在 D 的收據與核實狀態（可在『帳務管理 > 洗分出金核實』核對面額與狀態；若須由本案自行核實或作廢，用『核實／作廢帳號』執行並確認狀態後再繼續），記入執行記錄
+      expected: A：0.10 已核實、0.20 已核實、399.65 已作廢；B：0.10 待核實、0.20 待核實；D 沒有其他機台的出金
+    - n: 2
+      action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期 D ～ D，搜尋。記錄機台 A 列、機台 B 列與底部總計列的『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』
+      expected: 機台 A 列：收據 399.95、已兌現 0.30、未兌現 0、已作廢 399.65；機台 B 列：收據 0.30、已兌現 0、未兌現 0.30、已作廢 0；總計列：收據 400.25、已兌現 0.30、未兌現
+        0.30、已作廢 399.65。每個數值都沒有非零的多餘尾數（例如不得出現 0.30000000000000004、399.95000000000005）；每列與總計列皆滿足 收據金額＝已兌現＋未兌現＋已作廢
+    - n: 3
+      action: 把統計維度改為『依場館彙總』，其餘條件不變，搜尋，記錄 D 這一列與總計列的四欄
+      expected: D 列與總計列皆為：收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65，等於步驟 2 機台 A、B 兩列的對應欄之和
+    - n: 4
+      action: 把統計維度改回『依機台明細』並搜尋，點頁面右上角『匯出 CSV』，用文字編輯器或試算表開啟下載的檔案，找到機台 A 列、機台 B 列與總計列，逐欄對照『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』
+      expected: CSV 中三列的四欄數值與步驟 2 畫面顯示的數值逐欄相同（不比較位數格式，只比較數值），且同樣沒有非零的多餘尾數
+    expected_result: 含小數面額的收據跨機台、跨狀態加總後：機台 A 列收據 399.95＝已兌現 0.30＋未兌現 0＋已作廢 399.65，機台 B 列收據 0.30＝0＋0.30＋0，每列的恆等式精確成立（不因小數出現尾數）；總計列為各列精確合計（收據
+      400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65），依場館彙總列與總計列相同；匯出 CSV 的列與總計列數值與畫面逐欄一致。收據金額以面額計、不取整，且含已作廢者。不斷言顯示位數。
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-010
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／收據金額（第 51 行）
+    - requirement_id: REQ-DAILYREPORT-010
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／收據金額（第 51 行）
+    - requirement_id: REQ-DAILYREPORT-027
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已作廢金額（第 54 行）
+    - requirement_id: REQ-DAILYREPORT-027
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已作廢金額（第 54 行）
+    - requirement_id: REQ-DAILYREPORT-016
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位（總計與匯出）（第 62 行）
+    source_refs:
+    - &id006
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／收據金額（第 51 行）
+      quote: 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+    - *id003
+    - &id004
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位（總計與匯出）（第 62 行）
+      quote: 列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）；「期初餘額」與「期末餘額」不加總（見下）。頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制。
+    design_rationale: 依據：第 54 行『每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額』、第 51 行與變更記錄 v02『收據金額一律以面額計（含小數）』、第 62 行（總計為整個查詢結果的各欄合計、匯出
+      CSV 同範圍）；AC-0104（399.60 不取整）、AC-0272（三欄與收據的勾稽）、AC-0161／0162。T3RR RF-04 指出：含小數只用單筆 399.60 驗證過，多張小數收據同列加總、進入總計列與 CSV 時有無浮點尾數、恆等式是否精確沒有案例。技術：requirement_based——這是同一規則（恆等式與合計）套在含小數資料上的一般案例，沒有
+      spec 定義的數值邊界，也沒有條件組合矩陣，所以不標 boundary_value／decision_table。資料設計：同一欄內出現 0.10＋0.20（浮點易出尾數）、再與 399.65 同列相加，是我為了讓浮點誤差可被觀察而選的，不是
+      spec 規則。顯示位數 spec 未定義，已在前提註明不作判準，只比較數值是否精確與彼此一致。我的推測與需確認事項：(1) 造出餘額恰為 0.10、0.20、399.65 的方式；(2) D 場館除 A、B 外無其他出金；(3)
+      核實／作廢的角色與按鈕名稱以畫面為準。
+    source_ref: T3RR:RUN-20261012-007 RF-04
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: hybrid
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR2YZBQGWE6PQE5FWDT
+    title: 查詢與匯出 CSV 的同時有人核實或作廢收據：每一次回應都自洽（每列收據金額＝三欄之和、總計列＝各列之和、收據金額不變），事後的最終查詢反映全部核實與作廢
+    description: 驗證報表在查詢／匯出執行期間，同一時段有另一帳號持續核實與作廢收據時，單次回應（畫面查詢與 CSV）內部一致（RUN-20261012-007 T3RR RF-10）。
+    requirement_ids:
+    - REQ-DAILYREPORT-016
+    - REQ-DAILYREPORT-027
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0162
+    - AC-DAILYREPORT-0272
+    - AC-DAILYREPORT-0273
+    test_level: api
+    test_types:
+    - functional
+    design_techniques:
+    - scenario
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59
+      的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - 測試場館在連續 4 個已結束的營業日 D1～D4 共有 12 張出金收據，全部為待核實，面額（整數，避免小數干擾）依序為：D1：100、200、300；D2：400、500、600；D3：700、800、900；D4：1000、1100、1200（每營業日
+      3 張，收據金額分別為 600、1500、2400、3300，合計 7800）。該場館在 D1～D4 沒有這 12 張以外的出金收據。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）
+    - 核實與作廢由另一個『核實／作廢帳號』在『帳務管理 > 洗分出金核實』執行（核實與作廢的角色權限不在本 spec，本案不驗證權限）；本案計畫核實面額 100、300、500、700、900、1100（共 3600），作廢面額 200、400、600、800、1000、1200（共
+      4200）。需要兩個同時可操作的瀏覽器 session（或兩台電腦）：session A 用管理員跑查詢與匯出，session B 用核實／作廢帳號操作
+    - 報表查詢與匯出請求要能被重放：在步驟 1 以瀏覽器開發者工具 Network 頁籤取得這兩個請求（含登入憑證）並『複製為 cURL』。請求路徑與參數名稱 spec 未載明，不預設；若請求無法重放（例如憑證一次性），改以兩個瀏覽器分頁手動連續按『搜尋』與『匯出
+      CSV』當作觸發方式（較不密集，需多做幾輪）
+    - 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試場館與測試機台帳號產生的紀錄，不得對正式營運資料執行
+    - 核實／作廢後重新查詢，報表應立即反映最新狀態（第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+    test_data:
+    - name: 待核實收據（12 張）
+      value: D1：100/200/300；D2：400/500/600；D3：700/800/900；D4：1000/1100/1200
+    - name: 每營業日收據金額（全程不變）
+      value: D1=600、D2=1500、D3=2400、D4=3300，合計 7800
+    - name: 核實的收據（共 3600）
+      value: 100、300、500、700、900、1100
+    - name: 作廢的收據（共 4200）
+      value: 200、400、600、800、1000、1200
+    - name: 最終預期（依序 D1～D4：已兌現／已作廢／未兌現）
+      value: D1：400/200/0；D2：500/1000/0；D3：1600/800/0；D4：1100/2200/0；總計：3600/4200/0
+    steps:
+    - n: 1
+      action: session A：以管理員登入並選好站台，開啟場館日結報表：統計維度『依場館彙總』、統計週期『按日』、機台帳號留空、結算日期 D1 ～ D4，搜尋；在 Network 頁籤找到該次查詢請求，複製為 cURL（存為
+        Q）。點『匯出 CSV』，找到匯出請求，複製為 cURL（存為 E）。記錄起始狀態
+      expected: 列表 4 列（D1～D4）加總計列；起始：每列收據金額 600／1500／2400／3300、未兌現同值、已兌現 0、已作廢 0；總計列收據 7800、未兌現 7800
+    - n: 2
+      action: session A 在終端機啟動重放迴圈（Q、E 為步驟 1 複製的完整 cURL 指令，改成輸出到檔案）：for i in $(seq 1 60); do 〈Q〉 -o q_$i.json; 〈E〉 -o e_$i.csv;
+        sleep 1; done。迴圈開始後立刻進行步驟 3
+      expected: 迴圈持續產生 q_1.json … 與 e_1.csv …（共約 60 組），被拒絕、被限流或失敗的請求只記錄，不作判準（系統是否防連點、匯出有無併發上限屬 CLR-DAILYREPORT-019，尚未決）；後續只檢查成功取得的回應與檔案
+    - n: 3
+      action: session B：以『核實／作廢帳號』登入，到『帳務管理 > 洗分出金核實』，依面額由小到大逐張處理：100 核實、200 作廢、300 核實、400 作廢、500 核實、600 作廢、700 核實、800 作廢、900
+        核實、1000 作廢、1100 核實、1200 作廢（按鈕名稱與必填欄位以畫面為準），每張處理完立即處理下一張，不要間隔等待
+      expected: 12 張收據依序完成核實或作廢
+    - n: 4
+      action: 迴圈結束後，逐一檢視 q_*.json（查詢回應）與 e_*.csv（匯出檔）：對每個成功取得的檔案檢查 (a) 每個營業日列的 收據金額＝已兌現＋未兌現＋已作廢；(b) 每列的收據金額等於 600／1500／2400／3300（全程不變）；(c)
+        總計列的收據、已兌現、未兌現、已作廢四欄各自等於 4 個營業日列的對應欄之和。另挑出『未兌現』總計介於 0 與 7800 之間的檔案，確認這類中途狀態的檔案確實存在
+      expected: 每個成功取得的查詢回應與 CSV 檔都同時滿足 (a)(b)(c)，沒有任何一個檔案出現列與列、或列與總計列對不起來的數值。若沒有任何中途狀態的檔案（所有回應不是全 7800 未兌現，就是已全部處理完），代表沒有真正碰到並行，本次執行無效，增加收據張數或加快重放後重做，不得判通過（若因被限流而取得的成功回應太少，同樣視為無效，改用較低頻率重放後重做，不判報表
+        FAIL）
+    - n: 5
+      action: 迴圈與核實／作廢都結束後，以相同條件重新查詢一次，並再匯出一次 CSV
+      expected: D1～D4 列依序：已兌現 400／500／1600／1100、已作廢 200／1000／800／2200、未兌現全為 0，收據金額 600／1500／2400／3300；總計列：已兌現 3600、已作廢 4200、未兌現
+        0、收據 7800；CSV 與畫面一致
+    expected_result: 核實與作廢進行期間重放的每一次查詢回應與每一份匯出 CSV 都是自洽的：每列 收據金額＝已兌現＋未兌現＋已作廢，且收據金額不因核實／作廢而改變（600／1500／2400／3300），總計列各金額欄等於各列對應欄之和（CSV
+      的總計列同）；全部處理完後的最終查詢與 CSV 顯示：已兌現 3600、已作廢 4200、未兌現 0、收據 7800（各營業日數值見 test_data）。（原文：第 54 行恆等式、第 62 行總計為整個查詢結果各欄合計；推論部分：『單次回應內自洽』是把這些以靜態數據陳述的規則套用到併發情境，spec
+      沒有明文談併發或快照語意。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位（總計與匯出）（第 62 行）
+      quote: 列表底部顯示**整個查詢結果**的各欄總計（不隨排序與分頁改變）
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-016
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位（總計與匯出）（第 62 行）
+    - requirement_id: REQ-DAILYREPORT-016
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §排序與分頁／總計列（第 84 行）
+    - requirement_id: REQ-DAILYREPORT-027
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已作廢金額（第 54 行）
+    - requirement_id: REQ-DAILYREPORT-027
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／已作廢金額（第 54 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位（總計與匯出）（第 62 行）
+      quote: 列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）；「期初餘額」與「期末餘額」不加總（見下）。頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制。
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §排序與分頁／總計列（第 84 行）
+      quote: 一律為整個查詢結果的合計（餘額欄仍依上述時點值規則），不隨排序與分頁改變
+    - *id003
+    - *id004
+    design_rationale: 依據：第 62 行（總計為整個查詢結果的各欄合計、匯出同範圍）、第 54 行（每列恆等式）、第 53／70 行（狀態以查詢當下為準）；AC-0162、AC-0272、AC-0273。T3RR RF-10
+      指出：現有案例都是『先操作、再重新查詢』的循序流程，沒有驗證查詢／匯出執行當下有人核實或作廢時，單次回應是否自洽。技術：scenario（持續重放查詢／匯出 × 同時核實／作廢的時序情境），不是 decision_table。觸發方式（我設計，可執行）：session
+      A 以複製為 cURL 的請求迴圈重放 60 輪，session B 同時逐張處理 12 張收據；斷言只用不變量（恆等式、收據金額不變、總計＝各列之和）與最終一致結果，不斷言任何中途數值，因為中途的混合狀態不可預測。步驟 4 要求確認有中途狀態的檔案，避免沒有真正並行卻誤判通過。我的推測與需確認事項：(1)
+      請求是否可被 cURL 重放、檔案輸出格式；(2) 12 張收據的造數方式與核實／作廢的角色；(3) 被限流或拒絕的請求只記錄，不作判準（CLR-DAILYREPORT-019 OPEN）；(4) 選『依場館彙總』使 4 個營業日只有
+      4 列（每頁 10 筆內，一次回應即含全部列），因此總計列可與各列直接加總；(5)『單次回應自洽』是把靜態規則套在併發情境的推論，spec 沒有明文，已寫入 expected_result。未涵蓋：同一張收據的核實與作廢互搶（RF-11，需
+      REQ-CASHOUT 側的 Clarification，依指示不補）。
+    source_ref: T3RR:RUN-20261012-007 RF-10
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: hybrid
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR30H00RDGJX2Z8D7NY
+    title: 日結執行當下持續有開分交易進來：每筆交易只計入一個營業日（依其交易時間在 T 之前或之後），各機台 D 列期末餘額＝D+1 列期初餘額，兩日開分合計等於送出總額
+    description: 驗證日結時刻前後持續送入交易時，營業日歸屬不漏不重，且相鄰營業日的餘額銜接（RUN-20261012-007 T3RR RF-12）。不使用注單，也不涉及逾時結束的場次。
+    requirement_ids:
+    - REQ-DAILYREPORT-007
+    - REQ-DAILYREPORT-020
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0071
+    - AC-DAILYREPORT-0072
+    - AC-DAILYREPORT-0201
+    test_level: ui_e2e
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - boundary_value
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59
+      的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - T 的設定在造數之前就已完成，造數到查詢結束期間不得修改（變更 T 對既有營業日的影響 v0.3 未定義，不在本案範圍）。本案在 T0（造數當天的日結時刻）前後現場執行，需提前安排時間；T 可以是任何時刻（含 00:00）。令 D
+      為 T0 之前的營業日（造數當天 T0 之前正在進行的營業日），D+1 為自 T0 起的營業日
+    - 機台 A、機台 B 為自行從環境中選定的兩台不同的既有機台帳號（會員編號），屬於上述場館；A、B 在 D 與 D+1 都沒有逾時結束的場次，且流量開始前 A、B 的分數為 0（若 A、B 有留存分數，先各做一次出金清空，出金一律清空餘額，第
+      128 行），以免分數來自逾時結束場次的餘分——該情況下『相鄰列前後相接』是否成立未定義（CLR-DAILYREPORT-017 未決，不依賴）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）
+    - 送出交易的方式：由環境負責人提供可對指定機台連續送出『開分 10』的機台模擬器或測試腳本（每秒每台機台 1 筆）。本 spec 沒有定義送出機制，下列迴圈中的〈送出機台 X 開分 10〉為環境提供的指令
+    - 『機台交易紀錄』可查到每一筆開分的交易時間（欄位名稱以畫面為準），本案以該時間（早於 T0 或不早於 T0）判定每筆交易所屬的營業日（AC-0071／0072：交易時間早於 T 計入前一營業日，等於 T 計入當日營業日）
+    - A、B 在 D+1 沒有本案送出的開分以外的任何交易；D 的開分基準值於步驟 1 另行記錄
+    test_data:
+    - name: 交易流
+      value: T0-30 秒 ～ T0+30 秒，每秒對機台 A 與機台 B 各送開分 10
+    - name: D 列開分基準 bA、bB
+      value: 步驟 1 查得的 A、B 在 D 的開分金額（送入前）
+    - name: nA_before / nA_after / nB_before / nB_after
+      value: 步驟 3 從機台交易紀錄數出的送入筆數（交易時間早於 T0／不早於 T0）
+    steps:
+    - n: 1
+      action: 在 T0 前至少 2 分鐘，以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期選 D ～ D，搜尋；記錄機台 A 與機台 B 在 D 列的『開分金額』（基準值
+        bA、bB）
+      expected: 取得基準值
+    - n: 2
+      action: 在 T0 前 30 秒開始，於終端機啟動：end=$((T0 的 epoch 秒 + 30)); while [ $(date +%s) -le $end ]; do 〈送出機台 A 開分 10〉; 〈送出機台 B
+        開分 10〉; sleep 1; done，持續到 T0 後 30 秒結束（約 60 秒，各 60 筆上下）。送出期間不要對 A、B 做其他任何操作
+      expected: 迴圈期間每筆開分都被接受；日結時刻 T0 在流量中途到達。記錄任何被拒絕或逾時的請求
+    - n: 3
+      action: 流量停止並等待日結完成後，到『機台交易紀錄』篩選機台 A、再篩選機台 B 在 T0-60 秒 ～ T0+60 秒內的開分，依交易時間數出『早於 T0』與『不早於 T0』各自的筆數（nA_before、nA_after、nB_before、nB_after）及各筆面額
+      expected: 每台機台的開分筆數＝送出筆數；每筆的面額為 10；兩個計數的和等於該機台送出的總筆數（沒有遺失、沒有重複的交易紀錄）。若紀錄筆數與送出筆數不符，這是交易層的問題，記錄後停止本案並回報，不判定報表
+    - n: 4
+      action: 重新查詢報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期 D ～ D+1，搜尋。記錄機台 A 與機台 B 在 D 列與 D+1 列的『開分金額』『期初餘額』『期末餘額』
+      expected: A 的 D 列開分＝bA＋10×nA_before，D+1 列開分＝10×nA_after；B 同理（bB＋10×nB_before、10×nB_after）；A、B 在 D 與 D+1 兩列開分之和（扣除基準）＝10×各自送出的總筆數
+    - n: 5
+      action: 比對相鄰兩列的餘額（依預設排序 D+1 列在上、D 列在下）
+      expected: 機台 A：D 列期末餘額＝D+1 列期初餘額；機台 B：D 列期末餘額＝D+1 列期初餘額
+    expected_result: 日結時刻 T0 在持續進入的開分流量中途到達時：每筆開分只計入一個營業日——交易時間早於 T0 的計入 D、不早於 T0 的計入 D+1，兩日的開分金額合計等於送出總額，沒有漏算或重複；且每台機台 D
+      列的期末餘額等於 D+1 列的期初餘額。（原文：第 68 行『較早一期的期末餘額即次一期的期初餘額』、第 42 行營業日依日結時間切分；AC-0071／0072 的交易歸屬規則。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+      quote: 故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-007
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／結算期間（第 42 行）
+    - requirement_id: REQ-DAILYREPORT-007
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §業務規則與驗證（第 152 行）
+    - requirement_id: REQ-DAILYREPORT-020
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+    source_refs:
+    - *id002
+    - *id005
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+      quote: 故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額
+    design_rationale: 依據：第 68 行（相鄰列前後相接，較早一期期末＝次一期期初）、第 42／152 行（營業日依日結時間切分）、AC-0071／0072（T 前歸前一營業日、T 整點歸當日）、AC-0201。T3RR
+      RF-12 指出：現有案例都在日結前後的靜止狀態下查詢，沒有覆蓋日結執行當下有交易進來的情況。技術：boundary_value，邊界是日結時刻 T0，交易流橫跨 T0 兩側；每筆交易歸屬由『機台交易紀錄』的實際交易時間判定，而不是預設某筆落在哪一側，因為現場無法精準控制每筆的毫秒時間。只用開分：不送注單（注單跨場次切換點的歸屬已有
+      BUG-DAILYREPORT-004，不斷言），不涉及逾時結束場次（CLR-DAILYREPORT-017 仍 OPEN，不依賴）。日結強制結束進行中場次並轉出餘額（第 151 行）是背景，本案不斷言場次狀態與場次數。我的推測與需確認事項：(1)
+      送出開分的機台模擬器與迴圈指令由環境提供（spec 未定義）；(2)『機台交易紀錄』的交易時間與報表分日使用同一時間，是我的推測，需環境負責人確認，若兩者本來就不同，步驟 3 的計數基準要調整；(3) D 的開分基準以送入前查詢取得；(4)
+      A、B 起始分數為 0、D 與 D+1 無逾時結束場次，是為了避開 CLR-DAILYREPORT-017 未決的餘分承接。
+    source_ref: T3RR:RUN-20261012-007 RF-12
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: hybrid
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR3MSE8J02H58WDR91H
+    title: 機台對同一筆入金與出金重送第二階段完成回報（同 TXID）後，若機台交易紀錄中該 TXID 各只有一筆，報表的進鈔金額、收據金額與未兌現金額與重送前相同
+    description: 驗證機台重送完成回報後，報表仍與交易層一致：以機台交易紀錄的 TXID 筆數作為前置判定，只有交易層無重複紀錄時才判定報表（RUN-20261012-007 T3RR RF-13）。
+    requirement_ids:
+    - REQ-DAILYREPORT-010
+    - REQ-DAILYREPORT-011
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0101
+    - AC-DAILYREPORT-0116
+    test_level: integration
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - scenario
+    priority: high
+    risk: high
+    execution_cost: high
+    preconditions:
+    - 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+    - 進入 各式報表 > 場館日結報表
+    - 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59
+      的交易計入 9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+    - 機台 A 為自行從環境中選定的既有機台帳號（會員編號），屬於上述場館；A 在『目前營業日』（以查詢當下依 T 判定）沒有其他入金與出金，餘額為 0，沒有進行中場次，且整個測試在同一個營業日內完成（不要跨過日結時刻）
+    - 重送完成回報的方式：由環境負責人提供可對指定機台的指定交易重送第二階段完成回報（end-cashin／end-cashout，內容與 TXID 與原回報完全相同）的機台模擬器或請求重放工具。重送機制與請求格式不在本 spec 內，本案不預設；入金／出金的
+      TXID 由該工具或『機台交易紀錄』取得
+    - 本案不假設重送在交易層會被如何處理（忽略、冪等或另記一筆皆有可能），也不斷言重送時機台金流端的回應。判定分兩段：先以『機台交易紀錄』確認該 TXID 的紀錄筆數；只有各只有一筆時，才斷言報表重送前後相同。出現多筆代表交易層問題，記錄後停止，不判報表
+      FAIL（報表依第 50、51 行是當日入金／出金交易的合計，交易層多記一筆時報表加總是正確行為）
+    - 收據只做『出金』，不核實也不作廢（維持待核實，以便觀察未兌現）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+      > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 →
+      收據面額帶小數）
+    test_data:
+    - name: 入金
+      value: 500（一次，正常完成兩階段）
+    - name: 出金
+      value: 一次，收據面額 F（入金 500 後出金，餘額 500，故 F=500）
+    - name: 重送
+      value: 入金的第二階段完成回報重送 3 次、出金的第二階段完成回報重送 3 次（同一 TXID，內容相同）
+    steps:
+    - n: 1
+      action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號填機台 A、結算日期為目前營業日 ～ 目前營業日，搜尋；記錄 A 當日列的『開分』『洗分』『進鈔』『收據』『已兌現』『未兌現』『已作廢』（基準
+        Z0）
+      expected: 取得基準 Z0（預期進鈔 0、收據 0、未兌現 0，若不為 0 代表前提 A 當日無其他入金／出金不成立，更換機台）
+    - n: 2
+      action: 對機台 A 進行一次入金 500（兩階段皆正常完成），再進行一次出金（餘額 500 清空，收據面額 F=500，維持待核實）；從『機台交易紀錄』或測試工具記下入金與出金各自的 TXID 與面額
+      expected: 入金、出金各完成一次；取得 TXID_in 與 TXID_out
+    - n: 3
+      action: 以步驟 1 相同條件重新查詢，記錄同樣七欄（記為 Z1）
+      expected: 相對 Z0：進鈔金額增加 500、收據金額增加 500、未兌現金額增加 500；開分、洗分、已兌現、已作廢不變
+    - n: 4
+      action: 用前提的重送工具，對 TXID_in 的第二階段完成回報重送 3 次，對 TXID_out 的第二階段完成回報重送 3 次（內容與 TXID 與原回報相同）；記錄每次重送的回應（只記錄，不判定）。接著到『機台交易紀錄』查看機台
+        A 當日 TXID_in 與 TXID_out 各有幾筆紀錄，以及 A 當日入金與出金的紀錄總筆數
+      expected: 分支判定：(a) TXID_in 與 TXID_out 各只有一筆紀錄 → 繼續步驟 5 並依其判定報表；(b) 任一 TXID 出現多筆紀錄 → 記錄為交易層問題（附紀錄截圖與筆數），停止本案並回報，不判定報表
+        FAIL，也不執行步驟 5 的判定
+    - n: 5
+      action: （僅在步驟 4 為分支 (a) 時）以步驟 1 相同條件重新查詢，記錄同樣七欄（記為 Z2）
+      expected: Z2 與 Z1 完全相同：進鈔金額仍只增加 500（不是 1000 或 2000）、收據金額仍只增加 500、未兌現金額仍只增加 500（只有一筆面額 500）；開分、洗分、已兌現、已作廢仍不變
+    expected_result: 當機台交易紀錄中重送的入金 TXID 與出金 TXID 各只有一筆時：報表在重送前後完全相同——進鈔金額相對基準只增加該筆入金的 500，收據金額與未兌現金額各只增加該筆出金的收據面額 500，重送前後（Z1、Z2）各金額欄不變。若任一
+      TXID 在機台交易紀錄出現多筆，則為交易層問題，記錄後停止，不判定報表（此時報表應等於交易紀錄的合計，不屬本案判準）。（原文：第 50 行『進鈔金額＝當日入金總額』、第 51 行『收據金額＝當日出金總額』、第 53 行未兌現為當日出金收據中仍待核實者的合計；本案的斷言只建立在『報表各欄＝當日交易紀錄的合計』這個不變量上，沒有假設重送是否構成新交易。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／進鈔金額（第 50 行）；收據金額（第 51 行）
+      quote: 當日入金總額（紙鈔機收現）
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-010
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／進鈔金額（第 50 行）
+    - requirement_id: REQ-DAILYREPORT-010
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／收據金額（第 51 行）
+    - requirement_id: REQ-DAILYREPORT-011
+      question_id: Q04
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §列表欄位／未兌現金額（第 53 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／進鈔金額（第 50 行）
+      quote: 當日入金總額（紙鈔機收現）
+    - *id006
+    - *id007
+    design_rationale: 依據：第 50 行（進鈔金額＝當日入金總額）、第 51 行（收據金額＝當日出金總額）、第 53 行（未兌現為當日仍待核實收據的合計）；AC-0101、AC-0116。T3RR RF-13 指出：機台會以同一
+      TXID 重送完成回報，沒有任何案例驗證報表在重送之後仍只計入一次。iteration 1 修訂（回應 Validator 對本案的 major：unsupported_assumption）：舊版把『同一 TXID 的重送不是新交易』當成前提，該前提來自
+      T3RR 描述、在派發包的 spec／CLR 內找不到依據，且若重送在交易層被記成多筆，報表加總反而正確、本案會錯判報表。改為比照 RF-12 案的條件判定：先查機台交易紀錄，TXID 各只有一筆才斷言報表重送前後相同；多筆視為交易層問題、停止並回報。斷言只建立在
+      v0.3 第 50、51、53 行『報表各欄＝當日交易合計』的不變量上，不再把冪等規則寫成前提。技術：scenario（入金／出金 → 重送 → 查交易紀錄 → 再查詢的時序），test_types 含 negative（重複送出不得使報表金額異常加倍）；不標
+      error_guessing，因為重送是 T3RR 指出的真實情境，不是我猜的錯誤輸入。我的推測與需確認事項：(1) 重送工具與請求格式不在派發包範圍內，由環境負責人提供；(2)『機台交易紀錄』可看到 TXID 與筆數，是我的推測，需環境負責人確認；(3)
+      只比較重送前後的報表金額欄，不斷言重送的回應；(4) 不涉及注單數。
+    source_ref: T3RR:RUN-20261012-007 RF-13
+  - product: ba-admin
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    automation_status: not_automated
+    ci_eligible: false
+    execution_mode: manual
+    stability: unknown
+    source: spec_workflow
+    assumptions: *id001
+    hotfix_eligible: false
+    draft_id: TC-DRAFT-01M4RHBRR3QEM2W8ZXVVG511WQ
+    title: 操作員在匯出 CSV 的請求中把站台／場館參數改成非自身場館：後端拒絕，不回傳含非自身場館資料的檔案
+    description: 補上操作員匯出 API 的越權案例（既有 TC-DAILYREPORT-004 只驗證查詢 API；RUN-20261012-007 T3RR RF-15）。
+    requirement_ids:
+    - REQ-DAILYREPORT-001
+    acceptance_criteria_ids:
+    - AC-DAILYREPORT-0013
+    test_level: api
+    test_types:
+    - negative
+    - security
+    design_techniques:
+    - security_rule
+    priority: high
+    risk: high
+    execution_cost: medium
+    preconditions:
+    - 環境負責人提供一個既有的操作員帳號（其自身場館記為 V1），以及一個『非自身場館』V2：確實存在於系統、不是 V1，且在同一個查詢條件（見下）下有日結資料列，作為越權目標
+    - 操作員自身場館 V1 在某個單一營業日 d 有報表資料，作為對照（自身場館）的查詢條件
+    - 瀏覽器可開啟開發者工具擷取請求；匯出請求的路徑與代表站台／場館的參數名稱本 spec 未載明，由步驟 3 現場擷取，不預設。若匯出沒有獨立請求（例如前端自行由查詢結果產生檔案），如實記錄此事實並跳過步驟 4～6
+    - CLR-DAILYREPORT-001（2026-09-14 補充）只說明『後端會拒絕』，沒有定義拒絕的 HTTP 狀態碼、錯誤訊息或錯誤代碼；本案只判定『被拒絕且不含非自身場館資料』，這些具體值只記錄、不作判準，也不套用管理員／站長適用的『無權限』錯誤（CLR-DAILYREPORT-014
+      的適用對象不含操作員）
+    - 進入 各式報表 > 場館日結報表（以操作員登入後）
+    test_data:
+    - name: 越權目標 V2
+      value: 由環境負責人提供，不寫死
+      note: 非操作員自身場館、確實存在、於查詢條件下有資料
+    - name: 查詢條件
+      value: 依場館彙總（或依機台明細）、按日、結算日期 d ～ d、機台帳號留空
+    steps:
+    - n: 1
+      action: 以操作員帳號登入後台，進入 各式報表 > 場館日結報表；展開頁面標題下方的站台切換下拉選單，逐項檢視所有選項
+      expected: 選單只提供操作員自身場館 V1，不含 V2（前端已擋）
+    - n: 2
+      action: 以前述查詢條件（結算日期 d ～ d）搜尋一次
+      expected: 列表正常列出 V1 的資料
+    - n: 3
+      action: 開啟瀏覽器開發者工具的 Network 頁籤，點頁面右上角『匯出 CSV』，找到該次匯出所送出的請求，記下請求方法、路徑、代表站台／場館的參數名稱與目前值（V1），並把下載的檔案另存為 F0
+      expected: 取得匯出請求資訊；F0 只含 V1 的資料
+    - n: 4
+      action: 以同一個登入 session 重送該匯出請求，僅把代表站台／場館的參數值改為 V2，其餘參數不變；檢視回應的狀態碼、回應內容，以及是否產生可下載的檔案
+      expected: 請求被後端拒絕（以回應是錯誤而非成功的檔案內容判定）；不產生含 V2 任何日結資料列的檔案或回應內容；狀態碼、錯誤訊息與錯誤代碼只記錄，不作判準
+    - n: 5
+      action: （資料不變的確認）重新整理報表頁，以操作員身分再搜尋同一條件
+      expected: 仍只顯示 V1 的資料，與步驟 2 相同
+    - n: 6
+      action: （對照）把匯出請求改回原本的參數值 V1 重送
+      expected: 可正常取得檔案，內容與 F0 相同；排除請求格式錯誤造成的假拒絕
+    expected_result: 操作員將匯出 CSV 請求中的站台／場館參數改為非自身場館 V2 時，後端拒絕，不回傳任何含 V2 日結資料的檔案或內容；站台切換選單只提供自身場館；以原本參數（V1）重送的對照請求可正常取得檔案。拒絕的具體形式（狀態碼、訊息、錯誤代碼）CLR-DAILYREPORT-001
+      未定義，不作判準。（依據：操作員只能看自身場館為 v0.3 第 25 行原文；後端拒絕為 CLR-DAILYREPORT-001 2026-09-14 補充，列於 source_refs，非 v0.3 本文。）
+    expected_result_spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    decision_refs:
+    - requirement_id: REQ-DAILYREPORT-001
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §功能說明／權限表（第 25 行）
+    - requirement_id: REQ-DAILYREPORT-001
+      question_id: Q02
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-DAILYREPORT-001
+        answer_rev: 0
+        answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+    source_refs:
+    - type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    - type: clarification
+      clarification_id: CLR-DAILYREPORT-001
+      answer_rev: 0
+      answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+      quote: 後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕
+    design_rationale: 依據：CLR-DAILYREPORT-001 的補充『後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕』與前段『前端已擋（站台切換選單不提供其他場館）』，以及第 25 行權限表（操作員＝自身場館）；AC-0013。T3RR
+      RF-15 指出：管理員／站長版本（TC-140／141）同時驗證查詢與匯出，操作員版本只有 TC-004 驗證查詢 API，匯出可能是獨立端點。『匯出 API 也屬於 CLR-001 所說的「直接呼叫 API」』是我依 RF-15
+      的推論（CLR 原文沒有特別提匯出）；因此預期寫成『被拒絕、不含非自身場館資料』，不超出 CLR 的字面範圍。技術：security_rule（角色範圍規則的越權拒絕）；步驟 6 為對照組，排除假拒絕。與 TC-004 的關係：004
+      只驗證查詢請求、屬 exploratory，本案驗證匯出請求且已有 CLR 依據，不取代 004。我的推測與需確認事項：(1) 匯出是否有獨立請求（步驟 3 現場確認，沒有則跳過）；(2) V2 必須確實存在且有資料，否則空結果會被誤判為『被拒絕』，故前提要求
+      V2 有資料、並以對照請求排除格式錯誤；(3) 拒絕的具體形式未定義，不作判準。
+    source_ref: T3RR:RUN-20261012-007 RF-15
+history:
+- at: '2026-10-12T17:08:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-004
