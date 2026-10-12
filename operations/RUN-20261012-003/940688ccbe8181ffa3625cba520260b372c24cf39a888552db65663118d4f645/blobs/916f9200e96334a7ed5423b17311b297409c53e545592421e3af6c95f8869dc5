@@ -1,0 +1,122 @@
+artifact_id: ART-BVR-01M4R3GG0D1GX8KHNKWY9KR2N5
+artifact_type: BugValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-003
+task_id: T2
+iteration: 0
+created_by: agent-bug-validator
+created_at: '2026-10-12T13:08:16Z'
+status: VALID
+source:
+  type: BugDraft
+  ids:
+  - ART-BD-01M4R3AAFQA9MNBJV05BWZZYAF
+references:
+- entity_type: Artifact
+  id: ART-BD-01M4R3AAFQA9MNBJV05BWZZYAF
+- entity_type: SpecVersion
+  id: SPEC-TXLOG-001
+  version: '0.1'
+- entity_type: Requirement
+  id: REQ-TXLOG-028
+- entity_type: Clarification
+  id: CLR-TXLOG-002
+- entity_type: Evidence
+  id: EVD-0099
+- entity_type: Evidence
+  id: EVD-0100
+requires_approval: null
+payload:
+  result: PASS
+  bug_draft_artifact_id: ART-BD-01M4R3AAFQA9MNBJV05BWZZYAF
+  checks:
+    violates_spec: true
+    expected_has_spec_basis: true
+    actual_supported_by_evidence: true
+    reproduction_sufficient: true
+    severity_reasonable: true
+    priority_reasonable: true
+    not_duplicate: true
+    not_mere_ambiguity: true
+  issues:
+  - testcase_id: N/A
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 手動取消：僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    evidence: BugDraft requirement_id=REQ-TXLOG-028；run 綁定的 RequirementModel R000（sha256 5cdb9fd6…c8475）中 REQ-TXLOG-028 標題為「本頁不提供手動取消操作」，AC-TXLOG-0281
+      then=「不存在任何可執行的手動取消操作」；REQ-TXLOG-017 statement 與 AC-TXLOG-0171 亦寫「原 spec.md 提及的『或由 Admin 手動取消為止』已由 Oscar 2026-09-14
+      確認為錯誤敘述」。CLR-TXLOG-002 rev 0（ANSWERED，requirement_clarified，sha256 ece76a3c…7547）明文推翻上述確認，但需求修訂尚未落地。
+    explanation: 正式 Bug 掛到的 REQ-TXLOG-028 現行 ACTIVE 文字與本單 expected 完全相反，trace 上看會像「Bug 違反了一條說它不該存在的需求」。Draft 已在 expected_result
+      與 ambiguity_note 誠實揭露並排除 AC-TXLOG-0281，expected 以 spec 原文＋最新 CLR 為依據是成立的，此問題不屬於 Draft 可自行修正的範圍，不影響 PASS。但 Draft 列出的待修訂清單（REQ-TXLOG-028／029、AC-TXLOG-0281／0291／0292）漏了
+      REQ-TXLOG-017／AC-TXLOG-0171：Draft 的 severity_rationale 與 impact 都引用 AC-TXLOG-0171 說明「出金不設逾時」，而該 AC 的收斂路徑清單同樣排除了 Admin
+      手動取消，也已過時。
+    recommended_change: Human 核准時知悉 REQ-TXLOG-028 為暫時對應編號。另案落地 CLR-TXLOG-002 時，修訂範圍要包含 REQ-TXLOG-017／AC-TXLOG-0171（恢復「或由 Admin
+      手動取消（僅出金）」收斂路徑）、REQ-TXLOG-028／AC-TXLOG-0281（改回提供，限出金、限管理員）、REQ-TXLOG-029／AC-TXLOG-0291／0292（恢復為有效需求，並重新處理阻擋機制未定義的 ambiguity），以及
+      CLR-CASHFLOW-008 涉及的 REQ-CASHFLOW-026。修訂落地後，把本 Bug 的 acceptance 對應補到新 AC。
+  - testcase_id: N/A
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: EVD-0099 為第 1/66 頁（總筆數 660）的 10 列，可見的出鈔（-$109.60、-$146.00）與洗分交易狀態皆為「已處理」，沒有任何待確認列，篩選區「交易狀態」為「請選擇/全部」；EVD-0100
+      為已處理出鈔 8799312 的明細面板。Draft 的 actual_result 與 reproduction_steps 第 4 步已自承此限制。
+    explanation: 依 spec 與 CLR-TXLOG-002，手動取消本來就只對待確認出金顯示或可執行，所以「已處理列沒有手動取消」本身符合需求，不能單獨證明缺陷。目前判定缺陷成立靠的是三點：(1) 明細面板的靜態標示「交易明细，本页只读…」，等於宣告整頁沒有寫入操作；(2)
+      列表操作欄全是「明细」；(3) CLR-TXLOG-002 記錄產品負責人與 RD 確認「後端已開發完成，前端尚未開發」。對「功能未實作」這類缺陷，開發方確認加上頁面只讀標示的證據強度可以接受，所以判 PASS。但核心情境（待確認出金列）沒有直接截圖，證據鏈仍有缺口。
+    recommended_change: 建議（非阻擋）在開單前或修復驗證時補一張截圖：篩選「交易狀態＝待確認」＋「交易類型＝出鈔」後按搜尋。查到待確認列就截操作欄與明細面板；查無資料也截下空結果，並依重現步驟 1 製造一筆。重現步驟 1
+      可補一條較省事的查找方式：先以上述篩選查歷史資料中是否已有待確認出金，沒有時再製造。過渡期（2026-09-03 起機台暫無印表機）出金由前台自行完成兩階段，製造方式要寫明是讓前台在送出 req-cashout 後、送出 end-cashout
+      前中斷。
+  - testcase_id: N/A
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: EVD-0100 面板標題下方實際字樣為簡體「交易明细，本页只读，核实一律在账务管理的洗分出金核实页执行」（UI 語言简体中文）；Draft 的 title、reproduction_steps 第 5 步、actual_result
+      都寫成繁體「交易明細，本頁只讀，核實一律在賬務管理的洗分出金核實頁執行」，且加了引號當作原文引用。另外 environment.account 寫「列表中可見機台帳號 ACAA00563 的出鈔交易」，但 EVD-0099 的機台帳號欄被截掉（最左側只看得到場次編號尾碼
+      …0004／…0003／…0002），ACAA00563 只出現在 EVD-0100。
+    explanation: 用引號標示的 UI 字串應與畫面一致，RD 才能直接用該字串搜尋前端程式碼；帳號出處寫錯張證據會讓讀者對不上截圖。這兩點都是措辭精確度問題，不影響缺陷判定。
+    recommended_change: 引號內的 UI 原文改為簡體原字樣（可另附繁體說明），並把 environment 改成「EVD-0100 明細面板顯示機台帳號 ACAA00563 的出鈔交易」。
+  evidence_verification:
+  - evidence_id: EVD-0099
+    hash_verified: true
+    supports_claim: true
+    note: sha256 a120beeb…740af 與 EVD-0099.yaml 記錄相符（重新計算）。已實際查看截圖：右上角為 ZZAA00012「管理员」，時區 UTC+00:00，语言简体中文；站台下拉選單為 Arcade；第
+      1/66 頁、總筆數 660，可見 10 列（出钞、转移-ATG、开分、红包、洗分），最右側「操作」欄每列都只有「明细」按鈕，沒有其他操作。可見的出鈔兩筆（-$109.60 待核实、-$146.00 已核实）與洗分 -$200.00
+      交易狀態皆為「已处理」，沒有待確認列。這和 Draft evidence_map 的兩條 claim（操作欄只有明細、當下沒有待確認出鈔）都相符；Draft 也沒有把本證據誇大成「待確認列沒有手動取消」。另外觀察到：篩選區「核实状态」顯示選了「已作废」，但結果列含待核实／已核实／「--」，可見截圖時顯示的篩選條件並未套用到結果（推測選了但還沒按搜尋）。這與本單
+      claim 無關，不構成本單問題，也不據此另判缺陷。
+  - evidence_id: EVD-0100
+    hash_verified: true
+    supports_claim: true
+    note: sha256 9ba9cd5d…6ae 與 EVD-0100.yaml 記錄相符（重新計算）。已實際查看截圖：交易號 8799312，出钞，交易狀態「已处理」，订单编号 26101200003，来源机台 ACAA00563，场次
+      ACAA00563_20261012_0004，请求／实际金额 -$109.60，核实状态「待核实」；標題下方為「交易明细，本页只读，核实一律在账务管理的洗分出金核实页执行」。交易摘要、往來紀錄（顯示「後端尚未提供往來紀錄資料，此區塊先保留版面」）、技術欄位（JSON，processStatus=1、verifyStatus=0）三區都沒有任何操作按鈕。支撐
+      Draft 的兩條 claim。限制：這是已處理的出鈔，依需求本來就不該有手動取消，因此本證據證明的是頁面只讀標示與面板沒有操作入口，不是待確認列的狀況（見 issues 第 2 項）。
+  severity_assessment:
+    severity_recommended: major
+    priority_recommended: high
+    agrees_with_analyst: true
+    rationale: 同意 major／high。major 的理由：已定案的整個功能入口在前端缺席（spec 第 89、99、122 行與 CLR-TXLOG-002），Operator Reset、機台報廢等死單沒有 UI 清理工具；不涉及錯帳或資料毀損，且仍有替代收斂路徑（被新
+      req-cashout 取代、櫃檯人工出金連動取消；過渡期 spec 第 97 行也規定待確認出金依人工出金連動取消處理），所以不到 critical。high 的理由：產品負責人與 RD 已明確定案，後端已完成、只差前端；而且直接卡住
+      TXLOG 約 14 張與 REDPACKET TC-REDPACKET-090 等引用手動取消的案例。Human 可酌情考量：替代路徑（櫃檯人工出金）會把餘額全數出金，無法滿足「取消後保留分數、玩家繼續遊玩」的情境；但如果現場目前很少出現死單，priority
+      可降為 medium。Draft 第 (2) 點「帳號持續被鎖」只來自 CLR 的業務描述，本單證據沒有驗證，Draft 也已自承。
+  duplicate_check:
+    searched: true
+    duplicate_of: null
+    note: 已檢索 bugs/index.md（9 筆：CASHFLOW 2、DAILYREPORT 5、UPDATEPACK 2）與 bugs/ba-admin/ 全部 YAML，沒有 TXLOG 單，也沒有任何單提到「取消」「待確認」「只讀」或
+      REQ-TXLOG-028。artifacts/bug-analysis/ 中提到手動取消或 REQ-TXLOG-028 的 BugDraft 只有本單。CASHFLOW-001／002 為幣別停用與入金上限判定，與本單無關。不是重複單。
+  ambiguity: null
+history:
+- at: '2026-10-12T13:08:59Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-003
