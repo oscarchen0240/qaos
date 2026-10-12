@@ -1,0 +1,768 @@
+artifact_id: ART-TCD-01M4R87TX2SNNBJ2P0HCMV03VA
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-006
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-12T14:28:34Z'
+status: VALID
+source:
+  type: ChangeImpactReport
+  ids:
+  - ART-CIR-01M4R7SPZR6KDEZPT5KCEKNN91
+references:
+- entity_type: Artifact
+  id: ART-CIR-01M4R7SPZR6KDEZPT5KCEKNN91
+- entity_type: Requirement
+  id: REQ-CASHOUT-006
+- entity_type: Requirement
+  id: REQ-CASHOUT-018
+- entity_type: Requirement
+  id: REQ-CASHOUT-022
+- entity_type: Requirement
+  id: REQ-CASHOUT-032
+requires_approval: null
+dispatch_packet_sha256: 15a318a3b396447a2f573e93651b179a9ec68299305a55ec6cafab384b52c717
+payload:
+  mode: change
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  change_impact_id: CI-SPEC-CASHOUT-001-0.1-0.2
+  testcases:
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: &id001 []
+    draft_id: TC-DRAFT-01M4R87TX06BGZ0R3XTBBVXS4F
+    title: 機台餘額帶小數（399.6）出金：洗分出金核實頁的實際金額欄顯示收據面額 399.60，不取整
+    description: 驗證出金收據面額照記含小數餘額，本頁實際金額欄照實顯示含小數的面額，不取整至個位數（AC-CASHOUT-0183）
+    requirement_ids:
+    - REQ-CASHOUT-018
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0183
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+    - 【環境前提，spec 與派發包均未定義佈置方式，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為恰好 399.6，且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。『如何把機台餘額調到
+      399.6』（遊戲結果、人工開分、機台端測試工具等）不在 spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為恰好 399.6，請回報環境負責人，不要以其他金額替代後逕行判定。
+    - 測試期間不需任何其他機台帳號的交易；本案產生的出金紀錄保持待核實，不需核實或作廢（核實不可撤銷，本案不需要）
+    test_data:
+    - name: 機台餘額（出金前）
+      value: '399.6'
+    - name: 預期收據面額／實際金額欄
+      value: '399.60'
+    - name: 不應出現的取整結果
+      value: 399、400（個位數）
+    steps:
+    - n: 1
+      action: 在機台端以選定的機台帳號確認機台餘額為 399.6；由玩家在前台遊戲畫面按『結算』鍵執行出金（出金一律全額且清空餘額）
+      expected: 出金完成。記下收據（機台暫無印表機的過渡期為前台結算結果畫面）上的訂單編號、時間與面額；面額應為 399.60（此為本案前提，若不是 399.60 代表前提不成立，停止並回報，不要繼續判定）
+    - n: 2
+      action: 到後台『帳務管理 > 洗分出金核實』，確認站台切換選單在本案場館所屬站台；在『訂單編號』篩選欄輸入步驟 1 記下的訂單編號並搜尋
+      expected: 列表出現該筆：交易類型『機台出金』、核實狀態『待核實』（藍色）、機台帳號為選定帳號的會員編號
+    - n: 3
+      action: 檢視該筆的『實際金額』欄
+      expected: 顯示 399.60（含小數的收據面額），不是 399，也不是 400
+    expected_result: 機台餘額 399.6 出金後，洗分出金核實頁該筆出金的『實際金額』欄顯示 399.60（含小數的面額），不取整為 399 或 400。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §收據兌現的櫃檯流程（第 118 行）；§列表欄位（第 67 行）
+      quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-018
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §列表欄位（第 67 行）
+    - requirement_id: REQ-CASHOUT-018
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §列表欄位（第 67 行）
+      quote: 實際異動的金額。洗分因門檻計算可能小於店員輸入的金額，付現一律以本欄為準；出金即收據面額
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    source_ref: 'new_required: REQ-CASHOUT-018 AC-CASHOUT-0183（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0183 的 given 指定餘額 399.6、收據面額 399.60，then 要求本頁顯示 399.60 且不取整，故以此單一情境逐字驗證，標 requirement_based（不是邊界值：spec
+      沒有定義數值上下限，只定義小數照記，故不貼 boundary_value；也不是決策表，沒有多條件組合）。依據：第 118 行『餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）』與第 67 行『出金即收據面額』，皆為
+      spec 明文。介面邊界：出金交易發生在機台端（前台），後台洗分出金核實頁只消費結果，所以 step 1 在機台端、step 2～3 在後台；『如何讓機台餘額恰為 399.6』spec 沒定義，已在 precondition 標為需環境負責人確認，是我的推測而非
+      spec 明文。本案刻意不核實，避免耗用不可撤銷的操作；既有 TC-CASHOUT-063 只驗證出金實際金額欄等於面額，未涵蓋含小數與不取整，兩者不重複。REQ-018 沒有 spec 定義的拒絕／邊界契約（見 TestDesignReport
+      的 NO_REJECTION_CONTRACT），『不取整』是同一顯示規則的反面描述，不另外硬造負向案例。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX17J91FRRV134TSKME
+    title: 機台端門檻為 0、餘額 399.6 全額洗分：洗分出金核實頁的實際金額欄顯示含小數 399.6，不取整至個位數
+    description: 驗證門檻 0 的全額洗分比照出金，實際金額含小數照記（AC-CASHOUT-0184）
+    requirement_ids:
+    - REQ-CASHOUT-018
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0184
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+    - 【環境前提，佈置方式 spec 未定義，需環境負責人確認】選定一個既有機台帳號，其機台端洗分門檻為 0，且機台餘額恰為 399.6。依據：spec 變更記錄（v01 2026-09-01）載明『洗分門檻改以機台端 throshold
+      為準、後台不設門檻』，因此門檻只能在機台端調整，後台無處設定；如何在機台端把門檻調為 0、如何讓餘額恰為 399.6，spec 均未說明，是我的推測，需環境負責人確認。若無法佈置請回報，不要以非 0 門檻或其他金額替代。
+    - 【環境前提，機台端操作方式 spec 未定義，需環境負責人確認】店員在機台端執行『全額洗分』時如何輸入金額（本案假設輸入機台目前全部餘額 399.6，使洗分金額等於全部餘額）；洗分是機台端（店員）操作，後台洗分出金核實頁不能發起洗分
+    - 測試期間不需核實該筆洗分；本案產生的洗分紀錄保持待核實（核實不可撤銷，本案不需要）
+    test_data:
+    - name: 機台端門檻
+      value: '0'
+    - name: 機台餘額（洗分前）
+      value: '399.6'
+    - name: 全額洗分金額
+      value: '399.6'
+    - name: 不應出現的取整結果
+      value: 399、400（個位數）
+    steps:
+    - n: 1
+      action: 在機台端確認選定機台帳號的門檻為 0、餘額為 399.6；由店員在機台端執行全額洗分（洗分金額為機台全部餘額 399.6）
+      expected: 洗分完成（交易狀態為已完成）；記下洗分完成的大約時間
+    - n: 2
+      action: 到後台『帳務管理 > 洗分出金核實』，站台切換選單在本案場館所屬站台；『機台帳號』篩選欄輸入該機台帳號的會員編號、『交易類型』選『機台洗分』、『核實狀態』選『待核實』並搜尋
+      expected: 列表出現該筆洗分，核實狀態『待核實』；若有多筆，以交易時間最新且與步驟 1 時間吻合者為準
+    - n: 3
+      action: 檢視該筆的『實際金額』欄
+      expected: 顯示含小數的實際洗分金額 399.6，不取整為 399 或 400（AC 原文寫 399.6，尾端是否補 0 不在 AC 範圍，只記錄實際顯示）
+    expected_result: 機台端門檻為 0、餘額 399.6 的全額洗分，洗分出金核實頁該筆洗分的『實際金額』欄顯示含小數的 399.6，不取整至個位數。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-018
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    source_ref: 'new_required: REQ-CASHOUT-018 AC-CASHOUT-0184（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0184 給定門檻 0、餘額 399.6 的全額洗分，then 要求實際金額含小數 399.6。spec 第 118 行只寫『門檻 0 的全額洗分比照（2026-10-05 定案）』，緊接在出金含小數照記的描述之後，原文很短，含小數、不取整是由
+      RM／AC 依「比照」展開；所以 expected 只斷言 AC 的 then（含小數、不取整），不延伸到『洗分金額與店員輸入金額一致』之類 spec 沒寫的推論。標 requirement_based：此案是單一情境，不是邊界值（『門檻
+      0』是 spec 的特定情境值而非邊界比較）。介面邊界：洗分由店員在機台端操作，後台只顯示結果，故 step 1 在機台端；機台端門檻調為 0 的方式與『全額洗分』的機台端輸入方式 spec 未定義，已在 precondition
+      標為需環境負責人確認，屬我的推測。『付現』在 spec 是先付現後核實，本案不涉及付現，也不核實。既有 TC-CASHOUT-062／110 驗證門檻計算後金額較小與趨近 0 的顯示，未涵蓋含小數，不重複。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX1TQYHYT9PY34B03B9
+    title: 核實面額 399.60 的出金：確認彈窗顯示金額 399.60，核實過程不要求、不顯示現場實付金額或差額
+    description: 驗證出金核實一律以面額計，彈窗顯示含小數面額，核實流程不要求也不呈現實付與差額（AC-CASHOUT-0222）
+    requirement_ids:
+    - REQ-CASHOUT-022
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0222
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+    - 【環境前提，spec 與派發包均未定義佈置方式，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為恰好 399.6，且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。『如何把機台餘額調到
+      399.6』（遊戲結果、人工開分、機台端測試工具等）不在 spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為恰好 399.6，請回報環境負責人，不要以其他金額替代後逕行判定。
+    - 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行。
+    - 本案會對一筆新產生的 399.60 出金執行核實（不可撤銷），不要與其他 TC 共用同一筆紀錄；該紀錄的訂單編號在步驟 1 取得
+    test_data:
+    - name: 機台餘額（出金前）
+      value: '399.6'
+    - name: 收據面額
+      value: '399.60'
+    - name: 現場模擬付現金額（僅現場動作，不輸入平台）
+      value: '400'
+      note: 與面額不同，零頭由場館自理
+    steps:
+    - n: 1
+      action: 在機台端由玩家按『結算』鍵，對機台餘額 399.6 的選定機台帳號執行出金，記下收據（過渡期為前台結算結果畫面）上的訂單編號與面額
+      expected: 出金完成，面額 399.60（若不是 399.60 代表前提不成立，停止並回報）
+    - n: 2
+      action: 到後台『帳務管理 > 洗分出金核實』，記下列表欄位集合（交易編號、訂單編號、機台帳號、交易類型、實際金額、核實狀態、交易時間、核實時間、核實人員、操作）作為核實前基準；在頁面上方輸入步驟 1 的訂單編號查詢
+      expected: 查到該筆待核實出金，實際金額 399.60
+    - n: 3
+      action: 點擊該筆的『核實』，檢視確認彈窗全部內容與可輸入欄位（先不要點確認）
+      expected: 彈窗顯示訂單編號、機台帳號、金額與收據印出時間，金額為 399.60（含小數的面額）；彈窗上沒有要求輸入『現場實際付現金額』或『差額』的欄位
+    - n: 4
+      action: 核對無誤後點擊確認（不可撤銷）
+      expected: 核實完成，過程中沒有任何額外步驟要求輸入實付金額或差額；該筆標記為『已核實』，核實人員與核實時間有值，實際金額維持 399.60
+    - n: 5
+      action: 櫃檯以整數 400 模擬現場付現（現場動作，此金額不輸入平台）；回到洗分出金核實頁以同一訂單編號重新查詢，對照步驟 2 的欄位集合，並檢視該筆列表呈現
+      expected: 列表欄位集合與步驟 2 相同，沒有新增『實付金額』或『差額』欄位，該筆也沒有顯示任何實付／差額數值；金額仍以面額 399.60 呈現
+    expected_result: 面額 399.60 的出金，核實確認彈窗顯示金額 399.60（含小數的面額），系統以面額 399.60 完成核實；核實過程（彈窗與流程）不要求輸入現場實際付現金額或面額與實付的差額，且洗分出金核實頁的彈窗與列表欄位上看不到實付金額或差額。（『不記錄』僅能由使用者介面觀察彈窗與列表欄位，後端儲存內容不在本案可驗證範圍。）
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作／核實（出金＝核銷收據）（第 89 行）；§收據兌現的櫃檯流程（第 118 行）
+      quote: 確認彈窗顯示訂單編號、機台帳號、金額與收據印出時間，核對無誤後點擊確認；平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-022
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作／核實（出金＝核銷收據）（第 88 行）
+    - requirement_id: REQ-CASHOUT-022
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作／核實（出金＝核銷收據）（第 89 行）
+    - requirement_id: REQ-CASHOUT-022
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作／核實（出金＝核銷收據）（第 88 行）
+      quote: 於頁面上方輸入收據上的訂單編號查詢
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作／核實（出金＝核銷收據）（第 89 行）
+      quote: 確認彈窗顯示訂單編號、機台帳號、金額與收據印出時間，核對無誤後點擊確認
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+    source_ref: 'new_required: REQ-CASHOUT-022 AC-CASHOUT-0222（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0222 的 then 有兩個斷言：彈窗顯示 399.60，以及核實過程『不要求、也不記錄』實付金額或差額。後者是負面事實（不出現），依原則先建立乾淨的對照基準：核實前記下列表欄位集合，核實後再比對，並同時檢查彈窗上沒有可輸入實付／差額的欄位，所以
+      test_types 含 negative；但它不是 spec 定義的拒絕路徑，技術仍標 requirement_based（不是 error_guessing：沒有猜測異常輸入）。範圍收窄（避免過度外推）：『不記錄』我只能在使用者介面驗證彈窗與列表欄位，無法驗證資料庫是否真的沒存，所以
+      expected_result 明確標註這個限制，不宣稱後端沒儲存。現場付現 400 只是模擬 AC given『實付與面額不同』的現場動作，系統沒有輸入點，這點由 spec『平台只記錄面額、不管現場實際付現多少』支持。介面邊界：出金交易在機台端產生，後台只核實，故
+      step 1 在機台端；機台餘額佈置方式為我的推測，已在 precondition 標為需環境負責人確認。既有 TC-CASHOUT-068 驗證核實四步驟的一般流程，未涵蓋含小數面額與『不要求實付／差額』，不重複；本案會消耗一筆不可撤銷的核實，因此不與其他
+      TC 共用紀錄。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX2VT9BCABDVM418Z5T
+    title: 核實面額 399.60 的出金：會員列表提款次數 +1、提款金額累計 399.60（以面額計，不以現場實付計）
+    description: 驗證核實當下提款金額以含小數面額累計，而非現場實際付現金額（AC-CASHOUT-0062）
+    requirement_ids:
+    - REQ-CASHOUT-006
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0062
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+    - 【環境前提，spec 與派發包均未定義佈置方式，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為恰好 399.6，且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。『如何把機台餘額調到
+      399.6』（遊戲結果、人工開分、機台端測試工具等）不在 spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為恰好 399.6，請回報環境負責人，不要以其他金額替代後逕行判定。
+    - 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行。
+    - 本案以選定機台帳號的會員在會員列表的『提款次數』『提款金額』為對照（核實前後各讀一次取差）；測試期間不要對該會員執行其他洗分、出金核實或人工提款操作，避免干擾差值（欄位可能已有既有累計值，不要求為 0）
+    - 本案會對一筆新產生的 399.60 出金執行核實（不可撤銷），不與其他 TC 共用同一筆紀錄
+    test_data:
+    - name: 機台餘額（出金前）
+      value: '399.6'
+    - name: 收據面額
+      value: '399.60'
+    - name: 現場模擬付現金額（僅現場動作，不輸入平台）
+      value: '400'
+      note: 與面額不同，零頭由場館自理
+    - name: 預期提款次數差
+      value: '+1'
+    - name: 預期提款金額差
+      value: '+399.60'
+      note: 不是 +399、也不是 +400
+    steps:
+    - n: 1
+      action: 到後台會員列表，以選定機台帳號的會員編號查詢，記下核實前的『提款次數』N0 與『提款金額』W0（含小數位照實記錄）
+      expected: 取得 N0、W0 作為核實前基準
+    - n: 2
+      action: 在機台端由玩家按『結算』鍵，對機台餘額 399.6 的該機台帳號執行出金，記下收據（過渡期為前台結算結果畫面）上的訂單編號與面額
+      expected: 出金完成，面額 399.60（若不是 399.60 代表前提不成立，停止並回報）
+    - n: 3
+      action: 到後台『帳務管理 > 洗分出金核實』，輸入該訂單編號查詢到待核實出金；再回會員列表重新讀取該會員的提款次數與提款金額
+      expected: 該筆為待核實、實際金額 399.60；提款次數與提款金額仍為 N0、W0（作為核實前基準的有效性確認，若不同表示有其他交易干擾，以此刻的值重新作為 N0、W0）
+    - n: 4
+      action: 回洗分出金核實頁點擊該筆『核實』，於確認彈窗核對後點擊確認（不可撤銷）；之後櫃檯以整數 400 模擬現場付現（現場動作，此金額不輸入平台）
+      expected: 該筆標記為『已核實』
+    - n: 5
+      action: 核實完成後立即到會員列表重新查詢同一會員，讀取『提款次數』與『提款金額』
+      expected: 提款次數 = N0 + 1；提款金額 = W0 + 399.60（差值恰為 399.60，含小數，不是 399 或 400）
+    expected_result: 面額 399.60 的待核實出金核實完成當下，該機台帳號在會員列表的提款次數 +1、提款金額累計 399.60（以面額計、含小數），不以現場實際付現金額（例如 400）計。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §核實狀態（第 37 行）；§收據兌現的櫃檯流程（第 118 行）
+      quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」；平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-006
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §核實狀態（第 37 行）
+    - requirement_id: REQ-CASHOUT-006
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作（規則表）（第 97 行）
+    - requirement_id: REQ-CASHOUT-006
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §核實狀態（第 37 行）
+      quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（規則表）（第 97 行）
+      quote: 金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+    source_ref: 'new_required: REQ-CASHOUT-006 AC-CASHOUT-0062（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0062 的 given 是『面額含小數的待核實出金，且現場實付金額與面額不同』，then 是提款次數 +1、提款金額累計 399.60。實付金額在系統裡沒有輸入點（spec：平台只記錄面額、不管現場實付），因此『實付不同』只能是現場模擬動作（付
+      400），能驗證的系統可觀察結果就是累計差值恰為 399.60 而非 399／400；我不聲稱能透過系統驗證『平台沒有使用實付』，只驗證差值。核實前後各讀一次會員列表取差，不假設起始值為 0，並在核實前再讀一次確認基準沒被其他交易干擾；待核實不計入（第
+      97 行）只當作基準有效性確認，不當作新斷言。標 requirement_based：單一情境、無多條件矩陣；不標 boundary_value，因為 spec 沒有定義數值邊界。介面邊界：出金在機台端產生；提款次數／金額在後台會員列表檢視。機台餘額佈置為我的推測，已標為需環境負責人確認。既有
+      TC-CASHOUT-048 以洗分交易驗證整數情境，TC-093 驗證待核實與已作廢不計；本案是含小數的出金，不重複。REQ-006 沒有 spec 定義的拒絕契約，見 NO_REJECTION_CONTRACT。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX2Q5TYYDDP0KQK9V0D
+    title: 作廢出收據兩日前的待核實出金：面額計入出收據那天（D 日）的已作廢金額，作廢那天（D+2 日）不計
+    description: 驗證作廢收據的『已作廢金額』記在出收據那天而非作廢那天，且 D 日未兌現金額不再包含該筆（AC-CASHOUT-0321）
+    requirement_ids:
+    - REQ-CASHOUT-032
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0321
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以站長或管理員登入後台（作廢僅管理員與站長可執行，操作員不能）；頁面標題下方的站台切換下拉選單切到本案機台場館所屬站台
+    - 選定一筆測試站台、測試機台帳號產生的『待核實』出金紀錄 R（自行從環境中選定，在洗分出金核實頁以『交易類型＝機台出金』『核實狀態＝待核實』篩選）：其交易時間（UTC+0）的日期 D 比今天（UTC+0）早 2 日，使『作廢當天』為
+      D+2 日；交易時間離 UTC+0 00:00 至少 2 小時。【環境前提，spec 未定義佈置方式，需環境負責人確認】若環境中沒有這樣的紀錄，需要在機台端（前台）先對測試機台帳號執行一筆出金，等到 2 個日曆日（UTC+0）之後再執行本案；後台不能直接建立指定日期的出金紀錄。作廢相差
+      2 日是為了對應 AC 的 D／D+2 例子。
+    - 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑、日期切分基準（是否與洗分出金核實頁的 UTC+0 交易時間一致）、以及核實／作廢後報表金額的更新時機（即時或排程）。本案以『報表列的日期＝該筆在洗分出金核實頁的交易時間日期（UTC+0）』為比對基準；若發現報表日期切分與
+      UTC+0 不一致，或報表未即時反映，請記錄實際現象與等待時間，不要直接判定 PASS／FAIL。為降低日期切分歧義，選用交易時間離 UTC+0 00:00 至少 2 小時的紀錄。
+    - 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行。
+    - 測試期間不要對同一站台執行其他作廢或核實，也不要在該站台對 D 日、D+2 日產生新的出收據，避免干擾報表列的前後差值
+    - 本案會對 R 執行不可撤銷的作廢，R 不得與其他 TC 共用；其他 REQ-CASHOUT-032 案例需另行選用不同的紀錄，且不要與它們在同一時段並行
+    test_data:
+    - name: 出收據日期 D
+      value: 今天（UTC+0）往前 2 日，由環境選定並記錄
+    - name: 作廢日期
+      value: D+2（即今天，UTC+0）
+    - name: 作廢原因
+      value: 測試作廢：收據遺失（作廢原因必填）
+    steps:
+    - n: 1
+      action: 到後台『帳務管理 > 洗分出金核實』，以『交易類型＝機台出金』『核實狀態＝待核實』篩選，選定符合前提的紀錄 R，記下訂單編號、面額 F、交易時間（UTC+0）及其日期 D
+      expected: 取得 R 的訂單編號、F、D；R 目前為待核實
+    - n: 2
+      action: 開啟場館日結報表（選單路徑見前提，需環境負責人提供），同一站台，結算日期範圍設為 D 日至 D+2 日；記下 D 日列的『未兌現金額』U_D0 與『已作廢金額』V_D0，以及 D+2 日列的『已作廢金額』V_D2_0
+      expected: 取得三個基準值；U_D0 包含 R 的面額 F（可與洗分出金核實頁 D 日全部待核實出金面額加總交叉確認）
+    - n: 3
+      action: 回洗分出金核實頁，對 R 點擊『作廢』，填寫作廢原因『測試作廢：收據遺失』，確認（不可撤銷）
+      expected: R 標記為『已作廢』
+    - n: 4
+      action: 回到場館日結報表，以同一站台、同一結算日期範圍（D 日至 D+2 日）重新查詢（若報表未即時反映，記錄實際更新方式與等待時間後再讀取）
+      expected: D 日列『已作廢金額』= V_D0 + F；D+2 日列『已作廢金額』= V_D2_0（不含 R）；D 日列『未兌現金額』= U_D0 − F（不再包含 R）
+    expected_result: 待核實出金 R 於 D+2 日作廢後，其面額 F 計入場館日結報表 D 日（出收據那天）列的『已作廢金額』，不計入 D+2 日（作廢那天）列的『已作廢金額』；D 日列的『未兌現金額』不再包含 R。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作／作廢（僅出金）（第 104 行）；§操作（備註）（第 110 行）
+      quote: 作廢的收據計入場館日結報表的「已作廢金額」，記在出收據那天（不是作廢那天）；日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作／作廢（僅出金）（第 104 行）
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作（備註）（第 110 行）
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作／作廢（僅出金）（第 104 行）
+      quote: 作廢的收據計入場館日結報表的「已作廢金額」，記在出收據那天（不是作廢那天）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（備註）（第 110 行）
+      quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出；查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    source_ref: 'new_required: REQ-CASHOUT-032 AC-CASHOUT-0321（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0321 的核心是歸屬日期：已作廢金額記在出收據那天，不是作廢那天。這是帶有明確負面事實（『不是作廢那天』）的規則，所以 test_types 含 negative；技術標 requirement_based（單一情境，非決策表／狀態機）。負面事實的比對基準（原則
+      4）：以作廢前後的報表差值判斷，同時記錄 D 日與 D+2 日兩列的作廢前基準，D+2 日列需『不變』而非『為 0』（該日可能有其他作廢）；對照組是同一份報表在作廢前後的同一範圍；干擾因素是同站台其他作廢、核實與新出收據，precondition
+      已要求測試期間避免。D 日列『未兌現金額』不再含 R 是 AC then 的第三句，對應第 110 行『直到核實或作廢才轉出』。介面邊界：作廢由後台管理員／站長在洗分出金核實頁執行；場館日結報表的選單路徑、日期切分基準、報表更新時機在本
+      spec 與派發包範圍內都沒有定義（日結報表有獨立的 spec），這是環境前提的假設，已在 precondition 標為需環境負責人確認，不是 spec 明文。取得『出收據日比今天早 2 日』的紀錄需要環境有舊資料或等待 2 個日曆日，同樣是我推測的佈置方式，已標明。本案會對測試資料做不可撤銷的作廢並影響日結統計，故限定測試站台與測試機台帳號。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX2SEGPPN8ETZSNCT0J
+    title: 跨日仍待核實的出金：面額留在出收據那天（D 日）列的未兌現金額，不移到之後日期；核實後 D 日列不再包含
+    description: 驗證未兌現收據的面額長期留在出收據那天的列上，核實後才轉出（AC-CASHOUT-0322）
+    requirement_ids:
+    - REQ-CASHOUT-032
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0322
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員、站長或操作員登入後台皆可（核實三種角色都能執行，操作員限自身場館）；頁面標題下方的站台切換下拉選單切到本案機台場館所屬站台
+    - 選定一筆測試站台、測試機台帳號產生的『待核實』出金紀錄 P（自行從環境中選定）：其交易時間（UTC+0）的日期 D 比今天（UTC+0）至少早 2 日（對應 AC『跨過數日仍為待核實』），交易時間離 UTC+0 00:00 至少 2
+      小時。【環境前提，spec 未定義佈置方式，需環境負責人確認】若環境沒有這樣的紀錄，需在機台端（前台）先對測試機台帳號出金並放置至少 2 個日曆日（UTC+0）；後台不能直接建立指定日期的出金紀錄。
+    - 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑、日期切分基準（是否與洗分出金核實頁的 UTC+0 交易時間一致）、以及核實／作廢後報表金額的更新時機（即時或排程）。本案以『報表列的日期＝該筆在洗分出金核實頁的交易時間日期（UTC+0）』為比對基準；若發現報表日期切分與
+      UTC+0 不一致，或報表未即時反映，請記錄實際現象與等待時間，不要直接判定 PASS／FAIL。為降低日期切分歧義，選用交易時間離 UTC+0 00:00 至少 2 小時的紀錄。
+    - 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行。
+    - 本案會對 P 執行不可撤銷的核實，P 不得與其他 TC 共用，且不要與其他 REQ-CASHOUT-032 案例在同一時段並行；測試期間不要在該站台對 D 日之後的日期新增或核實／作廢其他出金，避免干擾各列金額；其他日期可能本來就有待核實出金，本案以洗分出金核實頁的待核實面額加總作為各列的對照基準，不假設其他列為
+      0
+    test_data:
+    - name: 出收據日期 D
+      value: 今天（UTC+0）往前至少 2 日，由環境選定並記錄
+    - name: 對照基準
+      value: 洗分出金核實頁各日期『核實狀態＝待核實、交易類型＝機台出金』的面額加總
+    steps:
+    - n: 1
+      action: 到後台『帳務管理 > 洗分出金核實』，以『交易類型＝機台出金』『核實狀態＝待核實』篩選，『交易時間』範圍設為 D 日至今天；選定 P，記下訂單編號、面額 F；依交易時間日期分組，算出每個日期的待核實出金面額加總（D
+        日加總為 S_D，含 P）
+      expected: 取得 P 的資訊與各日期待核實面額加總；P 為待核實
+    - n: 2
+      action: 開啟場館日結報表（選單路徑見前提），同一站台，結算日期範圍設為 D 日至今天，記下 D 日列與之後各日期列的『未兌現金額』
+      expected: D 日列『未兌現金額』= S_D（含 P 的面額 F）；D 日之後每一列的『未兌現金額』等於該日自己的待核實出金面額加總（不含 P，也就是 F 沒有被移到之後日期）
+    - n: 3
+      action: 回洗分出金核實頁，以 P 的訂單編號查詢並點擊『核實』，於確認彈窗核對後點擊確認（不可撤銷）
+      expected: P 標記為『已核實』
+    - n: 4
+      action: 回到場館日結報表，以同一站台、同一結算日期範圍重新查詢（若報表未即時反映，記錄實際更新方式與等待時間後再讀取）
+      expected: D 日列『未兌現金額』= S_D − F（不再包含 P）；D 日之後各列的『未兌現金額』與步驟 2 相同（沒有因核實而增加）
+    expected_result: 跨過數日仍為待核實的出金，其面額留在日結報表出收據那天（D 日）列的『未兌現金額』，不會移到之後的日期；該筆被核實後再查詢，D 日列的『未兌現金額』不再包含此筆。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（備註）（第 108、110 行）
+      quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作（備註）（第 110 行）
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作（備註）（第 108 行）
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（備註）（第 110 行）
+      quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出；查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（備註）（第 108 行）
+      quote: 出金停在「待核實」則屬正常——收據不設兌現時效，該金額對應報表的「未兌現金額」
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    source_ref: 'new_required: REQ-CASHOUT-032 AC-CASHOUT-0322（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0322 描述一筆未兌現收據的生命週期：跨日仍待核實時留在 D 日列、核實後轉出。標 requirement_based：雖然有『待核實 → 已核實』兩個狀態，但 REQ-032 在 RM 中沒有定義
+      states，且本案驗證的是報表歸屬而非狀態機轉換本身，故不標 state_transition。『不會移到之後的日期』是負面事實，因此對照基準不用『之後各列為 0』（環境可能本來就有其他待核實出金），而是用洗分出金核實頁待核實面額按日期加總，與報表各列逐列比對，並在核實前後各讀一次；這個對照基準的前提是『某日未兌現金額＝該日待核實出金面額加總』，來自
+      RM statement（待核實出金面額計入出收據那天列上的未兌現金額），第 108、110 行的原文只說明對應關係與留在出收據那天。核實前後比對只斷言 AC 的 then（D 日列含／不含此筆；之後日期不增加），不延伸到總計行或其他報表欄位。介面邊界與環境假設（報表路徑、日期切分、更新時機、舊資料取得）與
+      TC 作廢案相同，皆為 spec 與派發包未定義、已標為需環境負責人確認的推測，不是 spec 明文。與作廢案（歸屬已作廢金額）分開設計，因為一筆紀錄只能走核實或作廢其中一條（皆不可撤銷），而且斷言欄位不同（未兌現金額）。
+  - product: ba-admin
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    test_level: ui_e2e
+    priority: high
+    risk: high
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    hotfix_eligible: false
+    execution_cost: high
+    stability: unknown
+    source: change_workflow
+    assumptions: *id001
+    draft_id: TC-DRAFT-01M4R87TX2PNETW68SC9VC4HQV
+    title: 未兌現金額總計隨結算日期範圍變動：只涵蓋 D2 日時只含 D2 那張，涵蓋 D1～D2 日時含兩張
+    description: 驗證要看全部未兌現須使結算日期涵蓋最早一張未兌現收據（AC-CASHOUT-0323）
+    requirement_ids:
+    - REQ-CASHOUT-032
+    acceptance_criteria_ids:
+    - AC-CASHOUT-0323
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員、站長或操作員登入後台皆可（本案只查詢，不核實也不作廢）；頁面標題下方的站台切換下拉選單切到本案機台場館所屬站台
+    - 選定兩筆測試站台、測試機台帳號產生的『待核實』出金紀錄 R1、R2（自行從環境中選定），交易時間（UTC+0）日期分別為 D1 與 D2 且 D1 早於 D2（不同日），兩筆交易時間離 UTC+0 00:00 至少 2 小時，且面額不為
+      0。【環境前提，spec 未定義佈置方式，需環境負責人確認】若環境沒有符合的兩筆，需在機台端（前台）於不同日曆日（UTC+0）各執行一筆出金並保持待核實；後台不能直接建立指定日期的出金紀錄。
+    - 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑、日期切分基準（是否與洗分出金核實頁的 UTC+0 交易時間一致）、以及核實／作廢後報表金額的更新時機（即時或排程）。本案以『報表列的日期＝該筆在洗分出金核實頁的交易時間日期（UTC+0）』為比對基準；若發現報表日期切分與
+      UTC+0 不一致，或報表未即時反映，請記錄實際現象與等待時間，不要直接判定 PASS／FAIL。為降低日期切分歧義，選用交易時間離 UTC+0 00:00 至少 2 小時的紀錄。
+    - 環境中可能另有其他日期的待核實出金，本案以洗分出金核實頁待核實出金面額的按日期加總作為報表總計的對照基準，不假設其他日期為 0；測試期間不要核實或作廢該站台的任何出金，也不要新增出收據，避免基準變動
+    test_data:
+    - name: D1（較早）、D2（較晚）
+      value: 兩個不同日期（UTC+0），由環境選定並記錄；R1 在 D1、R2 在 D2
+    - name: 對照基準
+      value: 洗分出金核實頁各日期『待核實、機台出金』面額加總
+    steps:
+    - n: 1
+      action: 到後台『帳務管理 > 洗分出金核實』，以『交易類型＝機台出金』『核實狀態＝待核實』篩選，『交易時間』範圍設為 D1 日至 D2 日；記下 R1（日期 D1、面額 F1）、R2（日期 D2、面額 F2），並依日期算出：S_D2
+        ＝ D2 日全部待核實出金面額加總（含 R2）、S_D1D2 ＝ D1 日至 D2 日全部待核實出金面額加總（含 R1、R2）
+      expected: 取得 F1、F2、S_D2、S_D1D2；S_D1D2 ≥ S_D2 + F1
+    - n: 2
+      action: 開啟場館日結報表（選單路徑見前提），同一站台，結算日期只設 D2 日（起訖皆為 D2），查詢並讀取『未兌現金額』總計 T2
+      expected: T2 = S_D2：包含 R2 的面額 F2，不包含 R1 的面額 F1（T2 ≠ S_D1D2）
+    - n: 3
+      action: 同一站台，結算日期改為 D1 日至 D2 日，查詢並讀取『未兌現金額』總計 T12
+      expected: T12 = S_D1D2：同時包含 R1 與 R2 的面額；T12 比 T2 多出的部分包含 F1
+    expected_result: D1 日與 D2 日（D1 早於 D2）各有一張未兌現收據時：結算日期只涵蓋 D2 日，未兌現金額總計只含 D2 那張；結算日期涵蓋 D1～D2 日，總計包含兩張。
+    expected_result_spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（備註）（第 110 行）
+      quote: 查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+    decision_refs:
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §操作（備註）（第 110 行）
+    - requirement_id: REQ-CASHOUT-032
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-CASHOUT-001
+        spec_version: '0.2'
+        content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+        location: §收據兌現的櫃檯流程（第 118 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（備註）（第 110 行）
+      quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出；查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+    - type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+    source_ref: 'new_required: REQ-CASHOUT-032 AC-CASHOUT-0323（CI-SPEC-CASHOUT-001-0.1-0.2）'
+    design_rationale: AC-0323 比較兩個查詢範圍：只含 D2 與含 D1～D2，總計是否各自包含對應收據。『只涵蓋 D2 時不含 D1 那張』是負面事實，所以 test_types 含 negative；對照基準用洗分出金核實頁的待核實面額按日期加總，並明確說明總計相等於基準而非『等於
+      F2』，以排除環境中其他待核實出金的干擾。標 requirement_based：這是兩個查詢範圍的對照，雖像等價類（含／不含最早收據），但 spec 沒有定義數值邊界或分區規則，只有第 110 行的一句話，不硬套 equivalence_partitioning
+      或 boundary_value。此案純查詢，不消耗不可撤銷的核實或作廢，可與其他 REQ-032 案例分開執行，但不應與它們在同一時段並行（它們會改變報表基準）。『報表總計＝待核實面額按日期加總』的對照前提來自 RM statement
+      與第 110 行『查詢範圍內的總計即代表場館端尚未付出的負債』，我沒有看到報表欄位的更細定義（超出派發包範圍），已在 precondition 標為環境前提；報表路徑、日期切分、更新時機同為需環境負責人確認的推測。
+history:
+- at: '2026-10-12T14:29:03Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-006

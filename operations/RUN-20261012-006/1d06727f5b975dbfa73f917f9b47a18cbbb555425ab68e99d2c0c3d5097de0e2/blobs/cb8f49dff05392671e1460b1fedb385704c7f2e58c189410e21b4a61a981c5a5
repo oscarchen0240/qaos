@@ -1,0 +1,114 @@
+artifact_id: ART-TDR-01M4R8AB9DHPT03HCDRRJ1RN04
+artifact_type: TestDesignReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-006
+task_id: T2
+iteration: 0
+created_by: agent-test-designer
+created_at: '2026-10-12T14:29:56Z'
+status: VALID
+source:
+  type: ChangeImpactReport
+  ids:
+  - ART-CIR-01M4R7SPZR6KDEZPT5KCEKNN91
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+requires_approval: null
+dispatch_packet_sha256: 15a318a3b396447a2f573e93651b179a9ec68299305a55ec6cafab384b52c717
+payload:
+  mode: change
+  testcase_draft_artifact_id: ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+  coverage_matrix:
+  - requirement_id: REQ-CASHOUT-006
+    draft_ids:
+    - TC-DRAFT-01M4R8AB9CY9854ZMQX882HA3D
+    acceptance_criteria:
+    - ac_id: AC-CASHOUT-0062
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CY9854ZMQX882HA3D
+  - requirement_id: REQ-CASHOUT-018
+    draft_ids:
+    - TC-DRAFT-01M4R8AB9CHKEEY1FY5T8Q1G7S
+    - TC-DRAFT-01M4R8AB9CP86RY8N2PBRD049S
+    acceptance_criteria:
+    - ac_id: AC-CASHOUT-0183
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CHKEEY1FY5T8Q1G7S
+    - ac_id: AC-CASHOUT-0184
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CP86RY8N2PBRD049S
+  - requirement_id: REQ-CASHOUT-022
+    draft_ids:
+    - TC-DRAFT-01M4R8AB9CQN2FV3S1ND7SJ05V
+    acceptance_criteria:
+    - ac_id: AC-CASHOUT-0222
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CQN2FV3S1ND7SJ05V
+  - requirement_id: REQ-CASHOUT-032
+    draft_ids:
+    - TC-DRAFT-01M4R8AB9CG3THKPB84PTVW6A4
+    - TC-DRAFT-01M4R8AB9CRSXTEP1D729J9S7B
+    - TC-DRAFT-01M4R8AB9CREDEGPX5G5GA4C1G
+    acceptance_criteria:
+    - ac_id: AC-CASHOUT-0321
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CG3THKPB84PTVW6A4
+    - ac_id: AC-CASHOUT-0322
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CRSXTEP1D729J9S7B
+    - ac_id: AC-CASHOUT-0323
+      draft_ids:
+      - TC-DRAFT-01M4R8AB9CREDEGPX5G5GA4C1G
+  uncovered_with_reason:
+  - requirement_id: REQ-CASHOUT-006
+    reason: 'NO_REJECTION_CONTRACT: REQ-CASHOUT-006 為 high risk，本批只新增 AC-CASHOUT-0062（含小數面額累計）的成功面計算案例；spec 對累計沒有定義拒絕或數值邊界，『不以現場實付計』在系統內沒有可變動的輸入，無法構成獨立的負向案例，不硬造。AC-CASHOUT-0061
+      與待核實／已作廢不計由既有 TC-CASHOUT-048／093 涵蓋。'
+  - requirement_id: REQ-CASHOUT-018
+    reason: 'NO_REJECTION_CONTRACT: REQ-CASHOUT-018 為 high risk，本批新增的 AC-CASHOUT-0183／0184 是含小數的顯示規則（成功面），spec 沒有定義拒絕或數值邊界（只有『不取整』的格式規則），不硬造負向案例。既有
+      TC-CASHOUT-062／063／110 涵蓋門檻較小與趨近 0 的顯示。'
+  technique_summary:
+  - technique: requirement_based
+    count: 7
+    notes: 單一情境→結果的顯示、累計與報表歸屬驗證，無多條件組合矩陣、無 spec 定義的數值邊界
+  - technique: state_transition
+    count: 1
+    notes: RM 定義的唯一狀態轉換（REQ-CASHOUT-022：待核實→已核實）僅 1 張，與 requirement_based 並列標註
+  self_check:
+    requirements_covered: true
+    acceptance_criteria_covered: true
+    negative_considered: true
+    boundary_considered: true
+    expected_results_traceable: true
+    no_unsupported_assumptions: true
+    duplicate_detection_completed: true
+  assumptions: []
+  duplicate_check:
+    against_registry: true
+    findings:
+    - draft_id: TC-DRAFT-01M4R8AB9CHKEEY1FY5T8Q1G7S
+      similar_to: TC-CASHOUT-063
+      resolution: 063 只驗證出金實際金額欄等於收據面額（整數情境）；本案驗證餘額 399.6 → 面額 399.60、不取整，面向不同，不合併
+    - draft_id: TC-DRAFT-01M4R8AB9CP86RY8N2PBRD049S
+      similar_to: TC-CASHOUT-062／110
+      resolution: 062 驗證門檻計算後金額較小、110 驗證趨近 0 的顯示；本案驗證門檻 0 全額洗分的含小數金額，不重複
+    - draft_id: TC-DRAFT-01M4R8AB9CQN2FV3S1ND7SJ05V
+      similar_to: TC-CASHOUT-068
+      resolution: 068 驗證出金核實四步驟一般流程；本案驗證含小數面額彈窗與不要求／不顯示實付與差額，不重複
+    - draft_id: TC-DRAFT-01M4R8AB9CY9854ZMQX882HA3D
+      similar_to: TC-CASHOUT-048／093
+      resolution: 048 以洗分交易驗證提款累計、093 驗證待核實與已作廢不計；本案以含小數面額出金驗證累計金額，不重複
+    - draft_id: TC-DRAFT-01M4R8AB9CG3THKPB84PTVW6A4
+      similar_to: TC-CASHOUT-077
+      resolution: 077 只驗證站長作廢並填原因後標記已作廢，不涉日結報表歸屬；本案驗證已作廢金額記在出收據那天，不重複
+    - draft_id: TC-DRAFT-01M4R8AB9CRSXTEP1D729J9S7B
+      similar_to: TC-CASHOUT-081
+      resolution: 081 為現金淨收只計已核實洗分，與未兌現金額歸屬無關；REQ-CASHOUT-032 無 ACTIVE TC，無重複
+history:
+- at: '2026-10-12T14:30:22Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-006

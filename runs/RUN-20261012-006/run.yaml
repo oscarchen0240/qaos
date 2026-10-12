@@ -9,7 +9,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-12T14:07:04Z'
-updated_at: '2026-10-12T14:21:48Z'
+updated_at: '2026-10-12T14:30:25Z'
 tasks:
 - task_id: T0
   type: agent
@@ -108,11 +108,15 @@ tasks:
   ended_at: '2026-10-12T14:21:33Z'
 - task_id: T2
   type: agent
-  status: READY
+  status: DONE
   iteration: 0
   input_artifact_ids: []
   input_entity_refs: []
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-TCD-01M4R87TX2SNNBJ2P0HCMV03VA
+  - ART-TDR-01M4R87TX2F6EA6YV9PQDEZ19Y
+  - ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+  - ART-TDR-01M4R8AB9DHPT03HCDRRJ1RN04
   agent_id: agent-test-designer
   mode: change
   gate: G-DESIGN
@@ -122,20 +126,105 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-12T14:29:00Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T14:29:00Z'
+    from_status: RUNNING
+    to_status: ARTIFACT_INVALID
+    by: system
+    trigger: structural fail
+  - at: '2026-10-12T14:29:00Z'
+    from_status: ARTIFACT_INVALID
+    to_status: READY
+    by: system
+    trigger: retry allowed
+  - at: '2026-10-12T14:29:03Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T14:29:21Z'
+    from_status: RUNNING
+    to_status: GATE_FAILED
+    by: system
+    trigger: G-DESIGN structural
+  - at: '2026-10-12T14:29:21Z'
+    from_status: GATE_FAILED
+    to_status: READY
+    by: system
+    trigger: revise
+  - at: '2026-10-12T14:30:18Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T14:30:25Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-DESIGN PASS
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261012-006/dispatch/T2-iter0.yaml
     sha256: 15a318a3b396447a2f573e93651b179a9ec68299305a55ec6cafab384b52c717
     at: '2026-10-12T14:21:48Z'
+  started_at: '2026-10-12T14:30:18Z'
+  gate_results:
+  - at: '2026-10-12T14:29:00Z'
+    layer: structural
+    result: FAIL
+    details:
+    - 'reference: Artifact ART-TCD-01M4R87TX2SNNBJ2P0HCMV03VA 狀態為 DRAFT，只有 VALID 可被引用'
+    artifact_id: ART-TDR-01M4R87TX2F6EA6YV9PQDEZ19Y
+  - at: '2026-10-12T14:29:03Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestCaseDraft ART-TCD-01M4R87TX2SNNBJ2P0HCMV03VA VALID
+  - at: '2026-10-12T14:29:15Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestDesignReport ART-TDR-01M4R87TX2F6EA6YV9PQDEZ19Y VALID
+  - at: '2026-10-12T14:29:21Z'
+    layer: structural
+    result: FAIL
+    details:
+    - REQ-CASHOUT-022 定義了狀態轉換，必須有 state_transition 案例
+  - at: '2026-10-12T14:30:18Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestCaseDraft ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8 VALID
+  - at: '2026-10-12T14:30:22Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestDesignReport ART-TDR-01M4R8AB9DHPT03HCDRRJ1RN04 VALID
+  - at: '2026-10-12T14:30:25Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-DESIGN structural PASS
+  ended_at: '2026-10-12T14:30:25Z'
 - task_id: T3
   type: agent
-  status: PENDING
+  status: READY
   iteration: 0
   input_artifact_ids: []
   input_entity_refs: []
   output_artifact_ids: []
   agent_id: agent-test-validator
   gate: G-TVAL
+  history:
+  - at: '2026-10-12T14:30:25Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
 - task_id: T3RR
   type: agent
   agent_id: agent-tc-risk-reviewer
@@ -188,7 +277,7 @@ from_requirement_model_revision:
   spec_version: '0.1'
   revision: R000
   sha256: 2f2d2e80def68309545ab5f53c19ca7ca8e2534bc9f3a6fb67dce3873e68f736
-current_task_id: T2
+current_task_id: T3
 requirement_model_revision:
   spec_id: SPEC-CASHOUT-001
   spec_version: '0.2'
