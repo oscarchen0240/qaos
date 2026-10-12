@@ -1,0 +1,197 @@
+artifact_id: ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T17:07:05Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+- entity_type: Artifact
+  id: ART-TDR-01M4RGYHPHE8C2C8A574VPPFYF
+- entity_type: Artifact
+  id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+requires_approval: null
+dispatch_packet_sha256: bb9cb68eb173352bb3a1dc2de2745efd9e3910f1ebadf03cf6c02e6dfba05ded
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+  validated_against:
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+  issues: []
+  advisories:
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-032
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（備註）（第 110 行）
+      quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出
+    evidence: TC-DRAFT-01M4RGZQZQBGSHCE3TG7H8XZG9、TC-DRAFT-01M4RGZQZQ8Z4TGM5H5AV52PY0、TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB
+      的前提把營業日 D 定義為『出金當下所屬的營業日，以場館日結時間切分』，並要求執行時刻距場館日結時間前後至少 2 小時；派發包 open_questions 中的 CLR-CASHOUT-005 (1) 還在問「出收據那天」是以場館日結時間還是
+      UTC+0 00:00 切日。
+    explanation: 三張 TC 都沒有斷言切日規則，報表算式也有依據：第 108、110 行規定待核實出金計入出收據那天的未兌現金額，核實後轉出；第 132 行規定已核實洗分才從現金淨收扣除；第 118 行規定以面額計。但定義 D
+      時，等於先採用了 CLR-005 的一種答案。如果最後答覆是 UTC 00:00，而場館日結時間不是 00:00，執行者可能在「離場館切點 2 小時以上、但與 UTC 日期不同營業日」的時段執行，單日查詢 D 會查不到這筆，造成誤判
+      FAIL。
+    recommended_change: 不阻擋本輪。前提改為：執行時刻須同時距場館日結時間與 UTC+0 00:00 各至少 2 小時，而且兩種切法得到的日期相同。這樣不論 CLR-005 怎麼答，D 都一致。
+  - testcase_id: TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-CASHOUT-001
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §功能說明（第 19 行）
+      quote: 每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄
+    evidence: 前提自承：『把重送的完成回報（同一訂單編號、同一交易）仍是同一筆出金，不是新的一筆，視為「每一筆」語意的定義性讀法；spec 並未明寫重送的處理方式』。另一條前提寫『CLR-CASHOUT-002 的回覆與 AC-CASHOUT-0041
+      的備註都提到，測試環境對 end-cashout 完成回報的攔截／製造能力有限』。
+    explanation: 判定：這個推論有依據，不算未定義假設。第 19 行以「每一筆交易」為單位產生一筆紀錄；第 63 行規定列表的交易編號對應機台交易編號；第 129 行規定「僅已完成的交易產生核實紀錄」。這三處合起來，就是一筆交易對應一筆核實紀錄。重送同一交易的完成回報不會成為新交易，所以斷言「仍只有一筆、未兌現只計一次」可以從原文推得。重送的回應內容只記錄、不判定，沒有超出
+      spec。不過 RM 沒有針對重送的決策點，這是 RM 的缺口。另外，「端點無法攔截」出自 AC-0041 的備註（RD 2026-09-23），CLR-002 的回覆並沒有提到測試環境能力，這處出處引用不精確。能否重送已列為環境前提，工具不支援時標為阻塞，執行上可接受。
+    recommended_change: TC 不需修改斷言。前提中的出處只保留 AC-CASHOUT-0041 的備註。可選：RM 下一版在 REQ-CASHOUT-001 補一個 data_scope 決策點（重送完成回報的冪等性），或開
+      CLR 確認，讓這個推論有明文依據。
+  - testcase_id: TC-DRAFT-01M4RGZQZQ8Z4TGM5H5AV52PY0
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-031
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §相關業務規則（現金淨收計算）（第 132 行）
+      quote: 只計入已核實的洗分；待核實洗分不扣除
+    evidence: 前提：『現金淨收的查看位置與算式 spec 未定義：本案假設場館日結報表可看到營業日 D 的現金淨收…「扣除項」使現金淨收減少是依名稱的推論』。步驟 8：『K1 ＝ K0 ＋ 399.6（若無扣除項明細，則 C1 ＝
+      C0 － 399.6）』。
+    explanation: 判定：算式有依據。第 132 行說「待核實洗分不扣除」，反過來就是已核實洗分會扣除，所以「核實後現金淨收減少 399.6」不只是從名稱推論。金額不取整的依據是第 118 行（日結報表一律以面額計，門檻 0 的全額洗分比照）。查看位置確實沒有在本
+      spec 定義，前提已寫明「結構不同就記錄並回報，不直接判定」。洗分與核實都在同一營業日完成，避開了 CLR-005 (2) 的跨日歸屬問題。整體可接受。
+    recommended_change: 可選：前提中「依名稱的推論」改寫為「依第 132 行『待核實洗分不扣除』推得已核實洗分扣除」，讓依據更明確。不阻擋本輪。
+  - testcase_id: TC-DRAFT-01M4RGZQZQZ5K0QNHJPMC6S5HZ
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-CASHOUT-018
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 餘額帶小數時收據面額照記實際餘額（含小數）（例 399.6 → 399.60）
+    evidence: 前提：『若顯示為 0.6（未補尾端 0）或「.6」，數值正確但格式與例子不一致，請記錄實際顯示並回報，不單獨判 FAIL…顯示成「.6」、「0」、空白或「1」則為缺陷』。步驟 3、4 的 expected 與 test_data
+      也把「.6」列為不應出現的結果。
+    explanation: 同一條前提中，「.6」先被說成只記錄、不判 FAIL，後面又被列為缺陷；步驟 3、4 也把它當成 FAIL。這是自相矛盾。spec 只給了 399.6 → 399.60 一個例子，沒有規定前導 0 或尾端 0
+      的顯示，所以把「.6」判為缺陷沒有依據。0、1、空白則屬於取整或未顯示，判為缺陷有依據。
+    recommended_change: 統一處理：「.6」和「0.6」一樣只記錄並回報格式差異，不判 FAIL；從步驟 3、4 與 test_data 的「不應出現」清單移除「.6」，只保留 0、1、空白。
+  - testcase_id: TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHOUT-024
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（規則表）（第 95 行）
+      quote: 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款
+    evidence: 步驟 5：『在 Network 面板找到那個成功的核實請求，右鍵 → Replay XHR（Chrome）重送一次』；前提只要求篩選 Fetch/XHR。
+    explanation: Chrome 的 Replay XHR 只對 XMLHttpRequest 類型的請求提供；如果後台用 fetch() 送出核實請求，右鍵選單沒有這個選項，步驟 5 就做不了。步驟 6（Copy as fetch
+      並行重放）不受影響。其他重放手法都可以執行：$0.click() 連點、Copy as fetch 改寫成 send() 後用 Promise.all 並行送出。斷言也只用了 spec 定義的結果（阻擋、不重複累計、核實人員與時間不被覆寫），提示字樣與狀態碼都不比對。
+    recommended_change: 步驟 5 補備案：「若右鍵選單沒有 Replay XHR（請求類型為 fetch），改用 Copy as fetch 在 Console 單獨送出一次」。
+  - testcase_id: '*'
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-CASHOUT-006
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（規則表）（第 97 行）
+      quote: 金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計
+    evidence: TC-DRAFT-01M4RGZQZQBGSHCE3TG7H8XZG9（步驟 3：待核實時提款次數、金額仍為 N0、W0）、TC-DRAFT-01M4RGZQZQ8Z4TGM5H5AV52PY0（步驟 5：核實前現金淨收與提款累計不變）、TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN（步驟
+      4、6：兩筆彼此不應互相阻擋、累計不得遺失）的 test_types 都只有 [functional]，但都含有「不變動／不遺失」這類反向斷言。
+    explanation: 依標籤規則，這三張應加 negative。高風險需求 REQ-CASHOUT-006、032 另有 TC4、TC6、TC7 標了 negative，non-happy 覆蓋沒有因此失去，所以只算 minor。
+    recommended_change: 上述三張的 test_types 補 negative。
+  - testcase_id: TC-DRAFT-01M4RGZQZRJ70857FK6Z9QMRAR
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-029
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作／作廢（僅出金）（第 102 行）
+      quote: 僅 管理員 與站長可執行，須填寫作廢原因（必填）；用於收據遺失、爭議或確認不再兌付的情況
+    evidence: 前提第 1 條：『三種後台身分各一個帳號：操作員…、站長（或管理員）…這三種角色都是 spec 已明載的角色』，實際只列出兩個帳號。
+    explanation: 文字瑕疵：實際需要的是操作員與站長（或管理員）兩個帳號，寫成「三種」可能讓執行者以為還要準備第三種角色。其餘部分都可以執行，斷言也有依據：用站長擷取請求樣板，再用 Y 做對照，可以排除「請求格式錯誤而被拒絕」的可能；只斷言拒絕、P
+      維持待核實；沒有涉及已核實能否作廢（CLR-003），也沒有涉及作廢重送（CLR-007）。與 TC-CASHOUT-079（介面上找不到入口）、TC-CASHOUT-073（核實 API、非自身場館）的驗證層次不同，不重複。
+    recommended_change: 「三種後台身分各一個帳號」改為「兩個後台帳號：操作員（屬本案場館）一個、站長或管理員一個」。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 派發訊息說依據包含「派發包 extra 的 TRR」，但派發包 runs/RUN-20261013-002/dispatch/T3-iter0.yaml 的 extra_inputs 是 []。Draft 只在各 TC
+      的自由文字 source_ref 與 envelope references 中提到 ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM，前提也引用了 RF-02、RF-07、RF-09。
+    explanation: TRR 不在本次派發包範圍內，依角色契約我沒有讀取。因此「8 張 TC 對應 RF-03、04、05、12、14、15、17、18」這個對應關係，我沒有獨立核對。source_refs、decision_refs
+      的 basis_ref、expected_result_spec_reference 全部是 SPEC-CASHOUT-001 v0.2（content_hash 相符），所有斷言都不依賴 TRR 內容，所以不構成 missing_reference。
+    recommended_change: 若需要 Validator 核對 TC 與 RF 的對應，下次派發時請以 --extra 登記 TRR；否則維持現狀即可。
+  - testcase_id: '*'
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 共 24 條，其中 8 條帶 NO_REJECTION_CONTRACT 前綴：REQ-CASHOUT-004、005、011、021、025、027、030（範圍外、high
+      risk），以及 REQ-CASHOUT-018（範圍內，說明 spec 沒有定義含小數面額的拒絕或數值邊界，不硬造負向案例）。
+    explanation: 依派發指示，範圍外需求以 NO_REJECTION_CONTRACT 豁免，是因為 G-DESIGN 在 mode=spec 下會把整份 RM 當作 scope，這是框架限制，已另案處理，不列 issue。REQ-CASHOUT-018
+      的豁免理由與 spec 相符：第 118 行只有「不取整」的格式規則，沒有拒絕契約；其他 AC 已由 TC-CASHOUT-062、063、110、128、129 覆蓋。
+    recommended_change: 無需修改本 Draft；等框架另案修正後，範圍外需求不必再借用此前綴。
+  coverage_summary:
+    requirements_total: 9
+    requirements_covered: 9
+    ac_total: 19
+    ac_covered: 7
+    uncovered_accepted:
+    - 本 run 範圍限定為 9 條需求（REQ-CASHOUT-001、006、018、022、024、028、029、031、032），目的是補強風險。本批 TC 掛到 7 條 AC：0011、0061、0062、0241、0291、0311、0312。
+    - 範圍內其餘 12 條 AC 由既有 ACTIVE TC 覆蓋，本批不重做：0181（062、110）、0182（063）、0183（128）、0184（129）、0221（068）、0222（130）、0242（071）、0281（077）、0282（078）、0321（132）、0322（133）、0323（134）。
+    - TC-DRAFT-01M4RGZQZQZ5K0QNHJPMC6S5HZ、TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN 沒有掛 AC，判定合理：既有 AC 都綁定 399.60 這個具體值，或只描述單筆核實。TC3
+      是同一等價類的變體（整數部分為 0 的小數面額），TC5 驗證兩筆同時核實時累計不遺失，都可以從 REQ-CASHOUT-006、018、022 的 statement 推得，掛在需求層即可。
+    - 範圍外 23 條需求依 TDR uncovered_with_reason 豁免（其中 7 條帶 NO_REJECTION_CONTRACT 前綴，屬框架限制），列為 advisory，不列 issue。
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    assumptions_ok: true
+    dispatch_scope_ok: true
+    no_open_clr_asserted: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RGZQZQBGSHCE3TG7H8XZG9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZQ8Z4TGM5H5AV52PY0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZQZ5K0QNHJPMC6S5HZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGZQZRJ70857FK6Z9QMRAR
+    verdict: ok
+history:
+- at: '2026-10-12T17:07:39Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-002
