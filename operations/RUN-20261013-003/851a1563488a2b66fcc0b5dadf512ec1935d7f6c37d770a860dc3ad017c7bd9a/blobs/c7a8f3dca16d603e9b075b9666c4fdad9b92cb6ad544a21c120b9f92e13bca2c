@@ -1,0 +1,148 @@
+run_id: RUN-20261013-003
+workflow_id: spec-to-testcase
+workflow_version: 1.0.0
+status: RUNNING
+input:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  scope: REQ-CASHFLOW-004,007,009,013,014,020,026,041,045,049（T3RR 風險抽查補強：RUN-20261012-004 RF-01/02/04/09/12/14/17/20）
+  initiated_by: oscarchen@blockaction.tech
+initiated_by: oscarchen@blockaction.tech
+created_at: '2026-10-12T16:48:17Z'
+updated_at: '2026-10-12T17:12:30Z'
+tasks:
+- task_id: T1
+  type: agent
+  status: DONE
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-spec-analyst
+  gate: G-SPEC
+- task_id: T2
+  type: agent
+  status: READY
+  iteration: 1
+  input_artifact_ids:
+  - ART-TVR-01M4RHG3JK0TX93SK9KY3JG594
+  input_entity_refs: []
+  output_artifact_ids:
+  - ART-TCD-01M4RH8ER06E3M31M2DTH4BEXC
+  - ART-TDR-01M4RH8ER0MAQ56PHGRVV4R4EJ
+  agent_id: agent-test-designer
+  mode: spec
+  gate: G-DESIGN
+  dispatch_packets:
+  - iteration: 0
+    path: runs/RUN-20261013-003/dispatch/T2-iter0.yaml
+    sha256: 03a515e9b98f3ff5deb47c8a4c5c00c7a20a5b5a886567e88cec97dbdf3a4bc4
+    at: '2026-10-12T16:48:45Z'
+  started_at: '2026-10-12T17:06:45Z'
+  gate_results:
+  - at: '2026-10-12T17:06:45Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestCaseDraft ART-TCD-01M4RH8ER06E3M31M2DTH4BEXC VALID
+  - at: '2026-10-12T17:06:55Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestDesignReport ART-TDR-01M4RH8ER0MAQ56PHGRVV4R4EJ VALID
+  - at: '2026-10-12T17:07:02Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-DESIGN structural PASS
+  ended_at: '2026-10-12T17:07:02Z'
+- task_id: T3
+  type: agent
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-test-validator
+  gate: G-TVAL
+  history:
+  - at: '2026-10-12T17:07:02Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-10-12T17:12:20Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T17:12:30Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: validator FAIL (ART-TVR-01M4RHG3JK0TX93SK9KY3JG594)
+  dispatch_packets:
+  - iteration: 0
+    path: runs/RUN-20261013-003/dispatch/T3-iter0.yaml
+    sha256: 9dfc2315d51faacf3b5e52c1c08975cbff55a2934f4b704f4abe58805504ce8b
+    at: '2026-10-12T17:07:05Z'
+  started_at: '2026-10-12T17:12:20Z'
+  gate_results:
+  - at: '2026-10-12T17:12:20Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestValidationReport ART-TVR-01M4RHG3JK0TX93SK9KY3JG594 VALID
+  - at: '2026-10-12T17:12:30Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-TVAL structural PASS
+  - at: '2026-10-12T17:12:30Z'
+    layer: semantic
+    result: FAIL
+    details:
+    - validator result = FAIL
+- task_id: T3RR
+  type: agent
+  agent_id: agent-tc-risk-reviewer
+  gate: G-RISK
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+- task_id: T4
+  type: approval
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+- task_id: T5
+  type: agent
+  status: PENDING
+  iteration: 0
+  input_artifact_ids: []
+  input_entity_refs: []
+  output_artifact_ids: []
+  agent_id: agent-supervisor
+history:
+- at: '2026-10-12T16:48:17Z'
+  from_status: null
+  to_status: CREATED
+  by: system
+  trigger: new_run by oscarchen@blockaction.tech
+  run_id: RUN-20261013-003
+- at: '2026-10-12T16:48:17Z'
+  from_status: CREATED
+  to_status: RUNNING
+  by: system
+  trigger: task graph expanded
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+current_task_id: T2

@@ -1,0 +1,92 @@
+approval_id: APR-0201
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261013-002
+task_id: T4
+status: PENDING
+summary: 8 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（高風險抽查 ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8：3 條補充建議，high 2、需澄清
+  0；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-135
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-136
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-137
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-138
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-139
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-140
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-141
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-142
+  version: 1
+artifact_ids:
+- ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+- ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-135
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-136
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-137
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-138
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-139
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-140
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-141
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHOUT-142
+  version: 1
+requested_by: agent-supervisor
+requested_at: '2026-10-12T17:11:56Z'
+diff_summary: '[risk-review] 複查 8 張補強 TC 是否補到上次洗分出金核實 TRR（ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM）的 RF-03、04、05、12、14、15、17、18。8
+  條都有對應案例，其中 RF-03、04、05、18 已完整補上；RF-12、14、15、17 的方向正確但不完整。新列 3 條：high 2、medium 1、low 0，3 條都有 spec 依據，不需另開 Clarification：RF-01
+  UI 雙視窗同步無法保證後端真正並行，並行重放又是在已成功之後才送，應補 API 層對待核實紀錄的並行請求；RF-02 競態與重放時，機台交易紀錄的核實回寫是否一致、不被覆寫，目前沒有驗證；RF-03 完成回報在紀錄已核實或已作廢之後才遲到重送，不得再產生新的待核實紀錄（可能重複付現）。已開
+  CLR 的項目（CLR-CASHOUT-003～008，即上次的 RF-01、02、06、07、08、09、10、11、13、16、19）依指示不重複列；Validator 已列的 minor 事項也不重複。本審查只提建議，不修改 TC、不判定
+  PASS／FAIL。
+
+  [RF-01/high/concurrency] 補強案例沒有真正保證兩個核實請求在後端重疊：TC-DRAFT-…GH6（對應上次的 RF-12）與 …KEN（RF-14）都靠兩個瀏覽器視窗用 JS 計時器『同時』按確認，兩個請求實際到達後端可能相差數十到數百毫秒，很可能被循序處理，結果只等於
+  TC-CASHOUT-070 已覆蓋的『先核實、後再核實』。TC-DRAFT-…V4A（RF-15）步驟 6 的並行重放，是在第一個請求已經成功之後才送出，驗證的是『已核實後再核實會被擋』，不是『待核實當下同時抵達』的競態。這兩個風險（雙重核實造成提款
+  +2、累計值被覆蓋而遺失）因此仍可能漏網。另外，…GH6／…KEN 允許 U1、U2 用同一帳號開兩個工作階段，此時步驟 5 的『核實人員＝成功那一方的帳號』無法分辨是哪一方成功。 → 建議：在 TC-DRAFT-…GH6 補一個 API
+  層的並行步驟：先用一筆取樣紀錄擷取核實請求格式（Copy as fetch），再對一筆新的待核實出金 P（尚未有任何核實請求）用 Promise.all 一次並行送出 5～10 個核實請求。預期恰好 1 個成功、其餘被拒，提款次數 +1、金額
+  +399.6，多輪執行。…KEN 比照：對同一機台帳號的兩張待核實出金，以兩個不同的後台帳號憑證並行送出核實請求，預期兩筆都成功、提款累計 +2 與兩筆面額之和。U1、U2 應限定為不同帳號，或改用請求的回應判定由哪一方成功。（相關 TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6,
+  TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN, TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A, TC-CASHOUT-070）
+
+  [RF-02/medium/concurrency] 上次 RF-15 的建議包含『機台交易紀錄與後台操作紀錄只各一筆核實』，但 TC-DRAFT-…V4A 與 …GH6 只檢查洗分出金核實頁的核實人員／時間與會員列表累計，沒有檢查第 97
+  行規定的回寫：機台交易紀錄的核實狀態與核實人員／時間。競態或重放時，若回寫不在同一個原子操作內，輸的一方可能把機台交易紀錄的核實人員或時間覆寫成自己的，造成核實頁與機台交易紀錄不一致（例如核實頁顯示 U1、機台交易紀錄顯示 U2）。 → 建議：在
+  TC-DRAFT-…GH6 步驟 5 與 …V4A 步驟 7 之後，各補一步：到機台交易紀錄以該筆交易編號查詢，確認核實狀態為已核實，核實人員／時間與核實頁完全一致、沒有被輸的一方或重放請求覆寫；若後台操作紀錄可查（第 142 行），一併確認該筆核實只有一筆紀錄。（相關
+  TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6, TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A, TC-CASHOUT-075）
+
+  [RF-03/high/duplicate_submission] TC-DRAFT-…3WB（對應上次的 RF-17）只在出金紀錄仍為待核實時重送完成回報。最危險的情況其實是：這筆已經核實（現金已付）或已作廢之後，遲到的完成回報才到。若平台把它當成新的一筆，就會再產生一筆待核實紀錄，櫃檯可能再付一次現金，日結報表也會再出現一筆未兌現。這和
+  CLR-CASHOUT-003（已核實的收據能否作廢）、CLR-CASHOUT-007（作廢請求重送）是不同的問題，目前沒有案例覆蓋。 → 建議：在 TC-DRAFT-…3WB 補兩個變體：(a) 出金完成並在本頁核實後，以測試工具重送同一筆（同訂單編號、同交易編號）的完成回報；(b)
+  另一筆出金由站長作廢後，同樣重送完成回報。預期兩種情況下，以該訂單編號查詢仍只有原本那一筆、狀態維持已核實／已作廢，不會出現新的待核實紀錄；會員列表提款累計與日結報表未兌現金額都不變。（相關 TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB,
+  TC-CASHOUT-041, TC-CASHOUT-084）'

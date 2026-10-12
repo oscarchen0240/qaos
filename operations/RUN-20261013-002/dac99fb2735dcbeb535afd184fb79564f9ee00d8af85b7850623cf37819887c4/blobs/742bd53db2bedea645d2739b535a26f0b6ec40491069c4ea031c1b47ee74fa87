@@ -1,0 +1,191 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+execution_mode: manual
+assumptions: []
+title: 機台端門檻 0、餘額 399.6 全額洗分並核實：提款次數 +1、提款金額 +399.6；現金淨收扣除項核實前不計、核實後計入 399.6
+description: TCRiskReview RF-04：含小數的全額洗分（AC-CASHOUT-0184 的佈置）核實後，驗證會員列表提款累計與場館現金淨收扣除項皆以含小數的 399.6 計，不取整為 399 或 400。
+requirement_ids:
+- REQ-CASHOUT-006
+- REQ-CASHOUT-018
+- REQ-CASHOUT-031
+acceptance_criteria_ids:
+- AC-CASHOUT-0061
+- AC-CASHOUT-0311
+- AC-CASHOUT-0312
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: high
+preconditions:
+- 以管理員或站長登入後台（本案從頭到尾使用同一個後台帳號），頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台。
+- 【環境前提，佈置方式 spec 未定義，需環境負責人確認】選定一個既有機台帳號（自行從環境中選定），其機台端洗分門檻為 0，且機台餘額恰為 399.6。依據：spec 變更記錄（v01 2026-09-01）載明『洗分門檻改以機台端 throshold
+  為準、後台不設門檻』，所以門檻只能在機台端調整；如何在機台端把門檻調為 0、如何讓餘額恰為 399.6，spec 均未說明，是我的推測，需環境負責人確認。若無法佈置請回報，不要以非 0 門檻或其他金額替代。
+- 【環境前提，機台端操作方式 spec 未定義，需環境負責人確認】店員在機台端執行『全額洗分』時以機台全部餘額 399.6 作為洗分金額；洗分是機台端（店員）操作，後台洗分出金核實頁不能發起洗分。
+- 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑與欄位名稱、場館日結時間（營業日的切分時點；spec 未定義其設定位置與值）、以及核實／作廢後報表金額是即時或排程更新。本案所稱營業日 D＝『出金當下所屬的營業日，以場館日結時間切分』，全程在同一個營業日
+  D 內完成，且執行時刻距場館日結時間（切分點）前後至少 2 小時，避開切日臨界（切日規則本身待 Clarification，本案不驗證）。若報表未即時反映，記錄實際更新方式與等待時間後再讀取，不要直接判定 PASS／FAIL。報表以管理員或站長身分檢視（這兩個角色是
+  spec 已授權執行本頁核實與作廢者；各角色對日結報表的可見範圍 spec 未定義，若看不到報表請回報環境負責人，不要改用其他角色逕行判定）。
+- 現金淨收的查看位置與算式 spec 未定義：本案假設場館日結報表可看到營業日 D 的『現金淨收』，若報表另有顯示現金淨收的扣除項明細則一併記錄；『扣除項』使現金淨收減少是依名稱的推論，非 spec 明寫的數學式。若報表實際結構與此不同，記錄實際現象並回報，不要直接判定
+  PASS／FAIL。洗分在機台端完成後立即在本頁核實（洗分核實時點本就是付現後立即），確保洗分與核實落在同一營業日 D，避免觸碰跨日歸屬規則（跨日核實的兌現金額歸屬 spec 未定義，TCRiskReview RF-07 待 Clarification）。
+- 測試期間該站台（使用測試站台與測試機台帳號）不應有其他出金／洗分交易、核實或作廢，也不要對選定機台帳號的會員做其他存提款或人工操作，避免干擾會員列表與日結報表的前後差值（欄位可能已有既有累計值，不要求為 0，一律取前後差值比對）。
+- 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行，本案產生的紀錄不與其他 TC 共用。本案會對一筆新產生的 399.6 洗分執行核實。
+test_data:
+- name: 機台端門檻
+  value: '0'
+- name: 機台餘額（洗分前）／全額洗分金額
+  value: '399.6'
+- name: 預期提款次數差
+  value: '+1'
+- name: 預期提款金額差
+  value: '+399.6'
+  note: 不是 +399、+400 或 +0
+- name: 預期現金淨收扣除項變化
+  value: 核實前不變；核實後 +399.6
+  note: 不是 399 或 400；若報表只有現金淨收總額，則核實後現金淨收比核實前減少 399.6
+steps:
+- n: 1
+  action: 到後台『會員列表』，以選定機台帳號的會員編號查詢，記下『提款次數』N0 與『提款金額』W0（小數位照實記錄）。
+  expected: 取得 N0、W0 作為基準。
+- n: 2
+  action: 開啟場館日結報表（選單路徑見前提），同一站台，結算日期設為營業日 D（起訖皆為 D），記下『現金淨收』C0；若報表有顯示現金淨收的扣除項明細，一併記下扣除項 K0。
+  expected: 取得 C0（與 K0）作為基準。
+- n: 3
+  action: 在機台端確認選定機台帳號的門檻為 0、餘額為 399.6；由店員在機台端執行全額洗分（洗分金額＝機台全部餘額 399.6），記下洗分完成的大約時間。
+  expected: 洗分完成（交易狀態為已完成）。
+- n: 4
+  action: 到後台『帳務管理 > 洗分出金核實』，『機台帳號』篩選輸入該機台帳號的會員編號、『交易類型』選『機台洗分』、『核實狀態』選『待核實』並搜尋；若有多筆，以交易時間最新且與步驟 3 時間吻合者為準。
+  expected: 列表出現該筆洗分，核實狀態『待核實』，『實際金額』數值為 399.6（尾端是否補 0 不比對）。
+- n: 5
+  action: 核實前檢查：回會員列表重新查詢同一會員；再回日結報表，同一站台、同一營業日 D 重新查詢。
+  expected: 會員列表提款次數仍為 N0、提款金額仍為 W0（待核實不計入）；日結報表『現金淨收』仍為 C0（扣除項仍為 K0）：待核實洗分不計入現金淨收扣除項。
+- n: 6
+  action: 回洗分出金核實頁，點擊該筆洗分的『核實』，確認彈窗核對機台帳號、實際金額（399.6）與交易時間無誤後點擊確認（不可撤銷）。
+  expected: 該筆標記為『已核實』，並記錄核實人員與時間。
+- n: 7
+  action: 核實完成後立即到會員列表重新查詢同一會員。
+  expected: 提款次數 ＝ N0 ＋ 1；提款金額 ＝ W0 ＋ 399.6（含小數的實際洗分金額，以站台核心貨幣原值累計），不是 W0 ＋ 399 或 ＋400。
+- n: 8
+  action: 回日結報表，同一站台、同一營業日 D 重新查詢，讀取『現金淨收』C1（與扣除項 K1）。
+  expected: 此筆已核實洗分計入現金淨收扣除項，金額為 399.6：扣除項 K1 ＝ K0 ＋ 399.6（若無扣除項明細，則 C1 ＝ C0 － 399.6），不是 399 或 400。
+expected_result: 機台端門檻 0、餘額 399.6 的全額洗分核實後：會員列表提款次數 +1、提款金額累計 +399.6（含小數）；場館現金淨收的扣除項在核實前不計入此筆、核實後計入 399.6，不取整為 399 或 400。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+decision_refs:
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §核實狀態（第 37 行）
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 97 行）
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+- requirement_id: REQ-CASHOUT-018
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+- requirement_id: REQ-CASHOUT-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §相關業務規則（現金淨收計算）（第 132 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §核實狀態（第 37 行）
+  quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 97 行）
+  quote: 金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §相關業務規則（現金淨收計算）（第 132 行）
+  quote: 現金淨收計算 | 只計入已核實的洗分；待核實洗分不扣除
+source_ref: TCRiskReview ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM RF-04（RUN-20261012-006）
+testcase_id: TC-CASHOUT-136
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+created_at: '2026-10-12T17:07:43Z'
+updated_at: '2026-10-12T17:11:56Z'
+history:
+- at: '2026-10-12T17:07:43Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:07:43Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:07:43Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:11:56Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-002
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd

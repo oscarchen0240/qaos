@@ -1,0 +1,127 @@
+artifact_id: ART-TVR-01M4RHG3JK0TX93SK9KY3JG594
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-003
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T17:11:00Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RH8ER06E3M31M2DTH4BEXC
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RH8ER06E3M31M2DTH4BEXC
+- entity_type: Artifact
+  id: ART-TDR-01M4RH8ER0MAQ56PHGRVV4R4EJ
+- entity_type: Artifact
+  id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+requires_approval: null
+dispatch_packet_sha256: 9dfc2315d51faacf3b5e52c1c08975cbff55a2934f4b704f4abe58805504ce8b
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4RH8ER06E3M31M2DTH4BEXC
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+  issues:
+  - testcase_id: TC-DRAFT-01M4RH8EQZ38N4HRRS8REYN7WZ
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-CASHFLOW-004
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §狀態碼對照（第 317 行）
+      quote: 欄位缺漏、型別錯誤、`currency` 與主站台核心貨幣不符、金額為負
+    evidence: 前提自承『spec 沒有定義 req-keyin 是否接受小數金額』，並給出退路：『若被拒…改請環境負責人以測試資料工具…構造相同餘額；仍無法構造…記為受阻』。但這條退路只涵蓋步驟 2 對機台 N 的佈置。步驟 7～9
+      的受測請求本身就是小數開分：M 送 req-keyin 100.5，預期 1-OVER LIMIT；送 100.4，預期 0-OK、M 分數 = B0 + 100.4；送 0.1，預期 1-OVER LIMIT。
+    explanation: 『req-keyin 接受小數金額』是 spec 未定義的行為，案例自己也承認。走退路時（步驟 2 的小數開分被拒、改用工具佈置 N），平台對步驟 7～9 可能回 6-BAD DATA/FORMAT 或取整，與預期不符，會被誤判成額度判定缺陷。尤其步驟
+      8 預期 100.4 回 0-OK，等於隱含斷言『平台接受小數開分』，而這項依賴沒有宣告、也沒有受阻閘門。同批的 TC-DRAFT-…D13ZX（end-cashin 路徑）刻意用整數清點金額、只讓小數出現在剩餘額度，就沒有這個問題；TC-DRAFT-…NKQ6、…BE7E
+      的小數開分只用於佈置，也已設受阻退路，都合格。
+    recommended_change: 在步驟 7 之前加一道閘門：只有步驟 2 的 req-keyin 399.6 實際回 0-OK 且 N 分數恰為 399.6（等於證明平台接受一位小數的開分），才執行步驟 7～9；若佈置改用工具完成，步驟
+      7～9 記為『受阻』，不判定。或者比照 end-cashin 案例，改用整數開分搭配小數剩餘額度（例：剩餘 100.4 時，開分 101 被拒、100 成立、再開 1 被拒）；但這樣會失去『恰等於上限』的檢查點，需在案例中說明取捨。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RH8EQZ5ZZ14VW38J4DKS31
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-004
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §開分（`req-keyin`）（第 352 行）
+      quote: 判定與入帳於場館鎖內執行
+    evidence: TC-DRAFT-01M4RH8EQZ5ZZ14VW38J4DKS31 步驟 5 要求『兩個請求都在任一回應到達之前已送出（否則該輪作廢）』，但 test_data 的 bash 範例只在起跑前記一次 date，每個
+      curl 只輸出 time_total。TC-DRAFT-01M4RH8EQZ1CJ2ME8WVP0P4TGS 步驟 2 同樣要求『記錄各請求的送出時間與回應時間』，範例卻完全沒有記錄時間。
+    explanation: 兩案的斷言只用 spec 定義的結果（恰一筆 0-OK、另一筆 1-OVER LIMIT、合計 = A；order_id 全系統不重複），沒有斷言哪一方勝出，也沒有斷言落敗那筆 end-cashin 的 PENDING
+      去向，可執行性與依據都沒有問題。只是『判定重疊』所需的逐請求時間戳，範例沒有提供，執行者得自己補，每輪是否作廢的判斷可能因人而異。
+    recommended_change: 不阻擋。範例改成逐請求記錄送出與回應的絕對時間，例如每個 curl 前後各記一次 date +%s.%N，或 curl -w 輸出 %{time_starttransfer}；也可改用 Python
+      asyncio 搭配 time.time()。判定式寫明：max(各請求送出時刻) < min(各請求回應時刻)。
+  - testcase_id: TC-DRAFT-01M4RH8EQZFV25RW63ZN16YJS1
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-026
+    spec_reference: null
+    evidence: TC-DRAFT-01M4RH8EQZFV25RW63ZN16YJS1（手動取消 API 的角色權限）與 ACTIVE 的 TC-CASHFLOW-117 v1 步驟 4（站長呼叫後端 API）部分重疊；TC-DRAFT-01M4RH8EQZSADCWQ3E58GV7S5T（JWT
+      繞過）與 TC-CASHFLOW-129 v1（簽章竄改、非平台簽發）部分重疊。
+    explanation: 兩張新案例都另有新增價值（操作員角色、以 API 為主要證據；alg=none、演算法混淆、不存在的機台帳號），不算重複。
+    recommended_change: 不阻擋。日後整理回歸套件時，可把 TC-117 的 API 選做步驟交由本案負責。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 有 40 筆：21 筆 NO_REJECTION_CONTRACT、19 筆 OUT_OF_SCOPE。其中包含 scope 內的 REQ-CASHFLOW-013，以及多筆
+      scope 外的 high risk 需求，都用 NO_REJECTION_CONTRACT 前綴，理由欄自承『此前綴僅為 G-DESIGN 對 high risk 的豁免機制，並非主張 spec 缺異常規則』。
+    explanation: 依指示，這是 scope 限定 run 的 G-DESIGN 框架限制（已另案處理），不判為 issue。把 ACTIVE TC 與本批草稿合計，ACTIVE 需求 49/49、AC 92/92 都有覆蓋，豁免沒有遮蔽實際缺口。只是
+      NO_REJECTION_CONTRACT 的語意被借用，日後統計『spec 缺拒絕契約』時會被這批誤導。
+    recommended_change: 不阻擋。等框架支援 scope 限定的豁免碼（例如 OUT_OF_SCOPE 也適用 high risk）後，再改標正確的原因碼。
+  coverage_summary:
+    requirements_total: 49
+    requirements_covered: 49
+    ac_total: 92
+    ac_covered: 92
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: false
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RH8EQY8T64DF3CJ5VSN0J0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQY3CC6E15KYTDBR87E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZ38N4HRRS8REYN7WZ
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4RH8EQZW6FPN8W1DR5D13ZX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZN0QT3KZFVY01NKQ6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZB81Z0PFS9VF8BE7E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZ9M2JC607MQSN8HXZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZ5ZZ14VW38J4DKS31
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZ1CJ2ME8WVP0P4TGS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZFV25RW63ZN16YJS1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RH8EQZSADCWQ3E58GV7S5T
+    verdict: ok
+history:
+- at: '2026-10-12T17:12:20Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-003

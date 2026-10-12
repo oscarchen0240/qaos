@@ -1,0 +1,146 @@
+artifact_id: ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-002
+task_id: T3RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T17:09:59Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+- entity_type: Artifact
+  id: ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+- entity_type: Artifact
+  id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+requires_approval: null
+dispatch_packet_sha256: 15896bd70286d879cef5776f909d70b68e43246e06de64dd2ceaea3fbef569ff
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RGYHPH02ZYW4P0S6C9W79S
+    validation_report_artifact_id: ART-TVR-01M4RH7ZA3FN3GZT3F4QCP14KC
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RGZQZQBGSHCE3TG7H8XZG9
+    - TC-DRAFT-01M4RGZQZQ8Z4TGM5H5AV52PY0
+    - TC-DRAFT-01M4RGZQZQZ5K0QNHJPMC6S5HZ
+    - TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6
+    - TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN
+    - TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A
+    - TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB
+    - TC-DRAFT-01M4RGZQZRJ70857FK6Z9QMRAR
+    active_testcases_consulted:
+    - TC-CASHOUT-041
+    - TC-CASHOUT-070
+    - TC-CASHOUT-073
+    - TC-CASHOUT-075
+    - TC-CASHOUT-079
+    - TC-CASHOUT-084
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: 上次的 RF-03（多筆含小數累計）由 TC-DRAFT-…XZG9 覆蓋：刻意只用一位小數（0.1、0.2、399.6），兩位以上精度屬已開的 Clarification，不在本次範圍，同時驗證提款精確累計與日結報表未兌現加總。RF-04（門檻
+      0 含小數洗分的提款累計與現金淨收）由 …PY0 覆蓋。RF-05（面額 0.6）由 …HZ 覆蓋。Validator 已指出 …HZ 對『.6』的判定自相矛盾，本審查不重複列。沒有新的邊界缺口。
+  - dimension: exception_flow
+    status: not_applicable
+    rationale: 本批 8 張只補上次邊界、併發、重複提交、權限四類 spec 有依據的缺口。上次異常流程的三條（RF-09 已核實能否作廢、RF-10 核實中途失敗、RF-11 過渡期金額不一致）已分別開成 CLR-CASHOUT-003／006／008，依指示不重複列。本批也沒有新增異常流程的案例可以審查。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: RF-12、RF-14 分別由 TC-DRAFT-…GH6、…KEN 補上，情境與斷言都正確（恰好一方成功、累計 +1；兩筆不同紀錄累計不遺失，多輪執行）。但兩者都靠瀏覽器 UI 同步觸發，無法保證請求在後端真正重疊（RF-01）；而且只驗證核實頁與會員列表，沒有驗證機台交易紀錄回寫的一致性（RF-02）。
+  - dimension: duplicate_submission
+    status: gaps_found
+    rationale: RF-15 由 TC-DRAFT-…V4A 補上，涵蓋連點、Replay、並行重放，以及核實人員／時間不被覆寫；Replay XHR 對 fetch 請求不可用的問題，Validator 已列出。RF-17 由 …3WB
+      補上，並寫明工具不支援時標為阻塞。缺口在：完成回報在紀錄已核實或已作廢之後才遲到重送的情境（RF-03）；…V4A 的回寫一致性併入 RF-02。
+  - dimension: permission
+    status: covered
+    rationale: RF-18 由 TC-DRAFT-…RAR 完整補上：用站長擷取作廢請求樣板，以操作員憑證從終端機直接送出、指定自身場館的待核實出金，斷言後端拒絕且 P 維持待核實；再以站長憑證送同格式請求作為對照，排除格式錯誤造成的假拒絕。這與
+      TC-CASHOUT-079（介面）、073（核實 API）的驗證層次不同。『三種身分』實際只要兩種的文字瑕疵，Validator 已列出。沒有新的權限缺口。
+  findings:
+  - finding_id: RF-01
+    dimension: concurrency
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6
+    - TC-DRAFT-01M4RGZQZQF3PRH8CM7F6HMKEN
+    - TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A
+    - TC-CASHOUT-070
+    related_requirement_ids:
+    - REQ-CASHOUT-024
+    - REQ-CASHOUT-006
+    gap: 補強案例沒有真正保證兩個核實請求在後端重疊：TC-DRAFT-…GH6（對應上次的 RF-12）與 …KEN（RF-14）都靠兩個瀏覽器視窗用 JS 計時器『同時』按確認，兩個請求實際到達後端可能相差數十到數百毫秒，很可能被循序處理，結果只等於
+      TC-CASHOUT-070 已覆蓋的『先核實、後再核實』。TC-DRAFT-…V4A（RF-15）步驟 6 的並行重放，是在第一個請求已經成功之後才送出，驗證的是『已核實後再核實會被擋』，不是『待核實當下同時抵達』的競態。這兩個風險（雙重核實造成提款
+      +2、累計值被覆蓋而遺失）因此仍可能漏網。另外，…GH6／…KEN 允許 U1、U2 用同一帳號開兩個工作階段，此時步驟 5 的『核實人員＝成功那一方的帳號』無法分辨是哪一方成功。
+    suggested_scenario: 在 TC-DRAFT-…GH6 補一個 API 層的並行步驟：先用一筆取樣紀錄擷取核實請求格式（Copy as fetch），再對一筆新的待核實出金 P（尚未有任何核實請求）用 Promise.all
+      一次並行送出 5～10 個核實請求。預期恰好 1 個成功、其餘被拒，提款次數 +1、金額 +399.6，多輪執行。…KEN 比照：對同一機台帳號的兩張待核實出金，以兩個不同的後台帳號憑證並行送出核實請求，預期兩筆都成功、提款累計 +2
+      與兩筆面額之和。U1、U2 應限定為不同帳號，或改用請求的回應判定由哪一方成功。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（規則表）（第 95 行）
+      quote: 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款
+    needs_clarification: false
+  - finding_id: RF-02
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RGZQZQEK0FVBBS5K2G5GH6
+    - TC-DRAFT-01M4RGZQZQ5CQQZ3G7JHXNBV4A
+    - TC-CASHOUT-075
+    related_requirement_ids:
+    - REQ-CASHOUT-026
+    - REQ-CASHOUT-024
+    gap: 上次 RF-15 的建議包含『機台交易紀錄與後台操作紀錄只各一筆核實』，但 TC-DRAFT-…V4A 與 …GH6 只檢查洗分出金核實頁的核實人員／時間與會員列表累計，沒有檢查第 97 行規定的回寫：機台交易紀錄的核實狀態與核實人員／時間。競態或重放時，若回寫不在同一個原子操作內，輸的一方可能把機台交易紀錄的核實人員或時間覆寫成自己的，造成核實頁與機台交易紀錄不一致（例如核實頁顯示
+      U1、機台交易紀錄顯示 U2）。
+    suggested_scenario: 在 TC-DRAFT-…GH6 步驟 5 與 …V4A 步驟 7 之後，各補一步：到機台交易紀錄以該筆交易編號查詢，確認核實狀態為已核實，核實人員／時間與核實頁完全一致、沒有被輸的一方或重放請求覆寫；若後台操作紀錄可查（第
+      142 行），一併確認該筆核實只有一筆紀錄。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §操作（規則表）（第 97 行）
+      quote: 核實結果回寫機台交易紀錄的「核實狀態」「核實人員／時間」欄位
+    needs_clarification: false
+  - finding_id: RF-03
+    dimension: duplicate_submission
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RGZQZRW15P539KD5YMG3WB
+    - TC-CASHOUT-041
+    - TC-CASHOUT-084
+    related_requirement_ids:
+    - REQ-CASHOUT-001
+    - REQ-CASHOUT-024
+    - REQ-CASHOUT-032
+    gap: TC-DRAFT-…3WB（對應上次的 RF-17）只在出金紀錄仍為待核實時重送完成回報。最危險的情況其實是：這筆已經核實（現金已付）或已作廢之後，遲到的完成回報才到。若平台把它當成新的一筆，就會再產生一筆待核實紀錄，櫃檯可能再付一次現金，日結報表也會再出現一筆未兌現。這和
+      CLR-CASHOUT-003（已核實的收據能否作廢）、CLR-CASHOUT-007（作廢請求重送）是不同的問題，目前沒有案例覆蓋。
+    suggested_scenario: 在 TC-DRAFT-…3WB 補兩個變體：(a) 出金完成並在本頁核實後，以測試工具重送同一筆（同訂單編號、同交易編號）的完成回報；(b) 另一筆出金由站長作廢後，同樣重送完成回報。預期兩種情況下，以該訂單編號查詢仍只有原本那一筆、狀態維持已核實／已作廢，不會出現新的待核實紀錄；會員列表提款累計與日結報表未兌現金額都不變。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+      location: §功能說明（第 19 行）
+      quote: 每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄
+    needs_clarification: false
+  summary: 複查 8 張補強 TC 是否補到上次洗分出金核實 TRR（ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM）的 RF-03、04、05、12、14、15、17、18。8 條都有對應案例，其中 RF-03、04、05、18
+    已完整補上；RF-12、14、15、17 的方向正確但不完整。新列 3 條：high 2、medium 1、low 0，3 條都有 spec 依據，不需另開 Clarification：RF-01 UI 雙視窗同步無法保證後端真正並行，並行重放又是在已成功之後才送，應補
+    API 層對待核實紀錄的並行請求；RF-02 競態與重放時，機台交易紀錄的核實回寫是否一致、不被覆寫，目前沒有驗證；RF-03 完成回報在紀錄已核實或已作廢之後才遲到重送，不得再產生新的待核實紀錄（可能重複付現）。已開 CLR 的項目（CLR-CASHOUT-003～008，即上次的
+    RF-01、02、06、07、08、09、10、11、13、16、19）依指示不重複列；Validator 已列的 minor 事項也不重複。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-12T17:11:29Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-002
