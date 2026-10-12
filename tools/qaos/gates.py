@@ -1,6 +1,6 @@
 """Quality Gate 的 Structural 檢查（deterministic）。每個函式回傳 issues list；空 = PASS。"""
 import hashlib, json, re
-from . import store, refs, rm, dispatch, decisions, sources, spec_ops, ids as ids_mod
+from . import store, refs, rm, dispatch, decisions, sources, spec_ops, run_scope, ids as ids_mod
 
 def _payload(art): return art["payload"]
 
@@ -214,8 +214,10 @@ def g_design(run, task, arts) -> list[str]:
     if rep["testcase_draft_artifact_id"] != tcd["artifact_id"]: issues.append("TestDesignReport 指向的 draft artifact 不是本次提交的")
     covered = {row["requirement_id"] for row in rep["coverage_matrix"] if row["draft_ids"]}
     uncovered = {u["requirement_id"]: u["reason"] for u in rep["uncovered_with_reason"]}
-    scope = set(reqs) if p["mode"] == "spec" else covered | set(uncovered)
-    for rid in scope:
+    rs = run_scope.requirement_ids(run) if p["mode"] == "spec" else None      # run scope 是需求清單時只看 scope 內（ADR-013）
+    must_cover, scope = design_scope(p, reqs, covered, uncovered, by_req, rs)
+    if rs is not None: issues += run_scope_issues(rs, run["input"].get("scope"), p, reqs)
+    for rid in sorted(must_cover):
         if rid in reqs and reqs[rid]["status"] == "ACTIVE" and rid not in covered and rid not in uncovered:
             issues.append(f"requirement {rid} 未被覆蓋且無 uncovered_with_reason")
     for row in rep["coverage_matrix"]:
@@ -230,7 +232,7 @@ def g_design(run, task, arts) -> list[str]:
     # --- 負向 / 反邏輯覆蓋（行為契約驅動） ---
     def non_happy(tc): return bool(set(tc["test_types"]) & NON_HAPPY_TYPES or set(tc["design_techniques"]) & NON_HAPPY_TECH)
     total_non_happy = sum(1 for tc in p["testcases"] if non_happy(tc))
-    for rid in scope:
+    for rid in sorted(scope):
         r = reqs.get(rid)
         if not r or r["status"] != "ACTIVE": continue
         tcs = by_req.get(rid, []); reason = uncovered.get(rid, "")
@@ -256,6 +258,28 @@ def g_design(run, task, arts) -> list[str]:
     for k, v in sc.items():
         if v is not True: issues.append(f"self_check.{k} 未通過")
     return issues
+
+def design_scope(p, reqs, covered, uncovered, by_req, rs) -> tuple[set, set]:
+    """G-DESIGN 的範圍：(必須覆蓋或列 uncovered_with_reason 的需求, 套用行為契約規則的需求)。
+    rs：run scope 解析出的需求清單（run_scope.requirement_ids；mode=spec 才傳），None 代表不限範圍。
+    - mode=spec、run scope 不是需求清單：兩者都是綁定 revision 的全部需求（原本的行為）。
+    - mode=spec、run scope 是需求清單（ADR-013）：必須覆蓋的只有 scope 內的需求；規則另外套用到 TC 實際涉及的需求。
+      scope 外的需求不必列入 uncovered_with_reason；列了也不檢查（相容舊報告）。
+    - 其他 mode：本 Draft 涉及的需求（coverage_matrix 有 draft 的，加上 uncovered_with_reason 列的）。"""
+    if p["mode"] != "spec":
+        s = covered | set(uncovered); return s, s
+    if rs is None:
+        s = set(reqs); return s, s
+    must = set(rs) & set(reqs)
+    return must, must | ((covered | set(by_req)) & set(reqs))
+
+def run_scope_issues(rs, raw, p, reqs) -> list[str]:
+    """run scope 是需求清單時：scope 的需求必須在綁定的 revision 中；每條 TC 至少涉及一個 scope 內的需求（不得設計本 run 範圍外的 TC）。"""
+    out = [f"run 的 scope 列出的 {rid} 不在綁定的 revision 中（scope：{raw}）；Designer 無法修正，請取消此 run 以正確的 scope 重開" for rid in rs if rid not in reqs]
+    for tc in p["testcases"]:
+        if not set(tc["requirement_ids"]) & set(rs):
+            out.append(f"{tc['draft_id']} 的 requirement_ids（{', '.join(tc['requirement_ids'])}）都不在本 run 的 scope 內（scope：{raw}）")
+    return out
 
 def _confirmed_assumption(tc, rid) -> bool:
     return any(a.get("requirement_id") == rid and a.get("needs_human_confirmation") is True for a in tc.get("assumptions") or [])
