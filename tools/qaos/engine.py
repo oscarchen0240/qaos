@@ -112,6 +112,15 @@ def _require_single_analysis(wf: dict, inputs: dict):
     busy = unlanded_analyses(sid)
     if busy: raise EngineError(busy_message(sid, busy))
 
+def _decision_added_note(pin: dict | None) -> str | None:
+    """沿用 revision（跳過 T0、無 T0 流程）時的提示：有 decision_added 成立的 CLR 只記 audit 警告，不改變放行結果（ADR-012 §3）。"""
+    if not pin: return None
+    where = f"{pin['spec_id']}@{pin['spec_version']} {pin['revision']}"
+    try: hit = rm.decision_added(pin)
+    except Exception as e: return f"{where} 無法判定 decision_added（{type(e).__name__}：{e}）"   # 只是提示：判定失敗不擋 run
+    if not hit: return None
+    return f"{where} 有尚未落地的同版本 CLR（{', '.join(hit)}）；本 run 仍沿用 {pin['revision']}。要落地請以 reason=decision_added 做同版本 CIA（ADR-012）"
+
 def _require_fresh(pin: dict, label: str):
     """沒有 T0 的流程（testcase-revision、manual）在 run new 時凍結 revision：過時或有非 ACTIVE 需求 → 拒絕，提示先重新分析（§4.3）。"""
     o = rm.outdated(pin); why = [k for k in ("declaration_changed", "decision_revised") if o[k]]
@@ -163,8 +172,8 @@ SAME_VERSION_REASON_RULES = {                                               # �
     "declaration_changed": "目標或閉包節點的 decl_rev、閉包組成和 revision 記錄的不同",
     "decision_revised": "revision 引用的 CLR 有更新的 answer_rev，或已撤回",
     "decision_applied": "revision 引用的 CLR 在 revision 建立之後新增了 applied landing；R000 為有任何 applied landing",
-    "decision_added": "同版本有 ANSWERED／INCORPORATED、最新答案 resolution 為 requirement_clarified 或 spec_updated、revision 沒有引用、"
-                      "而且不在 revision 分析範圍內（R000 一律算；有派發包看決議快照；否則看回答時間）的 CLR",
+    "decision_added": "有最新答案落在本版本（CLR 自身版本或 applicability）、狀態 ANSWERED／INCORPORATED、resolution 為 requirement_clarified 或 spec_updated、"
+                      "本版本的 revision 都沒有引用最新答案、而且不在 revision 分析範圍內（R000 一律算；有派發包看決議快照；否則看時間）的 CLR",
 }
 
 def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
@@ -179,7 +188,7 @@ def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:
             reason = inputs["reason"]
             if reason not in SAME_VERSION_REASONS: raise EngineError(f"reason 只能是 {'、'.join(SAME_VERSION_REASONS)}：{reason!r}")
             try: actual = rm.decision_applied(pin) if reason == "decision_applied" else rm.decision_added(pin) if reason == "decision_added" else rm.outdated(pin)[reason]
-            except rm.RMError as e: raise EngineError(f"{inputs['from_revision']} 無法判定 {reason}：{e}")
+            except (ValueError, KeyError) as e: raise EngineError(f"{inputs['from_revision']} 無法判定 {reason}：{e}")   # RMError、DispatchError、SourceError、SpecError 都是 ValueError；KeyError＝資料欄位缺漏
             if not actual: raise EngineError(f"{inputs['from_revision']} 的判定結果不是 {reason}（{SAME_VERSION_REASON_RULES[reason]}）；不能以這個理由做同版本 CIA")
             out["from_requirement_model_revision"] = pin
         else:
@@ -225,6 +234,9 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     state.apply("workflow_run", run, "RUNNING", SYSTEM, "task graph expanded", run_id)
     _save_run(run)
     store.audit(run_id, by, "CREATE_WORKFLOW_RUN", workflow_id)
+    if workflow_id in ("testcase-revision", "manual-test-to-regression"):          # 無 T0 流程凍結 revision：decision_added 只提示（ADR-012 §3）
+        note = _decision_added_note(run.get("requirement_model_revision"))
+        if note: store.audit(run_id, by, "WARN_DECISION_ADDED", note)
     _advance(run)
     return run
 
@@ -257,6 +269,8 @@ def _advance(run: dict, after: str | None = None):
             if warn: store.audit(run["run_id"], SYSTEM, "WARN_LEGACY_SKIP", warn)
             if not run.get("requirement_model_revision"):                    # 跳過分析時，run 綁定最新 revision（第 5 章 §4.2、§7）
                 rm.bind_run(run, rm.latest_pin(inp["spec_id"], inp.get("spec_version") or inp.get("to_version")))
+            note = _decision_added_note(run.get("requirement_model_revision"))
+            if note: store.audit(run["run_id"], SYSTEM, "WARN_DECISION_ADDED", note)
             t["status"] = "DONE"; store.audit(run["run_id"], SYSTEM, "SKIP_TASK", t["task_id"]); t = _next_task(run, t["task_id"]); continue
         if t["type"] == "approval":
             state.apply("task", t, "READY", SYSTEM, "advance"); state.apply("task", t, "RUNNING", SYSTEM, "advance")

@@ -1,8 +1,9 @@
 """同版本 CIA 的 reason=decision_added（ADR-012；需求 A 第 5 章 §8、附錄 A 5-19～5-21）：
 同版本新回答、目前 revision 沒有引用的 CLR，經同版本 CIA 落地到新 revision（A4）→ G-IMPACT → apply --path a6。
 
-狀態一律以正式流程建立：spec import、run new、dispatch、submit、evaluate_gate、approve、clarification new／answer／withdraw、
-req accept-declaration、clarification apply、migrate（legacy 資料由需求 A 之前的程式以它自己的正式流程產生）。
+狀態以正式流程建立：spec import、run new、dispatch、submit、evaluate_gate、approve、clarification new／answer／withdraw／applicability add、
+req accept-declaration、clarification apply、migrate（legacy 資料由需求 A 之前的程式以它自己的正式流程產生）。例外（各自標明）：
+沒有派發包的 revision 以 rm.save_requirements（唯一的需求寫入點）經 executor 產生，模擬 P4 之前的分析；派發包遺失的反例刪除派發包檔（標明的竄改）。
 agent 的產出（artifact 檔）由 tests/helpers.write_artifact 寫入，這是「外部寫入」。"""
 import json
 from tests import p1_util as U
@@ -101,7 +102,7 @@ print(json.dumps({"before": before_answer, "no_change": no_change, "added": adde
     assert out["g0"][0] == "PASS", out["g0"]
     assert (out["from"], out["to"]) == ("R001", "R002")
     assert out["clr"] == "INCORPORATED" and out["landing"] == [["incorporated", "R002", out["rid"]]]   # A4
-    assert out["after"] == {"r1": [cid], "r2": []}                                                    # 新 revision 已引用 → 不成立；R001 仍成立
+    assert out["after"] == {"r1": [], "r2": []}                                                       # 新 revision 已引用 → 不成立；同版本已有 revision 引用最新答案 → R001 也不成立
     assert out["g1"][0] == "PASS", out["g1"]
     assert out["status"] == "COMPLETED"
     assert "error" not in out["apply"], out["apply"]
@@ -189,7 +190,7 @@ print(json.dumps({"rev": r0["revision"], "legacy": legacy, "first": first, "ok":
     assert out["withdrawn"] == []
 
 def test_decision_added_does_not_block_skip_or_frozen_flows(tmp_path):
-    """ADR-012 的決定：decision_added 只是同版本 CIA 的 reason，不擋 _skip、不擋無 T0 流程的 run new（比照 decision_applied）。"""
+    """ADR-012 §3：decision_added 只是同版本 CIA 的 reason，不擋 _skip、不擋無 T0 流程的 run new（比照 decision_applied），只在 run 的 audit 記 WARN_DECISION_ADDED。"""
     root = mkroot(tmp_path)
     out = py(root, FLOW + """
 r1, cid, tc = baseline()
@@ -197,7 +198,77 @@ clr.answer(cid, "刪除失敗時回傳錯誤代碼 E403。", "pm", "requirement_
 assert rm.decision_added(r1) == [cid]
 s = engine.new_run("spec-to-testcase", {"spec_id": F.SPEC, "spec_version": F.VER}, F.BY, new_request=True)
 t = engine.new_run("testcase-revision", {"testcase_id": tc, "reason": "改寫步驟", "spec_id": F.SPEC, "spec_version": F.VER}, F.BY, new_request=True)
+warn = lambda r: [l for l in (store.ROOT / f"runs/{r['run_id']}/audit.log").read_text(encoding="utf-8").splitlines() if "WARN_DECISION_ADDED" in l]
 print(json.dumps({"skip": [x["status"] for x in s["tasks"] if x["task_id"] == "T1"], "bound": s.get("requirement_model_revision", {}).get("revision"),
-                  "trev": t["requirement_model_revision"]["revision"]}))""")
+                  "trev": t["requirement_model_revision"]["revision"], "cid": cid, "warn": [warn(s), warn(t)]}))""")
     assert out["skip"] == ["DONE"] and out["bound"] == "R001"
     assert out["trev"] == "R001"
+    for w in out["warn"]:                                                                             # 只提示：audit 記下尚未落地的 CLR 與建議的 reason
+        assert len(w) == 1 and out["cid"] in w[0] and "reason=decision_added" in w[0], w
+
+def test_decision_added_follows_dispatch_snapshot_not_timestamps(tmp_path):
+    """ADR-012 §2：以決議快照判定，不以時間推定。
+    (a) T0 派發之後、G-SPEC 持久化之前才回答（回答時間早於 revision 建立時間）→ 新 revision 沒看過 → 成立；
+    (b) 派發前已回答、在快照中但分析沒有採用 → 不成立，run new 拒絕；
+    (c) revision 記錄的派發包遺失 → 無法判定，run new 拒絕且不建立 run。"""
+    root = mkroot(tmp_path)
+    out = py(root, FLOW + """
+import os
+r1, cid, tc = baseline()
+clr.answer(cid, "刪除失敗時回傳錯誤代碼 E403。", "pm", "requirement_clarified", "oscar", new_request=True)
+# (b) 先派發（快照含 rev 0）→ T0 沒有採用（REQ-002 維持未定義，連回既有 CLR）→ R002
+rb = cia("R001", "decision_added")
+gb = F.analyze(rb, [req1(), req2_open()], task="T0"); assert gb["result"] == "PASS", gb
+r2 = engine.load_run(rb)["requirement_model_revision"]
+b = [rm.decision_added(r2), cia("R002", "decision_added")]
+# (a) 從 R002 的角度新答案 rev 1：先派發 T0，再回答，然後才提交 → R003 沒看過 rev 1
+clr.answer(cid, "改為回傳錯誤代碼 E409。", "pm", "requirement_clarified", "oscar", new_request=True)
+ra = cia("R002", "decision_added")
+dispatch.dispatch(ra, "T0")
+clr.answer(cid, "最後確認：回傳錯誤代碼 E410。", "pm", "requirement_clarified", "oscar", new_request=True)
+ga = F.analyze(ra, [req1(), req2_open()], task="T0"); assert ga["result"] == "PASS", ga
+r3 = engine.load_run(ra)["requirement_model_revision"]; doc3 = rm.load_revision(r3)
+answered = clr.load(cid)["answer_revisions"][-1]["answered_at"]
+a = [rm.decision_added(r3), answered < doc3["created_at"] or answered == doc3["created_at"]]
+# (c) R003 的派發包遺失
+pk = next(e for t in engine.load_run(ra)["tasks"] for e in t.get("dispatch_packets") or [] if e["sha256"] == doc3["dispatch_packet_sha256"])
+os.remove(store.abspath(pk["path"]))
+n0 = len(store.glob("runs/RUN-*/run.yaml")); c_ = cia("R003", "decision_added"); n1 = len(store.glob("runs/RUN-*/run.yaml"))
+print(json.dumps({"cid": cid, "b": b, "a": a, "c": c_, "n": [n0, n1]}))""")
+    assert out["b"][0] == [] and "判定結果不是 decision_added" in out["b"][1]["error"]
+    assert out["a"] == [[out["cid"]], True]
+    assert "無法判定 decision_added" in out["c"]["error"] and "派發包" in out["c"]["error"] and out["n"][0] == out["n"][1]
+
+def test_decision_added_landing_version_spec_updated_and_applicability(tmp_path):
+    """落地途徑（ADR-012 §1）：
+    - spec_updated 且 resulting_spec_version 指向其他版本 → 答案落在那個版本的 spec 原文，本版本不成立；沒有 resulting_spec_version → 成立；
+    - 經人工適用紀錄（applicability）適用到同 area 另一個 spec 版本 → 該版本成立；適用紀錄補在 revision 之前 → 不成立（時間判定）。"""
+    root = mkroot(tmp_path, refs=())
+    out = py(root, """
+import time
+from tools.qaos import operation
+def save(sid, n):
+    req = F.req(1); req["status"] = "ACTIVE"; req["spec_id"] = sid; req["requirement_id"] = f"REQ-DEMO-{n:03d}"
+    req["acceptance_criteria"][0]["ac_id"] = f"AC-DEMO-{n:03d}1"; req["spec_reference"]["spec_id"] = sid
+    return operation.run_operation("test_internal", lambda: rm.save_requirements(sid, F.VER, [req], reason="P4 之前的分析（沒有派發包）", by="system",
+                                   source_artifact_id="ART-RM-01M5DECADDED00000000000000"), new_request=True)
+demo = save(F.SPEC, 1)
+time.sleep(1.1)
+cid = clr.new("demo", "DEMO", F.SPEC, F.VER, "刪除失敗的錯誤代碼？", "oscar", consulted=[f"{F.SPEC}@{F.VER}"], requirement_id="REQ-DEMO-001", new_request=True)["clarification_id"]
+clr.answer(cid, "已寫入下一版 spec。", "pm", "spec_updated", "oscar", resulting_spec_version="1.1", new_request=True)
+moved = rm.decision_added(demo)
+cid2 = clr.new("demo", "DEMO", F.SPEC, F.VER, "刪除成功後的提示文字？", "oscar", consulted=[f"{F.SPEC}@{F.VER}"], requirement_id="REQ-DEMO-001", new_request=True)["clarification_id"]
+clr.answer(cid2, "spec 原文已更正（同版本）。", "pm", "spec_updated", "oscar", new_request=True)
+in_place = rm.decision_added(demo)
+other = save(F.OTHER, 2)
+time.sleep(1.1)
+before_ap = rm.decision_added(other)
+bh = sources.basis_hash(sources.basis(F.OTHER, F.VER))
+clr.applicability_add(cid, 0, "REQ-DEMO-002", "site.delete.error_code", ["*"], {}, f"{F.OTHER}@{F.VER}", "同一條錯誤代碼規則", "oscar", confirm_basis=bh, new_request=True)
+after_ap = rm.decision_added(other)
+print(json.dumps({"cid": cid, "cid2": cid2, "moved": moved, "in_place": in_place, "before_ap": before_ap, "after_ap": after_ap}))""")
+    cid = out["cid"]
+    assert out["moved"] == []                                                                         # resulting_spec_version 1.1：不落在 1.0
+    assert out["in_place"] == [out["cid2"]]                                                           # 沒有 resulting_spec_version：落在自身版本
+    assert out["before_ap"] == []                                                                     # 沒有適用紀錄：CLR 不屬於 SPEC-OTHER-001
+    assert out["after_ap"] == [cid]                                                                   # 適用紀錄晚於 revision 建立時間 → 成立
