@@ -1,0 +1,298 @@
+artifact_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-002
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T10:03:20Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+- entity_type: Artifact
+  id: ART-TDR-01M4QRVKBSQBWXPVHPT02PRP09
+- entity_type: Artifact
+  id: ART-CIR-01M4QRM44VZ0TKQE44EV62R1TG
+- entity_type: Artifact
+  id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+requires_approval: null
+dispatch_packet_sha256: 7e31e47b9cc2d6d70832ab6d69042d015f98776c740062baced18a08448d77cb
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  validated_against:
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4QRTV31F8D5Q1YZT8N23FH8
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-036
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §前台呈現說明（第 190 行）
+      quote: 顯示待開啟數量（例：「領取獎勵（2）」），每次領取一個；無待開啟紅包時按鈕停用
+    evidence: '與 RUN-20261012-001 最後一輪相同：冪等斷言仍標 assumption（needs_human_confirmation: true），decision_refs 只有 E1 的 REQ-036/Q02
+      與 REQ-014/Q01；派發包的 open_questions 裡沒有對應的 CLR。'
+    explanation: 只依賴 E1 的斷言卻帶未解決的 assumption（minor），會占用 REQ-036 的 exploratory 額度。重複／併發領取屬規格缺口，目前沒有對應的未定決策點可以引用。
+    recommended_change: 開 CLR 問『重複或併發的領取請求怎麼處理』，RM 補 E3～E5 決策點後，decision_refs 改指向該決策點；或在 CLR 定案前把預期改為『僅記錄』。不阻擋本輪。
+  - testcase_id: TC-DRAFT-01M4QRTV302BSWXSPGJZD1JVX9
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-025
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 398 行）
+      quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢
+    evidence: 沿用 RUN-20261012-001 的提示：RM AC-REDPACKET-0254 的 given 寫『S1 已因洗分留餘數結束』，與第 398 行（洗分完成即作廢待開啟紅包）矛盾。本 TC 改用日結結算結束
+      S1，並已補上『使用專用測試場館』的前置條件。
+    explanation: TC 的做法與 spec 第 398、399 行一致，TC 不用改；缺陷在 RM。
+    recommended_change: RM 下一個 revision 把 AC-0254 的 given 改為『S1 已因日結結算（或逾時）結束』。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-027
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 400 行）
+      quote: 交易取消、未成立、被新出金取代或由管理員手動取消時，原交易視為未成立、紅包恢復可開啟（新出金送出後再次鎖定）
+    evidence: 沿用 RUN-20261012-001 的提示：RM AC-REDPACKET-0279 的括號『新出金已完成或未在進行中』，與第 398、400 行矛盾（新出金完成時紅包應作廢；新出金送出後會再次鎖定）。
+    explanation: 草稿的處理正確：TC-090 斷言新出金進行中時仍鎖定，AC-0279 只掛在洗分未成立與管理員手動取消兩案。缺陷在 RM。
+    recommended_change: RM 下一個 revision 把括號改為『新出金未成立』，或拆成兩條 AC。TC 不用改。
+  - testcase_id: TC-DRAFT-01M4QRTV2X4JFADXPN14J9TJMN
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-016
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §活動排程（第 247 行）
+      quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程
+    evidence: 沿用 RUN-20261012-001 的提示：CIR 對 TC-040 的 reason 寫『紅包明細另顯示追加歷程』，本 TC 依 spec 第 247 行斷言『不另顯示』。
+    explanation: TC 正確，CIR 那句文字有誤。
+    recommended_change: TC 不用改；建議在核准說明中註記 CIR 這句與 spec 不一致，以 spec 為準。
+  - testcase_id: TC-DRAFT-01M4QRTV316T9JVQXPCA4KGF0P
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-REDPACKET-013
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包狀態（第 160 行）
+      quote: 不可復原、不補發；作廢釋放所占用的預算
+    evidence: 本案的確定斷言（S2 取消排程、S3 P1『已作廢』原因『活動結束』、沒有補發、錢包不變）與 Registry ACTIVE 的 TC-REDPACKET-035 v2（AC-0132／0133／0183：取消排程後
+      P1『已作廢』、筆數仍為 1、錢包不變）重疊；本案新增的 S4（以 API 開啟已作廢紅包）只記錄、不判定。
+    explanation: 屬部分重複，不是整案重複。依 CIR，TC-035 判為 unaffected、不修訂，API 補強改以新增 TC 提供，所以前段重複是佈置所需。本案在判定上沒有新增斷言，只產出 API 回應的紀錄。
+    recommended_change: 可保留。建議在 description 註明 S1～S3 是 S4 的佈置、判定與 TC-035 重疊；API 層的回應等 CLR 定案後再轉為斷言（RM 目前沒有對應的決策點，建議開 CLR）。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: CIR 判為 unaffected 而沿用的 ACTIVE 案：TC-REDPACKET-018 v1 S6 寫『於前台依序開啟 P1、P2』；TC-REDPACKET-035 v2 S5 寫『如前台紅包入口仍顯示該紅包』、S6
+      寫『前台紅包入口』；TC-REDPACKET-086 v1 S3 寫『開啟這 2 個紅包』，S4 斷言差異為『中性色（不是紅也不是綠）』。
+    explanation: 0.2 的領取流程改為紅包圖示 → 視窗 → 領取獎勵 → 確認領取（REQ-036）；取消排程後前台立即移除圖示（第 173 行）；CLR-REDPACKET-052 與 AC-0214 定為灰色。CIR 判定這些屬操作路徑更新、仍可執行，斷言也與
+      0.2 不衝突。這屬於 CIR 的判斷範圍，本報告不推翻，只提醒執行者依 0.2 的領取流程操作。
+    recommended_change: 執行這三案時依 REQ-036 的領取流程操作；下次修訂這三案時，把『開啟』改為領取流程、TC-035 S5 改為斷言圖示已移除、TC-086 的『中性色』改為『灰色』（CIR 對 TC-086
+      已有同樣建議）。本 run 不需處理。
+  coverage_summary:
+    requirements_total: 39
+    requirements_covered: 39
+    ac_total: 200
+    ac_covered: 200
+    uncovered_accepted:
+    - REQ-REDPACKET-004：移除規則後的命名 spec 未定義（TDR uncovered_with_reason，NO_REJECTION_CONTRACT），只記錄、不判定，可接受
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    dispatch_scope_ok: true
+    assumptions_ok: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4QRTV2XG6VGENEHFM9117Z1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2X4JFADXPN14J9TJMN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YSK5G3458G1JEV2MM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y0FY1A3R200V0DSHT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y6SMYD0TG73DT5P9Y
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YX2W5956AFZQ3172R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y06Z4B6Y3SNBGYTS1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y2AE3D2B0QSBT7H2A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y5R4GG2QK360PFDAD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YAF5550QCESBCHTW6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YQWXQT4J9W2NA9SST
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YZ9JW1H14Y3R4XZSX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y3VJ7WKWQJD8YPRAR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YAP67TES3HTMT7R03
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y3B9A3X4TCV8191C9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YE4D2S97VS7ZGN3RZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YRP1WGB1V0MZ76MWC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YVM05YKWW0RZ1TFXF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YQGAXEHCJAAHPGPW9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YTGFCT4A3A845W6D9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2YJ5SVFAD22YF7ZKR6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Y02PC5WCP04KTWME3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZN8YDDEMRYGS8BQ04
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z7YT91T76KKV3FFZ8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZVFESJ0KPN2GTTER5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z0P9GS31PH63Q59G8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z0CDKVVMYH0XAHT3X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZQZHC22H7PS2SNX41
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZAFMQERDCMHTC8BX2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZM2P4C3K1BD7N59QB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z3568VKGKGB8WSN88
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZBVQJHP8VRV1VZQ5P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZNZ4SA0V56VWYSYY6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZM2258YB23YJ9JWZK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZZMKAAN08EV6C942M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z5DBNDTJ7PCKG5260
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZHFH432KPQRZ8447F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z4DFF97PN9ACDWBV1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZWPJZKP0D0SPKJDQ9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZEWDPW3JTHS9B3MBT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZTMTYJZF9MN8KYPT4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2ZHADQNZ7RT3199BYH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV2Z1AY1YH67P57GE2A5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV302RS8KW8Z7EZPDA65
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30G2G6EM9H88T3SFRC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV307P31B4CRV9TJX2SK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV302BSWXSPGJZD1JVX9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30DPTJ94D550VN8XQ4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30S0C3C3E7SRB7XA6G
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30GB1BBWDWRPN1BQKS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30J27FDJQQH2BBCJA9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30BR0FMEBTF9N09N59
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30VPNNNEWFT4EE95SP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30JYNM8481YFTWWWWR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30TY34E6GD5T8V4GA2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30TH6JGXK21CBNHYJM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30ZJXMQSPZN2FDDD45
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30VYEJF1YX743J07Z8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV309R217TTBXC36D4V1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30KEH7V9DMS8FEH0DG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30JP5WSK6Z6ZNWVDEV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30KT8PFVK9R3FC98S7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30HXWJRFMQAPHCZE5N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV30RHBVH52FCEEKV5R2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31PJVCJPMGKQ2MV8HX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31P9221S81TP3FGBKN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31ZK2HFFVHCVHSS66D
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV313SNH2SW9K7M7V2TD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31F8D5Q1YZT8N23FH8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31BF4N8PDB3VQBG0Z0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31VK907F8N9YFBHXP6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31RVKRGZ5AB1XDHKE4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31NEZN1QDXVCTXP90Y
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV3167RS354QEAMHV4H6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV3101WZGYC99BK2CS8H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31R7K09KQNZV3EJS9E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31JJ718QX9YJDYEK13
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31GCJCGBT09X4CGMHK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV31V0Z310K3846J4G9W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV315R7RJVD1859PXZJX
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV3156SHBZ89E22QN0WD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QRTV316T9JVQXPCA4KGF0P
+    verdict: ok
+history:
+- at: '2026-10-12T10:03:47Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-002

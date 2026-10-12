@@ -1,0 +1,121 @@
+title: 重置方式『不重置』：跨日、跨週、跨月的 UTC+0 00:00 累計與已產生數都不歸零、待開啟紅包不作廢
+description: 重置方式『不重置』：跨日、跨週、跨月的 UTC+0 00:00 累計與已產生數都不歸零、待開啟紅包不作廢
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-011
+acceptance_criteria_ids: []
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- negative
+design_techniques:
+- negative
+priority: medium
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+- 【時間窗】本案至少橫跨一次 UTC+0 00:00（建議在 UTC+0 23:30 前備妥活動與步驟 2，00:05 之後繼續）；若剛好橫跨週日→週一或月底→1 日更佳，但非必要
+test_data:
+- name: 活動
+  value: 重置方式『不重置』；門檻 100／上限 2／固定 10／稽核 1
+- name: 下注
+  value: 玩家 A 150、60、100
+steps:
+- n: 1
+  action: UTC+0 23:30 前建立活動『RP-NORESET』（永久）：活動幣種 USDT；重置方式『不重置』；預設規則門檻 100／上限 2／固定 10／稽核 1；儲存
+  expected: 建立成功
+- n: 2
+  action: 玩家 A 結算有效流水貢獻 150
+  expected: 產生 1 個待開啟紅包 P1，餘量 50
+- n: 3
+  action: UTC+0 00:05 之後（已跨午夜）檢視紅包明細；玩家 A 前台開啟紅包視窗
+  expected: 沒有重置：P1 仍為『待開啟』、未作廢
+- n: 4
+  action: 玩家 A 結算有效流水貢獻 60（跨午夜）
+  expected: 累計 50＋60＝110 達標：產生第 2 個紅包 P2，『週期累計』顯示 210（150＋60，沒有因午夜歸零）
+- n: 5
+  action: 玩家 A 再結算有效流水貢獻 100
+  expected: 【僅記錄，不判定】記錄紅包明細是否仍為 2 筆（已產生 2 個、達上限 2）；『不重置』時單週期上限如何計 spec 沒有直接定義
+expected_result: 重置方式『不重置』的活動跨 UTC+0 00:00 時：待開啟紅包不作廢、累計不歸零（P2 的週期累計 210 含午夜前的 150）；單週期上限在『不重置』時如何計只記錄、不判定。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §新增優惠活動 — 紅包（第 67 行）
+  quote: 累計歸零週期：每日 / 每週一 / 每月 1 日 / 不重置
+decision_refs:
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 397 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 67 行）
+  quote: 累計歸零週期：每日 / 每週一 / 每月 1 日 / 不重置
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 397 行）
+  quote: 週期重置時該帳號所有待開啟紅包作廢；已入帳紀錄不受影響
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 96 行）
+  quote: 單一帳號在一個重置週期內最多產生的紅包數；達上限後停止累計，直到下次重置
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-011（整合評估 RE-G-06）（重置方式『不重置』）'
+testcase_id: TC-REDPACKET-168
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:03:52Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

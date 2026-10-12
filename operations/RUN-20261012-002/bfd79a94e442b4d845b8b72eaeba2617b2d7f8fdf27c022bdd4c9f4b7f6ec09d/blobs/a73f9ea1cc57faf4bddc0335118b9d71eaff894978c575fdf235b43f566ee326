@@ -1,0 +1,129 @@
+title: 以注單結算時點計入累計：已下注未結算不計入，結算後才計入並使用結算當下的匯率換算
+description: 以注單結算時點計入累計：已下注未結算不計入，結算後才計入並使用結算當下的匯率換算
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-008
+acceptance_criteria_ids: []
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- scenario
+priority: medium
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】可固定（mock）系統匯率並在測試中途改值；相關幣種（如 EUR）的錢包已在鏈上錢包管理開啟
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】有一款可『下注後不立即結算、由測試人員控制何時結算』的遊戲或遊戲商模擬器（例如賽事類或真人局進行中的注單），貢獻系數 100%
+test_data:
+- name: 活動
+  value: 門檻 1000／上限 5／固定 10／稽核 1；活動幣種 USDT、EUR
+- name: 注單
+  value: EUR 有效投注 500，下注時匯率 1.00、結算時匯率 2.00
+steps:
+- n: 1
+  action: 建立活動『RP-SETTLE』（活動時間『永久』）：活動幣種 USDT、EUR；預設規則門檻 1000／上限 5／固定 10／稽核 1；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 固定 EUR→USDT 匯率為 1.00；玩家 A 下注 EUR 500（該局暫不結算）
+  expected: 注單已下注、尚未結算
+- n: 3
+  action: 玩家 A 開啟前台紅包視窗，檢視累計進度；並看後台紅包明細
+  expected: 累計進度顯示 0 ／ 1,000（已下注未結算不計入）；紅包明細沒有玩家 A 的紅包
+- n: 4
+  action: 把匯率改為 2.00（下注後、結算前）
+  expected: （匯率變更）
+- n: 5
+  action: 讓該局結算（有效投注 500 EUR，100% 遊戲）
+  expected: 結算當下以 2.00 換算：500×2.00＝1,000 USDT 計入累計並達標，產生 1 個紅包，『週期累計』顯示 1,000（若以下注當下匯率 1.00 換算只有 500，不會達標）
+- n: 6
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 累計以注單結算時點計入：已下注未結算時不計入；結算後才計入，並使用結算當下的匯率換算（結算時匯率 2.00 → 1,000 USDT，達標）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 377 行）
+  quote: 有效流水貢獻（有效投注額 × 貢獻系數），以注單結算時點計入；只計以「活動幣種」下注的注單
+decision_refs:
+- requirement_id: REQ-REDPACKET-008
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 377 行）
+- requirement_id: REQ-REDPACKET-008
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 379 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 377 行）
+  quote: 有效流水貢獻（有效投注額 × 貢獻系數），以注單結算時點計入；只計以「活動幣種」下注的注單
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 379 行）
+  quote: 非核心貨幣注單的有效流水貢獻，於注單結算當下依系統匯率換算為核心貨幣，四捨五入至小數 2 位後計入累計；顯示與達標判斷皆用此值；換算後不因匯率變動重算
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-008（整合評估 RE-A-05）（注單結算時點計入、使用結算當下匯率）'
+testcase_id: TC-REDPACKET-159
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:03:52Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

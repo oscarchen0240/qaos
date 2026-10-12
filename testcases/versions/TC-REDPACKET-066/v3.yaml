@@ -1,0 +1,162 @@
+title: 店員洗分：確認視窗選［繼續結算］、洗分完成後待開啟紅包作廢（原因機台洗分）、累計不歸零、不留給下一位玩家
+description: 店員洗分：確認視窗選［繼續結算］、洗分完成後待開啟紅包作廢（原因機台洗分）、累計不歸零、不留給下一位玩家
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-028
+- REQ-REDPACKET-025
+- REQ-REDPACKET-027
+- REQ-REDPACKET-036
+acceptance_criteria_ids:
+- AC-REDPACKET-0281
+- AC-REDPACKET-0277
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- negative
+- functional
+design_techniques:
+- state_transition
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分與洗分；機台端洗分門檻為已知的正值或 0（機台端設定，後台無此設定）
+- 機台帳號 M1，本週期無注單；M1 洗分門檻已知（機台端設定）
+test_data:
+- name: 下注
+  value: 650 → (洗分) → 350
+- name: 活動設定
+  value: 門檻500／上限5／固定20／稽核0
+steps:
+- n: 1
+  action: 建立機台場館紅包活動『RP-WASH』（活動時間『永久』）：每日重置；預設規則門檻 500／上限 5／固定 20／稽核 0；儲存
+  expected: 建立成功
+- n: 2
+  action: M1 結算有效流水貢獻 650，並確保機台餘額 > 洗分門檻
+  expected: 產生 1 個紅包 P1（待開啟），累計餘量 150
+- n: 3
+  action: 店員以鑰匙選單對 M1 以『指定金額』洗分（保留餘額繼續遊玩），在 M1 機台畫面跳出的『尚有紅包未開啟，交易完成後將作廢』確認視窗選［繼續結算］
+  expected: 洗分送出並完成
+- n: 4
+  action: 後台紅包明細檢視 P1
+  expected: P1 狀態『已作廢』，作廢原因『機台洗分』
+- n: 5
+  action: 下一位玩家坐上 M1，開啟紅包視窗
+  expected: 『領取獎勵』按鈕停用（沒有待開啟紅包），P1 不可再領取
+- n: 6
+  action: M1 再結算有效流水貢獻 350
+  expected: 餘量 150＋350＝500 達門檻，產生新紅包 P2（累計沒有因洗分歸零；若歸零則 350 < 500 不會產生）
+- n: 7
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 店員洗分時選［繼續結算］後，洗分完成當下 P1 作廢（原因：機台洗分），下一位玩家無法領取；累計進度不歸零，P2 在餘量 150 加 350 達 500 時產生。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 398 行）
+  quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢；累計進度不歸零
+decision_refs:
+- requirement_id: REQ-REDPACKET-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 398 行）
+- requirement_id: REQ-REDPACKET-027
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 210 行）
+- requirement_id: REQ-REDPACKET-036
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 190 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 401 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 398 行）
+  quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢；累計進度不歸零
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 210 行）
+  quote: ［返回開啟紅包］關閉視窗、不送出交易；［繼續結算］送出交易。店員洗分時同一視窗由店員確認
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 190 行）
+  quote: 顯示待開啟數量（例：「領取獎勵（2）」），每次領取一個；無待開啟紅包時按鈕停用
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 401 行）
+  quote: 紅包入帳歸屬入帳當下進行中的場次（不是紅包產生當下的場次）；場館日結報表「依場次明細」該場次的紅包金額、期末餘額與餘額驗算皆含此筆
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'affected: TC-REDPACKET-066 v1（CI-SPEC-REDPACKET-001-0.1-0.2，R002→R001）'
+testcase_id: TC-REDPACKET-066
+version: 3
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+created_at: '2026-10-12T10:03:52Z'
+updated_at: '2026-10-12T10:03:52Z'
+history:
+- at: '2026-10-12T10:03:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QRVKBS0VZYPZ24FB4663NM
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-002
+- at: '2026-10-12T10:03:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QS268CJA75W9Z7JQQ3839F
+  run_id: RUN-20261012-002
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
