@@ -1,0 +1,87 @@
+clarification_id: CLR-CASHFLOW-008
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.1'
+question: 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與
+  spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？
+context: SPEC-CASHFLOW-001 v0.1 第 341、344、372 行與 v0.2 第 260、345、348、376 行皆寫待確認出金可由管理員手動取消收斂（含 Operator Reset 後只能手動取消、機台報廢死單清理）。2026-09-15
+  CLR-CASHFLOW-004 依 RD 畫面移除此路徑（REQ-CASHFLOW-026），並移除入金預留於手動取消時釋放（REQ-CASHFLOW-008）。2026-10-12 Oscar 確認（CLR-REDPACKET-055
+  rev 1）待確認出金的管理員手動取消要做，後端已完成、前端未開發。
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-10-12T12:58:36Z'
+status: ANSWERED
+history:
+- at: '2026-10-12T12:58:36Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-10-12T12:58:48Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by Oscar（2026-10-12；角色經 RD 確認）
+requirement_id: REQ-CASHFLOW-026
+impact_if_unanswered: REQ-CASHFLOW-026（出金死單收斂路徑）與引用手動取消的 CASHFLOW TC（約 4 張）需重新判定；REQ-CASHFLOW-008 視入金是否適用
+kind: spec_question
+topic: state_transition
+subject: cashflow.arcade.pending_cashout_admin_cancel
+level: major
+role_scope:
+- '*'
+params: {}
+known_rules:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  location: §出金 第一階段 15 秒逾時（第 341 行）
+  quote: 須由新的 `req-cashout` 取代或 Admin 手動取消收斂
+- type: clarification
+  clarification_id: CLR-REDPACKET-055
+  answer_rev: 1
+  answer_sha256: 03aae6a9a3c46e95992a94f37a6f9615abab2255a89a7938bf3af6ffee9b193c
+  quote: 待確認出金的管理員手動取消是要做的功能，後端已開發完成，僅前端尚未開發
+coverage:
+  consulted:
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+issue_key: 1f056d8660d7fa03b2ae338d71f29876fbeb3486f0c8a6ff6f3ed66185c58014
+answer_revisions:
+- rev: 0
+  answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
+    Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂，預留額度於入帳或逾時釋放，REQ-CASHFLOW-008 維持 2026-09-15
+    的移除不變。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。
+  answered_by: Oscar（2026-10-12；角色經 RD 確認）
+  answered_at: '2026-10-12T12:58:48Z'
+  resolution: requirement_clarified
+  answer_sources:
+  - type: message
+    channel: Claude Code 對話（Oscar 2026-10-12）
+    sent_by: Oscar
+    at: '2026-10-12'
+  basis:
+    target:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+    target_decl_rev: 0
+    closure: []
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  sha256: ebbbeea4d02092b8516d93140e1b082e583a6552c00799205158ee1d67938f8e
+  op_id: 585e7af4acda5b24fa27336f7634511e7ff15f376896558b876de66bab8c3659
+answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
+  Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂，預留額度於入帳或逾時釋放，REQ-CASHFLOW-008 維持 2026-09-15
+  的移除不變。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。
+answered_by: Oscar（2026-10-12；角色經 RD 確認）
+answered_at: '2026-10-12T12:58:48Z'
+resolution: requirement_clarified

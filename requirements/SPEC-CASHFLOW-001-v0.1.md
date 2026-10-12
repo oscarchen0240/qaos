@@ -1,7 +1,7 @@
 # Requirements — SPEC-CASHFLOW-001 v0.1（機台金流與場次）
 
 - 共 44 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理
-- 事實來源：`artifacts/requirements/SPEC-CASHFLOW-001/v0.1/requirements.yaml`
+- 事實來源：`artifacts/requirements/SPEC-CASHFLOW-001/v0.1/revisions/R000.yaml`（revision R000）
 
 ## REQ-CASHFLOW-001 稽核倍數預設 0 倍
 
@@ -24,7 +24,7 @@
   - 0021：給定 場館稽核倍數設為大於 0（如 1 倍）且有未完成稽核金額；當 計算洗分或出金的核可金額；則 核可金額已扣除未完成稽核部分
   - 0022：給定 扣除未完成稽核後金額為 0；當 嘗試洗分或出金；則 視同餘額不足，回 1-NO CREDITS
 - 不符合時系統怎麼做：spec 有寫——扣除規則已明確定義
-- 對應 TC：TC-CASHFLOW-064 v1, TC-CASHFLOW-063 v1, TC-CASHFLOW-002 v1
+- 對應 TC：TC-CASHFLOW-002 v1, TC-CASHFLOW-063 v1, TC-CASHFLOW-064 v1
 
 ## REQ-CASHFLOW-003 開分交易的紀錄與累計
 
@@ -36,7 +36,7 @@
   - 0031：給定 店員以鑰匙開啟機台選單為玩家開分；當 請求送達平台；則 立即生效，分數增加；交易紀錄類型為機台開分、金額為正值；當下直接累計存款次數與金額
 - 狀態轉換：無請求→已生效（req-keyin 判定通過）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-004 v1, TC-CASHFLOW-065 v1, TC-CASHFLOW-003 v1
+- 對應 TC：TC-CASHFLOW-003 v1, TC-CASHFLOW-004 v1, TC-CASHFLOW-065 v1
 
 ## REQ-CASHFLOW-004 開分超過額度上限則拒絕
 
@@ -47,7 +47,7 @@
 - 驗收條件：
   - 0041：給定 加計本次開分金額後，全場館機台分數餘額合計＋已預留未入帳的入金金額＋本筆金額，將超過場館額度上限；當 送出開分請求；則 平台回 1-OVER LIMIT，分數不變、不寫入任何帳務異動
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-066 v1, TC-CASHFLOW-005 v1, TC-CASHFLOW-005 v2
+- 對應 TC：TC-CASHFLOW-005 v1, TC-CASHFLOW-005 v2, TC-CASHFLOW-005 v3, TC-CASHFLOW-066 v1
 
 ## REQ-CASHFLOW-005 開分無唯一識別碼，系統不做防重複判斷
 
@@ -84,7 +84,7 @@
   - 0073：給定 兩筆入金的 end-cashin 幾乎同時到達，各自單看不超限但合計會超限；當 依場館鎖逐筆序列化處理；則 場館鎖內逐筆序列化判定：先處理的一筆通過並入帳，第二筆的判定基準已包含第一筆的實際入帳金額，因而正確被擋下回 1-OVER LIMIT
 - 不符合時系統怎麼做：spec 有寫——場館鎖序列化與預留機制已明確定義
 - ✅ PM 回答（CLR-CASHFLOW-005）：A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-cashin 階段客戶端回報的金額未經實體清點確認、不可信，若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字（如 1000000000000）讓機台卡在等待中造成整台機台無法入金的 DoS。spec v07「額度上限判定與預留移至 req-cashin」一條應正式作廢，改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin 才依入鈔機實際清點金額判定額度上限，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。REQ-CASHFLOW-007／009 statement 需依此回寫；TC-CASHFLOW-008／009／011 需修訂。BUG-CASHFLOW-002 的判定時機部分（症狀①）依此不再成立，紀錄消失部分（症狀②）維持有效，Oscar 決定如何處理該 bug。
-- 對應 TC：TC-CASHFLOW-070 v1, TC-CASHFLOW-009 v1, TC-CASHFLOW-009 v2, TC-CASHFLOW-069 v1, TC-CASHFLOW-008 v1, TC-CASHFLOW-008 v2, TC-CASHFLOW-008 v3
+- 對應 TC：TC-CASHFLOW-008 v1, TC-CASHFLOW-008 v2, TC-CASHFLOW-008 v3, TC-CASHFLOW-009 v1, TC-CASHFLOW-009 v2, TC-CASHFLOW-069 v1, TC-CASHFLOW-070 v1
 
 ## REQ-CASHFLOW-008 入金預留額度的釋放
 
@@ -99,7 +99,7 @@
 - 狀態轉換：PENDING(已預留)→已完成(轉實際餘額)（end-cashin 成功）；PENDING(已預留)→已逾時(釋放)（24 小時逾時）；PENDING(已預留)→已取消(釋放)（人工取消）
 - 不符合時系統怎麼做：spec 有寫——三種釋放情況已明確定義
 - ✅ PM 回答（CLR-CASHFLOW-004）：交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分出金核實」頁操作，但該頁的「作廢」操作僅適用於已完成、已生成收據的出金交易（REQ-CASHOUT-007），不處理待確認狀態的PENDING死單，範圍對不上正本裡「手動取消待確認交易」原本要處理的情境。REQ-CASHFLOW-008（入金預留釋放）與REQ-CASHFLOW-026（出金15秒逾時死單）裡「Admin/站長手動取消」這條收斂路徑需要移除：出金死單仍有「新請求取代」與REQ-CASHFLOW-027「人工出金連動取消」兩條路徑可收斂；入金死單僅剩「PENDING逾時24小時自動釋放」，不是資金卡死風險，只是少了立即處理的手動路徑，直接修正REQ即可，不需開Bug
-- 對應 TC：TC-CASHFLOW-010 v1, TC-CASHFLOW-010 v2, TC-CASHFLOW-071 v1, TC-CASHFLOW-072 v1, TC-CASHFLOW-053 v1, TC-CASHFLOW-054 v1
+- 對應 TC：TC-CASHFLOW-010 v1, TC-CASHFLOW-010 v2, TC-CASHFLOW-053 v1, TC-CASHFLOW-054 v1, TC-CASHFLOW-071 v1, TC-CASHFLOW-072 v1
 
 ## REQ-CASHFLOW-009 end-cashin 依實際清點金額判定額度上限並完成入帳
 
@@ -145,7 +145,7 @@
   - 0122：給定 PENDING 已轉為已逾時；當 之後才收到該 TXID 的 end-cashin；則 回 1-NO RECORD，不變更任何資料
 - 狀態轉換：PENDING→已逾時（超過 24 小時）；已逾時→已逾時（逾時後仍收到 end-cashin，回 1-NO RECORD）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-076 v1, TC-CASHFLOW-072 v1, TC-CASHFLOW-015 v1, TC-CASHFLOW-014 v1
+- 對應 TC：TC-CASHFLOW-014 v1, TC-CASHFLOW-015 v1, TC-CASHFLOW-072 v1, TC-CASHFLOW-076 v1
 
 ## REQ-CASHFLOW-013 洗分核可金額以門檻為單位捨去
 
@@ -159,7 +159,7 @@
   - 0133：給定 機台餘額 321，門檻 0，全洗；當 送出洗分請求；則 核可金額 321（全額，不取整）
 - 輸入：throshold（number，必填，{'min': 0, 'note': '機台隨請求送上，正值或 0'}）
 - 不符合時系統怎麼做：spec 有寫——計算規則與範例已明確定義
-- 對應 TC：TC-CASHFLOW-056 v1, TC-CASHFLOW-077 v1, TC-CASHFLOW-016 v1, TC-CASHFLOW-016 v2, TC-CASHFLOW-078 v1, TC-CASHFLOW-055 v1
+- 對應 TC：TC-CASHFLOW-016 v1, TC-CASHFLOW-016 v2, TC-CASHFLOW-055 v1, TC-CASHFLOW-056 v1, TC-CASHFLOW-077 v1, TC-CASHFLOW-078 v1
 
 ## REQ-CASHFLOW-014 洗分餘數留在機台帳號上
 
@@ -194,7 +194,7 @@
 - 驗收條件：
   - 0161：給定 機台餘額不足一個門檻單位（或為 0）；當 送出洗分請求；則 回 1-NO CREDITS，不寫入任何帳務異動與交易紀錄
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-081 v1, TC-CASHFLOW-019 v1
+- 對應 TC：TC-CASHFLOW-019 v1, TC-CASHFLOW-081 v1
 
 ## REQ-CASHFLOW-017 洗分為單階段且立即結束當前場次
 
@@ -217,7 +217,7 @@
 - 驗收條件：
   - 0181：給定 機台餘額 1000，門檻 100，指定金額洗 300（回 0-OK，餘額變 700）；當 誤判失敗後重按，再次送出指定金額洗 300；則 第二次同樣回 0-OK 並扣款 300（餘額變 400）——系統不會阻擋，此為 spec 明確點名的風險情境，需靠現場 SOP（先查後台再決定是否重做）因應
 - 不符合時系統怎麼做：spec 有寫——此為 spec 明確承認且刻意不做系統防護的行為，非缺陷
-- 對應 TC：TC-CASHFLOW-083 v1, TC-CASHFLOW-021 v1
+- 對應 TC：TC-CASHFLOW-021 v1, TC-CASHFLOW-083 v1
 
 ## REQ-CASHFLOW-019 出金 PENDING 唯一性與取代
 
@@ -229,7 +229,7 @@
   - 0191：給定 機台帳號已有一筆有效出金 PENDING；當 再次送出 req-cashout；則 既存 PENDING 被標記失效，同時建立一筆新的 PENDING，全程只有一筆有效
 - 狀態轉換：PENDING(舊)→已取消（新的 req-cashout 送達）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-084 v1, TC-CASHFLOW-091 v1, TC-CASHFLOW-022 v1
+- 對應 TC：TC-CASHFLOW-022 v1, TC-CASHFLOW-084 v1, TC-CASHFLOW-091 v1
 
 ## REQ-CASHFLOW-020 出金核可金額為全部餘額且不套門檻
 
@@ -241,7 +241,7 @@
   - 0201：給定 機台餘額 321；當 送出 req-cashout；則 核可金額為 321（全額），不因門檻而取整
   - 0202：給定 機台餘額為 0；當 送出 req-cashout；則 回 1-NO CREDITS，不建立 PENDING、不寫入交易紀錄
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-085 v1, TC-CASHFLOW-086 v1, TC-CASHFLOW-023 v1
+- 對應 TC：TC-CASHFLOW-023 v1, TC-CASHFLOW-085 v1, TC-CASHFLOW-086 v1
 
 ## REQ-CASHFLOW-021 end-cashout 完成扣分且立即結束場次
 
@@ -254,7 +254,7 @@
   - 0212：給定 該筆 end-cashout 已成功處理過一次；當 同一 TXID 再次送達；則 回應成功但不重複扣分（分數已是 0，不會變負）
 - 狀態轉換：進行中→已結束(出金)（end-cashout 扣分完成）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-025 v1, TC-CASHFLOW-087 v1, TC-CASHFLOW-024 v1
+- 對應 TC：TC-CASHFLOW-024 v1, TC-CASHFLOW-025 v1, TC-CASHFLOW-087 v1
 
 ## REQ-CASHFLOW-022 end-cashout 查無對應 PENDING
 
@@ -265,7 +265,7 @@
 - 驗收條件：
   - 0221：給定 送出的 end-cashout 的 TXID 查無對應 PENDING（例如已被新請求取代）；當 平台處理該請求；則 僅記錄 log，回 1-NO RECORD，不變更任何資料
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-093 v1, TC-CASHFLOW-084 v1, TC-CASHFLOW-026 v1, TC-CASHFLOW-026 v2
+- 對應 TC：TC-CASHFLOW-026 v1, TC-CASHFLOW-026 v2, TC-CASHFLOW-084 v1, TC-CASHFLOW-093 v1
 
 ## REQ-CASHFLOW-023 出金印表機異常的兩種情況
 
@@ -277,7 +277,7 @@
   - 0231：給定 按下結算時印表機已有異常（列印尚未開始）；當 機台直接結束流程；則 機台不呼叫 end-cashout，分數不扣、保留在機台上；但平台因先前 req-cashout 已建立的 PENDING 仍留有一筆「待確認」的出金（現場其實什麼也沒發生，該 PENDING 依 REQ-CASHFLOW-026 的既有機制收斂）
   - 0232：給定 收據已送入列印佇列後才卡紙或缺紙；當 檢視分數與收據狀態；則 分數已扣（出金已完成），收據仍在佇列中，待現場排除狀況後自動印出，不可視為未出金而重做
 - 不符合時系統怎麼做：spec 有寫——兩種情況與各自結果已明確定義
-- 對應 TC：TC-CASHFLOW-061 v1, TC-CASHFLOW-027 v1, TC-CASHFLOW-027 v2, TC-CASHFLOW-088 v1
+- 對應 TC：TC-CASHFLOW-027 v1, TC-CASHFLOW-027 v2, TC-CASHFLOW-061 v1, TC-CASHFLOW-088 v1
 
 ## REQ-CASHFLOW-024 出金按下結算無反應時不扣分
 
@@ -289,7 +289,7 @@
   - 0241：給定 按下結算鍵後機台連不上平台、自行結束流程；當 檢視分數；則 分數未扣
   - 0242：給定 再次按下結算鍵；當 送出新的 req-cashout；則 前一筆待確認出金自動被取代，新請求正常處理
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-089 v1, TC-CASHFLOW-028 v1
+- 對應 TC：TC-CASHFLOW-028 v1, TC-CASHFLOW-089 v1
 
 ## REQ-CASHFLOW-025 出金過渡期由前台依序呼叫完成
 
@@ -301,7 +301,7 @@
   - 0251：給定 機台暫無印表機（過渡期現況）；當 玩家按下結算鍵；則 前台依序呼叫 req-cashout 取得核可後立即回報 end-cashout，收到完成回覆當下才扣分並結束場次
   - 0252：給定 出金請求已送出、尚未收到回報完成；當 玩家或店員嘗試取消；則 系統不提供取消（結算畫面的取消鍵僅在送出請求前有效）
 - 不符合時系統怎麼做：spec 有寫——過渡期流程已明確定義為現行規則
-- 對應 TC：TC-CASHFLOW-030 v1, TC-CASHFLOW-029 v1, TC-CASHFLOW-091 v1, TC-CASHFLOW-090 v1
+- 對應 TC：TC-CASHFLOW-029 v1, TC-CASHFLOW-030 v1, TC-CASHFLOW-090 v1, TC-CASHFLOW-091 v1
 
 ## REQ-CASHFLOW-026 出金第一階段 15 秒逾時的死單風險
 
@@ -312,7 +312,8 @@
 - 驗收條件：
   - 0261：給定 req-cashout 已建立 PENDING，機台 15 秒內未收到回覆而結束程序；當 檢視該 PENDING 狀態；則 PENDING 持續停留在待確認，不會自動結束；需靠新的 req-cashout（依 REQ-CASHFLOW-019 取代）或櫃檯對該機台帳號執行人工出金（依 REQ-CASHFLOW-027 連動取消既有 PENDING）才能收斂——不存在「Admin 手動取消」這個操作（2026-09-15已由Oscar確認，交易紀錄查詢頁沒有此功能）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義為已知風險
-- 對應 TC：TC-CASHFLOW-031 v1, TC-CASHFLOW-031 v2, TC-CASHFLOW-092 v1, TC-CASHFLOW-088 v1
+- ✅ PM 回答（CLR-CASHFLOW-008）：可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂，預留額度於入帳或逾時釋放，REQ-CASHFLOW-008 維持 2026-09-15 的移除不變。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。
+- 對應 TC：TC-CASHFLOW-031 v1, TC-CASHFLOW-031 v2, TC-CASHFLOW-088 v1, TC-CASHFLOW-092 v1
 
 ## REQ-CASHFLOW-027 人工出金連動取消既有 PENDING
 
@@ -323,7 +324,7 @@
 - 驗收條件：
   - 0271：給定 機台帳號有一筆尚未完成的出金 PENDING；當 櫃檯對其執行人工出金；則 系統同時取消該筆既有的出金 PENDING
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-093 v1, TC-CASHFLOW-092 v1, TC-CASHFLOW-091 v1, TC-CASHFLOW-032 v1
+- 對應 TC：TC-CASHFLOW-032 v1, TC-CASHFLOW-091 v1, TC-CASHFLOW-092 v1, TC-CASHFLOW-093 v1
 
 ## REQ-CASHFLOW-028 人工入金不需處理既有入金 PENDING
 
@@ -334,7 +335,7 @@
 - 驗收條件：
   - 0281：給定 機台帳號有一筆或多筆尚未完成的入金 PENDING；當 櫃檯對其執行人工入金；則 既有的入金 PENDING 皆不受影響，仍可各自繼續走完流程
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，且與出金的連動規則相反，屬易混淆點
-- 對應 TC：TC-CASHFLOW-094 v1, TC-CASHFLOW-033 v1
+- 對應 TC：TC-CASHFLOW-033 v1, TC-CASHFLOW-094 v1
 
 ## REQ-CASHFLOW-029 未成立原因狀態碼對照
 
@@ -349,20 +350,20 @@
   - 0294：給定 機台憑證已失效（被重置）；當 送出任一交易請求；則 回 9-OTHER ERROR
   - 0295：給定 請求欄位缺漏、型別錯誤，或 currency 與主站台核心貨幣不符，或金額為負；當 送出任一交易請求；則 回 6-BAD DATA/FORMAT
 - 不符合時系統怎麼做：spec 有寫——狀態碼與觸發條件對照表已明確定義
-- 對應 TC：TC-CASHFLOW-095 v1, TC-CASHFLOW-060 v1, TC-CASHFLOW-057 v1, TC-CASHFLOW-058 v1, TC-CASHFLOW-034 v1, TC-CASHFLOW-034 v2, TC-CASHFLOW-059 v1
+- 對應 TC：TC-CASHFLOW-034 v1, TC-CASHFLOW-034 v2, TC-CASHFLOW-057 v1, TC-CASHFLOW-058 v1, TC-CASHFLOW-059 v1, TC-CASHFLOW-060 v1, TC-CASHFLOW-095 v1
 
-## REQ-CASHFLOW-030 餘額不足不寫入交易紀錄
+## REQ-CASHFLOW-030 所有未成立原因一律不寫入交易紀錄
 
-**需求**：洗分或出金因餘額不足（1-NO CREDITS）被拒絕時，不寫入交易紀錄，僅回覆該狀態碼；本表其餘未成立原因才會留下交易紀錄
+**需求**：任何交易被判定為未成立（不論原因為額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效或餘額不足），平台一律不寫入交易紀錄，僅回覆對應狀態碼；交易紀錄查詢／機台交易紀錄不會出現任何「未成立」狀態的紀錄。【2026-09-23 CLR-CASHFLOW-006 回覆 B】所有未成立原因（額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效等）一律不寫入交易紀錄，理由與 CLR-CASHFLOW-005 一致：客戶端未經驗證的輸入若被拒絕仍留紀錄，攻擊者可高頻觸發使資料庫被大量無用紀錄灌爆。spec.md 正本相關文字（未成立原因、附錄狀態碼對照）待更新。
 
 - 類型 functional · 行為 rejection · 風險 medium · 狀態 ACTIVE
-- spec 位置：§四種金流/交易不成立的原因 + §附錄-狀態碼對照　引句：「餘額不足 | 洗分時可洗金額為 0…或出金時餘額為 0。屬正常情形。不寫入交易紀錄——平台僅回覆機台餘額不足；本表其餘原因才會留下「未成立」紀錄」
+- spec 位置：§四種金流/交易不成立的原因 + §附錄-狀態碼對照　引句：「（v0.1 原文僅載明餘額不足不寫入；本規則已由 CLR-CASHFLOW-006 擴大至全部未成立原因，spec.md 待更新）」
 - 驗收條件：
   - 0301：給定 洗分或出金因餘額不足被拒絕；當 檢視機台交易紀錄；則 查無此次拒絕的紀錄，僅收到 1-NO CREDITS 回覆
-  - 0302：給定 交易因額度上限或其他原因被拒絕；當 檢視機台交易紀錄；則 有留下「未成立」的交易紀錄，可查得拒絕原因
+  - 0302：給定 交易因額度上限、資料格式錯誤、機台停用/場館未開通或憑證失效等任一未成立原因被拒絕；當 檢視機台交易紀錄；則 查無此次拒絕的紀錄，僅收到對應狀態碼；不會以「未成立」狀態出現在交易紀錄查詢中
 - 不符合時系統怎麼做：spec 有寫——此為明確定義的例外規則，容易被誤以為所有拒絕都會留紀錄
 - ✅ PM 回答（CLR-CASHFLOW-006）：B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種狀態；「未成立」不會有任何紀錄可查，「未成立原因」欄實質上永遠不會顯示內容。理由：req-cashin／req-keyin 階段對客戶端輸入的檢核（額度、格式、機台狀態、憑證）若都要在被拒絕時寫入紀錄，等同把資料庫暴露在客戶端可輕易高頻觸發的灌爆風險下，與 CLR-CASHFLOW-005 的整體防禦設計一致（不信任未經驗證的客戶端輸入）。
-- 對應 TC：TC-CASHFLOW-035 v1, TC-CASHFLOW-096 v1
+- 對應 TC：TC-CASHFLOW-005 v3, TC-CASHFLOW-035 v1, TC-CASHFLOW-035 v2, TC-CASHFLOW-096 v1
 
 ## REQ-CASHFLOW-031 2-OCCUPIED 狀態碼不啟用
 
@@ -397,7 +398,7 @@
   - 0332：給定 前一場次因洗分結束且留有餘數 21；當 洗分交易完成當下；則 立即建立新場次承接，期初餘額為 21
 - 狀態轉換：無場次→進行中（分數由 0 轉正（開分/入金））；已結束(洗分,有餘數)→進行中(新場次)（立即承接）
 - 不符合時系統怎麼做：spec 有寫——開始規則已明確定義
-- 對應 TC：TC-CASHFLOW-099 v1, TC-CASHFLOW-039 v1, TC-CASHFLOW-038 v1
+- 對應 TC：TC-CASHFLOW-038 v1, TC-CASHFLOW-039 v1, TC-CASHFLOW-099 v1
 
 ## REQ-CASHFLOW-034 場次進行中期間的交易歸屬
 
@@ -420,7 +421,7 @@
   - 0351：給定 場次進行中，一筆洗分交易回 0-OK（扣分成功）；當 檢視場次狀態；則 場次立即結束，不需等待該筆洗分於「洗分出金核實」頁核實
   - 0352：給定 一筆洗分或出金請求被拒絕（未成立）或取消；當 檢視場次狀態；則 場次不受影響，仍為進行中
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-041 v1, TC-CASHFLOW-101 v1, TC-CASHFLOW-042 v1
+- 對應 TC：TC-CASHFLOW-041 v1, TC-CASHFLOW-042 v1, TC-CASHFLOW-101 v1
 
 ## REQ-CASHFLOW-036 分數歸零結束場次
 
@@ -431,7 +432,7 @@
 - 驗收條件：
   - 0361：給定 場次進行中，玩家投注導致分數歸 0；當 檢視場次狀態；則 場次結束，標記為歸零結束，期末餘額為 0
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-102 v1, TC-CASHFLOW-043 v1
+- 對應 TC：TC-CASHFLOW-043 v1, TC-CASHFLOW-102 v1
 
 ## REQ-CASHFLOW-037 場次逾時結束
 
@@ -443,7 +444,7 @@
   - 0371：給定 場次有餘額，超過場館設定的逾時時間（如 1 小時）無任何交易或遊玩；當 系統排程檢查；則 場次自動結束，標記為逾時結束
   - 0372：給定 場次即將逾時前發生一筆交易或注單；當 檢視逾時計時；則 計時重新起算，場次不因此結束
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-103 v1, TC-CASHFLOW-044 v1, TC-CASHFLOW-045 v1
+- 對應 TC：TC-CASHFLOW-044 v1, TC-CASHFLOW-045 v1, TC-CASHFLOW-103 v1
 
 ## REQ-CASHFLOW-038 場館日結時間結束所有進行中場次
 
@@ -454,7 +455,7 @@
 - 驗收條件：
   - 0381：給定 場館日結時間到達，多台機台皆有進行中場次；當 系統執行日結；則 所有進行中場次皆結束並標記為日結結算，各自剩餘分數轉為隔日新場次的期初餘額
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-104 v1, TC-CASHFLOW-046 v1
+- 對應 TC：TC-CASHFLOW-046 v1, TC-CASHFLOW-104 v1
 
 ## REQ-CASHFLOW-039 一台機台同時只有一個進行中場次
 
@@ -465,7 +466,7 @@
 - 驗收條件：
   - 0391：給定 機台目前有一個進行中場次；當 同時嘗試觸發第二個場次的開始條件（理論情境）；則 系統仍只維持一個進行中場次，不會產生併發的第二個進行中場次
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-CASHFLOW-105 v1, TC-CASHFLOW-047 v1
+- 對應 TC：TC-CASHFLOW-047 v1, TC-CASHFLOW-105 v1
 
 ## REQ-CASHFLOW-040 線上帳號的場次欄位一律顯示為橫線
 
@@ -523,5 +524,5 @@
 - 驗收條件：
   - 0441：給定 檢視機台開分／稽核相關功能；當 任一操作情境；則 不存在「開分招待」（開分即綁定流水門檻的活動）功能；稽核倍數為幣種層級設定，無法綁定至單筆交易
 - 不符合時系統怎麼做：spec 有寫——明確定義為本次不實作的範圍，此規則本身即是「不應存在」
-- 對應 TC：TC-CASHFLOW-108 v1, TC-CASHFLOW-052 v1
+- 對應 TC：TC-CASHFLOW-052 v1, TC-CASHFLOW-108 v1
 

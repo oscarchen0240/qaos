@@ -1,0 +1,163 @@
+plan_schema: 1
+op_id: 859aa902398c757803c44ec03c7e4c38eab537d7b50a0ab7345f06458838dc5c
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHFLOW
+    - SPEC-CASHFLOW-001
+    - '0.1'
+    - 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與
+      spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: SPEC-CASHFLOW-001 v0.1 第 341、344、372 行與 v0.2 第 260、345、348、376 行皆寫待確認出金可由管理員手動取消收斂（含 Operator Reset 後只能手動取消、機台報廢死單清理）。2026-09-15
+        CLR-CASHFLOW-004 依 RD 畫面移除此路徑（REQ-CASHFLOW-026），並移除入金預留於手動取消時釋放（REQ-CASHFLOW-008）。2026-10-12 Oscar 確認（CLR-REDPACKET-055
+        rev 1）待確認出金的管理員手動取消要做，後端已完成、前端未開發。
+      options: []
+      requirement_id: REQ-CASHFLOW-026
+      impact: REQ-CASHFLOW-026（出金死單收斂路徑）與引用手動取消的 CASHFLOW TC（約 4 張）需重新判定；REQ-CASHFLOW-008 視入金是否適用
+      consulted:
+      - SPEC-CASHFLOW-001@0.1
+      - SPEC-CASHFLOW-001@0.2
+      - SPEC-REDPACKET-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: state_transition
+      subject: cashflow.arcade.pending_cashout_admin_cancel
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+      known_rules:
+      - type: spec
+        spec_id: SPEC-CASHFLOW-001
+        spec_version: '0.1'
+        content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+        location: §出金 第一階段 15 秒逾時（第 341 行）
+        quote: 須由新的 `req-cashout` 取代或 Admin 手動取消收斂
+      - type: clarification
+        clarification_id: CLR-REDPACKET-055
+        answer_rev: 1
+        answer_sha256: 03aae6a9a3c46e95992a94f37a6f9615abab2255a89a7938bf3af6ffee9b193c
+        quote: 待確認出金的管理員手動取消是要做的功能，後端已開發完成，僅前端尚未開發
+request_hash: 859aa902398c757803c44ec03c7e4c38eab537d7b50a0ab7345f06458838dc5c
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T12:58:36Z'
+allocated_ids:
+- CLR-CASHFLOW-008
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 087d1d5fe4a3a3ac59f67775fcc30b8170e20e3f2bde935722eaa488532912f1
+  expected_after: b6fb3b13723db920fce4da6237ab8cf39504c7a0260035bd0b627537f356bc4c
+  blob: b6fb3b13723db920fce4da6237ab8cf39504c7a0260035bd0b627537f356bc4c
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-008.yaml
+  kind: business
+  expected_before: null
+  expected_after: c6397c537892086e2e51278510739b50ffbe33422877ea078a9ef21503965dc8
+  blob: c6397c537892086e2e51278510739b50ffbe33422877ea078a9ef21503965dc8
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/859aa902398c757803c44ec03c7e4c38eab537d7b50a0ab7345f06458838dc5c-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 81574d49067f697fc430e1c819f500976f66a3a486b48b1dc33afccc6f9f248a
+  blob: 81574d49067f697fc430e1c819f500976f66a3a486b48b1dc33afccc6f9f248a
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-008.md
+  kind: business
+  expected_before: null
+  expected_after: e0d6c7d2319007b941e20a9ab2fe0dbe5c6746ba2e203f3b17fa70ba021de0d5
+  blob: e0d6c7d2319007b941e20a9ab2fe0dbe5c6746ba2e203f3b17fa70ba021de0d5
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: 6e5a4afe29246ef5827c2622ef85de9655a4f542b56e2d79452ba6e536fa7596
+  expected_after: ce673e1493ce15ee3cd712ad30697ce143c15cb77beb35643217edd22baac32c
+  blob: ce673e1493ce15ee3cd712ad30697ce143c15cb77beb35643217edd22baac32c
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/859aa902398c757803c44ec03c7e4c38eab537d7b50a0ab7345f06458838dc5c-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 2d1d149909076185d6b1b6eb70efb9c71bd27d2fb9824f7012a48be24ebc6ec0
+  blob: 2d1d149909076185d6b1b6eb70efb9c71bd27d2fb9824f7012a48be24ebc6ec0
+no_change: []
+audit_events:
+- at: '2026-10-12T12:58:36Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHFLOW-008: 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新
+    req-cashout 取代與人工出金連動取消，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？'
+  op_id: 859aa902398c757803c44ec03c7e4c38eab537d7b50a0ab7345f06458838dc5c
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-008
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  question: 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與
+    spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？
+  context: SPEC-CASHFLOW-001 v0.1 第 341、344、372 行與 v0.2 第 260、345、348、376 行皆寫待確認出金可由管理員手動取消收斂（含 Operator Reset 後只能手動取消、機台報廢死單清理）。2026-09-15
+    CLR-CASHFLOW-004 依 RD 畫面移除此路徑（REQ-CASHFLOW-026），並移除入金預留於手動取消時釋放（REQ-CASHFLOW-008）。2026-10-12 Oscar 確認（CLR-REDPACKET-055
+    rev 1）待確認出金的管理員手動取消要做，後端已完成、前端未開發。
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T12:58:36Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T12:58:36Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHFLOW-026
+  impact_if_unanswered: REQ-CASHFLOW-026（出金死單收斂路徑）與引用手動取消的 CASHFLOW TC（約 4 張）需重新判定；REQ-CASHFLOW-008 視入金是否適用
+  kind: spec_question
+  topic: state_transition
+  subject: cashflow.arcade.pending_cashout_admin_cancel
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  known_rules:
+  - type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+    location: §出金 第一階段 15 秒逾時（第 341 行）
+    quote: 須由新的 `req-cashout` 取代或 Admin 手動取消收斂
+  - type: clarification
+    clarification_id: CLR-REDPACKET-055
+    answer_rev: 1
+    answer_sha256: 03aae6a9a3c46e95992a94f37a6f9615abab2255a89a7938bf3af6ffee9b193c
+    quote: 待確認出金的管理員手動取消是要做的功能，後端已開發完成，僅前端尚未開發
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.1'
+      content_hash: b34624219b5a284168e1215f491369b988bf435fafd9d7b2c6a8890ab52a6e05
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    - spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  issue_key: 1f056d8660d7fa03b2ae338d71f29876fbeb3486f0c8a6ff6f3ed66185c58014

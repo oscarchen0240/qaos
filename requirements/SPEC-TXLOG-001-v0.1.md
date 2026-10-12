@@ -1,18 +1,18 @@
 # Requirements — SPEC-TXLOG-001 v0.1（機台交易紀錄）
 
 - 共 30 條；由 Spec Analyst 自 spec 切分，每條附原文位置與引句，請檢查切法是否合理
-- 事實來源：`artifacts/requirements/SPEC-TXLOG-001/v0.1/requirements.yaml`
+- 事實來源：`artifacts/requirements/SPEC-TXLOG-001/v0.1/revisions/R000.yaml`（revision R000）
 
 ## REQ-TXLOG-001 交易紀錄查詢擴充機台視角，含未完成/取消/未成立交易
 
-**需求**：併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成、被取消與未成立的交易（既有 4.1 只顯示已生效的錢包異動）
+**需求**：併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成（待確認）、被取消、已逾時的交易；「未成立」的交易因不寫入紀錄，查詢結果不會出現（CLR-CASHFLOW-006，2026-09-23）
 
 - 類型 functional · 行為 success · 風險 high · 狀態 ACTIVE
 - spec 位置：§功能說明　引句：「既有的 4.1 只顯示已經生效的錢包異動；併入後，查詢範圍含機台交易時另外顯示尚未完成、被取消與被拒絕的交易」
 - 驗收條件：
-  - 0011：給定 查詢範圍包含機台交易；當 檢視查詢結果；則 除已完成（已生效）的交易外，也列出待確認、已取消、已逾時、未成立的機台交易
+  - 0011：給定 查詢範圍包含機台交易；當 檢視查詢結果；則 除已完成（已生效）的交易外，也列出待確認、已取消、已逾時的機台交易；未成立的交易不會出現
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-001 v1, TC-TXLOG-084 v1, TC-TXLOG-044 v1
+- 對應 TC：TC-TXLOG-001 v1, TC-TXLOG-044 v1, TC-TXLOG-084 v1, TC-TXLOG-125 v1, TC-TXLOG-125 v2, TC-TXLOG-166 v1, TC-TXLOG-167 v1
 
 ## REQ-TXLOG-002 非機台交易的既有查詢行為不變
 
@@ -23,7 +23,7 @@
 - 驗收條件：
   - 0021：給定 查詢結果包含線上會員的既有交易；當 檢視這些交易的呈現方式；則 與擴充前的既有 4.1 行為一致，不受本包影響
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-085 v1, TC-TXLOG-045 v1, TC-TXLOG-002 v1
+- 對應 TC：TC-TXLOG-002 v1, TC-TXLOG-045 v1, TC-TXLOG-085 v1, TC-TXLOG-126 v1, TC-TXLOG-168 v1
 
 ## REQ-TXLOG-003 頁面資料範圍跟隨站台切換選單，不另設場館篩選欄位
 
@@ -34,7 +34,7 @@
 - 驗收條件：
   - 0031：給定 切換頁面標題下方的站台選單至站台 A；當 檢視篩選器與查詢結果；則 篩選器不存在「場館」欄位；查詢結果僅限站台 A 範圍內的交易
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-046 v1, TC-TXLOG-086 v1, TC-TXLOG-003 v1
+- 對應 TC：TC-TXLOG-003 v1, TC-TXLOG-046 v1, TC-TXLOG-086 v1, TC-TXLOG-127 v1, TC-TXLOG-169 v1
 
 ## REQ-TXLOG-004 機台帳號篩選支援輸入會員編號、逗號分隔查詢多筆
 
@@ -45,7 +45,7 @@
 - 驗收條件：
   - 0041：給定 以「,」分隔輸入兩個機台帳號的會員編號；當 點擊搜尋；則 查詢結果同時包含這兩個機台帳號的交易
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-047 v1, TC-TXLOG-004 v1, TC-TXLOG-087 v1
+- 對應 TC：TC-TXLOG-004 v1, TC-TXLOG-047 v1, TC-TXLOG-087 v1, TC-TXLOG-128 v1, TC-TXLOG-170 v1
 
 ## REQ-TXLOG-005 交易編號篩選可查詢特定一筆交易
 
@@ -56,7 +56,7 @@
 - 驗收條件：
   - 0051：給定 輸入一筆已知的交易編號；當 點擊搜尋；則 查詢結果僅顯示該筆交易
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-088 v1, TC-TXLOG-005 v1, TC-TXLOG-048 v1
+- 對應 TC：TC-TXLOG-005 v1, TC-TXLOG-048 v1, TC-TXLOG-088 v1, TC-TXLOG-129 v1, TC-TXLOG-171 v1
 
 ## REQ-TXLOG-006 場次編號可篩選同場次所有交易，線上帳號交易此欄顯示橫線
 
@@ -69,7 +69,7 @@
   - 0062：給定 在列表中點擊某筆機台交易的場次編號值；當 檢視結果；則 自動篩出同一場次的所有交易
   - 0063：給定 查詢結果包含線上會員的交易；當 檢視其場次編號欄；則 顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-006 v1, TC-TXLOG-007 v1, TC-TXLOG-050 v1, TC-TXLOG-089 v1, TC-TXLOG-049 v1, TC-TXLOG-090 v1
+- 對應 TC：TC-TXLOG-006 v1, TC-TXLOG-007 v1, TC-TXLOG-049 v1, TC-TXLOG-050 v1, TC-TXLOG-089 v1, TC-TXLOG-090 v1, TC-TXLOG-130 v1, TC-TXLOG-131 v1, TC-TXLOG-172 v1, TC-TXLOG-173 v1, TC-TXLOG-174 v1
 
 ## REQ-TXLOG-007 訂單編號篩選僅出金交易適用
 
@@ -80,7 +80,7 @@
 - 驗收條件：
   - 0071：給定 輸入一筆機台出金交易的訂單編號；當 點擊搜尋；則 查詢結果顯示該筆出金交易；其餘交易類型（開分/洗分/入金）的訂單編號欄一律顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-051 v1, TC-TXLOG-008 v1, TC-TXLOG-091 v1
+- 對應 TC：TC-TXLOG-008 v1, TC-TXLOG-051 v1, TC-TXLOG-091 v1, TC-TXLOG-132 v1, TC-TXLOG-175 v1, TC-TXLOG-176 v1
 
 ## REQ-TXLOG-008 交易類型篩選為多選 chip，實際標籤為開分/入鈔/出鈔/洗分
 
@@ -92,7 +92,7 @@
   - 0081：給定 開啟交易類型篩選；當 檢視可選項目；則 顯示「開分」「入鈔」「出鈔」「洗分」四個項目，可同時複選多個，非單選
   - 0082：給定 勾選「出鈔」與「洗分」兩個交易類型；當 點擊搜尋；則 查詢結果同時包含這兩種類型的交易
 - 不符合時系統怎麼做：spec 有寫——規則已由實際畫面截圖確認
-- 對應 TC：TC-TXLOG-092 v1, TC-TXLOG-010 v1, TC-TXLOG-093 v1, TC-TXLOG-053 v1, TC-TXLOG-052 v1, TC-TXLOG-009 v1
+- 對應 TC：TC-TXLOG-009 v1, TC-TXLOG-010 v1, TC-TXLOG-052 v1, TC-TXLOG-053 v1, TC-TXLOG-092 v1, TC-TXLOG-093 v1, TC-TXLOG-133 v1, TC-TXLOG-134 v1, TC-TXLOG-177 v1, TC-TXLOG-178 v1
 
 ## REQ-TXLOG-009 交易狀態篩選依交易類型分兩組，選項為後端技術值
 
@@ -105,7 +105,7 @@
   - 0092：給定 交易類型篩選勾選「出鈔」或「洗分」；當 開啟交易狀態篩選；則 可選項目為「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項
 - 不符合時系統怎麼做：spec 有寫——規則已由實際畫面截圖確認
 - ⚠ 歧義（minor）：開分/入鈔類型的交易狀態選項中「無」這個技術值對應 spec.md 哪個概念分類尚未確認　可能解讀：對應「未成立」（與「錯誤」「無效」同類） / 對應其他尚未定義的情況 / 純粹的 UI 佔位/邊界情況，實務上不會出現
-- 對應 TC：TC-TXLOG-094 v1, TC-TXLOG-104 v1, TC-TXLOG-105 v1, TC-TXLOG-095 v1, TC-TXLOG-102 v1, TC-TXLOG-011 v1, TC-TXLOG-100 v1, TC-TXLOG-101 v1, TC-TXLOG-054 v1
+- 對應 TC：TC-TXLOG-011 v1, TC-TXLOG-054 v1, TC-TXLOG-094 v1, TC-TXLOG-095 v1, TC-TXLOG-100 v1, TC-TXLOG-101 v1, TC-TXLOG-102 v1, TC-TXLOG-104 v1, TC-TXLOG-105 v1, TC-TXLOG-135 v1, TC-TXLOG-136 v1, TC-TXLOG-141 v1, TC-TXLOG-142 v1, TC-TXLOG-143 v1, TC-TXLOG-145 v1, TC-TXLOG-146 v1, TC-TXLOG-179 v1
 
 ## REQ-TXLOG-010 核實狀態篩選僅對機台洗分與機台出金有意義
 
@@ -117,7 +117,7 @@
   - 0101：給定 開啟核實狀態篩選；當 檢視可選項目；則 僅有「待核實」「已核實」「已作廢」三個可選值，不含「不適用」
   - 0102：給定 篩選核實狀態為「待核實」並搜尋；當 檢視結果；則 僅顯示核實狀態為待核實的機台洗分或機台出金交易
 - 不符合時系統怎麼做：spec 有寫——規則已由實際畫面截圖確認
-- 對應 TC：TC-TXLOG-056 v1, TC-TXLOG-012 v1, TC-TXLOG-013 v1, TC-TXLOG-055 v1, TC-TXLOG-096 v1, TC-TXLOG-097 v1
+- 對應 TC：TC-TXLOG-012 v1, TC-TXLOG-013 v1, TC-TXLOG-055 v1, TC-TXLOG-056 v1, TC-TXLOG-096 v1, TC-TXLOG-097 v1, TC-TXLOG-137 v1, TC-TXLOG-138 v1, TC-TXLOG-180 v1, TC-TXLOG-181 v1
 
 ## REQ-TXLOG-011 交易時間與金額範圍篩選
 
@@ -129,7 +129,7 @@
   - 0111：給定 設定交易時間範圍並搜尋；當 檢視結果；則 僅顯示交易發生時間落在該範圍內的交易
   - 0112：給定 設定金額範圍（min～max）並搜尋；當 檢視結果；則 僅顯示金額落在該範圍內的交易
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-057 v1, TC-TXLOG-098 v1, TC-TXLOG-014 v1
+- 對應 TC：TC-TXLOG-014 v1, TC-TXLOG-057 v1, TC-TXLOG-098 v1, TC-TXLOG-139 v1, TC-TXLOG-182 v1, TC-TXLOG-183 v1
 
 ## REQ-TXLOG-012 搜尋與清除按鈕行為
 
@@ -140,7 +140,7 @@
 - 驗收條件：
   - 0121：給定 設定多個篩選條件後點擊清除；當 檢視篩選器與查詢結果；則 所有篩選條件重置為預設值，查詢結果回到未篩選狀態
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-099 v1, TC-TXLOG-058 v1, TC-TXLOG-015 v1
+- 對應 TC：TC-TXLOG-015 v1, TC-TXLOG-058 v1, TC-TXLOG-099 v1, TC-TXLOG-140 v1, TC-TXLOG-184 v1
 
 ## REQ-TXLOG-013 交易狀態「待確認」定義
 
@@ -151,7 +151,7 @@
 - 驗收條件：
   - 0131：給定 一筆交易處於待確認狀態；當 檢視其分數異動情形；則 分數尚未異動
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-016 v1, TC-TXLOG-100 v1, TC-TXLOG-059 v1
+- 對應 TC：TC-TXLOG-016 v1, TC-TXLOG-059 v1, TC-TXLOG-100 v1, TC-TXLOG-141 v1, TC-TXLOG-185 v1
 
 ## REQ-TXLOG-014 交易狀態「已完成」與「已取消」定義
 
@@ -163,7 +163,7 @@
   - 0141：給定 一筆交易處於已完成狀態；當 檢視其分數異動情形；則 分數已異動
   - 0142：給定 一筆出金交易被新的出金請求或櫃檯人工出金取代；當 檢視其狀態與分數；則 狀態顯示已取消，分數未異動
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-061 v1, TC-TXLOG-060 v1, TC-TXLOG-017 v1, TC-TXLOG-102 v1, TC-TXLOG-101 v1, TC-TXLOG-018 v1
+- 對應 TC：TC-TXLOG-017 v1, TC-TXLOG-018 v1, TC-TXLOG-060 v1, TC-TXLOG-061 v1, TC-TXLOG-101 v1, TC-TXLOG-102 v1, TC-TXLOG-142 v1, TC-TXLOG-143 v1, TC-TXLOG-186 v1, TC-TXLOG-187 v1
 
 ## REQ-TXLOG-015 交易狀態「已逾時」僅入金會出現
 
@@ -176,19 +176,19 @@
   - 0152：給定 篩選交易狀態為「已逾時」；當 檢視結果；則 只會出現入金交易，不會出現出金交易
 - 狀態轉換：待確認→已逾時（入金超過 24 小時未回報）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-104 v1, TC-TXLOG-020 v1, TC-TXLOG-103 v1, TC-TXLOG-063 v1, TC-TXLOG-062 v1, TC-TXLOG-019 v1
+- 對應 TC：TC-TXLOG-019 v1, TC-TXLOG-020 v1, TC-TXLOG-062 v1, TC-TXLOG-063 v1, TC-TXLOG-103 v1, TC-TXLOG-104 v1, TC-TXLOG-144 v1, TC-TXLOG-145 v1, TC-TXLOG-188 v1, TC-TXLOG-189 v1
 
-## REQ-TXLOG-016 交易狀態「未成立」不含餘額不足
+## REQ-TXLOG-016 交易狀態「未成立」不會有任何紀錄可查（不只餘額不足）
 
-**需求**：未成立狀態代表平台拒絕了這筆請求，分數未異動；因餘額不足被拒絕的交易不寫入紀錄，故未成立狀態不含餘額不足的情形
+**需求**：未成立狀態代表平台拒絕了這筆請求，分數未異動；所有未成立原因（含額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效、餘額不足）皆不寫入交易紀錄，故「未成立」狀態實質上不會出現在交易紀錄查詢中（CLR-CASHFLOW-006，2026-09-23，擴大原僅排除餘額不足的規則）
 
 - 類型 functional · 行為 rejection · 風險 medium · 狀態 ACTIVE
 - spec 位置：§交易狀態　引句：「未成立 | 平台拒絕了這筆請求；分數未異動，原因見「未成立原因」欄（餘額不足不寫入紀錄，故本狀態不含餘額不足）」
 - 驗收條件：
-  - 0161：給定 一筆交易因額度上限等原因被平台拒絕；當 檢視其狀態；則 顯示未成立，分數未異動，未成立原因欄可查得拒絕原因
+  - 0161：給定 一筆交易因額度上限等任一未成立原因被平台拒絕；當 檢視其狀態；則 查無此筆交易，不會以未成立狀態出現在列表中（與 AC-TXLOG-0162 餘額不足同一待遇）
   - 0162：給定 一筆洗分或出金因餘額不足被拒絕；當 檢視交易紀錄；則 查無此筆交易，不會以未成立狀態出現在列表中
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，且與 SPEC-CASHFLOW-001 的餘額不足不寫入紀錄規則一致
-- 對應 TC：TC-TXLOG-021 v1, TC-TXLOG-105 v1, TC-TXLOG-065 v1, TC-TXLOG-064 v1, TC-TXLOG-106 v1, TC-TXLOG-022 v1
+- 對應 TC：TC-TXLOG-021 v1, TC-TXLOG-022 v1, TC-TXLOG-064 v1, TC-TXLOG-065 v1, TC-TXLOG-105 v1, TC-TXLOG-106 v1, TC-TXLOG-146 v1, TC-TXLOG-146 v2, TC-TXLOG-147 v1, TC-TXLOG-190 v1, TC-TXLOG-191 v1
 
 ## REQ-TXLOG-017 入金與出金的待確認收斂機制不同
 
@@ -199,7 +199,7 @@
 - 驗收條件：
   - 0171：給定 一筆出金交易長期處於待確認狀態，機台從未補送完成回報；當 持續檢視其狀態；則 不會自動轉為已逾時，持續保留為待確認，直到被新出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁（SPEC-CASHOUT-001）由人工處理
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，是本包與 CASHFLOW 收斂機制差異的關鍵風險點
-- 對應 TC：TC-TXLOG-066 v1, TC-TXLOG-023 v1, TC-TXLOG-107 v1
+- 對應 TC：TC-TXLOG-023 v1, TC-TXLOG-066 v1, TC-TXLOG-107 v1, TC-TXLOG-148 v1, TC-TXLOG-192 v1
 
 ## REQ-TXLOG-018 列表底部依交易類型分列顯示金額總計
 
@@ -210,7 +210,7 @@
 - 驗收條件：
   - 0181：給定 篩選出一批包含多種交易類型的結果；當 檢視列表底部；則 顯示依交易類型分列的金額總計，且與該類型交易的金額加總一致
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-108 v1, TC-TXLOG-067 v1, TC-TXLOG-024 v1
+- 對應 TC：TC-TXLOG-024 v1, TC-TXLOG-067 v1, TC-TXLOG-108 v1, TC-TXLOG-149 v1, TC-TXLOG-193 v1
 
 ## REQ-TXLOG-019 機台帳號（來源機台）欄位規則
 
@@ -223,7 +223,7 @@
   - 0192：給定 查詢結果包含線上會員的交易；當 檢視其機台帳號欄；則 顯示「—」
   - 0193：給定 檢視列表任一欄位；當 確認是否顯示場館名稱；則 列表中不存在場館名稱欄位或顯示
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-109 v1, TC-TXLOG-026 v1, TC-TXLOG-069 v1, TC-TXLOG-068 v1, TC-TXLOG-025 v1, TC-TXLOG-110 v1
+- 對應 TC：TC-TXLOG-025 v1, TC-TXLOG-026 v1, TC-TXLOG-068 v1, TC-TXLOG-069 v1, TC-TXLOG-109 v1, TC-TXLOG-110 v1, TC-TXLOG-150 v1, TC-TXLOG-151 v1, TC-TXLOG-194 v1, TC-TXLOG-195 v1
 
 ## REQ-TXLOG-020 請求金額與實際金額欄位規則
 
@@ -236,7 +236,7 @@
   - 0202：給定 一筆出金交易；當 檢視請求金額與實際金額欄；則 兩者皆為當下全部餘額（全額清空）
   - 0203：給定 一筆交易尚未完成（待確認）；當 檢視其實際金額欄；則 顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，直接關係到現場核帳正確性
-- 對應 TC：TC-TXLOG-112 v1, TC-TXLOG-113 v1, TC-TXLOG-071 v1, TC-TXLOG-027 v1, TC-TXLOG-070 v1, TC-TXLOG-028 v1, TC-TXLOG-029 v1, TC-TXLOG-072 v1, TC-TXLOG-111 v1
+- 對應 TC：TC-TXLOG-027 v1, TC-TXLOG-028 v1, TC-TXLOG-029 v1, TC-TXLOG-070 v1, TC-TXLOG-071 v1, TC-TXLOG-072 v1, TC-TXLOG-111 v1, TC-TXLOG-112 v1, TC-TXLOG-113 v1, TC-TXLOG-152 v1, TC-TXLOG-153 v1, TC-TXLOG-154 v1, TC-TXLOG-196 v1, TC-TXLOG-197 v1, TC-TXLOG-198 v1, TC-TXLOG-199 v1
 
 ## REQ-TXLOG-021 核實狀態欄位規則
 
@@ -250,7 +250,7 @@
   - 0213：給定 檢視一筆待核實的機台出金交易；當 確認呈現方式；則 正常顯示，不特別提示
   - 0214：給定 嘗試在本頁直接修改核實狀態；當 檢視是否可操作；則 本頁不提供修改核實狀態的操作，此欄純顯示
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-030 v1, TC-TXLOG-114 v1, TC-TXLOG-115 v1, TC-TXLOG-031 v1, TC-TXLOG-073 v1, TC-TXLOG-074 v1
+- 對應 TC：TC-TXLOG-030 v1, TC-TXLOG-031 v1, TC-TXLOG-073 v1, TC-TXLOG-074 v1, TC-TXLOG-114 v1, TC-TXLOG-115 v1, TC-TXLOG-155 v1, TC-TXLOG-156 v1, TC-TXLOG-200 v1, TC-TXLOG-201 v1, TC-TXLOG-202 v1, TC-TXLOG-210 v1
 
 ## REQ-TXLOG-022 核實人員／時間欄位規則
 
@@ -262,11 +262,11 @@
   - 0221：給定 一筆交易已於核實頁被核實；當 檢視此欄；則 顯示執行核實的後台帳號與時間（UTC+0）
   - 0222：給定 一筆交易仍待核實；當 檢視此欄；則 顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-032 v1, TC-TXLOG-116 v1, TC-TXLOG-075 v1
+- 對應 TC：TC-TXLOG-032 v1, TC-TXLOG-075 v1, TC-TXLOG-116 v1, TC-TXLOG-157 v1, TC-TXLOG-203 v1
 
 ## REQ-TXLOG-023 未成立原因欄位僅未成立狀態顯示
 
-**需求**：未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表
+**需求**：未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表。【2026-09-23 補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證。【2026-09-23 補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證
 
 - 類型 functional · 行為 success · 風險 low · 狀態 ACTIVE
 - spec 位置：§列表欄位　引句：「未成立原因 | 僅「未成立」狀態顯示，內容見「交易不成立的原因」對照表（定義於開發包③／正本）」
@@ -274,7 +274,7 @@
   - 0231：給定 一筆交易狀態為未成立；當 檢視未成立原因欄；則 顯示對應的拒絕原因文字
   - 0232：給定 一筆交易狀態非未成立（如已完成）；當 檢視未成立原因欄；則 不顯示內容（或顯示「—」）
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-076 v1, TC-TXLOG-117 v1, TC-TXLOG-033 v1
+- 對應 TC：TC-TXLOG-033 v1, TC-TXLOG-076 v1, TC-TXLOG-117 v1, TC-TXLOG-158 v1, TC-TXLOG-158 v2, TC-TXLOG-204 v1
 
 ## REQ-TXLOG-024 交易時間與完成時間欄位規則
 
@@ -286,7 +286,7 @@
   - 0241：給定 一筆交易已完成；當 檢視完成時間欄；則 顯示以 UTC+0 表示的完成時間
   - 0242：給定 一筆交易尚未完成（待確認）；當 檢視完成時間欄；則 顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-077 v1, TC-TXLOG-118 v1, TC-TXLOG-034 v1
+- 對應 TC：TC-TXLOG-034 v1, TC-TXLOG-077 v1, TC-TXLOG-118 v1, TC-TXLOG-159 v1, TC-TXLOG-205 v1
 
 ## REQ-TXLOG-025 重送次數欄位目前固定顯示橫線，不顯示實際次數
 
@@ -298,7 +298,7 @@
   - 0251：給定 一筆交易曾被機台重複回報完成；當 檢視該筆交易的重送次數欄；則 欄位固定顯示「—」，不顯示實際重複次數（分數本身仍只異動一次，不受此欄位顯示問題影響）
   - 0252：給定 一筆交易從未被重複回報；當 檢視重送次數欄；則 同樣顯示「—」
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義，直接對應 SPEC-CASHFLOW-001 的 end-cashin/end-cashout 冪等性機制
-- 對應 TC：TC-TXLOG-036 v1, TC-TXLOG-119 v1, TC-TXLOG-120 v1, TC-TXLOG-079 v1, TC-TXLOG-035 v1, TC-TXLOG-078 v1
+- 對應 TC：TC-TXLOG-035 v1, TC-TXLOG-036 v1, TC-TXLOG-078 v1, TC-TXLOG-079 v1, TC-TXLOG-119 v1, TC-TXLOG-120 v1, TC-TXLOG-160 v1, TC-TXLOG-161 v1, TC-TXLOG-206 v1, TC-TXLOG-207 v1
 
 ## REQ-TXLOG-026 來源欄位目前固定顯示橫線，不顯示實際位置
 
@@ -309,7 +309,7 @@
 - 驗收條件：
   - 0261：給定 檢視任一筆交易；當 檢視來源欄；則 固定顯示「—」，不顯示「大廳」或其他實際位置值
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-037 v1, TC-TXLOG-121 v1, TC-TXLOG-080 v1
+- 對應 TC：TC-TXLOG-037 v1, TC-TXLOG-080 v1, TC-TXLOG-121 v1, TC-TXLOG-162 v1, TC-TXLOG-208 v1
 
 ## REQ-TXLOG-027 查看明細操作區分摘要與技術欄位
 
@@ -320,7 +320,7 @@
 - 驗收條件：
   - 0271：給定 點擊列表中任一筆交易；當 檢視開啟的右側面板；則 顯示該筆交易的完整往來紀錄，區分上半部摘要區塊與下半部技術欄位區塊
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-122 v1, TC-TXLOG-038 v1, TC-TXLOG-081 v1
+- 對應 TC：TC-TXLOG-038 v1, TC-TXLOG-081 v1, TC-TXLOG-122 v1, TC-TXLOG-163 v1, TC-TXLOG-209 v1
 
 ## REQ-TXLOG-028 本頁不提供手動取消操作
 
@@ -331,7 +331,8 @@
 - 驗收條件：
   - 0281：給定 檢視本頁（交易紀錄查詢）任一筆待確認狀態的交易；當 尋找手動取消相關的按鈕或入口；則 不存在任何可執行的手動取消操作；待確認交易的後續處理需至「洗分出金核實」頁（SPEC-CASHOUT-001）進行
 - 不符合時系統怎麼做：spec 有寫——此操作本身不存在，已由 Oscar 明確確認
-- 對應 TC：TC-TXLOG-082 v1, TC-TXLOG-040 v1, TC-TXLOG-123 v1, TC-TXLOG-039 v1
+- ✅ PM 回答（CLR-TXLOG-002）：提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依 24 小時逾時轉「已逾時」收斂）。後端已開發完成，前端尚未開發（2026-10-12 實機：列表操作欄只有「明細」，明細面板標示「本頁只讀」）。2026-09-14（CLR-TXLOG-001）與 2026-09-15（CLR-CASHFLOW-004）「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028 改回提供（限出金、限管理員），REQ-TXLOG-029 的限制（非管理員、非待確認、入金）恢復為有效需求。
+- 對應 TC：TC-TXLOG-039 v1, TC-TXLOG-040 v1, TC-TXLOG-082 v1, TC-TXLOG-123 v1, TC-TXLOG-164 v1, TC-TXLOG-210 v1
 
 ## REQ-TXLOG-029 手動取消對非 Admin 或非待確認狀態的限制
 
@@ -356,5 +357,5 @@
 - 驗收條件：
   - 0301：給定 檢視本頁（交易紀錄查詢）的所有可用操作；當 確認是否有核實相關操作；則 本頁不存在任何核實或手動取消操作，僅有查看明細一項
 - 不符合時系統怎麼做：spec 有寫——規則已明確定義
-- 對應 TC：TC-TXLOG-124 v1, TC-TXLOG-083 v1, TC-TXLOG-043 v1
+- 對應 TC：TC-TXLOG-043 v1, TC-TXLOG-083 v1, TC-TXLOG-124 v1, TC-TXLOG-165 v1, TC-TXLOG-210 v1
 
