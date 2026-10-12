@@ -1,0 +1,205 @@
+artifact_id: ART-TVR-01M4RH4HR7QQYS2QFMRWXVYJQJ
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-004
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T17:05:13Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RGX0HC7209GDMZBDV9KCPJ
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RGX0HC7209GDMZBDV9KCPJ
+- entity_type: Artifact
+  id: ART-TDR-01M4RGX0HDWS1EEQ8TJF9GSM6Y
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: b8a0640bf70bbbbcb381e0483b92863dd21099c57c0e3d4c64d7917401c901d6
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4RGX0HC7209GDMZBDV9KCPJ
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    requirement_model_artifact_id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+  issues:
+  - testcase_id: TC-DRAFT-01M4RGX0HBP4TGTC417XQYVTWS
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／進鈔金額（第 50 行）
+      quote: 當日入金總額（紙鈔機收現）
+    evidence: 步驟 5 的 expected 與 expected_result 無條件斷言「Z2 與 Z1 完全相同：進鈔仍只增加 500、收據仍只增加 500、未兌現仍只增加 500」。前提自承「重送後報表應與重送前相同這個預期的前提是：同一
+      TXID 的重送不是新的一筆入金或出金（T3RR RF-13 的敘述，機台金流冪等規則本身在不在本包範圍內我無法從派發包驗證）」；expected_result 也寫「推論部分：同一 TXID 的重送不構成新的入金／出金，來自 T3RR
+      RF-13 的敘述，不是本 spec 明文」。步驟 4 只「記錄」機台交易紀錄中這兩個 TXID 各有幾筆，不作分支。派發包 extra_inputs 為 []、closure 為 []。
+    explanation: v0.3 沒有提到 TXID、兩階段完成回報或重送；第 7 行說明交易模型（四種金流）定義在開發包③，但本包沒有宣告引用，也不在本 run 閉包內。CLR-001～016 都沒有涉及這件事。T3RR 是風險審查產物，不是規範來源，而且沒有登記在本派發包的
+      extra_inputs，所以這個前提在派發包範圍內沒有 spec／CLR 依據，屬於未定義假設。這個前提卻直接決定通過與否：如果重送在交易層被記成新的入金／出金（機台交易紀錄出現多筆），報表依第 50、51 行的「當日入金／出金總額」把它們加總反而是正確行為，這時本案會錯判報表
+      FAIL，而真正的缺陷在交易層。本案以確定斷言呈現，沒有 assumptions[]，也沒有把判定建立在 spec 定義的不變量上。（v0.3 定義得到的不變量是：報表各欄＝當日交易的合計。）
+    recommended_change: '擇一：(a) 比照 RF-12 案步驟 3 的寫法改為條件判定——步驟 4 依機台交易紀錄確認 TXID_in、TXID_out 各只有一筆紀錄時，才斷言 Z2＝Z1；若出現多筆，記錄為交易層問題並停止，不判定報表（必要時另行斷言報表各欄等於交易紀錄的合計，這是
+      v0.3 第 50、51、53 行可支持的不變量）；(b) 由主 session 以 --extra 登記開發包③（機台金流與場次）中定義同 TXID 重送行為的條文，並改以該條文為依據寫入 source_refs；(c) 改為 exploratory，以
+      assumptions[] 標記此前提並設 needs_human_confirmation: true。不要以 T3RR 作為斷言依據。'
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RGX0HBTY27T0FJS485HJGD
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-027
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+    evidence: 設計者推論：「出收據的日期」＝出金交易時刻所屬的營業日（依 T 判定）。依據引用第 42、52～54、70 行與 AC-0071／0072。RF-04、RF-10、RF-13 的收據歸屬也沿用這個推論。
+    explanation: 判定為有依據，不構成未定義假設：第 51 行把收據金額定義為「當日出金總額」，第 70 行說明「當日」指各列的營業日；第 54 行規定每列 收據＝已兌現＋未兌現＋已作廢，三欄因此必須和收據金額採同一個營業日歸屬，也就是出金交易所屬的營業日。營業日依
+      T 切分（第 42、152 行），以起算日期標示（AC-0071／0072）。本案沒有斷言收據 T 邊界上的 1 秒精度：方式 (b) 已註明只驗證 T0 兩側。也已排除變更 T 的情境（CLR-DAILYREPORT-018 未決）。
+    recommended_change: 不阻擋。可在 expected_result 的推論說明補上第 51、54 行的勾稽關係作為依據，讓依據更完整。
+  - testcase_id: TC-DRAFT-01M4RGX0HBWV4505JD7AQD2DRR
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-005
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §篩選器／統計週期（第 35 行）
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    evidence: 設計者推論「週一營業日自週一的 T 起，週一 00:00～T 的交易屬週日營業日、歸前一週」。步驟 2 的 expected 引用「依 CLR-DAILYREPORT-008，不完整週照實際起迄顯示」，但 decision_refs／source_refs
+      沒有列出 CLR-DAILYREPORT-008。
+    explanation: 推論有依據：第 35 行規定週列為「該週期內各營業日的彙總」，週的組成單位是營業日；營業日依 T 切分並以起算日期標示（第 42 行、AC-0071／0072），所以週一 00:00～T 屬週日營業日。CLR-008
+      的 applicability 已綁定 v0.3（派發包 resolutions），可以引用；只是追溯上沒有列出。本案的判準是兩列的金額，不依賴不完整週列的標籤格式，所以影響小。
+    recommended_change: 在 decision_refs／source_refs 補上 CLR-DAILYREPORT-008（answer_rev 0，sha 93118bcd…），或把步驟 2 中的 CLR-008 字樣改為「期間文字以畫面為準」。
+  - testcase_id: TC-DRAFT-01M4RGX0HBXAVTNZQBCY0V1V2R
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §排序與分頁／總計列（第 84 行）
+      quote: 一律為**整個查詢結果**的合計（餘額欄仍依上述時點值規則），**不隨排序與分頁改變**
+    evidence: 設計者推論「併發下單次回應自洽」。判準 (a)(b)(c) 是：每列 收據＝三欄之和（第 54 行）、收據金額不因核實／作廢改變（第 51 行，收據含作廢；第 72 行）、總計列＝各列合計（第 62、84 行）。另外，步驟
+      2 的 expected 寫「每次請求都成功回應（記錄任何非成功的回應）」，重放頻率約每秒一次查詢加一次匯出，共 60 組。
+    explanation: 判準 (a)(b)(c) 全部是 v0.3 對任何一份呈現結果的明文不變量。本案沒有要求特定的快照或隔離語意，也沒有斷言中途數值，只要求每份回應符合 spec 的列與總計規則，所以不構成未定義假設；「沒有中途狀態就判無效、不得判通過」的設計也合理。唯一的疑慮是步驟
+      2：系統是否防連點、有無匯出併發上限，屬於 CLR-DAILYREPORT-019（OPEN）。「每次請求都成功」容易被讀成判準，而被限流拒絕的請求不違反 spec。
+    recommended_change: 在步驟 2 的 expected 明寫「被拒絕或限流的請求只記錄、不作判準（CLR-DAILYREPORT-019 未決），只檢查成功取得的回應與檔案」。
+  - testcase_id: TC-DRAFT-01M4RGX0HBQ96505V60NF1VVXQ
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-020
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+      quote: 故依結算期間排序時相鄰各列前後相接——較早一期的期末餘額即次一期的期初餘額
+    evidence: 前提：「A、B 目前沒有已逾時（逾時結束）的場次，因為本案不涉及逾時結束場次的餘分承接（CLR-DAILYREPORT-017 仍未決，不依賴）」。
+    explanation: 斷言只用 spec 定義的規則：交易依時間歸營業日（AC-0071／0072）、D 期末＝D+1 期初（第 68 行）、日結強制結束並轉入（第 151 行）；第 3 步的交易層分支也正確。不依賴 CLR-017，也不涉及注單。只是「目前沒有已逾時的場次」只限制了「目前」，沒有排除
+      A、B 在測試開始時的分數來自 D 稍早逾時結束場次的餘分。REQ-017 Q02（E5）的 detail_gaps 明列這種情況下「相鄰列前後相接」是否成立未定義。
+    recommended_change: 改寫為「A、B 在 D 與 D+1 都沒有逾時結束的場次，且測試開始時 A、B 的分數不來自逾時結束場次的餘分（最好先讓 A、B 的分數為 0）」。
+  - testcase_id: TC-DRAFT-01M4RGX0HBNB7427B8FFQR4M0G
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: expected_result_spec_reference 的 spec_id／spec_version 填 SPEC-DAILYREPORT-001 0.3，但 quote「後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕」是
+      CLR-DAILYREPORT-001 的答案原文，不在 v0.3 本文中；location 混寫「CLR-DAILYREPORT-001 2026-09-14 補充；§功能說明／權限表（第 25 行）」。另外，派發包 open_questions
+      中的 CLR-DAILYREPORT-020（OPEN）第 (1) 題問「操作員能否查看場館日結報表」。
+    explanation: 斷言本身有依據：操作員可看自身場館由第 25 行明定（REQ-001 Q01，E1），API 越權被後端拒絕由 CLR-001（applicability 以 role_scope operator 綁定 v0.3）支持；本案只判「被拒絕且不含
+      V2 資料」，沒有套用 CLR-014 的「無權限」字樣，作法正確。CLR-001 也已列在 decision_refs 與 source_refs，所以只是 expected_result_spec_reference 欄位用法不正確。CLR-020
+      第 (1) 題目前與 v0.3 第 25 行並存；如果日後的回答改變操作員權限，本案與既有的 TC-003／004 要一併檢討。
+    recommended_change: 把 expected_result_spec_reference 改為只引 v0.3 第 25 行的原文，CLR-001 的依據保留在 source_refs／decision_refs。不阻擋。
+  - testcase_id: TC-DRAFT-01M4RGX0HBT6TSQNWMCXRY5VXD
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §變更記錄 v02（第 169 行）
+      quote: 收據金額一律以面額計（含小數）
+    evidence: 斷言「不得出現 0.30000000000000004 等非零的多餘尾數」，並刻意選用 0.10＋0.20 作為資料。顯示位數不作判準；位數不足以區分時如實記錄「無法判讀」。
+    explanation: 依據充分：以面額計（第 169 行）加上每列恆等式（第 54 行）與總計為各列合計（第 62 行），要求數值精確相等；顯示精度缺口（REQ-010 Q03）已正確迴避。與 ACTIVE 的 TC-DAILYREPORT-146（單筆
+      399.60 不取整）部分重疊，但本案驗證的是跨機台、跨狀態的加總與 CSV，不算重複。面額恰為 0.10、0.20 的機台餘額能否造出，由環境負責人負責，前提已標明。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4RGX0HBTY27T0FJS485HJGD
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 列了 19 條需求（本 run scope 外的 18 條，加上因 RF-12 被納入 scope、但未新增專屬 TC 的 REQ-017），其中多條以「NO_REJECTION_CONTRACT:」為前綴，並註明「此前綴僅為滿足結構檢查」。另外，派發訊息說
+      TRR 列在派發包的 extra，但 T3-iter0.yaml 的 extra_inputs 實際為 []，所以我沒有讀 TRR；各案的 source_ref 只以文字標示 T3RR 的 RF 編號作為出處。
+    explanation: 依派發指示，scope 限定造成的框架限制不判為 issue。這些需求既有的 ACTIVE TC 不變，覆蓋缺口不是本批造成的。不過「NO_REJECTION_CONTRACT」的字面意義與實際理由（不在 scope）不符，日後審視容易誤讀。coverage_summary
+      以 RM 全部 28 條需求為分母（本批覆蓋 9 條，19 條列入 uncovered_accepted）；AC 只計本批針對的 16 條。TRR 沒有登記為來源這一點，只有在 RF-13 構成實質影響（見 issue）。
+    recommended_change: 不阻擋。建議日後讓 G-DESIGN 在 scope 限定的 run 支援專用的 out-of-scope 理由前綴；若後續需要以 TRR 內容作為依據，請在派發時以 --extra 登記。
+  coverage_summary:
+    requirements_total: 28
+    requirements_covered: 9
+    ac_total: 16
+    ac_covered: 16
+    uncovered_accepted:
+    - REQ-DAILYREPORT-002（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-003（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-004（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-006（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-008（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-009（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-012（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-013（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-014（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-017（scope 限定：因 RF-12 納入 scope，但其逾時結束餘分屬 CLR-DAILYREPORT-017 未決事項，本批不新增，RF-12 案已刻意不依賴）
+    - REQ-DAILYREPORT-018（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-019（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-021（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-022（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-023（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-024（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-025（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-026（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-028（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    no_open_clr_dependency: true
+    no_bet_session_switch_assertion: true
+    business_day_split_by_venue_cutoff: true
+    login_roles_authorized_by_spec: true
+    assertions_use_spec_invariants_only: false
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RGX0HBTY27T0FJS485HJGD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGX0HBWV4505JD7AQD2DRR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGX0HBT6TSQNWMCXRY5VXD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGX0HBXAVTNZQBCY0V1V2R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGX0HBQ96505V60NF1VVXQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RGX0HBP4TGTC417XQYVTWS
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4RGX0HBNB7427B8FFQR4M0G
+    verdict: ok
+history:
+- at: '2026-10-12T17:05:44Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-004
