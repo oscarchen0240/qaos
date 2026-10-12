@@ -1,0 +1,398 @@
+artifact_id: ART-TRR-01M4REJR4H6PP9TDPBGKTAH3QJ
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-007
+task_id: T3RR
+iteration: 0
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T16:19:23Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+- entity_type: Artifact
+  id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: 5c0fd58041ac0ac43d49f84fd4a0a4e225a28901bc83a05feab151ec2c1d7090
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+    validation_report_artifact_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RE72Z08WJGCQR04NQN8PCP
+    - TC-DRAFT-01M4RE72Z6YK6DK4XVFK60W67A
+    - TC-DRAFT-01M4RE72Z7DG4D5YFHVVBB6C1N
+    - TC-DRAFT-01M4RE72Z7APRX5XDAY9PGQ890
+    - TC-DRAFT-01M4RE72Z79WPE7ZR9KP03GZJT
+    - TC-DRAFT-01M4RE72Z7KFMWPVTRAT1WM7Z8
+    - TC-DRAFT-01M4RE72Z7V43EY0E3N26YGC09
+    - TC-DRAFT-01M4RE72Z7W20TP001BP7FBX5S
+    - TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    - TC-DRAFT-01M4RE72Z7ZDNDNZBRYSS8QZ7A
+    - TC-DRAFT-01M4RE72Z76AM0WSEXXDV3Z26F
+    - TC-DRAFT-01M4RE72Z7QF67233ZQKFP1BRC
+    - TC-DRAFT-01M4RE72Z87S79TNNVG8KZBE0J
+    - TC-DRAFT-01M4RE72Z8SX3JQFQ94NRFRBK4
+    - TC-DRAFT-01M4RE72Z8ZWEFME3C1AB0A43X
+    - TC-DRAFT-01M4RE72Z8GCFSV7JZ39JAZCM6
+    - TC-DRAFT-01M4RE72Z8ZB819CN3ECWM44AR
+    - TC-DRAFT-01M4RE72Z8CGCNXSDMMXYHS84F
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DRAFT-01M4RE72Z8H3DBFC3PBG3X8YKE
+    - TC-DRAFT-01M4RE72Z91G0ZCSQHZXWXA5E9
+    - TC-DRAFT-01M4RE72Z9XB2PHNEV5PT6N18W
+    active_testcases_consulted:
+    - TC-DAILYREPORT-003
+    - TC-DAILYREPORT-004
+    - TC-DAILYREPORT-011
+    - TC-DAILYREPORT-014
+    - TC-DAILYREPORT-021
+    - TC-DAILYREPORT-022
+    - TC-DAILYREPORT-024
+    - TC-DAILYREPORT-032
+    - TC-DAILYREPORT-037
+    - TC-DAILYREPORT-047
+    - TC-DAILYREPORT-048
+    - TC-DAILYREPORT-049
+    - TC-DAILYREPORT-050
+    - TC-DAILYREPORT-051
+    - TC-DAILYREPORT-098
+    - TC-DAILYREPORT-106
+    - TC-DAILYREPORT-119
+    - TC-DAILYREPORT-121
+    - TC-DAILYREPORT-122
+    - TC-DAILYREPORT-123
+  dimension_results:
+  - dimension: boundary
+    status: gaps_found
+    rationale: 收據日歸屬、按週不完整週、無資料期間、日結結算場次歸屬等草稿都已覆蓋；交易在日結時間前 1 秒與整點的歸屬由 TC-DAILYREPORT-021／022 覆蓋（以開分驗證）。缺口在：日結時間變更（RF-01）、收據落在切分點時三欄的歸屬（RF-02）、T
+      不是 00:00 時的週界（RF-03）、多張含小數收據的加總精度（RF-04）、長區間與大量匯出（RF-05）、注單數的計入範圍（RF-06）。注單跨場次切換點的歸屬，主 session 告知已有 BUG-DAILYREPORT-004；逾時結束場次的餘分承接為
+      OPEN 的 CLR-DAILYREPORT-017。兩者依指示只記錄、不重複列；草稿也都已刻意避開這兩類資料。
+  - dimension: exception_flow
+    status: gaps_found
+    rationale: 報表未即時反映的處理，草稿已寫明要記錄延遲並視為偏差；無資料時匯出由 TC-DAILYREPORT-050 與 TC-DRAFT-…3X 覆蓋。缺口在：已核實的收據能否再作廢（RF-07）、人工入金與人工出金及已取消出金在報表與餘額驗算中的處理（RF-08）、停用或改歸屬場館的機台留存分數（RF-09）。
+  - dimension: concurrency
+    status: gaps_found
+    rationale: 核實、作廢後重新查詢的連動由 TC-DAILYREPORT-037 與 TC-DRAFT-…0J／…FK 覆蓋，但都是循序操作。缺口在：查詢或匯出時同時有人核實、作廢，單一次回應是否自洽（RF-10）、同一收據的核實與作廢互搶（RF-11）、日結執行當下有交易進來（RF-12）。
+  - dimension: duplicate_submission
+    status: gaps_found
+    rationale: 本頁是唯讀統計（TC-DAILYREPORT-049），沒有會產生資料的提交動作。但報表金額依賴上游交易只計一次，第二階段回報重送後報表是否仍只計一次沒有案例（RF-13）；匯出與查詢的防連點也沒有定義（RF-14）。
+  - dimension: permission
+    status: gaps_found
+    rationale: 管理員、站長越權（含匯出）依 CLR-DAILYREPORT-014 由 TC-DRAFT-…PGQ890／…GZJT 覆蓋；操作員查詢越權由 TC-DAILYREPORT-003／004 覆蓋；唯讀由 TC-DAILYREPORT-049
+      覆蓋。缺口在：操作員匯出 API 的越權（RF-15），以及管轄範圍變更對既有工作階段的生效時機（RF-16）。草稿只引用 SPEC-DAILYREPORT-001@0.3 與派發包內的 CLR-014／015／016；文中提到的
+      TC-CASHOUT-132～134 只是『不得共用資料』的說明，不是依據來源，沒有用到派發包範圍外的來源。
+  findings:
+  - finding_id: RF-01
+    dimension: boundary
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7KFMWPVTRAT1WM7Z8
+    - TC-DRAFT-01M4RE72Z76AM0WSEXXDV3Z26F
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DAILYREPORT-021
+    - TC-DAILYREPORT-022
+    - TC-DAILYREPORT-024
+    related_requirement_ids:
+    - REQ-DAILYREPORT-007
+    - REQ-DAILYREPORT-011
+    - REQ-DAILYREPORT-009
+    gap: 營業日依場館的『日結時間』切分（第 42、152 行），而日結時間是場館設定，可以修改。v0.3 沒有定義修改後的效果：過去的營業日要用新時間重新切分，還是維持原樣；切換當天的營業日會變長或變短（例如 00:00 改成 06:00，切換當天是
+      30 小時或 18 小時）；已以收據日歸屬的未兌現、已作廢、已兌現金額，以及日結結算場次的歸屬營業日，會不會因此跳到別的列。所有草稿都假設 T 固定不變，現有 ACTIVE TC 也沒有覆蓋這個情境。
+    suggested_scenario: 開 Clarification 確認日結時間變更的生效方式（只影響之後、或回溯重切），以及切換當天營業日的長度。定案後補案例：在測試場館把 T 從 00:00 改為 06:00；變更前後各留一張待核實收據和一個日結結算場次；查詢跨越變更日的按日報表，核對各列的營業日起訖、收據相關三欄、場次數與期初／期末餘額是否前後相接。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-02
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z08WJGCQR04NQN8PCP
+    - TC-DRAFT-01M4RE72Z76AM0WSEXXDV3Z26F
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DRAFT-01M4RE72Z8SX3JQFQ94NRFRBK4
+    - TC-DAILYREPORT-021
+    - TC-DAILYREPORT-022
+    related_requirement_ids:
+    - REQ-DAILYREPORT-011
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-007
+    gap: v0.3 把未兌現、已作廢、已兌現三欄都改成『以出收據的日期歸屬』，草稿也都選離日結時刻較遠的收據。目前只有 TC-DAILYREPORT-021／022 用『開分』驗證 T 前 1 秒和 T 整點的歸屬，沒有任何案例驗證收據落在切分點時這三欄記到哪一列。另外，洗分出金核實的
+      REQ-CASHOUT-032 只寫『出收據那天』，同批 RUN-20261012-006 的草稿用的是 UTC+0 日期；本 spec 的『當日』是依場館日結時間切分的營業日。T 不是 00:00 時，兩邊對同一張收據可能歸到不同天。
+    suggested_scenario: 把測試場館的 T 設為 06:00，在 T 前 1 秒與 T 整點各產生一張出金收據（都保持待核實），按日查詢兩個營業日，確認前一張的未兌現記在前一營業日、後一張記在當日；接著把兩張分別作廢、核實，確認已作廢與已兌現金額跟著同一個營業日，作廢日或核實日都不影響。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／結算期間（第 42 行）
+      quote: 按日顯示營業日（依場館日結時間切分）
+    needs_clarification: false
+  - finding_id: RF-03
+    dimension: boundary
+    severity: low
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z6YK6DK4XVFK60W67A
+    - TC-DRAFT-01M4RE72Z8SX3JQFQ94NRFRBK4
+    - TC-DRAFT-01M4RE72Z9XB2PHNEV5PT6N18W
+    - TC-DAILYREPORT-014
+    related_requirement_ids:
+    - REQ-DAILYREPORT-005
+    - REQ-DAILYREPORT-015
+    gap: 按週以週一為週起（第 35 行），但週一的營業日要從週一的 T 才開始。T 不是 00:00 時，週一 00:00～T 之間發生的收據與注單屬於週日營業日，應計入前一週的列。按週的草稿與 TC-DAILYREPORT-014
+      都以 T＝00:00 為前提，沒有覆蓋這個週界。
+    suggested_scenario: 把 T 設為 06:00，在週一 03:00 產生一張待核實收據與若干注單，按週查詢跨越這個週一的兩週，確認它們計入前一週列（週日營業日），不計入新的一週。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §篩選器／統計週期（第 35 行）
+      quote: 按週以週一為週起；非按日時，每列為該週期內各營業日的彙總
+    needs_clarification: false
+  - finding_id: RF-04
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7ZDNDNZBRYSS8QZ7A
+    - TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    - TC-DAILYREPORT-048
+    related_requirement_ids:
+    - REQ-DAILYREPORT-010
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-016
+    gap: 收據金額含小數（REQ-010 Q03）只用單筆 399.60 驗證過。多張含小數的收據同列加總、跨列進入總計列、匯出 CSV 時，各處數值會不會出現浮點尾數或彼此不一致；含小數時『收據金額＝已兌現＋未兌現＋已作廢』這條恆等式是否仍精確成立，都沒有案例。列表與
+      CSV 的顯示精度 spec 未定義（REQ-010 Q03 detail_gaps），但恆等式本身有定義。
+    suggested_scenario: 同一營業日佈置面額 0.10、0.20、399.65 三張收據，分別為已核實、待核實、已作廢，查詢依機台明細與依場館彙總：核對收據金額＝三欄之和且沒有尾數誤差、總計列為各列精確和，匯出 CSV 後逐欄與畫面比對。顯示精度只記錄，不作判準。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+    needs_clarification: false
+  - finding_id: RF-05
+    dimension: boundary
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z08WJGCQR04NQN8PCP
+    - TC-DAILYREPORT-011
+    - TC-DAILYREPORT-048
+    related_requirement_ids:
+    - REQ-DAILYREPORT-004
+    - REQ-DAILYREPORT-016
+    gap: 結算日期不設區間上限（第 34 行），匯出 CSV 又必須涵蓋整個查詢結果、不受分頁限制（第 62、89 行）；v0.3 起要看全部未兌現，結算日期還必須涵蓋最早一張未兌現收據，長區間查詢會成為常態。資料量很大時（例如多年、按日、依場次明細），查詢與匯出的回應時間、逾時處理、CSV
+      筆數上限、要不要改用非同步匯出，spec 都沒有定義。TC-DAILYREPORT-011 只驗證 400 天的查詢被接受，沒有驗證大量列與大量匯出。
+    suggested_scenario: 開 Clarification 確認長區間查詢與匯出的效能目標、逾時與筆數上限處置。定案後補案例：在有多年資料的場館，以依場次明細、按日、跨 2～3 年查詢並匯出 CSV，記錄回應時間，並核對 CSV
+      列數＝畫面總筆數、總計列與畫面一致、檔案沒有被截斷。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-06
+    dimension: boundary
+    severity: low
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z91G0ZCSQHZXWXA5E9
+    - TC-DRAFT-01M4RE72Z9XB2PHNEV5PT6N18W
+    related_requirement_ids:
+    - REQ-DAILYREPORT-028
+    gap: 注單數只有『當日該場館／機台產生的注單筆數』的定義（第 56 行）。REQ-028 Q02 的 detail_gaps 已指出：取消或退款的注單算不算、歸屬營業日依下注時間還是結算時間，都沒有寫。（注單跨場次切換點的歸屬，主
+      session 告知已有 BUG-DAILYREPORT-004，本條不重複列。）
+    suggested_scenario: 開 Clarification 確認注單數是否計入取消／退款的注單，以及歸屬營業日的時間基準。定案後補案例：同一營業日佈置正常、取消、退款各一筆注單，核對依機台明細的注單數。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-07
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DRAFT-01M4RE72Z7QF67233ZQKFP1BRC
+    - TC-DRAFT-01M4RE72Z8CGCNXSDMMXYHS84F
+    related_requirement_ids:
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-011
+    - REQ-DAILYREPORT-012
+    gap: 報表的恆等式（收據金額＝已兌現＋未兌現＋已作廢）與現金淨收（只扣已兌現、不扣已作廢）都假設一張收據同時只會是一種狀態。洗分出金核實那邊沒有規定『已核實的收據能不能再作廢』（同批 RUN-20261012-006 抽查已列為待
+      Clarification）；若允許，同一面額會同時算進已兌現與已作廢，恆等式就不成立，現金淨收要不要回補也不明。本 spec 沒有定義報表在這種情況下怎麼呈現。
+    suggested_scenario: 併同洗分出金核實的 Clarification，確認已核實收據能否作廢，以及若允許時報表各欄的呈現。定案後補案例：對一張已核實的收據嘗試作廢，回報表核對收據日那一列的已兌現、已作廢、現金淨收與恆等式。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-08
+    dimension: exception_flow
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z8CGCNXSDMMXYHS84F
+    - TC-DAILYREPORT-122
+    - TC-DAILYREPORT-123
+    related_requirement_ids:
+    - REQ-DAILYREPORT-021
+    - REQ-DAILYREPORT-010
+    - REQ-DAILYREPORT-012
+    gap: 餘額驗算式只含開分、進鈔、損益、洗分、收據五項（第 72 行），但櫃檯對機台帳號做的人工入金（補分）與人工出金（結清待確認出金）也會改變機台分數。這兩種交易要計入報表哪一欄、算不算進現金淨收，本 spec 沒有定義。若不計入任何一欄，期末餘額＝期初＋…的驗算式在發生人工交易的那一天就不成立。被取消（新請求取代或人工出金連動）的待確認出金不應進收據金額，這點同樣沒有明文。
+    suggested_scenario: 開 Clarification 確認人工入金、人工出金與已取消出金在報表各欄與餘額驗算中的處理。定案後補案例：同一營業日對機台 A 做開分 1000、人工入金 200、人工出金 300，再做一筆被取消的出金；按日查詢
+      A 的列，核對各欄與驗算式是否成立。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-09
+    dimension: exception_flow
+    severity: low
+    related_testcase_ids:
+    - TC-DAILYREPORT-106
+    - TC-DAILYREPORT-121
+    related_requirement_ids:
+    - REQ-DAILYREPORT-014
+    - REQ-DAILYREPORT-002
+    gap: 期末餘額涵蓋『當期無場次但仍有留存分數』的機台（第 68 行）。但機台被停用、報廢（只停用不刪除），或改歸屬到另一個場館時，它的留存分數要不要繼續計入原場館的期初／期末餘額、歷史列會不會跟著搬家，都沒有定義。報廢機台若持續計入，場館的期末餘額就永遠含一筆不會再動的分數。
+    suggested_scenario: 開 Clarification 確認停用或改歸屬場館的機台，在報表期初／期末餘額與歷史列中的處理。定案後補案例：讓留有 300 分的機台 A 停用（或改歸屬 B 場館），查詢停用前後各營業日的依場館彙總列，核對期末餘額與相鄰列前後相接。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-10
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z87S79TNNVG8KZBE0J
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DAILYREPORT-037
+    - TC-DAILYREPORT-047
+    - TC-DAILYREPORT-048
+    related_requirement_ids:
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-016
+    - REQ-DAILYREPORT-011
+    gap: 核實與作廢會立即改變過去營業日的列（狀態以查詢當下為準，第 53、70 行）。草稿都是『先操作、再重新查詢』的循序流程，沒有驗證在查詢或匯出 CSV 執行的同時有人核實或作廢時，單一次回應是否自洽：每列的恆等式要成立，總計列要等於各列之和（第
+      62 行）。若列與總計、或列表與 CSV 讀的是不同時點的資料，就會出現對不起來的報表。
+    suggested_scenario: 對大範圍查詢（例如 90 天、依機台明細）重複送出查詢與匯出 CSV，同時由另一個帳號連續核實與作廢範圍內的多張收據；每次回應都核對每列收據金額＝三欄之和、總計列＝各列之和，CSV 本身的列與總計列也要一致。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位（總計與匯出）（第 62 行）
+      quote: 列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）
+    needs_clarification: false
+  - finding_id: RF-11
+    dimension: concurrency
+    severity: high
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    - TC-DRAFT-01M4RE72Z87S79TNNVG8KZBE0J
+    - TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    related_requirement_ids:
+    - REQ-DAILYREPORT-027
+    - REQ-DAILYREPORT-011
+    gap: 同一張待核實收據被櫃檯核實、同時又被站長作廢時，報表必須只把它算進已兌現或已作廢其中一欄。洗分出金核實對這組競態的最終結果沒有定義（同批 RUN-20261012-006 抽查已列待 Clarification），本 spec
+      也沒有定義報表在這種情況下要怎麼保證恆等式。
+    suggested_scenario: 待洗分出金核實那邊的 Clarification 定案後，以兩個工作階段同時對同一張收據送出核實與作廢，重複多次；每次都回報表核對收據日那一列：面額只出現在已兌現或已作廢其中一欄，恆等式成立，現金淨收只在核實勝出時扣除。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-12
+    dimension: concurrency
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7KFMWPVTRAT1WM7Z8
+    - TC-DRAFT-01M4RE72Z8GCFSV7JZ39JAZCM6
+    - TC-DRAFT-01M4RE72Z8ZB819CN3ECWM44AR
+    - TC-DAILYREPORT-119
+    - TC-DAILYREPORT-051
+    related_requirement_ids:
+    - REQ-DAILYREPORT-020
+    - REQ-DAILYREPORT-017
+    - REQ-DAILYREPORT-007
+    gap: 日結時刻到達時，系統要強制結束所有進行中場次並轉出餘額（第 151 行）；同一時間機台可能正好送來開分、入金、出金或投注。現有案例都在日結前後的靜止狀態下查詢，沒有覆蓋日結執行當下有交易進來的情況。這時 D 的期末餘額與 D+1
+      的期初餘額必須相同（第 68 行），交易也不能漏算或重複計入兩個營業日。
+    suggested_scenario: 在日結時刻前後幾秒，對同場館多台機台連續送出開分、出金與投注，日結完成後查詢 D 與 D+1：核對 D 列期末＝D+1 列期初，各交易只出現在一個營業日，兩日的驗算式都成立。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+      quote: 較早一期的期末餘額即次一期的期初餘額
+    needs_clarification: false
+  - finding_id: RF-13
+    dimension: duplicate_submission
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    - TC-DAILYREPORT-032
+    related_requirement_ids:
+    - REQ-DAILYREPORT-010
+    gap: 進鈔金額與收據金額是當日入金與出金的總額（第 50、51 行）。機台會以同一 TXID 重送 end-cashin／end-cashout，機台金流端要求冪等（分數只變一次），但沒有任何案例驗證報表在重送之後仍只計入一次：進鈔金額、收據金額、未兌現金額、注單以外的筆數都不能因重送而加倍。
+    suggested_scenario: 對同一筆入金與出金各重送 3 次第二階段回報（同一 TXID），查詢當日報表：進鈔金額與收據金額各只計入一次，未兌現金額只有一筆面額，餘額驗算式成立；並與機台交易紀錄的筆數對照。
+    spec_basis:
+      type: spec
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+      location: §列表欄位／進鈔金額（第 50 行）
+      quote: 當日入金總額（紙鈔機收現）
+    needs_clarification: false
+  - finding_id: RF-14
+    dimension: duplicate_submission
+    severity: low
+    related_testcase_ids:
+    - TC-DAILYREPORT-048
+    - TC-DAILYREPORT-050
+    related_requirement_ids:
+    - REQ-DAILYREPORT-016
+    gap: 匯出 CSV 一律匯出整個查詢結果、不受分頁限制，結算日期又沒有區間上限。使用者在長區間下連點匯出、或重複送出查詢，系統要不要防連點、會不會同時產生多份大型匯出，spec 都沒有定義，可能拖垮報表服務。
+    suggested_scenario: 開 Clarification 確認匯出與查詢的防連點、併發上限。定案後補案例：在長區間條件下快速連點匯出 CSV 5 次，記錄產生的檔案數、回應時間與系統負載，並核對每份檔案內容相同且完整。
+    spec_basis: null
+    needs_clarification: true
+  - finding_id: RF-15
+    dimension: permission
+    severity: medium
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7APRX5XDAY9PGQ890
+    - TC-DRAFT-01M4RE72Z79WPE7ZR9KP03GZJT
+    - TC-DAILYREPORT-004
+    related_requirement_ids:
+    - REQ-DAILYREPORT-001
+    gap: 管理員與站長的越權案例（TC-DRAFT-…PGQ890、…GZJT）同時驗證了查詢與匯出 API；操作員只有 TC-DAILYREPORT-004 驗證『查詢』API。匯出 CSV 可能是獨立的端點，操作員把匯出請求的站台參數改成非自身場館時會不會被後端拒絕，目前沒有案例。依
+      CLR-DAILYREPORT-001，後端應拒絕。
+    suggested_scenario: 以操作員身分在自身場館按匯出 CSV，從 Network 擷取匯出請求，把站台／場館參數改成非自身場館後重送：預期後端拒絕，不回傳任何非自身場館資料的檔案；再以原參數重送作為對照。
+    spec_basis:
+      type: clarification
+      clarification_id: CLR-DAILYREPORT-001
+      answer_rev: 0
+      answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+      quote: 後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕
+    needs_clarification: false
+    spec_basis_decision:
+      requirement_id: REQ-DAILYREPORT-001
+      question_id: Q02
+  - finding_id: RF-16
+    dimension: permission
+    severity: low
+    related_testcase_ids:
+    - TC-DRAFT-01M4RE72Z7APRX5XDAY9PGQ890
+    - TC-DRAFT-01M4RE72Z79WPE7ZR9KP03GZJT
+    - TC-DAILYREPORT-003
+    related_requirement_ids:
+    - REQ-DAILYREPORT-001
+    gap: 使用者登入後，管轄範圍被調整（站長被移出某子站台、操作員改調到其他場館）時，既有的登入工作階段是否立即套用新的範圍、已開啟的報表頁再查詢或匯出時會不會仍取得舊範圍的資料，spec 沒有定義（管轄範圍本身的定義也沿用正本，本包未附，見
+      REQ-001 Q01 detail_gaps）。
+    suggested_scenario: 開 Clarification 確認權限範圍變更對既有工作階段的生效時機。定案後補案例：站長保持登入並開著 B 場館的報表頁，由管理員把 B 移出其管轄範圍，再用原頁面查詢與匯出，核對回應。
+    spec_basis: null
+    needs_clarification: true
+  summary: 抽查 22 張 VALIDATED TC（修訂 TC-045、046、128，新增 19 張：已作廢金額、注單數、收據日歸屬 CLR-015、無資料期間餘額 CLR-016、越權回無權限 CLR-014、日結結算場次歸屬開始營業日）。五個面向皆有缺口，共
+    16 條建議：high 4、medium 7、low 5；其中 9 條 spec 未定義、需開 Clarification（RF-01、RF-05、RF-06、RF-07、RF-08、RF-09、RF-11、RF-14、RF-16），其餘
+    7 條有依據可直接補案例。最優先：日結時間變更（RF-01）、人工入金／人工出金讓餘額驗算式失效（RF-08）、已核實收據再作廢與核實作廢互搶破壞恆等式（RF-07、RF-11）。CLR-DAILYREPORT-017（逾時結束餘分）與注單跨場次切換點歸屬（BUG-DAILYREPORT-004）依指示只記錄、不重複列。本審查只提建議，不修改
+    TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-12T16:19:59Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-007
