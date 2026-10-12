@@ -1,0 +1,166 @@
+artifact_id: ART-SA-01M4R7MFN78S2ZV272FJXTW5DM
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-006
+task_id: T0
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-10-12T14:18:00Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-CASHOUT-001@0.2
+  - RequirementModel:ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+references:
+- entity_type: SpecVersion
+  id: SPEC-CASHOUT-001
+  version: '0.2'
+- entity_type: Artifact
+  id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+- entity_type: Clarification
+  id: CLR-CASHOUT-001
+- entity_type: Clarification
+  id: CLR-CASHOUT-002
+requires_approval: null
+payload:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  summary: SPEC-CASHOUT-001 v0.2（洗分出金核實開發包⑤，2026-10-05 配合正本 v08 進版）重新分析，spec-change-impact 0.1→0.2（RUN-20261012-006 T0，派發包
+    T0-iter0；閉包為空、references undeclared；決議快照 CLR-CASHOUT-001／002 皆 APPLIED，本版原文與兩者不衝突，僅作 known_rules 補充依據）。沿用 v0.1 範圍與 31
+    條需求 ID、全部既有 AC ID。v0.2 變更：①餘額帶小數時收據面額照記含小數、平台只記面額不記實付、核實與日結報表一律以面額計、門檻 0 全額洗分比照（刪除「櫃檯付現須付至個位數」）→ 修改 REQ-CASHOUT-018（新增
+    AC-CASHOUT-0183、0184）、REQ-CASHOUT-022（新增 AC-CASHOUT-0222）、REQ-CASHOUT-006（新增 AC-CASHOUT-0062），三者 version 2；②作廢的收據計入場館日結報表「已作廢金額」、以出收據日歸屬，③未兌現金額留在出收據那天的列上直到核實或作廢才轉出
+    → 新增 REQ-CASHOUT-032（3 條 AC）；④權限用詞 Admin 改稱「管理員」（REQ-CASHOUT-025／028／029 文字同步，視為同一角色 admin，行為不變，version 不升）。共 32 條需求，決策點全部
+    defined_in_target（E1），不會自動開單；REQ-CASHOUT-031 出金比照屬推論（minor），REQ-CASHOUT-018 有一筆文案 doc_issue（付現以本欄為準 vs 零頭由場館自理）。
+  scope:
+    in_scope:
+    - 核實狀態定義與呈現規則（含待核實洗分醒目提示）
+    - 紀錄產生規則（僅已完成交易出現；開分／入金不出現）
+    - 篩選器與列表欄位（含實際金額欄的小數面額顯示）
+    - 核實（洗分／出金）操作流程與以面額登記
+    - 作廢操作（僅出金）與權限
+    - 核實／作廢的連動：會員列表提款統計、機台交易紀錄回寫、現金淨收、場館日結報表的未兌現與已作廢金額日期歸屬
+    out_of_scope:
+    - 洗分／出金交易本身如何產生、金額如何計算（含出金清空、不套門檻、小數面額的產生規則）、人工出金連動取消未完成出金（SPEC-CASHFLOW-001；本包第 117～121、133 行為抽錄）
+    - 機台交易紀錄查詢頁本身的篩選／列表與待確認出金的手動取消（SPEC-TXLOG-001／SPEC-CASHFLOW-001）
+    - 場館日結報表其餘欄位與計算、已兌現金額的歸屬（SPEC-DAILYREPORT-001）
+    - 核實與作廢寫入後台操作紀錄（第 142 行；由 REQ-ARCADE-006 涵蓋）
+    - 操作員角色的完整權限定義（SPEC-PLATFORMRULE-001）
+  requirement_ids:
+  - REQ-CASHOUT-001
+  - REQ-CASHOUT-002
+  - REQ-CASHOUT-003
+  - REQ-CASHOUT-004
+  - REQ-CASHOUT-005
+  - REQ-CASHOUT-006
+  - REQ-CASHOUT-007
+  - REQ-CASHOUT-008
+  - REQ-CASHOUT-009
+  - REQ-CASHOUT-010
+  - REQ-CASHOUT-011
+  - REQ-CASHOUT-012
+  - REQ-CASHOUT-013
+  - REQ-CASHOUT-014
+  - REQ-CASHOUT-015
+  - REQ-CASHOUT-016
+  - REQ-CASHOUT-017
+  - REQ-CASHOUT-018
+  - REQ-CASHOUT-019
+  - REQ-CASHOUT-020
+  - REQ-CASHOUT-021
+  - REQ-CASHOUT-022
+  - REQ-CASHOUT-023
+  - REQ-CASHOUT-024
+  - REQ-CASHOUT-025
+  - REQ-CASHOUT-026
+  - REQ-CASHOUT-027
+  - REQ-CASHOUT-028
+  - REQ-CASHOUT-029
+  - REQ-CASHOUT-030
+  - REQ-CASHOUT-031
+  - REQ-CASHOUT-032
+  ambiguities:
+  - requirement_id: REQ-CASHOUT-031
+    ambiguity:
+      level: minor
+      raised_level: minor
+      description: 現金淨收計算原文只寫洗分；出金比照依第 108、110 行推得並沿用 Oscar 2026-09-14 確認，未另開單
+  constraints:
+  - text: 機台廠商規格未定義收據如何兌現與核銷，核銷（＝核實）為後台自訂；核銷方式採櫃檯人工輸入訂單編號，不引入掃碼設備
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §功能說明（第 28 行）
+      quote: 核銷方式採櫃檯人工輸入訂單編號，不引入掃碼設備
+  - text: 平台只記錄面額、不記現場實際付現金額與差額；核實與日結報表一律以面額計
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 核實與日結報表一律以面額計
+    requirement_id: REQ-CASHOUT-018
+  - text: 收據不設兌現時效、不自動作廢，待核實出金永久有效，一律由人工作廢
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作備註（第 110 行）
+      quote: 待核實的出金（未兌現收據）永久有效，一律由人工判斷後以「作廢」處理
+    requirement_id: REQ-CASHOUT-032
+  - text: 作廢的收據以出收據那天歸屬日結報表的已作廢金額
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作／作廢（第 104 行）
+      quote: 記在出收據那天（不是作廢那天）
+    requirement_id: REQ-CASHOUT-032
+  edge_case_candidates:
+  - text: 面額含小數時實際金額欄的顯示精度：出金例示為兩位小數（399.60），門檻 0 全額洗分是否同樣顯示兩位小數（399.60 或 399.6）未明寫
+    requirement_id: REQ-CASHOUT-018
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §收據兌現的櫃檯流程（第 118 行）
+      quote: 例 399.6 → 399.60
+  - text: 金額範圍篩選輸入含小數的 min／max（例 399.5～399.7）時，含小數面額的紀錄是否正確落入範圍
+    requirement_id: REQ-CASHOUT-014
+  - text: 核實彈窗與列表、會員列表提款金額、日結報表三處對同一筆含小數面額的顯示是否一致（同為面額，不四捨五入）
+    requirement_id: REQ-CASHOUT-022
+  - text: 出收據那天的日期切分依 UTC+0（列表時間為 UTC+0）或場館時區，接近午夜出的收據會歸到哪一天（由日結報表包定義）
+    requirement_id: REQ-CASHOUT-032
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §列表欄位（第 69 行）
+      quote: 交易完成的時間（UTC+0）
+  - text: 同一天出收據、同一天作廢的出金：D 日列的已作廢金額含此筆、未兌現金額不含此筆
+    requirement_id: REQ-CASHOUT-032
+  - text: 待核實出金被核實後轉出未兌現金額，轉入日結報表哪個欄位與哪一天（已兌現金額的歸屬）本包未定義，屬日結報表包
+    requirement_id: REQ-CASHOUT-032
+  - text: 已作廢紀錄的核實時間與核實人員欄顯示值（「—」或作廢人員／時間）未明寫
+    requirement_id: REQ-CASHOUT-019
+  - text: 待確認（尚未完成）的出金不會出現在本頁，因此無法在本頁作廢；本頁作廢只適用已完成、已出收據的待核實出金
+    requirement_id: REQ-CASHOUT-028
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §紀錄產生規則（第 42 行）
+      quote: 待確認、已取消、已逾時、未成立的交易不會出現
+  - text: 作廢原因只輸入空白字元時是否視為未填
+    requirement_id: REQ-CASHOUT-028
+  open_questions: []
+  previous_requirement_model_id: ART-RM-01M2FQEJZKJN67ZPJJ95Q1SXVD
+  consulted_sources:
+  - spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    read_scope: full
+dispatch_packet_sha256: 8854ac143ae5cb0887ab587c410370ad932fc50d71e81a545fe8490933e94b1e
+history:
+- at: '2026-10-12T14:18:06Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-006
