@@ -1,0 +1,142 @@
+artifact_id: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-004
+task_id: T3
+iteration: 3
+created_by: agent-test-validator
+created_at: '2026-10-12T17:37:42Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+- entity_type: Artifact
+  id: ART-TDR-01M4RJVRG1AQ6JS5RYR5V1ATW2
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: 80a9e790c0cd31cc72fd11122f306aac6d264479011f54a9574f2f368360412d
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    requirement_model_artifact_id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RJVRFYJFPQJBE4NK5P7W0H
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／收據金額（第 51 行）
+      quote: 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+    evidence: 上一輪 major 已解決：前提改為依機台交易紀錄把出金分成 D 側（nOd）、D+1 側（nOd1）、跨 T0（nOx）三類，並明寫「v0.3 沒有規定出金兩階段跨過 T0 時以哪個時刻歸屬，所以本案不替它假設」。步驟
+      4 的 expected 改為：D 列增量＝100×（nOd＋k）、D+1 列增量＝100×（nOd1＋nOx－k），0≤k≤nOx，k 只記錄、不作判準；兩日合計＝100×出金總筆數；nOx＝0 時逐日精確。重複的前提句已刪除。
+    explanation: 逐日斷言只用在兩階段都落在 T0 同一側的出金（AC-0071／0072 的交易歸屬規則），跨 T0 的出金只斷言不重不漏，已不再依賴開發包③ 的歸屬時刻。「每列收據與未兌現增量相同」由第 54 行每列勾稽推得（本案不核實也不作廢）。D
+      期末＝D+1 期初與出金歸屬無關。剩下一點：如果機台交易紀錄每筆出金只顯示一個時間，本案就以該時間逐日斷言；這等於把畫面顯示的時間當作 AC-0071 所說的「交易發生」時間。這是合理讀法，前提也已要求環境負責人確認紀錄是否分記兩階段，所以不阻擋。
+    recommended_change: 不阻擋。可補一句：如果環境負責人確認紀錄只顯示單一時間、但系統內部另有兩階段時間，就比照跨 T0 出金處理落在 T0 前後數秒內的出金。
+  - testcase_id: TC-DRAFT-01M4RJVRFY72X58TP65X6MWMHE
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-011
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／未兌現金額（第 53 行）
+      quote: 當日出金的收據中，截至查詢當下仍為待核實者的金額合計；以出收據的日期歸屬（2026-10-05 定案，原為「截至查詢當下全部待核實收據的累計」）
+    evidence: 上一輪 advisory 1 已處理：步驟 9 的分支 (a) 補上「R2 仍為已核實、R3 仍為已作廢」，狀態被改變時記為交易層／核實層問題並停止；第一段的步驟 4 也補了「R1 仍為待核實」的確認。剩下一點：步驟
+      4 要到『帳務管理 > 洗分出金核實』確認 R1 的狀態，但沒有指定用哪個帳號；第一段的前提沒有提供『核實／作廢帳號』，該帳號只在第二段的前提出現，步驟 9 則有指定。
+    explanation: 如果管理員沒有該頁的瀏覽權限，執行者不知道在步驟 4 要換哪個帳號。只是執行細節，不影響判定的正確性。
+    recommended_change: 步驟 4 註明「以『核實／作廢帳號』（必要時切換並重選站台）確認」，並把該帳號的前提改寫成兩段都適用。
+  - testcase_id: TC-DRAFT-01M4RJVRFYXS2MNWERMG5NWCDK
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: 本案未改動。CLR-DAILYREPORT-020（OPEN）第 (1) 題問「操作員能否查看場館日結報表」。
+    explanation: CLR-020 目前與 v0.3 第 25 行並存；如果日後的回答改變操作員權限，本案與 TC-003／004 要一併檢討。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4RJVRFYP013SNVFD2D0DK2X
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 仍以「NO_REJECTION_CONTRACT:」前綴在 uncovered_with_reason 列出 19 條需求（含只補了成功面檢查的 REQ-012）。RF-04 與 TC-146 部分重疊的 advisory
+      仍然適用。派發包 extra_inputs 仍為 []，我沒有讀 TRR，也沒有任何斷言以 TRR 為依據。RF-10 前提中的重複段落已刪除。
+    explanation: 依派發指示，scope 限定造成的框架限制不判為 issue。coverage_summary 以 RM 全部 28 條需求為分母，本批涉及 10 條，AC 計本批針對的 18 條。
+    recommended_change: 不阻擋。
+  coverage_summary:
+    requirements_total: 28
+    requirements_covered: 10
+    ac_total: 18
+    ac_covered: 18
+    uncovered_accepted:
+    - REQ-DAILYREPORT-002（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-003（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-004（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-006（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-008（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-009（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-013（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-014（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-017（scope 限定：逾時結束餘分屬 CLR-DAILYREPORT-017 未決事項，本批不新增；RF-12 案已刻意不依賴）
+    - REQ-DAILYREPORT-018（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-019（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-021（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-022（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-023（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-024（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-025（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-026（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-028（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-012（只補同列自洽的成功面檢查，沒有專屬的負向案例；既有 ACTIVE TC 涵蓋其餘）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    no_open_clr_dependency: true
+    no_bet_session_switch_assertion: true
+    business_day_split_by_venue_cutoff: true
+    login_roles_authorized_by_spec: true
+    assertions_use_spec_invariants_only: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RJVRFYP013SNVFD2D0DK2X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFY22HG4RM5QW9ZD4HB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFYE6Y9MK7PRTGBQMTW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFY9C1KY3BD9TDH4Y0X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFYJFPQJBE4NK5P7W0H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFY72X58TP65X6MWMHE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJVRFYXS2MNWERMG5NWCDK
+    verdict: ok
+history:
+- at: '2026-10-12T17:43:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-004

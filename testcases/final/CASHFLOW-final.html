@@ -108,8 +108,8 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     </div>
     <div class="brand-sub">實體機台金流與場次 · 最終整合版</div>
     <div class="stat-strip">
-      <div class="stat"><b>81</b><span>ACTIVE 案例</span></div>
-      <div class="stat"><b>78</b><span>grounded 已確認</span></div>
+      <div class="stat"><b>92</b><span>ACTIVE 案例</span></div>
+      <div class="stat"><b>89</b><span>grounded 已確認</span></div>
       <div class="stat"><b>3</b><span>exploratory 待確認</span></div>
       <div class="stat"><b>43</b><span>Phase 3 整合修訂</span></div>
     </div>
@@ -125,7 +125,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
   <main class="main">
     <div class="page-head">
       <h1>CASHFLOW 功能區 · 最終測試案例</h1>
-      <p>本頁彙整 SPEC-CASHFLOW-001 底下所有 ACTIVE 狀態的測試案例，共 81 條，涵蓋 49 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。更新：2026-10-12。</p>
+      <p>本頁彙整 SPEC-CASHFLOW-001 底下所有 ACTIVE 狀態的測試案例，共 92 條，涵蓋 49 項需求。每條案例皆經過結構化 Gate 與獨立 Validator 審查通過並由 Oscar 核准。更新：2026-10-12。</p>
       <div class="integration-note">
         <b>Phase 2 × Phase 3 整合／修訂說明：</b> 其中 43 條（TC-CASHFLOW-005, TC-CASHFLOW-008, TC-CASHFLOW-009, TC-CASHFLOW-010, TC-CASHFLOW-011, TC-CASHFLOW-014, TC-CASHFLOW-016, TC-CASHFLOW-018, TC-CASHFLOW-026, TC-CASHFLOW-027, TC-CASHFLOW-031, TC-CASHFLOW-034, TC-CASHFLOW-035, TC-CASHFLOW-043, TC-CASHFLOW-053, TC-CASHFLOW-055, TC-CASHFLOW-056, TC-CASHFLOW-057, TC-CASHFLOW-058, TC-CASHFLOW-059, TC-CASHFLOW-060, TC-CASHFLOW-061, TC-CASHFLOW-109, TC-CASHFLOW-110, TC-CASHFLOW-111, TC-CASHFLOW-112, TC-CASHFLOW-113, TC-CASHFLOW-114, TC-CASHFLOW-115, TC-CASHFLOW-116, TC-CASHFLOW-117, TC-CASHFLOW-118, TC-CASHFLOW-119, TC-CASHFLOW-120, TC-CASHFLOW-121, TC-CASHFLOW-122, TC-CASHFLOW-123, TC-CASHFLOW-124, TC-CASHFLOW-125, TC-CASHFLOW-126, TC-CASHFLOW-127, TC-CASHFLOW-128, TC-CASHFLOW-129）為交叉比對後納入的整合版本、新增案例，或依 PM 澄清（CLR）修訂後的版本；修訂歷程見各 TC 的 history 與對應 run。
       </div>
@@ -348,6 +348,119 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     </div>
   </div>
 </article>
+<article class="tc-card" data-search="tc-cashflow-130 場館額度上限設為 0 代表不限制：開分 req-keyin 送出遠大於原額度的金額仍回 0-ok 入帳，不會被當成『上限為 0』而回 1-over limit req-cashflow-004 ac-cashflow-0041 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-130</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">場館額度上限設為 0 代表不限制：開分 req-keyin 送出遠大於原額度的金額仍回 0-OK 入帳，不會被當成『上限為 0』而回 1-OVER LIMIT</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>後台讀 M 目前分數，記為 B0；逐一讀出 M 所屬場館所有機台帳號的分數並加總，記為 S（含 M 的 B0）；並記下該場館現行的『額度上限』原值 Q_orig</span></li><li><span class='step-n'>2</span><span>把 M 所屬場館的『額度上限』設為 A = S + 100（非 0；剩餘額度恰為 100）</span></li><li><span class='step-n'>3</span><span>對照（額度上限非 0）：M 送出 req-keyin，金額 101（加計後合計 S + 101，超過 A 共 1 單位）</span></li><li><span class='step-n'>4</span><span>把該場館『額度上限』改為 0</span></li><li><span class='step-n'>5</span><span>M 送出與步驟 3 完全相同的 req-keyin，金額 101</span></li><li><span class='step-n'>6</span><span>M 送出 req-keyin，金額 1000000（遠大於步驟 2 的 A）</span></li><li><span class='step-n'>7</span><span>還原：把額度上限改回 Q_orig。M 留有的餘額（B0 + 1000101）若需歸零，可送 req-keyout（mode=all、throshold=0）全洗；此為清理，不列入判定</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">場館額度上限為非 0 的 A 時，超過剩餘額度的開分（101）被拒：回 1-OVER LIMIT、分數不變；同場館額度上限改為 0 後，同一筆 101 與遠大於原額度的 1000000 開分都回 0-OK 並入帳，不回 1-OVER LIMIT——0 代表不限制，不會被當成上限為 0。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 249 行）</span>
+      <span class="spec-quote">設為 0 代表不限制</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-132 合計含小數的額度臨界（開分）：同場館另一台留有 99.6、剩餘額度 100.4 時，開分 100.5 回 1-over limit，100.4（恰等於上限）成立，成立後再開分 0.1 又回 1-over limit req-cashflow-004 ac-cashflow-0041 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-132</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">合計含小數的額度臨界（開分）：同場館另一台留有 99.6、剩餘額度 100.4 時，開分 100.5 回 1-OVER LIMIT，100.4（恰等於上限）成立，成立後再開分 0.1 又回 1-OVER LIMIT</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0041</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原</li><li>【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過</li><li>清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』）</li><li>機台 N：與 M 同一場館的另一台既有機台（自行從環境中選定，狀態『啟用』），並取得 N 現行有效的機台憑證；N 用來持有小數餘額 99.6，M 用來送出臨界金額的開分</li><li>場館內除 N 以外的機台帳號分數皆為整數（步驟 4 會核對 S 的小數部分恰為 .6；不符就換一個場館）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>把 M 所屬場館的額度上限設為 0（排除額度干擾）；記下原值 Q_orig。若 N 目前分數不是 0，先用洗分清空 N（req-keyout，mode=all、throshold=0，不核實）</span></li><li><span class='step-n'>2</span><span>【佈置】N 送出 req-keyin，金額 399.6；記錄回覆碼與 N 分數，作為步驟 7 閘門 G 的依據</span></li><li><span class='step-n'>3</span><span>【佈置】N 送出 req-keyout，mode=all、throshold=100</span></li><li><span class='step-n'>4</span><span>後台讀 M 分數 B0；逐一讀出場館所有機台帳號的分數（含 N 的 99.6）並加總為 S</span></li><li><span class='step-n'>5</span><span>把額度上限設為 A = S + 100.4（整數；剩餘額度 100.4）</span></li><li><span class='step-n'>6</span><span>探測生效：M 送出 req-keyin，金額 101（超過剩餘額度 0.6）</span></li><li><span class='step-n'>7</span><span>【閘門 G】判定步驟 2：只有『N 送出 req-keyin 399.6 實際回 0-OK，且 N 分數恰為 399.6』（等於證明平台接受一位小數的開分）才執行步驟 8～10；否則步驟 8～10 一律記為『受阻』，不判定額度缺陷（req-keyin 是否接受小數金額 spec 未定義，被拒或取整時回 6-BAD DATA/FORMAT 或金額不符，與額度判定無關）</span></li><li><span class='step-n'>8</span><span>（G 成立才做）M 送出 req-keyin，金額 100.5（超過剩餘額度 0.1）</span></li><li><span class='step-n'>9</span><span>（G 成立才做）M 送出 req-keyin，金額 100.4（加計後合計恰等於 A）</span></li><li><span class='step-n'>10</span><span>（G 成立才做）M 送出 req-keyin，金額 0.1（此時場館已恰在上限，再多 0.1 即超過）</span></li><li><span class='step-n'>11</span><span>還原：額度上限改回 Q_orig；清理 M、N 的餘額（req-keyout，mode=all、throshold=0，不核實），不列入判定</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">全場館分數合計含小數（99.6）時，額度判定仍精確：剩餘額度 100.4，開分 100.5（多 0.1）被拒，回 1-OVER LIMIT、分數不變、不寫入任何帳務異動；開分 100.4（加計後恰等於上限）成立，回 0-OK；成立後再開分 0.1 又被拒，回 1-OVER LIMIT。不會把恰等於誤判為超過，也不會放行超過 0.1 的一筆。前提：平台接受一位小數的開分（以步驟 2 的 399.6 開分實際回 0-OK 為閘門）；閘門不成立時步驟 8～10 記為受阻，不判額度缺陷。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§開分（第 84 行）</span>
+      <span class="spec-quote">若加上這筆會使全場館機台分數餘額合計超過場館額度上限</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-137 同場館『一台開分 req-keyin』與『另一台入金 end-cashin』同時到達、各自單看不超限但合計超限：恰一筆成立、另一筆回 1-over limit，全場館分數合計不超過額度上限 req-cashflow-004 req-cashflow-009 req-cashflow-007 ac-cashflow-0041 ac-cashflow-0091 ac-cashflow-0072 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-137</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">同場館『一台開分 req-keyin』與『另一台入金 end-cashin』同時到達、各自單看不超限但合計超限：恰一筆成立、另一筆回 1-OVER LIMIT，全場館分數合計不超過額度上限</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0041</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0091</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0072</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台兩台：自行從環境中選定同一場館（站台『開通』）下兩台不同的、狀態『啟用』的既有機台，分別稱 M1、M2，並取得各自現行有效的機台憑證 T1、T2（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文的請求都以機台憑證直接呼叫機台 API 送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M1／M2 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原</li><li>本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值</li><li>【環境前提】需要能讓兩個 HTTP 請求『同時』送出的工具或腳本（例如 bash 兩個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』</li><li>end-cashin 要帶『入鈔機實際清點金額』（CLR-CASHFLOW-005）；純 API 直連環境以請求中的清點金額欄位為準，回覆碼與分數是判定依據</li><li>洗分用於每輪結束後把場館分數合計還原：req-keyout（mode=value、throshold=0）。依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』，洗分會立即扣分、場館合計隨之下降</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>後台讀 M1 分數 B1、M2 分數 B2；逐一讀出場館所有機台帳號的分數並加總為 S；記下額度上限原值 Q_orig；把額度上限設為 A = S + 100</span></li><li><span class='step-n'>2</span><span>探測生效：M2 送出 req-keyin，金額 101</span></li><li><span class='step-n'>3</span><span>單邊對照（確認兩個請求單獨送出都成立，排除『單邊本來就被拒』造成的誤判）：(a) M2 送出 req-keyin 100；成立後 M2 送出 req-keyout（mode=value、金額 100、throshold=0）還原。(b) M1 送出 req-cashin 100 取得 TXID，再送 end-cashin（清點 100）；成立後 M1 送出 req-keyout（mode=value、金額 100、throshold=0）還原</span></li><li><span class='step-n'>4</span><span>【每輪開頭】M1 送出 req-cashin，金額 100，取得 TXID_r（req-cashin 不判額度、不預留，所以此時場館合計仍為 S）</span></li><li><span class='step-n'>5</span><span>【每輪】用腳本『同時』送出兩個請求：(i) M1 的 end-cashin（TXID_r，清點金額 100）；(ii) M2 的 req-keyin（金額 100）。逐請求記錄送出與回應的絕對時間（範例見 test_data）</span></li><li><span class='step-n'>6</span><span>【每輪】後台讀 M1、M2 分數與場館分數合計</span></li><li><span class='step-n'>7</span><span>【每輪結尾】對勝出的那台機台送 req-keyout（mode=value、金額 100、throshold=0)，回到下一輪的起點。若是 end-cashin 落敗，TXID_r 的去向 spec 未定義（RF-06），不斷言也不重送，下一輪用新的 req-cashin</span></li><li><span class='step-n'>8</span><span>重複步驟 4～7 共至少 10 輪；彙整每輪的勝出方、兩個回覆碼與場館合計</span></li><li><span class='step-n'>9</span><span>還原：額度上限改回 Q_orig</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">同場館一台開分 req-keyin 與另一台入金 end-cashin 同時到達、各自單看不超限但合計超限時，兩條路徑在同一把場館鎖內序列化：每一輪恰一筆回 0-OK 入帳、另一筆回 1-OVER LIMIT 且不改變分數，全場館分數合計恰為額度上限 A，不會出現兩筆都成立使合計超過 A；重複至少 10 輪結果一致。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§開分（`req-keyin`）（第 352 行）（鎖的對象以 REQ-CASHFLOW-004 敘述為準：開分與入金的額度判定共用同一把場館鎖；該行『入金預留』的部分已被 CLR-CASHFLOW-005 取代，不引用）</span>
+      <span class="spec-quote">判定與入帳於場館鎖內執行</span>
+    </div>
+  </div>
+</article>
       </div>
     </section>
     <section class="req-group" id="REQ-CASHFLOW-005">
@@ -560,6 +673,45 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     </div>
   </div>
 </article>
+<article class="tc-card" data-search="tc-cashflow-131 場館額度上限設為 0 代表不限制：入金 end-cashin 同一筆實際清點金額在額度上限非 0 時回 1-over limit，改為 0 後回 0-ok 入帳（req-cashin 兩次都只建立 pending） req-cashflow-009 req-cashflow-007 ac-cashflow-0091 ac-cashflow-0071 ac-cashflow-0072 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-131</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">場館額度上限設為 0 代表不限制：入金 end-cashin 同一筆實際清點金額在額度上限非 0 時回 1-OVER LIMIT，改為 0 後回 0-OK 入帳（req-cashin 兩次都只建立 PENDING）</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0091</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0071</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0072</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原</li><li>本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值</li><li>end-cashin 要帶『入鈔機實際清點金額』（CLR-CASHFLOW-005）；純 API 直連環境沒有實體入鈔機，以請求中帶入的清點金額欄位為準，回覆碼與分數是判定依據，『機台退鈔』只在有實體機台時另行確認</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>後台讀 M 分數 B0；逐一讀出 M 所屬場館所有機台帳號的分數並加總為 S；記下該場館『額度上限』原值 Q_orig；把額度上限設為 A = S + 100（非 0）</span></li><li><span class='step-n'>2</span><span>對照（額度上限非 0）：M 送出 req-cashin，金額 101</span></li><li><span class='step-n'>3</span><span>M 送出 end-cashin，帶 TXID_1，實際清點金額 101（加計後合計 S + 101，超過 A 共 1 單位）</span></li><li><span class='step-n'>4</span><span>把該場館『額度上限』改為 0</span></li><li><span class='step-n'>5</span><span>M 送出 req-cashin，金額 101（與步驟 2 相同），取得 TXID_2</span></li><li><span class='step-n'>6</span><span>M 送出 end-cashin，帶 TXID_2，實際清點金額 101（與步驟 3 相同）</span></li><li><span class='step-n'>7</span><span>還原：把額度上限改回 Q_orig。TXID_1 留下的 PENDING 不處理、不依賴其狀態；M 餘額若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，此為清理，不列入判定</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">end-cashin 以入鈔機實際清點金額判定額度上限：額度上限為非 0 的 A 時，同一筆 101 超過剩餘額度，回 1-OVER LIMIT、不更新帳務；額度上限改為 0 後，同一筆 101 回 0-OK、分數增加 101、該筆轉為已完成——0 代表不限制，end-cashin 路徑也不會把 0 當成上限 0。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 249 行）（額度判定時點以 CLR-CASHFLOW-005 為準：end-cashin 才判定；該行『入金於 req-cashin 判定並預留』的寫法已過時，只引用『設為 0 代表不限制』）</span>
+      <span class="spec-quote">設為 0 代表不限制</span>
+    </div>
+  </div>
+</article>
       </div>
     </section>
     <section class="req-group" id="REQ-CASHFLOW-008">
@@ -721,6 +873,43 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     <div class="tc-spec">
       <span class="spec-loc">SPEC-CASHFLOW-001 v0.1（依 RM REQ-CASHFLOW-007／009，2026-09-23 依 CLR-CASHFLOW-005 回寫；spec.md 正本 v07 文字已作廢，待更新）</span>
       
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-133 合計含小數的額度臨界（end-cashin）：同場館另一台留有 99.4、剩餘額度 100.6 時，整數清點金額 101 回 1-over limit，100 成立，成立後再入 1 回 1-over limit req-cashflow-009 ac-cashflow-0091 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-133</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">合計含小數的額度臨界（end-cashin）：同場館另一台留有 99.4、剩餘額度 100.6 時，整數清點金額 101 回 1-OVER LIMIT，100 成立，成立後再入 1 回 1-OVER LIMIT</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0091</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原</li><li>【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過</li><li>清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』）</li><li>本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值</li><li>機台 N：與 M 同一場館的另一台既有機台（自行從環境中選定，狀態『啟用』），並取得 N 現行有效的機台憑證；N 用來持有小數餘額 99.4，M 用來送出入金</li><li>場館內除 N 以外的機台帳號分數皆為整數（步驟 4 會核對 S 的小數部分恰為 .4；不符就換一個場館）</li><li>實體入鈔機只會清點出整數面額的紙鈔，所以本案的 end-cashin 清點金額一律用整數，小數只出現在『剩餘額度』</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>把 M 所屬場館的額度上限設為 0（排除額度干擾）；記下原值 Q_orig。若 N 目前分數不是 0，先用洗分清空 N（req-keyout，mode=all、throshold=0，不核實）</span></li><li><span class='step-n'>2</span><span>【佈置】N 送出 req-keyin，金額 399.4</span></li><li><span class='step-n'>3</span><span>【佈置】N 送出 req-keyout，mode=all、throshold=100</span></li><li><span class='step-n'>4</span><span>後台讀 M 分數 B0；逐一讀出場館所有機台帳號的分數（含 N 的 99.4）並加總為 S</span></li><li><span class='step-n'>5</span><span>把額度上限設為 A = S + 100.6（整數；剩餘額度 100.6）</span></li><li><span class='step-n'>6</span><span>M 送出 req-cashin，金額 101，取得 TXID_1；接著送出 end-cashin（TXID_1，實際清點金額 101，超過剩餘額度 0.4）</span></li><li><span class='step-n'>7</span><span>M 送出 req-cashin，金額 100，取得 TXID_2；接著送出 end-cashin（TXID_2，實際清點金額 100，低於剩餘額度 0.6）</span></li><li><span class='step-n'>8</span><span>M 送出 req-cashin，金額 1，取得 TXID_3；接著送出 end-cashin（TXID_3，實際清點金額 1，大於此時剩餘額度 0.6）</span></li><li><span class='step-n'>9</span><span>還原：額度上限改回 Q_orig；清理 M、N 的餘額（req-keyout，mode=all、throshold=0，不核實），不列入判定。TXID_1、TXID_3 留下的 PENDING 不處理</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">全場館分數合計含小數（99.4）、剩餘額度為 100.6 時，end-cashin 依整數實際清點金額精確判定：101（多 0.4）回 1-OVER LIMIT、不更新帳務；100 回 0-OK、分數增加 100；成立後剩餘額度 0.6，再入 1 回 1-OVER LIMIT。不會把剩餘額度取整後誤放行。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 249 行）（額度判定時點以 CLR-CASHFLOW-005 為準：end-cashin 才判定；只引用『合計超過上限時拒絕』）</span>
+      <span class="spec-quote">開分與入金加計後，全場館機台分數餘額合計超過上限時拒絕</span>
     </div>
   </div>
 </article>
@@ -1132,6 +1321,83 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     <div class="tc-spec">
       <span class="spec-loc">§四種金流/洗分</span>
       
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-134 門檻 100 全洗 399.6 後留下的餘數 99.6：再以門檻 100 全洗回 1-no credits 洗不出，按結算出金則全額領回 99.6（含小數）、餘額歸 0、交易紀錄 -99.6 req-cashflow-014 req-cashflow-020 ac-cashflow-0142 ac-cashflow-0203 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-134</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">門檻 100 全洗 399.6 後留下的餘數 99.6：再以門檻 100 全洗回 1-NO CREDITS 洗不出，按結算出金則全額領回 99.6（含小數）、餘額歸 0、交易紀錄 -99.6</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0142</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0203</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過</li><li>清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』）</li><li>出金不套門檻、不需要 throshold；過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout，本案以直接呼叫機台 API 等效驗證平台端行為</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>若 M 目前分數不是 0，先用洗分清空（req-keyout，mode=all、throshold=0，不核實）</span></li><li><span class='step-n'>2</span><span>【佈置】M 送出 req-keyin，金額 399.6</span></li><li><span class='step-n'>3</span><span>【佈置】M 送出 req-keyout，mode=all、throshold=100</span></li><li><span class='step-n'>4</span><span>M 再送出 req-keyout，mode=all、throshold=100（餘數 99.6 不足一個門檻單位 100）</span></li><li><span class='step-n'>5</span><span>M 送出 req-cashout</span></li><li><span class='step-n'>6</span><span>M 送出 end-cashout，帶 TXID_1</span></li><li><span class='step-n'>7</span><span>後台讀 M 分數；4.1 查看這筆機台出金（TXID_1）的金額</span></li><li><span class='step-n'>8</span><span>還原：額度上限改回原值（不影響判定）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">餘額 399.6、門檻 100 全洗後餘數 99.6 留在機台帳號：再以門檻 100 全洗可洗金額為 0，回 1-NO CREDITS、餘數不變；改按結算出金則核可金額為全部餘額 99.6（含小數、不取整），機台餘額歸 0，交易紀錄金額 -99.6。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 252 行）</span>
+      <span class="spec-quote">餘數單獨存在時可洗金額為 0、無法洗出，須待餘額再累積（或按結算出金全額領回）</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-135 餘額 0.6（整數部分為 0）：以門檻 100 全洗回 1-no credits 洗不出，按結算出金核可金額 0.6、不被當成 0 而回 1-no credits，餘額歸 0、交易紀錄 -0.6 req-cashflow-014 req-cashflow-020 ac-cashflow-0142 ac-cashflow-0203 ac-cashflow-0202 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-135</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">餘額 0.6（整數部分為 0）：以門檻 100 全洗回 1-NO CREDITS 洗不出，按結算出金核可金額 0.6、不被當成 0 而回 1-NO CREDITS，餘額歸 0、交易紀錄 -0.6</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0142</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0203</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0202</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec 證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過</li><li>清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』）</li><li>出金不套門檻、不需要 throshold；過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout，本案以直接呼叫機台 API 等效驗證平台端行為</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>若 M 目前分數不是 0，先用洗分清空（req-keyout，mode=all、throshold=0，不核實）</span></li><li><span class='step-n'>2</span><span>【佈置】M 送出 req-keyin，金額 0.6</span></li><li><span class='step-n'>3</span><span>M 送出 req-keyout，mode=all、throshold=100</span></li><li><span class='step-n'>4</span><span>M 送出 req-cashout</span></li><li><span class='step-n'>5</span><span>M 送出 end-cashout，帶 TXID_1</span></li><li><span class='step-n'>6</span><span>後台讀 M 分數；4.1 查看這筆機台出金（TXID_1）的金額</span></li><li><span class='step-n'>7</span><span>還原：額度上限改回原值（不影響判定）</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">餘額只有 0.6 時：以門檻 100 全洗可洗金額為 0，回 1-NO CREDITS、餘額不變；按結算出金核可金額為全部餘額 0.6（含小數），不會因整數部分為 0 而被當成 0 回 1-NO CREDITS，機台餘額歸 0，交易紀錄金額 -0.6。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§出金（`req-cashout` → `end-cashout`）（第 339 行）</span>
+      <span class="spec-quote">核可金額為 0 時回 `1-NO CREDITS`，不建立 PENDING、不寫入交易紀錄</span>
     </div>
   </div>
 </article>
@@ -2007,6 +2273,82 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     
     <div class="tc-spec">
       <span class="spec-loc">§業務規則與驗證（本包相關）（第 260 行）</span>
+      <span class="spec-quote">出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-136 機台被設為停用後：該機台待確認出金的 end-cashout 回 7-out of service，pending 仍為待確認且分數不變；管理員仍可手動取消，轉為已取消、分數不異動 req-cashflow-041 req-cashflow-026 ac-cashflow-0411 ac-cashflow-0262 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-136</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">機台被設為停用後：該機台待確認出金的 end-cashout 回 7-OUT OF SERVICE，PENDING 仍為待確認且分數不變；管理員仍可手動取消，轉為已取消、分數不異動</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">integration</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0411</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0262</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>【環境前提，spec 未定義】後端『手動取消待確認出金』API：CLR-CASHFLOW-008 說明後端已開發完成、前端（4.1 的『手動取消』入口）尚未開發（BUG-TXLOG-001 OPEN）。API 的路徑、認證方式（各後台角色的登入身分如何帶入）、請求參數與拒絕時的回應內容，spec 與 CLR 均未定義，需由開發提供；本案不編造這些細節。取不到 API 規格時，本案記為『受阻』並回報缺口，不得改以 UI 假設通過（前端尚未開發）</li><li>【環境前提，spec 未定義操作位置】後台將機台設為『停用』的入口：spec 只說明機台『在後台被設為停用』，沒有載明在哪個頁面操作；請環境負責人確認，並確認停用後能再改回啟用以便清理</li><li>管理員帳號（Admin 角色）。僅管理員可手動取消待確認出金（CLR-CASHFLOW-008）</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1</span></li><li><span class='step-n'>2</span><span>M 送出 req-cashout，之後不送 end-cashout（模擬機台收不到回覆而結束程序）</span></li><li><span class='step-n'>3</span><span>管理員在後台將 M 設為『停用』</span></li><li><span class='step-n'>4</span><span>M 送出 end-cashout，帶 TXID_1</span></li><li><span class='step-n'>5</span><span>後台讀 M 分數；4.1 重新查詢 TXID_1</span></li><li><span class='step-n'>6</span><span>M 仍為停用狀態：管理員以後端手動取消 API 取消 TXID_1（API 規格見前提）；之後 4.1 重新查詢 TXID_1、後台讀 M 分數</span></li><li><span class='step-n'>7</span><span>清理：後台將 M 改回『啟用』。M 餘額 B1 若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，不核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">機台被設為停用後，該機台已存在的待確認出金不受影響：送 end-cashout 回 7-OUT OF SERVICE，PENDING 仍為待確認、分數不變；停用中的機台遺留的這筆待確認出金，仍可由管理員手動取消，轉為已取消，分數不異動。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 268 行）</span>
+      <span class="spec-quote">停用中的機台無法運作；不影響餘額與尚未完成的交易</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-139 後端手動取消 api 驗證權限：站長、操作員（非管理員）呼叫都不能取消待確認出金（txid 仍為待確認、分數不變），管理員呼叫同一 api 則轉為已取消、分數不異動 req-cashflow-026 ac-cashflow-0265 ac-cashflow-0262 high high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-139</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">後端手動取消 API 驗證權限：站長、操作員（非管理員）呼叫都不能取消待確認出金（TXID 仍為待確認、分數不變），管理員呼叫同一 API 則轉為已取消、分數不異動</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 high</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0265</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0262</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>【環境前提，spec 未定義】後端『手動取消待確認出金』API：CLR-CASHFLOW-008 說明後端已開發完成、前端（4.1 的『手動取消』入口）尚未開發（BUG-TXLOG-001 OPEN）。API 的路徑、認證方式（各後台角色的登入身分如何帶入）、請求參數與拒絕時的回應內容，spec 與 CLR 均未定義，需由開發提供；本案不編造這些細節。取不到 API 規格時，本案記為『受阻』並回報缺口，不得改以 UI 假設通過（前端尚未開發）</li><li>三個後台帳號（自行從環境中選定）：管理員（Admin）角色一個、站長角色一個、操作員角色一個，皆能登入後台並取得各自的 API 身分。&#x27;操作員&#x27; 角色在環境中的實際名稱與其權限範圍 spec 未定義，請環境負責人指定一個被歸類為非管理員的操作員帳號；環境沒有此角色帳號時，操作員那一步記為『受阻』，其餘步驟照做</li><li>本案以 API 為主要驗證（不是選做）：前端『手動取消』入口尚未開發，既有 TC-CASHFLOW-117 的 UI 步驟無法執行，API 步驟是目前唯一能驗證後端權限的證據。本案只斷言『非管理員不能取消』的結果（TXID 狀態與分數），拒絕時的回應內容（碼、訊息）spec 未定義，只記錄不斷言</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1</span></li><li><span class='step-n'>2</span><span>M 送出 req-cashout，之後不送 end-cashout</span></li><li><span class='step-n'>3</span><span>以站長身分呼叫後端手動取消 API，目標 TXID_1；記錄回應（HTTP 狀態、內容），不斷言內容</span></li><li><span class='step-n'>4</span><span>管理員在 4.1 重新查詢 TXID_1，並讀 M 分數</span></li><li><span class='step-n'>5</span><span>以操作員身分呼叫後端手動取消 API，目標 TXID_1；記錄回應，不斷言內容</span></li><li><span class='step-n'>6</span><span>管理員在 4.1 重新查詢 TXID_1，並讀 M 分數</span></li><li><span class='step-n'>7</span><span>對照：以管理員身分呼叫同一個後端手動取消 API，目標 TXID_1</span></li><li><span class='step-n'>8</span><span>管理員在 4.1 重新查詢 TXID_1，並讀 M 分數</span></li><li><span class='step-n'>9</span><span>清理：M 餘額 B1 若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，不核實</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">待確認出金的手動取消僅限管理員：站長與操作員透過後端 API 嘗試取消，該筆都不會被取消（仍為待確認）、分數不變；同一 API 以管理員身分呼叫則該筆轉為已取消、分數不異動。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§業務規則與驗證（本包相關）（第 260 行）（角色限制以 CLR-CASHFLOW-008 rev 1『僅管理員，RD 已確認』為準）</span>
       <span class="spec-quote">出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止</span>
     </div>
   </div>
@@ -3164,6 +3506,43 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     </div>
   </div>
 </article>
+<article class="tc-card" data-search="tc-cashflow-138 多台機台（含跨場館）同時送出 req-cashout：每筆出金的 order_id 各自一組、全系統不重複，且依 order_id 到洗分出金核實頁各只查到一筆 req-cashflow-045 ac-cashflow-0452 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-138</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">多台機台（含跨場館）同時送出 req-cashout：每筆出金的 order_id 各自一組、全系統不重複，且依 order_id 到洗分出金核實頁各只查到一筆</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0452</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：至少 10 台狀態『啟用』的既有機台（自行從環境中選定，需涵蓋至少 2 個不同場館；站台皆『開通』），逐台取得各自現行有效的機台憑證（JWT，Bearer 帶入），稱 M1…Mn。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。機台不足 10 台時，改以多輪補足 order_id 總筆數 ≥ 10，並在結果註明『單輪最大併發台數』，不得宣稱已達 10 台併發</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與『洗分出金核實』頁；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>對每一台機台所屬場館，把『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案，動手前先記下各場館原值；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原各場館原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>過渡期（機台暫無印表機）出金由前台依序呼叫 req-cashout／end-cashout；本案以直接呼叫機台 API 等效驗證平台端行為</li><li>【環境前提】需要能讓多個 HTTP 請求『同時』送出的工具或腳本（例如 bash 多個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』</li><li>【環境前提】櫃檯依 order_id 查詢的位置：spec 指向『洗分出金核實』頁的收據核銷（屬另一個規格）；請依該頁實際的查詢欄位，若以其他名稱提供編號查詢以實際為準</li><li>本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>每台機台 Mi 依序送出 req-keyin，金額 100（序列送出即可）；後台讀各機台分數 Bi（開分後）</span></li><li><span class='step-n'>2</span><span>用腳本『同時』對全部機台各送一個 req-cashout（每台一個請求，起跑時點相同）；逐請求記錄送出與回應的絕對時間（範例見 test_data）</span></li><li><span class='step-n'>3</span><span>比對本輪全部 order_id_i（並與 4.1 或洗分出金核實頁中可見的其他既有出金 order_id 抽樣比對）</span></li><li><span class='step-n'>4</span><span>每台機台 Mi 送出 end-cashout（TXID_i）完成該筆出金</span></li><li><span class='step-n'>5</span><span>到後台『洗分出金核實』頁，逐一以 order_id_i 查詢</span></li><li><span class='step-n'>6</span><span>重複步驟 1～5 共至少 3 輪；把所有輪次的 order_id 合併再比對一次</span></li><li><span class='step-n'>7</span><span>還原：各場館額度上限改回原值</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">多台機台（含不同場館）同時送出 req-cashout 時，平台為每筆出金產生各自一組、全系統不重複的 order_id；依任一 order_id 到洗分出金核實頁查詢，都只查到對應的那一筆出金，不會查到兩筆或查到別台的出金。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§出金（`req-cashout` → `end-cashout`）（第 335 行）</span>
+      <span class="spec-quote">`order_id` 由平台產生，一筆出金一組，全系統唯一</span>
+    </div>
+  </div>
+</article>
       </div>
     </section>
     <section class="req-group" id="REQ-CASHFLOW-046">
@@ -3524,6 +3903,43 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
     <div class="tc-section">
       <div class="tc-label">預期結果</div>
       <p class="tc-expected">token 簽章無效（遭竄改或非平台簽發）時，平台拒絕並回 9-OTHER ERROR。</p>
+    </div>
+    
+    <div class="tc-spec">
+      <span class="spec-loc">§狀態碼對照（第 319 行）</span>
+      <span class="spec-quote">Token 無效或已重置、機台帳號不存在，或其他未預期錯誤</span>
+    </div>
+  </div>
+</article>
+<article class="tc-card" data-search="tc-cashflow-140 jwt 繞過手法一律回 9-other error：header alg=none 去掉簽章、演算法混淆、簽章有效但 claim 指向不存在的機台帳號，各種機台 api 都不處理，分數與交易筆數不變 req-cashflow-049 ac-cashflow-0493 medium high" data-class="grounded">
+  <header class="tc-head">
+    <div class="tc-id-row">
+      <span class="tc-id">TC-CASHFLOW-140</span>
+      <span class="tc-ver">v1</span>
+      
+    </div>
+    <h3 class="tc-title">JWT 繞過手法一律回 9-OTHER ERROR：header alg=none 去掉簽章、演算法混淆、簽章有效但 claim 指向不存在的機台帳號，各種機台 API 都不處理，分數與交易筆數不變</h3>
+    <div class="tc-pills">
+      <span class='pill pill-grounded'>grounded · 已確認</span>
+      <span class='pill pill-neutral'>優先 medium</span>
+      <span class='pill pill-risk-high'>風險 high</span>
+      <span class="pill pill-neutral">api</span>
+      <span class="pill pill-neutral">AC-CASHFLOW-0493</span>
+    </div>
+  </header>
+
+  <div class="tc-body">
+    <div class="tc-section">
+      <div class="tc-label">前置條件</div>
+      <ul class="tc-precon"><li>測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以 M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台</li><li>以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準</li><li>【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認</li><li>將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值</li><li>確認稽核倍數為預設 0 倍（帳務管理 &gt; 出金設定 &gt; TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案</li><li>測試人員可解碼 JWT（拆成 header／payload／signature 三段，base64url）並手動組出新的 JWT（JWT 工具或腳本，例如 Python 的 base64 與 hmac／cryptography 套件）</li><li>取得 M 現行有效憑證 T，解碼 header 記下 alg（記為 X），解碼 payload 找出『標識機台帳號』的 claim（記為 CLAIM_ACCT；claim 名稱 spec 未定義，以實際 T 為準）。本案不重置 M 的憑證</li><li>【環境前提】子項 (b-asym)（演算法混淆）僅在 X 為非對稱演算法（RS／ES／PS 系列）且測試人員能取得平台驗簽用的公鑰時才執行；X 為對稱演算法（HS 系列）時改做子項 (b-sym)。子項 (c) 需要能以平台簽章金鑰簽發 token（測試環境的簽章金鑰或開發提供的簽發工具）；取不到時 (c) 記為『受阻』，其餘子項照做。這些環境條件 spec 均未定義</li><li>子項 (c) 的『不存在的機台帳號』：自行取一個確定不存在的帳號字串（例如 NOSUCHMACHINE 加隨機尾碼），並先在後台會員搜尋確認查無此帳號</li></ul>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">步驟</div>
+      <ol class="tc-steps"><li><span class='step-n'>1</span><span>以 T 送 req-keyin，金額 100（對照）；後台記下 M 分數 B1、4.1 以 M 篩選（不篩狀態）的交易筆數 N1</span></li><li><span class='step-n'>2</span><span>子項 (a)：依 test_data 組出兩個 alg=none 的 token，各自分別送出四種請求（req-keyin 10、req-cashin 10、req-cashout、req-keyout mode=all throshold=0）</span></li><li><span class='step-n'>3</span><span>子項 (b)：依 X 選擇 (b-sym) 或 (b-asym) 組出 token，各自分別送出四種請求</span></li><li><span class='step-n'>4</span><span>子項 (c)：組出簽章有效、CLAIM_ACCT 指向不存在機台帳號的 token，分別送出四種請求（取不到簽發工具則記『受阻』）</span></li><li><span class='step-n'>5</span><span>後台讀 M 分數；4.1 重新查詢 M 的交易筆數（不篩狀態）；並到會員搜尋確認沒有出現步驟 4 那個不存在的帳號</span></li><li><span class='step-n'>6</span><span>對照：以原 T 送 req-keyin，金額 10</span></li></ol>
+    </div>
+    <div class="tc-section">
+      <div class="tc-label">預期結果</div>
+      <p class="tc-expected">token 無效（alg=none 去掉簽章、演算法混淆等偽造簽章）或機台帳號不存在（簽章有效但 claim 指向不存在的帳號）時，平台拒絕並回 9-OTHER ERROR，任何一種機台 API 都不處理，分數與交易筆數不變，也不會因此建立機台帳號。</p>
     </div>
     
     <div class="tc-spec">

@@ -1,0 +1,153 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+execution_mode: manual
+assumptions: []
+title: 操作員略過前端直接呼叫作廢 API 指定自身場館的待核實出金：後端拒絕，該筆維持待核實且無作廢紀錄
+description: TCRiskReview RF-18：作廢只授權管理員與站長。TC-CASHOUT-079 從介面驗操作員找不到作廢入口；本案驗證操作員繞過前端、帶有效的操作員憑證直接呼叫作廢 API 時後端拒絕。
+requirement_ids:
+- REQ-CASHOUT-029
+- REQ-CASHOUT-028
+acceptance_criteria_ids:
+- AC-CASHOUT-0291
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- negative
+- security_rule
+- state_transition
+priority: medium
+risk: high
+preconditions:
+- 兩個後台帳號：操作員（屬於本案機台場館，操作員限自身場館）一個、站長（或管理員）一個。操作員用一般瀏覽器視窗，站長用另一個無痕視窗或 Profile，兩者同時登入；站台切換選單都切到本案機台場館所屬的站台。這兩種角色都是 spec 已明載的角色，本案不使用其他角色。
+- 需要三筆本案場館（操作員的自身場館）的待核實『機台出金』紀錄，均使用測試站台、測試機台帳號：P＝受測對象（本案預期它不會被作廢）；X＝取樣用（由站長正常作廢一次以擷取作廢請求格式，之後即為已作廢）；Y＝對照用（步驟 7 以站長憑證驗證擷取的請求格式有效，Y
+  會被作廢）。X、Y 作廢不可復原，是專供本案消耗的測試資料。若環境已有作廢 API 的文件（網址、方法、請求內容、認證方式），可由環境負責人提供而省略 X；仍需保留 Y 或其他方式證明請求格式有效，否則無法排除『因格式錯誤而被拒絕』。
+- 【環境前提，需環境負責人確認】三筆待核實出金的取得：以機台端（前台）對測試機台帳號出金產生（出金金額不拘；機台餘額如何調整 spec 未定義，是我推測需由環境負責人提供），或環境中已有符合條件的紀錄。作廢 API 的網址與請求格式、認證方式（Cookie
+  或 Authorization）spec 未定義，一律以 Network 面板實際擷取為準。
+- 本案不驗證『已核實的收據能否作廢』（spec 未定義，TCRiskReview RF-09 待 Clarification），因此受測對象 P 只用『待核實』紀錄；也不推論操作員對其他功能的權限，只驗證作廢這一項。
+- 作廢一經確認不可撤銷，且會進入場館日結報表的統計：本案只使用測試站台、測試機台帳號的紀錄，不得對正式營運資料執行；X、Y 不與其他 TC 共用。測試期間不要對 P 執行核實或作廢。
+test_data:
+- name: 作廢原因（取樣與對照用）
+  value: 測試作廢：請求格式取樣／對照
+- name: 作廢原因（操作員越權請求）
+  value: 操作員越權測試
+- name: 受測紀錄 P
+  value: 操作員自身場館的待核實出金
+  note: 預期請求後狀態仍為待核實
+steps:
+- n: 1
+  action: 站長視窗：到『帳務管理 > 洗分出金核實』，以『交易類型＝機台出金』『核實狀態＝待核實』篩選，選定 P、X、Y 三筆，各自記下訂單編號 O_P、O_X、O_Y。
+  expected: 三筆皆為『待核實』且屬於操作員的自身場館。
+- n: 2
+  action: 站長視窗：開啟 F12 → Network，勾選 Preserve log、篩選 Fetch/XHR 並 Clear；對 X 點擊『作廢』，填寫作廢原因『測試作廢：請求格式取樣』後送出；在 Network 找到作廢請求，右鍵
+    → Copy → Copy as cURL，存成樣板。
+  expected: X 標記為『已作廢』；取得作廢請求的樣板（網址、方法、請求內容、認證方式、目標紀錄的識別方式）。
+- n: 3
+  action: 操作員視窗：開啟 F12 → Network（Preserve log），進入『帳務管理 > 洗分出金核實』，以 O_P 查詢；從列表查詢請求的回應內容找出 P 的紀錄識別；任選一個該次登入產生的請求 Copy as cURL，取得操作員的認證資訊（Cookie
+    或 Authorization）。同時檢視 P 的操作欄。
+  expected: 取得 P 的紀錄識別與操作員認證資訊。（操作員的操作欄預期沒有『作廢』，此為 TC-CASHOUT-079 的範圍，這裡只記錄）
+- n: 4
+  action: 以步驟 2 的樣板在終端機組出作廢請求：認證資訊換成步驟 3 的操作員認證資訊、目標紀錄識別換成 P 的紀錄識別、作廢原因填『操作員越權測試』，其餘內容不變；從終端機（curl）直接送出，不經任何前端畫面。記下完整回應（狀態碼與內容）。
+  expected: 回應為拒絕（HTTP 4xx 或業務錯誤；具體狀態碼與訊息 spec 未定義，不比對），不是成功。
+- n: 5
+  action: 站長視窗：重新整理洗分出金核實頁，以 O_P 查詢 P。
+  expected: P 仍為『待核實』，核實狀態未變、沒有已作廢標記，也沒有作廢原因。
+- n: 6
+  action: 操作員視窗：重新整理後以 O_P 查詢，並以操作員身分查看 P 的操作欄。
+  expected: P 仍為『待核實』；操作員看到的 P 狀態與步驟 5 一致，且仍不能作廢。
+- n: 7
+  action: 對照組：以步驟 2 的樣板，只把目標紀錄識別換成 Y 的識別（取法同步驟 3，從站長視窗以 O_Y 查詢時列表請求的回應取得；認證資訊維持站長的），從終端機送出，作廢原因填『測試作廢：對照』。
+  expected: 請求成功，Y 標記為『已作廢』——證明步驟 4 的請求格式與目標識別的組法是有效的，步驟 4 被拒絕是因為操作員身分，不是因為格式錯誤。
+expected_result: 操作員（自身場館）略過前端、以有效的操作員憑證直接呼叫作廢 API 指定自身場館的待核實出金 P 時，後端拒絕該請求；P 維持待核實、沒有作廢標記或作廢原因。對照組以站長憑證送出同一格式的請求則成功，證明拒絕係因身分而非請求格式。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §操作／作廢（僅出金）（第 102 行）
+  quote: 僅 管理員 與站長可執行，須填寫作廢原因（必填）；用於收據遺失、爭議或確認不再兌付的情況
+decision_refs:
+- requirement_id: REQ-CASHOUT-029
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作／作廢（僅出金）（第 102 行）
+- requirement_id: REQ-CASHOUT-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作／作廢（僅出金）（第 102 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作／作廢（僅出金）（第 102 行）
+  quote: 僅 管理員 與站長可執行，須填寫作廢原因（必填）；用於收據遺失、爭議或確認不再兌付的情況
+source_ref: TCRiskReview ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM RF-18（RUN-20261012-006）
+testcase_id: TC-CASHOUT-150
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+created_at: '2026-10-12T17:30:45Z'
+updated_at: '2026-10-12T17:43:17Z'
+history:
+- at: '2026-10-12T17:30:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:36:28Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:43:17Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0206
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:43:17Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-002
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0206

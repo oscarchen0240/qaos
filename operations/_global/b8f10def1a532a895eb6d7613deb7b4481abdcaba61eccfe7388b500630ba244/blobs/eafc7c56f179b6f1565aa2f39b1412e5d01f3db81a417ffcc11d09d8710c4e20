@@ -1,0 +1,208 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+stability: unknown
+source: spec_workflow
+title: 同場館『一台開分 req-keyin』與『另一台入金 end-cashin』同時到達、各自單看不超限但合計超限：恰一筆成立、另一筆回 1-OVER LIMIT，全場館分數合計不超過額度上限
+requirement_ids:
+- REQ-CASHFLOW-004
+- REQ-CASHFLOW-009
+- REQ-CASHFLOW-007
+acceptance_criteria_ids:
+- AC-CASHFLOW-0041
+- AC-CASHFLOW-0091
+- AC-CASHFLOW-0072
+test_level: api
+test_types:
+- functional
+- negative
+- boundary
+design_techniques:
+- error_guessing
+priority: high
+risk: high
+execution_mode: hybrid
+execution_cost: high
+critical_path: true
+preconditions:
+- 測試用機台兩台：自行從環境中選定同一場館（站台『開通』）下兩台不同的、狀態『啟用』的既有機台，分別稱 M1、M2，並取得各自現行有效的機台憑證 T1、T2（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文的請求都以機台憑證直接呼叫機台
+  API 送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M1／M2 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+- 本案依賴的『機台 API 請求欄位名稱與 JSON 格式』（例如 req-cashin 的金額欄、end-cashin 的實際清點金額欄、TXID 欄）spec 未定義，依機台 API 文件（J型老虎機API文件-入金出金）組成請求；本案只寫各欄位的語意與數值
+- 【環境前提】需要能讓兩個 HTTP 請求『同時』送出的工具或腳本（例如 bash 兩個背景 curl 加 wait、Python asyncio.gather／threading.Barrier、k6）。觸發範例見 test_data『同時送出的範例』
+- end-cashin 要帶『入鈔機實際清點金額』（CLR-CASHFLOW-005）；純 API 直連環境以請求中的清點金額欄位為準，回覆碼與分數是判定依據
+- 洗分用於每輪結束後把場館分數合計還原：req-keyout（mode=value、throshold=0）。依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻 0＝洗出全部餘額』，洗分會立即扣分、場館合計隨之下降
+test_data:
+- name: S（場館所有機台帳號分數合計）
+  value: 依環境讀出
+  note: 含 M1、M2
+- name: 額度上限 A
+  value: S + 100
+  note: 剩餘額度恰為 100
+- name: M1 end-cashin 實際清點金額（= req-cashin 聲稱金額）
+  value: 100
+  note: 單看不超限（剩餘 100）
+- name: M2 req-keyin 金額
+  value: 100
+  note: 單看不超限；兩筆合計 200 > 剩餘 100
+- name: 重複輪數
+  value: 至少 10 輪
+  note: 每輪須以 max(送出時刻) < min(回應時刻) 判定有效重疊，不成立的輪次作廢
+- name: 同時送出的範例
+  value: "# 兩個請求同時送出，並逐請求記錄『送出』與『回應』的絕對時間（bash；macOS 的 date 不支援 %N，故用 python3 取 epoch 秒）\n# BASE、路徑與 JSON 欄位依機台 API 文件填入；T1、T2\
+    \ 分別是 M1、M2 的機台憑證\nnow() { python3 -c 'import time;print(time.time())'; }\nfire() {   # $1=token $2=路徑 $3=body $4=輸出名稱\n\
+    \  s=$(now)\n  w=$(curl -s -o \"r_$4.json\" -w '%{time_pretransfer} %{time_starttransfer}' -X POST \"$BASE/$2\" -H \"\
+    Authorization: Bearer $1\" -H 'Content-Type: application/json' -d \"$3\")\n  echo \"$s $w\" > \"t_$4.txt\"   # 送出時刻 =\
+    \ s + time_pretransfer；回應時刻 = s + time_starttransfer（首個回應位元組）\n}\nfire \"$T1\" '<end-cashin 路徑>' \"$BODY_END_CASHIN\"\
+    \ end &\nfire \"$T2\" '<req-keyin 路徑>'  \"$BODY_KEYIN\"      key &\nwait\n# 判定式：send_i = s_i + pretransfer_i；resp_i =\
+    \ s_i + starttransfer_i；max(send_1, send_2) < min(resp_1, resp_2) 才算有效重疊，否則該輪作廢重做\n# 也可改用 Python asyncio.gather／threading.Barrier\
+    \ 搭配 time.time()，或 k6 兩個同時起跑的 scenario；判定式相同"
+steps:
+- n: 1
+  action: 後台讀 M1 分數 B1、M2 分數 B2；逐一讀出場館所有機台帳號的分數並加總為 S；記下額度上限原值 Q_orig；把額度上限設為 A = S + 100
+  expected: 取得 B1、B2、S、Q_orig；額度上限 A 已儲存
+- n: 2
+  action: 探測生效：M2 送出 req-keyin，金額 101
+  expected: 回 1-OVER LIMIT；M2 分數仍為 B2
+- n: 3
+  action: 單邊對照（確認兩個請求單獨送出都成立，排除『單邊本來就被拒』造成的誤判）：(a) M2 送出 req-keyin 100；成立後 M2 送出 req-keyout（mode=value、金額 100、throshold=0）還原。(b)
+    M1 送出 req-cashin 100 取得 TXID，再送 end-cashin（清點 100）；成立後 M1 送出 req-keyout（mode=value、金額 100、throshold=0）還原
+  expected: (a) req-keyin 回 0-OK、M2 = B2 + 100；還原洗分回 0-OK、M2 回到 B2。(b) req-cashin 回 0-OK、end-cashin 回 0-OK、M1 = B1 + 100；還原後
+    M1 回到 B1。場館合計回到 S
+- n: 4
+  action: 【每輪開頭】M1 送出 req-cashin，金額 100，取得 TXID_r（req-cashin 不判額度、不預留，所以此時場館合計仍為 S）
+  expected: 回 0-OK 並取得 TXID_r；M1 分數仍為 B1
+- n: 5
+  action: 【每輪】用腳本『同時』送出兩個請求：(i) M1 的 end-cashin（TXID_r，清點金額 100）；(ii) M2 的 req-keyin（金額 100）。逐請求記錄送出與回應的絕對時間（範例見 test_data）
+  expected: 有效重疊判定：max(兩請求的送出時刻) < min(兩請求的回應時刻)（絕對時間，由 test_data 範例的 t_*.txt 算出），不成立的輪次作廢重做；兩個回覆中恰一個為 0-OK、另一個為 1-OVER LIMIT。哪一個勝出不限（取決於誰先取得場館鎖）
+- n: 6
+  action: 【每輪】後台讀 M1、M2 分數與場館分數合計
+  expected: end-cashin 勝出時：M1 = B1 + 100、M2 = B2；開分勝出時：M2 = B2 + 100、M1 = B1。無論哪邊勝出，場館分數合計恰為 S + 100 = A，不會是 S + 200（兩筆都成立）；失敗的一筆不改變分數
+- n: 7
+  action: 【每輪結尾】對勝出的那台機台送 req-keyout（mode=value、金額 100、throshold=0)，回到下一輪的起點。若是 end-cashin 落敗，TXID_r 的去向 spec 未定義（RF-06），不斷言也不重送，下一輪用新的
+    req-cashin
+  expected: 還原洗分回 0-OK；M1 回到 B1、M2 回到 B2、場館合計回到 S
+- n: 8
+  action: 重複步驟 4～7 共至少 10 輪；彙整每輪的勝出方、兩個回覆碼與場館合計
+  expected: 每一輪都滿足步驟 5、6 的斷言；沒有任何一輪出現兩筆都成立（合計 A + 100）或兩筆都被拒
+- n: 9
+  action: 還原：額度上限改回 Q_orig
+expected_result: 同場館一台開分 req-keyin 與另一台入金 end-cashin 同時到達、各自單看不超限但合計超限時，兩條路徑在同一把場館鎖內序列化：每一輪恰一筆回 0-OK 入帳、另一筆回 1-OVER LIMIT
+  且不改變分數，全場館分數合計恰為額度上限 A，不會出現兩筆都成立使合計超過 A；重複至少 10 輪結果一致。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §開分（`req-keyin`）（第 352 行）（鎖的對象以 REQ-CASHFLOW-004 敘述為準：開分與入金的額度判定共用同一把場館鎖；該行『入金預留』的部分已被 CLR-CASHFLOW-005 取代，不引用）
+  quote: 判定與入帳於場館鎖內執行
+decision_refs:
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（`req-keyin`）（第 352 行）
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（`req-keyin`）（第 352 行）
+- requirement_id: REQ-CASHFLOW-009
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-005
+    answer_rev: 0
+    answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+- requirement_id: REQ-CASHFLOW-007
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-005
+    answer_rev: 0
+    answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 352 行）
+  quote: 判定與入帳於場館鎖內執行
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 352 行）
+  quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+- type: clarification
+  clarification_id: CLR-CASHFLOW-005
+  answer_rev: 0
+  answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+  quote: 改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin 才依入鈔機實際清點金額判定額度上限，超限則退鈔
+source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-12
+assumptions: []
+testcase_id: TC-CASHFLOW-137
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+created_at: '2026-10-12T17:22:45Z'
+updated_at: '2026-10-12T17:43:12Z'
+history:
+- at: '2026-10-12T17:22:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:25:36Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:43:12Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0203
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:43:12Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0203

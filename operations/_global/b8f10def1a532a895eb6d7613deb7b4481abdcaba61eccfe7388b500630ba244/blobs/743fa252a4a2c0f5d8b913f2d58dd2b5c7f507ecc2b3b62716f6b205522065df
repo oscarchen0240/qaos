@@ -1,0 +1,151 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+stability: unknown
+source: spec_workflow
+title: 後端手動取消 API 驗證權限：站長、操作員（非管理員）呼叫都不能取消待確認出金（TXID 仍為待確認、分數不變），管理員呼叫同一 API 則轉為已取消、分數不異動
+requirement_ids:
+- REQ-CASHFLOW-026
+acceptance_criteria_ids:
+- AC-CASHFLOW-0265
+- AC-CASHFLOW-0262
+test_level: api
+test_types:
+- functional
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+execution_cost: medium
+critical_path: true
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 【環境前提，spec 未定義】後端『手動取消待確認出金』API：CLR-CASHFLOW-008 說明後端已開發完成、前端（4.1 的『手動取消』入口）尚未開發（BUG-TXLOG-001 OPEN）。API 的路徑、認證方式（各後台角色的登入身分如何帶入）、請求參數與拒絕時的回應內容，spec
+  與 CLR 均未定義，需由開發提供；本案不編造這些細節。取不到 API 規格時，本案記為『受阻』並回報缺口，不得改以 UI 假設通過（前端尚未開發）
+- 三個後台帳號（自行從環境中選定）：管理員（Admin）角色一個、站長角色一個、操作員角色一個，皆能登入後台並取得各自的 API 身分。'操作員' 角色在環境中的實際名稱與其權限範圍 spec 未定義，請環境負責人指定一個被歸類為非管理員的操作員帳號；環境沒有此角色帳號時，操作員那一步記為『受阻』，其餘步驟照做
+- 本案以 API 為主要驗證（不是選做）：前端『手動取消』入口尚未開發，既有 TC-CASHFLOW-117 的 UI 步驟無法執行，API 步驟是目前唯一能驗證後端權限的證據。本案只斷言『非管理員不能取消』的結果（TXID 狀態與分數），拒絕時的回應內容（碼、訊息）spec
+  未定義，只記錄不斷言
+test_data:
+- name: 開分金額
+  value: 100
+steps:
+- n: 1
+  action: M 送出 req-keyin，金額 100；後台讀 M 分數，記為 B1
+  expected: 回 0-OK；M 分數 B1
+- n: 2
+  action: M 送出 req-cashout，之後不送 end-cashout
+  expected: 回 0-OK 取得 TXID_1；後台 4.1 篩選 M、交易類型『機台出金』、交易狀態『待確認』可找到 TXID_1；M 分數仍為 B1
+- n: 3
+  action: 以站長身分呼叫後端手動取消 API，目標 TXID_1；記錄回應（HTTP 狀態、內容），不斷言內容
+  expected: （只記錄回應）
+- n: 4
+  action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+  expected: TXID_1 仍為『待確認』（沒有被取消）；M 分數仍為 B1
+- n: 5
+  action: 以操作員身分呼叫後端手動取消 API，目標 TXID_1；記錄回應，不斷言內容
+  expected: （只記錄回應）
+- n: 6
+  action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+  expected: TXID_1 仍為『待確認』；M 分數仍為 B1
+- n: 7
+  action: 對照：以管理員身分呼叫同一個後端手動取消 API，目標 TXID_1
+  expected: 呼叫被受理（對照組成立，證明前面的結果來自角色限制，而不是 API 不可用或 TXID 不正確）
+- n: 8
+  action: 管理員在 4.1 重新查詢 TXID_1，並讀 M 分數
+  expected: TXID_1 轉為『已取消』；M 分數仍為 B1（分數不異動）
+- n: 9
+  action: 清理：M 餘額 B1 若需歸零，可送 req-keyout（mode=all、throshold=0）全洗，不核實
+expected_result: 待確認出金的手動取消僅限管理員：站長與操作員透過後端 API 嘗試取消，該筆都不會被取消（仍為待確認）、分數不變；同一 API 以管理員身分呼叫則該筆轉為已取消、分數不異動。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（本包相關）（第 260 行）（角色限制以 CLR-CASHFLOW-008 rev 1『僅管理員，RD 已確認』為準）
+  quote: 出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止
+decision_refs:
+- requirement_id: REQ-CASHFLOW-026
+  question_id: Q02
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-008
+    answer_rev: 1
+    answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+- requirement_id: REQ-CASHFLOW-026
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-CASHFLOW-008
+    answer_rev: 1
+    answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+source_refs:
+- type: clarification
+  clarification_id: CLR-CASHFLOW-008
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  quote: 僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動
+source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-17
+assumptions: []
+testcase_id: TC-CASHFLOW-139
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+created_at: '2026-10-12T17:22:45Z'
+updated_at: '2026-10-12T17:43:12Z'
+history:
+- at: '2026-10-12T17:22:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:25:36Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:43:12Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0203
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:43:12Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0203
