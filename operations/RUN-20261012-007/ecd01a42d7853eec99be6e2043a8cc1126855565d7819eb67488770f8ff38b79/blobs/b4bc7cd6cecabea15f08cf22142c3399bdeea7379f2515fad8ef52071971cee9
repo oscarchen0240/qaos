@@ -1,0 +1,234 @@
+artifact_id: ART-TVR-01M4RDZE99QD55A0NNET3NX9C3
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-007
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T16:10:08Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RDCX0KEW96SYQ2NW8HJBCK
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RDCX0KEW96SYQ2NW8HJBCK
+- entity_type: Artifact
+  id: ART-TDR-01M4RDCX0KS2187E2N694W6KW5
+- entity_type: Artifact
+  id: ART-CIR-01M4RC47KM7WBQ7F91XVFN661K
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: cc01688d9821f34492fda1fb5c733d24d4c61a1f0bed6fac1a82e90e20a0a111
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4RDCX0KEW96SYQ2NW8HJBCK
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    requirement_model_artifact_id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+  issues:
+  - testcase_id: TC-DRAFT-01M4RDF4N093KW2YJEVRM0SJ0H
+    issue_type: unsupported_assumption
+    severity: major
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位（無資料）（第 64 行）
+      quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）。匯出 CSV 同此規則。
+    evidence: 前提只排除「A 的 400 不是逾時結束場次留下的餘分」，卻同時寫「其他機台在該時點的分數以造數記錄為準，AC 範例視為 0」，允許場館內其他機台在 D-1 結算時點有分數、且沒有限制其來源；步驟 1 為依場館彙總、機台帳號留空，expected_result
+      斷言「期初餘額與期末餘額皆為 D-1 結算時點全場館機台分數合計」。RM REQ-DAILYREPORT-017 Q02（dailyreport.session.timeout_residual_carry）derived.state＝E5，對應
+      CLR-DAILYREPORT-017（OPEN），detail_gaps 明列「決定含逾時結束場次時期末／期初餘額……是否成立」。
+    explanation: 這張案例的斷言是場館層級的餘額合計。只要場館內任何一台機台在 D-1 結算時點的分數來自「逾時結束」場次的餘分，就會碰到 CLR-017 尚未回答的兩件事：(1) 這筆餘分是否計入期初／期末餘額，決定了期望值該不該把它算進「全場館合計」；(2)
+      日結時是否把它承接成 D 的新場次，決定了「D 沒有任何場次」這個形狀能不能成立。設計者對機台 A 有排除這個情況，但其他機台被明文允許「以造數記錄為準」，所以在合法的造數下，確定斷言會隱含依賴 E5 的未定事項，而且沒有宣告 decision_refs。在共用的
+      Arcade 測試場館中，其他機台因閒置逾時而留有分數是可能發生的情況，可能造成誤判。（A 的 400 本身這個形狀沒有問題：spec 第 64、68 行與 AC-0166 都明載「當期無場次但仍有留存分數」的情形，形成方式交由環境負責人確認，不算未定義假設。）
+    recommended_change: 在前提加入資料限制，擇一：(a) 同 AC-0166 範例，場館內除 A 以外的機台在 D-1 結算時點分數皆為 0；或 (b) 場館內任何機台在 D-1 結算時點的分數都不得來自逾時結束場次的餘分（造數記錄須能佐證），並在步驟中加一步依造數記錄確認，不符就停止並回報。不要引用
+      CLR-DAILYREPORT-017，也不要斷言逾時結束餘分的處置。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RDF4N0AZ6HMSPKA7B1Z4CC
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-018
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+      quote: 含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）
+    evidence: 前提寫「查詢範圍內不含狀態『逾時結束』的場次」，但查詢範圍只有 D；留存分數 400 是在 D-2 形成。另一條前提寫「A 的 400 須是已結束場次後留在機台的餘分」。
+    explanation: 排除逾時結束的範圍放錯位置：真正需要排除的是 D-2 那筆 400 的來源。「已結束」是本 spec 的狀態名稱，依字面已經排除逾時結束，所以這不構成實質依賴 CLR-017；不過，如果環境負責人把「已結束場次」當成泛稱，拿逾時結束留下的
+      400 來造數，期初餘額 400 就會落入 REQ-017 Q02（E5）的未定範圍。D-2→D 跨日結的留存形狀本身有 spec 第 64、68 行與 AC-0186 為依據，不算未定義假設。
+    recommended_change: 比照機台金流 0166 案對 A 的寫法，明寫「A 在 D-2 結算時點的 400 須來自狀態『已結束』（例如洗分留餘數）的場次，不得來自逾時結束場次」，並把「查詢範圍內不含逾時結束」改為涵蓋 D-2～D。
+  - testcase_id: TC-DRAFT-01M4RDF4MVYVCAFKV47YX0VZ05
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／場次數（第 45 行）
+      quote: 例：日結時間 06:00，場次 S2 於 9/10 20:00 開始、9/11 06:00 日結時被強制結束（日結結算），計入 9/10 的場次數；餘分轉入的新場次 S3 從 9/11 06:00 開始，屬於 9/11，S3
+        結束前不計入。
+    evidence: 前提：「S2 於營業日 D 內開始……在 D+1 的日結時刻被日結強制結束……S3 於 D+1 的日結時刻開始」；同批的 AC-0095 案例則寫「在 D 的日結時刻（D 結束時）」。
+    explanation: 造數形狀完全依 spec 第 45、151 行與 AC-0094 的例子，S3 進行中、只能在 D+1 當天執行的限制也正確，不構成未定義假設。只是「D+1 的日結時刻」可能被讀成結束 D+1 的那個日結時刻（AC
+      範例的 9/12 06:00），和同批案例的用語不一致；AC 範例的時間有把意思限定住，所以只屬措辭問題。
+    recommended_change: 改寫為「在 D 結束、D+1 開始的那個日結時刻（AC 範例 9/11 06:00）」，與 AC-0095 案例用語一致。
+  - testcase_id: TC-DRAFT-01M4RDF4MVYPDQKZQ8AW9390PN
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／場次數（第 45 行）
+      quote: 計入狀態為「已結束」「逾時結束」「日結結算」的場次，「進行中」不計入
+    evidence: 前提要求單一營業日 D 內有一場在 D 內開始並結束的「逾時結束」場次。派發包內的 CLR-DAILYREPORT-007（針對 v0.1，applicability 為空）答「逾時結束的時間會超過日結時間……當日內場次只會以『已結束』或『日結結算』收尾」。另外，ACTIVE
+      的 TC-DAILYREPORT-031（逾時結束＋日結結算＝2）已部分涵蓋。
+    explanation: 斷言本身依 v0.3 第 45 行與 AC-0095，沒有問題，也只斷言場次數，沒有碰到逾時結束餘分（不依賴 CLR-017）。不過，如果逾時門檻真如 CLR-007 所述長於一個營業日，這個形狀在環境中可能造不出來。案例已有「造數不符就停止並回報」的步驟，所以不阻擋。
+    recommended_change: 不阻擋。建議請環境負責人先確認逾時門檻，確定能在單一營業日內形成逾時結束場次。與 TC-031 的重疊可在日後整理回歸套件時處理。
+  - testcase_id: TC-DRAFT-01M4RDF4MT56YWDXR8SG9HPV96
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: 管理員案（本筆）步驟 1 與 TC-DAILYREPORT-001 v2（選單只列管轄範圍內站台）重疊，步驟 3、4、7 與 TC-DAILYREPORT-103 v1（重送 API、改範圍外參數、範圍內對照）幾乎相同；站長案
+      TC-DRAFT-01M4RDF4MT6T27Y3VNKNAQBQVF 對 TC-002／TC-104 也是同樣關係。TC-103／104 的 expected 寫「反應形式待 PM 確認、不作判準」，assumption 沿用 APR-0191
+      核准。
+    explanation: 新案依 CLR-DAILYREPORT-014（已以 applicability 綁定 v0.3）斷言「無權限」錯誤，並加入匯出請求，比 TC-103／104 嚴格，屬於 CIR new_required 指定的補案，不算重複。CIR
+      把 TC-103／104 判為 unaffected，本 run 不能修改它們，所以重疊只能留到之後處理。
+    recommended_change: 不阻擋。之後可評估把 TC-103／104 退役或改為引用 CLR-014，避免回歸套件重複執行同一組 API 竄改步驟。
+  - testcase_id: TC-DRAFT-01M4RDF4N05G0GEPNX9NPETBFD
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-027
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+    evidence: 本案（作廢後 D 列未兌現→已作廢、作廢當天列不變）與 ACTIVE 的 TC-CASHOUT-132 v1（D+2 作廢 → D 列已作廢＋F、D+2 列不變、D 列未兌現－F）流程與觀察點高度重疊；TC-DRAFT-01M4RDF4MZM2WCA9FCV17257C2（AC-0116，未兌現留在收據日）與
+      TC-CASHOUT-133 部分重疊；TC-DRAFT-01M4RDF4MSMY1DM55DZKKCMCXN（起日移過收據日後不計入）與 TC-CASHOUT-134 部分重疊。
+    explanation: 追溯對象不同（DAILYREPORT REQ-027／011／015 與 CASHOUT REQ-032）。DAILYREPORT 這側另外斷言收據金額不變、已兌現 0 與三欄勾稽，並依場館日結時間 T 切分營業日（CASHOUT
+      側用 UTC+0 日期近似），而且已註明不得與 TC-CASHOUT-132～134 共用收據。所以不算重複，只是證據重疊；這幾張都會作廢或核實，屬於不可逆操作，排程時要錯開。
+    recommended_change: 不阻擋。之後整理回歸套件時，可在兩側互相註記；執行時依前提錯開收據與時段。
+  - testcase_id: TC-DRAFT-01M4RDF4MZEKSQZBWG1EE43A3M
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-012
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §操作（第 111 行）
+      quote: 核實狀態的操作一律於 帳務管理 >「洗分出金核實」執行（見開發包⑤之一）
+    evidence: 前提 1 為「已以管理員登入後台」，另一條前提要求「有權限在『帳務管理 > 洗分出金核實』核實出金的後台帳號（……請環境負責人提供；本案不驗證權限）」；步驟 1、3 在洗分出金核實頁操作，步驟 2、4 查報表，但都沒有指明使用哪個帳號，也沒有寫是否要切換登入。作廢案
+      TC-DRAFT-01M4RDF4N05G0GEPNX9NPETBFD 也是同樣寫法。
+    explanation: 查報表的角色（管理員，管轄範圍）有 spec 授權，這部分沒有問題。核實／作廢的角色權限不在本 spec 範圍，案例交給環境負責人提供帳號、不做斷言，作法正確。只是如果環境提供的帳號不是同一個管理員，執行者不知道何時切換帳號，也不知道切換後要重選站台。
+    recommended_change: 在步驟 1、3 註明「以前提提供的核實／作廢帳號操作（若與管理員不同，切換登入並把站台切換選單切到 Arcade）」，步驟 2、4 註明「以管理員查詢」。
+  - testcase_id: TC-DRAFT-01M4RDF4MZEKSQZBWG1EE43A3M
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-011
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位附註／統計週期（第 70 行）
+      quote: 「已兌現」「未兌現」「已作廢」三欄同為該週期內各營業日的合計（依收據日歸屬），狀態一律以查詢當下為準
+    evidence: 前提：「【環境前提，spec 未定義】核實／作廢後報表金額何時更新（即時或排程）：若重新查詢仍是舊值，請記錄實際的更新方式與等待時間後再讀取，不要直接判定 PASS／FAIL」。作廢案 TC-DRAFT-01M4RDF4N05G0GEPNX9NPETBFD
+      也有同一條。
+    explanation: v0.3 第 53 行（未兌現＝截至查詢當下仍為待核實者）與第 70 行（狀態一律以查詢當下為準）已規定報表要反映查詢當下的核實／作廢狀態，所以這一點不是 spec 未定義。「等待後再讀取」的寫法可能把延遲更新的缺陷判成通過。由於案例只要求記錄、不自動判定
+      PASS，不會產生錯誤斷言，所以列為 minor。
+    recommended_change: 把這條改為：重新查詢應立即反映核實／作廢後的狀態（依第 53、70 行）；如果仍是舊值，記錄實際延遲並視為偏差回報，不要等待更新後判定通過。
+  - testcase_id: TC-DRAFT-01M4RDF4MZEKSQZBWG1EE43A3M
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-012
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／現金淨收（第 55 行）
+      quote: 因已兌現以收據日歸屬，現金淨收含之後才付現的收據金額，不等於當日實際的現金增減
+    evidence: expected_result 一半的判準是「目前營業日（核實當天）列的現金淨收 M1＝M0，不因這次核實而變動」，屬於「不變動」的反向斷言；test_types 只有 functional。
+    explanation: REQ-012 在同批另有 AC-0123 案例標了 negative，實質的 non-happy 覆蓋沒有缺漏，只是標籤和案例性質不一致。
+    recommended_change: test_types 補上 negative。
+  coverage_summary:
+    requirements_total: 12
+    requirements_covered: 12
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted:
+    - REQ-DAILYREPORT-018（NO_REJECTION_CONTRACT：期初餘額沒有拒絕契約或數值邊界，本批只補 AC-0186 成功面；既有 TC-112 涵蓋從未有分數→0）
+    - REQ-DAILYREPORT-021（NO_REJECTION_CONTRACT：餘額驗算式為恆等式；AC-0216 已以錯誤答案 -200 對照）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: false
+    no_bet_session_switch_assertion: true
+    business_day_split_by_venue_cutoff: true
+    login_roles_authorized_by_spec: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RDF4M5424QKXCC1QZ72TCF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MSMY1DM55DZKKCMCXN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MT72XXVBAMRPDNNP1Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MT56YWDXR8SG9HPV96
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MT6T27Y3VNKNAQBQVF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MVYVCAFKV47YX0VZ05
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MVYPDQKZQ8AW9390PN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZN7AYA5HP2SNTYCJD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZYR74GWAKE9YQWEWN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZEQC2D7VTCCZMAR3E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZM2WCA9FCV17257C2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZYQDJAQMPVH296XW0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZEKSQZBWG1EE43A3M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4MZX3J5VZ6QBWRD836C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N0BQ1Z1KMA8EBJ45CJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N093KW2YJEVRM0SJ0H
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4RDF4N0AZ6HMSPKA7B1Z4CC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N0JD7K4Y4JM7RPEE6B
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N05G0GEPNX9NPETBFD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N0WKPS4PNCHPEY1PSZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N0PPWW8RE2SVJK2FXJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RDF4N0XJ2TXTZDVJ0HT7K4
+    verdict: ok
+history:
+- at: '2026-10-12T16:10:57Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-007
