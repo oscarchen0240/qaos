@@ -1,0 +1,225 @@
+artifact_id: ART-TVR-01M4R93M1P4J189A8ZRZ3TQ483
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-004
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T14:44:56Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4R8KRPGVV2G1FV8R0322CWK
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4R8KRPGVV2G1FV8R0322CWK
+- entity_type: Artifact
+  id: ART-TDR-01M4R8KRPGV97YRE92A3YQ0ACX
+- entity_type: Artifact
+  id: ART-CIR-01M4R79SMGTEBTDV1B1ZEZ99H8
+- entity_type: Artifact
+  id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+requires_approval: null
+dispatch_packet_sha256: d4dcd5830145942b61c628cf132123cdad35db5c46abd4380a6bc230a5dd9305
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4R8KRPGVV2G1FV8R0322CWK
+  validated_against:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4R6WE9GWA0D0524W5YFKH7H
+  issues:
+  - testcase_id: TC-DRAFT-01M4R8KQ5SD83GGHM2X4XWH6M6
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-CASHFLOW-020
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（第 168 行）
+      quote: 交易紀錄、核實與場館日結報表的收據金額、已兌現金額、現金淨收一律以面額計
+    evidence: 步驟 1 先記下場館日結報表『收據金額』『已兌現金額』『現金淨收』基準值 R0／C0／N0；步驟 2 才『使 M 餘額恰為 399.6（見前提）』再出金。前提給的佈置作法是『先把 M 餘額清到 0，再試送 req-keyin
+      金額 399.6』，或請環境負責人用測試資料工具設定。步驟 5 斷言『收據金額增加 399.6、已兌現金額增加 399.6、現金淨收的變動量絕對值為 399.6』。
+    explanation: 佈置餘額的交易發生在記錄基準值之後、比對之前，而且本身就會進入同一張場館日結報表：開分 399.6 會讓現金淨收 +399.6，與出金的 −399.6 互相抵銷；若用洗分把舊餘額清到 0，會再多一筆洗分付現；若用出金清到
+      0，收據金額也會多出舊餘額。照步驟寫的順序執行，步驟 5 的三個差額（尤其是現金淨收）不會等於 399.6，會產生假的 FAIL，AC-0204『現金淨收以面額計』的主要斷言就無法判定。前提雖然要求『測試期間該場館不得有其他交易』，但佈置交易本身就落在測試期間。
+    recommended_change: 把『使 M 餘額恰為 399.6』移到步驟 1 之前（獨立成前置步驟，並確認佈置交易已反映在報表上），然後才記下 R0／C0／N0；或者在步驟 2 佈置完成、送出 req-cashout 之前再讀一次基準值。步驟
+      5 的差額只比對從 req-cashout 到核實這段期間的變動。另外建議註明：清空舊餘額時不要用出金，避免收據金額混入其他筆。
+  - testcase_id: TC-DRAFT-01M4R8KQ5V8YC29B94WQ8XJHJN
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-CASHFLOW-048
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 258 行）
+      quote: 提款次數／提款金額累計機台洗分與機台出金——於「洗分出金核實」頁核實當下累計，待核實與已作廢不計
+    evidence: 前提只要求『自行從環境中選定一台…既有機台』與『測試期間不得有其他針對 M 的交易』，沒有要求 M 的起始分數為 0。步驟 2 送 req-keyin 1000、洗分 100 後斷言『M 分數 900』；步驟 3『完成出金（全額
+      900）』；步驟 4 斷言 R_o 金額 −900；步驟 6 斷言『提款金額 = m0 + 1000』。
+    explanation: 出金一律以當下全部餘額為核可金額（第 336 行）。如果選到的既有機台原本就有餘額 B0，R_o 的金額會是 B0 + 900，步驟 2、3、4、6 的絕對數值（900、−900、m0 + 1000）都會不符，產生假的
+      FAIL。這個案例對應 high risk 的 REQ-048，『核實當下累計提款金額』是 AC-0483 的核心斷言，前置條件不足會讓這個斷言無法判定。
+    recommended_change: 在步驟 1 之前加一個前置步驟：確認 M 分數為 0；若有餘額，先用 req-keyout mode=all、throshold=0 洗到 0，且不要核實這筆清空用的洗分，才不會影響 w0／m0。或者改成相對寫法：步驟
+      2 前先讀 B0，R_o 的金額寫成 −(B0 + 900)，步驟 6 寫成 m0 + 100 + (B0 + 900)。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4R8KQ5Q5D6NTQTJV588JY0Q
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-029
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §入金（`req-cashin` → `end-cashin`）（第 327 行）
+      quote: 本階段不再判定額度上限
+    evidence: TC-034 修訂版步驟 3 斷言入金 end-cashin 超限回 1-OVER LIMIT；source_refs 只有第 308 行，decision_refs 只有 REQ-029 Q01，expected_result_spec_reference
+      是第 313 行。整份案例都沒有引用 CLR-CASHFLOW-005。
+    explanation: 『入金在 end-cashin 判定額度』與 v0.2 第 327、386 行原文相反，依據是 CLR-CASHFLOW-005 rev 0（REQ-007 Q01 的裁決）。斷言本身與 AC-0291 一致，也能經由
+      RM 追溯，所以不阻擋；但執行者只拿 spec 對照時會看到矛盾，案例上沒有看得到的覆寫依據。同批的 TC-005 修訂版有正確引用 CLR-005。
+    recommended_change: 補一筆 decision_ref：REQ-CASHFLOW-007 Q01 → CLR-CASHFLOW-005 answer_rev 0（sha 7796efd4…），source_refs 也加上同一則
+      CLR 的引文。
+  - testcase_id: TC-DRAFT-01M4R8KQ5S1GR0RR854TAB7SYE
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-008
+    spec_reference: null
+    evidence: TC-DRAFT-01M4R8KQ5S1GR0RR854TAB7SYE、TC-DRAFT-01M4R8KQ5SHY4JD75GN0H936RQ、TC-DRAFT-01M4R8KQ5TXPAZFRHJB1FH6S9N
+      這三案的 expected_result_spec_reference 都填 spec_id=SPEC-CASHFLOW-001@0.2，但 location 寫『CLR-CASHFLOW-008 rev 1 …（澄清答案，非 spec
+      原文）』，quote 是 CLR 答案原文。
+    explanation: 這三案的依據確實是 CLR-CASHFLOW-008 rev 1，而且 source_refs／decision_refs 都正確引用了 answer_rev 1 與 sha，所以追溯沒有斷。只是 spec 參照欄位裝的是
+      CLR 文字，用 spec 行號做機械比對的工具或審閱者會對不上。
+    recommended_change: 不阻擋本輪。下次修訂時，TC-DRAFT-…SHY4JD75GN0H936RQ、…TXPAZFRHJB1FH6S9N 可改指 spec 第 260／345／376 行（管理員手動取消的原文），『已取消／分數不異動／僅管理員』留在
+      CLR 引用即可；TC-DRAFT-…1GR0RR854TAB7SYE 在 spec 中找不到支持的原文（第 326 行相反），建議維持現狀並在說明中保留衝突註記。
+  - testcase_id: TC-DRAFT-01M4R8KQ5TRYQWR2CF1TA676GT
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-045
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+      quote: 核可金額 ＝ `req-cashout` 當下的全部餘額
+    evidence: 步驟 1 送 req-keyin 100 後斷言『M 分數 100』；步驟 4 斷言查得的出金『金額 100』。前提沒有要求 M 起始分數為 0。
+    explanation: 這個缺陷與 TC-DRAFT-…8XJHJN 同一類：M 原本有餘額時，這兩個數值會不符。它們只是附帶斷言，不影響 AC-0451 的 order_id 主體，所以列為 advisory。
+    recommended_change: 步驟 1 改成讀取 B0 後開分，斷言 M 分數 = B0 + 100、出金金額 = B0 + 100；或在前提要求先把 M 洗到 0。
+  - testcase_id: TC-DRAFT-01M4R8KQ5SHY4JD75GN0H936RQ
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-026
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（`req-cashout` → `end-cashout`）（第 340 行）
+      quote: 收到 `end-cashout` 但查無 PENDING 或 TXID 不符時，僅記錄 log 後丟棄，回 `1-NO RECORD`
+    evidence: TC-DRAFT-01M4R8KQ5SHY4JD75GN0H936RQ 的 expected 斷言『機台分數不異動』與『end-cashout 回 1-NO RECORD』，TC-DRAFT-01M4R8KQ5S0MXYPFCRCGSG6G24
+      的 expected 斷言『不會自動結束』，但兩案的 test_types 都只有 functional。
+    explanation: expected 含反向結果（不異動、被拒絕、不自動轉換），依性質應標 negative。REQ-026 的 non-happy 面另有 TC-DRAFT-…XM0Z2C、…FH6S9N 等案例覆蓋，沒有因此失去覆蓋，所以只列
+      minor。
+    recommended_change: 兩案的 test_types 加上 negative。
+  - testcase_id: TC-DRAFT-01M4R8KQ5S0MXYPFCRCGSG6G24
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-CASHFLOW-026
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §出金（`req-cashout` → `end-cashout`）（第 348 行）
+      quote: Reset 後機台停止重送，平台端的 PENDING 只能由 管理員 手動取消
+    evidence: TC-DRAFT-01M4R8KQ5S0MXYPFCRCGSG6G24 在只能用 API 模擬時，Reset 改為『不再送 end-cashout』；這樣步驟 2～5 就等於 TC-031 修訂版（TC-DRAFT-…KZQ15CBQY27Z）的步驟
+      2～4、6，再加上 TC-DRAFT-…GN0H936RQ 的步驟 3。另外，TC-DRAFT-01M4R8KQ5VNYWM1DWF7HG6ZW9K（AC-0491）實質上涵蓋 ACTIVE 的 TC-CASHFLOW-059 v1（AC-0294：重置後回
+      9-OTHER ERROR）。
+    explanation: 各案對應的 AC 不同（0263 與 0261／0262；0491 與 0294），而且 TC-DRAFT-…SG6G24 在實機上有 Reset 的獨特價值，所以不算重複。但用 API 模擬執行時，證據會和其他案重疊。
+    recommended_change: 不阻擋。TC-DRAFT-…SG6G24 的結果欄建議要求註明『實機 Reset／API 模擬』；日後整理回歸套件時，可考慮在 TC-CASHFLOW-059 註記已被 AC-0491 案例涵蓋。
+  - testcase_id: '*'
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: null
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 249 行）
+      quote: 設為 0 代表不限制
+    evidence: 多案前提標【環境前提】的事項：(1) 後台讀取機台分數的位置；(2) 額度上限修改後是否即時套用（TC-DRAFT-…25G09WHV6、…TJV588JY0Q、…Q430PSCRV 以 A = S + 100 做精確邊界）；(3)
+      24 小時真實等待與排程頻率（…YKNCDGST4、…Q430PSCRV、…ZG96XM0Z2C）；(4) 399.6 餘額佈置（…5NK3GJ、…X47E7S、…A8B547、…XWH6M6）。
+    explanation: 逐項判斷，四項都不構成未定義假設。這些都是執行定位或資料佈置的前提：沒有一項被當成 expected 的依據；做不到時各案都寫明記為『受阻／受限』，或改記錄觀察、不判定。24 小時門檻與『超過 24 小時才逾時』由
+      spec 第 260、375 行定義，案例只記錄實際轉換時間、不斷言排程時限；399.6 佈置也明寫不可改用其他值冒充。剩下一個執行風險：額度即時套用只靠『向環境負責人確認』，案例內沒有自我驗證。若額度實際上未生效，TC-005 修訂版步驟
+      5（預期 1-OVER LIMIT）會出現假的失敗。
+    recommended_change: 不阻擋。建議在 A = S + 100 的三案中，正式步驟前加一個探測：例如先送一筆 req-keyin 101，預期 1-OVER LIMIT（確認新額度已生效），再接原步驟。
+  coverage_summary:
+    requirements_total: 49
+    requirements_covered: 49
+    ac_total: 92
+    ac_covered: 92
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4R8KQ5PY03MC1B25G09WHV6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5QXTZHQWMJT2VWQSMF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5QADFW9SAYKNCDGST4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5QPZJ9KZQ15CBQY27Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5Q5D6NTQTJV588JY0Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5R4RWC71RZPAC9P4MA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5S6KC68K8Q430PSCRV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5S1GR0RR854TAB7SYE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5SMK4DCE91PJ5NK3GJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5SQHBGA62THCX47E7S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5SSY441YNMFZA8B547
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5SD83GGHM2X4XWH6M6
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4R8KQ5SHY4JD75GN0H936RQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5S0MXYPFCRCGSG6G24
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TM0MS08ZG96XM0Z2C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TXPAZFRHJB1FH6S9N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TRYQWR2CF1TA676GT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5T5DE43Y4E2XEK0ZP2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TK8DQJC2MM2MFE8PB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TPP3TY122RJF95MWZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TQK11BN87C12PF92W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5TRT8T4H51BNBDNXZK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5VD0M09A7GNGCAT6FA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5V8YC29B94WQ8XJHJN
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4R8KQ5VGAQVSSRGSYYNW44P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5VNYWM1DWF7HG6ZW9K
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5VSQA1HW9B1BSYR3R8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4R8KQ5VZS801Y0QDPY3Y2S1
+    verdict: ok
+history:
+- at: '2026-10-12T15:21:05Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-004

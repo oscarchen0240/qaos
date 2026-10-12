@@ -56,10 +56,12 @@
 | [CLR-DAILYREPORT-008](ba-admin/DAILYREPORT/CLR-DAILYREPORT-008.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 按週統計時，結算日期範圍內的不完整週如何顯示與計算？ | 不完整週照實際範圍顯示（截圖：結算日期 09-03 起、按週 → 列出「2026-09-07 ~ 2026-09-13」 |
 | [CLR-DAILYREPORT-009](ba-admin/DAILYREPORT/CLR-DAILYREPORT-009.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「未兌現金額不受週期影響、累計至查詢當下」是否也不受結算日期範圍限制？ | 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200； |
 | [CLR-DAILYREPORT-010](ba-admin/DAILYREPORT/CLR-DAILYREPORT-010.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 「已兌現金額」以收據日還是兌現日歸屬？（同一筆出金跨日兌現時，記在出收據那天還是付現那天） | A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 |
-| [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ASKED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ |  |
+| [CLR-DAILYREPORT-011](ba-admin/DAILYREPORT/CLR-DAILYREPORT-011.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.1 | 出金在洗分出金核實頁被「作廢」後，該筆收據金額在場館日結報表如何呈現？ | 依 SPEC-DAILYREPORT-001 v0.3（2026-10-05 定案，第 53、54 行）：出金在洗分出金 |
 | [CLR-DAILYREPORT-012](ba-admin/DAILYREPORT/CLR-DAILYREPORT-012.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表「依場次明細」是否應列出進行中的場次（結束時間「—」、時長累計至查詢當下）？ | B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明 |
 | [CLR-DAILYREPORT-013](ba-admin/DAILYREPORT/CLR-DAILYREPORT-013.md) | APPLIED | SPEC-DAILYREPORT-001 v0.1 | 場館日結報表對「進行中場次」的處理：CLR-DAILYREPORT-012 的定案（2026-09-22，B）與 spec 2026-09-17 修訂相反，以哪一個為準？①「依場次明細」是否列出進行中場次？②「期末餘額」是否計入進行中場次累計到查詢當下的分數？ | A：以 spec 2026-09-17 為準。①依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢 |
 | [CLR-DAILYREPORT-014](ba-admin/DAILYREPORT/CLR-DAILYREPORT-014.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.2 | REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項， |
+| [CLR-DAILYREPORT-015](ba-admin/DAILYREPORT/CLR-DAILYREPORT-015.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.3 | 未兌現金額如何歸屬到各列：v0.3 第 53、70 行定為以出收據的日期歸屬（週期列為各營業日合計），CLR-DAILYREPORT-009（v0.1 時回答）定為不受統計週期切分、範圍內較早日期出的未兌現收據不落在該日／該週的列。以哪一邊為準？ | 以 v0.3 為準：未兌現金額以出收據的日期歸屬——每列只含當日（週期列為該週期內各營業日）出的收據中、截至查詢當下仍為 |
+| [CLR-DAILYREPORT-016](ba-admin/DAILYREPORT/CLR-DAILYREPORT-016.md) | ANSWERED | SPEC-DAILYREPORT-001 v0.3 | 查詢期間沒有任何交易與場次、但機台留有分數時，期初／期末餘額顯示什麼：v0.3 第 64、68 行定為沿用最近一個營業日的結算值（從未有分數者為 0），CLR-DAILYREPORT-006（當時尚無期初餘額欄）定為各欄位顯示 0。以哪一邊為準？ | 以 v0.3 為準：查詢期間沒有任何交易與場次時，列表仍列出該結算期間，各金額與筆數欄顯示 0；期初／期末餘額依時點值規 |
 
 ## ba-admin / PLATFORMRULE
 

@@ -1,0 +1,697 @@
+packet_version: 1
+run_id: RUN-20261012-004
+task_id: T2
+iteration: 1
+agent_id: agent-test-designer
+workflow_id: spec-change-impact
+created_at: '2026-10-12T15:21:16Z'
+target:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+target_decl_rev: 0
+closure: []
+basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+rm_pins:
+  target:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    revision: R001
+    sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+  from:
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    revision: R000
+    sha256: f29abff1bca0b41d9a3c94bfc75111a20be696eab377928679e34535222919e8
+  pin_groups:
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.1'
+    revision: R000
+    sha256: f29abff1bca0b41d9a3c94bfc75111a20be696eab377928679e34535222919e8
+resolutions:
+- clarification_id: CLR-CASHFLOW-004
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 005cce0a33de80ab70b66eab5f3ea8a14ac98e03f5f69f5643441eaf1f981f2e
+  answer: 交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分出金核實」頁操作，但該頁的「作廢」操作僅適用於已完成、已生成收據的出金交易（REQ-CASHOUT-007），不處理待確認狀態的PENDING死單，範圍對不上正本裡「手動取消待確認交易」原本要處理的情境。REQ-CASHFLOW-008（入金預留釋放）與REQ-CASHFLOW-026（出金15秒逾時死單）裡「Admin/站長手動取消」這條收斂路徑需要移除：出金死單仍有「新請求取代」與REQ-CASHFLOW-027「人工出金連動取消」兩條路徑可收斂；入金死單僅剩「PENDING逾時24小時自動釋放」，不是資金卡死風險，只是少了立即處理的手動路徑，直接修正REQ即可，不需開Bug
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability: []
+- clarification_id: CLR-CASHFLOW-005
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-007
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+  answer: A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-cashin 階段客戶端回報的金額未經實體清點確認、不可信，若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字（如
+    1000000000000）讓機台卡在等待中造成整台機台無法入金的 DoS。spec v07「額度上限判定與預留移至 req-cashin」一條應正式作廢，改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin
+    才依入鈔機實際清點金額判定額度上限，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。REQ-CASHFLOW-007／009 statement 需依此回寫；TC-CASHFLOW-008／009／011
+    需修訂。BUG-CASHFLOW-002 的判定時機部分（症狀①）依此不再成立，紀錄消失部分（症狀②）維持有效，Oscar 決定如何處理該 bug。
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-007
+      subject: cashflow.cashin.quota_check_stage
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 94、249、325 行仍寫 req-cashin 判定並預留額度，以 CLR-005（RD 2026-09-23 確認 end-cashin 依實際清點判定、不預留）為準，v0.2
+      寫法屬文件未同步
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:25Z'
+    op_id: a8b4d4d550370d9f9076ab85b01b3d89bb29d901ee01fb4e41fe12393e2092a1
+    sha256: 2a86ee6760b40450590e7bae4524f10a9ad6aeced1960d0e649a95fb81f3d0aa
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-009
+      subject: cashflow.cashin.end_cashin_quota_check
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 327、386 行寫 end-cashin 不判定額度，以 CLR-005（end-cashin 才依實際清點金額判定，超限退鈔）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:27Z'
+    op_id: 8d890dbb920a78042215a2e78573bae0a09497111fce1c4e6d4fd041aaca71e2
+    sha256: fa293e0687f890a3b196dabe8f4b4c3110999b46ccfb5a08b926f5bd1cfe552d
+- clarification_id: CLR-CASHFLOW-006
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-030
+  question_id: null
+  answer_rev: 0
+  answer_sha256: dd8f557b0d7f20ffc857e2b14d50511d948f738beb7e7cf3dd2513f28768673a
+  answer: B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種狀態；「未成立」不會有任何紀錄可查，「未成立原因」欄實質上永遠不會顯示內容。理由：req-cashin／req-keyin
+    階段對客戶端輸入的檢核（額度、格式、機台狀態、憑證）若都要在被拒絕時寫入紀錄，等同把資料庫暴露在客戶端可輕易高頻觸發的灌爆風險下，與 CLR-CASHFLOW-005 的整體防禦設計一致（不信任未經驗證的客戶端輸入）。
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-030
+      subject: cashflow.txlog.rejected_reason_recording
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 180、185 行寫餘額不足以外的拒絕留「未成立」紀錄，以 CLR-006（所有未成立原因一律不寫入交易紀錄）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:30Z'
+    op_id: e7ff24ea7b9a012de3fe8aaf823760a1ff9638f7262eb466660d276de644ff5b
+    sha256: 131d24bb5b8457529981d3524e2999effc4d9a27ca896d8f0554aa028d8f7681
+- clarification_id: CLR-CASHFLOW-007
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-020
+  question_id: null
+  answer_rev: 0
+  answer_sha256: de80663944c912ec96c997b81f9f7ea523f29a87d5b81bfc06ff9bef326478d6
+  answer: 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）：餘額帶小數時出金照樣全額清空，核可金額與收據面額照記實際餘額含小數、不取整（例：餘額 399.6 → 收據面額
+    399.60，機台餘額歸 0）；平台只記錄面額，不管現場實際付現多少，零頭如何付由場館自行決定，平台也不記錄面額與實付的差額；門檻 0（throshold=0）的全額洗分比照出金，洗分金額照記含小數（例 399.6），機台餘額歸 0。報表一律以面額計。
+  resolution: spec_updated
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability: []
+- clarification_id: CLR-CASHFLOW-008
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-026
+  question_id: null
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
+    Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂；入金額度上限的判定時機依 CLR-CASHFLOW-005（end-cashin
+    依實際清點金額判定、req-cashin 不預留額度），REQ-CASHFLOW-008 維持 2026-09-15 移除「手動取消釋放預留」的結論。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。（rev
+    1：刪除 rev 0 中「預留額度於入帳或逾時釋放」一句，該句與 CLR-CASHFLOW-005 不一致）
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope:
+    spec_id: SPEC-CASHFLOW-001
+    requirement_id: REQ-CASHFLOW-026
+    subject: cashflow.arcade.pending_cashout_admin_cancel
+    role_scope:
+    - '*'
+    params: {}
+  applicability:
+  - answer_rev: 1
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-008
+      subject: cashflow.cashin.pending_manual_cancel
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 326、249 行寫管理員／站長可手動取消待確認入金並釋放額度，以 CLR-008 rev 1（入金沒有手動取消）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:28Z'
+    op_id: 91b2470ad63ec30221dfcd26d3c04df11bc0151abdf28bcf0bded01281224475
+    sha256: 7a0cd4739e9477b3945e18470fe1ad4d81d2ed43cbe7681ff68aaf4b5a6b59cb
+run_decisions: []
+open_questions:
+- clarification_id: CLR-CASHFLOW-001
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-042
+  question_id: null
+  question: REQ-CASHFLOW-042 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+- clarification_id: CLR-CASHFLOW-002
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-043
+  question_id: null
+  question: REQ-CASHFLOW-043 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+- clarification_id: CLR-CASHFLOW-009
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-042
+  question_id: Q01
+  question: 過渡期由前台呼叫 req-cashout／end-cashout 時使用何種認證：沿用機台憑證（JWT）或另立前台認證？
+- clarification_id: CLR-CASHFLOW-010
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-043
+  question_id: Q01
+  question: 過渡期 req-cashout 成功後 end-cashout 失敗時，前台的重送策略為何（重試次數、間隔、放棄條件）？
+- clarification_id: CLR-CASHFLOW-011
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-045
+  question_id: Q02
+  question: 入金的 order_id 由廠商於 req-cashin 帶入，還是由平台產生（暫定比照出金由平台產生）？
+decision_sources:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 319 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 232 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 362 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 252 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §機台帳號的稽核（第 59 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 168 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 254 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 253 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 158 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 342 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 336 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 211 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 208 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 223 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-006
+  answer_rev: 0
+  answer_sha256: dd8f557b0d7f20ffc857e2b14d50511d948f738beb7e7cf3dd2513f28768673a
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 354 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（第 82 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 330 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（第 127 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 224 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 258 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §PENDING 保留期限（第 376 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 249 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 257 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（第 84 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 329 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 328 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 360 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 352 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 324 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 247 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 264 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 259 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 268 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 345 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §機台帳號的稽核（第 58 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 213 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 323 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 308 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 266 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 327 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 335 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 316 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（第 83 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-007
+  answer_rev: 0
+  answer_sha256: de80663944c912ec96c997b81f9f7ea523f29a87d5b81bfc06ff9bef326478d6
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §主文的交易狀態與 PENDING 的對應（第 386 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 169 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 363 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 348 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（第 146 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 164 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 269 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 157 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 365 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 210 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 212 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（第 134 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 166 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 171 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 256 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 326 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 263 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 347 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §交易不成立的原因（第 180 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-008
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（`req-cashin` → `end-cashin`）（第 325 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（第 115 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 209 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §機台帳號的稽核（第 63 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 314 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 172 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（第 96 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 341 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §交易不成立的原因（第 185 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（第 131 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 340 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次（第 236 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-004
+  answer_rev: 0
+  answer_sha256: 005cce0a33de80ab70b66eab5f3ea8a14ac98e03f5f69f5643441eaf1f981f2e
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 334 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 338 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 260 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次如何開始與結束（第 207 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 367 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 318 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-005
+  answer_rev: 0
+  answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §洗分（`req-keyout`）（第 366 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §PENDING 保留期限（第 375 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（`req-cashout` → `end-cashout`）（第 339 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §機台帳號的稽核（第 56 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（第 94 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 159 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §主文的交易狀態與 PENDING 的對應（第 385 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 317 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §場次資訊（第 225 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（第 92 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §出金（第 173 行）
+extra_inputs: []
+references_status: undeclared

@@ -1,0 +1,158 @@
+plan_schema: 1
+op_id: 1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - DAILYREPORT
+    - SPEC-DAILYREPORT-001
+    - '0.3'
+    - 查詢期間沒有任何交易與場次、但機台留有分數時，期初／期末餘額顯示什麼：v0.3 第 64、68 行定為沿用最近一個營業日的結算值（從未有分數者為 0），CLR-DAILYREPORT-006（當時尚無期初餘額欄）定為各欄位顯示 0。以哪一邊為準？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: 兩邊一致的部分：列表仍列出、金額與筆數欄為 0、CSV 同列表。
+      options: []
+      requirement_id: REQ-DAILYREPORT-016
+      impact: null
+      consulted:
+      - SPEC-DAILYREPORT-001@0.3
+      no_source_check_reason: null
+      kind: spec_question
+      question_id: Q04
+      topic: calculation
+      subject: dailyreport.empty_period.balance_display
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+      known_rules:
+      - type: spec
+        spec_id: SPEC-DAILYREPORT-001
+        spec_version: '0.3'
+        content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+        location: §查詢期間沒有任何交易與場次時（第 64 行）
+        quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）
+request_hash: 1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T15:23:49Z'
+allocated_ids:
+- CLR-DAILYREPORT-016
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 120923bef8f5a4fdfb7ae17ffbcdfa78821ef42e477062a131ba028ccbd167b1
+  expected_after: 596a4cafdbba54b9984c00d705a708571a7a3a8b70727850069d5d8ec79bbbe5
+  blob: 596a4cafdbba54b9984c00d705a708571a7a3a8b70727850069d5d8ec79bbbe5
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/DAILYREPORT/CLR-DAILYREPORT-016.yaml
+  kind: business
+  expected_before: null
+  expected_after: 6de4f82636a3c9a2f08a641f3ef351853e93fe5f9777d55236d91a4b2361d707
+  blob: 6de4f82636a3c9a2f08a641f3ef351853e93fe5f9777d55236d91a4b2361d707
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 1e220c1fd301986f571f726c5502735e74ebe07c11f2e60ea3d7ae3899686154
+  blob: 1e220c1fd301986f571f726c5502735e74ebe07c11f2e60ea3d7ae3899686154
+- seq: 4
+  step_id: event2
+  path: runs/_audit.d/1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48-2.yaml
+  kind: event
+  expected_before: null
+  expected_after: b5c3e75455949798378f394d9de29bf517bafe6ba54c7f921778281a4da3c281
+  blob: b5c3e75455949798378f394d9de29bf517bafe6ba54c7f921778281a4da3c281
+- seq: 5
+  step_id: derived5
+  path: clarifications/ba-admin/DAILYREPORT/CLR-DAILYREPORT-016.md
+  kind: business
+  expected_before: null
+  expected_after: cdc72b29a5127a91b6938c5b00c9e6ca42cac71c95c767b0e685b524c5fb9c97
+  blob: cdc72b29a5127a91b6938c5b00c9e6ca42cac71c95c767b0e685b524c5fb9c97
+- seq: 6
+  step_id: render6
+  path: runs/_audit.log
+  kind: business
+  expected_before: b72979fa705ee5fcca8474a38d78c5ba1d4de6aa8917a1ac0ad6827f05c5baa1
+  expected_after: 744d2c41ca049d1800618c019519bd79d8728a97385b41b192251e0620ae5b3c
+  blob: 744d2c41ca049d1800618c019519bd79d8728a97385b41b192251e0620ae5b3c
+- seq: 7
+  step_id: completed
+  path: operations/_global/status.d/1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: e71bd7a738e4d1fa81c3a8cbba89eb037338584a8dd0f3f699ecdcf8a92310fe
+  blob: e71bd7a738e4d1fa81c3a8cbba89eb037338584a8dd0f3f699ecdcf8a92310fe
+no_change: []
+audit_events:
+- at: '2026-10-12T15:23:49Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-DAILYREPORT-016: 查詢期間沒有任何交易與場次、但機台留有分數時，期初／期末餘額顯示什麼：v0.3 第 64、68 行定為沿用最近一個營業日的結算值（從未有分數者為 0），CLR-DAILYREPORT-006（當時尚無期初餘額欄）定為各欄位顯示
+    0。以哪一邊為準？'
+  op_id: 1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48
+  step: 1
+  run_id: null
+- at: '2026-10-12T15:23:49Z'
+  actor: oscarchen@blockaction.tech
+  action: WARN_POSSIBLE_DUPLICATE
+  detail: CLR-DAILYREPORT-016：REQ-DAILYREPORT-016 已有沒有 issue key 的舊 CLR CLR-DAILYREPORT-006，新單標 possible_duplicate，請人工確認是否重複
+  op_id: 1f4b0639df1397307dce5c3cf5b2be9e0b8515c4b8ddb05819f8e096e5b25c48
+  step: 2
+  run_id: null
+result:
+  clarification_id: CLR-DAILYREPORT-016
+  product: ba-admin
+  functional_area: DAILYREPORT
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  question: 查詢期間沒有任何交易與場次、但機台留有分數時，期初／期末餘額顯示什麼：v0.3 第 64、68 行定為沿用最近一個營業日的結算值（從未有分數者為 0），CLR-DAILYREPORT-006（當時尚無期初餘額欄）定為各欄位顯示
+    0。以哪一邊為準？
+  context: 兩邊一致的部分：列表仍列出、金額與筆數欄為 0、CSV 同列表。
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T15:23:49Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T15:23:49Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-DAILYREPORT-016
+  kind: spec_question
+  question_id: Q04
+  topic: calculation
+  subject: dailyreport.empty_period.balance_display
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  known_rules:
+  - type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §查詢期間沒有任何交易與場次時（第 64 行）
+    quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）
+  coverage:
+    consulted:
+    - spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  issue_key: efdfbee42882377320ba0a5c52b7236199164e8b001ab0e73adbd9b11573d6ed
+  related_clarifications:
+  - id: CLR-DAILYREPORT-006
+    relation: possible_duplicate

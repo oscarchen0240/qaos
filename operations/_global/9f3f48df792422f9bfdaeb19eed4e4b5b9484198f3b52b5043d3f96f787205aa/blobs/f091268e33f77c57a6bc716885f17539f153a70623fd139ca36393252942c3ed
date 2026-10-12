@@ -1,0 +1,85 @@
+clarification_id: CLR-DAILYREPORT-014
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.2'
+question: REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+context: '場館日結報表依角色限制可見範圍：管理員＝管轄範圍；站長＝管轄範圍；操作員＝自身場館（v0.2 修訂：v0.1 的「Admin｜全部」改名為「管理員」，可見範圍改為「管轄範圍」）。操作員越權時前端與後端皆阻擋：站台切換選單不提供非自身場館，直接呼叫
+  API 帶非自身場館參數會被後端拒絕（依 CLR-DAILYREPORT-001 PM 定案，含 2026-09-14 補充；v0.2 原文未載）。
+
+  操作員越權：前端已擋（站台切換選單不提供其他場館選項）、後端也擋（直接呼叫 API 帶非自身場館參數會被拒絕），依 CLR-DAILYREPORT-001（含 2026-09-14 補充）。v0.2 新增的限制——管理員由「全部」改為「管轄範圍」——其越權（管理員或站長存取管轄範圍外場館，含直接呼叫
+  API）時的系統反應 v0.2 未定義，CLR-001 只涵蓋操作員，需再確認是否比照操作員（前端不提供、後端拒絕）。'
+options: []
+raised_by: agent-spec-analyst
+raised_at: '2026-10-01T12:02:47Z'
+status: ANSWERED
+history:
+- at: '2026-10-01T12:02:47Z'
+  from_status: null
+  to_status: OPEN
+  by: system
+  trigger: new
+  run_id: RUN-20261001-007
+- at: '2026-10-09T06:57:17Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+requirement_id: REQ-DAILYREPORT-001
+spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  location: §功能說明/權限表（操作員越權的前後端阻擋依 CLR-DAILYREPORT-001）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+run_id: RUN-20261001-007
+impact_if_unanswered: Test Designer 只能以 exploratory（假設）方式撰寫此需求的負向案例，expected 需 Human 確認
+answer_revisions:
+- rev: 0
+  answer: 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項，後端拒絕並回傳「無權限」錯誤、資料不變；不採用「當作不存在／回空結果」。錯誤代碼由後端定義（截至 2026-10-09
+    後端尚未定案）。依 QA 問題單回覆 CLR-SITELIST-015「全系統的越權處理一致，CLR-DAILYREPORT-014 同樣適用」；規則寫在開發包⑧（SPEC-ROLEPERM-001 v0.2），場館日結報表 spec
+    本身未為此改版。
+  answered_by: PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+  answered_at: '2026-10-09T06:57:17Z'
+  resolution: requirement_clarified
+  answer_sources:
+  - type: document
+    file_name: 問題單回覆.html
+    sha256: 16c59e6280f53015673182e92efa6189adac92df8eac2adbf395220f18b6894d
+    package_sha256: 00a6cd752ea9f2e38e2c81081fd5b8ed07d822c88078053b960974d07b208a7e
+    location: 站台列表問題單／CLR-SITELIST-015：「CLR-DAILYREPORT-014（查詢、匯出範圍外的場館）同樣適用」
+  - type: spec
+    spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+    location: 第 118～120 行（後端強制；站台切換、列表查詢、報表匯出走同一範圍判定；越權一律回「無權限」）；第 265 行（越權回應）
+  basis:
+    target:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.2'
+      content_hash: 7930c1fb9c1161c04aabaaf3ebd9f082da9e0a28709cbfc575159a5d89c5fc70
+    target_decl_rev: 0
+    closure: []
+  basis_hash: 9eda473d5ba24446f3468f6a2fd420e698c5aadf2b1ab953aed165e4a39a01fe
+  sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+  op_id: 37cfa11841df774a133eb63c84bb93e8e3441d0cf0a307e312bdee2cf6305248
+answer: 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項，後端拒絕並回傳「無權限」錯誤、資料不變；不採用「當作不存在／回空結果」。錯誤代碼由後端定義（截至 2026-10-09
+  後端尚未定案）。依 QA 問題單回覆 CLR-SITELIST-015「全系統的越權處理一致，CLR-DAILYREPORT-014 同樣適用」；規則寫在開發包⑧（SPEC-ROLEPERM-001 v0.2），場館日結報表 spec 本身未為此改版。
+answered_by: PM（2026-10-05 定案，QA問題單回覆；經 Oscar 轉達）
+answered_at: '2026-10-09T06:57:17Z'
+resolution: requirement_clarified
+applicability:
+- answer_rev: 0
+  scope:
+    spec_id: SPEC-DAILYREPORT-001
+    requirement_id: REQ-DAILYREPORT-001
+    subject: dailyreport.access.out_of_scope_venue
+    role_scope:
+    - admin
+    - site_manager
+    params: {}
+  basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+  rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+  by: oscarchen@blockaction.tech
+  at: '2026-10-12T15:22:22Z'
+  op_id: 9f3f48df792422f9bfdaeb19eed4e4b5b9484198f3b52b5043d3f96f787205aa
+  sha256: a61eb6e0e9deb431dcf38bf8eba154c3114c8c231e7ebebd0c4da0a7130f0f1d
