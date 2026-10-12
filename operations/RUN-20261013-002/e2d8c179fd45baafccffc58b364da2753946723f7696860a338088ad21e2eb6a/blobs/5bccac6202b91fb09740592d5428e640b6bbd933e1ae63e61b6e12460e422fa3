@@ -1,0 +1,212 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+execution_mode: manual
+assumptions: []
+title: 核實確認連點與已成功的核實請求重放：只成立一次核實，重送被阻擋，提款次數只 +1、提款金額只 +399.6，核實頁與機台交易紀錄的核實人員／時間不被覆寫
+description: TCRiskReview RF-15：核實確認鈕連點、或以開發者工具重放同一個已成功的核實請求（含並行重放）。本案的重放發生在第一個請求已成功之後，驗證的是『已核實後的再次核實（含同時多個再次核實）會被擋、不重複累計、不覆寫回寫』，不宣稱涵蓋『待核實當下兩個請求同時抵達』的真正競態（該情境由
+  API 層並行案例另行驗證）。
+requirement_ids:
+- REQ-CASHOUT-024
+- REQ-CASHOUT-006
+- REQ-CASHOUT-026
+acceptance_criteria_ids:
+- AC-CASHOUT-0241
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- negative
+- error_guessing
+priority: high
+risk: high
+preconditions:
+- 以管理員或站長登入後台（本案從頭到尾使用同一個後台帳號），頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台。
+- 【環境前提，佈置方式 spec 與派發包均未定義，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為指定值（399.6），且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。出金一律全額並清空餘額，所以每次出金前都要重新把餘額調到指定值。『如何把機台餘額調到指定值』（遊戲結果、人工開分、機台端測試工具等）不在
+  spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為指定值，請回報環境負責人，不要以其他金額替代後逕行判定。
+- 使用桌面版 Chrome（或 Edge）開發者工具（F12）：Network 面板勾選 Preserve log、篩選 Fetch/XHR；本案利用其『Replay XHR』與『Copy as fetch』功能重送請求。核實 API 的網址與請求格式
+  spec 未定義，一律以 Network 面板實際擷取為準。
+- 【執行輪次】本案至少執行 2 輪，每輪使用一筆新的待核實出金（核實不可撤銷，用過即不可重用）。
+- 【環境前提，需環境負責人確認】後台操作紀錄的頁面位置、查詢方式與欄位 spec 未定義（只在第 142 行規定洗分出金核實與作廢須寫入操作人員、時間、對象交易）。找不到操作紀錄頁時，該項標記為『無法驗證』並回報，不要判 FAIL，也不要因此跳過其餘檢查。
+- 測試期間該站台（使用測試站台與測試機台帳號）不應有其他出金／洗分交易、核實或作廢，也不要對選定機台帳號的會員做其他存提款或人工操作，避免干擾會員列表與日結報表的前後差值（欄位可能已有既有累計值，不要求為 0，一律取前後差值比對）。
+- 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行，本案產生的紀錄不與其他 TC 共用。
+test_data:
+- name: 出金面額（機台餘額）
+  value: '399.6'
+  note: 含小數，使重複累計呈現 +799.2 而容易辨識
+- name: 預期提款次數差（每輪）
+  value: '+1'
+  note: 不是 +2 或更多
+- name: 預期提款金額差（每輪）
+  value: '+399.6'
+  note: 不是 +799.2
+- name: 重放方式
+  value: (a) 同一 JS 週期內連續兩次 click；(b) Replay XHR 重送一次；(c) Copy as fetch 後並行送出 2 個
+steps:
+- n: 1
+  action: （每輪開始）到後台『會員列表』，以選定機台帳號的會員編號查詢，記下『提款次數』N0 與『提款金額』W0（小數位照實記錄）。
+  expected: 取得本輪基準 N0、W0。
+- n: 2
+  action: 在機台端對選定機台帳號（餘額 399.6）按『結算』執行出金，記下訂單編號 O 與面額。
+  expected: 出金完成，面額數值 399.6（若不是，前提不成立，停止並回報）。
+- n: 3
+  action: 到『帳務管理 > 洗分出金核實』，以 O 查詢，點擊該筆『核實』開啟確認彈窗（先不要按確認）；開啟開發者工具 Network 面板並按 Clear；在 Elements 面板選取彈窗上的『確認』按鈕。
+  expected: 彈窗顯示訂單編號、機台帳號、金額 399.60 與收據印出時間；Network 面板為空。
+- n: 4
+  action: 切到 Console，輸入 `$0.click(); $0.click();`（同一個 JS 週期內連續點擊兩次，模擬連點）。待回應完成後，記下 Network 面板中核實請求的數量與每個請求的回應（成功或拒絕）。再以 O
+    重新查詢，記下 P 的核實狀態、核實人員與核實時間。
+  expected: P 為『已核實』。Network 中若出現多個核實請求，至多 1 個成功，其餘為拒絕（回應非成功）；若前端在第一次點擊後即停用按鈕而只送出 1 個請求，也符合預期（如實記錄，這屬前端保護，下一步仍要驗後端）。記下此刻的核實人員與核實時間
+    H1。
+- n: 5
+  action: 在 Network 面板找到那個『成功的』核實請求，右鍵 → Replay XHR（Chrome）重送一次，記下回應。若右鍵選單沒有 Replay XHR（請求類型為 fetch 時不提供），改用備案：右鍵 → Copy →
+    Copy as fetch，貼到 Console，單獨送出一次（只送一次，與下一步的並行不同）。
+  expected: 重送的請求被阻擋（回應為拒絕／錯誤，不是成功；spec 要求『系統阻擋並提示』，提示字樣與狀態碼 spec 未定義，不比對）。
+- n: 6
+  action: 同一個成功的核實請求，右鍵 → Copy → Copy as fetch，貼到 Console，將 `fetch(...)` 陳述式改寫成 `const send = () => fetch(...)`，再執行 `Promise.all([send(),
+    send()]).then(r => Promise.all(r.map(x => x.text()))).then(console.log)`（並行重放 2 個）。
+  expected: 兩個並行重放請求都被阻擋（回應為拒絕／錯誤，沒有任何一個成功）。
+- n: 7
+  action: 重新整理洗分出金核實頁，以 O 查詢 P。
+  expected: P 仍為『已核實』且只有 1 筆；核實人員與核實時間與 H1 完全相同（重放沒有覆寫）。
+- n: 8
+  action: 到『機台交易紀錄』以 P 的交易編號查詢該筆交易，檢視核實狀態與核實人員／時間欄位；再到後台操作紀錄（spec 第 142 行要求核實須寫入，頁面位置 spec 未定義，見前提）以 O 或交易編號查詢。
+  expected: 機台交易紀錄該筆為『已核實』，核實人員／時間與核實頁的 H1 完全一致（回寫只寫一次，沒有被重放覆寫）；操作紀錄中該筆交易的核實紀錄只有 1 筆（操作人員為步驟 4 的核實帳號）。
+- n: 9
+  action: 回會員列表重新查詢同一會員，讀取『提款次數』與『提款金額』。
+  expected: 提款次數 ＝ N0 ＋ 1；提款金額 ＝ W0 ＋ 399.6（不是 +799.2 或更多）。
+- n: 10
+  action: 重複步驟 1～9 共至少 2 輪，每輪用新的出金。
+  expected: 每一輪都符合各步驟的預期。
+expected_result: 對同一張待核實出金，確認鈕連點與同一核實請求的重放（含並行重放）只成立一次核實：重放的請求被阻擋，核實人員與時間維持第一次的值；該機台帳號的提款次數只 +1、提款金額只累計 +399.6。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §操作（規則表）（第 95 行）
+  quote: 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款
+decision_refs:
+- requirement_id: REQ-CASHOUT-024
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 95 行）
+- requirement_id: REQ-CASHOUT-024
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §相關業務規則（收據核銷）（第 131 行）
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §核實狀態（第 37 行）
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 97 行）
+- requirement_id: REQ-CASHOUT-026
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 97 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 95 行）
+  quote: 可核實的狀態 | 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §相關業務規則（收據核銷）（第 131 行）
+  quote: 出金紀錄只有「待核實」狀態可核實（核銷）；重複核實阻擋並提示
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §核實狀態（第 37 行）
+  quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 97 行）
+  quote: 金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 97 行）
+  quote: 核實結果回寫機台交易紀錄的「核實狀態」「核實人員／時間」欄位
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §對既有章節的影響（第 142 行）
+  quote: 洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）
+source_ref: TCRiskReview ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM RF-15（RUN-20261012-006）；二次抽查 ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8
+  RF-02
+testcase_id: TC-CASHOUT-148
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+created_at: '2026-10-12T17:30:45Z'
+updated_at: '2026-10-12T17:36:28Z'
+history:
+- at: '2026-10-12T17:30:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:36:28Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-002
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd

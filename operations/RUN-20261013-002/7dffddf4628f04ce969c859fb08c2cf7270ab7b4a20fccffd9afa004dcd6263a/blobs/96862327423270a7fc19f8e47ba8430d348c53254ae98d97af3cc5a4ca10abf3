@@ -1,0 +1,92 @@
+artifact_id: ART-TRR-01M4RJW7EW4JCFMH60134TKHJB
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-002
+task_id: T3RR
+iteration: 1
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T17:34:28Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+- entity_type: Artifact
+  id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+- entity_type: Artifact
+  id: ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8
+- entity_type: Artifact
+  id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+requires_approval: null
+dispatch_packet_sha256: 1a82d4dad0d14b801ee11eea6cb05d74e2d8ffc7ace7d7f9f06e11ebf69ec477
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+    validation_report_artifact_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+    functional_area: CASHOUT
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RJC1PZA85JMDMZFVMR4GSN
+    - TC-DRAFT-01M4RJC1PZ30FS8RA6MFCPVBGD
+    - TC-DRAFT-01M4RJC1PZPRG5SZKKX3XRAENC
+    - TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN
+    - TC-DRAFT-01M4RJC1Q027RYAGAWBN3C13TS
+    - TC-DRAFT-01M4RJC1Q0NF0R7J93BJZ4ST4Z
+    - TC-DRAFT-01M4RJC1Q0YR3F48VDVFZFYAPW
+    - TC-DRAFT-01M4RJC1Q0V8SGG6TZ5XE1XWJ2
+    - TC-DRAFT-01M4RJC1Q0V2KA7KCK1GAH0VCY
+    active_testcases_consulted:
+    - TC-CASHOUT-048
+    - TC-CASHOUT-066
+    - TC-CASHOUT-070
+    - TC-CASHOUT-071
+    - TC-CASHOUT-075
+    - TC-CASHOUT-093
+    - TC-CASHOUT-131
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: 三張邊界案例延續上一輪已判定完整的內容，本輪沒有改動預期：TC-DRAFT-…GSN 驗 0.1、0.2、399.6 的精確累計與未兌現加總；…BGD 驗門檻 0、全額洗分 399.6 的提款累計與現金淨收；…ENC
+      驗面額 0.6。邊界不是本輪重點，也沒有發現新的邊界缺口。金額篩選的小數與等號邊界（CLR-CASHOUT-004）、照片金額精度（CLR-CASHOUT-008）已開 CLR；…ENC 的 AC 為空，Validator 已列出。以上都不重複列。
+  - dimension: exception_flow
+    status: not_applicable
+    rationale: 本批沒有新增中途失敗或逾時的案例。核實逾時與部分失敗（CLR-CASHOUT-006）、已核實的收據能否作廢（CLR-CASHOUT-003）、過渡期照片金額不一致（CLR-CASHOUT-008）都已開 CLR，不重複列。『已核實或已作廢後完成回報才遲到』（上輪
+      RF-03）屬重送冪等，放在 duplicate_submission 評估。附記一條 low 觀察（不列 finding）：遲到的完成回報會不會讓機台端再扣一次分數、或讓機台交易紀錄多出一筆，屬機台交易紀錄的規格，不在本 spec
+      與派發包範圍內。
+  - dimension: concurrency
+    status: covered
+    rationale: 【RF-01 已完整補上】TC-DRAFT-…RRWN 改在 API 層驗：對一筆從未送過核實的待核實出金 P，由兩個不同帳號 U1、U2 各送 5 個核實請求，以 Barrier 同時放行；逐筆記錄送出與回應時間，只有
+      max(送出) < min(回應) 的輪次才算有效，無效輪次換新的 P 重做，至少跑 3 個有效輪次。預期恰好 1 個成功、核實人員為勝方帳號、提款次數 +1、金額 +399.6。…3C13TS 對同一機台帳號的兩張出金（399.6、321），由不同帳號在
+      API 層並行核實，至少跑 5 個有效輪次，預期 +2 與 +720.6，可以抓到累計值被覆蓋而遺失。…ST4Z 的描述也已改成只驗『已核實後的重放』，不再宣稱涵蓋競態。【RF-02 已完整補上】…RRWN 步驟 8、…3C13TS
+      步驟 7、…ST4Z 步驟 8 都會到機台交易紀錄，以交易編號核對核實狀態與核實人員／時間：要與核實頁一致，而且沒有被輸方或重放覆寫；操作紀錄也一併檢查。另有兩條觀察，不列 finding：(1) medium：並行案例只用出金。洗分核實同樣在核實當下累計提款（第
+      37、97 行），並計入現金淨收的扣除項（第 132 行）。如果洗分核實走的是另一條處理路徑，並行雙重核實會讓提款金額與現金淨收扣除項重複計入。不過洗分是付現後才登記，不會因此重複付現，所以不列 high。若要補，可以用 …RRWN
+      的腳本對一筆待核實洗分加跑一輪。(2) low：…3C13TS 的 test_data 腳本是直接照抄 …RRWN 的 10 請求版本，JOBS 要照前提自己改成 (U1→P1)、(U2→P2) 兩筆，執行者照抄就會送錯。建議核准前把
+      JOBS 改好。成功的判定基準、『TC4』序號參照這兩點 Validator 已列，不重複。
+  - dimension: duplicate_submission
+    status: covered
+    rationale: 【RF-03 已完整補上】TC-DRAFT-…VCY 涵蓋兩種情況：(a) A 已核實後、(b) B 已作廢後，各對同一訂單編號與交易編號重送一次完成回報。斷言 A、B 仍各只有 1 筆，狀態與核實人員／時間不變，待核實筆數不增加，會員列表的提款次數與金額、日結報表的未兌現金額與已作廢金額都不變。A
+      只核實、B 只作廢，刻意不交叉，所以不會碰到 CLR-CASHOUT-003（已核實能否作廢）。加上 …APW（待核實時重送），待核實、已核實、已作廢三種狀態都有覆蓋。限制：…VCY 與 …APW 都要靠機台端測試工具重送同一筆完成回報，而
+      RD 2026-09-23 註記測試環境處理完成回報的能力有限；工具不支援時案例會標為受阻。屆時 RF-03 等於『設計已補、還沒實測』，建議在核准單上註明。…ST4Z 的連點與重放也補上了機台交易紀錄的回寫檢查（RF-02）。被擋下的核實是否會寫入操作紀錄、…VCY
+      的 AC 為空，這兩點 Validator 已列；作廢的連點與重送屬 CLR-CASHOUT-007。都不重複列，也沒有新的 high 缺口。
+  - dimension: permission
+    status: covered
+    rationale: TC-DRAFT-…WJ2（操作員略過前端直接呼叫作廢 API、站長同格式請求作對照）沿用上一輪已判定完整的內容，沒有變動；它和 TC-CASHOUT-079（介面）、073（核實 API）驗的層次不同。並行案例的
+      U1、U2 限定為 spec 授權可核實的角色，操作員只能用自身場館，符合第 96 行與 CLR-CASHOUT-001。沒有新的權限缺口。
+  findings: []
+  summary: 本輪只確認上一輪抽查（ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8）的 RF-01～03 有沒有補齊，三條都已完整補上。RF-01 由 TC-DRAFT-…RRWN、…3C13TS 補上：改在 API
+    層真正並行、兩個不同帳號、以 max(送出) < min(回應) 判定有效輪次。RF-02 由 …RRWN、…3C13TS、…ST4Z 補上：機台交易紀錄的核實人員／時間只寫一次、不被覆寫。RF-03 由 …VCY 補上：已核實、已作廢後的完成回報遲到時，不產生新紀錄，金額也不變。新建議
+    0 條（high 0、medium 0、low 0）。另有三條觀察只記在 dimension_results，不列 finding：medium 1 條（洗分核實的並行雙重核實，只會影響提款與現金淨收的統計，不會重複付現）、low 2
+    條（…3C13TS 腳本的 JOBS 沒有改寫；遲到回報會不會讓機台端再扣分，屬範圍外）。RF-03 能不能實測取決於機台端工具能否重送完成回報，建議在核准單上註明。CLR-CASHOUT-003～008 與 Validator 的 6
+    條 minor 都不重複列。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-12T17:36:24Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-002

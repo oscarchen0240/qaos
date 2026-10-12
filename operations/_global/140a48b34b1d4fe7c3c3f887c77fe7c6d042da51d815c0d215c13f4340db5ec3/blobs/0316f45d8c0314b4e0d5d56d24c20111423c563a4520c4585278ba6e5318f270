@@ -1,0 +1,174 @@
+title: 線上玩家［確認領取］與後台［確認取消排程］同時送出：紅包不會既入帳又作廢，錢包、交易紀錄、稽核明細與預算占用彼此一致（重複 5 輪）
+description: 線上玩家［確認領取］與後台［確認取消排程］同時送出：紅包不會既入帳又作廢，錢包、交易紀錄、稽核明細與預算占用彼此一致（重複 5 輪）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-013
+- REQ-REDPACKET-036
+acceptance_criteria_ids:
+- AC-REDPACKET-0132
+- AC-REDPACKET-0133
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- state_transition
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；每一輪開始時玩家 A 的累計都必須從 0 起算（每輪用全新的活動）
+- 【同時送出的兩個動作】後台的『取消排程』確認（［確認取消］）與玩家 A 前台的［確認領取］。可由兩人各自備妥畫面後以同一個口令同時按下，或由腳本同時送出兩個對應的 API 請求
+- 本案重複 5 輪。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+test_data:
+- name: 活動
+  value: 門檻 100／上限 5／固定 10／稽核 1／總預算 100／每日重置
+- name: 同時動作
+  value: 後台［確認取消］ vs 玩家 A［確認領取］
+- name: 輪數
+  value: 5 輪
+steps:
+- n: 1
+  action: 【每一輪】建立活動『RP-RACE-n』（永久）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 10／稽核 1；總預算 100；每日重置；儲存。記下玩家 A 的 USDT 錢包餘額 W0、交易紀錄『紅包』筆數 N0、稽核明細『紅包』筆數
+    H0
+  expected: 建立成功
+- n: 2
+  action: 【每一輪】玩家 A 結算有效流水貢獻 100
+  expected: 產生 1 個待開啟紅包 P；預算使用 10 ／ 100
+- n: 3
+  action: 【每一輪】玩家 A 開啟紅包視窗，點『領取獎勵（1）』，讓『確認領取獎勵』視窗開著；後台在『活動排程 > 紅包活動』該活動列點『取消排程』，讓確認視窗開著
+  expected: 兩邊都停在確認畫面
+- n: 4
+  action: 【每一輪】讓後台［確認取消］與玩家 A［確認領取］幾乎同時送出
+  expected: 請求送出；前台被拒絕時的訊息 spec 未定義，只記錄
+- n: 5
+  action: 【每一輪】檢視玩家 A 的錢包餘額、交易紀錄『紅包』與稽核明細『紅包』筆數、該活動的狀態與紅包明細（P 的狀態、作廢原因、頂部『總預算（已占用／總預算）』）
+  expected: 活動狀態『已取消』。結果只有兩種：(甲) 領取先成立：P『已入帳』（沒有被作廢）、錢包＝W0＋10、交易紀錄『紅包』＝N0＋1、稽核明細『紅包』＝H0＋1（所需有效投注額增加 10）、已占用 10 ／ 100；(乙) 取消先成立：P『已作廢』、作廢原因『活動結束』、錢包＝W0、交易紀錄與稽核明細筆數不變、已占用
+    0 ／ 100。不得出現其他組合（P 既『已入帳』又『已作廢』、錢包增加但 P 為已作廢、錢包未增加但 P 已入帳、交易紀錄或稽核明細只寫一邊、占用與狀態不符）
+- n: 6
+  action: 【每一輪結束】回到步驟 1 進入下一輪（上一輪活動已取消，可立即以相同時段重建）
+  expected: 進入下一輪
+expected_result: 領取與取消排程同時送出時只有一方先成立：(甲) 領取先成立＝紅包已入帳、錢包＋10、交易紀錄與稽核明細各 +1、預算仍占用 10；(乙) 取消先成立＝紅包已作廢（活動結束）、錢包與交易紀錄、稽核明細皆不變、預算釋放為
+  0。不會既入帳又作廢，也不會只寫入其中一部分。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §紅包狀態（第 160 行）
+  quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+decision_refs:
+- requirement_id: REQ-REDPACKET-013
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包狀態（第 160 行）
+- requirement_id: REQ-REDPACKET-013
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §紅包狀態（第 159 行）
+- requirement_id: REQ-REDPACKET-036
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 196 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包狀態（第 160 行）
+  quote: 週期重置、活動結束（到期或取消排程）時作廢；機台另於完成洗分／出金時作廢，洗分／出金完成後才達標者直接以本狀態建立（見業務規則「洗分／出金後才達標」）。不可復原、不補發；作廢釋放所占用的預算
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包狀態（第 159 行）
+  quote: 金額已入錢包、稽核已掛上、已寫入交易紀錄
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 196 行）
+  quote: 送出後按鈕顯示「處理中…」，完成即入帳（線上入錢包、機台分數增加）；仍有待開啟紅包時，紅包視窗改顯示下一個紅包的金額，可再次領取
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 217 行）
+  quote: 取消排程後活動停止累計與產生紅包，已產生未開啟的紅包一併作廢
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-09 (2)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-227
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+created_at: '2026-10-12T17:27:52Z'
+updated_at: '2026-10-12T17:35:40Z'
+history:
+- at: '2026-10-12T17:27:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:32:50Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:35:40Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0205
+  run_id: RUN-20261013-001
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

@@ -1,0 +1,273 @@
+title: 機台場館紅包金額帶 1 位小數（固定 10.5 TWD）：入帳後機台分數 +10.5、4.4 稽核明細金額 10.5 TWD、日結報表紅包金額與餘額驗算成立
+description: 機台場館紅包金額帶 1 位小數（固定 10.5 TWD）：入帳後機台分數 +10.5、4.4 稽核明細金額 10.5 TWD、日結報表紅包金額與餘額驗算成立
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-025
+- REQ-REDPACKET-014
+- REQ-REDPACKET-032
+- REQ-REDPACKET-039
+acceptance_criteria_ids:
+- AC-REDPACKET-0253
+- AC-REDPACKET-0143
+- AC-REDPACKET-0144
+- AC-REDPACKET-0321
+- AC-REDPACKET-0391
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+- 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+- 整個測試須在同一個營業日內完成，且避開場館日結時間前後 30 分鐘（日結時間見『後台管理員系統 > 站台列表』該機台站台的『日結時間』），否則日結結算會結束進行中的場次、每日重置會干擾累計與待開啟紅包
+- 【範圍註記】本案只驗紅包入帳後的機台分數、4.1／4.4 與場館日結報表；玩家之後以帶小數的餘額結算出金（收據面額、付現、小數殘值）屬機台金流範圍（CLR-CASHFLOW-007 的收據小數處理），不在本案斷言範圍
+test_data:
+- name: 紅包金額
+  value: 固定 10.5 TWD（1 位小數）
+- name: 活動
+  value: 門檻 100／單週期上限 5／稽核倍數 1／每日重置
+- name: 下注
+  value: M1 有效流水貢獻 100（入帳前）；領取後不再下注
+steps:
+- n: 1
+  action: 【精度上限的另一側】進入機台場館『優惠活動管理 > 新增優惠活動』建立紅包活動『RP-ARC-DEC』（永久）：每日重置；預設規則門檻 100／單週期上限 5／獎勵方式『固定金額』紅包金額填 10.55（2 位小數）／稽核倍數
+    0；點『儲存』
+  expected: 紅包金額欄標紅框、下方提示『最多 1 位小數』，不建立活動（AC-0391）
+- n: 2
+  action: 把紅包金額改為 10.5、稽核倍數改為 1，再點『儲存』
+  expected: 紅包金額 10.5 為 1 位小數，該欄不再出現『最多 1 位小數』提示；因機台場館稽核倍數大於 0 顯示機台稽核警告，站長確認後儲存成功（警告視窗按鈕文字 spec 未載明，依畫面）
+- n: 3
+  action: 店員對 M1 開分 200，使 M1 進入進行中場次；M1 結算有效流水貢獻 100（下注輸贏使分數增減屬正常）
+  expected: 產生 1 個待開啟紅包 P1；後台『優惠活動管理 > 活動排程 > 紅包活動』點該活動名稱進紅包明細，P1 的『紅包金額』顯示 10.5、狀態『待開啟』
+- n: 4
+  action: 【入帳前基準】記下 M1 目前分數 S1（機台畫面；分數的顯示位置與小數位呈現方式 spec 未定義，只要求數值）。至『各式報表 > 場館日結報表』：統計維度『依場次明細』、機台帳號填 M1、結算日期選今天（含此刻）；找到
+    M1 進行中場次那一列，記下該列的『紅包金額』R0，以及期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額
+  expected: 已記錄基準值 S1、R0 與各欄；待開啟的 P1 不計入『紅包金額』（只計已入帳）。自此步驟起到最後一次查詢日結報表為止，M1 不再下注、不洗分、不出金
+- n: 5
+  action: M1 依領取流程領取 P1
+  expected: 機台分數變為 S1＋10.5（恰好增加 10.5，不取整、不四捨五入；畫面顯示的小數位只記錄）；紅包以 TWD 入帳
+- n: 6
+  action: 回到紅包明細檢視 P1
+  expected: P1 狀態『已入帳』、紅包金額 10.5、稽核倍數 1、入帳時間有值
+- n: 7
+  action: 至『各式報表 > 交易紀錄查詢』（機台視角），只篩選 M1 的會員編號，檢視交易類型下拉選單，並選交易類型『紅包』查詢
+  expected: 交易類型下拉含『紅包』；M1 的『紅包』紀錄新增 1 筆，場次編號為入帳當下進行中的場次、交易狀態『已完成』、核實狀態『不適用』；該列若有顯示金額，應為正值 10.5，但機台視角的哪些欄位顯示紅包金額 spec 未定義（REQ-REDPACKET-014
+    Q04），只記錄各欄實際內容，不判定
+- n: 8
+  action: 至『各式報表 > 稽核明細』（機台場館視角），篩選 M1 的帳號、類型『紅包』
+  expected: 新增 1 筆類型『紅包』的紀錄：金額 10.5、所需有效投注額增加 10.5（10.5 × 稽核倍數 1），單位為 TWD
+- n: 9
+  action: 回到『場館日結報表』，以『入帳前基準』步驟相同的條件重新查詢，找到同一個場次列，記下『紅包金額』R1 與各欄
+  expected: 『紅包金額』R1 ＝ R0 ＋ 10.5（該場次入帳的紅包合計，含小數）；以該列顯示的數字驗算 期初餘額＋開分金額＋進鈔金額＋紅包金額＋損益－洗分金額－收據金額 ＝ 期末餘額，等式成立（小數運算以實際顯示值為準，不得因
+    .5 被取整而差 0.5）
+- n: 10
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 機台場館固定金額 10.5 TWD 的紅包可建立（1 位小數合法）；M1 領取後機台分數恰好增加 10.5（不取整）；4.4 稽核明細新增『紅包』紀錄，金額與所需有效投注額為 10.5 TWD；4.1 機台視角新增『紅包』列（場次編號為入帳當下的場次、已完成、核實狀態不適用）；場館日結報表該場次的『紅包金額』增加
+  10.5，期末餘額 ＝ 期初餘額＋開分＋進鈔＋紅包金額＋損益－洗分－收據 成立。紅包金額 10.55（2 位小數）則被擋下、不建立活動。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+decision_refs:
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 410 行）
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 415 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §線上與機台的差異（第 38 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 401 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 395 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 396 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 425 行）
+- requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 424 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 431 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 415 行）
+  quote: 以上驗證不通過時，前端於該欄位標紅框並於下方提示，點擊「儲存」時整體再檢查一次並捲動至第一個錯誤欄位
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 38 行）
+  quote: 固定 TWD（場館僅此一種），不顯示選項
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 401 行）
+  quote: 紅包入帳歸屬入帳當下進行中的場次（不是紅包產生當下的場次）；場館日結報表「依場次明細」該場次的紅包金額、期末餘額與餘額驗算皆含此筆
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 395 行）
+  quote: 入帳時所需有效投注額增加 紅包金額 × 稽核倍數，寫入 4.4 稽核明細（類型「紅包」）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 396 行）
+  quote: 入帳時寫入 4.1 交易紀錄查詢，交易類型「紅包」，正值
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 425 行）
+  quote: 4.1 機台視角的交易類型下拉新增「紅包」；紅包列：場次編號為入帳歸屬的場次（見業務規則「機台入帳場次」）、交易狀態固定「已完成」、核實狀態「不適用」，其餘機台專屬欄位顯示「—」
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 424 行）
+  quote: 機台帳號的紅包列單位為 TWD
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 431 行）
+  quote: 餘額驗算式改為 期末餘額 ＝ 期初餘額 ＋ 開分 ＋ 進鈔 ＋ 紅包金額 ＋ 損益 － 洗分 － 收據；現金淨收不變
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 431 行）
+  quote: 當日已入帳紅包合計，營業日依入帳時間歸屬
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-01（部分）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-216
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+created_at: '2026-10-12T17:27:52Z'
+updated_at: '2026-10-12T17:35:40Z'
+history:
+- at: '2026-10-12T17:27:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:32:50Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:35:40Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0205
+  run_id: RUN-20261013-001
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
