@@ -50,6 +50,7 @@ scope 對不上綁定的 revision（列了 revision 沒有的需求，或沒有�
 
 - 範圍外需求不再需要 `NO_REJECTION_CONTRACT:`；這個前綴回到原本的意義（spec 沒有定義拒絕契約）。
 - Designer 若在 scope 外設計 TC（TC 只涉及 scope 外需求）會被 G-DESIGN 擋下；要擴大範圍須重開 run。
-- 用真實資料比對：既有 spec-to-testcase run 的最後一份設計產出在新舊規則下 G-DESIGN 結果相同；RUN-20261013-002～004 的報告拿掉範圍外的 uncovered 條目後，新規則 PASS（舊規則各報 28～59 條「未被覆蓋」）。
+- 用真實資料比對（主目錄 main `3d2e5332` 唯讀匯出）：既有 spec-to-testcase run 的最後一份設計產出在新舊規則下 G-DESIGN 的 issue 集合相同；RUN-20261013-002（T2 iter0，`ART-TDR-01M4RGYHPHE8C2C8A574VPPFYF`）、003（iter1，`ART-TDR-01M4RH8ER0MAQ56PHGRVV4R4EJ`）、004（iter1，`ART-TDR-01M4RHBRR3255BS51Y5GSNC4CY`）的報告拿掉範圍外的 uncovered 條目後，新規則 0 issue（舊規則分別 30／59／28 條「未被覆蓋」）。
+  之後的資料版本中，TC 若順帶涉及範圍外的 high-risk 需求，該需求的 uncovered 豁免仍須保留（例如 main `d9f9e754` 的 RUN-20261013-004 T2 iter4，兩條 TC 涉及 REQ-DAILYREPORT-012）；拿掉的應是「範圍外且沒有 TC 涉及」的條目。這是本 ADR 規則的預期結果（Codex 審查 01 輪 m01）。
 - 未處理（待 Oscar 決定）：CLR 落地的「run 範圍」（`clr_lifecycle._run_scope`，需求 A 第 6 章 §5.6）對 spec-to-testcase 仍是整份 revision，沒有跟著 scope 收斂；改動涉及需求 A 的定義，另案處理。
 - 測試：`tests/test_design_run_scope.py`。
