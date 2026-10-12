@@ -1,0 +1,127 @@
+plan_schema: 1
+op_id: 4f4133b26f8609d901a0e9ec1ce037ce423db48a73b02cd1e132b4d484c6ff07
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHOUT
+    - SPEC-CASHOUT-001
+    - '0.2'
+    - (1)「出收據那天」以什麼切日：場館日結時間（營業日）還是 UTC+0 00:00？(2) 跨日核實（D 日出收據、D+n 日核實）的兌現金額（現金淨收的扣除項）記在 D 日列還是核實那天的列？(3) 收據永久有效，日結報表結算日期若有上限或資料保留期，最早的未兌現收據超出時怎麼呈現？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: v0.2 第 104、110 行規定作廢記在出收據那天、未兌現留在出收據那天直到核實或作廢、要看全部未兌現須涵蓋最早收據；但切日基準與跨日核實的兌現歸屬未定義。日結報表 v0.3 的「當日」是依場館日結時間切分的營業日，兩份
+        spec 需一致。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-01/07/08；問題單 C 主題 C4）
+      options: []
+      requirement_id: REQ-CASHOUT-032
+      impact: 洗分出金核實 RF-01、07、08；TC-CASHOUT-132～134 的日期基準
+      consulted:
+      - SPEC-CASHOUT-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: data_scope
+      subject: cashout.receipt_day.attribution
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: 4f4133b26f8609d901a0e9ec1ce037ce423db48a73b02cd1e132b4d484c6ff07
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:32Z'
+allocated_ids:
+- CLR-CASHOUT-005
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 55f96af63127be14729f1782f3d91fd70b1849c8fe09526e7924d462804e44e8
+  expected_after: 416f051b5ca76ecdb561c6ecce095bb77064480888f008914a2dbcd5c745fb61
+  blob: 416f051b5ca76ecdb561c6ecce095bb77064480888f008914a2dbcd5c745fb61
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-005.yaml
+  kind: business
+  expected_before: null
+  expected_after: 7120ba7e87aa45ecd1ed14828dbd30c9da0bb584b7b96de75d420674e8e9cbfe
+  blob: 7120ba7e87aa45ecd1ed14828dbd30c9da0bb584b7b96de75d420674e8e9cbfe
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/4f4133b26f8609d901a0e9ec1ce037ce423db48a73b02cd1e132b4d484c6ff07-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 7e97985dc79c5ca62ec09b775566a50154780a72a0dec9ad5cf1bd7490994a23
+  blob: 7e97985dc79c5ca62ec09b775566a50154780a72a0dec9ad5cf1bd7490994a23
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-005.md
+  kind: business
+  expected_before: null
+  expected_after: f422b27e99dfa9eee7b84f2f4d9e9761fe0560f7145c6b4a3de07041c4465cb0
+  blob: f422b27e99dfa9eee7b84f2f4d9e9761fe0560f7145c6b4a3de07041c4465cb0
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: a7ca0787198775af03ca934a255b9d390e321f8c9ea44243bf5aaf04060b3dc0
+  expected_after: fc2d745e9a206133e98650bd12d76d6b6f40c3f84fbe9bebaa1149a9702119e5
+  blob: fc2d745e9a206133e98650bd12d76d6b6f40c3f84fbe9bebaa1149a9702119e5
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/4f4133b26f8609d901a0e9ec1ce037ce423db48a73b02cd1e132b4d484c6ff07-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: e174114d4dd8b86e7384095f434b3ad728b04a72acac3b8871c74b29b23fe94b
+  blob: e174114d4dd8b86e7384095f434b3ad728b04a72acac3b8871c74b29b23fe94b
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:32Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHOUT-005: (1)「出收據那天」以什麼切日：場館日結時間（營業日）還是 UTC+0 00:00？(2) 跨日核實（D 日出收據、D+n 日核實）的兌現金額（現金淨收的扣除項）記在 D 日列還是核實那天的列？(3)
+    收據永久有效，日結報表結算日期若有上限或資料保留期，最早的未兌現收據超出時怎麼呈現？'
+  op_id: 4f4133b26f8609d901a0e9ec1ce037ce423db48a73b02cd1e132b4d484c6ff07
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHOUT-005
+  product: ba-admin
+  functional_area: CASHOUT
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  question: (1)「出收據那天」以什麼切日：場館日結時間（營業日）還是 UTC+0 00:00？(2) 跨日核實（D 日出收據、D+n 日核實）的兌現金額（現金淨收的扣除項）記在 D 日列還是核實那天的列？(3) 收據永久有效，日結報表結算日期若有上限或資料保留期，最早的未兌現收據超出時怎麼呈現？
+  context: v0.2 第 104、110 行規定作廢記在出收據那天、未兌現留在出收據那天直到核實或作廢、要看全部未兌現須涵蓋最早收據；但切日基準與跨日核實的兌現歸屬未定義。日結報表 v0.3 的「當日」是依場館日結時間切分的營業日，兩份
+    spec 需一致。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-01/07/08；問題單 C 主題 C4）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:32Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:32Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHOUT-032
+  impact_if_unanswered: 洗分出金核實 RF-01、07、08；TC-CASHOUT-132～134 的日期基準
+  kind: spec_question
+  topic: data_scope
+  subject: cashout.receipt_day.attribution
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  issue_key: 2f5211fd538c7a2693a0cfc8dd2fa1d7e3d0e050077c9ee129c1e06201cdaeb7

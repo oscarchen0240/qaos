@@ -1,0 +1,126 @@
+plan_schema: 1
+op_id: 113618b7c5361bd83a292f511f49bbb1e565ce5412f40234c7fafd6c260f8de0
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - REDPACKET
+    - SPEC-REDPACKET-001
+    - '0.2'
+    - 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: spec 只定義遊戲商取消（負值）與重結算（－300＋300）；連點與兩裝置同時領取的「只入帳一次」目前是推得的預期（TC-REDPACKET-202 exploratory）。重複計入會讓帳號提早或多產生紅包。（來源：2026-10-12／13
+        T3RR 風險抽查 REDPACKET RF-10/13；問題單 C 主題 C7）
+      options: []
+      requirement_id: REQ-REDPACKET-036
+      impact: 紅包 RF-10、RF-13；TC-REDPACKET-202 的假設
+      consulted:
+      - SPEC-REDPACKET-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: rejection_response
+      subject: redpacket.claim.replay_idempotency
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: 113618b7c5361bd83a292f511f49bbb1e565ce5412f40234c7fafd6c260f8de0
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:49Z'
+allocated_ids:
+- CLR-REDPACKET-060
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 6c7d40d371a8bca0620421c986aa502b1dc65e682c6939c79e57f897a317ec5f
+  expected_after: f3f81cf79f9e0ffb75edd95b8a15eaac3985a2ed6a9a129f32c1c9b9e44a3d07
+  blob: f3f81cf79f9e0ffb75edd95b8a15eaac3985a2ed6a9a129f32c1c9b9e44a3d07
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/REDPACKET/CLR-REDPACKET-060.yaml
+  kind: business
+  expected_before: null
+  expected_after: bbaaeefc5d290e91f39dc15f9c744322b08483eb0eeea25374f4f9e0796babcc
+  blob: bbaaeefc5d290e91f39dc15f9c744322b08483eb0eeea25374f4f9e0796babcc
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/113618b7c5361bd83a292f511f49bbb1e565ce5412f40234c7fafd6c260f8de0-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: f1665f3b23c0fc68205e35d33742eb3d0b7a329b6d0aa2310aa8bba89862f4fa
+  blob: f1665f3b23c0fc68205e35d33742eb3d0b7a329b6d0aa2310aa8bba89862f4fa
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/REDPACKET/CLR-REDPACKET-060.md
+  kind: business
+  expected_before: null
+  expected_after: 89db71691e2c2c41e5948dbe54f6ae65fb2c6746f05ee68d227c85aa759ddf7a
+  blob: 89db71691e2c2c41e5948dbe54f6ae65fb2c6746f05ee68d227c85aa759ddf7a
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: dcce1b642eb2c669f6aa86e063eac4399238a9ceca118db8768524a723e4e751
+  expected_after: 3efb609922eb761480a6cb4be7bc70652a9a984c075095aedbe85afd7a003316
+  blob: 3efb609922eb761480a6cb4be7bc70652a9a984c075095aedbe85afd7a003316
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/113618b7c5361bd83a292f511f49bbb1e565ce5412f40234c7fafd6c260f8de0-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 43bd79bd2174975a59135ff0aedbf2d0facb15519d0fc5000128173f452ca2ef
+  blob: 43bd79bd2174975a59135ff0aedbf2d0facb15519d0fc5000128173f452ca2ef
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:49Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-REDPACKET-060: 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？'
+  op_id: 113618b7c5361bd83a292f511f49bbb1e565ce5412f40234c7fafd6c260f8de0
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-REDPACKET-060
+  product: ba-admin
+  functional_area: REDPACKET
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  question: 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？
+  context: spec 只定義遊戲商取消（負值）與重結算（－300＋300）；連點與兩裝置同時領取的「只入帳一次」目前是推得的預期（TC-REDPACKET-202 exploratory）。重複計入會讓帳號提早或多產生紅包。（來源：2026-10-12／13
+    T3RR 風險抽查 REDPACKET RF-10/13；問題單 C 主題 C7）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:49Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:49Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-REDPACKET-036
+  impact_if_unanswered: 紅包 RF-10、RF-13；TC-REDPACKET-202 的假設
+  kind: spec_question
+  topic: rejection_response
+  subject: redpacket.claim.replay_idempotency
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  issue_key: f7ea8e8555c55b9cb312b570be0cffc915f2b4124dbb5bb1b1d62aa4e6fdc499

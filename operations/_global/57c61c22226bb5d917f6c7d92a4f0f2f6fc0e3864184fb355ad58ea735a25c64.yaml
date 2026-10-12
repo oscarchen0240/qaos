@@ -1,0 +1,151 @@
+plan_schema: 1
+op_id: 57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHFLOW
+    - SPEC-CASHFLOW-001
+    - '0.2'
+    - 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin
+      清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token
+      回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: 依 CLR-CASHFLOW-005 入金額度改於 end-cashin 判定；第 371 行只列 1-NO RECORD、6-BAD DATA/FORMAT 會讓機台停止重送，1-OVER LIMIT、9-OTHER
+        ERROR 不在其中——若持續重送，額度釋放後可能入帳，造成退鈔又加分。第 175、343 行與第 337、338 行對出金期間投鈔的餘額說法矛盾。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-06/03/10/13；問題單
+        C 主題 C5）
+      options: []
+      requirement_id: REQ-CASHFLOW-007
+      impact: 機台金流 RF-06、03、10、13
+      consulted:
+      - SPEC-CASHFLOW-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: state_transition
+      subject: cashflow.cashin.over_limit_aftermath
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: 57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:35Z'
+allocated_ids:
+- CLR-CASHFLOW-014
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 416f051b5ca76ecdb561c6ecce095bb77064480888f008914a2dbcd5c745fb61
+  expected_after: 15e0ae13958b04e362a72db906907325e1de7f66f8604828f12f8d364a4654af
+  blob: 15e0ae13958b04e362a72db906907325e1de7f66f8604828f12f8d364a4654af
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-014.yaml
+  kind: business
+  expected_before: null
+  expected_after: 45788da65346157867afbd317bcc2c686e9112957c4888dc621f963468e16772
+  blob: 45788da65346157867afbd317bcc2c686e9112957c4888dc621f963468e16772
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 338cca74228b5ed7ac7d2b40113af0b731067bf01b8b2f82d5f64580795fc606
+  blob: 338cca74228b5ed7ac7d2b40113af0b731067bf01b8b2f82d5f64580795fc606
+- seq: 4
+  step_id: event2
+  path: runs/_audit.d/57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64-2.yaml
+  kind: event
+  expected_before: null
+  expected_after: e6cedd26add056dc26af1fdd7308bb17de06c5b5a95faacd892a9a0e0c1b2c79
+  blob: e6cedd26add056dc26af1fdd7308bb17de06c5b5a95faacd892a9a0e0c1b2c79
+- seq: 5
+  step_id: derived5
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-014.md
+  kind: business
+  expected_before: null
+  expected_after: 21458e98f30f2a8d2d1916c725ca5280e74d17063f0f27a598dacf7c6ec81f3a
+  blob: 21458e98f30f2a8d2d1916c725ca5280e74d17063f0f27a598dacf7c6ec81f3a
+- seq: 6
+  step_id: render6
+  path: runs/_audit.log
+  kind: business
+  expected_before: fc2d745e9a206133e98650bd12d76d6b6f40c3f84fbe9bebaa1149a9702119e5
+  expected_after: 15fd23ddf1876c6aa65c3dd30c1be0dfb2eeb807eb08d35bf81d4ee96665d7b8
+  blob: 15fd23ddf1876c6aa65c3dd30c1be0dfb2eeb807eb08d35bf81d4ee96665d7b8
+- seq: 7
+  step_id: completed
+  path: operations/_global/status.d/57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: d70da44543b53fd8496126b2badf028d4af5885c55a4dc28d202872437150a58
+  blob: d70da44543b53fd8496126b2badf028d4af5885c55a4dc28d202872437150a58
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:35Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHFLOW-014: 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2)
+    end-cashin 清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊
+    token 回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？'
+  op_id: 57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64
+  step: 1
+  run_id: null
+- at: '2026-10-12T16:51:35Z'
+  actor: oscarchen@blockaction.tech
+  action: WARN_POSSIBLE_DUPLICATE
+  detail: CLR-CASHFLOW-014：REQ-CASHFLOW-007 已有沒有 issue key 的舊 CLR CLR-CASHFLOW-005，新單標 possible_duplicate，請人工確認是否重複
+  op_id: 57c61c22226bb5d917f6c7d92a4f0f2f6fc0e3864184fb355ad58ea735a25c64
+  step: 2
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-014
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  question: 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin
+    清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token
+    回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？
+  context: 依 CLR-CASHFLOW-005 入金額度改於 end-cashin 判定；第 371 行只列 1-NO RECORD、6-BAD DATA/FORMAT 會讓機台停止重送，1-OVER LIMIT、9-OTHER ERROR
+    不在其中——若持續重送，額度釋放後可能入帳，造成退鈔又加分。第 175、343 行與第 337、338 行對出金期間投鈔的餘額說法矛盾。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-06/03/10/13；問題單
+    C 主題 C5）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:35Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:35Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHFLOW-007
+  impact_if_unanswered: 機台金流 RF-06、03、10、13
+  kind: spec_question
+  topic: state_transition
+  subject: cashflow.cashin.over_limit_aftermath
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  issue_key: 39cd951d9ecd697f3f92b6dc73d25ad500b0634c7302d45ac4fb1f3e3ae4129c
+  related_clarifications:
+  - id: CLR-CASHFLOW-005
+    relation: possible_duplicate

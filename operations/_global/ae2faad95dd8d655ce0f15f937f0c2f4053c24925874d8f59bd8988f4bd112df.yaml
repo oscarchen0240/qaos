@@ -1,0 +1,128 @@
+plan_schema: 1
+op_id: ae2faad95dd8d655ce0f15f937f0c2f4053c24925874d8f59bd8988f4bd112df
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHOUT
+    - SPEC-CASHOUT-001
+    - '0.2'
+    - 已核實（已兌現）的出金收據還能不能作廢？若同一張待核實收據被櫃檯核實、同時被站長作廢，最終以哪個為準、輸的一方看到什麼？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: v0.2 第 95 行只規定已作廢不能再核實；作廢（第 102～104 行）沒有寫只能對待核實出金執行，RM 只列待核實→已作廢。若已核實還能作廢，同一面額會同時算在已兌現與出收據日的已作廢金額，會員列表提款金額是否回扣也不明；場館日結報表「收據＝已兌現＋未兌現＋已作廢」也會不成立（日結報表
+        RF-07、RF-11）。選項：甲、只有待核實可作廢，已核實的作廢一律拒絕（介面不提供、後端拒絕）；乙、已核實也可作廢，並說明提款金額與日結報表如何回補。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-09/13；DAILYREPORT
+        RF-07/11；問題單 C 主題 C1）
+      options: []
+      requirement_id: REQ-CASHOUT-028
+      impact: 洗分出金核實 RF-09、RF-13；日結報表 RF-07、RF-11 的案例依此定案
+      consulted:
+      - SPEC-CASHOUT-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: state_transition
+      subject: cashout.void.allowed_from_state
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: ae2faad95dd8d655ce0f15f937f0c2f4053c24925874d8f59bd8988f4bd112df
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:15Z'
+allocated_ids:
+- CLR-CASHOUT-003
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: a919bf4f03769c781cdbb7e26cc896333f1502c0f3e71d12298c636789910d2b
+  expected_after: 5d7cd558129235f0e8201451527e3dd744155b3aaf05feca131f1e9b591af09b
+  blob: 5d7cd558129235f0e8201451527e3dd744155b3aaf05feca131f1e9b591af09b
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-003.yaml
+  kind: business
+  expected_before: null
+  expected_after: 4f97749326f9d4dbae68dbedeb1bd95773a1784ae60a2d72ef892e28955f546e
+  blob: 4f97749326f9d4dbae68dbedeb1bd95773a1784ae60a2d72ef892e28955f546e
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/ae2faad95dd8d655ce0f15f937f0c2f4053c24925874d8f59bd8988f4bd112df-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 6bb2c0f7a03df09cabea07e186ef9bc40ad9529290eae902ed079054acb07e97
+  blob: 6bb2c0f7a03df09cabea07e186ef9bc40ad9529290eae902ed079054acb07e97
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-003.md
+  kind: business
+  expected_before: null
+  expected_after: 3e5e937ef3c4f1db730c218448a148052e85f1068da60aed77574423c47a3377
+  blob: 3e5e937ef3c4f1db730c218448a148052e85f1068da60aed77574423c47a3377
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: 1ef0a6a7df2f0a25b859554fc36308cf75fd24e7b2e272d6b1323c0980fe9153
+  expected_after: 80f5db4b8beba9c812eeeb88c5d488131b216c0c1196f4097b9a58ea410d550d
+  blob: 80f5db4b8beba9c812eeeb88c5d488131b216c0c1196f4097b9a58ea410d550d
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/ae2faad95dd8d655ce0f15f937f0c2f4053c24925874d8f59bd8988f4bd112df-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: cd8c74769a0c778ad59fe20ddc8738eb27aba91b1910219a6559b854f4f2f3d6
+  blob: cd8c74769a0c778ad59fe20ddc8738eb27aba91b1910219a6559b854f4f2f3d6
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:15Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHOUT-003: 已核實（已兌現）的出金收據還能不能作廢？若同一張待核實收據被櫃檯核實、同時被站長作廢，最終以哪個為準、輸的一方看到什麼？'
+  op_id: ae2faad95dd8d655ce0f15f937f0c2f4053c24925874d8f59bd8988f4bd112df
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHOUT-003
+  product: ba-admin
+  functional_area: CASHOUT
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  question: 已核實（已兌現）的出金收據還能不能作廢？若同一張待核實收據被櫃檯核實、同時被站長作廢，最終以哪個為準、輸的一方看到什麼？
+  context: v0.2 第 95 行只規定已作廢不能再核實；作廢（第 102～104 行）沒有寫只能對待核實出金執行，RM 只列待核實→已作廢。若已核實還能作廢，同一面額會同時算在已兌現與出收據日的已作廢金額，會員列表提款金額是否回扣也不明；場館日結報表「收據＝已兌現＋未兌現＋已作廢」也會不成立（日結報表
+    RF-07、RF-11）。選項：甲、只有待核實可作廢，已核實的作廢一律拒絕（介面不提供、後端拒絕）；乙、已核實也可作廢，並說明提款金額與日結報表如何回補。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-09/13；DAILYREPORT
+    RF-07/11；問題單 C 主題 C1）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:15Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:15Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHOUT-028
+  impact_if_unanswered: 洗分出金核實 RF-09、RF-13；日結報表 RF-07、RF-11 的案例依此定案
+  kind: spec_question
+  topic: state_transition
+  subject: cashout.void.allowed_from_state
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  issue_key: e95614f8085f590ad9bf023da79707f97566b077adb4b70b6b03a41f38957051

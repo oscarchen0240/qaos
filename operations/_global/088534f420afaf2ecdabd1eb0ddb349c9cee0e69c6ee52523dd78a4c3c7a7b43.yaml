@@ -1,0 +1,144 @@
+plan_schema: 1
+op_id: 088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHFLOW
+    - SPEC-CASHFLOW-001
+    - '0.2'
+    - 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: v0.2 第 127、168、336、360 行只示範一位小數（399.6 → 收據 399.60），第 118 行（洗分出金核實）又寫「餘額 321 → 收據面額 321」，整數是否補 .00 不一致。CLR-CASHFLOW-007
+        已定「照記含小數、平台只記面額」，但未定精度。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-05；CASHOUT RF-02；問題單 C 主題 C3）
+      options: []
+      requirement_id: REQ-CASHFLOW-020
+      impact: 機台金流 RF-05、洗分出金核實 RF-02 的邊界案例依此定案
+      consulted:
+      - SPEC-CASHFLOW-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: calculation
+      subject: cashflow.amount.decimal_precision
+      level: minor
+      role_scope:
+      - '*'
+      params: {}
+request_hash: 088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:21Z'
+allocated_ids:
+- CLR-CASHFLOW-013
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: eee5a865356c0ba0210e4c2f56ebdc57754d1bfd0b114f9db725a48dade952da
+  expected_after: 9f973d3b72fc06566283653a7e7ee690e4d8a3324102fa40c8bcdfcc3f98a539
+  blob: 9f973d3b72fc06566283653a7e7ee690e4d8a3324102fa40c8bcdfcc3f98a539
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-013.yaml
+  kind: business
+  expected_before: null
+  expected_after: 63005aca55f85c7f7e3bd1f2ed003e80f3ec51ea39945e75fc65dbbb5289d7c6
+  blob: 63005aca55f85c7f7e3bd1f2ed003e80f3ec51ea39945e75fc65dbbb5289d7c6
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 3763986862486a3e236e536923697e7ada608c1a5ff7ccca23de380d7635890e
+  blob: 3763986862486a3e236e536923697e7ada608c1a5ff7ccca23de380d7635890e
+- seq: 4
+  step_id: event2
+  path: runs/_audit.d/088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43-2.yaml
+  kind: event
+  expected_before: null
+  expected_after: 22bc1c63d89c6c2f1359cf31e24a5252c9a06566d3512aaac3bb8c15a11a4a62
+  blob: 22bc1c63d89c6c2f1359cf31e24a5252c9a06566d3512aaac3bb8c15a11a4a62
+- seq: 5
+  step_id: derived5
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-013.md
+  kind: business
+  expected_before: null
+  expected_after: 2500e678863691651149dee04b9481e6e34494a8d58a5cd89d01cfb2fc95560e
+  blob: 2500e678863691651149dee04b9481e6e34494a8d58a5cd89d01cfb2fc95560e
+- seq: 6
+  step_id: render6
+  path: runs/_audit.log
+  kind: business
+  expected_before: 2b6a5c3ca891a04f58bc2b9b577c4274b102793c2b14256443c515cfc50e6845
+  expected_after: e02237aa1a338459a7abe5a3aa6aa0e888d599c69dd212e918d8340a6f06428c
+  blob: e02237aa1a338459a7abe5a3aa6aa0e888d599c69dd212e918d8340a6f06428c
+- seq: 7
+  step_id: completed
+  path: operations/_global/status.d/088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 3538ffff07ce4dccbea91eb2a3a485d486228c7dae710f54e4ec43f01a18bb73
+  blob: 3538ffff07ce4dccbea91eb2a3a485d486228c7dae710f54e4ec43f01a18bb73
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:21Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHFLOW-013: 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold
+    能否帶小數（例 0.5）？'
+  op_id: 088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43
+  step: 1
+  run_id: null
+- at: '2026-10-12T16:51:21Z'
+  actor: oscarchen@blockaction.tech
+  action: WARN_POSSIBLE_DUPLICATE
+  detail: CLR-CASHFLOW-013：REQ-CASHFLOW-020 已有沒有 issue key 的舊 CLR CLR-CASHFLOW-007，新單標 possible_duplicate，請人工確認是否重複
+  op_id: 088534f420afaf2ecdabd1eb0ddb349c9cee0e69c6ee52523dd78a4c3c7a7b43
+  step: 2
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-013
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  question: 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？
+  context: v0.2 第 127、168、336、360 行只示範一位小數（399.6 → 收據 399.60），第 118 行（洗分出金核實）又寫「餘額 321 → 收據面額 321」，整數是否補 .00 不一致。CLR-CASHFLOW-007
+    已定「照記含小數、平台只記面額」，但未定精度。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-05；CASHOUT RF-02；問題單 C 主題 C3）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:21Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:21Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHFLOW-020
+  impact_if_unanswered: 機台金流 RF-05、洗分出金核實 RF-02 的邊界案例依此定案
+  kind: spec_question
+  topic: calculation
+  subject: cashflow.amount.decimal_precision
+  level: minor
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  issue_key: a6d17dcc68dad867b80ddc0925ef5ce73ce0e0e477dd17cad2c6dd586a5bda5c
+  related_clarifications:
+  - id: CLR-CASHFLOW-007
+    relation: possible_duplicate

@@ -1,0 +1,146 @@
+plan_schema: 1
+op_id: a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - DAILYREPORT
+    - SPEC-DAILYREPORT-001
+    - '0.3'
+    - 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4)
+      結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: v0.3 第 42、152 行依場館日結時間切分營業日，日結時間可修改但未定義修改效果；第 34 行結算日期不設上限，第 62、89 行匯出涵蓋整個查詢結果；v0.3 起看全部未兌現要涵蓋最早一張收據，長區間查詢會成為常態。（來源：2026-10-12／13
+        T3RR 風險抽查 DAILYREPORT RF-01/05；問題單 C 主題 C4）
+      options: []
+      requirement_id: REQ-DAILYREPORT-007
+      impact: 日結報表 RF-01、RF-05
+      consulted:
+      - SPEC-DAILYREPORT-001@0.3
+      no_source_check_reason: null
+      kind: spec_question
+      topic: data_scope
+      subject: dailyreport.business_day.cutoff_change
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:29Z'
+allocated_ids:
+- CLR-DAILYREPORT-018
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: da3155247999bc4d8cd4a38436d0cb0cbc5afb8a7b60f240dcf7da0464b50e29
+  expected_after: 55f96af63127be14729f1782f3d91fd70b1849c8fe09526e7924d462804e44e8
+  blob: 55f96af63127be14729f1782f3d91fd70b1849c8fe09526e7924d462804e44e8
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/DAILYREPORT/CLR-DAILYREPORT-018.yaml
+  kind: business
+  expected_before: null
+  expected_after: 879813d50cdea22bba78db7d0abc1e6c90725bf942315db74518a04d52354c8a
+  blob: 879813d50cdea22bba78db7d0abc1e6c90725bf942315db74518a04d52354c8a
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: d94371fa66b668dac9bca6f68276c6dc54e4d486d703739f008916d6ffe663fc
+  blob: d94371fa66b668dac9bca6f68276c6dc54e4d486d703739f008916d6ffe663fc
+- seq: 4
+  step_id: event2
+  path: runs/_audit.d/a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b-2.yaml
+  kind: event
+  expected_before: null
+  expected_after: a35cbbac1cb76237edae906eb81345c5a59e65b36da0a734c0e308864fc9f6b8
+  blob: a35cbbac1cb76237edae906eb81345c5a59e65b36da0a734c0e308864fc9f6b8
+- seq: 5
+  step_id: derived5
+  path: clarifications/ba-admin/DAILYREPORT/CLR-DAILYREPORT-018.md
+  kind: business
+  expected_before: null
+  expected_after: 6433ef0600741c346852c61198c87697c3ddb90bfebe4e0304fffe960d7e3e2e
+  blob: 6433ef0600741c346852c61198c87697c3ddb90bfebe4e0304fffe960d7e3e2e
+- seq: 6
+  step_id: render6
+  path: runs/_audit.log
+  kind: business
+  expected_before: 3fc99fa0e32ab7a67e684a1cce800818b8b1f606d5589cf4b630da82cb7a20f3
+  expected_after: a7ca0787198775af03ca934a255b9d390e321f8c9ea44243bf5aaf04060b3dc0
+  blob: a7ca0787198775af03ca934a255b9d390e321f8c9ea44243bf5aaf04060b3dc0
+- seq: 7
+  step_id: completed
+  path: operations/_global/status.d/a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 0e6277b563b855e96aa13d6b16fad2ece3b55d66887b7d20bc537981cb3007e1
+  blob: 0e6277b563b855e96aa13d6b16fad2ece3b55d66887b7d20bc537981cb3007e1
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:29Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-DAILYREPORT-018: 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4)
+    結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？'
+  op_id: a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b
+  step: 1
+  run_id: null
+- at: '2026-10-12T16:51:29Z'
+  actor: oscarchen@blockaction.tech
+  action: WARN_POSSIBLE_DUPLICATE
+  detail: CLR-DAILYREPORT-018：REQ-DAILYREPORT-007 已有沒有 issue key 的舊 CLR CLR-DAILYREPORT-004，新單標 possible_duplicate，請人工確認是否重複
+  op_id: a412f4b07a007366feae802fbc4c376d0a545ef46ef9d14c8de255fe127a4c0b
+  step: 2
+  run_id: null
+result:
+  clarification_id: CLR-DAILYREPORT-018
+  product: ba-admin
+  functional_area: DAILYREPORT
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  question: 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4)
+    結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？
+  context: v0.3 第 42、152 行依場館日結時間切分營業日，日結時間可修改但未定義修改效果；第 34 行結算日期不設上限，第 62、89 行匯出涵蓋整個查詢結果；v0.3 起看全部未兌現要涵蓋最早一張收據，長區間查詢會成為常態。（來源：2026-10-12／13
+    T3RR 風險抽查 DAILYREPORT RF-01/05；問題單 C 主題 C4）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:29Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:29Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-DAILYREPORT-007
+  impact_if_unanswered: 日結報表 RF-01、RF-05
+  kind: spec_question
+  topic: data_scope
+  subject: dailyreport.business_day.cutoff_change
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  issue_key: 7bff596c88ac675cfb042e140b31b4e575a9d86fa4f8296900944ea8385de35f
+  related_clarifications:
+  - id: CLR-DAILYREPORT-004
+    relation: possible_duplicate

@@ -1,0 +1,126 @@
+plan_schema: 1
+op_id: 54fd89412ecb5ab22185e55a60994365feb57a7b669a5eef63115a5d73b45c55
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHOUT
+    - SPEC-CASHOUT-001
+    - '0.2'
+    - 出金核實按下確認後請求逾時、網路中斷或後端部分失敗時：核實狀態、機台交易紀錄核實欄位、會員列表提款次數／金額三處是否同進同退？畫面如何提示？櫃檯如何判斷可否付現？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: 核實一次改動三處（第 97 行回寫機台交易紀錄、會員列表提款累計），且不可撤銷（第 98 行）；若出現「狀態已核實但提款金額未累計」或反之，無法由操作修正。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT
+        RF-10；問題單 C 主題 C6）
+      options: []
+      requirement_id: REQ-CASHOUT-022
+      impact: 洗分出金核實 RF-10
+      consulted:
+      - SPEC-CASHOUT-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: state_transition
+      subject: cashout.verify.partial_failure
+      level: major
+      role_scope:
+      - '*'
+      params: {}
+request_hash: 54fd89412ecb5ab22185e55a60994365feb57a7b669a5eef63115a5d73b45c55
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T16:51:40Z'
+allocated_ids:
+- CLR-CASHOUT-006
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: 93fbfd3668cf1ad592d12f6b874908986c06f15045dbb4bfecc87053047993f4
+  expected_after: 6c7d40d371a8bca0620421c986aa502b1dc65e682c6939c79e57f897a317ec5f
+  blob: 6c7d40d371a8bca0620421c986aa502b1dc65e682c6939c79e57f897a317ec5f
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-006.yaml
+  kind: business
+  expected_before: null
+  expected_after: db8f16a8bc69604680e77ff37adb06318fc25566f5cf7be6c5097779052001fb
+  blob: db8f16a8bc69604680e77ff37adb06318fc25566f5cf7be6c5097779052001fb
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/54fd89412ecb5ab22185e55a60994365feb57a7b669a5eef63115a5d73b45c55-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: a581bb64da3cbdd1d2929112545db3e85937b7c29d9fb6578712155f001dbafd
+  blob: a581bb64da3cbdd1d2929112545db3e85937b7c29d9fb6578712155f001dbafd
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/CASHOUT/CLR-CASHOUT-006.md
+  kind: business
+  expected_before: null
+  expected_after: ff87bd07d8f4b07805b28448aaa36a77213d99419399cb8e1aba5f9108e336b7
+  blob: ff87bd07d8f4b07805b28448aaa36a77213d99419399cb8e1aba5f9108e336b7
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: dbde7efd46e84e4dd2bbfcd98049f72b5bfde98a2bd7c357ccd2939536ed209f
+  expected_after: dcce1b642eb2c669f6aa86e063eac4399238a9ceca118db8768524a723e4e751
+  blob: dcce1b642eb2c669f6aa86e063eac4399238a9ceca118db8768524a723e4e751
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/54fd89412ecb5ab22185e55a60994365feb57a7b669a5eef63115a5d73b45c55-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 79af8f74a330cb6a0d9efb6af1ccb1e4eba7fc7bc68a71897f8b511273462196
+  blob: 79af8f74a330cb6a0d9efb6af1ccb1e4eba7fc7bc68a71897f8b511273462196
+no_change: []
+audit_events:
+- at: '2026-10-12T16:51:40Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHOUT-006: 出金核實按下確認後請求逾時、網路中斷或後端部分失敗時：核實狀態、機台交易紀錄核實欄位、會員列表提款次數／金額三處是否同進同退？畫面如何提示？櫃檯如何判斷可否付現？'
+  op_id: 54fd89412ecb5ab22185e55a60994365feb57a7b669a5eef63115a5d73b45c55
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHOUT-006
+  product: ba-admin
+  functional_area: CASHOUT
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  question: 出金核實按下確認後請求逾時、網路中斷或後端部分失敗時：核實狀態、機台交易紀錄核實欄位、會員列表提款次數／金額三處是否同進同退？畫面如何提示？櫃檯如何判斷可否付現？
+  context: 核實一次改動三處（第 97 行回寫機台交易紀錄、會員列表提款累計），且不可撤銷（第 98 行）；若出現「狀態已核實但提款金額未累計」或反之，無法由操作修正。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT
+    RF-10；問題單 C 主題 C6）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:40Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T16:51:40Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHOUT-022
+  impact_if_unanswered: 洗分出金核實 RF-10
+  kind: spec_question
+  topic: state_transition
+  subject: cashout.verify.partial_failure
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  issue_key: 6e9f9f8a4c8c3fa3cf816c11ea05ad1ea48c501cbc68b40e9d2d9ae12775c994
