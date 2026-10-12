@@ -184,3 +184,97 @@ print(json.dumps({"mid": mid, "g4": g4, "t5": a2 and a2["type"], "ci": ci(rid)},
     assert out["mid"] == "COMPARING"
     assert out["g4"]["result"] == "PASS", out["g4"]
     assert out["t5"] == "APPLY_CHANGE" and out["ci"] == "PENDING_APPROVAL"
+
+REPORT_ERRORS = {   # 本輪 Draft 多取代 unaffected 的 TC-AUTH-003（最後一筆）；報告除此之外還寫錯 → 仍是報告問題，只寫診斷、不升級（自審 1）
+    "old_version": ("vcr = copy.deepcopy(new); vcr[-1]['supersedes_testcase'] = dict(vcr[-1]['supersedes_testcase'], version=99)", "比較卻對到"),
+    "as_added":    ("vcr = copy.deepcopy(new); vcr[-1].pop('supersedes_testcase')", "比較列應恰好是"),
+}
+
+@pytest.mark.parametrize("case", list(REPORT_ERRORS))
+def test_g_compare_report_errors_on_out_of_scope_rows_stay_diagnostic(case):
+    """被超出範圍取代的 TC，比較列仍要對到取代它的 Draft 與版本：報告把那一列寫錯（old_version、當成 added）→ 報告問題，T4 READY、不建 HUMAN_OVERRIDE，
+    避免 override 帶著錯誤的比較報告進 APPLY_CHANGE。"""
+    edit, expect = REPORT_ERRORS[case]
+    out = run_cia(_root(), f"""
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+did, new = legacy_design(rid, cid, cir, P1, [extra_sup('TC-AUTH-003')]); validate(rid, did, rmid)
+{edit}
+_, g4 = compare(rid, cid, cir, vcr)
+print(json.dumps({{"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[0]}}, default=str))""")
+    assert out["g"]["result"] == "FAIL" and any(expect in i for i in out["g"]["issues"]), out["g"]
+    assert any("unaffected" in i for i in out["g"]["issues"]) and out["t4"][0] == "READY" and out["apr"] is None
+
+def test_g_design_rejects_payload_mode_spec_in_change_task():
+    """spec-change-impact 的 T2 以 payload mode=spec（source=spec_workflow）提交、取代 unaffected 的 TC：payload 自填的 mode 不能繞過檢查（自審 2）。"""
+    out = run_cia(_root(), """
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+base, _ = H.draft_set(prefix=P1); H.legacy_acs(base, set(rm.ac_history(SPEC)["owners"]))
+x = extra_sup('TC-AUTH-003'); x["source"] = "spec_workflow"
+did, pd = H.write_artifact(rid, "T2", "agent-test-designer", "TestCaseDraft", {"mode": "spec", "spec_id": SPEC, "spec_version": "1.0", "testcases": [x]},
+                           [{"entity_type": "Requirement", "id": r} for r in x["requirement_ids"]], {"type": "ChangeImpactReport", "ids": [cid]}, "test-design")
+rep = H.design_report(did, [x])
+_, pr = H.write_artifact(rid, "T2", "agent-test-designer", "TestDesignReport", rep, [{"entity_type": "Artifact", "id": did}], {"type": "TestCaseDraft", "ids": [did]}, "test-design")
+assert engine.submit(rid, "T2", str(pd))[0] and engine.submit(rid, "T2", str(pr))[0]
+print(json.dumps({"g": engine.evaluate_gate(rid, "T2"), "t2": tasks(rid)["T2"]}, default=str))""")
+    issues = out["g"]["issues"]
+    assert out["g"]["result"] == "FAIL" and out["t2"][0] == "READY", out["g"]
+    assert any("mode=spec" in i and "mode=change" in i for i in issues) and any("TC-AUTH-003" in i and "unaffected" in i for i in issues), issues
+
+def test_human_override_decision_must_match_option():
+    """HUMAN_OVERRIDE 的 decision 與 option 必須一致（自審 3）：approve 只代表取消，必須帶 --option cancel；override／reject 帶不同 option → 拒絕，核准單維持 PENDING。"""
+    out = run_cia(_root(), ESCALATE + """
+errs = []
+for d, opt in (("approve", None), ("approve", "override"), ("reject", "cancel"), ("override", "reject")):
+    try: engine.approve(apr, d, BY, rationale="x", selected_option=opt, new_request=True); errs.append(None)
+    except engine.EngineError as ex: errs.append(str(ex))
+st = store.load(f"approvals/{apr}.yaml")["status"]; run_st = engine.load_run(rid)["status"]
+engine.approve(apr, "reject", BY, rationale="退回", selected_option="reject", new_request=True)
+print(json.dumps({"errs": errs, "st": st, "run": run_st, "after": engine.load_run(rid)["current_task_id"]}, default=str))""")
+    assert all(out["errs"]), out["errs"]
+    assert "--option cancel" in out["errs"][0] and out["st"] == "PENDING" and out["run"] == "WAITING_HUMAN" and out["after"] == "T2"
+
+@pytest.mark.parametrize("decision", ["reject", "override"])
+def test_compare_escalation_on_inflight_run_left_in_test_update_required(decision):
+    """修正前在 G-TVAL 迭代超限選 override 的在途 run，ChangeImpact 停在 TEST_UPDATE_REQUIRED（自審 4；以外部寫入模擬該舊狀態）：
+    G-COMPARE 升級後 reject 仍可退回 T2、override 仍可建立 APPLY_CHANGE（先補走 VALIDATING → COMPARING）。"""
+    out = run_cia(_root(), ESCALATE + f"""
+p = f"runs/{{rid}}/entities/change-impact.yaml"; c = store.load(p); c["status"] = "TEST_UPDATE_REQUIRED"; H.raw_save(p, c)
+engine.approve(apr, "{decision}", BY, rationale="在途 run", new_request=True)
+a2 = waiting(rid)[1]
+print(json.dumps({{"ci": ci(rid), "cur": engine.load_run(rid)["current_task_id"], "t5": a2 and a2["type"]}}, default=str))""")
+    if decision == "reject": assert out["ci"] == "TEST_UPDATE_REQUIRED" and out["cur"] == "T2" and out["t5"] is None
+    else: assert out["ci"] == "PENDING_APPROVAL" and out["t5"] == "APPLY_CHANGE"
+
+RETIRE = {   # (CIR 改判, retire_recommendations, 預期訊息)
+    "not_obsolete": ("", "[{'testcase_id': 'TC-AUTH-001', 'reason': 'x'}]", "不是 CIR 判定 obsolete 的 TC"),
+    "legal":        ("o = next(i for i in cir['testcase_impact'] if i['testcase_id'] == 'TC-AUTH-003'); o.update(impact='obsolete', reason='需求刪除'); "
+                     "cir['summary'].update(testcases_obsolete=1, testcases_unaffected=cir['summary']['testcases_unaffected'] - 1)",
+                     "[{'testcase_id': 'TC-AUTH-003', 'reason': '需求刪除'}]", None),
+}
+
+@pytest.mark.parametrize("case", list(RETIRE))
+def test_g_compare_checks_retire_recommendations(case):
+    """retire_recommendations 在 APPLY_CHANGE 核准後會被退役：只能是 CIR obsolete、且沒有本輪新版的 TC（自審 6）。列 affected 的 TC → 報告問題（READY）；
+    obsolete 的 TC 列為 removed 並建議退役 → PASS。"""
+    cir_edit, retire, expect = RETIRE[case]
+    out = run_cia(_root(), f"""
+rid, rmid = start()
+cir = cir_for(rid)
+{cir_edit}
+cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+did, new = design(rid, cid, cir, P1); validate(rid, did, rmid)
+sup = [d for d in new if d.get("supersedes_testcase")]
+obs = [i for i in cir["testcase_impact"] if i["impact"] == "obsolete"]
+vcr = {{"change_impact_id": cir["change_impact_id"], "comparisons": [{{"testcase_id": d["supersedes_testcase"]["testcase_id"], "old_version": d["supersedes_testcase"]["version"],
+       "new_draft_id": d["draft_id"], "verdict": "changed", "field_diffs": [{{"field": "expected_result", "old": "-", "new": d["expected_result"]}}], "impacted_requirement_ids": d["requirement_ids"]}} for d in sup] +
+       [{{"testcase_id": i["testcase_id"], "old_version": i["active_version"], "new_draft_id": None, "verdict": "removed", "field_diffs": [], "impacted_requirement_ids": []}} for i in obs],
+       "retire_recommendations": {retire}, "summary": {{"unchanged": 0, "changed": len(sup), "added": 0, "removed": len(obs)}}}}
+aid, p = H.write_artifact(rid, "T4", "agent-change-impact-analyst", "VersionComparisonReport", vcr, [{{"entity_type": "Artifact", "id": cid}}], {{"type": "ChangeImpactReport", "ids": [cid]}}, "change-impact")
+assert engine.submit(rid, "T4", str(p))[0]; g4 = engine.evaluate_gate(rid, "T4")
+print(json.dumps({{"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[1] and waiting(rid)[1]["type"]}}, default=str))""")
+    if expect is None: assert out["g"]["result"] == "PASS" and out["apr"] == "APPLY_CHANGE", out["g"]
+    else:
+        assert out["g"]["result"] == "FAIL" and any(expect in i for i in out["g"]["issues"]), out["g"]
+        assert out["t4"][0] == "READY" and out["apr"] is None

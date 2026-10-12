@@ -48,15 +48,15 @@
 | 版本相符 | `supersedes_testcase.version` ≠ CIR 的 `active_version` |
 | 一張 TC 一筆新稿 | 同一張 TC 被兩筆以上 Draft 取代 |
 
-- **G-DESIGN**：`mode=change` 且 run 在 T2 之前有本輪有效的 ChangeImpactReport 時套用（testcase-revision 沒有 CIR，不套用；spec-change-impact 找不到 CIR 直接 FAIL）。FAIL → T2 READY，Designer 修正，不計入 Validation 迭代。
+- **G-DESIGN**：run 在設計 task 之前有本輪有效的 ChangeImpactReport 時套用，不看 Draft 自填的 `mode`（testcase-revision 沒有 CIR，不套用；spec-change-impact 找不到 CIR 直接 FAIL）。另外 Draft 的 `mode` 必須等於設計 task 的 mode（workflow 定義），不能以 `mode=spec` 繞過 change 模式的檢查。FAIL → 設計 task READY，Designer 修正，不計入 Validation 迭代。
 - **G-COMPARE**：同一套規則仍保留（防線：修正前已通過 G-DESIGN、正在途中的 run）。
 
 ### G-COMPARE 失敗的出路
 
 G-COMPARE 的問題分兩類（`gates.compare_issue_split`）：
 
-1. **比較報告本身的問題**（漏列、對錯取代關係、`old_version` 不符、`new_draft_id` 不屬於本輪 Draft、新 TC 不是 `added`……）：Change Impact Analyst 重交報告即可修正 → 維持現行行為，只寫診斷、T4 READY。
-2. **Draft 超出 CIR 範圍**（上表三條）：不論報告怎麼寫都會存在，READY 重試只會卡死。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
+1. **比較報告本身的問題**（漏列、對錯取代關係、`old_version` 不符、`new_draft_id` 不屬於本輪 Draft、新 TC 不是 `added`、`retire_recommendations` 不是 CIR obsolete 或是本輪 Draft 取代的 TC……）：Change Impact Analyst 重交報告即可修正 → 維持現行行為，只寫診斷、T4 READY。
+2. **Draft 超出 CIR 範圍**（上表三條）：不論報告怎麼寫都會存在，READY 重試只會卡死。被超出範圍取代的 TC，報告仍必須照 Draft 寫——比較列恰好是取代它的各筆 Draft、對到 `supersedes_testcase` 的 TC 與版本；只豁免「`old_version` 等於 CIR 的 `active_version`」（版本不符時兩者互相矛盾）。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
 
 | 選項 | 決定 | Runtime 動作 |
 |---|---|---|
@@ -65,6 +65,10 @@ G-COMPARE 的問題分兩類（`gates.compare_issue_split`）：
 | `cancel` | `--decision approve --option cancel`（與 Validator 超限的 HUMAN_OVERRIDE 相同） | run CANCELLED |
 
 兩類同時存在時先以診斷 FAIL 回報全部問題（報告問題修好後才升級），避免 override 帶著有問題的比較報告進 APPLY_CHANGE。
+
+HUMAN_OVERRIDE 的 decision 與 option 必須一致（`engine._preflight_approval`，所有 HUMAN_OVERRIDE 皆適用）：`approve` 只代表取消，必須帶 `--option cancel`；`override`／`reject` 若帶 option 必須同名。原本 `approve` 不論 option 都會取消 run，CLI 容易誤觸。
+
+修正前在 Validator 迭代超限選 override 的在途 run，ChangeImpact 可能停在 `TEST_UPDATE_REQUIRED`：G-COMPARE 升級後選 reject 不再轉換（已是該狀態），選 override 先補走 `VALIDATING → COMPARING` 再建 APPLY_CHANGE。
 
 為何不另開新的核准類型：`HUMAN_OVERRIDE` 本來就涵蓋「Gate FAIL 但 Human 認為可接受」（`09-human-approval-flow.md`），`_after_override` 的 reopen／override／cancel 處理與 admin-ui 的選項呈現都可沿用；G-COMPARE 專屬的差異（不 materialize、撤回已登記版本、ChangeImpact 回退）以核准單所屬 task 的 gate 判斷。狀態機為此新增兩條 Human 轉換：TestCase `VALIDATED → DRAFT`、ChangeImpact `COMPARING → TEST_UPDATE_REQUIRED`（`03-state-machines.md`）。
 

@@ -518,6 +518,15 @@ def _escalate_compare(run, task, arts, issues):
                            reopen_task=gen["task_id"])
     return {"gate": "G-COMPARE", "layer": "structural", "result": "FAIL", "issues": issues, "approval_id": apr["approval_id"]}
 
+def _ci_to_comparing(run, trigger):
+    """spec-change-impact：要推進到 T4／T5 時，ChangeImpact 若停在 TEST_UPDATE_REQUIRED（Validator 迭代超限 override；含修正前就 override 的在途 run），
+    比照 G-TVAL PASS 補走 VALIDATING → COMPARING，否則 T5 無法轉 PENDING_APPROVAL。"""
+    ci_path = f"runs/{run['run_id']}/entities/change-impact.yaml"
+    if not store.exists(ci_path): return
+    ci = store.load(ci_path)
+    if ci["status"] == "TEST_UPDATE_REQUIRED":
+        state.apply("change_impact", ci, "VALIDATING", SYSTEM, trigger, run["run_id"]); state.apply("change_impact", ci, "COMPARING", SYSTEM, trigger, run["run_id"]); store.save(ci_path, ci)
+
 def _reject_compare_round(run, task, apr, by):
     """G-COMPARE 的 HUMAN_OVERRIDE 選 reject：退回 Designer 前，撤下本輪 G-TVAL 登記的 VALIDATED 版本（比照 APPLY_CHANGE reject 把版本改回 DRAFT），
     ChangeImpact 從 COMPARING 回到 TEST_UPDATE_REQUIRED，T4 重設為 PENDING。"""
@@ -532,7 +541,9 @@ def _reject_compare_round(run, task, apr, by):
         t["input_entity_refs"] = []
     ci_path = f"runs/{run['run_id']}/entities/change-impact.yaml"
     if store.exists(ci_path):
-        ci = store.load(ci_path); state.apply("change_impact", ci, "TEST_UPDATE_REQUIRED", by, apr["approval_id"], run["run_id"]); store.save(ci_path, ci)
+        ci = store.load(ci_path)
+        if ci["status"] == "COMPARING":                                     # 已是 TEST_UPDATE_REQUIRED（修正前 override 的在途 run）就不必轉
+            state.apply("change_impact", ci, "TEST_UPDATE_REQUIRED", by, apr["approval_id"], run["run_id"]); store.save(ci_path, ci)
     _reopen_downstream(task)
 
 def _refresh_clr_index():
@@ -743,7 +754,7 @@ def approve(apr_id: str, decision: str, by: str, rationale: str = "", selected_o
     if decision == "override" and not rationale.strip(): raise EngineError("override 必須提供 rationale")
     apr = store.load(f"approvals/{apr_id}.yaml")
     if apr["status"] != "PENDING": raise EngineError(f"{apr_id} 狀態 {apr['status']}")
-    _preflight_approval(apr, decision, resolutions)
+    _preflight_approval(apr, decision, resolutions, selected_option)
     apr["decision"] = {k: v for k, v in {"decision": decision, "selected_option": selected_option, "decided_by": by, "decided_at": store.now(),
                        "rationale": rationale or None, "per_item": per_item, "adjustments": adjustments, "resolutions": resolutions}.items() if v is not None}
     apr["status"] = "DECIDED"
@@ -775,9 +786,14 @@ def _legacy_clr_refs(apr) -> list[str]:
         if not (rid in reqs and decisions.is_new(reqs[rid])): out.append(ref["id"])
     return out
 
-def _preflight_approval(apr, decision, resolutions=None):
+def _preflight_approval(apr, decision, resolutions=None, selected_option=None):
     """寫入 decision 之前的檢查（第 1 章 §3.7）：失敗時 approval 維持 PENDING、run 維持 WAITING_HUMAN。"""
     res = resolutions or []
+    if apr["type"] == "HUMAN_OVERRIDE":                                     # _after_override：override 強制通過、reject 再給一次迭代、其餘一律取消 run → decision 與 option 必須一致
+        if decision == "approve" and selected_option != "cancel":
+            raise EngineError(f"{apr['approval_id']} 是 HUMAN_OVERRIDE：--decision approve 只用於取消 run，必須帶 --option cancel；強制通過用 --decision override，再給一次迭代用 --decision reject")
+        if decision in ("override", "reject") and selected_option not in (None, decision):
+            raise EngineError(f"{apr['approval_id']} 是 HUMAN_OVERRIDE：--option {selected_option} 和 --decision {decision} 不一致")
     if res and apr["type"] != "RESOLVE_AMBIGUITY": raise EngineError(f"resolutions 只用於 RESOLVE_AMBIGUITY（{apr['approval_id']} 是 {apr['type']}）")
     if apr["type"] != "RESOLVE_AMBIGUITY" or decision not in ("approve", "override"): return      # reject 不檢查（現行行為）
     for i, e in enumerate(res):
@@ -970,16 +986,13 @@ def _after_override(run, task, apr, decision, by):
     compare = task.get("gate") == "G-COMPARE"                                  # _escalate_compare 建立的單（其餘來自 _route_back 的 Validator 迭代超限）
     if decision == "override" and compare:                                       # 視為 G-COMPARE 通過：T4 完成，推進到 APPLY_CHANGE
         for to in ("READY", "RUNNING", "DONE"): state.apply("task", task, to, SYSTEM, f"G-COMPARE override（{apr['approval_id']}）")
+        _ci_to_comparing(run, f"G-COMPARE override（{apr['approval_id']}）")
         task["ended_at"] = store.now(); _advance(run, task["task_id"]); return
     if decision == "override":
         # 視為 Validator PASS：以最後一份 validator 報告的 draft 進行 materialize / bug VALIDATED
         vt = _task(run, task["task_id"]); arts = _valid_outputs(vt)
         if "TestValidationReport" in arts:
-            ci_path = f"runs/{run['run_id']}/entities/change-impact.yaml"
-            if store.exists(ci_path):                                            # spec-change-impact：比照 G-TVAL PASS，ChangeImpact 進入 COMPARING（否則 T5 無法轉 PENDING_APPROVAL）
-                ci = store.load(ci_path)
-                if ci["status"] == "TEST_UPDATE_REQUIRED":
-                    state.apply("change_impact", ci, "VALIDATING", SYSTEM, apr["approval_id"], run["run_id"]); state.apply("change_impact", ci, "COMPARING", SYSTEM, f"override（{apr['approval_id']}）", run["run_id"]); store.save(ci_path, ci)
+            _ci_to_comparing(run, f"override（{apr['approval_id']}）")
             _materialize_testcases(run, vt, arts["TestValidationReport"])
         elif "BugValidationReport" in arts:   # _route_back 已把 bug 退回 DRAFT；由 _bug_entity_transition 走 DRAFT → VALIDATING → VALIDATED（與 TC override 相同，validated_by／report 取最後一份報告）
             _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM, validator=vt["agent_id"], report_id=arts["BugValidationReport"]["artifact_id"])
