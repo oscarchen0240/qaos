@@ -1,0 +1,465 @@
+artifact_id: ART-TVR-01M4QQ0RRPQW973C4RFQD83XCS
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-001
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T09:27:36Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4QP71DJ3CXZVDDXFG4AY5PS
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4QP71DJ3CXZVDDXFG4AY5PS
+- entity_type: Artifact
+  id: ART-TDR-01M4QP71DJVDSR10A0NZFM57JZ
+- entity_type: Artifact
+  id: ART-CIR-01M4QJRMAWTDN6W2648R4RDY0K
+- entity_type: Artifact
+  id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+requires_approval: null
+dispatch_packet_sha256: be61786487484cd5bec2c99d3abfae893c7e432cbdf7275952e63dfcd834a672
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4QP71DJ3CXZVDDXFG4AY5PS
+  validated_against:
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+  issues:
+  - testcase_id: TC-DRAFT-01M4QP6AG5YF0FKJM6WM68YM7N
+    issue_type: missing_coverage
+    severity: major
+    violated_requirement: REQ-REDPACKET-022
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包明細（第 272 行）
+      quote: 全部 / 各規則名稱；僅有等級規則的活動顯示
+    evidence: 本 TC 的 decision_refs 為 REQ-022/Q04 → basis_ref null，assumption 寫『待 CLR-REDPACKET-053 回覆後再轉為確定斷言』；S3／S4 標【推得的預期】，S5（預設規則關閉＋只有一組等級規則）標【僅記錄，不判定】。本派發包的決議快照
+      resolutions 中 CLR-REDPACKET-053 已是 ANSWERED（answer_rev 0，answer_sha256 9f85e585…）：依目標第 272 行，預設規則關閉、只有一組等級規則的活動也顯示『規則』篩選（選項為『全部』與該等級規則名稱），proto
+      以規則數大於 1 判斷的寫法不採用。
+    explanation: REQ-022/Q04 的衝突已由派發包範圍內的 CLR-053 裁決，本 TC 卻仍把裁決的核心情境（S5）留在只記錄，assumption 也還寫著等待回覆。草稿與 Registry 中沒有其他 TC 斷言『預設規則關閉＋單一等級規則時顯示規則篩選』，這個已裁決的行為因此沒有任何確定斷言。T2
+      派發時 CLR-053 尚未回答，當時寫成 exploratory 符合規則；但以本派發包為準，現在需要收斂。落地後 assumption 會在啟用核准時被標成已確認，S5 卻永遠不會驗證。
+    recommended_change: 用新的派發包（含 CLR-053）重做本 TC：decision_refs 加 REQ-022/Q04 → basis_ref CLR-REDPACKET-053（answer_rev 0），source_refs
+      一併登記；S3／S4 改為確定斷言，拿掉【推得的預期】；S5 改為確定斷言：RP-RF-2 的紅包明細顯示『規則』下拉，選項為『全部』『等級規則 1』，選『等級規則 1』可篩出玩家 B 的紅包；移除 needs_human_confirmation
+      的 assumption。建議另加一個對照情境：只有預設規則的活動不顯示『規則』篩選（AC-0221，TC-053 已涵蓋，可只在本案引用）。
+  - testcase_id: TC-DRAFT-01M4QP6AG74Z10NPG3PCTS3NFS
+    issue_type: non_executable_steps
+    severity: major
+    violated_requirement: REQ-REDPACKET-038
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 399 行）
+      quote: 場次因逾時、日結結算或歸零結束者不適用，照常產生待開啟紅包
+    evidence: S6【Run C 歸零結束】寫『店員對 M1 開分 10；M1 下注一局（有效流水貢獻 100，暫緩結算），再以其他小額下注使分數歸 0』。Run B 出金完成後 M1 分數已清空；開分 10 後，M1 不可能下注有效投注
+      100 的一局，之後也沒有分數可做『其他小額下注』。
+    explanation: AC-0383（場次因歸零結束時照常產生待開啟紅包、占用預算、圖示亮起）在本草稿只由本 TC 的 Run C 覆蓋，REQ-038 為 high risk。照現有測試資料無法佈置出『暫緩結算的那一局觸發達標、且場次已因歸零結束』的前提，這條非
+      happy path 等於沒有可執行的驗證。另外 Run A／Run B 沒有寫明開分金額：M1 要能先結算 100、再壓住一局 100，洗分時餘額還要大於洗分門檻，Run B 也要有餘額可出金。
+    recommended_change: Run C 改成可行的數字，例如：店員對 M1 開分 100 → M1 下注一局有效投注 100 並暫緩結算（下注後分數 0，場次因歸零結束；若平台在注單未結算前不會判定歸零，改為開分 110、先壓住
+      100 的一局，再以 10 小額輸光）→ 確認場次已因歸零結束 → 讓壓住的那一局以輸局結算。同時寫明 Run A、Run B 開始前的開分金額（例如各開分 300），確保『結算 100 → 再壓住 100 → 餘額仍大於洗分門檻／可出金』成立。小額下注累計的流水要低於門檻，否則會在壓住的那一局結算前就先達標；這一點也要在步驟中註明。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4QP6AG3B4DKMW68QM1KCY5Q
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-013
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §紅包狀態（第 160 行）
+      quote: 不可復原、不補發；作廢釋放所占用的預算
+    evidence: 'S8【推得的預期】以 API 開啟已作廢的 P1 應被拒絕；decision_refs 只有 E1 的 REQ-013/Q01，assumption 標 needs_human_confirmation: true。S5『玩家
+      A 在前台嘗試開啟 P1（如前台仍有入口）』寫成條件式。'
+    explanation: 只依賴 E1 的斷言卻加了未解決的 assumption，會占用 REQ-013 每條需求 exploratory 最多 3 條的額度。spec 對『已作廢不可開啟』是 E1 known rule，只有 API
+      層的回應未定義，屬於規格缺口。S5 依第 173 行，取消排程後前台應立即移除圖示，可以直接斷言。
+    recommended_change: 二擇一：(a) 把 API 層行為開 CLR，讓 RM 補一個 E3～E5 決策點後再以 exploratory 引用；(b) 把 S8 降為『僅記錄』並移除 assumption。S5 改為斷言『前台紅包圖示已移除（第
+      173 行），無入口可開啟 P1』。
+  - testcase_id: TC-DRAFT-01M4QP6AG59RWJD8VFVXT277FT
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-011
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §新增優惠活動 — 紅包（第 96 行）
+      quote: 單一帳號在一個重置週期內最多產生的紅包數；達上限後停止累計，直到下次重置
+    evidence: 'S5【推得的預期】：『不重置』活動達上限 2 後不再產生；decision_refs 只有 REQ-011/Q01（E1，第 397 行），assumption 標 needs_human_confirmation:
+      true。'
+    explanation: 斷言的依據是上限的定義（REQ-010），但宣告的決策點是 REQ-011/Q01；這屬於 E1 加上未解決的 assumption，會占用 exploratory 額度，而『不重置時上限怎麼計』其實是規格缺口，沒有對應的決策點。
+    recommended_change: 開 CLR 問『不重置活動的單週期上限是否以整個活動期間計』，RM 補決策點後再以 exploratory 引用（decision_refs 指向該決策點）；或在定案前把 S5 降為『僅記錄』並移除
+      assumption。
+  - testcase_id: TC-DRAFT-01M4QP6AG749N7904SCVMABT9Q
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-036
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §前台呈現說明（第 190 行）
+      quote: 顯示待開啟數量（例：「領取獎勵（2）」），每次領取一個；無待開啟紅包時按鈕停用
+    evidence: '整案的冪等斷言標【推得的預期】，assumption 標 needs_human_confirmation: true，decision_refs 只有 E1 的 REQ-036/Q02 與 REQ-014/Q01。'
+    explanation: 只依賴 E1 的斷言卻加了未解決的 assumption（minor）。併發與重送是規格缺口，應有對應的未定決策點。
+    recommended_change: 開 CLR 問『重複或併發的領取請求怎麼處理』，RM 補決策點（E3～E5）後再以 exploratory 引用；或在定案前把預期改為『僅記錄』。
+  - testcase_id: TC-DRAFT-01M4QP6AG7MCK2F7S1JVC6GZ1C
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-012
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §新增優惠活動 — 紅包（第 107 行）
+      quote: 設定各獎項金額與中獎機率，紅包產生時依機率抽出其中一項
+    evidence: '容許誤差 ±3 個百分點以 assumption（needs_human_confirmation: true）標示；decision_refs 只有 E1 的 REQ-012/Q01。'
+    explanation: 容許誤差是測試判準，不是產品行為。把它寫成產品斷言的 assumption，會占用 REQ-012 的 exploratory 額度。
+    recommended_change: 把容許誤差改寫在 test_data 或 description 中，作為 QA 的統計判準（例如 3σ≈1.5 個百分點，並附計算依據），並移除 assumption；若要 PM 確認，改由 QA
+      內部審核，不需走 CLR。
+  - testcase_id: TC-DRAFT-01M4QP6AG8H17P8MAVE5XV6YD3
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 400 行）
+      quote: 洗分或出金請求送出後、交易完成前，紅包不可開啟
+    evidence: '併發不變量標【推得的預期】，assumption 標 needs_human_confirmation: true，decision_refs 只有 E1 的 REQ-028/Q03、Q01 與 REQ-036/Q01。'
+    explanation: 只依賴 E1 的斷言卻加了未解決的 assumption（minor）。『同一把帳號鎖』在第 400 行是明文；本案的不變量（只有一方成立、不會重複入帳）其實可以直接由第 398、400 行推出，不一定要列為
+      assumption。
+    recommended_change: 如果團隊認為不變量可由第 398 與 400 行直接推出，就移除 assumption、改成確定斷言；如果認為這是規格缺口，就開 CLR 補決策點。
+  - testcase_id: TC-DRAFT-01M4QP6AG8H17P8MAVE5XV6YD3
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §新增優惠活動 — 紅包（第 96 行）
+      quote: 單一帳號在一個重置週期內最多產生的紅包數；達上限後停止累計，直到下次重置
+    evidence: test_data『輪數：至少 5 輪』，每輪由 M1 結算 100 產生一個新的待開啟紅包；活動的單週期上限是 5。
+    explanation: 在同一個營業日內，第 6 輪起會因達到上限而無法產生 Pn，『至少 5 輪』的寫法容易讓執行者跑到無法佈置的輪次。
+    recommended_change: 把上限設為大於預定輪數（例如上限 20），或明寫『恰好 5 輪』。
+  - testcase_id: TC-DRAFT-01M4QP6AG4T09WCGFPXPAN90BS
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: §出金（第 466 行）
+      quote: 前台在請求出金到回報完成之間不提供取消，結算畫面的「取消」鍵僅在送出請求前有效。
+    evidence: S3 以環境手段讓 W1 停在『待確認』（壓住 end-cashout）；S4 要玩家在 M1 前台再按一次『結算』產生 W2。
+    explanation: 過渡期由前台依序送出 req-cashout 與 end-cashout，而前台在請求到回報完成之間不提供取消。end-cashout 被壓住時，前台可能停在處理中的畫面，玩家未必能再按結算。平台的取代規則（SPEC-CASHFLOW-001@0.2
+      第 254 行）沒有問題，但前台不一定能觸發。前次 run 已提出同樣的提醒。
+    recommended_change: 在前置條件註明：環境手段需讓前台回到可再按結算的狀態，例如代理讓前台的 end-cashout 逾時失敗，但平台仍保留 PENDING；或改由模擬器直接送出第二筆 req-cashout，並說明以此代表『玩家再按一次結算』。
+  - testcase_id: TC-DRAFT-01M4QP6AG6CH79AA6246JQ0D7Q
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（本包相關）（第 260 行）
+      quote: 出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 管理員 手動取消為止
+    evidence: S3 指定由『各式報表 > 交易紀錄查詢』機台視角的明細面板執行『手動取消』，source_refs 引用 SPEC-TXLOG-001@0.1『操作 手動取消』。前置條件自述：CLR-CASHFLOW-004（本派發包快照中為
+      APPLIED）依 RD 實際畫面稱交易紀錄查詢頁沒有手動取消。
+    explanation: 斷言本身（取消後恢復可領取）以 CLR-REDPACKET-055 為依據，合法。但操作入口的依據（TXLOG 第 0.1 版）與同一派發包內已落地的 CLR-CASHFLOW-004 互相矛盾；CLR-055
+      也寫明入口要另開單請 PM／RD 確認，所以 S3 的路徑目前無法確定可執行。
+    recommended_change: S3 改寫為『依 PM／RD 確認的手動取消入口（追蹤單號：…）』，不要寫死成交易紀錄查詢的明細面板；SPEC-TXLOG 那筆 source_ref 改為背景說明，不當作入口依據。入口定案後再補上實際路徑。
+  - testcase_id: TC-DRAFT-01M4QP6AG6TVS8Z9PQCVQ8RTXV
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-025
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 398 行）
+      quote: 機台帳號完成洗分或出金（扣分成功）當下，該帳號待開啟紅包作廢
+    evidence: RM AC-REDPACKET-0254 的 given 是『S1 已因洗分留餘數結束、目前進行中場次為 S2』，要求 S2 期間領取該紅包；本 TC 改以日結結算結束 S1，並在前置條件標【推測的佈置】。
+    explanation: 依第 398 行，洗分完成時待開啟紅包就會作廢，所以 AC-0254 的前提無法成立，是 RM 的缺陷。本 TC 改用第 399 行列明不會作廢的『日結結算』，與 spec 一致，TC 本身不用改。
+    recommended_change: RM 下一個 revision 把 AC-0254 的 given 改成『S1 已因日結結算（或逾時）結束』。另外 S1 是在活動建立前修改日結時間；如果環境中同場館還有其他進行中的活動，會受影響，建議在前置條件註明使用專用測試場館。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-027
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 400 行）
+      quote: 交易取消、未成立、被新出金取代或由管理員手動取消時，原交易視為未成立、紅包恢復可開啟（新出金送出後再次鎖定）
+    evidence: RM AC-REDPACKET-0279 的 when 是『該筆出金被取消、未成立或被新出金取代（新出金已完成或未在進行中）』，then 是『領取按鈕恢復可領取，紅包仍為待開啟』。
+    explanation: 括號內的『新出金已完成』與第 398、400 行矛盾：新出金完成時，紅包應作廢而不是恢復。被取代時，新出金送出後會再次鎖定。草稿把 AC-0279 掛在 TC-070（洗分未成立）與『待確認出金由管理員手動取消』兩案，TC-090
+      只斷言『新出金進行中仍鎖定』，處理正確。
+    recommended_change: RM 下一個 revision 把 AC-0279 的括號改成『新出金未成立』，或拆成兩條 AC：取代後新出金仍在進行中 → 繼續鎖定；新出金未成立 → 恢復。TC 不用改。
+  - testcase_id: TC-DRAFT-01M4QP6AG3TY2XJERFTSA3ZPPA
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-016
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §活動排程（第 247 行）
+      quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程
+    evidence: CIR（ART-CIR-01M4QJRMAWTDN6W2648R4RDY0K）對 TC-040 的 reason 寫『紅包明細另顯示追加歷程』；本 TC 的 S5 斷言『紅包明細不另顯示追加預算的歷程』。
+    explanation: TC 依 spec 第 247 行與 RM REQ-016 statement 的寫法，是正確的；CIR 的 reason 文字有誤。
+    recommended_change: TC 不用改。建議在核准說明中註記 CIR 這句與 spec 不一致，以 spec 為準，避免審核者誤以為 TC 偏離 CIR。
+  - testcase_id: TC-DRAFT-01M4QP6AG8Q5HCXM67YZHJJGX0
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-REDPACKET-007
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 387 行）
+      quote: 新方案多出、未被勾選的序號：依預設規則開關，開啟時適用預設規則、關閉時不參加
+    evidence: 本 TC 的 acceptance_criteria_ids＝[AC-REDPACKET-0071]，TDR coverage_matrix 也把 AC-0071 對到本 TC；但本 TC 驗的是『新方案多出、未被勾選的序號依預設規則開關』，沒有驗
+      AC-0071 的 then（等級規則 1 改適用新方案第 3 級、設定與列表顯示新名稱）。
+    explanation: AC 對應不實。AC-0071 實際上已由 Registry 的 TC-REDPACKET-021 涵蓋，所以覆蓋率沒有缺口；但本 TC 驗的規則目前沒有對應的 AC。
+    recommended_change: acceptance_criteria_ids 改為空陣列（只掛 REQ-007），或請 RM 補一條『新方案多出未勾序號』的 AC 後再掛上；TDR coverage_matrix 同步修正。
+  - testcase_id: TC-DRAFT-01M4QP6AG5GT01S9DE120NWBN6
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-REDPACKET-015
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 392 行）
+      quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包
+    evidence: 本 TC 的 S5／S6（剩餘預算恰等於抽出金額仍可產生、不足時不產生並標示『預算用罄』）與 S4（領取不改變占用），和 Registry ACTIVE 的 TC-REDPACKET-038 v2（AC-0151、AC-0152，同樣驗剩餘恰等於抽出金額、用罄標示、開啟不釋放占用）重疊；兩案掛的
+      AC 也相同。
+    explanation: 本 TC 真正新增的是『預設規則與等級規則共用一池』（第 68 行）。邊界部分與 TC-038 重複，屬於部分重複，不構成整案重複。
+    recommended_change: 把本 TC 收斂到共用一池的斷言（S2、S3 跨規則占用合計），邊界 S5／S6 可保留作為佐證，但 title、acceptance_criteria 註明與 TC-038 的分工；或把 AC
+      改為 REQ-015 的共用池規則（第 68 行）。
+  - testcase_id: TC-DRAFT-01M4QP6AG73TT5PC7SMZVYH2Z9
+    issue_type: invalid_expected_result
+    severity: minor
+    violated_requirement: REQ-REDPACKET-035
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §前台呈現說明（第 183 行）
+      quote: 有待開啟紅包時：顯示下一個待開啟紅包的實際金額
+    evidence: S5 預期『視窗紅包金額顯示 r1 或 r2 其中之一（下一個待開啟紅包的實際金額），不加『最高』，不是 88 以外的任意值』。
+    explanation: 『不是 88 以外的任意值』照字面會讓 r1＝8 或 18 時判定失敗，與前半句矛盾，原意應是『不是最高 88』。另外 AC-0353 依產生順序（先 18 後 8）斷言，本案放寬為兩者之一，比 AC 弱。
+    recommended_change: 改為『顯示先產生那一個（依紅包明細產生時間較早者）的實際金額，不加「最高」』；S6 對應改為顯示另一個。
+  - testcase_id: '*'
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-REDPACKET-039
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 415 行）
+      quote: 「機率合計須為 100%」「最多 1 位小數」「活動名稱最多 25 字元」
+    evidence: TC-DRAFT-01M4QP6AG7554X529J4D123B43（數值精度）、TC-DRAFT-01M4QP6AG78VMXF3B21YYSVBFG（稽核倍數邊界）、TC-DRAFT-01M4QP6AG7WDGGAA5Q1RGYHFX1（捲動至第一個錯誤）都斷言了第
+      415 行的提示文字（如『最多 1 位小數』『請至少勾選一個活動幣種』『累積門檻須大於 0』），但 decision_refs 沒有宣告 REQ-039/Q03（提示文字，E2）。該決策點的 conflict_sides 正是第 415
+      行這些文字。
+    explanation: 斷言實質上依賴 E2 的 Q03，而 Q03 已由派發包內的 CLR-REDPACKET-057 裁決採用第 415 行，所以內容正確；只是沒有標明依賴，之後追溯時找不到決議依據。TC-077 與『表單驗證提示文字對照』兩案有正確宣告。
+    recommended_change: 上述三案的 decision_refs 補上 REQ-REDPACKET-039/Q03 → basis_ref CLR-REDPACKET-057（answer_rev 0），source_refs
+      同步登記。
+  - testcase_id: '*'
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 以下草稿的 expected_result 含反向斷言，但 test_types 沒有 negative：TC-DRAFT-01M4QP6AG2GCRWPDVPBVKWB7X2（升級當下『不觸發產生』）、TC-DRAFT-01M4QP6AG3TY2XJERFTSA3ZPPA（『不補發』『紅包明細不另顯示追加歷程』）、TC-DRAFT-01M4QP6AG30W15A7CVZP86DRZ0
+      與 TC-DRAFT-01M4QP6AG5GYZ4M6FY5ZXE640E（『不含總計列』）、TC-DRAFT-01M4QP6AG4SAXES55GNQHSBCPP（重結算『沒有新增紅包』）、TC-DRAFT-01M4QP6AG3ZVYCD4WYMNMF9CE0
+      與 TC-DRAFT-01M4QP6AG67JNVF452Z8TVJ9V1（『不自動彈出視窗』）、TC-DRAFT-01M4QP6AG7NNA888B8PNFG25NV（無待開啟時『按鈕停用』）。
+    explanation: 標籤與案例性質不符，只是提示。這些需求（REQ-006／008／016／022／025／034／036）在草稿或 Registry 中都另有標 negative 的案例，沒有因此失去 non-happy 覆蓋。
+    recommended_change: 上述草稿的 test_types 補上 negative；design_techniques 不用改。
+  coverage_summary:
+    requirements_total: 39
+    requirements_covered: 39
+    ac_total: 200
+    ac_covered: 200
+    uncovered_accepted:
+    - REQ-REDPACKET-004：移除規則後的命名 spec 未定義（TDR uncovered_with_reason，NO_REJECTION_CONTRACT），只記錄、不判定，可接受
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: false
+    expected_result_valid: true
+    steps_executable: false
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    dispatch_scope_ok: true
+    assumptions_ok: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4QP6AG2GCRWPDVPBVKWB7X2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3B4DKMW68QM1KCY5Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3NA1S1MPA5H8GRKX0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3TY2XJERFTSA3ZPPA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3E2B37J6YP9GSQ1JT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG30W15A7CVZP86DRZ0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3ZNPAMHRCSNGFW136
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3XAAPB526JE8T9WKN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3ZVYCD4WYMNMF9CE0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3K692CNMDYPA4H8CM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3RJCTK4JZ7TREFS62
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3AJCJCYB0WJYW8MPF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG39W7GV98PA09CAC7S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3TPNRF5K7H3Y3B88Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3PHWGC2W3JMJSJ1VJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3YJPDN2VH76PFX7GR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG34YXYTZ6VSHVB4MCS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3HYMKNSZP85R7ZYEV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG3WRY8RVV89PT8GNQP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4E93ZQ94P33B3VS7G
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4MZ0GXED0FSPKCEW1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4T09WCGFPXPAN90BS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4ZAPNZJFCX5R16N20
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4N65F0WYA39Z521VT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4SAXES55GNQHSBCPP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4QYCPCXJASEZ20ERP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG4F044XWX6Q2RVMJ3R
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG46T7R3DTDTFV5R1Z1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG44FZHT5HZAKFQ7GS5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG57JWPYHETPT8JZ4SD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG53ASQ7S4VA68HNNMK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5WWJRGCV5V63KAF9Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5ZBRZZBC80WN1SVP8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5DAQCFBERR661D4WA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG54A83PS9YQGWM6P1Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5AA30XZ6CNV98VAMD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG56TJ135MFCE8Y8CXH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG59RWJD8VFVXT277FT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG51Q7B7CWGDT8THHTC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5TT3W97RMQPJ02GC8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5GT01S9DE120NWBN6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5RY7K3QYS2JMTJSW8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5PQJTD3W7TD2Y40XZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5RMGW2DGRPFZ1HEYD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5GYZ4M6FY5ZXE640E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG5YF0FKJM6WM68YM7N
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4QP6AG5T4RHBAFJZQYN3QWB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6S1FTKC52DD3K0ZTM
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG661HADWZ0G91P01ZD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6TVS8Z9PQCVQ8RTXV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG69H0J83G3ZYW7P3R7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG628Q5D7Q0YTZ8N137
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6E618VKJTTJGJ7BHE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6BDXVV13GJ9SC1RT6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6CH79AA6246JQ0D7Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6XJEH1Y8C8W40FRFY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6CTK8DXDCFJ7JR7C1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6MT6TTCK37PR9FGKW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6Q6GYVR8DMB93K84J
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6GZG11QMNQ4S556DS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG66JV4FN0KGKY99KXC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6RRMEP2WNGCPWQ0P7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG67JNVF452Z8TVJ9V1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG6DMAJKA0BQ0PE3GHB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG711TQSR36Z898FQQ6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7F373Q38AKR9TCB54
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG73TT5PC7SMZVYH2Z9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7ZG61A0016T2ZD04J
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7HH530WWRVGK7AQB1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7386W2GE67AJ01X9E
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7NNA888B8PNFG25NV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG749N7904SCVMABT9Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG72E1TAQ0V4FWPE554
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG74Z10NPG3PCTS3NFS
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4QP6AG7554X529J4D123B43
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG78VMXF3B21YYSVBFG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7WDGGAA5Q1RGYHFX1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7HZF1BTP6Z6T4JV5C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG73QSMCHG3RCH94Q1P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG7MCK2F7S1JVC6GZ1C
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG8Q5HCXM67YZHJJGX0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG80XEK6YSYEBJ4QWPG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4QP6AG8H17P8MAVE5XV6YD3
+    verdict: ok
+history:
+- at: '2026-10-12T09:28:14Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-001
