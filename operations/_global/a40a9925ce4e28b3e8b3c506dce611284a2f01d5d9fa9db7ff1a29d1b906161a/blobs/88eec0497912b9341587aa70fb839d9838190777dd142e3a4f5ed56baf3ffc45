@@ -1,0 +1,157 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+test_level: ui_e2e
+priority: high
+risk: high
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 跨日仍待核實的出金：面額留在出收據那天（D 日）列的未兌現金額，不移到之後日期；核實後 D 日列不再包含
+description: 驗證未兌現收據的面額長期留在出收據那天的列上，核實後才轉出（AC-CASHOUT-0322）
+requirement_ids:
+- REQ-CASHOUT-032
+acceptance_criteria_ids:
+- AC-CASHOUT-0322
+test_types:
+- functional
+design_techniques:
+- requirement_based
+preconditions:
+- 以管理員、站長或操作員登入後台皆可（核實三種角色都能執行，操作員限自身場館）；頁面標題下方的站台切換下拉選單切到本案機台場館所屬站台
+- 選定一筆測試站台、測試機台帳號產生的『待核實』出金紀錄 P（自行從環境中選定）：其交易時間（UTC+0）的日期 D 比今天（UTC+0）至少早 2 日（對應 AC『跨過數日仍為待核實』），交易時間離 UTC+0 00:00 至少 2 小時。【環境前提，spec
+  未定義佈置方式，需環境負責人確認】若環境沒有這樣的紀錄，需在機台端（前台）先對測試機台帳號出金並放置至少 2 個日曆日（UTC+0）；後台不能直接建立指定日期的出金紀錄。
+- 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑、日期切分基準（是否與洗分出金核實頁的 UTC+0 交易時間一致）、以及核實／作廢後報表金額的更新時機（即時或排程）。本案以『報表列的日期＝該筆在洗分出金核實頁的交易時間日期（UTC+0）』為比對基準；若發現報表日期切分與
+  UTC+0 不一致，或報表未即時反映，請記錄實際現象與等待時間，不要直接判定 PASS／FAIL。為降低日期切分歧義，選用交易時間離 UTC+0 00:00 至少 2 小時的紀錄。
+- 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行。
+- 本案會對 P 執行不可撤銷的核實，P 不得與其他 TC 共用，且不要與其他 REQ-CASHOUT-032 案例在同一時段並行；測試期間不要在該站台對 D 日之後的日期新增或核實／作廢其他出金，避免干擾各列金額；其他日期可能本來就有待核實出金，本案以洗分出金核實頁的待核實面額加總作為各列的對照基準，不假設其他列為
+  0
+test_data:
+- name: 出收據日期 D
+  value: 今天（UTC+0）往前至少 2 日，由環境選定並記錄
+- name: 對照基準
+  value: 洗分出金核實頁各日期『核實狀態＝待核實、交易類型＝機台出金』的面額加總
+steps:
+- n: 1
+  action: 到後台『帳務管理 > 洗分出金核實』，以『交易類型＝機台出金』『核實狀態＝待核實』篩選，『交易時間』範圍設為 D 日至今天；選定 P，記下訂單編號、面額 F；依交易時間日期分組，算出每個日期的待核實出金面額加總（D 日加總為
+    S_D，含 P）
+  expected: 取得 P 的資訊與各日期待核實面額加總；P 為待核實
+- n: 2
+  action: 開啟場館日結報表（選單路徑見前提），同一站台，結算日期範圍設為 D 日至今天，記下 D 日列與之後各日期列的『未兌現金額』
+  expected: D 日列『未兌現金額』= S_D（含 P 的面額 F）；D 日之後每一列的『未兌現金額』等於該日自己的待核實出金面額加總（不含 P，也就是 F 沒有被移到之後日期）
+- n: 3
+  action: 回洗分出金核實頁，以 P 的訂單編號查詢並點擊『核實』，於確認彈窗核對後點擊確認（不可撤銷）
+  expected: P 標記為『已核實』
+- n: 4
+  action: 回到場館日結報表，以同一站台、同一結算日期範圍重新查詢（若報表未即時反映，記錄實際更新方式與等待時間後再讀取）
+  expected: D 日列『未兌現金額』= S_D − F（不再包含 P）；D 日之後各列的『未兌現金額』與步驟 2 相同（沒有因核實而增加）
+expected_result: 跨過數日仍為待核實的出金，其面額留在日結報表出收據那天（D 日）列的『未兌現金額』，不會移到之後的日期；該筆被核實後再查詢，D 日列的『未兌現金額』不再包含此筆。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §操作（備註）（第 108、110 行）
+  quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出
+decision_refs:
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（備註）（第 110 行）
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（備註）（第 108 行）
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（備註）（第 110 行）
+  quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出；查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（備註）（第 108 行）
+  quote: 出金停在「待核實」則屬正常——收據不設兌現時效，該金額對應報表的「未兌現金額」
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+source_ref: 'new_required: REQ-CASHOUT-032 AC-CASHOUT-0322（CI-SPEC-CASHOUT-001-0.1-0.2）'
+testcase_id: TC-CASHOUT-133
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+created_at: '2026-10-12T14:35:44Z'
+updated_at: '2026-10-12T15:39:51Z'
+history:
+- at: '2026-10-12T14:35:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:24:40Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:39:51Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0198
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:39:51Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-006
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0198

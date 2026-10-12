@@ -1,0 +1,126 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+test_level: ui_e2e
+priority: high
+risk: high
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 機台端門檻為 0、餘額 399.6 全額洗分：洗分出金核實頁的實際金額欄顯示含小數 399.6，不取整至個位數
+description: 驗證門檻 0 的全額洗分比照出金，實際金額含小數照記（AC-CASHOUT-0184）
+requirement_ids:
+- REQ-CASHOUT-018
+acceptance_criteria_ids:
+- AC-CASHOUT-0184
+test_types:
+- functional
+design_techniques:
+- requirement_based
+preconditions:
+- 以管理員或站長登入後台，頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台（洗分出金核實頁的資料範圍跟隨該選單，不另設場館篩選欄位）
+- 【環境前提，佈置方式 spec 未定義，需環境負責人確認】選定一個既有機台帳號，其機台端洗分門檻為 0，且機台餘額恰為 399.6。依據：spec 變更記錄（v01 2026-09-01）載明『洗分門檻改以機台端 throshold 為準、後台不設門檻』，因此門檻只能在機台端調整，後台無處設定；如何在機台端把門檻調為
+  0、如何讓餘額恰為 399.6，spec 均未說明，是我的推測，需環境負責人確認。若無法佈置請回報，不要以非 0 門檻或其他金額替代。
+- 【環境前提，機台端操作方式 spec 未定義，需環境負責人確認】店員在機台端執行『全額洗分』時如何輸入金額（本案假設輸入機台目前全部餘額 399.6，使洗分金額等於全部餘額）；洗分是機台端（店員）操作，後台洗分出金核實頁不能發起洗分
+- 測試期間不需核實該筆洗分；本案產生的洗分紀錄保持待核實（核實不可撤銷，本案不需要）
+test_data:
+- name: 機台端門檻
+  value: '0'
+- name: 機台餘額（洗分前）
+  value: '399.6'
+- name: 全額洗分金額
+  value: '399.6'
+- name: 不應出現的取整結果
+  value: 399、400（個位數）
+steps:
+- n: 1
+  action: 在機台端確認選定機台帳號的門檻為 0、餘額為 399.6；由店員在機台端執行全額洗分（洗分金額為機台全部餘額 399.6）
+  expected: 洗分完成（交易狀態為已完成）；記下洗分完成的大約時間
+- n: 2
+  action: 到後台『帳務管理 > 洗分出金核實』，站台切換選單在本案場館所屬站台；『機台帳號』篩選欄輸入該機台帳號的會員編號、『交易類型』選『機台洗分』、『核實狀態』選『待核實』並搜尋
+  expected: 列表出現該筆洗分，核實狀態『待核實』；若有多筆，以交易時間最新且與步驟 1 時間吻合者為準
+- n: 3
+  action: 檢視該筆的『實際金額』欄
+  expected: 顯示含小數的實際洗分金額 399.6，不取整為 399 或 400（AC 原文寫 399.6，尾端是否補 0 不在 AC 範圍，只記錄實際顯示）
+expected_result: 機台端門檻為 0、餘額 399.6 的全額洗分，洗分出金核實頁該筆洗分的『實際金額』欄顯示含小數的 399.6，不取整至個位數。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+decision_refs:
+- requirement_id: REQ-CASHOUT-018
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+source_ref: 'new_required: REQ-CASHOUT-018 AC-CASHOUT-0184（CI-SPEC-CASHOUT-001-0.1-0.2）'
+testcase_id: TC-CASHOUT-129
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+created_at: '2026-10-12T14:35:44Z'
+updated_at: '2026-10-12T15:39:51Z'
+history:
+- at: '2026-10-12T14:35:44Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4R8AB9CFNY4YTEEGPADPHQ8
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-006
+- at: '2026-10-12T14:35:44Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4R8J1YKDBVGAQ3F73D6QYZR
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:24:40Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:39:51Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0198
+  run_id: RUN-20261012-006
+- at: '2026-10-12T15:39:51Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-006
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0198

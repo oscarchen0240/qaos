@@ -1,0 +1,143 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-048
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §入金（第 92 行）
+- requirement_id: REQ-CASHFLOW-048
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §業務規則與驗證（本包相關）（第 258 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §入金（第 92 行）
+  quote: 交易紀錄的類型記為「機台入金」，金額為正值
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 258 行）
+  quote: 提款次數／提款金額累計機台洗分與機台出金——於「洗分出金核實」頁核實當下累計，待核實與已作廢不計
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 258 行）
+  quote: 存款次數／存款金額累計機台開分與機台入金——兩者不需核實，於交易完成（分數入帳）當下直接累計
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §入金（第 92 行）
+  quote: 交易紀錄的類型記為「機台入金」，金額為正值
+steps:
+- n: 1
+  action: 在後台會員列表找到 M 的機台帳號，記下『存款次數』n0、『存款金額』d0
+  expected: 取得基準值 n0、d0
+- n: 2
+  action: M 送出 req-cashin，金額 300；查看會員列表
+  expected: 回 0-OK 取得 TXID_1；存款次數、存款金額仍為 n0、d0（入帳前基準，PENDING 尚未完成）
+- n: 3
+  action: M 送出 end-cashin，帶 TXID_1 與實際清點金額 300
+  expected: 回 0-OK
+- n: 4
+  action: 立即重新整理會員列表；後台 4.1 查看該筆入金
+  expected: 存款次數 = n0 + 1、存款金額 = d0 + 300（不需核實，完成當下即累計）；該筆交易類型『機台入金』，金額為正值 +300
+test_data:
+- name: 入金金額
+  value: 300
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-048/AC-0481'
+title: 機台入金完成：交易類型『機台入金』金額為正值，且當下累計存款次數 +1、存款金額加上該筆（不需核實）
+requirement_ids:
+- REQ-CASHFLOW-048
+acceptance_criteria_ids:
+- AC-CASHFLOW-0481
+test_level: integration
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 【環境前提】會員列表要能看到該機台帳號的『存款次數』『存款金額』欄位（spec 的『會員列表累計欄位』列）；測試期間不得有其他針對 M 的交易，否則前後差額失準
+expected_result: 機台入金完成（分數入帳）後：交易類型為『機台入金』、金額為正值；當下累計存款次數 +1、存款金額加上該筆。
+testcase_id: TC-CASHFLOW-124
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:39:55Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:36:56Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:39:55Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0199
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:39:55Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0199

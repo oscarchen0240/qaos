@@ -1,0 +1,119 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+execution_mode: manual
+source: change_workflow
+decision_refs:
+- requirement_id: REQ-CASHFLOW-049
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+  quote: 驗證除簽章外須比對該機台現行有效的憑證識別，重置後舊 token 一律拒絕；不設有效期限（v07 定案），僅靠重置使舊憑證失效
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+  quote: 驗證除簽章外須比對該機台現行有效的憑證識別，重置後舊 token 一律拒絕；不設有效期限（v07 定案），僅靠重置使舊憑證失效
+steps:
+- n: 1
+  action: 解碼該 token 的 payload（base64url），記錄簽發時間相關 claim 與是否有到期 claim（spec 未規定 claim 名稱，只記錄）；後台記下該機台分數 B1
+  expected: 僅記錄；取得簽發距今時間與基準值 B1
+- n: 2
+  action: 以該 token 送 req-keyin，金額 10
+  expected: 回 0-OK（驗證通過、正常受理），不是 9-OTHER ERROR
+- n: 3
+  action: 後台讀該機台分數
+  expected: 分數 = B1 + 10
+test_data:
+- name: 請求
+  value: req-keyin 金額 10
+assumptions: []
+source_ref: 'new_required: REQ-CASHFLOW-049/AC-0492'
+title: 簽發已久且未被重置的有效 token 呼叫機台 API：因憑證不設有效期限，驗證通過、正常受理
+requirement_ids:
+- REQ-CASHFLOW-049
+acceptance_criteria_ids:
+- AC-CASHFLOW-0492
+test_level: api
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: high
+preconditions:
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 【環境前提，需環境負責人確認】找一台機台，其現行有效憑證是環境中簽發時間最久、且從未被重置的（簽發時間越久越能體現『不設有效期限』；spec 沒有規定多久算『簽發已久』，本案不自訂門檻）。若環境中只有剛簽發的憑證，本案無法有力驗證，記為『受限』並請環境負責人提供舊憑證，不可用新憑證冒充
+- 該機台狀態『啟用』、所屬場館站台『開通』
+expected_result: 機台以簽發已久、未被重置的有效 token 呼叫 API，因憑證不設有效期限，驗證通過、正常受理。
+testcase_id: TC-CASHFLOW-128
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+created_at: '2026-10-12T15:28:04Z'
+updated_at: '2026-10-12T15:39:55Z'
+history:
+- at: '2026-10-12T15:28:04Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RBDDF3GY9K1QF25KS9011Q
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:28:04Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RBJXSXMRN1DNA67GDZJ668
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:36:56Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:39:55Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0199
+  run_id: RUN-20261012-004
+- at: '2026-10-12T15:39:55Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-004
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0199
