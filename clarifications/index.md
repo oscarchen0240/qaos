@@ -30,7 +30,10 @@
 | [CLR-CASHFLOW-005](ba-admin/CASHFLOW/CLR-CASHFLOW-005.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 入金額度上限的判定時機：req-cashin 階段判定（spec v07 定案文字）還是 end-cashin 階段判定（RD 2026-09-23 確認的實際開發流程）？ | A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-ca |
 | [CLR-CASHFLOW-006](ba-admin/CASHFLOW/CLR-CASHFLOW-006.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 額度上限被拒絕（1-OVER LIMIT）是否比照餘額不足（1-NO CREDITS），不寫入交易紀錄？ | B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種 |
 | [CLR-CASHFLOW-007](ba-admin/CASHFLOW/CLR-CASHFLOW-007.md) | ANSWERED | SPEC-CASHFLOW-001 v0.1 | 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？ | 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）： |
-| [CLR-CASHFLOW-008](ba-admin/CASHFLOW/CLR-CASHFLOW-008.md) | ANSWERED | SPEC-CASHFLOW-001 v0.1 | 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？ | 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理 |
+| [CLR-CASHFLOW-008](ba-admin/CASHFLOW/CLR-CASHFLOW-008.md) | INCORPORATED | SPEC-CASHFLOW-001 v0.1 | 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？ | 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理 |
+| [CLR-CASHFLOW-009](ba-admin/CASHFLOW/CLR-CASHFLOW-009.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 過渡期由前台呼叫 req-cashout／end-cashout 時使用何種認證：沿用機台憑證（JWT）或另立前台認證？ |  |
+| [CLR-CASHFLOW-010](ba-admin/CASHFLOW/CLR-CASHFLOW-010.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 過渡期 req-cashout 成功後 end-cashout 失敗時，前台的重送策略為何（重試次數、間隔、放棄條件）？ |  |
+| [CLR-CASHFLOW-011](ba-admin/CASHFLOW/CLR-CASHFLOW-011.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 入金的 order_id 由廠商於 req-cashin 帶入，還是由平台產生（暫定比照出金由平台產生）？ |  |
 
 ## ba-admin / CASHOUT
 

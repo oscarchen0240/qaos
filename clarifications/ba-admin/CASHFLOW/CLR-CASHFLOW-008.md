@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.1
 - 相關需求：REQ-CASHFLOW-026
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：ANSWERED
+- 狀態：INCORPORATED
 
 ## 背景
 SPEC-CASHFLOW-001 v0.1 第 341、344、372 行與 v0.2 第 260、345、348、376 行皆寫待確認出金可由管理員手動取消收斂（含 Operator Reset 後只能手動取消、機台報廢死單清理）。2026-09-15 CLR-CASHFLOW-004 依 RD 畫面移除此路徑（REQ-CASHFLOW-026），並移除入金預留於手動取消時釋放（REQ-CASHFLOW-008）。2026-10-12 Oscar 確認（CLR-REDPACKET-055 rev 1）待確認出金的管理員手動取消要做，後端已完成、前端未開發。
