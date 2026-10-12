@@ -1,0 +1,159 @@
+title: 多帳號同時達標爭用同一池總預算（剩餘只夠一個）：只產生 1 個紅包、預算占用不超過總預算、用罄標示、其餘不補發（至少 5 個有效輪）
+description: 多帳號同時達標爭用同一池總預算（剩餘只夠一個）：只產生 1 個紅包、預算占用不超過總預算、用罄標示、其餘不補發（至少 5 個有效輪）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-015
+acceptance_criteria_ids:
+- AC-REDPACKET-0152
+- AC-REDPACKET-0153
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+- 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+  100% 的遊戲，有效投注額＝有效流水貢獻）
+- 【先向工程確認：結算是否並行處理】請工程說明注單結算通知在後端是否一律經單一佇列序列化處理。若確認為序列化，本案只能算『循序一致性驗證』——步驟與預期照做，但回報時不得宣稱已驗證併發，並以下列『處理時間證據』欄標示『不適用（序列化）』；若為並行處理，則須取得處理時間證據（見步驟中的『處理時間證據』）
+- 【逐請求時間記錄與有效重疊判定】腳本須對每一個並行請求記錄：請求識別與送出帳號、送出絕對時間 t_send（UTC+0，至毫秒）、收到回應的絕對時間 t_resp（UTC+0，至毫秒）與回應內容。該輪有效 ⇔ max(所有請求的 t_send)
+  < min(所有請求的 t_resp)（所有請求都在任一請求得到回應之前已送出）；不符者該輪作廢，不計入有效輪數，重做（重新佈置該輪）。有效輪數未達本案規定的下限時，不得判定通過（記為未完成）。人工口令同時按下只當補充觀察，不計入有效輪
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定三名既有線上會員（玩家 A、B、C，彼此不同），本週期皆無注單計入累計
+- 本案至少要 5 個『有效輪』（有效重疊判定見上）；每一輪用一個全新的活動（上一輪的活動取消排程後立即以相同設定重建，使三人的累計從 0 重新起算）。每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』
+test_data:
+- name: 活動
+  value: 門檻 100／上限 5／固定 30／稽核 0／總預算 30／每日重置
+- name: 玩家累計
+  value: A、B、C 各 90，再各結算 10（同時）
+- name: 有效輪數
+  value: 至少 5 個有效輪
+steps:
+- n: 1
+  action: 【每一輪】建立活動『RP-POOL-n』（n 為輪次；活動時間『永久』）：活動幣種 USDT；預設規則門檻 100／上限 5／固定 30／稽核 0；總預算 30；每日重置；儲存
+  expected: 建立成功；預算使用 0 ／ 30
+- n: 2
+  action: 【每一輪】玩家 A、B、C 各自依序結算有效流水貢獻 90（共 3 筆，逐筆完成，不同時）
+  expected: 三人累計各 90，沒有任何紅包；預算使用仍 0 ／ 30
+- n: 3
+  action: 【每一輪】以腳本讓三人各一筆有效流水貢獻 10 的注單『幾乎同時』結算（三人的累計同時恰好達到門檻 100），並依『逐請求時間記錄』記下三筆結算通知的 t_send、t_resp；另向工程取得三筆結算的後端處理時間（結算處理
+    log 時間戳，或紅包明細產生時間），記為處理時間證據
+  expected: 請求送出；依 max(t_send) < min(t_resp) 且處理時間區間確實重疊（max(處理開始) < min(處理結束)）判定該輪有效，否則該輪作廢重做；已確認序列化者處理時間證據標『不適用（序列化）』，本案改列循序一致性驗證、不宣稱併發
+- n: 4
+  action: 【每一輪】檢視 RP-POOL-n 的紅包明細，以及『活動排程 > 紅包活動』列表該活動的預算使用與狀態旁標示
+  expected: 紅包明細恰 1 筆紅包（金額 30、狀態『待開啟』），由 A、B、C 其中一人取得（誰取得不判定）；預算使用 30 ／ 30，占用任何時候都不得大於總預算 30；狀態旁標示『預算用罄』
+- n: 5
+  action: 【每一輪】另外兩名未取得紅包的玩家各再結算有效流水貢獻 100
+  expected: 仍不產生紅包（預算用罄期間達標的門檻不產生、不補發）；紅包明細仍 1 筆；預算使用 30 ／ 30
+- n: 6
+  action: 【每一輪結束】於『活動排程 > 紅包活動』對該輪活動點『取消排程』並於確認視窗點『確認取消』，再回到步驟 1 進入下一輪
+  expected: 已取消排程
+expected_result: A、B、C 三人同時達標、剩餘預算只夠一個紅包時，每一輪都只產生 1 個紅包（金額 30）、預算使用恰為 30 ／ 30（不得大於總預算）、活動標示『預算用罄』；其餘兩人該門檻不產生紅包且之後不補發。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 392 行）
+  quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包；用罄期間帳號累計照常推進，達標的門檻不產生、不補發
+decision_refs:
+- requirement_id: REQ-REDPACKET-015
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 392 行）
+- requirement_id: REQ-REDPACKET-015
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 391 行）
+- requirement_id: REQ-REDPACKET-015
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §新增優惠活動 — 紅包（第 68 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 392 行）
+  quote: 紅包產生當下抽出的金額大於剩餘預算時，不產生該紅包，活動標示「預算用罄」並停止產生紅包；用罄期間帳號累計照常推進，達標的門檻不產生、不補發
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 391 行）
+  quote: 設有總預算時，預算占用＝已入帳＋待開啟紅包金額；紅包作廢即釋放占用
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 68 行）
+  quote: 所有規則共用一池
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-07；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-266
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+created_at: '2026-10-12T18:06:36Z'
+updated_at: '2026-10-12T18:08:15Z'
+history:
+- at: '2026-10-12T18:06:36Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:08:15Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

@@ -1,0 +1,96 @@
+artifact_id: ART-TRR-01M4RMSCDBB4J4NJZCE40D16W7
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-001
+task_id: T3RR
+iteration: 2
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T18:07:52Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+- entity_type: Artifact
+  id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+- entity_type: Artifact
+  id: ART-TRR-01M4RKXQ8RSM8MDBFQ74K8422S
+requires_approval: null
+dispatch_packet_sha256: a90d2771a6208d1c376d18e5f2781660d3df51895ef0cbd7f1f3ef0fa81eaf6a
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+    validation_report_artifact_id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+    functional_area: REDPACKET
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RMH21ZT84BBDF0BJC8E8PQ
+    - TC-DRAFT-01M4RMH23EX52B2HK4CX946TC6
+    - TC-DRAFT-01M4RMH24WR2XT2Y920YJ040PE
+    - TC-DRAFT-01M4RMH26A3DDC6G83CGBQ477S
+    - TC-DRAFT-01M4RMH27SJJSVTRB1G6V2PG8X
+    - TC-DRAFT-01M4RMH299JX5D4S2T5VX9DXCK
+    - TC-DRAFT-01M4RMH2ART41TCKJCNHK3HY5P
+    - TC-DRAFT-01M4RMH2C6AS3HV3HZ8JBFPSNG
+    - TC-DRAFT-01M4RMH2DSSJC81FWGEAQ6T4SC
+    - TC-DRAFT-01M4RMH2F8GPKH8G2S5BW5ZT7X
+    - TC-DRAFT-01M4RMH2GR28F324SW3R4VSHNG
+    - TC-DRAFT-01M4RMH2J99SCKVR1DGY4YP6MJ
+    - TC-DRAFT-01M4RMH2KWBNJGPBQDKDTBTA66
+    - TC-DRAFT-01M4RMH2NCHB3BRWD1VKKSRFHA
+    - TC-DRAFT-01M4RMH2PW6N99DXEZY6CKVGZ2
+    - TC-DRAFT-01M4RMH2RC2CM3RXMMCNCMSPBG
+    - TC-DRAFT-01M4RMH2SVBPZX0STBA4Z82892
+    - TC-DRAFT-01M4RMH2T08M7PHCW7XHSRGQFH
+    - TC-DRAFT-01M4RMH2VK952RA97RAJC5DM7A
+    - TC-DRAFT-01M4RMH2X3T03BJ8Z0ZWFMDPC0
+    - TC-DRAFT-01M4RMH2YH3T73T9YFWTXN9Q4F
+    - TC-DRAFT-01M4RMH308PX3TDADH2M13ZCRN
+    - TC-DRAFT-01M4RMH31YJVD7AH099R32WA04
+    active_testcases_consulted:
+    - TC-REDPACKET-057
+    - TC-REDPACKET-068
+    - TC-REDPACKET-089
+    - TC-REDPACKET-185
+    - TC-REDPACKET-213
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: 本輪逐欄比對 iter1 與 iter2：T01（TC-DRAFT-…8PQ）、T02（…TC6）只刪了 AC 掛載，現在只剩 AC-REDPACKET-0391，步驟與預期都沒有變。這些步驟原本就因 CLR-REDPACKET-058
+      未答而只記錄、不判定，刪掉 AC 只是讓追溯和實際驗證一致，不會削弱覆蓋，實際斷言仍由既有的 ACTIVE TC 承擔。T03～T06 與上一輪完全相同。沒有新的邊界缺口。
+  - dimension: exception_flow
+    status: covered
+    rationale: T10、T11 與上一輪完全相同，維持上一輪『已補齊』的判定。領取中途失敗屬 CLR-REDPACKET-059，不重複列。沒有新缺口。
+  - dimension: concurrency
+    status: covered
+    rationale: 上一輪判定 RF-01～03 已補齊，本輪的修改沒有削弱這個判定。(1) T12（…6MJ）、T22（…CRN）、T23（…A04）的（甲）（乙）改成只依最終狀態歸類，回應內容只記錄；回應與最終狀態不一致時記為觀察事項，等
+      CLR-REDPACKET-059 定義回應語意後再轉為斷言。（甲）（乙）的定義、『不得出現其他組合』、守恆式（最終分數＝S1＋入帳金額－核可金額＝0）、有效輪判定與輪數下限、expected_result 都沒有變；所以既入帳又作廢、分數殘留、只寫入一邊這些會造成金額錯誤的結果，仍是
+      FAIL 判準。改以最終狀態歸類，反而移除了依賴未定義回應語意的歸類。(2) T22、T23 新增稽核前提：出金設定 TWD 稽核倍數為 0，且 M1 沒有未完成的稽核，不成立就停止回報。這是讓守恆式成立的必要條件，避免 CLR-REDPACKET-056
+      的扣減算法造成誤判，沒有縮小併發情境本身；代價是前提不成立時案例無法執行，屬環境依賴。(3) T23（乙）的『領取按鈕停用並顯示交易處理中』降為只記錄。（乙）的核心斷言仍在：P 維持待開啟、沒有新增紅包交易、出金核可金額＝S1；出金完成後
+      P 作廢、原因為機台出金，最終分數為 0。這些都是依第 398、400 行驗證的金額相關結果，不受影響。T07～T09、T13～T17 與上一輪相同。CASHFLOW 引用的行號有小瑕疵、T22 與 TC-REDPACKET-213
+      的退役沒有寫在 Draft 上，這兩點 Validator 已列，不重複。沒有新的 high 缺口。上一輪附記的觀察（同一紅包並行重複領取與 CLR-REDPACKET-060 相關、出金被取消或被取代後恢復可領取與 CLR-CASHFLOW-012
+      相關）維持原狀，不重複展開。
+  - dimension: duplicate_submission
+    status: covered
+    rationale: T13、T15、T17 與上一輪完全相同，維持上一輪『已補齊』的判定。領取請求的重放與冪等屬 CLR-REDPACKET-060，不重複列。沒有新缺口。
+  - dimension: permission
+    status: covered
+    rationale: T18～T21 與上一輪完全相同，維持上一輪『已補齊』的判定。CLR-REDPACKET-061、062 不重複列。沒有新缺口。
+  findings: []
+  summary: iteration 2 只確認本輪的修改有沒有削弱上一輪（ART-TRR-01M4RKXQ8RSM8MDBFQ74K8422S）判定為補齊的覆蓋，或引入會造成金額錯誤的新缺口。逐欄比對 iter1 與 iter2 的派發副本：只有
+    T01、T02、T12、T22、T23 有變更，其餘 18 張完全相同；派發包除了 iteration、created_at、review_drafts 之外也與 iter1 相同。結論：沒有削弱覆蓋，RF-01～03 仍為已補齊。T01、T02
+    只刪了 AC 掛載，步驟與預期沒變。T12、T22、T23 改以最終狀態歸類，（甲）（乙）的定義、禁止組合與守恆式都保留。T22、T23 的稽核倍數 0 前提是守恆式成立的必要條件。T23（乙）只把畫面斷言降為記錄，金額相關的斷言（P
+    維持待開啟、核可金額＝S1、出金完成後作廢、最終分數 0）都保留。新建議 0 條（high 0、medium 0、low 0）。CLR-REDPACKET-058～063 與 Validator 的 minor 都不重複列。本審查只提建議，不修改
+    TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-12T18:08:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-001
