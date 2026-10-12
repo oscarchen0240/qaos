@@ -1,0 +1,135 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 過去營業日的現金淨收隨其收據之後被核實而改變：核實後收據日那一列的現金淨收減少該筆面額，核實當天那一列不變
+requirement_ids:
+- REQ-DAILYREPORT-012
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0124
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- scenario
+priority: high
+risk: high
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- （歷史資料佈置）本規格未定義如何造出過去營業日的資料，也未定義如何建立指定日期的出金收據；我推測出金（收據）由機台端（前台）交易產生、後台沒有直接建立指定日期出金的入口，此點需環境負責人確認。因此由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的
+  AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日的場次、交易、收據與其核實狀態、結算時點的分數）作為預期值的比對來源
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），須在該管理員管轄範圍內的機台場館；需要第二台機台時另選一台不同的既有機台帳號
+- 收據 R 為機台 A 的一筆出金收據（面額 F，截至目前仍待核實），其出收據的營業日 D 比目前營業日（今天所屬的營業日，依 T 判定）至少早一個營業日（AC 範例：9/10 出收據、9/12 核實，核實日 ≠ 收據日）；機台 A 在目前營業日沒有其他會改變現金淨收的新交易（找一台沒人在玩的測試機台），整個測試須在同一個營業日內完成，不要跨過日結時刻
+- 查詢報表一律以步驟指定的管理員帳號；核實出金改用環境負責人提供的「核實帳號」（有權限在『帳務管理 > 洗分出金核實』核實出金的後台帳號；核實的角色權限不在本 spec，本案不驗證權限）——若核實帳號與管理員不是同一個，需在步驟 1、3 切換登入，回到步驟
+  2、4 時切回管理員並重選站台
+- 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行；本案使用的收據不得與其他 TC（含 TC-CASHOUT-132～134）共用，測試期間也不要對同一機台帳號做其他核實、作廢或新增出金
+- 核實／作廢後重新查詢，報表應立即反映最新的核實／作廢狀態（spec 第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+test_data:
+- name: 收據面額 F
+  value: 自選待核實出金的面額
+  note: AC 範例 1000
+- name: 預期
+  value: N1＝N0－F；M1＝M0
+steps:
+- n: 1
+  action: 以前提的「核實帳號」登入後台（若與管理員不同則切換登入，並把站台切換選單切到機台場館站台 Arcade），到『帳務管理 > 洗分出金核實』，找出機台 A 在 D 的那筆待核實出金（篩選方式以畫面為準），記下訂單編號、面額 F
+    與其出收據日 D
+  expected: 取得收據資訊；該筆為待核實
+- n: 2
+  action: 以管理員登入（若剛才切換過帳號則切回，並重選站台為 Arcade），開啟場館日結報表（各式報表 > 場館日結報表），統計維度「依機台明細」、統計週期「按日」、機台帳號填機台 A、結算日期設為 D～目前營業日，搜尋；記錄 D
+    列的「開分金額」「進鈔金額」「已核實洗分」「已兌現金額」「現金淨收」（記為 N0），以及目前營業日列的「現金淨收」（記為 M0）
+  expected: D 列現金淨收 N0＝開分＋進鈔－已核實洗分－已兌現；此時 R 尚未核實，其面額不在已兌現內
+- n: 3
+  action: 以「核實帳號」登入（必要時切換並重選站台為 Arcade），回到洗分出金核實頁，對該筆出金執行核實，依畫面流程確認（按鈕名稱與確認步驟以畫面為準）
+  expected: 該筆標記為已核實
+- n: 4
+  action: 以管理員登入（必要時切換並重選站台為 Arcade），回到場館日結報表，以相同條件重新查詢；記錄 D 列的現金淨收（記為 N1）與目前營業日列的現金淨收（記為 M1）
+expected_result: 核實後：D 列現金淨收 N1＝N0－F（含之後才付現的收據金額，已兌現歸收據日 D）；目前營業日（核實當天）列的現金淨收 M1＝M0，不因這次核實而變動。重新查詢即應反映核實後的狀態（依第 53、70 行，狀態以查詢當下為準）。（AC
+  範例：N0＝2000、F＝1000、N1＝1000。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／現金淨收（第 55 行）
+  quote: 因已兌現以收據日歸屬，現金淨收含之後才付現的收據金額，不等於當日實際的現金增減
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-012
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／現金淨收（第 55 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／現金淨收（第 55 行）
+  quote: 因已兌現以收據日歸屬，現金淨收含之後才付現的收據金額，不等於當日實際的現金增減
+hotfix_eligible: false
+execution_cost: high
+source_ref: new_required:REQ-DAILYREPORT-012 AC-DAILYREPORT-0124
+testcase_id: TC-DAILYREPORT-149
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:27:53Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:21:30Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0200
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0200

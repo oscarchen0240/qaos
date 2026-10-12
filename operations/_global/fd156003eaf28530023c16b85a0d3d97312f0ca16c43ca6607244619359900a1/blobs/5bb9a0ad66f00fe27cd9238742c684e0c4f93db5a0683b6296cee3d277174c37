@@ -1,0 +1,147 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 列表欄位順序：「已作廢金額」緊接在「未兌現金額」之後、「現金淨收」之前，「注單數」在「現金淨收」與「有效投注額」之間；三種統計維度皆然，匯出 CSV 的注單數位置與畫面一致
+requirement_ids:
+- REQ-DAILYREPORT-027
+- REQ-DAILYREPORT-028
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0274
+- AC-DAILYREPORT-0282
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 三種統計維度下，各自選一段有資料的查詢條件使列表至少有 1 列結果（資料內容不拘，本案只看欄位標題的順序）
+test_data: []
+steps:
+- n: 1
+  action: 統計維度選「依場館彙總」，搜尋；由左至右記錄列表上的全部欄位標題
+- n: 2
+  action: 統計維度改選「依機台明細」，搜尋；由左至右記錄全部欄位標題
+- n: 3
+  action: 統計維度改選「依場次明細」，搜尋；由左至右記錄全部欄位標題
+- n: 4
+  action: 統計維度回到「依場館彙總」，搜尋後點擊頁面右上角「匯出 CSV」，開啟檔案，由左至右記錄第一列的欄位標題
+expected_result: 三種統計維度的畫面欄位標題皆依序包含相鄰的「未兌現金額」→「已作廢金額」→「現金淨收」→「注單數」→「有效投注額」：已作廢金額在未兌現金額之後、現金淨收之前；注單數在現金淨收與有效投注額之間。CSV 的欄位標題中，「現金淨收」「注單數」「有效投注額」的相對順序與畫面一致。（CSV
+  內「已作廢金額」的位置 spec 未明寫，只記錄、不作判準。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／注單數（第 56 行）
+  quote: 當日該場館／機台產生的注單筆數（2026-10-05 補列，與實際畫面及 CSV 欄位順序一致）
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-027
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §變更記錄 v02（第 169 行）
+- requirement_id: REQ-DAILYREPORT-028
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §變更記錄 v02（第 169 行）
+- requirement_id: REQ-DAILYREPORT-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／注單數（第 56 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §變更記錄 v02（第 169 行）
+  quote: ⑤新增「已作廢金額」欄（未兌現之後，收據日歸屬），收據金額仍含作廢
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §變更記錄 v02（第 169 行）
+  quote: ②補列「注單數」欄（現金淨收與有效投注額之間）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／注單數（第 56 行）
+  quote: 當日該場館／機台產生的注單筆數（2026-10-05 補列，與實際畫面及 CSV 欄位順序一致）
+hotfix_eligible: false
+execution_cost: low
+source_ref: new_required:REQ-DAILYREPORT-027 AC-DAILYREPORT-0274；REQ-DAILYREPORT-028 AC-DAILYREPORT-0282
+testcase_id: TC-DAILYREPORT-156
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:27:53Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:21:30Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0200
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0200

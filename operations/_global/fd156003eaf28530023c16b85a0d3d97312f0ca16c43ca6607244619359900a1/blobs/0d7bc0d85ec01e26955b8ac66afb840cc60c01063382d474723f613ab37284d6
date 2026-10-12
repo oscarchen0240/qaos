@@ -1,0 +1,146 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 站長將報表查詢與匯出請求的站台／場館參數改為其管轄範圍外時，後端拒絕並回「無權限」錯誤、不回傳範圍外場館資料；站台切換選單不提供範圍外選項
+requirement_ids:
+- REQ-DAILYREPORT-001
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0012
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- security_rule
+priority: high
+risk: high
+preconditions:
+- 環境負責人提供一個既有的站長帳號，其管轄範圍已知；並提供至少一個該帳號管轄範圍外、且確實存在於系統的站台／場館識別（作為越權目標）
+- 瀏覽器可開啟開發者工具擷取請求；報表查詢與匯出請求的路徑與參數名稱本 spec 未載明，由步驟 3、5 現場擷取，不預設
+- 錯誤代碼由後端定義、截至 2026-10-09 尚未定案（CLR-DAILYREPORT-014）：本案只判定『回應是「無權限」錯誤且不含範圍外資料』，HTTP 狀態碼與錯誤代碼的具體值只記錄、不作判準
+- 進入 各式報表 > 場館日結報表
+- 該管轄範圍內有一個機台場館站台，且在某個單一營業日有報表資料，作為對照（範圍內）的查詢條件
+test_data:
+- name: 越權目標
+  value: 管轄範圍外且確實存在的站台／場館識別
+  note: 由環境負責人提供，不寫死
+steps:
+- n: 1
+  action: 以站長登入後台，進入 各式報表 > 場館日結報表；展開頁面標題下方的站台切換下拉選單，逐項檢視所有選項
+  expected: 選單只含該站長管轄範圍內的站台（自身及子站台）；環境負責人提供的範圍外站台／場館不出現在選單中（AC-DAILYREPORT-0012）
+- n: 2
+  action: 站台切換選單切到管轄範圍內的機台場館站台，結算日期選該場館有資料的單一營業日，搜尋一次
+  expected: 列表正常列出範圍內資料
+- n: 3
+  action: 開啟瀏覽器開發者工具的 Network 頁籤，找到該次報表查詢所送出的請求，記下請求方法、路徑、代表站台／場館的參數名稱與目前值
+  expected: 取得請求資訊
+- n: 4
+  action: 以同一個登入 session 重送該請求，僅把代表站台／場館的參數值改為管轄範圍外的站台／場館識別（由環境負責人提供，須確認該站台確實存在於系統），其餘參數不變；檢視回應的 HTTP 狀態碼與回應內容
+  expected: 回應為「無權限」錯誤（以回應內容的錯誤訊息或錯誤碼語意判定）；回應不含任何範圍外場館的日結資料列；狀態碼與錯誤代碼具體值只記錄
+- n: 5
+  action: 回到頁面，以範圍內條件點「匯出 CSV」，同樣在 Network 找到匯出所送出的請求（若匯出沒有獨立請求，記錄此事實並跳過步驟 6）
+  expected: 取得匯出請求資訊
+- n: 6
+  action: 以同一個登入 session 重送該匯出請求，僅把站台／場館參數值改為同一個範圍外識別，其餘不變；檢視回應
+  expected: 同樣為「無權限」錯誤，不回傳含範圍外場館資料的檔案或內容
+- n: 7
+  action: （對照）以原本範圍內的參數值重送查詢請求
+  expected: 同一請求在範圍內可正常取得資料，排除請求格式錯誤造成的假拒絕
+expected_result: (1) 站台切換選單只提供其自身及子站台管轄範圍內的站台，管轄範圍外的場館不出現在選單中（AC-DAILYREPORT-0012）；(2) 將查詢請求與匯出請求的站台／場館參數改為管轄範圍外的場館時，後端拒絕並回傳「無權限」錯誤（依
+  CLR-DAILYREPORT-014 的回答），回應不含任何範圍外場館的日結資料，資料不因此變動；(3) 範圍內參數值的對照請求可正常取得資料。HTTP 狀態碼與錯誤代碼具體值後端尚未定案，不作為判準。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §功能說明／權限表（第 25 行）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §功能說明／權限表（第 25 行）
+- requirement_id: REQ-DAILYREPORT-001
+  question_id: Q03
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-DAILYREPORT-014
+    answer_rev: 0
+    answer_sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §功能說明／權限表（第 25 行）
+  quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+- type: clarification
+  clarification_id: CLR-DAILYREPORT-014
+  answer_rev: 0
+  answer_sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+  quote: 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項，後端拒絕並回傳「無權限」錯誤、資料不變
+hotfix_eligible: false
+execution_cost: medium
+source_ref: new_required:REQ-DAILYREPORT-001（CLR-DAILYREPORT-014 越權回「無權限」）
+testcase_id: TC-DAILYREPORT-141
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:27:53Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:21:30Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0200
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:27:53Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0200
