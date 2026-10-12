@@ -532,3 +532,25 @@
 | AC-08-32 的 0.3 部分 | 沒有驗證「REQ-012 在 0.3 的 basis 為 0.3＋閉包；人建立的 applicability 帶 0.3 本次的 basis_hash → E1，並記錄人核對的是 0.3 那一次的 basis」 | **有保證**：同上，加上 basis_hash 的計算與比對機制（`test_p2_sources.py::test_basis_hash_changes_with_declarations_only`、`test_ac_08_27_28_basis_changed_fails_and_29_applicability_fixes`、`test_ac_08_30_same_basis_and_covering_scope_passes`）。<br>**沒有保證**：0.3 的 basis_hash 與 E1 推導在真實資料上成立 | 同上 |
 
 兩項在各表都標為「已接受的缺口」。它們**不算通過的對題測試**。
+
+## ADR-011 延伸：`--request-key` 與 `--json`（2026-10-09）
+
+第 4 章 §3 的 CanonicalRequest 新增選填的 `request_key`，寫入指令新增 `--json` 輸出（ADR-011，admin-ui 後端審查 R01、R02、R07 的根治）。不帶新參數時行為不變，既有驗收不受影響。新增驗收案例在 `tests/test_request_key.py`：
+
+| 案例 | 預期 |
+|---|---|
+| 同 key 重送已完成的請求 | `outcome=completed`、root 內容不變 |
+| `after_plan_save`／`after_register`／`after_output:1`／`before_completed` 中止後同 key 重送 | 索引在計畫保存前已綁定；`outcome=resumed`、同一 op、不被第 3b 步擋下 |
+| 綁定之後、計畫保存之前中止（`after_bind_key`）；綁定途中短寫中止 | 同 key 同內容 → 新建同一 op；同 key 不同內容 → 改綁到新 op；本 op 本 key 的暫存檔被清除、其他暫存檔不動 |
+| 未完成或 `operation resume` 之後，以同 key 不同內容送出 | `key_conflict` |
+| migrate 中止後被 rollback 接管（含以同一 key 發 rollback） | key 仍綁定原 op：同 key 不同內容與同 key 的 rollback → `key_conflict`；同內容 → 已終結、`refused` |
+| 索引被竄改（指向沒有該 key 的計畫／不存在的 op） | `internal`／同內容重送時改回 |
+| 已登錄的計畫檔被竄改成空檔、YAML null 或清單（completed、未完成各一） | 同 key 不論內容 → `internal`；沒有第二個 op，索引與業務檔不變；不帶 `--json` 也沒有 traceback |
+| 同上，改以 `operation resume <op>` 與不帶 key 的同請求重送 | 證據衝突（不是「不存在」）、沒有 traceback、root 內容不變；真正不存在的 op 仍回報「不存在」 |
+| 同 key 不同內容（含 key 綁定的 op 尚未完成） | `key_conflict`、root 內容不變 |
+| 不同 key、相同內容的 `execution import` | 兩個 op、兩筆 EXE（R02） |
+| `--request-key` 與 `--new-request` 同時使用、key 格式不符 | argparse 錯誤（結束碼 2）／`validation`；沒有寫入 |
+| `--json` 的成功與失敗（validation、refused、maintenance、locked、incomplete_plan、key_conflict、internal、非零結束的成功） | stdout 剛好一行 JSON；`ids` 取自計畫的 allocated_ids（十種計數器 ID 都有名稱，含 MAN）；`completed` 的 `result` 是當時的結果；回放時讀目前狀態失敗 → 和不帶 `--json` 一樣失敗 |
+| 控制指令的前置條件不符（已移轉再 migrate、已在維護中再 start） | `refused`（一般寫入在維護中才是 `maintenance`） |
+| 有 key 的 `qaos id` 重送 | 提示換新 key，不提示互斥的 `--new-request` |
+| 有 key 的請求 | 計畫追加 `REQUEST_KEY` audit 事件；沒有 key 的請求沒有 |
