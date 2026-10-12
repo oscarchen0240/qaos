@@ -1,0 +1,167 @@
+title: 追加預算重複送出：連點『確認』、API 重放同一請求、並送 3 個相同請求（逐請求時間記錄、至少 3 個有效輪），每次只增加一次、7.4 操作紀錄只多一筆
+description: 追加預算重複送出：連點『確認』、API 重放同一請求、並送 3 個相同請求（逐請求時間記錄、至少 3 個有效輪），每次只增加一次、7.4 操作紀錄只多一筆
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-016
+acceptance_criteria_ids:
+- AC-REDPACKET-0168
+- AC-REDPACKET-0162
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+- 【逐請求時間記錄與有效重疊判定】腳本須對每一個並行請求記錄：請求識別與送出帳號、送出絕對時間 t_send（UTC+0，至毫秒）、收到回應的絕對時間 t_resp（UTC+0，至毫秒）與回應內容。該輪有效 ⇔ max(所有請求的 t_send)
+  < min(所有請求的 t_resp)（所有請求都在任一請求得到回應之前已送出）；不符者該輪作廢，不計入有效輪數，重做（重新佈置該輪）。有效輪數未達本案規定的下限時，不得判定通過（記為未完成）。人工口令同時按下只當補充觀察，不計入有效輪
+- 【環境前提，spec 未定義，需環境負責人確認】7.4 操作紀錄是實體機台正本規劃新增的頁面（手冊 v01 尚未定義），其選單路徑與可檢視的角色隨該頁定義、目前 spec 未載明；由環境負責人告知入口，並確認本案登入角色可檢視該頁
+- 【清空後依序佈置】建立活動『RP-TOPUP-DUP』：活動幣種 USDT、重置方式每日、活動時間『永久』、預設規則（門檻 1000／上限 5／固定 10／稽核 1）、總預算 5000；儲存後確認狀態為『進行中』
+- 備妥『追加預算』視窗的快速連點手段（例如快速連按滑鼠左鍵 3 次），並記下 7.4 操作紀錄目前的筆數 L0
+test_data:
+- name: 總預算
+  value: 5000 → 6000 → 7000
+- name: 重送次數
+  value: UI 連點 3 次；API 逐次重送 2 次；並送 3 個（至少 3 個有效輪）
+steps:
+- n: 1
+  action: 【UI 連點】於『活動排程 > 紅包活動』該活動列點『追加預算』，輸入新總預算 6000，快速連點『確認』3 次
+  expected: 活動總預算變為 6000（預算使用 x ／ 6000）；7.4 操作紀錄只新增 1 筆：操作人員為本次登入帳號、活動名稱『RP-TOPUP-DUP』、調整前 5000、調整後 6000，筆數＝L0＋1。視窗是否關閉、後
+    2 次點擊是被前端擋下或被後端拒絕及其提示，spec 未定義，只記錄
+- n: 2
+  action: 【API 重放】以 API 工具用同一個後台帳號，把步驟 1 的追加預算請求（新總預算 6000）逐次重送 2 次
+  expected: 兩次皆被後端拒絕（6000 不大於目前總預算 6000），總預算維持 6000；7.4 操作紀錄筆數仍為 L0＋1，沒有新增調整前 6000、調整後 6000 的紀錄
+- n: 3
+  action: 【並送，至少 3 個有效輪】每輪起點總預算為 B（第 1 輪 B＝6000，之後為上一輪結果）；以腳本同時送出 3 個相同的追加預算 API 請求（新總預算 B＋1000，同一帳號），並依『逐請求時間記錄』記下 3 個請求的
+    t_send、t_resp 與回應
+  expected: 每輪依 max(t_send) < min(t_resp) 判定是否有效，無效者作廢重做。有效輪：恰有 1 個請求成功、其餘被拒絕；總預算變為 B＋1000；7.4 操作紀錄本輪只新增 1 筆：調整前 B、調整後 B＋1000（不得出現重複的
+    B→B＋1000，也不得出現調整後不是 B＋1000 的值）
+- n: 4
+  action: 回到『活動排程 > 紅包活動』與紅包明細頂部檢視該活動總預算
+  expected: 總預算＝6000＋1000×有效輪數，活動狀態仍『進行中』；7.4 操作紀錄筆數＝L0＋1＋有效輪數
+- n: 5
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 追加預算被重複送出（連點、重放、並送；並送僅計有效輪）時：只有讓總預算變大的第一個請求成功並寫入一筆 7.4 操作紀錄，其餘新預算不大於目前總預算的請求被後端拒絕、資料不變、不寫入紀錄；總預算只增加一次。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §活動排程（第 246 行）
+  quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+decision_refs:
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 246 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q04
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 247 行）
+- requirement_id: REQ-REDPACKET-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §活動排程（第 245 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 246 行）
+  quote: 後端同樣檢查，新預算不大於目前總預算時拒絕、資料不變
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 247 行）
+  quote: 每次追加寫入 7.4 操作紀錄（操作人員、時間、活動名稱、調整前與調整後金額）；紅包明細不另顯示追加歷程。7.4 操作紀錄為實體機台正本規劃新增的頁面（手冊 v01 尚未定義），可檢視角色隨該頁定義
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 245 行）
+  quote: 只能調高、不能調低；未設總預算（不限）的活動不提供此操作
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+source_ref: RF-11 (1)；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-272
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+created_at: '2026-10-12T18:06:36Z'
+updated_at: '2026-10-12T18:16:54Z'
+history:
+- at: '2026-10-12T18:06:36Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:08:15Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:16:54Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0209
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:16:54Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0209
