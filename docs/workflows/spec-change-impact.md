@@ -16,7 +16,7 @@ flowchart TD
     subgraph T2["Task 2 · Test Designer (mode=change)"]
         TD[輸入: ChangeImpactReport + 舊版 TC + 新 RequirementModel<br/>產 TestCaseDraft（新版本 supersedes 舊版）+ TestDesignReport]
     end
-    T2 --> G2{G-DESIGN} -->|FAIL| T2
+    T2 --> G2{G-DESIGN<br/>含取代範圍：只能 supersede CIR affected} -->|FAIL| T2
     G2 -->|PASS| T3
     subgraph T3["Task 3 · Test Validator"]
         TV[驗證新版 Draft 對 to_version]
@@ -28,7 +28,10 @@ flowchart TD
     subgraph T4["Task 4 · Change Impact Analyst (phase: compare)"]
         CMP[輸入: 舊 ACTIVE 版本 + 新 VALIDATED 版本<br/>產 VersionComparisonReport: unchanged/changed/added/removed + impacted requirement]
     end
-    T4 --> G4{G-COMPARE} -->|FAIL| T4
+    T4 --> G4{G-COMPARE} -->|FAIL：報告問題| T4
+    G4 -->|FAIL：只剩 Draft 超出 CIR 範圍| HO2[[HUMAN_OVERRIDE<br/>override → T5 / reject → T2 / cancel]]
+    HO2 -->|reject| T2
+    HO2 -->|override| AR
     G4 -->|PASS| AR[ApprovalRequest APPLY_CHANGE<br/>「是否將此新版 Test Case 更新為正式 Registry 版本？」]
     AR --> H[[Human]]
     H -->|approve| C[Runtime: 新版 ACTIVE、舊版 SUPERSEDED、obsolete → RETIRED<br/>ChangeImpact APPLIED]

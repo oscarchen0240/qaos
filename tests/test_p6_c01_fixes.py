@@ -10,20 +10,23 @@ CASES = {
     "swapped":     "vcr = copy.deepcopy(new); a, b = vcr[0]['supersedes_testcase'], vcr[1]['supersedes_testcase']; vcr[0]['supersedes_testcase'], vcr[1]['supersedes_testcase'] = b, a",
     "old_version": "vcr = copy.deepcopy(new); vcr[0]['supersedes_testcase'] = dict(vcr[0]['supersedes_testcase'], version=vcr[0]['supersedes_testcase']['version'] + 1)",
 }
-EXTRA = {   # Designer 本輪多取代一張 CIR 判定 unaffected 的 TC（TC-AUTH-003），報告與 Draft 一致（P6-S01-01）
-    "extra_unaffected": "base, _ = H.draft_set(prefix='01BX5ZZKBKACTAV9WEVGEMMVR'); o = store.load(store.tc_version_path('TC-AUTH-003', 1)); "
+EXTRA = {   # Designer 本輪多取代一張 CIR 判定 unaffected 的 TC（TC-AUTH-003），報告與 Draft 一致（P6-S01-01）。
+            # 現在 G-DESIGN 就會擋下（tests/test_cia_supersede_scope.py）；這裡暫時停用 G-DESIGN，模擬修正前已通過 G-DESIGN 的 Draft，驗證 G-COMPARE 仍擋下
+    "extra_unaffected": "gates.GATES['G-DESIGN'] = lambda *a: []; "
+                        "base, _ = H.draft_set(prefix='01BX5ZZKBKACTAV9WEVGEMMVR'); o = store.load(store.tc_version_path('TC-AUTH-003', 1)); "
                         "x = copy.deepcopy(next(t for t in base if t['acceptance_criteria_ids'] == o['acceptance_criteria_ids'])); x['draft_id'] = x['draft_id'][:-1] + 'Z'; "
                         "x.update(source='change_workflow', supersedes_testcase={'testcase_id': 'TC-AUTH-003', 'version': 1}); extra = [x]",
 }
 CASES["extra_unaffected"] = "vcr = new"
-EXPECT = {"extra_unaffected": "沒有把它判定為 affected／obsolete", "missing": "應恰好比較一次", "foreign": "不屬於 G-TVAL 審過的本輪 Draft", "swapped": "比較卻對到", "old_version": "不是 CIR 的 active_version"}
+EXPECT = {"extra_unaffected": "CIR 把它判定為 unaffected", "missing": "應恰好比較一次", "foreign": "不屬於 G-TVAL 審過的本輪 Draft", "swapped": "比較卻對到", "old_version": "不是 CIR 的 active_version"}
 
 @pytest.mark.parametrize("case", list(CASES))
 def test_c01_01_g_compare_checks_coverage_and_draft_identity(case):
     """P6-C01-01：同版本 CIA，T1 正確判定 TC-AUTH-001、002 affected，T2 重產兩份新版，T3 審本輪 Draft 並 PASS；
     T4 的比較報告漏列一張、引用不屬於本輪 Draft 的 draft_id、對錯取代關係、old_version 不是 CIR 的 active_version，
     或 Designer 多取代一張 CIR 判定 unaffected 的 TC（報告與 Draft 一致；P6-S01-01）→ G-COMPARE Structural FAIL，
-    不建立 APPLY_CHANGE、TC 版本不變；完整且正確的報告 → PASS 並建立 APPLY_CHANGE。（compare helper 依 supersedes_testcase 組報告，錯誤只改報告內容。）"""
+    不建立 APPLY_CHANGE、TC 版本不變；完整且正確的報告 → PASS 並建立 APPLY_CHANGE。（compare helper 依 supersedes_testcase 組報告，錯誤只改報告內容。）
+    報告錯誤 T4 重交即可修正，維持 READY；多取代 unaffected 是 Draft 的問題，T4 停在 GATE_FAILED 並建立 HUMAN_OVERRIDE（出路見 test_cia_supersede_scope.py）。"""
     root = U.mkroot(); U.import_auth_spec(root)
     U.py(root, "from tests import p3_flow as F\nF.full()")
     U.q(root, "spec", "reference", "declare-empty", "SPEC-AUTH-001@1.0", "--reason", "P6-C01-01", "--by", "oscar", check=True)
@@ -47,4 +50,5 @@ print(json.dumps({{"affected": sorted(i["testcase_id"] for i in cir["testcase_im
     else:
         assert out["g4"]["result"] == "FAIL" and out["g4"]["layer"] == "structural", out["g4"]
         assert any(EXPECT[case] in i for i in out["g4"]["issues"]), out["g4"]["issues"]
-        assert out["t4"] == "READY" and out["apr"] is None and out["same"]
+        if case == "extra_unaffected": assert out["t4"] == "GATE_FAILED" and out["apr"] == "HUMAN_OVERRIDE" and out["same"]
+        else: assert out["t4"] == "READY" and out["apr"] is None and out["same"]

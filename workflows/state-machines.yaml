@@ -14,6 +14,7 @@ machines:
       - {from: VALIDATED,         to: PENDING_APPROVAL,  by: [system], requires: "ApprovalRequest(ACTIVATE_TESTCASE|APPLY_CHANGE)"}
       - {from: PENDING_APPROVAL,  to: APPROVED,          by: [human],  requires: "ApprovalDecision(approve|override)"}
       - {from: PENDING_APPROVAL,  to: DRAFT,             by: [human],  requires: "ApprovalDecision(reject)"}
+      - {from: VALIDATED,         to: DRAFT,             by: [human],  requires: "ApprovalDecision(HUMAN_OVERRIDE reject：G-COMPARE 退回 Test Designer)"}
       - {from: APPROVED,          to: ACTIVE,            by: [system], requires: "COMMIT_TO_REGISTRY"}
       - {from: ACTIVE,            to: SUPERSEDED,        by: [system], requires: "newer version ACTIVE"}
       - {from: ACTIVE,            to: RETIRED,           by: [human],  requires: "ApprovalDecision(RETIRE_TESTCASE|APPLY_CHANGE)"}
@@ -51,6 +52,7 @@ machines:
       - {from: COMPARING,            to: PENDING_APPROVAL,     by: [system]}
       - {from: PENDING_APPROVAL,     to: APPLIED,              by: [human]}
       - {from: PENDING_APPROVAL,     to: TEST_UPDATE_REQUIRED, by: [human]}
+      - {from: COMPARING,            to: TEST_UPDATE_REQUIRED, by: [human], requires: "ApprovalDecision(HUMAN_OVERRIDE reject：G-COMPARE 退回 Test Designer)"}
   workflow_run:
     initial: CREATED
     terminal: [COMPLETED, FAILED, CANCELLED]

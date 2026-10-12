@@ -12,7 +12,7 @@
 | `CHANGE_BUG_SEVERITY` | Human 或 Validator 建議與 Draft 不同 | 重大 severity / priority 變更 | 更新 + history |
 | `UPDATE_SUITE_MEMBERSHIP` | RegressionProposal 通過 G-REG | 加入 / 移出 Full / CI / Hotfix / Smoke suite | UPDATE_SUITE_MEMBERSHIP（新 suite version） |
 | `RESOLVE_AMBIGUITY` | Spec Analyst 標記 critical ambiguity | 接受哪個解讀作為正式需求（或退回 SPEC 作者）。Runtime 同時為每個 ambiguity 開一張 **Clarification（問 PM 的單）**；**PM 未回答（Clarification 非 ANSWERED）前 Runtime 拒絕 approve** | Clarification → APPLIED；T1 重開讓 Spec Analyst 帶答案重產；Requirement → ACTIVE 並記錄 `resolved_by_approval` |
-| `HUMAN_OVERRIDE` | Validation 迭代超過上限 / Gate FAIL 但 Human 認為可接受 | 強制通過（必填 rationale） | 依 context 執行對應 commit，audit 標記 override |
+| `HUMAN_OVERRIDE` | Validation 迭代超過上限 / Gate FAIL 但 Human 認為可接受（含 spec-change-impact 的 G-COMPARE 只剩 Draft 超出 CIR 範圍，見 `04-quality-gates.md`） | 強制通過（必填 rationale）／再給一次迭代／取消 | 依 context 執行對應 commit，audit 標記 override |
 | `NEEDS_DECISION` | Supervisor 無法判斷 task_type / 架構級未決事項 | 選擇 Option | 記錄於 `docs/decisions/` |
 
 **Agent 動詞**：propose / draft / analyze / validate / compare / recommend。**Human 動詞**：approve / reject / override。
