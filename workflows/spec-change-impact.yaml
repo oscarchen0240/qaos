@@ -45,6 +45,7 @@ tasks:
     outputs: [TestDesignReport, TestCaseDraft]
     gate: G-DESIGN
     constraint: "只處理 impact ∈ {affected, new_required}；unaffected 不得重產；obsolete 只列入 retire 建議"
+    enforced_by: "G-DESIGN（gates.supersede_scope_issues）：supersedes_testcase 只能指向 CIR 判定 affected 的 TC，版本等於 CIR 的 active_version，一張 TC 只能被一筆 Draft 取代"
   - id: T3
     agent: agent-test-validator
     inputs: [SpecVersion(to), RequirementModel(to), TestCaseDraft]
@@ -60,6 +61,9 @@ tasks:
     inputs: ["TestCaseVersion(old ACTIVE)", "TestCaseVersion(new VALIDATED)", ChangeImpactReport]
     outputs: [VersionComparisonReport]
     gate: G-COMPARE
+    on_result:
+      FAIL_report: "比較報告本身的問題 → T4 READY 重交（只寫診斷）"
+      FAIL_draft_scope: "只剩 Draft 超出 CIR 範圍（T4 重交也修不好）→ HUMAN_OVERRIDE（reopen_task=T2）：override → 視為通過、goto T5；reject → change_impact COMPARING → TEST_UPDATE_REQUIRED、本輪 VALIDATED 版本 → DRAFT、goto T2（iteration+1）；cancel → run CANCELLED"
   - id: T5
     type: approval
     approval_type: APPLY_CHANGE

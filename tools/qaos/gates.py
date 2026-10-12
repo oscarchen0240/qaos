@@ -204,6 +204,10 @@ def g_design(run, task, arts) -> list[str]:
         h = hashlib.sha1((tc["title"].strip() + "|" + "|".join(s["action"].strip() for s in tc["steps"])).encode()).hexdigest()
         if h in seen: issues.append(f"{did} 與 {seen[h]} 重複（title+steps）")
         seen[h] = did
+    if p["mode"] == "change" and task is not None:                          # task 為 None：函式層直接呼叫，沒有 run 的輪次可核對
+        cir = _run_output(run, task, "ChangeImpactReport")
+        if cir is not None: issues += supersede_scope_issues(cir["payload"], p["testcases"])
+        elif run["workflow_id"] == "spec-change-impact": issues.append("本 run 沒有本輪有效的 ChangeImpactReport，無法核對 supersedes_testcase 的範圍")
     if rep["testcase_draft_artifact_id"] != tcd["artifact_id"]: issues.append("TestDesignReport 指向的 draft artifact 不是本次提交的")
     covered = {row["requirement_id"] for row in rep["coverage_matrix"] if row["draft_ids"]}
     uncovered = {u["requirement_id"]: u["reason"] for u in rep["uncovered_with_reason"]}
@@ -509,24 +513,51 @@ def _run_output(run, before_task, art_type):
             if a and a["artifact_type"] == art_type and a["status"] == "VALID": found = a
     return found
 
-def _compare_coverage_issues(run, task, p) -> list[str]:
+def supersede_scope_issues(cir_payload, testcases) -> list[str]:
+    """change 模式的取代範圍（workflows/spec-change-impact.yaml T2 constraint）：Draft 以 supersedes_testcase 取代的 TC 必須是本 run CIR 判定 affected 的 TC，
+    取代的版本等於 CIR 的 active_version，且一張 TC 只能被一筆 Draft 取代——unaffected 不得重產，obsolete 只列入 retire 建議、不得重產。
+    只看 CIR 與 Draft，與比較報告無關：G-DESIGN 以它擋下 Draft；G-COMPARE 以它區分「T4 重交報告也修不好」的問題（engine._escalate_compare）。"""
+    return [m for _, m in _supersede_scope_pairs(cir_payload, testcases)]
+
+def _supersede_scope_pairs(cir_payload, testcases) -> list[tuple[str, str]]:
+    """supersede_scope_issues 的 (被取代的 testcase_id, 訊息)；G-COMPARE 以 testcase_id 判定哪些比較列不再要求（不比對訊息字串）。"""
+    impact = {t["testcase_id"]: t for t in cir_payload["testcase_impact"]}
+    out, by = [], {}
+    for tc in testcases:
+        sup = tc.get("supersedes_testcase")
+        if not sup: continue
+        did, tid = tc["draft_id"], sup["testcase_id"]; by.setdefault(tid, []).append(did)
+        t = impact.get(tid)
+        if t is None: out.append((tid, f"{did} 取代 {tid}，但它不在本 run CIR 的 testcase_impact（只能取代 CIR 判定 affected 的 TC）"))
+        elif t["impact"] == "obsolete": out.append((tid, f"{did} 取代 {tid}，但 CIR 把它判定為 obsolete（obsolete 只列入 retire 建議，不得重產）"))
+        elif t["impact"] != "affected": out.append((tid, f"{did} 取代 {tid}，但 CIR 把它判定為 {t['impact']}（unaffected 不得重產；只能取代 affected 的 TC）"))
+        elif sup["version"] != t["active_version"]:
+            out.append((tid, f"{did} 取代 {tid} v{sup['version']}，但 CIR 判定的是 v{t['active_version']}（supersedes_testcase.version 必須等於 CIR 的 active_version）"))
+    for tid, dids in sorted(by.items()):
+        if len(dids) > 1: out.append((tid, f"{tid} 被 {len(dids)} 筆 Draft 取代（{', '.join(dids)}）；一張 TC 只能有一個新版本"))
+    return out
+
+def _compare_coverage_issues(run, task, p) -> tuple[list[str], list[str]]:
     """比較報告的對象與集合（docs/architecture/04-quality-gates.md G-COMPARE；P6-C01-01）：以本 run 本輪有效的 CIR 與 G-TVAL 審過的 Draft 機械核對——
     CIR 中 affected／obsolete 的 TC 各恰好比較一次且 old_version 等於 active_version；new_draft_id 必須屬於 G-TVAL 審過的 Draft，且該 Draft 的每張 TC 恰好比較一次；
-    有 supersedes_testcase 的 TC 必須取代 CIR 判定 affected／obsolete 的 TC、對到它取代的 TC 與版本，沒有的必須是 added。只核對身分與集合，不判斷 diff 的語意。"""
+    有 supersedes_testcase 的 TC 必須對到它取代的 TC 與版本，沒有的必須是 added。只核對身分與集合，不判斷 diff 的語意。
+    回傳 (報告的問題, Draft 超出 CIR 範圍的問題)：後者由 supersede_scope_issues 判定（與 G-DESIGN 同一套規則），不論報告怎麼寫都會存在。"""
     cir, rep = _run_output(run, task, "ChangeImpactReport"), _run_output(run, task, "TestValidationReport")
-    if cir is None: return ["本 run 沒有本輪有效的 ChangeImpactReport，無法核對比較範圍"]
-    if rep is None: return ["本 run 沒有本輪有效的 TestValidationReport，無法核對比較的 Draft"]
+    if cir is None: return ["本 run 沒有本輪有效的 ChangeImpactReport，無法核對比較範圍"], []
+    if rep is None: return ["本 run 沒有本輪有效的 TestValidationReport，無法核對比較的 Draft"], []
     issues = []; cp = cir["payload"]
     if p["change_impact_id"] != cp["change_impact_id"]: issues.append(f"change_impact_id {p['change_impact_id']} 不是本 run 的 {cp['change_impact_id']}")
     draft_path = store.find_artifact(rep["payload"]["testcase_draft_artifact_id"])
-    if not draft_path: return issues + [f"G-TVAL 審過的 Draft {rep['payload']['testcase_draft_artifact_id']} 不存在，無法核對比較的 Draft"]
+    if not draft_path: return issues + [f"G-TVAL 審過的 Draft {rep['payload']['testcase_draft_artifact_id']} 不存在，無法核對比較的 Draft"], []
     drafts = {tc["draft_id"]: tc for tc in store.load(draft_path)["payload"]["testcases"]}
+    pairs = _supersede_scope_pairs(cp, drafts.values()); bad = {t for t, _ in pairs}   # 超出範圍的取代：對應的比較列無論怎麼寫都不一致，不再另報
     impacted = {t["testcase_id"]: t["active_version"] for t in cp["testcase_impact"] if t["impact"] in ("affected", "obsolete")}
     by_tc, by_draft = {}, {}
     for c in p["comparisons"]:
         if c["testcase_id"] is not None: by_tc.setdefault(c["testcase_id"], []).append(c)
         if c["new_draft_id"] is not None: by_draft.setdefault(c["new_draft_id"], []).append(c)
     for tc_id, ver in sorted(impacted.items()):
+        if tc_id in bad: continue
         cs = by_tc.get(tc_id) or []
         if len(cs) != 1: issues.append(f"{tc_id}（CIR 判定 affected／obsolete）應恰好比較一次，實際 {len(cs)} 次"); continue
         if cs[0]["old_version"] != ver: issues.append(f"{tc_id} 的 old_version {cs[0]['old_version']} 不是 CIR 的 active_version {ver}")
@@ -536,18 +567,18 @@ def _compare_coverage_issues(run, task, p) -> list[str]:
         cs = by_draft.get(d) or []
         if len(cs) != 1: issues.append(f"本輪 Draft 的 {d} 應恰好比較一次，實際 {len(cs)} 次"); continue
         sup = tc.get("supersedes_testcase"); c = cs[0]
-        if sup and sup["testcase_id"] not in impacted: issues.append(f"{d} 取代 {sup['testcase_id']}，但 CIR 沒有把它判定為 affected／obsolete（unaffected 不得重產）")
-        if sup and (c["testcase_id"], c["old_version"]) != (sup["testcase_id"], sup["version"]):
+        if sup and sup["testcase_id"] not in bad and (c["testcase_id"], c["old_version"]) != (sup["testcase_id"], sup["version"]):
             issues.append(f"{d} 取代 {sup['testcase_id']} v{sup['version']}，比較卻對到 {c['testcase_id']} v{c['old_version']}")
         if not sup and c["verdict"] != "added": issues.append(f"{d} 是新 TC，verdict 應為 added（實際 {c['verdict']}）")
     for tc_id in sorted(set(by_tc) - set(impacted)):
         if not any((tc.get("supersedes_testcase") or {}).get("testcase_id") == tc_id for tc in drafts.values()):
             issues.append(f"{tc_id} 不在 CIR 的 affected／obsolete，也沒有本輪 Draft 取代它")
-    return issues
+    return issues, [m for _, m in pairs]
 
-def g_compare(run, task, arts) -> list[str]:
+def compare_issue_split(run, task, arts) -> tuple[list[str], list[str]]:
+    """G-COMPARE 的問題分兩類：(比較報告本身的問題——T4 重交報告即可修正, Draft 超出 CIR 範圍的問題——只能退回 T2 或由 Human 裁決)。"""
     vcr = arts.get("VersionComparisonReport")
-    if not vcr: return ["缺 VersionComparisonReport"]
+    if not vcr: return ["缺 VersionComparisonReport"], []
     p = _payload(vcr); issues = []
     for c in p["comparisons"]:
         if c["verdict"] in ("changed", "unchanged", "removed") and (c["testcase_id"] is None or c["old_version"] is None):
@@ -555,8 +586,13 @@ def g_compare(run, task, arts) -> list[str]:
         if c["verdict"] in ("changed", "unchanged", "added") and c["new_draft_id"] is None:
             issues.append(f"verdict {c['verdict']} 需要 new_draft_id")
         if c["verdict"] == "changed" and not c["field_diffs"]: issues.append(f"{c['testcase_id']} changed 但無 field_diffs")
-    if task is not None: issues += _compare_coverage_issues(run, task, p)        # task 為 None：函式層直接呼叫，沒有 run 的輪次可核對
-    return issues
+    if task is None: return issues, []                                          # task 為 None：函式層直接呼叫，沒有 run 的輪次可核對
+    more, scope = _compare_coverage_issues(run, task, p)
+    return issues + more, scope
+
+def g_compare(run, task, arts) -> list[str]:
+    report, scope = compare_issue_split(run, task, arts)
+    return report + scope
 
 def g_reg(run, task, arts) -> list[str]:
     rp = arts.get("RegressionProposal")

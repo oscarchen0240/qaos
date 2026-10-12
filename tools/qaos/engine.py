@@ -382,13 +382,17 @@ def evaluate_gate(run_id: str, task_id: str) -> dict:
     expected = wt.get("outputs") or []
     missing = [o for o in expected if o not in arts]
     if missing: raise EngineError(f"尚缺 VALID artifact：{missing}")
-    gate = task.get("gate")
-    issues = gates.GATES[gate](run, task, arts) if gate else []
+    gate = task.get("gate"); out_of_scope = []
+    if gate == "G-COMPARE":                                                 # 報告本身的問題 T4 重交即可修正；Draft 超出 CIR 範圍的問題 T4 修不好
+        report_issues, out_of_scope = gates.compare_issue_split(run, task, arts); issues = report_issues + out_of_scope
+    else: issues = gates.GATES[gate](run, task, arts) if gate else []
     notes = gates.advisories(gate, run, task, arts) if gate and not issues else []
     if notes:   # 不擋流程的提示（D3）：放在 structural 結果之前，讓最後一筆仍是本次 gate 的判定
         task.setdefault("gate_results", []).append({"at": store.now(), "layer": "advisory", "result": "WARN", "details": notes[:20]})
         store.audit(run_id, SYSTEM, "GATE_ADVISORY", f"{gate}: " + "; ".join(notes)[:300])
     task.setdefault("gate_results", []).append({"at": store.now(), "layer": "structural", "result": "FAIL" if issues else "PASS", "details": issues[:20] or [f"{gate} structural PASS"]})
+    if out_of_scope and issues == out_of_scope:                             # 報告本身已無問題，只剩 Draft 超出 CIR 範圍 → 交 Human 裁決（不是只寫診斷的重試）
+        return _escalate_compare(run, task, arts, issues)
     if issues:
         store.mark_diagnostic()   # 驗證失敗：只寫允許的診斷，不建立計畫
         state.apply("task", task, "GATE_FAILED", SYSTEM, f"{gate} structural"); state.apply("task", task, "READY", SYSTEM, "revise")
@@ -496,6 +500,40 @@ def _route_back(run, task, wf, report):
     gen.setdefault("history", None); gen.pop("history", None)
     run["current_task_id"] = gen["task_id"]; _save_run(run)
     store.audit(run["run_id"], SYSTEM, "ROUTE_BACK", f"{task['task_id']} → {gen['task_id']} iteration {gen['iteration']}")
+
+def _escalate_compare(run, task, arts, issues):
+    """G-COMPARE 只剩 Draft 超出 CIR 範圍的問題（gates.supersede_scope_issues）：T4 重交比較報告也修不好，維持 READY 重試會讓 run 卡死。
+    比照 _route_back 超限時的 HUMAN_OVERRIDE（docs/architecture/04-quality-gates.md「G-COMPARE 失敗的出路」）：
+    override → 視為 G-COMPARE 通過、進入 APPLY_CHANGE；reject → 退回 Test Designer 再給一次迭代；cancel → 取消 run。
+    T4 停在 GATE_FAILED 等 Human 決定（run 為 WAITING_HUMAN，不接受提交與重評）。"""
+    state.apply("task", task, "GATE_FAILED", SYSTEM, "G-COMPARE structural（Draft 超出 CIR 範圍）")
+    ids_ = [t["task_id"] for t in run["tasks"]]
+    gen = next(t for t in reversed(run["tasks"][:ids_.index(task["task_id"])]) if t.get("agent_id") == "agent-test-designer")
+    draft = gates._run_output(run, task, "TestValidationReport")["payload"]["testcase_draft_artifact_id"]
+    store.audit(run["run_id"], SYSTEM, "GATE_FAIL", "G-COMPARE structural（Draft 超出 CIR 範圍）: " + "; ".join(issues)[:300])
+    apr = _create_approval(run, task, "HUMAN_OVERRIDE", f"G-COMPARE：本輪 Draft 超出 CIR 的範圍，{task['task_id']} 重交比較報告也無法修正（{len(issues)} 項）。"
+                           f"override 視為通過、進入 APPLY_CHANGE；reject 退回 {gen['task_id']} 重新設計；cancel 取消 run。問題：" + "；".join(issues[:5]) + (f"……等 {len(issues)} 項（全部見 {task['task_id']} 的 gate_results）" if len(issues) > 5 else ""),
+                           [], [arts["VersionComparisonReport"]["artifact_id"], draft],
+                           options=[{"key": "override", "label": "強制通過（需 rationale），進入 APPLY_CHANGE"}, {"key": "reject", "label": f"退回 {gen['task_id']} 再給一次迭代"}, {"key": "cancel", "label": "取消 run"}],
+                           reopen_task=gen["task_id"])
+    return {"gate": "G-COMPARE", "layer": "structural", "result": "FAIL", "issues": issues, "approval_id": apr["approval_id"]}
+
+def _reject_compare_round(run, task, apr, by):
+    """G-COMPARE 的 HUMAN_OVERRIDE 選 reject：退回 Designer 前，撤下本輪 G-TVAL 登記的 VALIDATED 版本（比照 APPLY_CHANGE reject 把版本改回 DRAFT），
+    ChangeImpact 從 COMPARING 回到 TEST_UPDATE_REQUIRED，T4 重設為 PENDING。"""
+    for t in run["tasks"]:
+        if t.get("gate") != "G-TVAL": continue
+        for it in t.get("input_entity_refs") or []:
+            path = store.tc_version_path(it["id"], it["version"]); v = store.load(path); ptr = store.load(store.tc_pointer_path(it["id"]))
+            state.apply("testcase", v, "DRAFT", by, apr["approval_id"], run["run_id"], note="rejected（G-COMPARE 退回）"); store.save(path, v)
+            for pv in ptr["versions"]:
+                if pv["version"] == it["version"]: pv["status"] = "DRAFT"
+            store.save(store.tc_pointer_path(it["id"]), ptr)
+        t["input_entity_refs"] = []
+    ci_path = f"runs/{run['run_id']}/entities/change-impact.yaml"
+    if store.exists(ci_path):
+        ci = store.load(ci_path); state.apply("change_impact", ci, "TEST_UPDATE_REQUIRED", by, apr["approval_id"], run["run_id"]); store.save(ci_path, ci)
+    _reopen_downstream(task)
 
 def _refresh_clr_index():
     """本操作新開或改動了 CLR（G-SPEC 自動開單、納入答案）→ 在同一個操作中重建 clarifications/index.md，總表不落後於 CLR 檔。"""
@@ -929,15 +967,25 @@ def _apply_waivers(apr, by):
 
 def _after_override(run, task, apr, decision, by):
     reopen = (apr.get("diff_summary") or "").replace("reopen_task=", "") or None
+    compare = task.get("gate") == "G-COMPARE"                                  # _escalate_compare 建立的單（其餘來自 _route_back 的 Validator 迭代超限）
+    if decision == "override" and compare:                                       # 視為 G-COMPARE 通過：T4 完成，推進到 APPLY_CHANGE
+        for to in ("READY", "RUNNING", "DONE"): state.apply("task", task, to, SYSTEM, f"G-COMPARE override（{apr['approval_id']}）")
+        task["ended_at"] = store.now(); _advance(run, task["task_id"]); return
     if decision == "override":
         # 視為 Validator PASS：以最後一份 validator 報告的 draft 進行 materialize / bug VALIDATED
         vt = _task(run, task["task_id"]); arts = _valid_outputs(vt)
         if "TestValidationReport" in arts:
+            ci_path = f"runs/{run['run_id']}/entities/change-impact.yaml"
+            if store.exists(ci_path):                                            # spec-change-impact：比照 G-TVAL PASS，ChangeImpact 進入 COMPARING（否則 T5 無法轉 PENDING_APPROVAL）
+                ci = store.load(ci_path)
+                if ci["status"] == "TEST_UPDATE_REQUIRED":
+                    state.apply("change_impact", ci, "VALIDATING", SYSTEM, apr["approval_id"], run["run_id"]); state.apply("change_impact", ci, "COMPARING", SYSTEM, f"override（{apr['approval_id']}）", run["run_id"]); store.save(ci_path, ci)
             _materialize_testcases(run, vt, arts["TestValidationReport"])
         elif "BugValidationReport" in arts:   # _route_back 已把 bug 退回 DRAFT；由 _bug_entity_transition 走 DRAFT → VALIDATING → VALIDATED（與 TC override 相同，validated_by／report 取最後一份報告）
             _bug_entity_transition(run, "VALIDATED", apr["approval_id"], by=SYSTEM, validator=vt["agent_id"], report_id=arts["BugValidationReport"]["artifact_id"])
         vt["status"] = "DONE"; _advance(run, vt["task_id"]); return
     if decision == "reject" and reopen:
+        if compare: _reject_compare_round(run, task, apr, by)
         t = _task(run, reopen); t["iteration"] += 1; t["status"] = "READY"; t["output_artifact_ids"] = []; run["current_task_id"] = reopen   # 「再給一次迭代」：新的 iteration、新的派發包
         ids_ = [x["task_id"] for x in run["tasks"]]
         for later in run["tasks"][ids_.index(reopen) + 1:]:   # 下游已 DONE 的 task 重設，讓 Validator 可再跑
