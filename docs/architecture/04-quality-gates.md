@@ -57,7 +57,7 @@
 G-COMPARE 的問題分兩類（`gates.compare_issue_split`）：
 
 1. **比較報告本身的問題**（漏列、對錯取代關係、`old_version` 不符、`new_draft_id` 不屬於本輪 Draft、新 TC 不是 `added`、取代舊版的列不是 `changed`／`unchanged`、`removed` 帶新稿、`added` 帶舊 TC、`summary` 與逐列 verdict 統計不符、`retire_recommendations` 不是 CIR obsolete 或是本輪 Draft 取代的 TC……）：Change Impact Analyst 重交報告即可修正 → 維持現行行為，只寫診斷、T4 READY。
-2. **Draft 超出 CIR 範圍**（上表四條）：不論報告怎麼寫都會存在，READY 重試只會卡死。範圍以 Draft 的完整清單判定（不經 draft_id 索引）；draft_id 重複時比較列無從核對，直接視為 Draft 的問題。被超出範圍取代的 TC，報告仍必須照 Draft 寫——比較列恰好是取代它的各筆 Draft、對到 `supersedes_testcase` 的 TC 與版本；只豁免「`old_version` 等於 CIR 的 `active_version`」（版本不符時兩者互相矛盾）。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
+2. **Draft 超出 CIR 範圍**（上表四條）：不論報告怎麼寫都會存在，READY 重試只會卡死。範圍以 Draft 的完整清單判定（不經 draft_id 索引）。draft_id 重複是 Draft 的問題，但報告仍須照 Draft 逐筆寫：同一 draft_id 的比較列以 (testcase_id, old_version) 的多重集合對到那幾筆稿；foreign ID、CIR coverage、retire 建議等檢查照常進行。被超出範圍取代的 TC，報告仍必須照 Draft 寫——比較列恰好是取代它的各筆 Draft、對到 `supersedes_testcase` 的 TC 與版本；只豁免「`old_version` 等於 CIR 的 `active_version`」（版本不符時兩者互相矛盾）。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
 
 | 選項 | 決定 | Runtime 動作 |
 |---|---|---|

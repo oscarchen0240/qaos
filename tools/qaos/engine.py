@@ -512,7 +512,7 @@ def _escalate_compare(run, task, arts, issues):
     draft = gates._run_output(run, task, "TestValidationReport")["payload"]["testcase_draft_artifact_id"]
     store.audit(run["run_id"], SYSTEM, "GATE_FAIL", "G-COMPARE structural（Draft 超出 CIR 範圍）: " + "; ".join(issues)[:300])
     apr = _create_approval(run, task, "HUMAN_OVERRIDE", f"G-COMPARE：本輪 Draft 超出 CIR 的範圍，{task['task_id']} 重交比較報告也無法修正（{len(issues)} 項）。"
-                           f"override 視為通過、進入 APPLY_CHANGE；reject 退回 {gen['task_id']} 重新設計；cancel 取消 run。問題：" + "；".join(issues[:5]) + (f"……等 {len(issues)} 項（全部見 {task['task_id']} 的 gate_results）" if len(issues) > 5 else ""),
+                           f"override 視為通過、進入 APPLY_CHANGE；reject 退回 {gen['task_id']} 重新設計；cancel 取消 run。問題：" + "；".join(issues[:5]) + (f"……等 {len(issues)} 項（{task['task_id']} 的 gate_results 保留前 20 項；完整問題可由本單引用的 Draft 與比較報告重新核對）" if len(issues) > 5 else ""),
                            [], [arts["VersionComparisonReport"]["artifact_id"], draft],
                            options=[{"key": "override", "label": "強制通過（需 rationale），進入 APPLY_CHANGE"}, {"key": "reject", "label": f"退回 {gen['task_id']} 再給一次迭代"}, {"key": "cancel", "label": "取消 run"}],
                            reopen_task=gen["task_id"])

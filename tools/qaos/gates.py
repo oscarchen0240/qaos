@@ -550,7 +550,8 @@ def _compare_coverage_issues(run, task, p) -> tuple[list[str], list[str]]:
     """比較報告的對象與集合（docs/architecture/04-quality-gates.md G-COMPARE；P6-C01-01）：以本 run 本輪有效的 CIR 與 G-TVAL 審過的 Draft 機械核對——
     CIR 中 affected／obsolete 的 TC 各恰好比較一次且 old_version 等於 active_version；new_draft_id 必須屬於 G-TVAL 審過的 Draft，且該 Draft 的每張 TC 恰好比較一次；
     有 supersedes_testcase 的 TC 必須對到它取代的 TC 與版本，沒有的必須是 added。只核對身分與集合，不判斷 diff 的語意。
-    回傳 (報告的問題, Draft 超出 CIR 範圍的問題)：後者由 supersede_scope_issues 判定（與 G-DESIGN 同一套規則），不論報告怎麼寫都會存在。"""
+    回傳 (報告的問題, Draft 超出 CIR 範圍的問題)：後者由 duplicate_draft_id_issues 與 supersede_scope_issues 判定（與 G-DESIGN 同一套規則），不論報告怎麼寫都會存在；
+    Draft 有問題時其餘報告檢查照常進行（只豁免與 Draft 問題互相矛盾的 old_version 一項），報告問題修完才會升級。"""
     cir, rep = _run_output(run, task, "ChangeImpactReport"), _run_output(run, task, "TestValidationReport")
     if cir is None: return ["本 run 沒有本輪有效的 ChangeImpactReport，無法核對比較範圍"], []
     if rep is None: return ["本 run 沒有本輪有效的 TestValidationReport，無法核對比較的 Draft"], []
@@ -560,12 +561,12 @@ def _compare_coverage_issues(run, task, p) -> tuple[list[str], list[str]]:
     if not draft_path: return issues + [f"G-TVAL 審過的 Draft {rep['payload']['testcase_draft_artifact_id']} 不存在，無法核對比較的 Draft"], []
     tcs = store.load(draft_path)["payload"]["testcases"]
     pairs = _supersede_scope_pairs(cp, tcs); bad = {t for t, _ in pairs}   # 超出範圍的取代（Draft 的問題）；以完整清單判定，不經 draft_id 索引
-    dup = duplicate_draft_id_issues(tcs)
-    if dup: return issues, dup + [m for _, m in pairs]                     # Draft 身分有歧義：比較列無從核對，只能退回 Designer 或由 Human 裁決
-    drafts = {tc["draft_id"]: tc for tc in tcs}
+    dup = duplicate_draft_id_issues(tcs)                                    # draft_id 重複是 Draft 的問題；報告仍須逐筆照 Draft 寫（同一 draft_id 的各筆以比較列的多重集合核對）
+    groups = {}                                                             # draft_id → 該 ID 的各筆稿（正常只有一筆）
+    for tc in tcs: groups.setdefault(tc["draft_id"], []).append(tc)
     sup_of = {}                                                             # testcase_id → 取代它的 draft_id
-    for d, tc in drafts.items():
-        if tc.get("supersedes_testcase"): sup_of.setdefault(tc["supersedes_testcase"]["testcase_id"], []).append(d)
+    for tc in tcs:
+        if tc.get("supersedes_testcase"): sup_of.setdefault(tc["supersedes_testcase"]["testcase_id"], []).append(tc["draft_id"])
     impacted = {t["testcase_id"]: t["active_version"] for t in cp["testcase_impact"] if t["impact"] in ("affected", "obsolete")}
     by_tc, by_draft = {}, {}
     for c in p["comparisons"]:
@@ -580,9 +581,19 @@ def _compare_coverage_issues(run, task, p) -> tuple[list[str], list[str]]:
         if len(cs) != 1: issues.append(f"{tc_id}（CIR 判定 affected／obsolete）應恰好比較一次，實際 {len(cs)} 次"); continue
         if cs[0]["old_version"] != ver: issues.append(f"{tc_id} 的 old_version {cs[0]['old_version']} 不是 CIR 的 active_version {ver}")
     for d in sorted(by_draft):
-        if d not in drafts: issues.append(f"new_draft_id {d} 不屬於 G-TVAL 審過的本輪 Draft {rep['payload']['testcase_draft_artifact_id']}")
-    for d, tc in sorted(drafts.items()):
+        if d not in groups: issues.append(f"new_draft_id {d} 不屬於 G-TVAL 審過的本輪 Draft {rep['payload']['testcase_draft_artifact_id']}")
+    for d, grp in sorted(groups.items()):
         cs = by_draft.get(d) or []
+        if len(grp) > 1:                                                    # 重複的 draft_id：比較列的 (testcase_id, old_version, 是否為取代) 必須恰好對到這些稿
+            key = lambda t: (str(t[0]), str(t[1]))
+            want = sorted([((tc.get("supersedes_testcase") or {}).get("testcase_id"), (tc.get("supersedes_testcase") or {}).get("version")) for tc in grp], key=key)
+            got = sorted([(c["testcase_id"], c["old_version"]) for c in cs], key=key)
+            if got != want: issues.append(f"draft_id {d}（Draft 中 {len(grp)} 筆）的比較列應恰好對到 {want}，實際 {got}")
+            for c in cs:
+                if c["testcase_id"] is not None and c["verdict"] not in ("changed", "unchanged"): issues.append(f"{d} 取代 {c['testcase_id']}，verdict 應為 changed 或 unchanged（實際 {c['verdict']}）")
+                if c["testcase_id"] is None and c["verdict"] != "added": issues.append(f"{d} 是新 TC，verdict 應為 added（實際 {c['verdict']}）")
+            continue
+        tc = grp[0]
         if len(cs) != 1: issues.append(f"本輪 Draft 的 {d} 應恰好比較一次，實際 {len(cs)} 次"); continue
         sup = tc.get("supersedes_testcase"); c = cs[0]
         if sup and (c["testcase_id"], c["old_version"]) != (sup["testcase_id"], sup["version"]):
@@ -590,13 +601,13 @@ def _compare_coverage_issues(run, task, p) -> tuple[list[str], list[str]]:
         if sup and c["verdict"] not in ("changed", "unchanged"): issues.append(f"{d} 取代 {sup['testcase_id']}，verdict 應為 changed 或 unchanged（實際 {c['verdict']}）")
         if not sup and c["verdict"] != "added": issues.append(f"{d} 是新 TC，verdict 應為 added（實際 {c['verdict']}）")
     for tc_id in sorted(set(by_tc) - set(impacted)):
-        if not any((tc.get("supersedes_testcase") or {}).get("testcase_id") == tc_id for tc in drafts.values()):
+        if tc_id not in sup_of:
             issues.append(f"{tc_id} 不在 CIR 的 affected／obsolete，也沒有本輪 Draft 取代它")
     obsolete = {t["testcase_id"] for t in cp["testcase_impact"] if t["impact"] == "obsolete"}
     for r in p.get("retire_recommendations") or []:                        # APPLY_CHANGE 核准後會依此退役：只能是 CIR obsolete、且沒有本輪新版的 TC
         if r["testcase_id"] not in obsolete: issues.append(f"retire_recommendations 的 {r['testcase_id']} 不是 CIR 判定 obsolete 的 TC")
         elif r["testcase_id"] in sup_of: issues.append(f"retire_recommendations 的 {r['testcase_id']} 被本輪 Draft {', '.join(sup_of[r['testcase_id']])} 取代，核准後會退役剛啟用的新版")
-    return issues, [m for _, m in pairs]
+    return issues, dup + [m for _, m in pairs]
 
 def compare_issue_split(run, task, arts) -> tuple[list[str], list[str]]:
     """G-COMPARE 的問題分兩類：(比較報告本身的問題——T4 重交報告即可修正, Draft 超出 CIR 範圍的問題——只能退回 T2 或由 Human 裁決)。"""

@@ -291,7 +291,8 @@ print(json.dumps({"g": g}, default=str))""")
 
 def test_g_compare_duplicate_draft_id_cannot_hide_out_of_scope_draft():
     """Codex 01 M1 反例：在途 Draft 中取代 unaffected TC-AUTH-003 的稿和合法稿共用 draft_id、排在前面，比較報告只列後一筆。
-    G-COMPARE 必須以完整清單判定範圍（不經 draft_id 索引）：不得 PASS／建立 APPLY_CHANGE，而是升級 HUMAN_OVERRIDE，Registry 不變。"""
+    G-COMPARE 必須以完整清單判定範圍（不經 draft_id 索引）：不得 PASS／建立 APPLY_CHANGE。報告漏列同一 draft_id 的另一筆仍是報告問題（Codex 02 M3），
+    T4 READY；報告照 Draft 逐筆寫後才升級（見 test_g_compare_duplicate_draft_id_with_correct_report_escalates_then_reject），Registry 不變。"""
     out = run_cia(_root(), """
 rid, rmid = start()
 cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
@@ -304,9 +305,10 @@ validate(rid, did, rmid)
 before = {t: v for t, v, _ in active()}
 _, g4 = compare(rid, cid, cir, new[1:])
 apr, a = waiting(rid)
-print(json.dumps({"g": g4, "type": a and a["type"], "same": before == {t: v for t, v, _ in active()}}, default=str))""")
-    assert out["g"]["result"] == "FAIL" and out["type"] == "HUMAN_OVERRIDE" and out["same"], out
-    assert any("必須唯一" in i for i in out["g"]["issues"]) and any("TC-AUTH-003" in i and "unaffected" in i for i in out["g"]["issues"])
+print(json.dumps({"g": g4, "type": a and a["type"], "t4": tasks(rid)["T4"], "same": before == {t: v for t, v, _ in active()}}, default=str))""")
+    issues = out["g"]["issues"]
+    assert out["g"]["result"] == "FAIL" and out["type"] is None and out["t4"][0] == "READY" and out["same"], out
+    assert any("必須唯一" in i for i in issues) and any("TC-AUTH-003" in i and "unaffected" in i for i in issues) and any("比較列應恰好對到" in i for i in issues), issues
 
 VERDICT_ERRORS = {   # 報告的 verdict／身分／summary 不一致 → 報告問題（T4 READY），範圍內與範圍外的列都一樣（Codex 01 M2）
     "removed_with_new": ("compare(rid, cid, cir, new, verdict='removed')", "verdict removed 不得帶 new_draft_id"),
@@ -334,3 +336,44 @@ did, new = legacy_design(rid, cid, cir, P1, {extra}); validate(rid, did, rmid)
 print(json.dumps({{"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[0]}}, default=str))""")
     assert out["g"]["result"] == "FAIL" and any(expect in i for i in out["g"]["issues"]), out["g"]
     assert out["t4"][0] == "READY" and out["apr"] is None
+
+DUP_SETUP = """
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+x = extra_sup('TC-AUTH-003')
+def mutate(new):
+    x2 = new.pop(); x2["draft_id"] = new[0]["draft_id"]; new.insert(0, x2)
+orig = gates.GATES["G-DESIGN"]; gates.GATES["G-DESIGN"] = lambda *a: []
+did, new, g2 = design_g(rid, cid, cir, P1, extra=[x], mutate=mutate); gates.GATES["G-DESIGN"] = orig
+validate(rid, did, rmid)
+before = {t: v for t, v, _ in active()}
+"""
+
+def test_g_compare_duplicate_draft_id_still_checks_report():
+    """Codex 02 M3：draft_id 重複（Draft 的問題）時，報告的其餘檢查照常進行。報告只列一筆、old_version 寫 99、new_draft_id 是 foreign、
+    建議退役 unaffected 的 TC-AUTH-005 → 報告問題，T4 READY、不建 HUMAN_OVERRIDE，Registry 不變（不會 override 後退役 unaffected TC）。"""
+    out = run_cia(_root(), DUP_SETUP + """
+rows = [{"testcase_id": d["supersedes_testcase"]["testcase_id"], "old_version": 99, "new_draft_id": d["draft_id"][:-1] + "Q", "verdict": "changed",
+         "field_diffs": [{"field": "expected_result", "old": "-", "new": d["expected_result"]}], "impacted_requirement_ids": d["requirement_ids"]} for d in new[1:]]
+vcr = {"change_impact_id": cir["change_impact_id"], "comparisons": rows, "retire_recommendations": [{"testcase_id": "TC-AUTH-005", "reason": "誤退役 unaffected"}],
+       "summary": {"unchanged": 0, "changed": len(rows), "added": 0, "removed": 0}}
+aid, p = H.write_artifact(rid, "T4", "agent-change-impact-analyst", "VersionComparisonReport", vcr, [{"entity_type": "Artifact", "id": cid}], {"type": "ChangeImpactReport", "ids": [cid]}, "change-impact")
+assert engine.submit(rid, "T4", str(p))[0]; g4 = engine.evaluate_gate(rid, "T4")
+print(json.dumps({"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[0], "same": before == {t: v for t, v, _ in active()}}, default=str))""")
+    issues = out["g"]["issues"]
+    assert out["g"]["result"] == "FAIL" and out["t4"][0] == "READY" and out["apr"] is None and out["same"], out
+    for expect in ("不屬於 G-TVAL 審過的本輪 Draft", "TC-AUTH-005 不是 CIR 判定 obsolete", "不是 CIR 的 active_version", "必須唯一"):
+        assert any(expect in i for i in issues), (expect, issues)
+
+def test_g_compare_duplicate_draft_id_with_correct_report_escalates_then_reject():
+    """draft_id 重複、報告照 Draft 逐筆寫（同一 draft_id 兩列，各對到所取代的 TC）→ 只剩 Draft 問題，升級 HUMAN_OVERRIDE；reject → 退回 T2，Registry 不變。"""
+    out = run_cia(_root(), DUP_SETUP + """
+_, g4 = compare(rid, cid, cir, new)
+apr, a = waiting(rid)
+engine.approve(apr, "reject", BY, rationale="draft_id 重複，退回重做", new_request=True)
+print(json.dumps({"g": g4, "type": a and a["type"], "cur": engine.load_run(rid)["current_task_id"], "t2": tasks(rid)["T2"],
+                  "same": before == {t: v for t, v, _ in active()}}, default=str))""")
+    issues = out["g"]["issues"]
+    assert out["g"]["result"] == "FAIL" and out["type"] == "HUMAN_OVERRIDE", out
+    assert all("必須唯一" in i or ("TC-AUTH-003" in i and "unaffected" in i) for i in issues), issues
+    assert out["cur"] == "T2" and out["t2"] == ["READY", 1] and out["same"]
