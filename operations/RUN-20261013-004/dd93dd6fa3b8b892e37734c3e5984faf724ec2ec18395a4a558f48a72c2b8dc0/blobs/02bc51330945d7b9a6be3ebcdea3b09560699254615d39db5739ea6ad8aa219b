@@ -1,0 +1,143 @@
+artifact_id: ART-TVR-01M4RHEMDY4ZGEFVX66H5ETZGE
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-004
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-12T17:10:08Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+- entity_type: Artifact
+  id: ART-TDR-01M4RHBRR3255BS51Y5GSNC4CY
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: b227b758f6180d978bcb56fc000bb63f76e2177659ef61d577e49106e1cc6e71
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RHBRR34QJ50WEZSPHK0CNX
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    requirement_model_artifact_id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RHBRR3MSE8J02H58WDR91H
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／進鈔金額（第 50 行）
+      quote: 當日入金總額（紙鈔機收現）
+    evidence: 上一輪的 major 已解決：步驟 4 改為分支判定，(a) TXID_in、TXID_out 在機台交易紀錄各只有一筆才進入步驟 5，並斷言 Z2＝Z1；(b) 出現多筆就記為交易層問題並停止，不判報表 FAIL。expected_result
+      明寫斷言只建立在「報表各欄＝當日交易紀錄的合計」這個不變量上，原本以 T3RR 為依據的推論已刪除。剩下一點：步驟 4 也記錄了「A 當日入金與出金的紀錄總筆數」，但分支 (a) 的條件只看兩個 TXID 的筆數。
+    explanation: 判定已不再依賴「同 TXID 重送不是新交易」這個範圍外的前提，改以 v0.3 第 50、51、53 行可支持的不變量判定。殘留的漏洞是：如果交易層把重送記成另一個 TXID 的新紀錄（兩個原 TXID 仍各一筆），分支
+      (a) 仍會成立，報表依第 50 行把它加總是正確行為，本案卻會判 FAIL。發生機率低，所以列為 minor。
+    recommended_change: 把分支 (a) 的條件補上「且 A 當日入金、出金的紀錄總筆數各為 1（只有本案那兩筆）」；總筆數多於 1 時比照分支 (b) 處理。
+  - testcase_id: TC-DRAFT-01M4RHBRR3QEM2W8ZXVVG511WQ
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: expected_result_spec_reference 已改為只引第 25 行原文，CLR-DAILYREPORT-001 的依據保留在 source_refs／decision_refs，expected_result
+      也補了依據說明。派發包 open_questions 中的 CLR-DAILYREPORT-020（OPEN）第 (1) 題問「操作員能否查看場館日結報表」。
+    explanation: 追溯問題已修正。CLR-020 目前與 v0.3 第 25 行並存；如果日後的回答改變操作員權限，本案與既有的 TC-003／004 要一併檢討。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4RHBRR26HK5YC320520EFT4
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-010
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §變更記錄 v02（第 169 行）
+      quote: 收據金額一律以面額計（含小數）
+    evidence: 與 ACTIVE 的 TC-DAILYREPORT-146（單筆 399.60 不取整）部分重疊。
+    explanation: 本案驗證的是跨機台、跨狀態的小數加總、總計列與 CSV 的精確一致，不算重複。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4RHBRR2JJ3CT46BC9XN3EMN
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 仍列 19 條需求（scope 外 18 條，加上 REQ-017），多條以「NO_REJECTION_CONTRACT:」為前綴，並註明「此前綴僅為滿足結構檢查」。派發包
+      extra_inputs 仍為 []，我沒有讀 TRR；各案只在 source_ref 文字欄標示 T3RR 出處。
+    explanation: 依派發指示，scope 限定造成的框架限制不判為 issue。前綴的字面意義與實際理由（不在 scope）不符。coverage_summary 以 RM 全部 28 條需求為分母（本批覆蓋 9 條，19 條列入
+      uncovered_accepted），AC 只計本批針對的 16 條。本輪已沒有任何斷言以 TRR 為依據。
+    recommended_change: 不阻擋。建議日後讓 G-DESIGN 在 scope 限定的 run 支援專用的 out-of-scope 理由前綴。
+  coverage_summary:
+    requirements_total: 28
+    requirements_covered: 9
+    ac_total: 16
+    ac_covered: 16
+    uncovered_accepted:
+    - REQ-DAILYREPORT-002（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-003（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-004（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-006（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-008（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-009（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-012（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-013（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-014（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-017（scope 限定：因 RF-12 納入 scope，但其逾時結束餘分屬 CLR-DAILYREPORT-017 未決事項，本批不新增，RF-12 案已刻意不依賴）
+    - REQ-DAILYREPORT-018（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-019（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-021（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-022（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-023（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-024（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-025（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-026（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+    - REQ-DAILYREPORT-028（scope 限定：不在本 run 補強範圍，既有 ACTIVE TC 不變）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    no_open_clr_dependency: true
+    no_bet_session_switch_assertion: true
+    business_day_split_by_venue_cutoff: true
+    login_roles_authorized_by_spec: true
+    assertions_use_spec_invariants_only: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RHBRR2JJ3CT46BC9XN3EMN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR2EMVSRY34QHQSTYWZ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR26HK5YC320520EFT4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR2YZBQGWE6PQE5FWDT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR30H00RDGJX2Z8D7NY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR3MSE8J02H58WDR91H
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHBRR3QEM2W8ZXVVG511WQ
+    verdict: ok
+history:
+- at: '2026-10-12T17:10:38Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-004
