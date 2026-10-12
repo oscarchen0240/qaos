@@ -1,0 +1,138 @@
+title: 線上站台建立紅包活動重複送出：連點『儲存』、API 重放、並送 3 個請求（逐請求時間記錄、至少 3 個有效輪），只建立 1 個活動，玩家結算只產生 1 個紅包
+description: 線上站台建立紅包活動重複送出：連點『儲存』、API 重放、並送 3 個請求（逐請求時間記錄、至少 3 個有效輪），只建立 1 個活動，玩家結算只產生 1 個紅包
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-017
+acceptance_criteria_ids:
+- AC-REDPACKET-0172
+- AC-REDPACKET-0171
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- negative
+design_techniques:
+- error_guessing
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義，需工程提供】可讓多個請求『幾乎同時』送出的手段（例如以腳本在同一時間點平行送出 N 個請求，或預先開好 N 個工作階段後以同一個觸發訊號同時送出）；『同時送出』無法保證每一輪都撞上競態，所以本案重複多輪，且每一輪的預期都是『不論誰先誰後都必須成立的最終一致結果』，不是指定誰先成立
+- 【環境前提，spec 未定義，需工程提供】可程式化地讓多筆注單『幾乎同時』結算（例如以腳本模擬遊戲商的注單結算通知，或同時操作多個前台工作階段各自結算）；結算通知的介面與格式 spec 未定義，由工程提供。每筆注單的有效流水貢獻須可指定（貢獻系數
+  100% 的遊戲，有效投注額＝有效流水貢獻）
+- 【逐請求時間記錄與有效重疊判定】腳本須對每一個並行請求記錄：請求識別與送出帳號、送出絕對時間 t_send（UTC+0，至毫秒）、收到回應的絕對時間 t_resp（UTC+0，至毫秒）與回應內容。該輪有效 ⇔ max(所有請求的 t_send)
+  < min(所有請求的 t_resp)（所有請求都在任一請求得到回應之前已送出）；不符者該輪作廢，不計入有效輪數，重做（重新佈置該輪）。有效輪數未達本案規定的下限時，不得判定通過（記為未完成）。人工口令同時按下只當補充觀察，不計入有效輪
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計
+- 備妥『儲存』鈕的快速連點手段（例如快速連按滑鼠左鍵或連按 Enter 3 次）
+test_data:
+- name: 活動
+  value: 永久／每日重置／門檻 100／上限 5／固定 10／稽核 1
+- name: 重送次數
+  value: UI 連點 3 次；API 逐次重送 2 次；並送 3 個（至少 3 個有效輪）
+steps:
+- n: 1
+  action: 進入『系統管理 > 優惠活動管理 > 新增優惠活動』，新增優惠活動、活動類型『紅包』，填妥合法表單：活動幣種 USDT；活動時間『永久』；重置方式每日；預設規則門檻 100／上限 5／固定 10／稽核 1，活動名稱『RP-DUP-CREATE』；先不按儲存
+  expected: 表單已填妥
+- n: 2
+  action: 【UI 連點】快速連點『儲存』3 次
+  expected: 進入『活動排程 > 紅包活動』，狀態為『進行中』或『排程中』的活動恰 1 個（『RP-DUP-CREATE』），沒有第 2、3 個活動；連點被擋下時的提示 spec 未定義，只記錄
+- n: 3
+  action: 【API 重放】以 API 工具對『新增紅包活動』逐次重送與步驟 1 完全相同的建立請求 2 次
+  expected: 兩次皆被阻擋（站台已有進行中的永久活動，任何時段皆重疊）；活動排程中進行中／排程中的活動仍恰 1 個
+- n: 4
+  action: 【並送，至少 3 個有效輪】第 n 輪：先取消站台上現有的進行中／排程中活動（確認視窗點『確認取消』），再以腳本同時送出 3 個相同的『新增紅包活動』API 請求（活動名稱『RP-DUP-CREATE-n』、永久，其餘設定同步驟
+    1），並依『逐請求時間記錄』記下 3 個請求的 t_send、t_resp 與回應
+  expected: 每輪依 max(t_send) < min(t_resp) 判定是否有效，無效者作廢重做。有效輪：恰有 1 個請求成功建立；其餘 2 個因時段重疊被阻擋；活動排程中狀態為『進行中』或『排程中』的活動恰 1 個（已取消的活動仍列於列表，不算）
+- n: 5
+  action: 最後一個有效輪保留存活的活動，等它變為『進行中』後，玩家 A 結算有效流水貢獻 100
+  expected: 只產生 1 個紅包（紅包明細 1 筆；玩家 A 紅包視窗『本期已獲得』1 ／ 5）；若同時存在兩個進行中的活動，同一筆流水會被兩個活動各算一次而產生 2 個紅包
+- n: 6
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 建立活動被重複送出時：站台同一時間只存在 1 個進行中或排程中的紅包活動，其餘重複請求因時段重疊被阻擋、資料不寫入；之後玩家結算達門檻只產生 1 個紅包。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 405 行）
+  quote: 排程時間重疊時阻擋儲存
+decision_refs:
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 405 行）
+- requirement_id: REQ-REDPACKET-017
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 405 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 405 行）
+  quote: 排程時間重疊時阻擋儲存
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 405 行）
+  quote: 重疊判斷只計「進行中」與「排程中」的活動；已取消的活動不占用時段，取消後可立即以相同時段重建
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-12 (1)(2)（線上）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-274
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+created_at: '2026-10-12T18:06:36Z'
+updated_at: '2026-10-12T18:06:36Z'
+history:
+- at: '2026-10-12T18:06:36Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T18:06:36Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

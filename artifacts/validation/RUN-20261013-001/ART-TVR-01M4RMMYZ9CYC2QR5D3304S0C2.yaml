@@ -1,0 +1,158 @@
+artifact_id: ART-TVR-01M4RMMYZ9CYC2QR5D3304S0C2
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-001
+task_id: T3
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-10-12T18:06:10Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+- entity_type: Artifact
+  id: ART-TDR-01M4RMH35NEE20AF9QCY2CB7FB
+- entity_type: Artifact
+  id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+requires_approval: null
+dispatch_packet_sha256: ab7d740afb2ed097c8c718e7b6a85c32cc176d308c3c08d6c8a4a2696cd0d876
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RMH31Y6JQYY7FC82SAAF0Z
+  validated_against:
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+  issues: []
+  advisories:
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      location: §機台帳號的稽核（第 56、59 行）
+      quote: 0 倍——即開分與入金不產生稽核門檻，玩家隨時可洗分與出金
+    evidence: iter1 的 advisory 2～6 逐條核對：(2) T01 TC-DRAFT-01M4RMH21ZT84BBDF0BJC8E8PQ、T02 TC-DRAFT-01M4RMH23EX52B2HK4CX946TC6
+      的 acceptance_criteria_ids 只剩 AC-REDPACKET-0391，TDR coverage_matrix 中 REQ-014、025、032 也改成只掛在需求層，已處理。(3) T12 第 5 步、T22
+      第 6 步、T23 第 7 步改為「以最終狀態歸類，回應只記錄；不一致時另記觀察事項、不影響 PASS／FAIL、待 CLR-059」，T12 前提的「由回應與紀錄判斷」也改成「由最終狀態與紀錄判斷」，已處理。(4) T22、T23
+      新增稽核前提與第 1 步前提檢查（出金設定 TWD 稽核倍數為 0、M1 沒有未完成稽核，不符就停止並回報、不判定），第 3 步每輪重查，已處理。(5) T23 第 5 步的前台按鈕狀態改為【僅記錄】（重新整理或重新開啟紅包視窗後記錄、不判定），已處理。(6)
+      見下一條。
+    explanation: CASHFLOW 引用在範圍內：SPEC-CASHFLOW-001@0.2（content_hash b1e2c556…）是派發包 closure 中 required 的 normative spec，機械核對
+      draft_out_of_scope 為空，source_ref_issues 也通過。小瑕疵：source_refs 的 location 寫「第 51、59 行」，但 quote「0 倍——即開分與入金不產生稽核門檻…」實際在第
+      56 行（第 51 行是稽核依出金設定倍數計算，第 59 行是倍數大於 0 時扣除）。三行都支持本前提，只是定位不精確。前提檢查放在第 1 步、每輪再查一次，不成立時停止、不判定，避免了誤判；守恆式的依據不變（CASHFLOW 第
+      336、338、360、362 行，本 spec 第 196、398、400 行）。
+    recommended_change: 可選：T22、T23 的 CASHFLOW source_ref 把 location 改為「第 56 行」（或「第 51、56、59 行」）。不阻擋本輪。
+  - testcase_id: TC-DRAFT-01M4RMH308PX3TDADH2M13ZCRN
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-REDPACKET-028
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 400 行）
+      quote: 紅包入帳與機台洗分／出金使用同一把帳號鎖
+    evidence: 派發訊息說「T22 註明核准時退役 TC-213」，但派發包裡的 T22 副本（已剝除 design_rationale）全文沒有出現「213」或「退役」；本輪 T22 的變更也只有 preconditions、steps、source_refs。
+    explanation: T22 與 ACTIVE 的 TC-REDPACKET-213 高度重疊（iter1 advisory 6），處理方式是核准時一併退役 TC-213。這個決定如果只寫在 design_rationale，Validator
+      看不到，核准人在 Draft 本身也看不到，容易漏掉。退役本來就是核准時的動作，不影響 T22 本身的正確性。
+    recommended_change: 請主 session 在 T22 的核准請求或核准決定中明確寫上「同時退役 TC-REDPACKET-213」（或在 T22 的 description 補一句），確保兩張不會同時維持 ACTIVE。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 本輪只有 T01、T02、T12、T22、T23 有變更，其餘 18 張與 iter1 逐欄相同。iter2 派發包除了 iteration、created_at、review_drafts 之外，與 iter1 相同（closure、resolutions、open_questions
+      都沒變）。機械核對：draft_out_of_scope 為空；23 張 TC 的 _decision_ref_issues 與 source_ref_issues 都沒有問題；每條 AC 都屬於所掛的需求。
+    explanation: 沒有引入新問題：新增的前提檢查沒有斷言 CLR-056 的扣減算法，只用 CASHFLOW 已定義的預設 0 倍與「不成立就停止」；歸類改以最終狀態為準，(甲)(乙)的定義與 expected_result 沒變；T23
+      的前台按鈕狀態降為只記錄，確定斷言反而變少。CLR-058～063 依然都沒有被斷言。iter1 的 advisory 1（REQ-025、032 的 assumption 依附在 E1 上，缺口在 RM）、7（環境依賴）、8（TRR
+      仍不在派發包範圍，extra_inputs 仍是 []，RF 對應未核對；T19、T21 的重疊屬可選）、9（範圍外豁免）維持原判，都不需要修改 Draft。
+    recommended_change: RM 下一個 revision 為 CLR-058 補建決策點；若需要核對 RF 對應，請在派發時以 --extra 登記 TRR。
+  - testcase_id: '*'
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 共 23 條（OUT_OF_SCOPE 14 條、NO_REJECTION_CONTRACT 9 條），全部是 scope 外的需求。
+    explanation: 依派發指示，這是 G-DESIGN 在 mode=spec 下的框架限制，已另案處理，不列 issue。
+    recommended_change: 無需修改本 Draft。
+  coverage_summary:
+    requirements_total: 16
+    requirements_covered: 16
+    ac_total: 99
+    ac_covered: 30
+    uncovered_accepted:
+    - 本 run 的 scope 為 16 條需求，目的是補強 T3RR 風險；本批 23 張 TC 掛到其中 30 條 AC。REQ-014、025、032 本批只掛在需求層（T01、T02 的小數入帳待 CLR-058，只記錄）。
+    - 範圍內其餘 69 條 AC，經逐條核對都已有 ACTIVE TC 覆蓋，本批不重做。
+    - 範圍外需求依 TDR 以 OUT_OF_SCOPE 或 NO_REJECTION_CONTRACT 豁免，屬框架限制，列為 advisory。
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    assumptions_ok: true
+    dispatch_scope_ok: true
+    no_open_clr_asserted: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RMH21ZT84BBDF0BJC8E8PQ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH23EX52B2HK4CX946TC6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH24WR2XT2Y920YJ040PE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH26A3DDC6G83CGBQ477S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH27SJJSVTRB1G6V2PG8X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH299JX5D4S2T5VX9DXCK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2ART41TCKJCNHK3HY5P
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2C6AS3HV3HZ8JBFPSNG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2DSSJC81FWGEAQ6T4SC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2F8GPKH8G2S5BW5ZT7X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2GR28F324SW3R4VSHNG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2J99SCKVR1DGY4YP6MJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2KWBNJGPBQDKDTBTA66
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2NCHB3BRWD1VKKSRFHA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2PW6N99DXEZY6CKVGZ2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2RC2CM3RXMMCNCMSPBG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2SVBPZX0STBA4Z82892
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2T08M7PHCW7XHSRGQFH
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2VK952RA97RAJC5DM7A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2X3T03BJ8Z0ZWFMDPC0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH2YH3T73T9YFWTXN9Q4F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH308PX3TDADH2M13ZCRN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RMH31YJVD7AH099R32WA04
+    verdict: ok
+history:
+- at: '2026-10-12T18:06:31Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-001
