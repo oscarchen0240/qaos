@@ -1,0 +1,217 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: hybrid
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: 查詢與匯出 CSV 的同時有人核實或作廢收據：每一次成功取得的回應都自洽（每列收據金額＝三欄之和、現金淨收＝開分＋進鈔－已核實洗分－已兌現、總計列＝各列之和、收據金額不變），事後的最終查詢反映全部核實與作廢
+description: 驗證報表在查詢／匯出執行期間，同一時段有另一帳號持續核實與作廢收據時，單次回應（畫面查詢與 CSV）內部一致（RUN-20261012-007 T3RR RF-10）。（iteration 2：造數加入開分，並補驗每列現金淨收＝開分＋進鈔－已核實洗分－已兌現，二次抽查
+  RF-01。）
+requirement_ids:
+- REQ-DAILYREPORT-016
+- REQ-DAILYREPORT-027
+- REQ-DAILYREPORT-012
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0162
+- AC-DAILYREPORT-0272
+- AC-DAILYREPORT-0273
+- AC-DAILYREPORT-0121
+test_level: api
+test_types:
+- functional
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_cost: high
+preconditions:
+- 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+- 進入 各式報表 > 場館日結報表
+- 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入
+  9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+- 測試場館在連續 4 個已結束的營業日 D1～D4 共有 12 張出金收據，全部為待核實，面額（整數，避免小數干擾）依序為：D1：100、200、300；D2：400、500、600；D3：700、800、900；D4：1000、1100、1200（每營業日
+  3 張，收據金額分別為 600、1500、2400、3300，合計 7800）。該場館在 D1～D4 沒有這 12 張以外的出金收據。D1～D4 各營業日都有開分（數值以造數記錄為準，例：每日開分 10000，讓現金淨收不是只剩已兌現的負值）；造數記錄須列出
+  D1～D4 各日的開分、進鈔與洗分。本案期間不核實也不作廢任何洗分，所以開分、進鈔、已核實洗分在全程不變，只有已兌現與未兌現隨核實／作廢變動。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定營業日的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+  > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額；開分後餘額如何降到收據面額（遊戲損益或洗分）本 spec 沒有定義。
+- 核實與作廢由另一個『核實／作廢帳號』在『帳務管理 > 洗分出金核實』執行（核實與作廢的角色權限不在本 spec，本案不驗證權限）；本案計畫核實面額 100、300、500、700、900、1100（共 3600），作廢面額 200、400、600、800、1000、1200（共
+  4200）。需要兩個同時可操作的瀏覽器 session（或兩台電腦）：session A 用管理員跑查詢與匯出，session B 用核實／作廢帳號操作
+- 報表查詢與匯出請求要能被重放：在步驟 1 以瀏覽器開發者工具 Network 頁籤取得這兩個請求（含登入憑證）並『複製為 cURL』。請求路徑與參數名稱 spec 未載明，不預設；若請求無法重放（例如憑證一次性），改以兩個瀏覽器分頁手動連續按『搜尋』與『匯出
+  CSV』當作觸發方式（較不密集，需多做幾輪）
+- 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試場館與測試機台帳號產生的紀錄，不得對正式營運資料執行
+- 核實／作廢後重新查詢，報表應立即反映最新狀態（第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+test_data:
+- name: 待核實收據（12 張）
+  value: D1：100/200/300；D2：400/500/600；D3：700/800/900；D4：1000/1100/1200
+- name: 每營業日收據金額（全程不變）
+  value: D1=600、D2=1500、D3=2400、D4=3300，合計 7800
+- name: 核實的收據（共 3600）
+  value: 100、300、500、700、900、1100
+- name: 作廢的收據（共 4200）
+  value: 200、400、600、800、1000、1200
+- name: 最終預期（依序 D1～D4：已兌現／已作廢／未兌現）
+  value: D1：400/200/0；D2：500/1000/0；D3：1600/800/0；D4：1100/2200/0；總計：3600/4200/0
+- name: 現金淨收的不變量
+  value: 每列：現金淨收＝開分＋進鈔－已核實洗分－已兌現；全程開分、進鈔、已核實洗分不變，現金淨收的變動量＝已兌現的變動量（取負號）
+steps:
+- n: 1
+  action: session A：以管理員登入並選好站台，開啟場館日結報表：統計維度『依場館彙總』、統計週期『按日』、機台帳號留空、結算日期 D1 ～ D4，搜尋；在 Network 頁籤找到該次查詢請求，複製為 cURL（存為 Q）。點『匯出
+    CSV』，找到匯出請求，複製為 cURL（存為 E）。記錄起始狀態（含各列的開分、進鈔、已核實洗分、已兌現、現金淨收）
+  expected: 列表 4 列（D1～D4）加總計列；起始：每列收據金額 600／1500／2400／3300、未兌現同值、已兌現 0、已作廢 0；總計列收據 7800、未兌現 7800；每列 現金淨收＝開分＋進鈔－已核實洗分－已兌現（起始已兌現為
+    0）；總計列的開分、現金淨收為各列之和
+- n: 2
+  action: session A 在終端機啟動重放迴圈（Q、E 為步驟 1 複製的完整 cURL 指令，改成輸出到檔案）：for i in $(seq 1 60); do 〈Q〉 -o q_$i.json; 〈E〉 -o e_$i.csv;
+    sleep 1; done。迴圈開始後立刻進行步驟 3
+  expected: 迴圈持續產生 q_1.json … 與 e_1.csv …（共約 60 組），被拒絕、被限流或失敗的請求只記錄，不作判準（系統是否防連點、匯出有無併發上限屬 CLR-DAILYREPORT-019，尚未決）；後續只檢查成功取得的回應與檔案
+- n: 3
+  action: session B：以『核實／作廢帳號』登入，到『帳務管理 > 洗分出金核實』，依面額由小到大逐張處理：100 核實、200 作廢、300 核實、400 作廢、500 核實、600 作廢、700 核實、800 作廢、900
+    核實、1000 作廢、1100 核實、1200 作廢（按鈕名稱與必填欄位以畫面為準），每張處理完立即處理下一張，不要間隔等待
+  expected: 12 張收據依序完成核實或作廢
+- n: 4
+  action: 迴圈結束後，逐一檢視 q_*.json（查詢回應）與 e_*.csv（匯出檔）：對每個成功取得的檔案檢查 (a) 每個營業日列的 收據金額＝已兌現＋未兌現＋已作廢；(b) 每列的收據金額等於 600／1500／2400／3300（全程不變）；(c)
+    總計列的收據、已兌現、未兌現、已作廢四欄各自等於 4 個營業日列的對應欄之和；(d) 每列 現金淨收＝開分＋進鈔－已核實洗分－已兌現（四項皆取自同一份回應或同一份 CSV 的同一列），總計列的開分與現金淨收各自等於 4 列之和，且每列的開分、進鈔、已核實洗分在全部成功回應中不變。另挑出『未兌現』總計介於
+    0 與 7800 之間的檔案，確認這類中途狀態的檔案確實存在
+  expected: 每個成功取得的查詢回應與 CSV 檔都同時滿足 (a)(b)(c)(d)，沒有任何一個檔案出現列與列、或列與總計列對不起來的數值。若沒有任何中途狀態的檔案（所有回應不是全 7800 未兌現，就是已全部處理完），代表沒有真正碰到並行，本次執行無效，增加收據張數或加快重放後重做，不得判通過（若因被限流而取得的成功回應太少，同樣視為無效，改用較低頻率重放後重做，不判報表
+    FAIL）
+- n: 5
+  action: 迴圈與核實／作廢都結束後，以相同條件重新查詢一次，並再匯出一次 CSV
+  expected: D1～D4 列依序：已兌現 400／500／1600／1100、已作廢 200／1000／800／2200、未兌現全為 0，收據金額 600／1500／2400／3300；總計列：已兌現 3600、已作廢 4200、未兌現
+    0、收據 7800；CSV 與畫面一致；每列 現金淨收＝開分＋進鈔－已核實洗分－已兌現，且相對起始值，各列現金淨收的減少量恰等於該列已兌現金額（D1～D4 依序 400／500／1600／1100），總計列現金淨收減少 3600
+expected_result: 核實與作廢進行期間重放的每一次查詢回應與每一份匯出 CSV 都是自洽的：每列 收據金額＝已兌現＋未兌現＋已作廢，且收據金額不因核實／作廢而改變（600／1500／2400／3300），每列 現金淨收＝開分＋進鈔－已核實洗分－已兌現（同一份回應內的值，不會出現已兌現已增加而現金淨收還沒扣），總計列各金額欄等於各列對應欄之和（CSV
+  的總計列同）；全部處理完後的最終查詢與 CSV 顯示：已兌現 3600、已作廢 4200、未兌現 0、收據 7800（各營業日數值見 test_data），各列現金淨收相對起始值的減少量等於該列已兌現金額。以上只判定成功取得的回應與檔案。（原文：第
+  54 行恆等式、第 62 行總計為整個查詢結果各欄合計；推論部分：『單次回應內自洽』是把這些以靜態數據陳述的規則套用到併發情境，spec 沒有明文談併發或快照語意。）
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位（總計與匯出）（第 62 行）
+  quote: 列表底部顯示**整個查詢結果**的各欄總計（不隨排序與分頁改變）
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位（總計與匯出）（第 62 行）
+- requirement_id: REQ-DAILYREPORT-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §排序與分頁／總計列（第 84 行）
+- requirement_id: REQ-DAILYREPORT-027
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／已作廢金額（第 54 行）
+- requirement_id: REQ-DAILYREPORT-027
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／已作廢金額（第 54 行）
+- requirement_id: REQ-DAILYREPORT-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／現金淨收（第 55 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（總計與匯出）（第 62 行）
+  quote: 列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）；「期初餘額」與「期末餘額」不加總（見下）。頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制。
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §排序與分頁／總計列（第 84 行）
+  quote: 一律為整個查詢結果的合計（餘額欄仍依上述時點值規則），不隨排序與分頁改變
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已作廢金額（第 54 行）
+  quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已作廢金額（第 54 行）
+  quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／現金淨收（第 55 行）
+  quote: 開分 ＋ 進鈔 － 已核實洗分 － 已兌現（不扣待核實洗分——尚未確認付出；作廢的收據未付現，亦不扣）
+source_ref: T3RR:RUN-20261012-007 RF-10
+testcase_id: TC-DAILYREPORT-169
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+created_at: '2026-10-12T17:43:49Z'
+updated_at: '2026-10-12T18:01:28Z'
+history:
+- at: '2026-10-12T17:43:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:43:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:43:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:46:33Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T18:01:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0207
+  run_id: RUN-20261013-004
+- at: '2026-10-12T18:01:28Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-004
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0207

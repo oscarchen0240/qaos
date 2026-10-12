@@ -1,0 +1,233 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: spec_workflow
+assumptions: []
+hotfix_eligible: false
+title: 多張含小數面額的收據同列加總：收據金額＝已兌現＋未兌現＋已作廢、現金淨收＝開分＋進鈔－已核實洗分－已兌現皆精確成立，總計列為各列的精確合計，匯出 CSV 的數值與畫面逐欄一致
+description: 驗證含小數面額的收據在同一營業日跨機台、跨狀態加總時，各欄、總計列與 CSV 彼此一致且無浮點尾數（RUN-20261012-007 T3RR RF-04）。不斷言顯示位數。（iteration 2：加入開分，補驗每列現金淨收＝開分＋進鈔－已核實洗分－已兌現在含小數時精確成立，二次抽查
+  RF-01。）
+requirement_ids:
+- REQ-DAILYREPORT-010
+- REQ-DAILYREPORT-027
+- REQ-DAILYREPORT-016
+- REQ-DAILYREPORT-012
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0104
+- AC-DAILYREPORT-0272
+- AC-DAILYREPORT-0161
+- AC-DAILYREPORT-0162
+- AC-DAILYREPORT-0121
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+execution_cost: high
+preconditions:
+- 已以管理員登入後台（所選機台場館須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至該機台場館站台（自行從環境中選定一個機台場館）
+- 進入 各式報表 > 場館日結報表
+- 營業日依場館的日結時間 T（UTC+0，場館設定欄位，第 152 行）切分：自某日 T 起至次日 T 前的交易屬同一營業日，營業日以起算日期標示（AC-DAILYREPORT-0071／0072：T=06:00 時，9/5 05:59 的交易計入
+  9/4，9/5 06:00 的交易計入 9/5）。結算日期欄與列表上的日期皆為營業日；測試人員位於非 UTC 時區時，須先依 T 把營業日換算成 UTC+0 的時間範圍，避免差一天
+- 同一個已結束的營業日 D（結算日期選 D ～ D）。機台 A、機台 B 為自行從環境中選定的兩台不同的既有機台帳號（會員編號），屬於上述場館；該場館在 D 除 A、B 之外沒有任何機台有開分、進鈔、洗分或出金交易，A、B 在 D 沒有下列收據以外的出金，也沒有進鈔與洗分
+- 機台 A 在 D 有三張收據：面額 0.10（已核實）、0.20（已核實）、399.65（已作廢）；機台 B 在 D 有兩張收據：面額 0.10（待核實）、0.20（待核實）。（造數方式為我的推測，需環境負責人確認）本規格未定義如何造出指定時間的開分／出金交易與收據，也沒有後台入口可直接建立出金；我推測出金（收據）由機台端產生、核實與作廢在『帳務管理
+  > 洗分出金核實』執行（第 111 行），因此造數由環境負責人以環境既有的機台操作或造數工具完成。出金一律清空餘額（第 128 行），故一張收據的面額＝出金當下機台的餘額（AC-DAILYREPORT-0104：機台餘額帶小數 → 收據面額帶小數）。要讓機台餘額恰為
+  0.10、0.20、399.65 的方式，本 spec 沒有定義（AC-0104 只說餘額可帶小數），需環境負責人造數或挑選符合形狀的既有資料
+- 機台 A 與 B 在 D 各有開分（示例：A 開分 1000、B 開分 500；實際以造數記錄為準）。造數須讓各營業日有開分（現金淨收才不是只剩已兌現的負值）：開分、進鈔、洗分（已核實／待核實）的數值由環境負責人的造數記錄提供，因為出金一律清空餘額（第
+  128 行）、收據面額＝出金當下餘額，開分後餘額如何降到收據面額（遊戲損益或洗分）本 spec 沒有定義，這是造數方式的假設，需環境負責人確認。本案造數不含任何洗分與進鈔，所以現金淨收的預期值＝開分－已兌現
+- 0.10＋0.20 是浮點加法常見出現尾數（如 0.30000000000000004）的組合，這是本案刻意選用的資料設計，不是 spec 規則
+- 核實與作廢改用環境負責人提供的『核實／作廢帳號』（有權限在『帳務管理 > 洗分出金核實』核實與作廢出金的後台帳號；核實與作廢的角色權限不在本 spec，本案不驗證權限）。若與管理員不是同一個，需在核實／作廢步驟切換登入，回到報表查詢步驟時切回管理員並重選站台
+- 核實與作廢可能無法復原（本 spec 未說明復原方式，請視為不可復原），且會進入場館日結報表的統計；本案只使用測試場館與測試機台帳號產生的紀錄，不得對正式營運資料執行
+- 核實／作廢後重新查詢，報表應立即反映最新狀態（第 53、70 行：狀態一律以查詢當下為準）；若重新查詢仍是舊值，記錄實際延遲並視為與 spec 的偏差回報，不要等待更新後再讀取並判定通過
+- 本 spec 沒有定義列表與 CSV 的小數顯示位數（REQ-DAILYREPORT-010 Q03 的缺口），本案不斷言顯示位數：數值以畫面／CSV 實際顯示的小數位判讀，若顯示位數太少而無法區分（例如全部取整），如實記錄『無法判讀』，不判通過也不判失敗
+test_data:
+- name: 機台 A 收據
+  value: 0.10（已核實）、0.20（已核實）、399.65（已作廢）
+- name: 機台 B 收據
+  value: 0.10（待核實）、0.20（待核實）
+- name: 開分（示例，以造數記錄為準）
+  value: A 1000、B 500；A、B 無進鈔、無洗分
+- name: 預期（機台 A 列）
+  value: 收據 399.95、已兌現 0.30、未兌現 0、已作廢 399.65；現金淨收＝A 開分－0.30（示例 1000 → 999.70）
+- name: 預期（機台 B 列）
+  value: 收據 0.30、已兌現 0、未兌現 0.30、已作廢 0；現金淨收＝B 開分（示例 500）
+- name: 預期（總計列／依場館彙總列）
+  value: 開分＝A、B 開分之和；收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65；現金淨收＝開分合計－0.30（示例 1500 → 1499.70）
+steps:
+- n: 1
+  action: 依前提確認 A、B 在 D 的開分、收據與核實狀態（可在『帳務管理 > 洗分出金核實』核對面額與狀態；若須由本案自行核實或作廢，用『核實／作廢帳號』執行並確認狀態後再繼續），並從造數記錄取得 A、B 在 D 的開分數值，記入執行記錄
+  expected: A：0.10 已核實、0.20 已核實、399.65 已作廢；B：0.10 待核實、0.20 待核實；D 沒有其他機台的交易；取得 A、B 的開分數值
+- n: 2
+  action: 以管理員登入並選好站台，開啟場館日結報表：統計維度『依機台明細』、統計週期『按日』、機台帳號留空、結算日期 D ～ D，搜尋。記錄機台 A 列、機台 B 列與底部總計列的『開分金額』『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』『現金淨收』
+  expected: 機台 A 列：收據 399.95、已兌現 0.30、未兌現 0、已作廢 399.65，現金淨收＝A 開分－0.30（示例 999.70）；機台 B 列：收據 0.30、已兌現 0、未兌現 0.30、已作廢 0，現金淨收＝B
+    開分（示例 500）；總計列：收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65，開分與現金淨收為各列之和（示例 1500、1499.70）。每個數值都沒有非零的多餘尾數（例如不得出現 0.30000000000000004、399.95000000000005、999.6999999999999）；每列與總計列皆滿足
+    收據金額＝已兌現＋未兌現＋已作廢，且 現金淨收＝開分＋進鈔－已核實洗分－已兌現（進鈔與已核實洗分為 0）
+- n: 3
+  action: 把統計維度改為『依場館彙總』，其餘條件不變，搜尋，記錄 D 這一列與總計列的六欄（同步驟 2）
+  expected: D 列與總計列的六欄皆等於步驟 2 機台 A、B 兩列的對應欄之和（收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65，現金淨收＝開分合計－0.30）
+- n: 4
+  action: 把統計維度改回『依機台明細』並搜尋，點頁面右上角『匯出 CSV』，用文字編輯器或試算表開啟下載的檔案，找到機台 A 列、機台 B 列與總計列，逐欄對照『開分金額』『收據金額』『已兌現金額』『未兌現金額』『已作廢金額』『現金淨收』
+  expected: CSV 中三列的六欄數值與步驟 2 畫面顯示的數值逐欄相同（不比較位數格式，只比較數值），且同樣沒有非零的多餘尾數
+expected_result: 含小數面額的收據跨機台、跨狀態加總後：機台 A 列收據 399.95＝已兌現 0.30＋未兌現 0＋已作廢 399.65，機台 B 列收據 0.30＝0＋0.30＋0，每列的恆等式精確成立（不因小數出現尾數）；每列現金淨收＝開分＋進鈔－已核實洗分－已兌現（A
+  列＝A 開分－0.30，B 列＝B 開分，本案無進鈔與洗分），精確、無浮點尾數；總計列為各列精確合計（收據 400.25、已兌現 0.30、未兌現 0.30、已作廢 399.65，現金淨收＝開分合計－0.30），依場館彙總列與總計列相同；匯出
+  CSV 的列與總計列數值與畫面逐欄一致。收據金額以面額計、不取整，且含已作廢者。不斷言顯示位數。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／已作廢金額（第 54 行）
+  quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-010
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／收據金額（第 51 行）
+- requirement_id: REQ-DAILYREPORT-010
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／收據金額（第 51 行）
+- requirement_id: REQ-DAILYREPORT-027
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／已作廢金額（第 54 行）
+- requirement_id: REQ-DAILYREPORT-027
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／已作廢金額（第 54 行）
+- requirement_id: REQ-DAILYREPORT-016
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位（總計與匯出）（第 62 行）
+- requirement_id: REQ-DAILYREPORT-010
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／開分金額（第 46 行）
+- requirement_id: REQ-DAILYREPORT-012
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／現金淨收（第 55 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／收據金額（第 51 行）
+  quote: 當日出金總額（印出的收據面額合計；過渡期機台暫無印表機時，為結算結果畫面顯示的出金金額合計）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已作廢金額（第 54 行）
+  quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／已作廢金額（第 54 行）
+  quote: 每列 收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（總計與匯出）（第 62 行）
+  quote: 列表底部顯示整個查詢結果的各欄總計（不隨排序與分頁改變）；「期初餘額」與「期末餘額」不加總（見下）。頁面右上角提供「匯出 CSV」，匯出整個查詢結果、不受分頁限制。
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／開分金額（第 46 行）
+  quote: 當日開分總額（店員現場收現）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／現金淨收（第 55 行）
+  quote: 開分 ＋ 進鈔 － 已核實洗分 － 已兌現（不扣待核實洗分——尚未確認付出；作廢的收據未付現，亦不扣）
+source_ref: T3RR:RUN-20261012-007 RF-04
+testcase_id: TC-DAILYREPORT-168
+version: 1
+supersedes: null
+status: ACTIVE
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+created_at: '2026-10-12T17:43:49Z'
+updated_at: '2026-10-12T18:01:28Z'
+history:
+- at: '2026-10-12T17:43:49Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:43:49Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:43:49Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+  run_id: RUN-20261013-004
+- at: '2026-10-12T17:46:33Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-004
+- at: '2026-10-12T18:01:28Z'
+  from_status: PENDING_APPROVAL
+  to_status: APPROVED
+  by: oscarchen@blockaction.tech
+  trigger: APR-0207
+  run_id: RUN-20261013-004
+- at: '2026-10-12T18:01:28Z'
+  from_status: APPROVED
+  to_status: ACTIVE
+  by: system
+  trigger: COMMIT_TO_REGISTRY
+  run_id: RUN-20261013-004
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
+approved_by: oscarchen@blockaction.tech
+approval_id: APR-0207
