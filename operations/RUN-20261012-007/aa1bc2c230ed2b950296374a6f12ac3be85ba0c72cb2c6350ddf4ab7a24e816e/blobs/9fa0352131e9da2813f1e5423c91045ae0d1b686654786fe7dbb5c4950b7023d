@@ -1,0 +1,122 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 機台於更早的營業日留有分數、緊鄰的前一營業日沒有任何交易與場次：查詢日的期初餘額沿用該留存分數（AC 範例 400），不因前一營業日無交易而為 0
+requirement_ids:
+- REQ-DAILYREPORT-018
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0186
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- equivalence_partitioning
+priority: high
+risk: high
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- （歷史資料佈置）本規格未定義如何造出過去營業日的資料，也未定義如何建立指定日期的出金收據；我推測出金（收據）由機台端（前台）交易產生、後台沒有直接建立指定日期出金的入口，此點需環境負責人確認。因此由環境負責人預先造數，或從環境既有資料中挑選符合下列形狀者；說明中的
+  AC 範例日期與數字（如 9/10、1000）僅為示意，可平移為環境中的實際日期與數值，但營業日的連續關係與數值之間的關係必須保持；環境負責人須提供「造數記錄」（各機台於各營業日的場次、交易、收據與其核實狀態、結算時點的分數）作為預期值的比對來源
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），須在該管理員管轄範圍內的機台場館；需要第二台機台時另選一台不同的既有機台帳號
+- 查詢範圍（D-2～D）內不含狀態「逾時結束」的場次，A 在 D-2 結算時點的 400 也不得來自逾時結束的場次（逾時結束後留在機台的餘分如何處置 spec 未定義；本案不依賴也不斷言該行為，請挑選或佈置不含逾時結束場次的資料）
+- 營業日 D（AC 範例 2026-09-10）、D-1（09-09）、D-2（09-08）：機台 A 在 D-2 結算時點留存分數 400；A 在 D-1 沒有任何交易與場次；A 在 D 至少有一筆交易（為了讓 A 在 D 的依機台明細列確實出現——idle
+  機台是否出列 spec 未明說，這是我的資料要求）
+- D-2 結算時點 A 的 400 須來自狀態「已結束」的場次（例如洗分留下的餘數），不得來自逾時結束的場次；D-2 的日結時刻 A 不能有進行中的場次，A 的 400 是已結束場次後留在機台的餘分，之後到 D-1 結束都沒有新場次（依 spec『場次日結』：日結強制結束進行中場次、餘額轉隔日新場次，否則
+  D-1 會有場次）；此形成方式為我的推論，需環境負責人確認
+test_data:
+- name: D-2 結算時點 A 的分數
+  value: 400
+- name: 預期 A 在 D 的期初餘額
+  value: 400
+- name: 不應出現的結果
+  value: 0
+steps:
+- n: 1
+  action: 統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期設為 D（起迄同一天），搜尋
+- n: 2
+  action: 找到機台 A 在 D 的列，記錄「期初餘額」
+- n: 3
+  action: 對照造數記錄：D-2 結算時點 A 的分數及其來源場次的狀態，以及 D-1 A 無任何交易與場次
+  expected: D-2 結算時點分數 400、來源場次狀態為已結束（非逾時結束）；D-1 無交易與場次；任一不符，停止並回報環境負責人，不要繼續判定
+expected_result: 機台 A 在 D 的列期初餘額 400：沿用最近一個營業日（D-2）的結算值，不因緊鄰的前一營業日 D-1 無交易而為 0。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位（無資料）（第 64 行）
+  quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）。匯出 CSV 同此規則。
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-018
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位（無資料）（第 64 行）
+- requirement_id: REQ-DAILYREPORT-018
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（無資料）（第 64 行）
+  quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）。匯出 CSV 同此規則。
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位附註／期初餘額比照辦理（第 68 行）
+  quote: 含當期無場次但仍有留存分數者（沿用其最近一個營業日的結算時點值）
+hotfix_eligible: false
+execution_cost: medium
+source_ref: new_required:REQ-DAILYREPORT-018 AC-DAILYREPORT-0186
+testcase_id: TC-DAILYREPORT-153
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:15:33Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e

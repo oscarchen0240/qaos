@@ -1,0 +1,164 @@
+artifact_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-007
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-12T16:15:09Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+- entity_type: Artifact
+  id: ART-TDR-01M4RE72Z9FBK4CTE3153ZCZCK
+- entity_type: Artifact
+  id: ART-CIR-01M4RC47KM7WBQ7F91XVFN661K
+- entity_type: Artifact
+  id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+requires_approval: null
+dispatch_packet_sha256: 19c5666d163358dd4730c9a8df2543470f5b59fda4f26605e37f92301a3c51f8
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  validated_against:
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    requirement_model_artifact_id: ART-RM-01M4RBGJ1BPEVC4PYNFVBNV4Z0
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RE72Z8GCFSV7JZ39JAZCM6
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-016
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位（無資料）（第 64 行）
+      quote: 期初／期末餘額依下方時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）。匯出 CSV 同此規則。
+    evidence: 上一輪 major 已解決：前提改為除 A 以外的機台在 D-1 結算時點皆為 0（同 AC 範例），做不到時退而要求其他機台的分數都來自狀態「已結束」的場次，且整個場館不得有任何機台的分數來自逾時結束；新增步驟 1
+      依造數記錄確認，不符就停止回報。剩下一個措辭問題：expected_result 寫「全場館機台分數合計（前提下即 A 的 400，AC 範例）」，步驟 4 的 expected 寫「合計為 400（其他機台皆為 0 時）」。
+    explanation: 改寫後的斷言不再依賴 REQ-DAILYREPORT-017 Q02（E5／CLR-DAILYREPORT-017）：場館內所有留存分數都限定來自狀態「已結束」的場次，這類餘分的處置有 spec 第 64、68
+      行為依據。不過採用退而求其次的條件時，期望值是 A 的 400 加上其他機台的分數；括號內「即 A 的 400」只在主要條件下成立。主斷言「全場館機台分數合計」本身正確，所以只列 minor。
+    recommended_change: 不阻擋。可把括號改為「主要條件下即 A 的 400；採退而求其次條件時為 400 加上其他機台在 D-1 結算時點的分數」。
+  - testcase_id: TC-DRAFT-01M4RE72Z7V43EY0E3N26YGC09
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-009
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／場次數（第 45 行）
+      quote: 計入狀態為「已結束」「逾時結束」「日結結算」的場次，「進行中」不計入
+    evidence: 沿用上一輪：前提要求單一營業日 D 內有一場在 D 內開始並結束的「逾時結束」場次。派發包內的 CLR-DAILYREPORT-007（針對 v0.1，applicability 為空）答「逾時結束的時間會超過日結時間」。另外，ACTIVE
+      的 TC-DAILYREPORT-031 已部分涵蓋（逾時結束＋日結結算＝2）。
+    explanation: 斷言依 v0.3 第 45 行與 AC-0095，只斷言場次數，不依賴 CLR-017。如果逾時門檻長於一個營業日，這個形狀可能造不出來；案例已有不符就停止回報的步驟。
+    recommended_change: 不阻擋。建議請環境負責人先確認逾時門檻。
+  - testcase_id: TC-DRAFT-01M4RE72Z7APRX5XDAY9PGQ890
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-001
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §功能說明／權限表（第 25 行）
+      quote: '| 場館日結報表 | 管轄範圍 | 管轄範圍 | 自身場館 |'
+    evidence: 沿用上一輪：管理員案（本筆）、站長案 TC-DRAFT-01M4RE72Z79WPE7ZR9KP03GZJT 分別與 TC-DAILYREPORT-001／103、TC-DAILYREPORT-002／104 的選單比對與
+      API 竄改步驟重疊。
+    explanation: 新案依 CLR-DAILYREPORT-014（applicability 已綁定 v0.3）斷言「無權限」錯誤並加驗匯出，比較嚴格，屬於 CIR new_required 的補案，不算重複。CIR 把 TC-103／104
+      判為 unaffected，本 run 不修改它們。
+    recommended_change: 不阻擋。之後可評估把 TC-103／104 退役或改為引用 CLR-014。
+  - testcase_id: TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-DAILYREPORT-027
+    spec_reference:
+      spec_id: SPEC-DAILYREPORT-001
+      spec_version: '0.3'
+      location: §列表欄位／已作廢金額（第 54 行）
+      quote: 當日出金的收據中，已作廢者的金額合計；以出收據的日期歸屬，不論作廢是哪一天（2026-10-05 新增）
+    evidence: 沿用上一輪：本案與 TC-CASHOUT-132 v1 高度重疊；TC-DRAFT-01M4RE72Z76AM0WSEXXDV3Z26F（AC-0116）與 TC-CASHOUT-133、TC-DRAFT-01M4RE72Z6YK6DK4XVFK60W67A（TC-046
+      修訂）與 TC-CASHOUT-134 部分重疊。
+    explanation: 追溯的需求不同（DAILYREPORT REQ-027／011／015 與 CASHOUT REQ-032）。DAILYREPORT 這側另外斷言收據金額不變與三欄勾稽，並依場館日結時間 T 切分營業日；案例也已註明不與
+      TC-CASHOUT-132～134 共用收據。不算重複，只是證據重疊。
+    recommended_change: 不阻擋。執行時依前提錯開收據與時段，之後整理回歸套件時兩側互相註記。
+  coverage_summary:
+    requirements_total: 12
+    requirements_covered: 12
+    ac_total: 25
+    ac_covered: 25
+    uncovered_accepted:
+    - REQ-DAILYREPORT-018（NO_REJECTION_CONTRACT：期初餘額沒有拒絕契約或數值邊界，本批只補 AC-0186 成功面；既有 TC-112 涵蓋從未有分數→0）
+    - REQ-DAILYREPORT-021（NO_REJECTION_CONTRACT：餘額驗算式為恆等式；AC-0216 已以錯誤答案 -200 對照）
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: true
+    no_bet_session_switch_assertion: true
+    business_day_split_by_venue_cutoff: true
+    login_roles_authorized_by_spec: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RE72Z08WJGCQR04NQN8PCP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z6YK6DK4XVFK60W67A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7DG4D5YFHVVBB6C1N
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7APRX5XDAY9PGQ890
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z79WPE7ZR9KP03GZJT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7KFMWPVTRAT1WM7Z8
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7V43EY0E3N26YGC09
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7W20TP001BP7FBX5S
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7FCT0F6AYVEC851JN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7ZDNDNZBRYSS8QZ7A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z76AM0WSEXXDV3Z26F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z7QF67233ZQKFP1BRC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z87S79TNNVG8KZBE0J
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8SX3JQFQ94NRFRBK4
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8ZWEFME3C1AB0A43X
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8GCFSV7JZ39JAZCM6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8ZB819CN3ECWM44AR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8CGCNXSDMMXYHS84F
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z86FPVGTX6Z1K8CYFK
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z8H3DBFC3PBG3X8YKE
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z91G0ZCSQHZXWXA5E9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RE72Z9XB2PHNEV5PT6N18W
+    verdict: ok
+history:
+- at: '2026-10-12T16:15:29Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-007

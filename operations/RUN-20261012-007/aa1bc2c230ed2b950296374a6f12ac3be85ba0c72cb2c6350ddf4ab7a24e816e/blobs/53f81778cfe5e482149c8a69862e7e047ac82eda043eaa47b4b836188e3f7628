@@ -1,0 +1,115 @@
+product: ba-admin
+functional_area: DAILYREPORT
+spec_id: SPEC-DAILYREPORT-001
+spec_version: '0.3'
+automation_status: not_automated
+ci_eligible: false
+execution_mode: manual
+stability: unknown
+source: change_workflow
+assumptions: []
+title: 依機台明細的場次數不含進行中場次；鑽取到依場次明細時列出含進行中場次的全部場次，列數多於上一層的場次數
+requirement_ids:
+- REQ-DAILYREPORT-009
+acceptance_criteria_ids:
+- AC-DAILYREPORT-0096
+test_level: ui_e2e
+test_types:
+- functional
+design_techniques:
+- requirement_based
+priority: high
+risk: high
+preconditions:
+- 已以管理員登入後台（機台場館站台 Arcade 須在該管理員的管轄範圍內），並在頁面標題下方的站台切換下拉選單切換至機台場館站台（Arcade）
+- 進入 各式報表 > 場館日結報表
+- 測試場館（Arcade）已設定日結時間 T（UTC+0；以場館設定為準，目前 Arcade 為 00:00，若不同請以實際 T 換算）。營業日依 T 切分：自某日 T 起至次日 T 前的交易屬同一營業日；結算日期欄與列表上的日期皆為營業日，測試人員位於非
+  UTC 時區或 T 不是 00:00 時，須依 T 把「某營業日」換算成對應的 UTC 時間範圍，避免差一天（T 前後的交易歸屬不同營業日）
+- 機台 A 為自行從環境中選定的既有機台帳號（會員編號），須在該管理員管轄範圍內的機台場館；需要第二台機台時另選一台不同的既有機台帳號
+- 機台 A 在目前的營業日（今天所屬的營業日，依 T 判定）內有 2 場「已結束」的場次，另有 1 場「進行中」的場次，且 A 在該營業日沒有其他場次；本案須在該進行中場次仍進行中時完成（不要讓它結束，也不要在測試中途跨過日結時刻）。如何讓機台
+  A 在當日形成這個形狀（機台端遊玩、洗分／出金結束場次再重新開始）spec 未定義，我推測需在機台端操作或請環境負責人協助，不在後台完成
+- 查詢條件為單一營業日（結算日期起迄同為目前的營業日）
+test_data:
+- name: 機台 A 當日場次
+  value: 已結束 2、進行中 1
+- name: 預期
+  value: 依機台明細場次數 2；依場次明細 3 列
+steps:
+- n: 1
+  action: 統計維度選「依機台明細」、統計週期選「按日」、機台帳號填機台 A、結算日期設為目前的營業日（起迄同一天），搜尋；記錄機台 A 列的「場次數」
+- n: 2
+  action: 點擊機台 A 列的機台帳號進行鑽取，確認統計維度切換為「依場次明細」且機台帳號帶入篩選器
+- n: 3
+  action: 記錄「依場次明細」列表的列數，以及每一列的場次編號與結束時間
+expected_result: 步驟 1：機台 A 列場次數 2（進行中的場次不計入）。步驟 3：依場次明細列出 3 列（2 場已結束＋1 場進行中），其中進行中場次的結束時間顯示「—」；列數 3 多於上一層的場次數 2。
+expected_result_spec_reference:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  location: §列表欄位／場次數（第 45 行）
+  quote: 「依場次明細」另列進行中場次，故鑽取後的列數可能多於上一層的場次數
+decision_refs:
+- requirement_id: REQ-DAILYREPORT-009
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／場次數（第 45 行）
+- requirement_id: REQ-DAILYREPORT-009
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+    location: §列表欄位／場次數（第 45 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／場次數（第 45 行）
+  quote: 計入狀態為「已結束」「逾時結束」「日結結算」的場次，「進行中」不計入
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位／場次數（第 45 行）
+  quote: 「依場次明細」另列進行中場次，故鑽取後的列數可能多於上一層的場次數
+hotfix_eligible: false
+execution_cost: medium
+source_ref: new_required:REQ-DAILYREPORT-009 AC-DAILYREPORT-0096
+testcase_id: TC-DAILYREPORT-144
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+created_at: '2026-10-12T16:15:33Z'
+updated_at: '2026-10-12T16:15:33Z'
+history:
+- at: '2026-10-12T16:15:33Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RE72Z9AQGEHH1884DE72CD
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-007
+- at: '2026-10-12T16:15:33Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RE9ZHAAZWF60Q39P823WDD
+  run_id: RUN-20261012-007
+requirement_model_revision:
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  revision: R001
+  sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
