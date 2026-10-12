@@ -241,8 +241,10 @@ print(json.dumps({"cid": cid, "b": b, "a": a, "c": c_, "n": [n0, n1]}))""")
 
 def test_decision_added_landing_version_spec_updated_and_applicability(tmp_path):
     """落地途徑（ADR-012 §1）：
-    - spec_updated 且 resulting_spec_version 指向其他版本 → 答案落在那個版本的 spec 原文，本版本不成立；沒有 resulting_spec_version → 成立；
-    - 經人工適用紀錄（applicability）適用到同 area 另一個 spec 版本 → 該版本成立；適用紀錄補在 revision 之前 → 不成立（時間判定）。"""
+    - spec_updated 且最新答案的 resulting_spec_version 指向其他版本 → 答案落在那個版本的 spec 原文，本版本不成立；
+      同一張 CLR 改答 spec_updated、不帶 resulting_spec_version → 落在自身版本，成立（頂層 resulting_spec_version 會殘留，判定讀最新修訂自己的值）；
+    - 經人工適用紀錄（applicability）適用到同 area 另一個 spec 版本 → 該版本成立；
+      沒有派發包的 revision：適用紀錄晚於 revision 建立 → 成立；適用紀錄早於 revision 建立 → 不成立。"""
     root = mkroot(tmp_path, refs=())
     out = py(root, """
 import time
@@ -257,18 +259,46 @@ time.sleep(1.1)
 cid = clr.new("demo", "DEMO", F.SPEC, F.VER, "刪除失敗的錯誤代碼？", "oscar", consulted=[f"{F.SPEC}@{F.VER}"], requirement_id="REQ-DEMO-001", new_request=True)["clarification_id"]
 clr.answer(cid, "已寫入下一版 spec。", "pm", "spec_updated", "oscar", resulting_spec_version="1.1", new_request=True)
 moved = rm.decision_added(demo)
-cid2 = clr.new("demo", "DEMO", F.SPEC, F.VER, "刪除成功後的提示文字？", "oscar", consulted=[f"{F.SPEC}@{F.VER}"], requirement_id="REQ-DEMO-001", new_request=True)["clarification_id"]
-clr.answer(cid2, "spec 原文已更正（同版本）。", "pm", "spec_updated", "oscar", new_request=True)
-in_place = rm.decision_added(demo)
+clr.answer(cid, "改為本版本原文更正。", "pm", "spec_updated", "oscar", new_request=True)
+c = clr.load(cid)
+reanswered = {"top": c.get("resulting_spec_version"), "revs": [r.get("resulting_spec_version") for r in c["answer_revisions"]], "da": rm.decision_added(demo)}
+ap = clr.new("demo", "DEMO", F.SPEC, F.VER, "錯誤代碼是否共用？", "oscar", consulted=[f"{F.SPEC}@{F.VER}"], requirement_id="REQ-DEMO-001", new_request=True)["clarification_id"]
+clr.answer(ap, "兩個規格共用同一組錯誤代碼。", "pm", "requirement_clarified", "oscar", new_request=True)
 other = save(F.OTHER, 2)
 time.sleep(1.1)
 before_ap = rm.decision_added(other)
 bh = sources.basis_hash(sources.basis(F.OTHER, F.VER))
-clr.applicability_add(cid, 0, "REQ-DEMO-002", "site.delete.error_code", ["*"], {}, f"{F.OTHER}@{F.VER}", "同一條錯誤代碼規則", "oscar", confirm_basis=bh, new_request=True)
+clr.applicability_add(ap, 0, "REQ-DEMO-002", "site.delete.error_code", ["*"], {}, f"{F.OTHER}@{F.VER}", "同一條錯誤代碼規則", "oscar", confirm_basis=bh, new_request=True)
 after_ap = rm.decision_added(other)
-print(json.dumps({"cid": cid, "cid2": cid2, "moved": moved, "in_place": in_place, "before_ap": before_ap, "after_ap": after_ap}))""")
-    cid = out["cid"]
+time.sleep(1.1)
+other2 = save(F.OTHER, 2)
+print(json.dumps({"cid": cid, "ap": ap, "moved": moved, "re": reanswered, "before_ap": before_ap, "after_ap": after_ap, "ap_before_rev": rm.decision_added(other2)}))""")
+    cid, ap = out["cid"], out["ap"]
     assert out["moved"] == []                                                                         # resulting_spec_version 1.1：不落在 1.0
-    assert out["in_place"] == [out["cid2"]]                                                           # 沒有 resulting_spec_version：落在自身版本
+    assert out["re"]["top"] == "1.1" and out["re"]["revs"] == ["1.1", None]                           # 頂層殘留舊值；修訂各自記錄
+    assert out["re"]["da"] == [cid]                                                                   # 改答不帶版本 → 落在自身版本
     assert out["before_ap"] == []                                                                     # 沒有適用紀錄：CLR 不屬於 SPEC-OTHER-001
-    assert out["after_ap"] == [cid]                                                                   # 適用紀錄晚於 revision 建立時間 → 成立
+    assert out["after_ap"] == [ap]                                                                    # 適用紀錄晚於 revision 建立時間 → 成立
+    assert out["ap_before_rev"] == []                                                                 # 適用紀錄早於 revision 建立時間 → 不成立
+
+def test_decision_added_snapshot_applicability_added_after_dispatch(tmp_path):
+    """有派發包的 revision：答案已在決議快照中，但適用紀錄是派發之後才補的 → 成立；下一次分析的快照已含該適用紀錄 → 不成立。"""
+    root = mkroot(tmp_path)
+    out = py(root, FLOW + """
+r1, cid, tc = baseline()
+other = clr.new("demo", "DEMO", F.OTHER, F.VER, "共用規則？", "oscar", consulted=[f"{F.OTHER}@{F.VER}"], new_request=True)["clarification_id"]
+clr.answer(other, "共用錯誤規則。", "pm", "requirement_clarified", "oscar", new_request=True)
+clr.answer(cid, "E403。", "pm", "requirement_clarified", "oscar", new_request=True)
+rid = cia("R001", "decision_added")
+dispatch.dispatch(rid, "T0")
+bh = sources.basis_hash(sources.basis(F.SPEC, F.VER))
+clr.applicability_add(other, 0, "REQ-DEMO-002", "site.delete.error_code", ["*"], {}, f"{F.SPEC}@{F.VER}", "同一條錯誤規則", "oscar", confirm_basis=bh, new_request=True)
+g = F.analyze(rid, [req1(), req2_open()], task="T0"); assert g["result"] == "PASS", g
+r2 = engine.load_run(rid)["requirement_model_revision"]
+late = rm.decision_added(r2)
+rid2 = cia("R002", "decision_added")
+g2 = F.analyze(rid2, [req1(), req2_open()], task="T0"); assert g2["result"] == "PASS", g2
+r3 = engine.load_run(rid2)["requirement_model_revision"]
+print(json.dumps({"other": other, "late": late, "seen": rm.decision_added(r3)}))""")
+    assert out["late"] == [out["other"]]
+    assert out["seen"] == []

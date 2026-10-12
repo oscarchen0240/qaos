@@ -173,7 +173,7 @@ SAME_VERSION_REASON_RULES = {                                               # �
     "decision_revised": "revision 引用的 CLR 有更新的 answer_rev，或已撤回",
     "decision_applied": "revision 引用的 CLR 在 revision 建立之後新增了 applied landing；R000 為有任何 applied landing",
     "decision_added": "有最新答案落在本版本（CLR 自身版本或 applicability）、狀態 ANSWERED／INCORPORATED、resolution 為 requirement_clarified 或 spec_updated、"
-                      "本版本的 revision 都沒有引用最新答案、而且不在 revision 分析範圍內（R000 一律算；有派發包看決議快照；否則看時間）的 CLR",
+                      "from_revision 沒有引用它的任何 answer_rev、本版本其他 revision 也沒有引用最新答案、而且不在 revision 分析範圍內（R000 一律算；有派發包看決議快照；否則看時間）的 CLR",
 }
 
 def _bind_at_new_run(workflow_id: str, inputs: dict) -> dict:

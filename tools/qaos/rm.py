@@ -278,10 +278,12 @@ def _analysis_horizon(pin: dict) -> tuple:
 
 def _landing_handles(c: dict, rev: dict, sid: str, ver: str, bh) -> list:
     """CLR 最新答案落在 sid@ver 的途徑（與 X16 的兩種適用依據對應）：
-    ("own", None)＝CLR 自身的版本就是 sid@ver；但 spec_updated 且 resulting_spec_version 指向其他版本時，答案落在那個版本的 spec 原文，不算；
+    ("own", None)＝CLR 自身的版本就是 sid@ver；但 spec_updated 且最新答案的 resulting_spec_version 指向其他版本時，答案落在那個版本的 spec 原文，不算
+    （頂層 resulting_spec_version 只在有帶時更新、改答不會清除，所以讀最新修訂自己的值；修訂沒有這個欄位才退回頂層值）；
     ("applicability", 適用紀錄)＝最新 answer_rev 的人工適用紀錄指向 sid、basis_hash 等於 sid@ver 目前的 basis_hash。"""
     out = []
-    moved = rev.get("resolution") == "spec_updated" and c.get("resulting_spec_version") and str(c["resulting_spec_version"]) != str(c.get("spec_version"))
+    target = rev["resulting_spec_version"] if "resulting_spec_version" in rev else c.get("resulting_spec_version")   # 舊修訂沒有自己的值 → 頂層值（回答當時唯一的紀錄）
+    moved = rev.get("resolution") == "spec_updated" and target and str(target) != str(c.get("spec_version"))
     if (c.get("spec_id"), str(c.get("spec_version"))) == (sid, ver) and not moved: out.append(("own", None))
     for ap in c.get("applicability") or []:
         if ap.get("answer_rev") == rev["rev"] and (ap.get("scope") or {}).get("spec_id") == sid and ap.get("basis_hash") == bh: out.append(("applicability", ap))

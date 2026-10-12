@@ -1,7 +1,7 @@
 # ADR-012 · 同版本 CIA 新增 reason `decision_added`（同版本新回答的 CLR 落地）
 
 - **Status**: Proposed——merge 後生效，Accepted 日期由 Oscar 於合併時確認。
-- **範圍**：需求 A 第 5 章 §6、§8；附錄 A 5-19～5-21。程式：`tools/qaos/rm.py` 的 `decision_added`、`engine.py` 的同版本 CIA 檢查與 `WARN_DECISION_ADDED` 提示。
+- **範圍**：需求 A 第 5 章 §6、§8；附錄 A 5-19～5-21。程式：`tools/qaos/rm.py` 的 `decision_added`、`engine.py` 的同版本 CIA 檢查與 `WARN_DECISION_ADDED` 提示、`clarification.py` 的答案修訂記錄 `resulting_spec_version`（`schemas/spec/clarification.schema.json` 的 AnswerRevision 新增選填欄位）。
 
 ## Context
 
@@ -24,7 +24,7 @@
 `rm.decision_added(pin)` 回傳成立的 CLR ID 清單（空＝不成立）。CLR 必須同時符合：
 
 1. 位於 T0 決議快照的範圍（目標 spec 的 area 與直接參考的 area，與 `dispatch._areas` 相同），而且最新答案**落在 from_revision 的版本**（落地途徑，對應 X16 的兩種適用依據）：
-   - 自身版本：CLR 的 `spec_id@spec_version` 就是這個版本；但 `spec_updated` 且 `resulting_spec_version` 指向其他版本時不算——答案落在那個版本的 spec 原文；
+   - 自身版本：CLR 的 `spec_id@spec_version` 就是這個版本；但 `spec_updated` 且最新答案的 `resulting_spec_version` 指向其他版本時不算——答案落在那個版本的 spec 原文。CLR 頂層的 `resulting_spec_version` 只在 `answer --spec-version` 有帶時更新、改答不會清除（admin-ui 依賴這個行為，不改），所以 `clarification answer` 另在每筆答案修訂記錄自己的 `resulting_spec_version`（沒帶＝null），判定讀最新修訂；舊修訂沒有這個欄位時以頂層值為準；
    - 適用紀錄：最新 answer_rev 有指向這個 spec、`basis_hash` 等於這個版本目前 basis_hash 的 applicability（同 spec 跨版本、跨 spec 的落地都走這條）；
 2. 狀態是 ANSWERED 或 INCORPORATED；
 3. 最新 answer_rev 的 resolution 是 `requirement_clarified` 或 `spec_updated`；
@@ -73,4 +73,4 @@ reason 不符時，錯誤訊息附上該 reason 的判定條件。派發包找�
 
 - `run new spec-change-impact … --input reason=decision_added` 可以把同版本新回答的 CLR 帶進 T0。T0 的決議快照本來就收錄同 area 已回答的 CLR；新 revision 以 clarification 型 SourceRef 採用最新 answer_rev、通過 X16 時，CLR 依 A4 轉 INCORPORATED。run COMPLETED 後以 `clarification apply --path a6 --landed-in <run>` 結案。
 - X16 照舊：CLR 自身的範圍只涵蓋它自己的 `requirement_id` 與 `subject`。同一張 CLR 要作為其他需求決策點的依據（例如 CLR-TXLOG-002 之於 REQ-TXLOG-017、029），需先以 `clarification applicability add` 補人工適用紀錄；否則這些需求只能以 spec 原文為依據改寫。
-- 測試：`tests/test_same_version_decision_added.py`（端到端 T0→A4→G-IMPACT→apply a6；R000；no_change／out_of_scope；撤回；同 area 其他 spec；已被引用；同版本其他 revision 已引用；引用舊 rev 與 `decision_revised` 互斥；派發後才回答、快照內未採用、派發包遺失；accept-declaration 沿用 parent；沒有派發包時以時間判定；spec_updated 指向其他版本；applicability 途徑；不擋 `_skip` 與 testcase-revision 但記 audit 警告；reason 不符時拒絕且不建立 run）。
+- 測試：`tests/test_same_version_decision_added.py`（端到端 T0→A4→G-IMPACT→apply a6；R000；no_change／out_of_scope；撤回；同 area 其他 spec；已被引用；同版本其他 revision 已引用；引用舊 rev 與 `decision_revised` 互斥；派發後才回答、快照內未採用、派發包遺失；accept-declaration 沿用 parent；沒有派發包時以時間判定；spec_updated 指向其他版本與同一張 CLR 改答；applicability 途徑（晚於／早於 revision、派發後才補）；不擋 `_skip` 與 testcase-revision 但記 audit 警告；reason 不符時拒絕且不建立 run）。
