@@ -1,0 +1,189 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+execution_mode: manual
+assumptions: []
+title: 機台對同一筆出金重送完成回報：核實頁以該訂單編號查詢仍只有一筆待核實紀錄，日結報表未兌現金額只計一次面額
+description: TCRiskReview RF-17：機台端出金完成回報重送（同一訂單編號的完成通知送達多次）時，驗證本頁不會重複產生待核實紀錄，日結報表同一營業日的未兌現金額只計入一次面額。
+requirement_ids:
+- REQ-CASHOUT-001
+- REQ-CASHOUT-032
+acceptance_criteria_ids:
+- AC-CASHOUT-0011
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- error_guessing
+priority: medium
+risk: high
+preconditions:
+- 以管理員或站長登入後台（本案從頭到尾使用同一個後台帳號），頁面標題下方的站台切換下拉選單切到本案機台場館所屬的站台。
+- 【環境前提，佈置方式 spec 與派發包均未定義，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為指定值（399.6），且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。出金一律全額並清空餘額，所以每次出金前都要重新把餘額調到指定值。『如何把機台餘額調到指定值』（遊戲結果、人工開分、機台端測試工具等）不在
+  spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為指定值，請回報環境負責人，不要以其他金額替代後逕行判定。
+- 【環境前提，spec 與派發包均未定義，需環境負責人確認】機台端測試工具能對『同一筆出金（同一訂單編號、同一交易）』重送完成回報（end-cashout）。注意：AC-CASHOUT-0041 的備註（RD 2026-09-23）載明後端無法攔截
+  end-cashout 完成回報，測試環境對 end-cashout 的處理能力有限；能否重送同一筆的完成回報，我無法從 spec 或派發包確認。若工具只能送出『新的出金請求』而不是重送同一筆的完成回報，本案無法執行，請標記為阻塞並回報，不要以第二次新出金替代（那會合法地產生第二筆紀錄）。
+- 【推理說明，spec 未對重送行為逐字規定】第 19 行以『每一筆』已完成的交易產生一筆待核實紀錄、第 63 行規定交易編號對應機台交易編號、第 129 行規定僅已完成的交易產生核實紀錄；三處合起來是『一筆交易對應一筆核實紀錄』。重送同一筆交易（同一訂單編號、同一交易編號）的完成回報不是新交易，所以預期仍只有一筆，是由這三處推得，不是
+  spec 對重送的明文。
+- 【環境前提，spec 與派發包均未定義，需環境負責人確認】場館日結報表的後台選單路徑與欄位名稱、場館日結時間（營業日的切分時點；spec 未定義其設定位置與值）、以及核實／作廢後報表金額是即時或排程更新。本案所稱營業日 D＝『出金當下所屬的營業日，以場館日結時間切分』，全程在同一個營業日
+  D 內完成，且執行時刻須同時距場館日結時間（營業日切分點）與 UTC+0 00:00 前後各至少 2 小時，並確認以這兩種切法得到的日期相同（「出收據那天」以哪一種切日目前待 Clarification CLR-CASHOUT-005，本案不驗證也不採用其中一種答案；兩種切法日期一致，才不會因答案不同而查錯列）。若報表未即時反映，記錄實際更新方式與等待時間後再讀取，不要直接判定
+  PASS／FAIL。報表以管理員或站長身分檢視（這兩個角色是 spec 已授權執行本頁核實與作廢者；各角色對日結報表的可見範圍 spec 未定義，若看不到報表請回報環境負責人，不要改用其他角色逕行判定）。
+- 測試期間該站台（使用測試站台與測試機台帳號）不應有其他出金／洗分交易、核實或作廢，也不要對選定機台帳號的會員做其他存提款或人工操作，避免干擾會員列表與日結報表的前後差值（欄位可能已有既有累計值，不要求為 0，一律取前後差值比對）。
+- 本案的出金保持待核實，不需核實或作廢（核實不可撤銷，本案不需要）；產生的紀錄不與其他 TC 共用。
+test_data:
+- name: 機台餘額（出金前）／預期面額
+  value: '399.6'
+- name: 完成回報重送次數
+  value: 先後各 1 次，共 2 次（若工具支援並行，再並行重送 2 個）
+- name: 預期同訂單編號的核實紀錄筆數
+  value: '1'
+  note: 不是 2 或 3
+- name: 預期日結報表未兌現金額增量
+  value: '+399.6'
+  note: 不是 +799.2
+steps:
+- n: 1
+  action: 到後台『帳務管理 > 洗分出金核實』，篩選『機台帳號』＝選定機台帳號的會員編號、『交易類型』＝機台出金、『核實狀態』＝待核實並搜尋，記下結果筆數 c0。開啟場館日結報表（選單路徑見前提），同一站台，結算日期設為營業日 D（起訖皆為
+    D），記下『未兌現金額』U0。
+  expected: 取得 c0 與 U0 作為基準。
+- n: 2
+  action: 在機台端對選定機台帳號（餘額 399.6）按『結算』執行出金，記下訂單編號 O、交易編號 T（交易編號可由本頁列表或機台交易紀錄查得）與面額。
+  expected: 出金完成，面額數值 399.6（若不是，前提不成立，停止並回報）。
+- n: 3
+  action: 回洗分出金核實頁，以 O 查詢；並以步驟 1 的篩選條件重新查詢。
+  expected: 以 O 查詢恰好 1 筆：機台出金、核實狀態『待核實』、交易編號為 T、實際金額數值 399.6；步驟 1 的篩選條件結果筆數為 c0 ＋ 1。
+- n: 4
+  action: 以機台端測試工具對同一筆出金（訂單編號 O、交易編號 T）重送完成回報（end-cashout）一次；稍待片刻後再重送一次。記下工具對每次重送的回應（回應內容 spec 未定義，只記錄，不判定）。
+  expected: 兩次重送完成。
+- n: 5
+  action: 回洗分出金核實頁重新整理，再次以 O 查詢，並以步驟 1 的篩選條件重新查詢。
+  expected: 以 O 查詢仍恰好 1 筆，狀態『待核實』、交易編號 T、實際金額數值 399.6；步驟 1 的篩選條件結果筆數仍為 c0 ＋ 1（沒有新增第二筆、第三筆）。
+- n: 6
+  action: 回日結報表，同一站台、同一營業日 D 重新查詢，讀取『未兌現金額』U1。
+  expected: U1 ＝ U0 ＋ 399.6（只計入一次面額），不是 U0 ＋ 799.2。
+expected_result: 機台對同一筆出金重送完成回報後，洗分出金核實頁以該訂單編號查詢仍只有一筆待核實紀錄（同一筆交易編號），同機台帳號的待核實出金筆數只增加 1；日結報表同一營業日的未兌現金額只增加一次面額 399.6。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §功能說明（第 19 行）
+  quote: 每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄
+decision_refs:
+- requirement_id: REQ-CASHOUT-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §功能說明（第 19 行）
+- requirement_id: REQ-CASHOUT-001
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §相關業務規則（交易核實）（第 129 行）
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（備註）（第 110 行）
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（備註）（第 108 行）
+- requirement_id: REQ-CASHOUT-032
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §收據兌現的櫃檯流程（第 118 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §功能說明（第 19 行）
+  quote: 每一筆「已完成」的機台洗分或機台出金，系統會自動在本頁產生一筆待核實紀錄
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §相關業務規則（交易核實）（第 129 行）
+  quote: 洗分與出金完成時，系統自動於「洗分出金核實」頁產生一筆待核實紀錄
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（備註）（第 110 行）
+  quote: 因此日結報表的「未兌現金額」會長期留在出收據那天的列上，直到核實或作廢才轉出；查詢範圍內的總計即代表場館端尚未付出的負債（要看全部未兌現，結算日期須涵蓋最早一張未兌現收據）
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（備註）（第 108 行）
+  quote: 出金停在「待核實」則屬正常——收據不設兌現時效，該金額對應報表的「未兌現金額」
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §收據兌現的櫃檯流程（第 118 行）
+  quote: 平台只記錄面額、不管現場實際付現多少，零頭由場館自理、不記差額，核實與日結報表一律以面額計；門檻 0 的全額洗分比照（2026-10-05 定案）
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §列表欄位（第 63 行）
+  quote: 對應的機台交易編號，可點擊跳至機台交易紀錄查看明細
+source_ref: TCRiskReview ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM RF-17（RUN-20261012-006）
+testcase_id: TC-CASHOUT-149
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+created_at: '2026-10-12T17:30:45Z'
+updated_at: '2026-10-12T17:30:45Z'
+history:
+- at: '2026-10-12T17:30:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+  run_id: RUN-20261013-002
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd

@@ -1,0 +1,193 @@
+product: ba-admin
+functional_area: CASHOUT
+spec_id: SPEC-CASHOUT-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+execution_mode: manual
+assumptions: []
+title: 同一機台帳號的兩張待核實出金（399.6 與 321）由兩個不同帳號在 API 層並行核實：兩筆都成功，提款次數 +2、提款金額 +720.6，兩筆機台交易紀錄的核實人員各自正確
+description: TCRiskReview RF-14（及二次抽查 RF-01、RF-02）：同一機台帳號的兩張不同待核實出金，由兩個不同的後台帳號以腳本在 API 層同時送出核實請求。驗證兩筆都核實成功、累計值沒有更新遺失、回寫各自正確。
+requirement_ids:
+- REQ-CASHOUT-006
+- REQ-CASHOUT-026
+acceptance_criteria_ids: []
+test_level: api
+test_types:
+- functional
+- negative
+design_techniques:
+- error_guessing
+priority: medium
+risk: high
+preconditions:
+- 兩個『不同的』後台帳號 U1、U2，角色皆為 spec 已授權執行核實者（管理員、站長、操作員三種擇二；若用操作員須屬於本案機台場館，因操作員限自身場館），自行從環境中選定；各用一個獨立的瀏覽器工作階段登入（一般視窗、無痕視窗），站台切換選單都切到本案機台場館所屬的站台。
+- 【環境前提，佈置方式 spec 與派發包均未定義，需環境負責人確認】本案需要一個既有的機台帳號（自行從環境中選定，該機台帳號即會員編號），其機台餘額可被調整為指定值（399.6 與 321；兩張出金需對『同一個』機台帳號先後各執行一次，每次出金前重新調整餘額。321
+  是 spec 例子（餘額 321 → 收據面額 321）），且機台端（前台，非後台）可由玩家按『結算』鍵（CASHOUT）執行出金。出金一律全額並清空餘額，所以每次出金前都要重新把餘額調到指定值。『如何把機台餘額調到指定值』（遊戲結果、人工開分、機台端測試工具等）不在
+  spec 範圍，是我推測需要由環境負責人提供；後台洗分出金核實頁不會憑空產生出金紀錄（紀錄由機台端已完成的交易自動產生），因此後台單獨無法執行本案。若無法佈置為指定值，請回報環境負責人，不要以其他金額替代後逕行判定。
+- 【取樣紀錄 X】核實請求的網址與格式 spec 未定義，需要先擷取：另備一筆與 P 不同的待核實出金 X（可屬另一個機台帳號），由 U1 在 Network 面板（勾 Preserve log、篩 Fetch/XHR）正常核實一次，對該核實請求右鍵
+  → Copy → Copy as cURL 存成樣板（X 因此被核實，不可重用；若環境負責人能直接提供核實 API 文件，可省略 X）。同樣從 U1、U2 視窗各取一個請求的 Copy as cURL，取得各自的認證資訊（Cookie 或
+  Authorization）。
+- 【並行送出方式】用下方 test_data 的『並行送出腳本』，JOBS 改為兩筆：(U1 → P1) 與 (U2 → P2)，一次同時放行。P1、P2 的紀錄識別取得方式同 TC4：由 U1／U2 視窗以訂單編號查詢時，列表查詢請求的回應內容取得。P1、P2
+  在並行送出之前不可在畫面點過『核實』。
+- 【有效性判定】逐請求記錄『送出時間』與『回應時間』（腳本輸出的 Unix 時間，單位秒、毫秒精度，同一台機器同一時鐘）。只有 max(所有請求的送出時間) < min(所有請求的回應時間) 才表示所有請求在回應回來之前都已送出、請求確實重疊；不成立的那一輪視為無效，不計入輪次，換新的待核實出金重做。
+- 【執行輪次】至少 5 個『有效』輪次（本案每輪只有 2 個請求，重疊機率較低，所以輪數比 TC4 多），每輪使用同一機台帳號新產生的兩張待核實出金（核實不可撤銷，用過即不可重用）；任何一輪不符預期即判 FAIL。
+- 【環境前提，需環境負責人確認】後台操作紀錄的頁面位置、查詢方式與欄位 spec 未定義（只在第 142 行規定洗分出金核實與作廢須寫入操作人員、時間、對象交易）。找不到操作紀錄頁時，該項標記為『無法驗證』並回報，不要判 FAIL，也不要因此跳過其餘檢查。
+- 測試期間該站台（使用測試站台與測試機台帳號）不應有其他出金／洗分交易、核實或作廢，也不要對選定機台帳號的會員做其他存提款或人工操作，避免干擾會員列表與日結報表的前後差值（欄位可能已有既有累計值，不要求為 0，一律取前後差值比對）。
+- 核實與作廢一經確認皆不可撤銷，且會進入場館日結報表的統計；本案只使用測試站台、測試機台帳號產生的紀錄，不得對正式營運資料執行，本案產生的紀錄不與其他 TC 共用。
+test_data:
+- name: P1 面額（機台餘額）
+  value: '399.6'
+- name: P2 面額（機台餘額）
+  value: '321'
+- name: 並行請求組成
+  value: (U1 → P1) × 1 ＋ (U2 → P2) × 1
+  note: 兩個請求目標不同紀錄、同一機台帳號
+- name: 並行送出腳本
+  value: "# 並行送出腳本（Python 3 標準庫；環境不限，只要能連到後台 API）\nimport threading, time, urllib.request, urllib.error\nURL    = \"<核實請求網址，取自樣板>\"\
+    \nMETHOD = \"<核實請求方法，取自樣板>\"\ndef body(record_id): return \"<樣板請求內容，把目標紀錄識別換成 record_id；格式一律取自樣板>\"\nH1 = {\"<標頭名>\":\
+    \ \"<U1 的認證資訊，取自 U1 視窗任一請求的 Copy as cURL>\", \"Content-Type\": \"<取自樣板>\"}\nH2 = {\"<標頭名>\": \"<U2 的認證資訊>\", \"Content-Type\"\
+    : \"<取自樣板>\"}\nJOBS = [  # (標籤, 標頭, 目標紀錄識別)——依本案步驟填寫\n    (\"U1\", H1, \"<P 的紀錄識別>\"), (\"U1\", H1, \"<P 的紀錄識別>\"), (\"\
+    U1\", H1, \"<P 的紀錄識別>\"), (\"U1\", H1, \"<P 的紀錄識別>\"), (\"U1\", H1, \"<P 的紀錄識別>\"),\n    (\"U2\", H2, \"<P 的紀錄識別>\"),\
+    \ (\"U2\", H2, \"<P 的紀錄識別>\"), (\"U2\", H2, \"<P 的紀錄識別>\"), (\"U2\", H2, \"<P 的紀錄識別>\"), (\"U2\", H2, \"<P 的紀錄識別>\"),\n\
+    ]\nbar = threading.Barrier(len(JOBS)); res = []\ndef run(tag, h, rid):\n    req = urllib.request.Request(URL, data=body(rid).encode(),\
+    \ headers=h, method=METHOD)\n    bar.wait()                       # 所有執行緒就緒後同時放行\n    t_send = time.time()\n    try:\n\
+    \        with urllib.request.urlopen(req, timeout=30) as r: code, txt = r.status, r.read().decode()\n    except urllib.error.HTTPError\
+    \ as e: code, txt = e.code, e.read().decode()\n    t_resp = time.time()\n    res.append((tag, rid, t_send, t_resp, code,\
+    \ txt[:200]))\nts = [threading.Thread(target=run, args=j) for j in JOBS]\n[t.start() for t in ts]; [t.join() for t in\
+    \ ts]\nfor r in sorted(res, key=lambda r: r[2]): print(\"%s %s send=%.3f resp=%.3f HTTP %s %s\" % (r[0], r[1], r[2], r[3],\
+    \ r[4], r[5]))\nprint(\"VALID(max(send) < min(resp)):\", max(r[2] for r in res) < min(r[3] for r in res))\n"
+  note: 同 TC4 的腳本，JOBS 改為上列兩筆；標籤用來對照核實人員
+- name: 預期提款次數差（每輪）
+  value: '+2'
+  note: 不是 +1
+- name: 預期提款金額差（每輪）
+  value: '+720.6'
+  note: 399.6＋321；若發生更新遺失會變成 +399.6 或 +321
+steps:
+- n: 1
+  action: （只做一次）依前提的『取樣紀錄 X』擷取核實請求樣板與 U1、U2 的認證資訊；之後才讀取任何會員列表基準。
+  expected: 取得樣板與 U1、U2 認證資訊。
+- n: 2
+  action: （每輪開始）到後台『會員列表』，以選定機台帳號的會員編號查詢，記下『提款次數』N0 與『提款金額』W0（小數位照實記錄）。
+  expected: 取得本輪基準 N0、W0。
+- n: 3
+  action: 在機台端對選定機台帳號先把餘額調為 399.6，按『結算』出金，記下訂單編號 O1；再把餘額調為 321，按『結算』出金，記下訂單編號 O2。
+  expected: 兩次出金完成，面額數值依序為 399.6、321（若不是，前提不成立，停止並回報）。
+- n: 4
+  action: U1 視窗以 O1 查詢、U2 視窗以 O2 查詢，確認各為『待核實』；取得 P1、P2 的紀錄識別，並記下兩筆在『機台交易紀錄』中的交易編號 T1、T2。不要點擊『核實』。
+  expected: 兩筆皆為待核實，面額數值 399.6、321；取得紀錄識別與交易編號。
+- n: 5
+  action: 執行『並行送出腳本』（U1 → P1、U2 → P2 同時放行），保存每個請求的送出時間、回應時間、HTTP 狀態與回應摘要。
+  expected: 腳本輸出 VALID(max(send) < min(resp)) ＝ True（否則本輪無效，不計入輪次，換新的兩張出金重做）；兩個請求都成功（它們核實的是不同紀錄，不應互相阻擋）。
+- n: 6
+  action: 在核實頁分別以 O1、O2 重新查詢。
+  expected: O1、O2 皆為『已核實』，核實人員分別為 U1、U2，核實時間皆有值。
+- n: 7
+  action: 到『機台交易紀錄』分別以 T1、T2 查詢。
+  expected: T1 為『已核實』且核實人員／時間與核實頁 O1 一致（U1）；T2 為『已核實』且與核實頁 O2 一致（U2）；沒有互相覆寫。
+- n: 8
+  action: 到後台操作紀錄（位置見前提）查詢 P1、P2。
+  expected: P1、P2 各有 1 筆核實紀錄，操作人員分別為 U1、U2。（找不到操作紀錄頁時標記『無法驗證』，不判 FAIL。）
+- n: 9
+  action: 回會員列表重新查詢同一會員，讀取『提款次數』與『提款金額』。
+  expected: 提款次數 ＝ N0 ＋ 2（不是 N0 ＋ 1）；提款金額 ＝ W0 ＋ 720.6（不是 W0 ＋ 399.6 或 W0 ＋ 321，即兩筆累計都沒有遺失）。
+- n: 10
+  action: 重複步驟 2～9，累積至少 5 個有效輪次。
+  expected: 每一個有效輪次都符合步驟 5～9 的預期。
+expected_result: 同一機台帳號的兩張待核實出金（面額 399.6 與 321），由兩個不同帳號在請求確實重疊的情況下並行核實後，兩筆都成為已核實，核實頁與機台交易紀錄的核實人員／時間各自一致、操作紀錄各 1 筆；該機台帳號的提款次數累計
+  +2、提款金額累計 +720.6，沒有任何一筆累計遺失。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  location: §核實狀態（第 37 行）
+  quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」
+decision_refs:
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §核實狀態（第 37 行）
+- requirement_id: REQ-CASHOUT-006
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 97 行）
+- requirement_id: REQ-CASHOUT-026
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+    location: §操作（規則表）（第 97 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §核實狀態（第 37 行）
+  quote: 核實當下該筆累計進該機台帳號於會員列表的「提款次數」「提款金額」
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 97 行）
+  quote: 金額以站台核心貨幣原值累計、不換算 USDT；待核實與已作廢不計
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §操作（規則表）（第 97 行）
+  quote: 核實結果回寫機台交易紀錄的「核實狀態」「核實人員／時間」欄位
+- type: spec
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  content_hash: 76c11bf6a07b6537100acbfd886f7bdd5adf15317e718127f20b52c007ddd6b6
+  location: §對既有章節的影響（第 142 行）
+  quote: 洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）
+source_ref: TCRiskReview ART-TRR-01M4R8WN6KYPRJVTQXYZSFBVBM RF-14（RUN-20261012-006）；二次抽查 ART-TRR-01M4RHFCN5HTNDGCSDK0ES0KR8
+  RF-01、RF-02
+testcase_id: TC-CASHOUT-147
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+created_at: '2026-10-12T17:30:45Z'
+updated_at: '2026-10-12T17:30:45Z'
+history:
+- at: '2026-10-12T17:30:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-002
+- at: '2026-10-12T17:30:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+  run_id: RUN-20261013-002
+requirement_model_revision:
+  spec_id: SPEC-CASHOUT-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 06beb1ad2602689cc11dbea3b7274c2b0594809d7d3e8e54ddd62462a4b5febd

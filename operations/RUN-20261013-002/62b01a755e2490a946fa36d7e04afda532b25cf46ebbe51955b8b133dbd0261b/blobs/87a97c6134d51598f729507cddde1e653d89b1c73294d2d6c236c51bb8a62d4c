@@ -1,0 +1,148 @@
+artifact_id: ART-TVR-01M4RJK1NJH6J4ZCN18ZY1BS0R
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-002
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-12T17:30:12Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+- entity_type: Artifact
+  id: ART-TDR-01M4RJC1Q089J9BNQ0PEHV8Y3Q
+- entity_type: Artifact
+  id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+requires_approval: null
+dispatch_packet_sha256: c42129959f35dfec74bc014c9d62387269b7c936d4ba059f5492fdffa4647fa6
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RJC1Q02V3CARA1J0FPA809
+  validated_against:
+    spec_id: SPEC-CASHOUT-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4R7MFN7P9S3MBA7FSR1W8ZQ
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN
+    issue_type: unsupported_assumption
+    severity: minor
+    violated_requirement: REQ-CASHOUT-024
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §對既有章節的影響（第 142 行）
+      quote: 洗分出金核實（含收據核銷）與作廢屬現金相關操作且不可撤銷，須寫入後台操作紀錄（操作人員、時間、對象交易）
+    evidence: TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN 步驟 9：『P 的核實紀錄只有 1 筆，操作人員為 W』（同一輪有 9 個被拒的核實請求）；TC-DRAFT-01M4RJC1Q0NF0R7J93BJZ4ST4Z
+      步驟 8：『操作紀錄中該筆交易的核實紀錄只有 1 筆』（前面有連點與 3 次重放被拒）。
+    explanation: 第 142 行只規定『核實』要寫入操作紀錄；被阻擋的核實嘗試是否也留紀錄（例如『核實失敗』）沒有定義。派發包的 CLR-CASHOUT-007 正是在問作廢重送時操作紀錄會不會重複追加，核實這邊的同類問題同樣未定。如果系統把被拒的嘗試也記下來，執行者照字面『只有
+      1 筆』可能誤判 FAIL。兩案的前提已寫明找不到操作紀錄頁就記『無法驗證』，所以風險有限。
+    recommended_change: 不阻擋。把兩處斷言改寫成『成功核實（操作人員＝W）的操作紀錄恰 1 筆；被阻擋的嘗試是否留紀錄 spec 未定義（類比 CLR-CASHOUT-007），只記錄、不判定』。
+  - testcase_id: TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-CASHOUT-024
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（規則表）（第 95 行）
+      quote: 僅「待核實」；已核實或已作廢的紀錄再次核實時，系統阻擋並提示，避免重複付款
+    evidence: TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN 步驟 6：『恰好 1 個請求成功，其餘 9 個被拒絕（非成功）』；前提說拒絕的回應內容 spec 未定義、只判定『非成功』。腳本只輸出 HTTP
+      狀態與回應前 200 字。TC-DRAFT-01M4RJC1Q0NF0R7J93BJZ4ST4Z 步驟 4～6 同樣以回應判定成功或拒絕。
+    explanation: 並行設計本身沒問題：Barrier 同時放行、逐請求記錄送出／回應時間、判定 max(send) < min(resp)、用兩個不同帳號從核實人員判斷勝方，可執行；斷言也只用 spec 定義的結果（僅待核實可核實、重複阻擋、核實當下累計）。不過業務拒絕可能也回
+      HTTP 200、只在內容帶錯誤訊息，這時『成功』要怎麼認定沒有寫明。另外，腳本的 t_send 是在 urlopen 建立連線之前記錄，比實際送出略早；只有在伺服器回應比連線建立還快時，才會影響重疊判定。
+    recommended_change: 不阻擋。補一句判定基準：以取樣紀錄 X 成功核實時的回應內容為『成功』樣板，內容不同就視為非成功；勝方以步驟 7 的核實人員為準，步驟 6 的計數僅供對照。
+  - testcase_id: TC-DRAFT-01M4RJC1Q027RYAGAWBN3C13TS
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-006
+    spec_reference: null
+    evidence: TC-DRAFT-01M4RJC1Q027RYAGAWBN3C13TS 前提：『P1、P2 的紀錄識別取得方式同 TC4』、『輪數比 TC4 多』，以批次內序號指稱 TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN。
+    explanation: draft_id 每輪都會重新產生，正式 ID 要到核准時才配發，『TC4』這種序號在 Registry 中無從對應，日後單獨執行這張案例時會找不到參照。
+    recommended_change: 不阻擋。把參照改成內文直接寫出取得方式（前提中的取樣紀錄 X 段已經說明），或在核准後改指正式 TC ID。
+  - testcase_id: TC-DRAFT-01M4RJC1Q0V2KA7KCK1GAH0VCY
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-CASHOUT-001
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §相關業務規則（交易核實）（第 129 行）
+      quote: 核實與否不影響分數與交易狀態
+    evidence: 新增的 TC-DRAFT-01M4RJC1Q0V2KA7KCK1GAH0VCY（已核實／已作廢後遲到的完成回報）的 acceptance_criteria_ids 為空，預期結果建立在前提標明的推論上（第 19、63、129
+      行合起來是『一筆交易對應一筆核實紀錄』）。TC-DRAFT-…XRAENC 與 …3C13TS 的 AC 也是空的。
+    explanation: 判定：這個推論不構成未定義假設。它已明確標為推論、沒有冒充成 spec 明文，三處引文都逐字相符；而第 129 行還寫了『核實與否不影響分數與交易狀態』，可直接支持『核實後該交易仍是同一筆已完成交易、不是新交易』。斷言只看本頁紀錄數、狀態、提款累計與報表金額，重送的回應內容只記錄；工具無法重送就記受阻。案例也刻意不交叉（A
+      只核實、B 只作廢），沒有斷言已核實能否作廢（CLR-CASHOUT-003）。只是沒有任何 AC 描述這個不變式，追溯只到需求層級。
+    recommended_change: 不阻擋。可選：前提的推理說明補引第 129 行『核實與否不影響分數與交易狀態』；RM 下一版在 REQ-CASHOUT-001 補一條 AC 或 data_scope 決策點（同一交易重送完成回報不產生新紀錄，不論核實狀態），讓這類案例有
+      AC 可掛。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-CASHOUT-026
+    spec_reference:
+      spec_id: SPEC-CASHOUT-001
+      spec_version: '0.2'
+      location: §操作（規則表）（第 97 行）
+      quote: 核實結果回寫機台交易紀錄的「核實狀態」「核實人員／時間」欄位
+    evidence: TC-DRAFT-…RRWN、…3C13TS、…ST4Z 掛上 REQ-CASHOUT-026（不在 run input.scope 列的 9 條內），只追溯到需求、沒有掛 AC-CASHOUT-0261（該 AC
+      的情境是洗分），並驗證出金核實回寫機台交易紀錄的核實人員／時間只寫一次、不被覆寫。
+    explanation: 判定：合理。這三張的主要目的仍是範圍內的 REQ-024／006。回寫的斷言是依第 97 行（洗分、出金都適用），既然斷言了這個行為，就應如實追溯到 REQ-026；沒有掛洗分專屬的 AC-0261 也是正確的。這是追溯用的掛載，不是擴大設計範圍；REQ-026
+      原有的 ACTIVE TC-CASHOUT-075 不受影響。
+    recommended_change: 不阻擋。建議在 run 總結或核准摘要註明：本批追溯包含 scope 外的 REQ-CASHOUT-026（僅作追溯）。
+  - testcase_id: '*'
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 有 8 條借用 NO_REJECTION_CONTRACT 前綴：REQ-004、005、011、021、025、027、030 在範圍外，REQ-018 在範圍內。ACTIVE
+      TC 加本批合計，需求 32/32、AC 50/51，唯一缺的是 AC-CASHOUT-0041。
+    explanation: 依指示，scope 限定造成的豁免不判為 issue。AC-0041 的零覆蓋是 RM 已記載的驗證能力缺口（RD 2026-09-23 確認待確認狀態無法在測試環境製造，原案 TC-CASHOUT-044 已退役），不是本批造成的。
+    recommended_change: 不阻擋。等框架支援 scope 限定的豁免碼後，範圍外需求不必再借用此前綴。
+  coverage_summary:
+    requirements_total: 32
+    requirements_covered: 32
+    ac_total: 51
+    ac_covered: 50
+    uncovered_accepted:
+    - AC-CASHOUT-0041
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RJC1PZA85JMDMZFVMR4GSN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1PZ30FS8RA6MFCPVBGD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1PZPRG5SZKKX3XRAENC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q0B08NH3DBWCX6RRWN
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q027RYAGAWBN3C13TS
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q0NF0R7J93BJZ4ST4Z
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q0YR3F48VDVFZFYAPW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q0V8SGG6TZ5XE1XWJ2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RJC1Q0V2KA7KCK1GAH0VCY
+    verdict: ok
+history:
+- at: '2026-10-12T17:30:41Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-002
