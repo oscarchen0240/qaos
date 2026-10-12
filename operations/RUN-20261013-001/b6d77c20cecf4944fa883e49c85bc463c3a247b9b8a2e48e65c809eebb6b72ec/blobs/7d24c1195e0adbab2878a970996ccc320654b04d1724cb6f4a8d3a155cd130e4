@@ -1,0 +1,135 @@
+title: 機台場館操作員以 API 匯出非自身場館的紅包明細 CSV：被後端拒絕『無權限』、不回傳資料（對照：匯出自身場館成功）
+description: 機台場館操作員以 API 匯出非自身場館的紅包明細 CSV：被後端拒絕『無權限』、不回傳資料（對照：匯出自身場館成功）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-024
+acceptance_criteria_ids:
+- AC-REDPACKET-0245
+- AC-REDPACKET-0246
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: api
+test_types:
+- security
+- negative
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 機台場館 V1、V2（同一站長可見，自行從環境中選定）；備妥 V1 的操作員後台帳號；V1、V2 各一個進行中的紅包活動（建立前先確認沒有進行中或排程中的紅包活動）：以站長建立『RP-OPX-V1』『RP-OPX-V2』，永久、重置方式每日、預設規則門檻
+  300／上限 5／固定 20／稽核 0、總預算 5000；各場館內一台機台帳號結算有效流水貢獻 300，使紅包明細至少有 1 筆紅包；記下兩個活動的識別（取得方式由工程告知）
+test_data:
+- name: 身分
+  value: V1 操作員
+- name: 動作
+  value: 匯出 CSV API：自身場館 V1（對照）／非自身場館 V2（越權）
+steps:
+- n: 1
+  action: 【對照組】以 V1 操作員的身分用 API 工具對 V1 的 RP-OPX-V1 呼叫『匯出 CSV』API
+  expected: 成功，CSV 資料列數等於 V1 該活動紅包明細的筆數（至少 1 筆）——操作員可匯出自身場館的查詢結果；確認 API 呼叫方式正確
+- n: 2
+  action: 以 V1 操作員的身分用 API 工具對 V2 的 RP-OPX-V2 呼叫『匯出 CSV』API
+  expected: 後端拒絕並回傳『無權限』，不回傳 V2 的 CSV 內容
+- n: 3
+  action: 以站長檢視 V2 的 RP-OPX-V2 紅包明細與活動狀態
+  expected: RP-OPX-V2 狀態『進行中』、總預算 5000、紅包明細筆數不變（資料不變）
+- n: 4
+  action: 清理：站長分別對 V1、V2 的活動取消排程（確認視窗點『確認取消』）
+  expected: 已取消排程
+expected_result: 機台場館操作員只能匯出自身場館的紅包明細 CSV：以 API 匯出自身場館活動成功；匯出非自身場館活動的 CSV，後端拒絕並回傳『無權限』、不回傳資料、對方場館資料不變。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §角色與權限（第 312 行）
+  quote: 自身場館（唯讀，可匯出 CSV）
+decision_refs:
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 312 行）
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 315 行）
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+    location: §十、業務規則（第 265 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 312 行）
+  quote: 自身場館（唯讀，可匯出 CSV）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 315 行）
+  quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §十、業務規則（第 265 行）
+  quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+source: spec_workflow
+source_ref: RF-16（操作員匯出 CSV）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-236
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+created_at: '2026-10-12T17:27:52Z'
+updated_at: '2026-10-12T17:27:52Z'
+history:
+- at: '2026-10-12T17:27:52Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:27:52Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

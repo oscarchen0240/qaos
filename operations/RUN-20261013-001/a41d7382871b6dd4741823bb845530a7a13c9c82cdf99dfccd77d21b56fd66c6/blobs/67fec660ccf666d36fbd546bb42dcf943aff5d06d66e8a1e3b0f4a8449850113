@@ -1,0 +1,229 @@
+artifact_id: ART-TVR-01M4RJCCTJA4R1YB27EV2CMX7E
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-001
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-12T17:27:12Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+- entity_type: Artifact
+  id: ART-TDR-01M4RHPWQZH5SZEFFG3A40NPF1
+- entity_type: Artifact
+  id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+requires_approval: null
+dispatch_packet_sha256: a665b241384110bbbb9a3292025080c566b55982838b82e1a0f836da06bf27ed
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4RHPWJ9PVJYRFN5SMPXJE8Q
+  validated_against:
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    requirement_model_artifact_id: ART-RM-01M4QHZNEKX2FRV31QEGYR7APP
+  issues: []
+  advisories:
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-025
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §新增優惠活動 — 紅包／獎勵方式（第 106 行）
+      quote: 每個紅包金額固定；須大於 0，最多 1 位小數
+    evidence: T01 TC-DRAFT-01M4RHPTP9SB71J9FF2H303DD6、T02 TC-DRAFT-01M4RHPTS5QZ6ZXA44PK7D8FC6 斷言機台場館的小數紅包（10.5、0.5）入帳後，機台分數恰增加
+      10.5、4.4 稽核明細金額 10.5 TWD、日結報表紅包金額 R0＋10.5。派發包 open_questions 中的 CLR-REDPACKET-058（OPEN，REQ-REDPACKET-025）問的是：「機台場館的紅包金額是否應限制為整數？若允許
+      1 位小數（例 10.5），機台入帳後的分數、4.1／4.4 金額、日結報表紅包金額是否都照記含小數？」
+    explanation: 判定：斷言都對得到 spec 原文。第 17 行規定線上與機台用同一套設定；第 106、113、410 行與 CLR-REDPACKET-027 規定紅包金額最多 1 位小數，沒有排除機台；第 196 行規定入帳即機台分數增加；第
+      395 行規定稽核金額＝紅包金額×倍數；第 431 行規定日結報表計入已入帳合計並列出驗算式。RM 的 REQ-025、REQ-039 決策點都是 E1，所以不構成 E3～E5 的確定斷言。出金收據的小數、4.1 金額欄都只記錄、不斷言，符合派發指示。不過
+      CLR-058 正在問同一件事（例子同樣是 10.5），還沒答覆。如果答覆是「機台限整數」，這兩張 TC 的前提（第 2 步可儲存 10.5）會直接失效。
+    recommended_change: 不阻擋本輪。CLR-058 落地時，請在 impact 掃描中把 T01、T02 列為必判對象；答覆為整數時改版或退役。也可以在核准前，於 TC 的前提註明「依 v0.2 現行規則；CLR-058
+      待覆」。
+  - testcase_id: TC-DRAFT-01M4RHPW9HS02NM83P6FGKJE2J
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-023
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §角色與權限（第 305 行）
+      quote: 可見與操作範圍依管轄範圍（管理員含其子站台；站長為自身站台）
+    evidence: REQ-REDPACKET-023/Q04 在 RM R001 是 E2（衝突未決，conflict_sides：本 spec 第 305 行 vs SPEC-ROLEPERM-001 第 67、104 行）。T18
+      對 Q04 的 decision_refs 引用 clarification CLR-REDPACKET-054（answer_rev 0，sha256 69116d15…）；第 305 行只用在 Q02，引文是「管理員含其子站台」（對照組）；expected
+      依據引 SPEC-ROLEPERM-001 第 265 行（越權回「無權限」）。
+    explanation: 判定：合法。E2 的限制只禁止引用衝突兩側；CLR-054 不是衝突的任何一側，而是 kind=conflict_resolution 的已答覆裁決，scope 的 subject 與 role_scope 都和
+      Q04 相符，basis_hash 和 RM 一致，也在派發包的 resolutions 中（機械範圍核對通過）。站長範圍那部分的斷言只依 CLR-054；第 305 行的引文只取「管理員含其子站台」，沒有借用衝突側「站長為自身站台」那半句。CLR-054
+      的答覆本身說明了與 ROLEPERM 通則不一致、已另報 PM，TC 的前提也寫明「若 PM 改採通則，步驟 2～6 需修訂」。與 TC-REDPACKET-178（介面層、呈現只記錄）、TC-REDPACKET-179（越權身分是
+      A1 管理員對 A）不重複：本案是站長以 API 直接操作子站台，屬於新的層次。
+    recommended_change: 不需修改。RM 下一個 revision 把 CLR-054 吸收為 Q04 的 resolution 後，E2 會轉 E1，屆時 basis_ref 可改指 resolution。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-011
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 383 行）
+      quote: 調晚時，本週期一律延至原結束點之後的第一個新重置時點結束（不立即重置、不產生短週期）
+    evidence: T04 TC-DRAFT-01M4RHPTZBRMG78Z6J7JVXM3DB 把兩條規則合起來推論：「調晚後，重置前 1 小時的作廢提示以新的重置點計」。T05 TC-DRAFT-01M4RHPV266FDMD6M80Y1HW7XG
+      把「每月 1 日」的營業日起點對應到「台灣時間 1 日 04:00＝UTC+0 月底最後一天 20:00」。
+    explanation: 判定：兩者都有依據。T04：第 383 行規定日結時間變更立即生效、調晚時本週期延至新重置點；第 199 行規定提示以「重置前 1 小時」為準。重置點既然已經改變，提示窗就跟著移動，這是兩條規則直接相乘的結果，沒有額外假設。第
+      3 步的編輯提示文字也與第 429 行一致；清理步驟會觸發調早立即重置，但已先取消活動，不受影響。T05：第 361 行的範例以台灣時間標示營業日，AC-REDPACKET-0119 也寫「台灣時間週一 04:00 起」，「1 日
+      04:00」照同一方式類推，與 ACTIVE TC-REDPACKET-165 的做法一致。只是 T05 掛的 AC-REDPACKET-0111 是線上 UTC+0 每日重置的 AC，對應不準。
+    recommended_change: T05 的 acceptance_criteria_ids 拿掉 AC-REDPACKET-0111，只保留 AC-REDPACKET-0119（或掛在需求層即可）。
+  - testcase_id: '*'
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-REDPACKET-016
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §活動排程（第 228 行）
+      quote: 已結束與已取消的活動仍列於列表，供查閱紅包明細；「取消排程」「追加預算」僅於排程中、進行中顯示
+    evidence: T11 TC-DRAFT-01M4RHPVNNQYYF7S7XJBPF5E9Q 第 5 步斷言活動狀態為「已結束」，第 7 步的清理卻寫「對該活動點『取消排程』」。
+    explanation: 已結束的活動沒有「取消排程」可以點（第 228 行），所以第 7 步無法執行，也和第 5 步自相矛盾。已結束的活動本來就不列入時段重疊判斷（第 405 行），不需要清理。
+    recommended_change: 刪除 T11 第 7 步，或改為「活動已結束，不需清理」。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-REDPACKET-017
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §業務規則與驗證（第 405 行）
+      quote: 同一站台同一時間僅能有一個進行中的紅包活動（排程時間重疊時阻擋儲存）
+    evidence: 併發與重放案例 T07～T17 的觸發方式：腳本平行送出、多工作階段配合同一口令、API 工具重放、UI 快速連點。每一輪的預期都寫成「不論誰先誰後都必須成立的最終一致結果」。
+    explanation: 判定：觸發方式都可以執行。但 T07、T08、T09、T12～T17 需要工程提供注單結算模擬，或後台 API 端點與認證方式；T06 需要遊戲商取消模擬；T13、T14 需要 7.4 操作紀錄頁的入口（spec
+      第 247 行說明手冊 v01 尚未定義）。這些都已列為環境前提，缺少時執行會被阻塞，不會誤判。斷言只用 spec 定義的最終結果：預算占用不超過總預算並標示用罄（第 391、392 行）；不超過單週期上限、餘數保留、之後的注單不再計入（第
+      389 行）；每筆注單各自計入，週期累計＝產生當下累計（第 377、289 行）；新預算不大於目前預算時拒絕且不寫紀錄（第 246、247 行）；時段重疊時阻擋，最終只有 1 個活動（第 405 行）；領取與作廢只有一方成立，狀態與錢包、交易紀錄、稽核明細一致（第
+      159、160 行的狀態定義）。前端提示與錯誤碼一律只記錄。T12 的「不得只寫一邊」來自已入帳／已作廢的狀態定義，沒有注入中途失敗，不涉及 CLR-059 問的失敗原子性。
+    recommended_change: 執行前請工程一次提供結算模擬、API 端點與 7.4 入口，避免案例逐一阻塞。TC 不需修改。
+  - testcase_id: '*'
+    issue_type: duplicate
+    severity: minor
+    violated_requirement: REQ-REDPACKET-023
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §角色與權限（第 305 行）
+      quote: 追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限
+    evidence: T19 TC-DRAFT-01M4RHPWCHQT8FGJCR280XK1NP 的前提與兩種身分（無優惠活動管理權限的帳號、子站台 A1 的管理員對 A）與 ACTIVE TC-REDPACKET-179 完全相同，只多了「匯出
+      CSV」這個 API 動作。T21 TC-DRAFT-01M4RHPWJ8396FBGQKCPHS0SH2 的佈置（V1、V2、操作員、站長建立的 RP-*）與 TC-REDPACKET-058 相同，只多了「以 API 匯出非自身場館
+      CSV」。
+    explanation: 兩張都斷言了既有 TC 沒有覆蓋的新動作，所以不算重複。CSV API 的權限推論有依據：第 305 行規定 CSV 與新增活動同權限；SPEC-ROLEPERM-001 第四節與第 265 行規定每支 API
+      都走同一範圍判定、越權一律回「無權限」，並特別點名「報表匯出」；機台場館另有第 312、315 行。但佈置幾乎相同，維護成本會加倍。
+    recommended_change: 可選：改以 TC-REDPACKET-179、058 改版補上 CSV 步驟，取代新增 T19、T21。保留新增也可以，不阻擋本輪。
+  - testcase_id: '*'
+    issue_type: technique_mismatch
+    severity: minor
+    violated_requirement: REQ-REDPACKET-011
+    spec_reference:
+      spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      location: §前台呈現說明（第 199 行）
+      quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」
+    evidence: T04 TC-DRAFT-01M4RHPTZBRMG78Z6J7JVXM3DB（test_types [functional]）斷言「不顯示提示」「P1 未被原重置點作廢」；T02 TC-DRAFT-01M4RHPTS5QZ6ZXA44PK7D8FC6（[functional,
+      boundary]）斷言「待開啟的紅包不計入紅包金額」。
+    explanation: 這些是反向斷言，依標籤規則應加 negative。高風險需求 REQ-011、032 另有 T03、T05、T01 等含 negative 或 boundary 的覆蓋，所以只算 minor。
+    recommended_change: T04、T02 的 test_types 補 negative。
+  - testcase_id: '*'
+    issue_type: other
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: 派發包 runs/RUN-20261013-001/dispatch/T3-iter0.yaml 的 extra_inputs 是 []；草稿只在各 TC 的自由文字 source_ref 與前提提到 TRR ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+      與 RF 編號。
+    explanation: TRR 不在本次派發包範圍內，我沒有讀取，所以「21 張 TC 對應 RF-01、02、03、05、07、08、09、11、12、15、16」這個對應我沒有核對。所有斷言用到的來源都在派發包範圍內（機械核對 draft_out_of_scope
+      為空），所以不構成 missing_reference。另外核對了未定 CLR：058～063 中，只有 CLR-058 的主題被 T01、T02 斷言（見第一條 advisory）。059（領取中途失敗）、060（領取或結算重放冪等）、061（領取
+      API 歸屬）、062（線上財務的子站台範圍）、063（預算用罄＋洗分出金後才達標）都沒有被任何 TC 斷言：T10～T12 沒有注入失敗；T13～T17 重放的是追加預算與建立活動，不是領取；T18、T19 沒有使用財務角色；T07
+      不涉及洗分或出金。
+    recommended_change: 若需要 Validator 核對 RF 對應，請在派發時以 --extra 登記 TRR。
+  - testcase_id: '*'
+    issue_type: missing_coverage
+    severity: minor
+    violated_requirement: null
+    spec_reference: null
+    evidence: TDR 的 uncovered_with_reason 共 24 條（OUT_OF_SCOPE 14 條、NO_REJECTION_CONTRACT 10 條），全部是 scope 外的需求。
+    explanation: 依派發指示，這是 G-DESIGN 在 mode=spec 下把整份 RM 當作 scope 的框架限制，已另案處理，不列 issue。範圍內 15 條需求都有覆蓋。
+    recommended_change: 無需修改本 Draft。
+  coverage_summary:
+    requirements_total: 15
+    requirements_covered: 15
+    ac_total: 90
+    ac_covered: 30
+    uncovered_accepted:
+    - 本 run 的 scope 限定為 15 條需求（REQ-REDPACKET-008、010、011、013、014、015、016、017、023、024、025、031、032、036、039），目的是補強 T3RR 風險；本批
+      21 張 TC 掛到其中 30 條 AC。
+    - 範圍內其餘 60 條 AC，經逐條核對都已有 ACTIVE TC 覆蓋（Registry 149 張 ACTIVE TC），本批不重做。
+    - REQ-REDPACKET-036 在本批只掛在需求層（T10、T11、T12），沒有掛 AC，這是合理的：本批驗的是領取與作廢的競態，既有 AC 0361～0365 由 ACTIVE TC 覆蓋。
+    - 範圍外 24 條需求依 TDR 以 OUT_OF_SCOPE 或 NO_REJECTION_CONTRACT 豁免，屬框架限制，列為 advisory。
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    assumptions_ok: true
+    dispatch_scope_ok: true
+    no_open_clr_asserted: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4RHPTP9SB71J9FF2H303DD6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPTS5QZ6ZXA44PK7D8FC6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPTW51QK4XBCP56C5Y0MD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPTZBRMG78Z6J7JVXM3DB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPV266FDMD6M80Y1HW7XG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPV50HPMZJ069HMK6029D
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPV880S0GKYTE230BSKRW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVBC1DR76836FG6P5EPC
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVFFNTZND8N9PNFTPNN1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVJHPTR7D6729GY9M8QB
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVNNQYYF7S7XJBPF5E9Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVSCTFSRR7AHH2RBPPR0
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVW4AME56E8N3E22WFY1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPVZ5EVSTT9PXS4BYR1S7
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPW27ATVSAE9V9D0NB215
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPW69PH4EPP344S7GZ8VA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPW97HCC4A0FK80ECX20A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPW9HS02NM83P6FGKJE2J
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPWCHQT8FGJCR280XK1NP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPWFEC6P4SC3DN7ZJS4ND
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4RHPWJ8396FBGQKCPHS0SH2
+    verdict: ok
+history:
+- at: '2026-10-12T17:27:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-001
