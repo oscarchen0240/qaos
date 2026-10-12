@@ -1,0 +1,137 @@
+artifact_id: ART-SA-01M4R5FPHAV3N2JH359JJ84469
+artifact_type: SpecAnalysis
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261012-005
+task_id: T0
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-10-12T13:40:26Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-ARCADE-001@0.8
+  - RequirementModel:ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+references:
+- entity_type: SpecVersion
+  id: SPEC-ARCADE-001
+  version: '0.8'
+- entity_type: Artifact
+  id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+requires_approval: null
+payload:
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.8'
+  content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  summary: SPEC-ARCADE-001 v0.8（實體機台正本 v08，2026-10-05，依 CLR-CASHFLOW-007、CLR-DAILYREPORT-006／007／010／011 定案）重新分析，spec-change-impact
+    0.7→0.8（RUN-20261012-005 T0，派發包 T0-iter0，閉包為空、references undeclared、ac_seq_high_water 為空）。沿用 v0.7 的範圍劃分：本正本大部分內容已拆到機台金流（CASHFLOW）、交易紀錄（TXLOG）、洗分出金核實（CASHOUT）、場館日結報表（DAILYREPORT）、站台列表（SITELIST）、創建會員帳號（MEMBER）、機台場館平台規則（PLATFORMRULE）等開發包各自建模，本包只對
+    v0.7 已屬 ARCADE 的需求建模。共 5 條 ACTIVE 需求（REQ-ARCADE-001～004、006，沿用原 ID 與原 AC），6 條 AC（沿用舊 3 位數 AC，未新增 AC），8 個決策點全部 defined_in_target（E1）；REQ-ARCADE-005
+    於 v0.7 已退役（被 REQ-PLATFORMRULE-014 涵蓋），本版不再列入（列入會被持久化重設為 ACTIVE）。v0.8 對本包範圍沒有新增、修改或移除的行為；僅行號位移（v0.7 RM 的位置引用改為 v0.8 行號）並改為決策點新格式。REQ-ARCADE-004
+    的稽核倍數設定位置在 v0.8 內仍有「出金設定」與「鏈上錢包管理」兩種用詞（第 198／834／858 行 vs 第 257 行），依第 257 行與 Oscar 2026-09-15 確認建模，用詞不一列 doc_issues（minor），不開新
+    ambiguity。
+  scope:
+    in_scope:
+    - 機台場館前台不開放自行註冊（REQ-ARCADE-001）
+    - 機台帳號流水不計入加盟傭金／代理返傭基數（REQ-ARCADE-002）
+    - 機台交易不進優惠彩金審核佇列（REQ-ARCADE-003）
+    - 鏈上錢包管理 TWD 頁籤的稽核倍數設定與預設 0 倍（REQ-ARCADE-004）
+    - 洗分出金核實的核實與作廢寫入後台操作紀錄（REQ-ARCADE-006）
+    out_of_scope:
+    - 四種金流、場次、對接 API、額度上限與預留、洗分門檻、出金清空與小數面額、PENDING 保留與手動取消（機台金流 SPEC-CASHFLOW-001）
+    - 交易紀錄查詢的機台視角擴充、交易狀態、手動取消操作（機台交易紀錄 SPEC-TXLOG-001）
+    - 洗分出金核實頁的篩選、列表、核實／作廢流程與權限（洗分出金核實 SPEC-CASHOUT-001）
+    - 場館日結報表（SPEC-DAILYREPORT-001）
+    - 站台類型、場館設定欄位、核心貨幣（站台列表 SPEC-SITELIST-001）
+    - 創建會員帳號、機台資訊／機台憑證區塊、重設密碼、前台忘記密碼（創建會員帳號 SPEC-MEMBER-001）
+    - 排除規則政策層、後台選單顯示、操作員角色、遊戲更新預設停用、Free Spin 例外（機台場館平台規則 SPEC-PLATFORMRULE-001）
+    - 角色與權限模型（後台角色與權限 SPEC-ROLEPERM-001）
+    - REQ-ARCADE-005（場次逾時時間操作員唯讀）：v0.7 已退役，由 REQ-PLATFORMRULE-014 涵蓋
+  requirement_ids:
+  - REQ-ARCADE-001
+  - REQ-ARCADE-002
+  - REQ-ARCADE-003
+  - REQ-ARCADE-004
+  - REQ-ARCADE-006
+  ambiguities:
+  - requirement_id: REQ-ARCADE-004
+    ambiguity:
+      level: minor
+      raised_level: minor
+      description: 稽核倍數設定位置用詞不一（出金設定 vs 鏈上錢包管理）；依第 257 行與 Oscar 2026-09-15 確認建模，列 doc_issues，不需裁決
+  constraints:
+  - text: 機台場館前台不提供自行註冊入口，機台帳號一律由後台建立
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 業務規則與驗證／前台自行註冊（第 853 行）
+      quote: 機台場館的前台暫不開放自行註冊（未來營運需求、開放時程未定）
+    requirement_id: REQ-ARCADE-001
+  - text: 機台帳號的投注不計入任何上層的加盟傭金／代理返傭基數
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 既有功能對機台帳號的排除規則（第 160 行）
+      quote: 不適用，機台帳號的投注不計入任何上層的傭金基數
+    requirement_id: REQ-ARCADE-002
+  - text: 機台帳號不適用優惠彩金審核
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 既有功能對機台帳號的排除規則（第 155 行）
+      quote: 3.3 | 優惠彩金審核 | 不適用
+    requirement_id: REQ-ARCADE-003
+  - text: 機台稽核倍數預設 0 倍
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 既有功能對機台帳號的排除規則（第 159 行）
+      quote: 機台預設為 0 倍（等同不設稽核門檻）
+    requirement_id: REQ-ARCADE-004
+  - text: 核實與作廢須寫入後台操作紀錄（操作人員、時間、對象交易）
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 對既有章節的影響／7.4 操作紀錄（第 841 行）
+      quote: 須寫入後台操作紀錄（操作人員、時間、對象交易）
+    requirement_id: REQ-ARCADE-006
+  edge_case_candidates:
+  - text: 在機台場館前台網域直接輸入註冊頁網址或直接呼叫註冊 API（繞過入口）時，系統是否拒絕；spec 只寫「入口不提供」
+    requirement_id: REQ-ARCADE-001
+  - text: 機台主站台自行直接經營（自身即場館）時，其前台同樣不提供自行註冊入口
+    requirement_id: REQ-ARCADE-001
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 名詞對照（第 74 行）
+      quote: 機台主站台自行直接經營時，其自身亦為一間場館
+  - text: 同一加盟商底下同時有線上會員與機台帳號時，傭金基數只含線上會員的流水
+    requirement_id: REQ-ARCADE-002
+  - text: 稽核倍數輸入負數、非數值或小數時的處理 spec 未定義
+    requirement_id: REQ-ARCADE-004
+  - text: 稽核倍數由 0 調高後，對調整前已完成的開分／入金是否追溯產生稽核門檻（spec 寫「該倍數即套用於後續」）
+    requirement_id: REQ-ARCADE-004
+  - text: 作廢時必填的作廢原因是否一併寫入後台操作紀錄 spec 未明寫（7.4 只列操作人員、時間、對象交易）
+    requirement_id: REQ-ARCADE-006
+    spec_reference:
+      spec_id: SPEC-ARCADE-001
+      spec_version: '0.8'
+      location: 洗分出金核實／作廢（第 715 行）
+      quote: 須填寫作廢原因（必填）
+  - text: 已核實或已作廢的紀錄再次核實被阻擋時，被阻擋的嘗試是否寫入操作紀錄
+    requirement_id: REQ-ARCADE-006
+  open_questions: []
+  previous_requirement_model_id: ART-RM-01M2GW8RBT2JA2KG86B1J5K87J
+  consulted_sources:
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+    read_scope: full
+dispatch_packet_sha256: 71504c82c9cb5d74dfa662e56ecd00d6c88a9cfe164d5244183079e6f4928e3f
+history:
+- at: '2026-10-12T13:41:17Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261012-005
