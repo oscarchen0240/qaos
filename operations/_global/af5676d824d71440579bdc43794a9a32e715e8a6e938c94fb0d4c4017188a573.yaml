@@ -1,0 +1,127 @@
+plan_schema: 1
+op_id: af5676d824d71440579bdc43794a9a32e715e8a6e938c94fb0d4c4017188a573
+action: clarification_new
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_new
+  params:
+    args:
+    - ba-admin
+    - CASHFLOW
+    - SPEC-CASHFLOW-001
+    - '0.2'
+    - 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？
+    - oscarchen@blockaction.tech
+    kwargs:
+      context: 兩行對同一組合的結果相反。現場風險：店員在門檻 0 的機台指定洗 100，若實作照第 360 行把全部餘額洗走，付出的現金與帳對不上；測試案例以此組合還原分數時也會因結果不同而卡住。（來源：2026-10-13 RUN-20261013-003
+        補強 TC 的二次風險抽查 RF-02；問題單 C 增補）
+      options: []
+      requirement_id: REQ-CASHFLOW-013
+      impact: 機台金流門檻 0 洗分相關案例；RUN-20261013-003 的開分／end-cashin 併發案例（以此組合還原分數）
+      consulted:
+      - SPEC-CASHFLOW-001@0.2
+      no_source_check_reason: null
+      kind: spec_question
+      topic: calculation
+      subject: cashflow.washout.threshold0_with_value
+      level: minor
+      role_scope:
+      - '*'
+      params: {}
+request_hash: af5676d824d71440579bdc43794a9a32e715e8a6e938c94fb0d4c4017188a573
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-12T17:25:51Z'
+allocated_ids:
+- CLR-CASHFLOW-016
+steps:
+- seq: 1
+  step_id: s1
+  path: testcases/registry/_counters.yaml
+  kind: business
+  expected_before: b99ceab671305bf4942aedf74ac6c64717165e926913366bdce36341c4b9756c
+  expected_after: 419806bbd54d22944a20117a41a5a6bdf64de47be899e7bcfc868bacca99c242
+  blob: 419806bbd54d22944a20117a41a5a6bdf64de47be899e7bcfc868bacca99c242
+- seq: 2
+  step_id: s2
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-016.yaml
+  kind: business
+  expected_before: null
+  expected_after: fdd22a59986fdd1df4ae1ee9370b0b600d8ffbdd65856805fb5d2e635dc5c273
+  blob: fdd22a59986fdd1df4ae1ee9370b0b600d8ffbdd65856805fb5d2e635dc5c273
+- seq: 3
+  step_id: event1
+  path: runs/_audit.d/af5676d824d71440579bdc43794a9a32e715e8a6e938c94fb0d4c4017188a573-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 8332ea96a6f9c2f900040de7260426212589f8b00ad1ded225f542ce83171bd5
+  blob: 8332ea96a6f9c2f900040de7260426212589f8b00ad1ded225f542ce83171bd5
+- seq: 4
+  step_id: derived4
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-016.md
+  kind: business
+  expected_before: null
+  expected_after: 3be365ff25a1e6532e5ab4c3e27f758b127f0e56048d243d4631a536c3c9709b
+  blob: 3be365ff25a1e6532e5ab4c3e27f758b127f0e56048d243d4631a536c3c9709b
+- seq: 5
+  step_id: render5
+  path: runs/_audit.log
+  kind: business
+  expected_before: 512e43260ef8c55fbceb6bab664bb5382d8a08d5bd587747266c7aeb0e685d17
+  expected_after: 09f3e6c935acba22201916358c873dffd18e35bfcf46007e8cc4e050b99b661f
+  blob: 09f3e6c935acba22201916358c873dffd18e35bfcf46007e8cc4e050b99b661f
+- seq: 6
+  step_id: completed
+  path: operations/_global/status.d/af5676d824d71440579bdc43794a9a32e715e8a6e938c94fb0d4c4017188a573-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 3420a63053dab84e465f411435a85deec45f624b4138dde5909d1926affbe023
+  blob: 3420a63053dab84e465f411435a85deec45f624b4138dde5909d1926affbe023
+no_change: []
+audit_events:
+- at: '2026-10-12T17:25:51Z'
+  actor: oscarchen@blockaction.tech
+  action: NEW_CLARIFICATION
+  detail: 'CLR-CASHFLOW-016: 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364
+    行「mode=value 時以請求金額核可、餘額不清空」？'
+  op_id: af5676d824d71440579bdc43794a9a32e715e8a6e938c94fb0d4c4017188a573
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-016
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  question: 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？
+  context: 兩行對同一組合的結果相反。現場風險：店員在門檻 0 的機台指定洗 100，若實作照第 360 行把全部餘額洗走，付出的現金與帳對不上；測試案例以此組合還原分數時也會因結果不同而卡住。（來源：2026-10-13 RUN-20261013-003
+    補強 TC 的二次風險抽查 RF-02；問題單 C 增補）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T17:25:51Z'
+  status: OPEN
+  history:
+  - at: '2026-10-12T17:25:51Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  requirement_id: REQ-CASHFLOW-013
+  impact_if_unanswered: 機台金流門檻 0 洗分相關案例；RUN-20261013-003 的開分／end-cashin 併發案例（以此組合還原分數）
+  kind: spec_question
+  topic: calculation
+  subject: cashflow.washout.threshold0_with_value
+  level: minor
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  issue_key: 8be4a194fb3e06ed0063b7043bcdb7d90d3cabcdadb7f75d2d2151e60a50ccdc

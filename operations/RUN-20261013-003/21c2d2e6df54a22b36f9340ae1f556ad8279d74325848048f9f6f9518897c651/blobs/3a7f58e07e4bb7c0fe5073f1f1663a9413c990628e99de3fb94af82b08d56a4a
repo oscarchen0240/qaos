@@ -1,0 +1,170 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+stability: unknown
+source: spec_workflow
+title: 合計含小數的額度臨界（開分）：同場館另一台留有 99.6、剩餘額度 100.4 時，開分 100.5 回 1-OVER LIMIT，100.4（恰等於上限）成立，成立後再開分 0.1 又回 1-OVER LIMIT
+requirement_ids:
+- REQ-CASHFLOW-004
+acceptance_criteria_ids:
+- AC-CASHFLOW-0041
+test_level: api
+test_types:
+- functional
+- negative
+- boundary
+design_techniques:
+- boundary_value
+priority: medium
+risk: high
+execution_mode: manual
+execution_cost: medium
+critical_path: false
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 選用測試期間沒有其他機台或玩家同時交易的場館（額度判定的基準是『全場館機台分數餘額合計』，旁人的交易會讓下列數值失準）【環境前提，需環境負責人確認】
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 額度上限的設定：額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，所以本案以探測步驟確認新額度已生效；動手前先記下原額度上限 Q_orig，執行完畢後還原
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】本案需要機台帳號出現帶小數的分數：spec 只說明餘額帶小數來自部分遊戲派彩，沒有定義 req-keyin 是否接受小數金額，也沒有定義如何構造小數餘額。建議作法（我的推測，未經 spec
+  證實）：以 req-keyin 送出只帶一位小數的金額（本案只用一位小數；小數位數上限、進位與顯示格式 spec 未定義，不在本案判定範圍）。若被拒（例如 6-BAD DATA/FORMAT）或顯示被取整，改請環境負責人以測試資料工具或指定派彩設定構造相同餘額；仍無法構造恰為指定值的餘額時，本案記為『受阻』，不可改用其他小數值替代後仍宣稱通過
+- 清空機台分數的方式：用洗分（req-keyout，mode=all、throshold=0），並且不要核實這筆清空用的洗分；不要用出金清空，因為出金的收據金額會混入場館報表（此為清理手法，依 spec『稽核倍數預設 0 倍，玩家隨時可洗分』與『門檻
+  0＝洗出全部餘額』）
+- 機台 N：與 M 同一場館的另一台既有機台（自行從環境中選定，狀態『啟用』），並取得 N 現行有效的機台憑證；N 用來持有小數餘額 99.6，M 用來送出臨界金額的開分
+- 場館內除 N 以外的機台帳號分數皆為整數（步驟 4 會核對 S 的小數部分恰為 .6；不符就換一個場館）
+test_data:
+- name: N 佈置用的開分金額
+  value: 399.6
+  note: 再以門檻 100 全洗，餘數 99.6 留在 N（沿用 TC-CASHFLOW-111 的佈置手法）
+- name: S（含 N 的 99.6 與 M 的 B0 在內的場館分數合計）
+  value: 依環境讀出
+  note: 小數部分應為 .6
+- name: 額度上限 A
+  value: S + 100.4
+  note: S 的小數部分為 .6，所以 A 是整數
+- name: 臨界開分金額
+  value:
+  - 100.5
+  - 100.4
+  - 0.1
+  note: 依序送出：超過 0.1、恰等於、成立後再加最小單位 0.1
+steps:
+- n: 1
+  action: 把 M 所屬場館的額度上限設為 0（排除額度干擾）；記下原值 Q_orig。若 N 目前分數不是 0，先用洗分清空 N（req-keyout，mode=all、throshold=0，不核實）
+  expected: N 分數為 0
+- n: 2
+  action: 【佈置】N 送出 req-keyin，金額 399.6；記錄回覆碼與 N 分數，作為步驟 7 閘門 G 的依據
+  expected: 回 0-OK，N 分數恰為 399.6（同時證明平台接受一位小數的開分）。若被拒（例如 6-BAD DATA/FORMAT）或被取整，改請環境負責人以工具構造 399.6 並照常繼續佈置，但閘門 G 視為不成立（步驟 8～10
+    記為受阻）；仍無法構造則整案受阻，不可改用其他值
+- n: 3
+  action: 【佈置】N 送出 req-keyout，mode=all、throshold=100
+  expected: 回 0-OK，value 為 300；N 分數 = 99.6（餘數留在帳號上）。此檢查點只確認佈置成立，不列入本案判定
+- n: 4
+  action: 後台讀 M 分數 B0；逐一讀出場館所有機台帳號的分數（含 N 的 99.6）並加總為 S
+  expected: S 的小數部分恰為 .6；否則換場館重做
+- n: 5
+  action: 把額度上限設為 A = S + 100.4（整數；剩餘額度 100.4）
+  expected: 額度上限 A 已儲存
+- n: 6
+  action: 探測生效：M 送出 req-keyin，金額 101（超過剩餘額度 0.6）
+  expected: 回 1-OVER LIMIT；M 分數仍為 B0。若回 0-OK，表示額度未生效或 S 讀值有誤，先確認，不要往下做
+- n: 7
+  action: 【閘門 G】判定步驟 2：只有『N 送出 req-keyin 399.6 實際回 0-OK，且 N 分數恰為 399.6』（等於證明平台接受一位小數的開分）才執行步驟 8～10；否則步驟 8～10 一律記為『受阻』，不判定額度缺陷（req-keyin
+    是否接受小數金額 spec 未定義，被拒或取整時回 6-BAD DATA/FORMAT 或金額不符，與額度判定無關）
+  expected: G 成立 → 繼續步驟 8；G 不成立 → 記『受阻』，跳到步驟 11
+- n: 8
+  action: （G 成立才做）M 送出 req-keyin，金額 100.5（超過剩餘額度 0.1）
+  expected: 回 1-OVER LIMIT；M 分數仍為 B0（不寫入任何帳務異動）
+- n: 9
+  action: （G 成立才做）M 送出 req-keyin，金額 100.4（加計後合計恰等於 A）
+  expected: 回 0-OK；M 分數 = B0 + 100.4；場館分數合計 = A（恰等於上限不算超過）
+- n: 10
+  action: （G 成立才做）M 送出 req-keyin，金額 0.1（此時場館已恰在上限，再多 0.1 即超過）
+  expected: 回 1-OVER LIMIT；M 分數仍為 B0 + 100.4
+- n: 11
+  action: 還原：額度上限改回 Q_orig；清理 M、N 的餘額（req-keyout，mode=all、throshold=0，不核實），不列入判定
+expected_result: 全場館分數合計含小數（99.6）時，額度判定仍精確：剩餘額度 100.4，開分 100.5（多 0.1）被拒，回 1-OVER LIMIT、分數不變、不寫入任何帳務異動；開分 100.4（加計後恰等於上限）成立，回
+  0-OK；成立後再開分 0.1 又被拒，回 1-OVER LIMIT。不會把恰等於誤判為超過，也不會放行超過 0.1 的一筆。前提：平台接受一位小數的開分（以步驟 2 的 399.6 開分實際回 0-OK 為閘門）；閘門不成立時步驟 8～10
+  記為受阻，不判額度缺陷。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §開分（第 84 行）
+  quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+decision_refs:
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（`req-keyin`）（第 352 行）
+- requirement_id: REQ-CASHFLOW-004
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §開分（第 84 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（第 84 行）
+  quote: 若加上這筆會使全場館機台分數餘額合計超過場館額度上限
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §開分（`req-keyin`）（第 352 行）
+  quote: 超過額度上限回 `1-OVER LIMIT`，不寫入任何帳務異動
+source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-02（開分路徑）
+assumptions: []
+testcase_id: TC-CASHFLOW-132
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+created_at: '2026-10-12T17:22:45Z'
+updated_at: '2026-10-12T17:25:36Z'
+history:
+- at: '2026-10-12T17:22:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:25:36Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

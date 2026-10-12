@@ -1,0 +1,111 @@
+approval_id: APR-0203
+type: ACTIVATE_TESTCASE
+run_id: RUN-20261013-003
+task_id: T4
+status: PENDING
+summary: 11 個 Test Case 版本已 VALIDATED，是否成為 Registry ACTIVE 版本？（高風險抽查 ART-TRR-01M4RJAXZF6JR1ESSSGJGT454S：3 條補充建議，high 1、需澄清
+  1；建議不影響本次核准，要採納請另起 run／開 CLR）
+impact:
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-130
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-131
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-132
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-133
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-134
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-135
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-136
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-137
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-138
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-139
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-140
+  version: 1
+artifact_ids:
+- ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+- ART-TRR-01M4RJAXZF6JR1ESSSGJGT454S
+trace: []
+options:
+- key: approve
+  label: 核准
+- key: reject
+  label: 退回
+- key: override
+  label: 強制通過（需 rationale）
+batch_items:
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-130
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-131
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-132
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-133
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-134
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-135
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-136
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-137
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-138
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-139
+  version: 1
+- entity_type: TestCaseVersion
+  id: TC-CASHFLOW-140
+  version: 1
+requested_by: agent-supervisor
+requested_at: '2026-10-12T17:25:36Z'
+diff_summary: '[risk-review] 複查 11 張補強 TC 是否補到上次機台金流 TRR（ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1）的 RF-01、02、04、09、12、14、17、20：8
+  條全部有對應案例，而且都補得完整。併發案例（…65Y、…SYJ）以逐請求時間戳判定有效重疊，確實打到同時送達；權限案例（…SR3）以後端 API 為主要驗證，並有管理員對照組。新列 3 條：high 1、medium 1、low 1，其中
+  1 條需開 Clarification（RF-02）：RF-01 同一台機台同時送出多個 req-cashout，可能留下兩筆有效 PENDING，造成重複出金（第 334 行）；RF-02 throshold=0 搭配 mode=value
+  的語意在第 360 行與第 364 行互相衝突，既影響店員指定金額洗分的實際扣款，也影響 …65Y 的還原步驟；RF-03 停用機台重新啟用後，原本的待確認出金應能正常完成。已開 CLR 的項目（CLR-CASHFLOW-011～015，即上次的
+  RF-03、05、06、07、08、10、11、13、15、16、18、19）依指示不重複列。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+
+  [RF-01/high/concurrency] TC-DRAFT-…SYJ（對應上次的 RF-14）驗證的是『多台機台同時 req-cashout』時 order_id 不重複。但同一台機台的併發沒有任何案例：玩家連按結算，或過渡期前台重試，可能讓同一帳號的兩個
+  req-cashout 幾乎同時到達。第 334 行規定同一帳號同時只允許一筆有效出金 PENDING，收到新請求時必須先使舊的失效再建立新的；若這段『先失效再建立』沒有序列化，就會留下兩筆有效 PENDING，兩筆 end-cashout
+  都可能成立，造成同一份餘額被出金兩次。TC-CASHFLOW-022／028 都是循序送出。 → 建議：沿用 TC-DRAFT-…YJ 的『有效重疊』判定（max(送出時刻) < min(回應時刻)），對同一台機台 M（已開分 100）同時送出
+  2～5 個 req-cashout，多輪執行。預期：4.1 中 M 只有一筆待確認出金，其餘皆為已取消；只有那一筆的 TXID 送 end-cashout 會成立，其他 TXID 的 end-cashout 回 1-NO RECORD；M
+  最終分數為 0（不是負值），洗分出金核實頁只出現一筆待核實出金。（相關 TC-DRAFT-01M4RHQCNSC08SA91ZZA5TNSYJ, TC-CASHFLOW-022, TC-CASHFLOW-028）
+
+  [RF-02/medium/boundary/需澄清] TC-DRAFT-…65Y 每輪結束時，用『req-keyout mode=value、金額 100、throshold=0』把分數還原 100，並預期場館合計回到 S。但 spec
+  對這個組合的規定互相衝突：第 360 行說 throshold=0 表示『洗出當前全部餘額』，第 364 行說 mode=value 時以請求金額（不超過可洗金額）核可、餘額不清空。若實作依第 360 行把整個餘額洗掉，還原步驟會讓場館合計低於
+  S，下一輪剩餘額度變大、兩筆都成立，草稿就會誤報『場館鎖沒有序列化』。現場風險更大：門檻 0 的機台上，店員指定洗 100，若被洗走全部餘額，就和付給玩家的現金對不上。既有的 TC-CASHFLOW-055／056 只測門檻 100 指定金額與門檻
+  0 全洗，沒有測門檻 0 指定金額。 → 建議：開 Clarification 確認 throshold=0 搭配 mode=value 時，核可金額是請求金額還是全部餘額。定案後補案例：餘額 1000、throshold=0、mode=value
+  洗 100，核對回覆的 value、剩餘分數與交易紀錄金額。TC-DRAFT-…65Y 的還原方式在定案前，建議改用不受此歧義影響的方法（例如 mode=value 搭配 throshold=1），或在步驟 3 的單邊對照中先確認還原後分數確實回到
+  B1、B2，再開始併發輪次。（相關 TC-DRAFT-01M4RHQCNS55D8F2YEQ4FM565Y, TC-CASHFLOW-055, TC-CASHFLOW-056）
+
+  [RF-03/low/exception_flow] TC-DRAFT-…JA（對應上次的 RF-09）證明了停用期間 end-cashout 回 7-OUT OF SERVICE、PENDING 維持待確認，再由管理員手動取消。但第 268
+  行『停用不影響尚未完成的交易』的另一面沒有驗證：機台只是暫時停用、之後改回啟用時，原本那筆待確認出金應該還能正常完成。7-OUT OF SERVICE 不在第 371 行的停止重送清單內，機台會持續重送 end-cashout，重新啟用後的那次重送應該成立並扣分。若實作在停用時順手把
+  PENDING 作廢或鎖住，重新啟用後就會出現玩家拿到收據、平台卻沒扣分的情況。 → 建議：在 TC-DRAFT-…JA 補一個變體：待確認出金存在時把機台停用，送 end-cashout 確認回 7-OUT OF SERVICE；接著把機台改回啟用，再送同一
+  TXID 的 end-cashout。預期回 0-OK、分數歸 0、交易轉為已完成，洗分出金核實頁出現一筆待核實出金。（相關 TC-DRAFT-01M4RHQCNSQK1627CFJ4MZKZJA, TC-CASHFLOW-049）'

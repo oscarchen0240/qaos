@@ -1,0 +1,156 @@
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+stability: unknown
+source: spec_workflow
+title: JWT 繞過手法一律回 9-OTHER ERROR：header alg=none 去掉簽章、演算法混淆、簽章有效但 claim 指向不存在的機台帳號，各種機台 API 都不處理，分數與交易筆數不變
+requirement_ids:
+- REQ-CASHFLOW-049
+acceptance_criteria_ids:
+- AC-CASHFLOW-0493
+test_level: api
+test_types:
+- negative
+- security
+design_techniques:
+- error_guessing
+priority: medium
+risk: high
+execution_mode: hybrid
+execution_cost: medium
+critical_path: false
+preconditions:
+- 測試用機台：自行從環境中選定一台狀態為『啟用』、所屬場館站台為『開通』的既有機台（下稱機台 M），並取得 M 現行有效的機台憑證（JWT，Bearer 帶入）。取得憑證的方式不在本 spec 範圍【環境前提，需環境負責人確認】。下文『機台送出』的請求，都以
+  M 的憑證直接呼叫機台 API（Postman 或腳本）送出，不需要實體機台
+- 以管理員（Admin）角色登入後台；後台查詢用 4.1 交易紀錄查詢（機台視角）與會員資料，並切換到 M 所屬的場館站台（若該頁以站台切換下拉選單限定範圍）；欄位與選單的實際名稱以環境畫面為準
+- 【環境前提，spec 未定義】需要能在後台讀出機台帳號的『分數』：spec 只說分數等同機台帳號的帳戶餘額，未載明顯示在哪個頁面；下文以『會員詳細頁／會員列表的餘額』稱之，實際欄位位置請環境負責人確認
+- 將 M 所屬場館的『額度上限』設為 0（spec：設為 0 代表不限制），避免額度判定干擾本案；動手前先記下原值。額度上限屬站台列表的場館設定（spec 前言所引欄位）；【環境前提】修改後是否即時套用 spec 未載明，設定後請向環境負責人確認生效；執行完畢後還原原值
+- 確認稽核倍數為預設 0 倍（帳務管理 > 出金設定 > TWD 頁籤；spec 預設值），否則洗分／出金核可金額會被稽核門檻扣減而干擾本案
+- 測試人員可解碼 JWT（拆成 header／payload／signature 三段，base64url）並手動組出新的 JWT（JWT 工具或腳本，例如 Python 的 base64 與 hmac／cryptography 套件）
+- 取得 M 現行有效憑證 T，解碼 header 記下 alg（記為 X），解碼 payload 找出『標識機台帳號』的 claim（記為 CLAIM_ACCT；claim 名稱 spec 未定義，以實際 T 為準）。本案不重置 M 的憑證
+- 【環境前提】子項 (b-asym)（演算法混淆）僅在 X 為非對稱演算法（RS／ES／PS 系列）且測試人員能取得平台驗簽用的公鑰時才執行；X 為對稱演算法（HS 系列）時改做子項 (b-sym)。子項 (c) 需要能以平台簽章金鑰簽發 token（測試環境的簽章金鑰或開發提供的簽發工具）；取不到時
+  (c) 記為『受阻』，其餘子項照做。這些環境條件 spec 均未定義
+- 子項 (c) 的『不存在的機台帳號』：自行取一個確定不存在的帳號字串（例如 NOSUCHMACHINE 加隨機尾碼），並先在後台會員搜尋確認查無此帳號
+test_data:
+- name: 有效 token
+  value: T（M 現行憑證）
+- name: 子項 (a) alg=none
+  value:
+  - header {"alg":"none","typ":"JWT"}，簽章段為空（token 結尾保留一個點）
+  - header {"alg":"None","typ":"JWT"}，簽章段為空
+  note: payload 與 T 相同
+- name: 子項 (b-sym) X 為 HS 系列
+  value:
+  - 把 header alg 改為 RS256，payload 與簽章沿用 T
+  - 把 header alg 改為 HS512，payload 與簽章沿用 T
+- name: 子項 (b-asym) X 為 RS/ES/PS 系列
+  value: 把 header alg 改為 HS256，以平台公鑰（PEM 原文）當 HMAC 密鑰，對與 T 相同的 payload 重新簽發
+- name: 子項 (c)
+  value: 以平台簽章金鑰簽發，payload 與 T 相同，只把 CLAIM_ACCT 的值換成不存在的帳號字串
+- name: 每個偽造 token 送出的請求
+  value:
+  - req-keyin 金額 10
+  - req-cashin 金額 10
+  - req-cashout
+  - req-keyout（mode=all、throshold=0）
+  note: M 先有餘額（步驟 1），這樣若有任何請求被誤放行，分數或交易筆數會改變
+steps:
+- n: 1
+  action: 以 T 送 req-keyin，金額 100（對照）；後台記下 M 分數 B1、4.1 以 M 篩選（不篩狀態）的交易筆數 N1
+  expected: 回 0-OK；B1、N1 為此後比對的基準
+- n: 2
+  action: 子項 (a)：依 test_data 組出兩個 alg=none 的 token，各自分別送出四種請求（req-keyin 10、req-cashin 10、req-cashout、req-keyout mode=all throshold=0）
+  expected: 全部回 9-OTHER ERROR
+- n: 3
+  action: 子項 (b)：依 X 選擇 (b-sym) 或 (b-asym) 組出 token，各自分別送出四種請求
+  expected: 全部回 9-OTHER ERROR
+- n: 4
+  action: 子項 (c)：組出簽章有效、CLAIM_ACCT 指向不存在機台帳號的 token，分別送出四種請求（取不到簽發工具則記『受阻』）
+  expected: 全部回 9-OTHER ERROR
+- n: 5
+  action: 後台讀 M 分數；4.1 重新查詢 M 的交易筆數（不篩狀態）；並到會員搜尋確認沒有出現步驟 4 那個不存在的帳號
+  expected: M 分數仍為 B1；筆數仍為 N1（沒有建立 PENDING 或任何交易）；不存在的帳號沒有被建立
+- n: 6
+  action: 對照：以原 T 送 req-keyin，金額 10
+  expected: 回 0-OK；M 分數 = B1 + 10（證明前面的拒絕來自偽造的 token，而不是機台或場館狀態）
+expected_result: token 無效（alg=none 去掉簽章、演算法混淆等偽造簽章）或機台帳號不存在（簽章有效但 claim 指向不存在的帳號）時，平台拒絕並回 9-OTHER ERROR，任何一種機台 API 都不處理，分數與交易筆數不變，也不會因此建立機台帳號。
+expected_result_spec_reference:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  location: §狀態碼對照（第 319 行）
+  quote: Token 無效或已重置、機台帳號不存在，或其他未預期錯誤
+decision_refs:
+- requirement_id: REQ-CASHFLOW-049
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §狀態碼對照（第 319 行）
+- requirement_id: REQ-CASHFLOW-049
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+    location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §狀態碼對照（第 319 行）
+  quote: Token 無效或已重置、機台帳號不存在，或其他未預期錯誤
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §附錄：機台系統對接規格（開發團隊用）（第 282 行）
+  quote: 驗證除簽章外須比對該機台現行有效的憑證識別，重置後舊 token 一律拒絕
+source_ref: tcrr:ART-TRR-01M4RBYQ0ZYG9GWC5PGGH843S1#RF-20
+assumptions: []
+testcase_id: TC-CASHFLOW-140
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+created_at: '2026-10-12T17:22:45Z'
+updated_at: '2026-10-12T17:25:36Z'
+history:
+- at: '2026-10-12T17:22:45Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RHQCNTEJEA6JXJ0GXXZZVJ
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:22:45Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RJ4PYZ2JQ035M9BMB3YZ42
+  run_id: RUN-20261013-003
+- at: '2026-10-12T17:25:36Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-003
+requirement_model_revision:
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: e897388281ca4a0375dffc546a5977ea1ae02bbb6f4dd557a0b4fae94b034d47

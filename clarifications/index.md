@@ -38,6 +38,7 @@
 | [CLR-CASHFLOW-013](ba-admin/CASHFLOW/CLR-CASHFLOW-013.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？ |  |
 | [CLR-CASHFLOW-014](ba-admin/CASHFLOW/CLR-CASHFLOW-014.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin 清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token 回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？ |  |
 | [CLR-CASHFLOW-015](ba-admin/CASHFLOW/CLR-CASHFLOW-015.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 機台請求中的機台帳號與 token 所屬機台不一致時（M1 的 token 對 M2、或對其他場館的 M3 發請求），是否一律拒絕？回覆碼為何？ |  |
+| [CLR-CASHFLOW-016](ba-admin/CASHFLOW/CLR-CASHFLOW-016.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？ |  |
 
 ## ba-admin / CASHOUT
 
