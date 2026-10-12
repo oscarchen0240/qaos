@@ -1,7 +1,7 @@
 run_id: RUN-20261013-004
 workflow_id: spec-to-testcase
 workflow_version: 1.0.0
-status: RUNNING
+status: WAITING_HUMAN
 input:
   spec_id: SPEC-DAILYREPORT-001
   spec_version: '0.3'
@@ -9,7 +9,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-12T16:48:20Z'
-updated_at: '2026-10-12T17:43:52Z'
+updated_at: '2026-10-12T17:46:33Z'
 tasks:
 - task_id: T1
   type: agent
@@ -277,11 +277,12 @@ tasks:
   type: agent
   agent_id: agent-tc-risk-reviewer
   gate: G-RISK
-  status: READY
+  status: DONE
   iteration: 1
   input_artifact_ids: []
   input_entity_refs: []
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-TRR-01M4RKGG74V5WXG9EY811TGAD3
   history:
   - at: '2026-10-12T17:10:47Z'
     from_status: PENDING
@@ -303,6 +304,16 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-12T17:46:23Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-12T17:46:33Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-RISK PASS
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261013-004/dispatch/T3RR-iter0.yaml
@@ -312,7 +323,7 @@ tasks:
     path: runs/RUN-20261013-004/dispatch/T3RR-iter1.yaml
     sha256: e4058883f0d772fa31fb54c77e9921769125aa244cc433c127e5edbeaa5ce6e0
     at: '2026-10-12T17:43:52Z'
-  started_at: '2026-10-12T17:19:15Z'
+  started_at: '2026-10-12T17:46:23Z'
   gate_results:
   - at: '2026-10-12T17:19:15Z'
     layer: structural
@@ -324,13 +335,44 @@ tasks:
     result: PASS
     details:
     - G-RISK structural PASS
-  ended_at: '2026-10-12T17:19:21Z'
+  - at: '2026-10-12T17:46:23Z'
+    layer: structural
+    result: PASS
+    details:
+    - TCRiskReview ART-TRR-01M4RKGG74V5WXG9EY811TGAD3 VALID
+  - at: '2026-10-12T17:46:33Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-RISK structural PASS
+  ended_at: '2026-10-12T17:46:33Z'
 - task_id: T4
   type: approval
-  status: PENDING
+  status: RUNNING
   iteration: 0
   input_artifact_ids: []
-  input_entity_refs: []
+  input_entity_refs:
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-166
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-167
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-168
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-169
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-170
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-171
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-DAILYREPORT-172
+    version: 1
   output_artifact_ids: []
   history:
   - at: '2026-10-12T17:19:21Z'
@@ -348,7 +390,17 @@ tasks:
     to_status: DONE
     by: system
     trigger: decided
-  approval_id: APR-0202
+  - at: '2026-10-12T17:46:33Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-10-12T17:46:33Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: advance
+  approval_id: APR-0207
 - task_id: T5
   type: agent
   status: PENDING
@@ -394,9 +446,16 @@ history:
   by: oscarchen@blockaction.tech
   trigger: APR-0204
   run_id: RUN-20261013-004
+- at: '2026-10-12T17:46:33Z'
+  from_status: RUNNING
+  to_status: WAITING_HUMAN
+  by: system
+  trigger: APR-0207
+  run_id: RUN-20261013-004
 requirement_model_revision:
   spec_id: SPEC-DAILYREPORT-001
   spec_version: '0.3'
   revision: R001
   sha256: 13e858994d8c049f4772be250b1c221a30b1863533846be74ca109c62945299e
 current_task_id: T3RR
+waiting_on_approval_id: APR-0207

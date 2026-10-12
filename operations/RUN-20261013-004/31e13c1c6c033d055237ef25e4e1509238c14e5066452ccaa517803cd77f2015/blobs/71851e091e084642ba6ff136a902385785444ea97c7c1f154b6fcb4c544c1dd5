@@ -1,0 +1,84 @@
+artifact_id: ART-TRR-01M4RKGG74V5WXG9EY811TGAD3
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-004
+task_id: T3RR
+iteration: 1
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T17:45:32Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+- entity_type: Artifact
+  id: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+- entity_type: Artifact
+  id: ART-TRR-01M4RHPGRDFBPT99QQ2QGWDM12
+requires_approval: null
+dispatch_packet_sha256: e4058883f0d772fa31fb54c77e9921769125aa244cc433c127e5edbeaa5ce6e0
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RJVRG1BQ87FDFKM5ZZ7E0H
+    validation_report_artifact_id: ART-TVR-01M4RK14X5779D0891AZHG7QGG
+    functional_area: DAILYREPORT
+    spec_id: SPEC-DAILYREPORT-001
+    spec_version: '0.3'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RJVRFYP013SNVFD2D0DK2X
+    - TC-DRAFT-01M4RJVRFY22HG4RM5QW9ZD4HB
+    - TC-DRAFT-01M4RJVRFYE6Y9MK7PRTGBQMTW
+    - TC-DRAFT-01M4RJVRFY9C1KY3BD9TDH4Y0X
+    - TC-DRAFT-01M4RJVRFYJFPQJBE4NK5P7W0H
+    - TC-DRAFT-01M4RJVRFY72X58TP65X6MWMHE
+    - TC-DRAFT-01M4RJVRFYXS2MNWERMG5NWCDK
+    active_testcases_consulted:
+    - TC-DAILYREPORT-038
+    - TC-DAILYREPORT-051
+    - TC-DAILYREPORT-098
+    - TC-DAILYREPORT-119
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: 三張邊界案例延續上一輪已判定完整的內容：TC-DRAFT-…DK2X 驗 T 邊界時三欄依收據日歸屬；…4HB 驗 T 不是 00:00 時的週界；…MTW 驗小數加總、總計列與 CSV 一致。本輪 …MTW 加了開分（示例
+      A 1000、B 500），並斷言 A 列現金淨收＝開分－0.30（示例 999.70），總計列＝開分合計－0.30（示例 1499.70），且明列不得出現 999.6999999999999 這類尾數。上一輪 RF-01 的『小數下現金淨收要精確』這一半因此已補上。小數顯示位數屬
+      REQ-DAILYREPORT-010 Q03 的缺口、日結時間變更屬 CLR-DAILYREPORT-018，都不重複列。沒有新的邊界缺口。
+  - dimension: exception_flow
+    status: not_applicable
+    rationale: 本批沒有新增中途失敗或逾時的案例。已核實收據再作廢（CLR-CASHOUT-003）、人工入金／出金與被取消的出金（CLR-DAILYREPORT-021）、停用或改歸屬的機台（CLR-DAILYREPORT-022）都已開
+      CLR，不重複列。完成回報遲到（上輪 RF-03）屬重送冪等，放在 duplicate_submission 評估。
+  - dimension: concurrency
+    status: covered
+    rationale: 【RF-01 已完整補上】TC-DRAFT-…Y0X 的造數讓 D1～D4 每天都有開分，並在步驟 4 新增檢查 (d)：每份成功的查詢回應與 CSV 中，每列現金淨收＝開分＋進鈔－已核實洗分－已兌現，四項都取自同一份回應的同一列；總計列的開分與現金淨收各自等於
+      4 列之和；開分、進鈔、已核實洗分在全程不變。步驟 5 再斷言最終各列現金淨收的減少量恰等於該列已兌現（總計減 3600）。『已兌現已增加、現金淨收還沒扣』這種同一回應內的不自洽，因此抓得到。小數精確的部分由 …MTW 補上，見 boundary。【RF-02
+      已完整補上】…W0H 把日結時刻 T0 前後 30 秒的流量，從只送開分擴充為機台 A『開分 100 → 出金』、機台 B『開分 100 → 洗分 100』交錯送出。它以機台交易紀錄的時間判定歸屬，斷言 D、D+1 兩列的開分、收據、未兌現、洗分、待核實洗分逐日正確、合計不重不漏，且每台機台
+      D 列期末＝D+1 列期初。出金兩階段跨 T0 時，只斷言恰好計入其中一列、不替它假設歸屬時刻（v0.3 未定義），做法合理；Validator 已列『紀錄只有單一時間』的 minor。附記一條 medium 觀察（不列 finding）：…W0H
+      只比對相鄰兩列的期初與期末，沒有對 D、D+1 兩列各自套用第 72 行的餘額驗算式（期末＝期初＋開分＋進鈔＋損益－洗分－收據）。若跨 T0 出金的扣分與收據落在不同營業日，兩列各自的驗算就會不平，而前後相接仍然成立。這是報表層的勾稽問題，不會造成現金收付錯誤，所以不列
+      high；若要補，可以在步驟 5 加一項每列驗算。
+  - dimension: duplicate_submission
+    status: covered
+    rationale: 【RF-03 已完整補上】TC-DRAFT-…MHE 新增第二段：R2（300）核實、R3（200）作廢之後，才把兩者的出金完成回報各遲到重送 3 次。判定時先以機台交易紀錄確認四個 TXID 各只有一筆、A 當日入金與出金的總筆數各為
+      3，並在洗分出金核實頁確認 R2 仍已核實、R3 仍已作廢；條件都成立，才斷言報表 Z4＝Z3：未兌現不重新出現（仍只有 R1 的 500），已兌現 +300 與已作廢 +200 都不重複，收據與進鈔不加倍。這與上一輪的建議一致。附記兩點限制，不列
+      finding：(1) 案例要靠環境的重送工具，沒有工具時標為受阻；(2) 交易層或核實層出錯時（重送被另記成新 TXID、收據狀態被改回待核實），案例會停止，不判報表 FAIL。這樣的分層正確，報表照交易紀錄加總本來就是對的行為；但這種結果代表洗分出金核實或交易層有可能重複付現的缺陷，建議執行時一律開
+      BUG、不要只記成受阻，在洗分出金核實端由 RUN-20261013-002 的 …VCY 對應驗證。匯出防連點屬 CLR-DAILYREPORT-019，『核實／作廢帳號』在第一段步驟 4 未指定，Validator 已列，都不重複。沒有新的
+      high 缺口。
+  - dimension: permission
+    status: covered
+    rationale: TC-DRAFT-…WCDK（操作員竄改匯出請求的場館參數，後端拒絕；以原參數重送作對照）未變動，上一輪已判定完整。CLR-DAILYREPORT-020 若改變操作員權限，本案要一併檢討，Validator 已提醒。沒有新的權限缺口。
+  findings: []
+  summary: 本輪只確認上一輪抽查（ART-TRR-01M4RHPGRDFBPT99QQ2QGWDM12）的 RF-01～03 有沒有補齊，三條都已完整補上。RF-01 由 TC-DRAFT-…Y0X、…MTW 補上：每份並行回應裡現金淨收都自洽，小數下現金淨收精確（999.70，不得有尾數）。RF-02
+    由 …W0H 補上：日結當下交錯送出開分→出金、開分→洗分，各欄逐日不重不漏，相鄰列餘額前後相接；跨 T0 的出金只斷言不重不漏。RF-03 由 …MHE 第二段補上：收據已核實或已作廢之後才遲到重送完成回報，未兌現不重新出現、已兌現與已作廢不重複。新建議
+    0 條（high 0、medium 0、low 0）。另有兩條觀察只記在 dimension_results，不列 finding：medium 1 條（…W0H 沒有對 D、D+1 兩列各自做第 72 行的餘額驗算）；執行建議 1 條（…MHE
+    若在交易層或核實層停止，應開 BUG、不要只記受阻）。CLR-DAILYREPORT-017～023、CLR-CASHOUT-003／005 與 Validator 的 4 條 minor 都不重複列。本審查只提建議，不修改 TC、不判定
+    PASS／FAIL。
+history:
+- at: '2026-10-12T17:46:23Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-004
