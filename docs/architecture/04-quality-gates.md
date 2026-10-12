@@ -47,6 +47,7 @@
 | 只能取代 affected | `supersedes_testcase` 指向的 TC 不在本 run CIR 的 `testcase_impact`，或 CIR 判定為 `unaffected`／`obsolete`（obsolete 只能在 VersionComparisonReport 列 retire 建議） |
 | 版本相符 | `supersedes_testcase.version` ≠ CIR 的 `active_version` |
 | 一張 TC 一筆新稿 | 同一張 TC 被兩筆以上 Draft 取代 |
+| draft_id 唯一 | 同一份 Draft 的 `draft_id` 重複（`duplicate_draft_id_issues`；比較報告與 Validator 以 draft_id 指稱新稿，重複時身分有歧義） |
 
 - **G-DESIGN**：run 在設計 task 之前有本輪有效的 ChangeImpactReport 時套用，不看 Draft 自填的 `mode`（testcase-revision 沒有 CIR，不套用；spec-change-impact 找不到 CIR 直接 FAIL）。另外 Draft 的 `mode` 必須等於設計 task 的 mode（workflow 定義），不能以 `mode=spec` 繞過 change 模式的檢查。FAIL → 設計 task READY，Designer 修正，不計入 Validation 迭代。
 - **G-COMPARE**：同一套規則仍保留（防線：修正前已通過 G-DESIGN、正在途中的 run）。
@@ -55,12 +56,12 @@
 
 G-COMPARE 的問題分兩類（`gates.compare_issue_split`）：
 
-1. **比較報告本身的問題**（漏列、對錯取代關係、`old_version` 不符、`new_draft_id` 不屬於本輪 Draft、新 TC 不是 `added`、`retire_recommendations` 不是 CIR obsolete 或是本輪 Draft 取代的 TC……）：Change Impact Analyst 重交報告即可修正 → 維持現行行為，只寫診斷、T4 READY。
-2. **Draft 超出 CIR 範圍**（上表三條）：不論報告怎麼寫都會存在，READY 重試只會卡死。被超出範圍取代的 TC，報告仍必須照 Draft 寫——比較列恰好是取代它的各筆 Draft、對到 `supersedes_testcase` 的 TC 與版本；只豁免「`old_version` 等於 CIR 的 `active_version`」（版本不符時兩者互相矛盾）。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
+1. **比較報告本身的問題**（漏列、對錯取代關係、`old_version` 不符、`new_draft_id` 不屬於本輪 Draft、新 TC 不是 `added`、取代舊版的列不是 `changed`／`unchanged`、`removed` 帶新稿、`added` 帶舊 TC、`summary` 與逐列 verdict 統計不符、`retire_recommendations` 不是 CIR obsolete 或是本輪 Draft 取代的 TC……）：Change Impact Analyst 重交報告即可修正 → 維持現行行為，只寫診斷、T4 READY。
+2. **Draft 超出 CIR 範圍**（上表四條）：不論報告怎麼寫都會存在，READY 重試只會卡死。範圍以 Draft 的完整清單判定（不經 draft_id 索引）；draft_id 重複時比較列無從核對，直接視為 Draft 的問題。被超出範圍取代的 TC，報告仍必須照 Draft 寫——比較列恰好是取代它的各筆 Draft、對到 `supersedes_testcase` 的 TC 與版本；只豁免「`old_version` 等於 CIR 的 `active_version`」（版本不符時兩者互相矛盾）。報告本身沒有其他問題、只剩這一類時，`engine._escalate_compare` 記錄 structural FAIL、T4 停在 `GATE_FAILED`，並建立 `HUMAN_OVERRIDE`（`reopen_task=T2`），選項比照 Validator 迭代超限（`engine._route_back`）：
 
 | 選項 | 決定 | Runtime 動作 |
 |---|---|---|
-| `override` | `--decision override`（必填 rationale） | 視為 G-COMPARE 通過：T4 DONE，推進到 T5 APPLY_CHANGE（由 Human 在核准單上看到全部取代）；WorkflowSummary 的 `overrides` 記錄此單 |
+| `override` | `--decision override`（必填 rationale） | 視為 G-COMPARE 通過：T4 DONE，推進到 T5 APPLY_CHANGE（由 Human 在核准單上看到全部取代）；WorkflowSummary 的 `overrides` 記錄此單（限制：同一 task 多輪升級時 Summary 只記最後一張；完整紀錄見 `approvals/` 與 audit 的 RECORD_APPROVAL） |
 | `reject` | `--decision reject` | 退回 T2 再給一次迭代：本輪 G-TVAL 登記的 VALIDATED 版本 → DRAFT（比照 APPLY_CHANGE reject）、ChangeImpact `COMPARING → TEST_UPDATE_REQUIRED`、T2 iteration+1 READY、T3（含 T3RR）／T4 重設為 PENDING，之後以新的派發包重做 |
 | `cancel` | `--decision approve --option cancel`（與 Validator 超限的 HUMAN_OVERRIDE 相同） | run CANCELLED |
 

@@ -278,3 +278,59 @@ print(json.dumps({{"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[1] and w
     else:
         assert out["g"]["result"] == "FAIL" and any(expect in i for i in out["g"]["issues"]), out["g"]
         assert out["t4"][0] == "READY" and out["apr"] is None
+
+def test_g_design_rejects_duplicate_draft_ids():
+    """Codex 01 M1：draft_id 重複 → G-DESIGN FAIL（比較報告與 Validator 以 draft_id 指稱新稿，重複時身分有歧義）。"""
+    out = run_cia(_root(), """
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+def mutate(new): new[1]["draft_id"] = new[0]["draft_id"]
+did, new, g = design_g(rid, cid, cir, P1, mutate=mutate)
+print(json.dumps({"g": g}, default=str))""")
+    assert out["g"]["result"] == "FAIL" and any("必須唯一" in i for i in out["g"]["issues"]), out["g"]
+
+def test_g_compare_duplicate_draft_id_cannot_hide_out_of_scope_draft():
+    """Codex 01 M1 反例：在途 Draft 中取代 unaffected TC-AUTH-003 的稿和合法稿共用 draft_id、排在前面，比較報告只列後一筆。
+    G-COMPARE 必須以完整清單判定範圍（不經 draft_id 索引）：不得 PASS／建立 APPLY_CHANGE，而是升級 HUMAN_OVERRIDE，Registry 不變。"""
+    out = run_cia(_root(), """
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+x = extra_sup('TC-AUTH-003')
+def mutate(new):
+    x2 = new.pop(); x2["draft_id"] = new[0]["draft_id"]; new.insert(0, x2)
+orig = gates.GATES["G-DESIGN"]; gates.GATES["G-DESIGN"] = lambda *a: []
+did, new, g2 = design_g(rid, cid, cir, P1, extra=[x], mutate=mutate); gates.GATES["G-DESIGN"] = orig
+validate(rid, did, rmid)
+before = {t: v for t, v, _ in active()}
+_, g4 = compare(rid, cid, cir, new[1:])
+apr, a = waiting(rid)
+print(json.dumps({"g": g4, "type": a and a["type"], "same": before == {t: v for t, v, _ in active()}}, default=str))""")
+    assert out["g"]["result"] == "FAIL" and out["type"] == "HUMAN_OVERRIDE" and out["same"], out
+    assert any("必須唯一" in i for i in out["g"]["issues"]) and any("TC-AUTH-003" in i and "unaffected" in i for i in out["g"]["issues"])
+
+VERDICT_ERRORS = {   # 報告的 verdict／身分／summary 不一致 → 報告問題（T4 READY），範圍內與範圍外的列都一樣（Codex 01 M2）
+    "removed_with_new": ("compare(rid, cid, cir, new, verdict='removed')", "verdict removed 不得帶 new_draft_id"),
+    "sup_as_added":     ("compare(rid, cid, cir, new, verdict='added')", "verdict added 不得帶舊 testcase_id"),
+}
+
+@pytest.mark.parametrize("scope", ["in_scope", "out_of_scope"])
+@pytest.mark.parametrize("case", list(VERDICT_ERRORS) + ["summary"])
+def test_g_compare_verdict_identity_and_summary_are_report_issues(case, scope):
+    """Codex 01 M2：supersedes 的列只能是 changed／unchanged；removed 不得帶新稿；added 不得帶舊 TC；summary 必須等於逐列統計。
+    這些都能改報告修正 → 報告問題，T4 READY、不建 HUMAN_OVERRIDE（out_of_scope：Draft 另外多取代 unaffected 的 TC-AUTH-003，也不得因此升級）。"""
+    extra = "[extra_sup('TC-AUTH-003')]" if scope == "out_of_scope" else "[]"
+    call, expect = VERDICT_ERRORS.get(case, (None, "summary.changed"))
+    body = f"_, g4 = {call}" if call else """sup = [d for d in new if d.get("supersedes_testcase")]
+vcr = {"change_impact_id": cir["change_impact_id"], "comparisons": [{"testcase_id": d["supersedes_testcase"]["testcase_id"], "old_version": d["supersedes_testcase"]["version"],
+       "new_draft_id": d["draft_id"], "verdict": "changed", "field_diffs": [{"field": "expected_result", "old": "-", "new": d["expected_result"]}], "impacted_requirement_ids": d["requirement_ids"]} for d in sup],
+       "retire_recommendations": [], "summary": {"unchanged": 0, "changed": len(sup) + 1, "added": 0, "removed": 0}}
+aid, p = H.write_artifact(rid, "T4", "agent-change-impact-analyst", "VersionComparisonReport", vcr, [{"entity_type": "Artifact", "id": cid}], {"type": "ChangeImpactReport", "ids": [cid]}, "change-impact")
+assert engine.submit(rid, "T4", str(p))[0]; g4 = engine.evaluate_gate(rid, "T4")"""
+    out = run_cia(_root(), f"""
+rid, rmid = start()
+cir = cir_for(rid); cid, g1 = impact(rid, cir); assert g1["result"] == "PASS", g1
+did, new = legacy_design(rid, cid, cir, P1, {extra}); validate(rid, did, rmid)
+{body}
+print(json.dumps({{"g": g4, "t4": tasks(rid)["T4"], "apr": waiting(rid)[0]}}, default=str))""")
+    assert out["g"]["result"] == "FAIL" and any(expect in i for i in out["g"]["issues"]), out["g"]
+    assert out["t4"][0] == "READY" and out["apr"] is None

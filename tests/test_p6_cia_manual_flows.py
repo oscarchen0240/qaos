@@ -190,7 +190,8 @@ def compare(rid, cid, cir, new, it=0, verdict="changed", diffs=True):
            "new_draft_id": d["draft_id"], "verdict": verdict, "field_diffs": [{"field": "expected_result", "old": "-", "new": d["expected_result"]}] if verdict == "changed" and diffs else [],
            "impacted_requirement_ids": d["requirement_ids"]} for d in sup] +
            [{"testcase_id": None, "old_version": None, "new_draft_id": d["draft_id"], "verdict": "added", "field_diffs": [], "impacted_requirement_ids": d["requirement_ids"]} for d in add],
-           "retire_recommendations": [], "summary": {"unchanged": 0, "changed": len(sup), "added": len(add), "removed": 0}}
+           "retire_recommendations": []}
+    vcr["summary"] = {v: sum(c["verdict"] == v for c in vcr["comparisons"]) for v in ("unchanged", "changed", "added", "removed")}   # summary 必須等於逐列統計
     aid, p = H.write_artifact(rid, "T4", "agent-change-impact-analyst", "VersionComparisonReport", vcr, [{"entity_type": "Artifact", "id": cid}], {"type": "ChangeImpactReport", "ids": [cid]}, "change-impact", iteration=it)
     ok, pr = engine.submit(rid, "T4", str(p))
     if not ok: return aid, {"submit": pr}
