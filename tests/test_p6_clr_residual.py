@@ -414,11 +414,12 @@ cli(["spec", "import", "tests/fixtures/SPEC-AUTH-001-v1.1.md", "--spec-id", SPEC
 rid = engine.new_run("spec-change-impact", {"spec_id": SPEC, "from_version": "1.0", "to_version": "1.1"}, BY, new_request=True)["run_id"]
 rmid = analyze(rid, "T0", "1.1", H.requirement_model("1.1", "12"))
 active = tcs_active(); affected = [t for t in active if "REQ-AUTH-001" in t[2]["requirement_ids"]]; unaffected = [t for t in active if t not in affected]
+obsolete = unaffected[:1]                                                       # 比較報告建議退役的 TC：retire 建議只能是 CIR obsolete 的 TC
 cir = {"change_impact_id": "CI-SPEC-AUTH-001-1.0-1.1", "spec_id": SPEC, "from_version": "1.0", "to_version": "1.1",
        "requirement_diff": [{"requirement_id": "REQ-AUTH-001", "change": "changed", "detail": "8 → 12"}] + [{"requirement_id": r, "change": "unchanged"} for r in ["REQ-AUTH-002", "REQ-AUTH-003", "REQ-AUTH-004"]],
-       "testcase_impact": [{"testcase_id": t[0], "active_version": t[1], "impact": "affected" if t in affected else "unaffected", "reason": "邊界值變更" if t in affected else "-",
+       "testcase_impact": [{"testcase_id": t[0], "active_version": t[1], "impact": "affected" if t in affected else "obsolete" if t in obsolete else "unaffected", "reason": "邊界值變更" if t in affected else "與另一張重複" if t in obsolete else "-",
                             "affected_requirement_ids": ["REQ-AUTH-001"] if t in affected else []} for t in active],
-       "summary": {"requirements_changed": 1, "requirements_added": 0, "requirements_removed": 0, "testcases_affected": len(affected), "testcases_obsolete": 0, "testcases_unaffected": len(unaffected)},
+       "summary": {"requirements_changed": 1, "requirements_added": 0, "requirements_removed": 0, "testcases_affected": len(affected), "testcases_obsolete": len(obsolete), "testcases_unaffected": len(unaffected) - len(obsolete)},
        "completeness": {"all_active_requirements_judged": True, "all_referencing_testcases_judged": True}}
 r = engine.load_run(rid); groups = {}
 for t in active: groups.setdefault(_json.dumps(rm.tc_pin(t[0], t[1]), sort_keys=True), []).append(t[0])
@@ -440,8 +441,9 @@ assert engine.submit(rid, "T2", str(pd))[0] and engine.submit(rid, "T2", str(pr)
 _, p = H.write_artifact(rid, "T3", "agent-test-validator", "TestValidationReport", H.validation_report(did, rmid, "PASS", spec_version="1.1"), [{"entity_type": "Artifact", "id": did}], {"type": "TestCaseDraft", "ids": [did]}, "validation")
 assert engine.submit(rid, "T3", str(p))[0] and engine.evaluate_gate(rid, "T3")["result"] == "PASS"
 vcr = {"change_impact_id": cir["change_impact_id"], "comparisons": [{"testcase_id": t[0], "old_version": 1, "new_draft_id": d["draft_id"], "verdict": "changed",
-       "field_diffs": [{"field": "steps[0]", "old": "8", "new": "12"}], "impacted_requirement_ids": ["REQ-AUTH-001"]} for t, d in zip(affected, new)],
-       "retire_recommendations": [{"testcase_id": unaffected[0][0], "reason": "與另一張重複"}], "summary": {"unchanged": 0, "changed": 2, "added": 0, "removed": 0}}
+       "field_diffs": [{"field": "steps[0]", "old": "8", "new": "12"}], "impacted_requirement_ids": ["REQ-AUTH-001"]} for t, d in zip(affected, new)] +
+       [{"testcase_id": t[0], "old_version": t[1], "new_draft_id": None, "verdict": "removed", "field_diffs": [], "impacted_requirement_ids": []} for t in obsolete],
+       "retire_recommendations": [{"testcase_id": unaffected[0][0], "reason": "與另一張重複"}], "summary": {"unchanged": 0, "changed": 2, "added": 0, "removed": len(obsolete)}}
 _, p = H.write_artifact(rid, "T4", "agent-change-impact-analyst", "VersionComparisonReport", vcr, [{"entity_type": "Artifact", "id": cid}], {"type": "x", "ids": []}, "change-impact")
 assert engine.submit(rid, "T4", str(p))[0]; g4 = engine.evaluate_gate(rid, "T4"); assert g4["result"] == "PASS", g4
 apr = store.load(f"approvals/{engine.load_run(rid)['waiting_on_approval_id']}.yaml"); assert apr["type"] == "APPLY_CHANGE"

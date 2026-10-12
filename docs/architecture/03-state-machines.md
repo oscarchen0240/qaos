@@ -13,6 +13,7 @@ stateDiagram-v2
     VALIDATION_FAILED --> PENDING_APPROVAL : iteration > max → Human Override 請求
     VALIDATING --> VALIDATED : TestValidationReport.result = PASS
     VALIDATED --> PENDING_APPROVAL : Runtime 建立 ApprovalRequest(ACTIVATE_TESTCASE)
+    VALIDATED --> DRAFT : G-COMPARE 的 HUMAN_OVERRIDE = reject（退回 Test Designer）
     PENDING_APPROVAL --> APPROVED : ApprovalDecision = approve / override
     PENDING_APPROVAL --> DRAFT : ApprovalDecision = reject (附 rationale)
     APPROVED --> ACTIVE : Runtime COMMIT_TO_REGISTRY（舊 active 版本 → SUPERSEDED）
@@ -28,6 +29,7 @@ stateDiagram-v2
 | `DRAFT → VALIDATING` | Supervisor | — |
 | `VALIDATING → VALIDATED / VALIDATION_FAILED` | Test Validator | `TestValidationReport` |
 | `VALIDATED → PENDING_APPROVAL` | Runtime（自動） | `ApprovalRequest(type=ACTIVATE_TESTCASE)`；**VALIDATED 版本即寫入 `versions/`，但 Registry pointer 不變** |
+| `VALIDATED → DRAFT` | Human | spec-change-impact 的 G-COMPARE 只剩 Draft 超出 CIR 範圍的問題，`HUMAN_OVERRIDE` 選 reject：本輪登記的 VALIDATED 版本撤回 DRAFT（比照 APPLY_CHANGE reject），退回 Test Designer（見 `04-quality-gates.md`「G-COMPARE 失敗的出路」） |
 | `PENDING_APPROVAL → APPROVED` | Human | `ApprovalDecision` |
 | `APPROVED → ACTIVE` | Runtime | 執行 `COMMIT_TO_REGISTRY`，更新 pointer，舊版 → SUPERSEDED |
 
@@ -75,6 +77,7 @@ stateDiagram-v2
     VALIDATING --> TEST_UPDATE_REQUIRED : Validation FAIL
     VALIDATING --> COMPARING : Validation PASS
     COMPARING --> PENDING_APPROVAL : VersionComparisonReport + ApprovalRequest(APPLY_CHANGE)
+    COMPARING --> TEST_UPDATE_REQUIRED : G-COMPARE 的 HUMAN_OVERRIDE = reject（Draft 超出 CIR 範圍，退回 Test Designer）
     PENDING_APPROVAL --> APPLIED : Human approve → 新 TC 版本 ACTIVE、舊版 SUPERSEDED、obsolete TC RETIRED
     PENDING_APPROVAL --> TEST_UPDATE_REQUIRED : Human reject
     NO_IMPACT --> [*]
