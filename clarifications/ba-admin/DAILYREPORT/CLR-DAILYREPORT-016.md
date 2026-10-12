@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-016
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：ANSWERED
+- 狀態：INCORPORATED
 
 ## 背景
 兩邊一致的部分：列表仍列出、金額與筆數欄為 0、CSV 同列表。

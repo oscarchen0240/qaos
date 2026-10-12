@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-011
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：ANSWERED
+- 狀態：INCORPORATED
 
 ## 背景
 v0.3 為 2026-10-05 定案且原文自註改寫前的舊規則；洗分出金核實 v0.2 REQ-CASHOUT-032 同樣以出收據日歸屬。
