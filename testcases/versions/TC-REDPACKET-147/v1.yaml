@@ -1,0 +1,115 @@
+title: 儲存時整體再檢查一次並捲動至第一個錯誤欄位：多個欄位有誤時皆標紅框與提示，畫面捲到最上方的錯誤欄位
+description: 儲存時整體再檢查一次並捲動至第一個錯誤欄位：多個欄位有誤時皆標紅框與提示，畫面捲到最上方的錯誤欄位
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-039
+acceptance_criteria_ids:
+- AC-REDPACKET-0393
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- negative
+design_techniques:
+- negative
+priority: medium
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 瀏覽器視窗高度足以讓『活動幣種』欄與頁面底部的規則欄不同時出現在畫面中（例如縮小視窗高度）
+test_data: []
+steps:
+- n: 1
+  action: 新增紅包活動，類型『紅包』、名稱『RP-SCROLL』、永久；取消勾選所有活動幣種（錯誤 1，位於頁面上方）；新增 2 組等級規則使表單拉長；把最後一個規則的累積門檻填 0（錯誤 2，位於頁面下方）；其餘欄位合法
+  expected: 表單可編輯
+- n: 2
+  action: 把畫面捲到最底部（看不到『活動幣種』欄），點底部『儲存』
+  expected: 不建立活動；整體再檢查一次：活動幣種欄與該規則的累積門檻欄都標紅框並於欄位下方提示（『請至少勾選一個活動幣種』『累積門檻須大於 0』）
+- n: 3
+  action: 觀察畫面位置
+  expected: 畫面自動捲動至第一個錯誤欄位（位置最上方的『活動幣種』欄）
+expected_result: 按『儲存』時整體再檢查一次：所有錯誤欄位皆標紅框並於下方提示，畫面自動捲動至第一個（位置最上方的）錯誤欄位，活動未建立。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 415 行）
+  quote: 以上驗證不通過時，前端於該欄位標紅框並於下方提示，點擊「儲存」時整體再檢查一次並捲動至第一個錯誤欄位
+decision_refs:
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q03
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-REDPACKET-057
+    answer_rev: 0
+    answer_sha256: 0841572729cc0a175f78a645d34b385271a6eeea0e93963363c8c81153c7db93
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 415 行）
+source_refs:
+- type: clarification
+  clarification_id: CLR-REDPACKET-057
+  answer_rev: 0
+  answer_sha256: 0841572729cc0a175f78a645d34b385271a6eeea0e93963363c8c81153c7db93
+  quote: 依紅包 spec v02（目標）第 415 行的提示文字
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 415 行）
+  quote: 以上驗證不通過時，前端於該欄位標紅框並於下方提示，點擊「儲存」時整體再檢查一次並捲動至第一個錯誤欄位
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 415 行）
+  quote: 「累積門檻須大於 0」「單週期發放上限須為大於 0 的整數」「總預算須大於 0」「紅包金額須大於 0」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: low
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-039/AC-0393'
+testcase_id: TC-REDPACKET-147
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+created_at: '2026-10-12T09:37:17Z'
+updated_at: '2026-10-12T09:37:17Z'
+history:
+- at: '2026-10-12T09:37:17Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QQABRZC6X3NVW3SM20A0DD
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+  run_id: RUN-20261012-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

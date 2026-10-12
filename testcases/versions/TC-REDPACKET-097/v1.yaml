@@ -1,0 +1,118 @@
+title: 取消屬於已重置的上一週期的注單：不扣本週期累計、上一週期已產生的紅包不受影響（跨 UTC+0 00:00）
+description: 取消屬於已重置的上一週期的注單：不扣本週期累計、上一週期已產生的紅包不受影響（跨 UTC+0 00:00）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-008
+acceptance_criteria_ids:
+- AC-REDPACKET-0087
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- scenario
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 選定一名既有線上會員（玩家 A），本週期無注單計入累計；記下玩家 A 目前 USDT 錢包餘額
+- 【時間窗】本案必須橫跨一次 UTC+0 00:00（與其他案例『避開 00:00 前後』相反）：請在 UTC+0 23:40 前備妥活動與步驟 2 的注單，並預留到 UTC+0 00:20 之後繼續
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】可模擬遊戲商對已結算的指定注單送來『取消』（負值有效流水貢獻）的測試手段，並可指定是哪一筆注單
+test_data:
+- name: 活動
+  value: 門檻 1000／上限 5／固定 10／稽核 1；每日重置
+- name: 注單
+  value: Y＝300（00:00 前）；Z＝500（00:00 後）
+steps:
+- n: 1
+  action: 建立活動『RP-XCYCLE』（活動時間『永久』）：活動幣種 USDT；預設規則門檻 1000／上限 5／固定 10／稽核 1；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: UTC+0 23:40 之前，玩家 A 結算注單 Y（有效流水貢獻 300）
+  expected: 累計 300，沒有紅包
+- n: 3
+  action: 等到 UTC+0 00:00 之後（週期已重置）；玩家 A 結算注單 Z（有效流水貢獻 500）
+  expected: 新週期累計 500（上一週期的 300 不帶入）；沒有紅包
+- n: 4
+  action: 對屬於上一週期的注單 Y 觸發遊戲商『取消』（－300）
+  expected: 本週期累計不扣減，仍為 500；上一週期的紅包明細（若有）不受影響
+- n: 5
+  action: 玩家 A 結算有效流水貢獻 499
+  expected: 累計 999，沒有紅包（若上一週期注單的 －300 被扣到本週期，累計會是 699）
+- n: 6
+  action: 玩家 A 結算有效流水貢獻 1
+  expected: 累計 1,000 達標：產生 1 個紅包，紅包明細『週期累計』顯示 1,000
+- n: 7
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 屬於已重置的上一週期的注單被取消時，不扣減本週期累計：本週期累計維持 500，補注 499 時仍未達標、再補 1 恰好達標，週期累計 1,000。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 378 行）
+  quote: 遊戲商取消或重結算注單送來的負值有效流水貢獻照實扣減，累計可暫時為負（之後須先補回）；只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣。已產生的紅包（待開啟、已入帳）不受影響、不追回；前台進度最低顯示 0
+decision_refs:
+- requirement_id: REQ-REDPACKET-008
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 378 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 378 行）
+  quote: 遊戲商取消或重結算注單送來的負值有效流水貢獻照實扣減，累計可暫時為負（之後須先補回）；只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣。已產生的紅包（待開啟、已入帳）不受影響、不追回；前台進度最低顯示 0
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-008/AC-0087'
+testcase_id: TC-REDPACKET-097
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+created_at: '2026-10-12T09:37:17Z'
+updated_at: '2026-10-12T09:37:17Z'
+history:
+- at: '2026-10-12T09:37:17Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QQABRZC6X3NVW3SM20A0DD
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+  run_id: RUN-20261012-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

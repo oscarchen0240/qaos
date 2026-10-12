@@ -1,0 +1,112 @@
+title: 切換會員等級方案後新方案多出、未被勾選的序號：預設規則開啟時該序號會員適用預設規則；預設規則關閉時不參加（不累計、不產生）
+description: 切換會員等級方案後新方案多出、未被勾選的序號：預設規則開啟時該序號會員適用預設規則；預設規則關閉時不參加（不累計、不產生）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-007
+acceptance_criteria_ids: []
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: integration
+test_types:
+- functional
+- negative
+design_techniques:
+- requirement_based
+priority: medium
+risk: medium
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 整個測試須在同一個 UTC+0 日內完成（避開 UTC+0 00:00 前後 30 分鐘），否則每日重置會干擾累計與待開啟紅包
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】『系統管理 > 會員等級設定』有兩個方案：方案 P5（序號 1～5）與方案 P6（序號 1～6，序號 6 為 P5 沒有的等級）；P5 目前為生效方案；另備一名在 P6 下屬於序號 6
+  的既有線上會員 M6（需有可立即改變測試會員 VIP 等級序號的辦法）
+- 切換生效方案的操作：『系統管理 > 會員等級設定』方案列表頁，於『生效設定』右側下拉選單選目標方案後點『儲存』
+test_data:
+- name: 活動 1
+  value: 預設規則開啟（門檻 100／上限 5／固定 10）＋等級規則 1 勾選序號 3；序號 6 未被勾選
+- name: 活動 2
+  value: 預設規則關閉＋等級規則 1 勾選序號 3
+steps:
+- n: 1
+  action: 確認生效方案為 P5；建立活動『RP-PLAN-ON』（永久）：預設規則開啟（門檻 100／上限 5／固定 10／稽核 1）＋等級規則 1 勾選序號 3（門檻 100／上限 5／固定 30／稽核 1）；每日重置；儲存
+  expected: 建立成功
+- n: 2
+  action: 於『會員等級設定』把生效方案切換為 P6 並儲存；M6（P6 下序號 6）結算有效流水貢獻 100
+  expected: 新方案多出、未被勾選的序號 6，預設規則開啟 → M6 適用預設規則：產生 1 個紅包，金額 10（預設規則的固定金額），紅包明細的適用規則為預設規則
+- n: 3
+  action: 取消排程 RP-PLAN-ON；把生效方案切回 P5 並儲存；建立活動『RP-PLAN-OFF』（永久）：預設規則『關閉』＋等級規則 1 勾選序號 3（門檻 100／上限 5／固定 30／稽核 1）；每日重置；儲存
+  expected: 建立成功
+- n: 4
+  action: 把生效方案切換為 P6 並儲存；M6 結算有效流水貢獻 100
+  expected: 序號 6 未被勾選且預設規則關閉 → 不參加：不累計、不產生紅包（紅包明細沒有 M6 的紅包）
+- n: 5
+  action: 取消排程 RP-PLAN-OFF；把生效方案改回環境原本的方案
+  expected: 已取消排程、方案已還原
+expected_result: 切換方案後新方案多出、未被勾選的序號：預設規則開啟時 M6 適用預設規則（產生 10 元紅包）；預設規則關閉時 M6 不參加（不累計、不產生紅包）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 387 行）
+  quote: 新方案沒有的序號：該勾選不對應任何會員。新方案多出、未被勾選的序號：依預設規則開關，開啟時適用預設規則、關閉時不參加
+decision_refs:
+- requirement_id: REQ-REDPACKET-007
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 387 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 387 行）
+  quote: 新方案沒有的序號：該勾選不對應任何會員。新方案多出、未被勾選的序號：依預設規則開關，開啟時適用預設規則、關閉時不參加
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-007（整合評估 RE-L-10）（切換方案後多出未勾選的序號）'
+testcase_id: TC-REDPACKET-151
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+created_at: '2026-10-12T09:37:17Z'
+updated_at: '2026-10-12T09:37:17Z'
+history:
+- at: '2026-10-12T09:37:17Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QQABRZC6X3NVW3SM20A0DD
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+  run_id: RUN-20261012-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

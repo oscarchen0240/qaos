@@ -1,0 +1,151 @@
+title: 稽核倍數邊界：0、100、2.5 可建立（可為 0、不設上限、1 位小數）；2.55 提示『最多 1 位小數』；－1 提示『稽核倍數須大於或等於 0』，皆不建立
+description: 稽核倍數邊界：0、100、2.5 可建立（可為 0、不設上限、1 位小數）；2.55 提示『最多 1 位小數』；－1 提示『稽核倍數須大於或等於 0』，皆不建立
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-039
+- REQ-REDPACKET-003
+acceptance_criteria_ids:
+- AC-REDPACKET-0392
+- AC-REDPACKET-0039
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以具備優惠活動管理權限的後台角色（站長或管理員）登入後台，頁面標題下方的站台切換下拉選單選到線上站台（核心貨幣 USDT）
+- 【先清空】確認該站台目前沒有進行中或排程中的紅包活動（系統管理 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動（已取消、已結束的活動不列入重疊判斷），否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後、依本案步驟或下列佈置步驟自行建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 線上站台；每次建立後取消排程再建立下一筆（同站台同一時間只能有一個進行中的紅包活動）
+test_data:
+- name: 稽核倍數
+  value: 0 ✓、100 ✓、2.5 ✓、2.55 ✗、-1 ✗
+steps:
+- n: 1
+  action: 新增紅包活動『RP-AUD-A』（永久）：預設規則門檻 1000／上限 5／固定 10；稽核倍數填 2.55；其餘合法；點『儲存』
+  expected: 不建立活動；稽核倍數欄提示『最多 1 位小數』
+- n: 2
+  action: 稽核倍數改填 -1，點『儲存』
+  expected: 不建立活動；稽核倍數欄提示『稽核倍數須大於或等於 0』
+- n: 3
+  action: 稽核倍數改填 0，點『儲存』
+  expected: 建立成功（稽核倍數可為 0）
+- n: 4
+  action: 取消排程 RP-AUD-A；新增『RP-AUD-B』（同上）稽核倍數填 100，儲存
+  expected: 建立成功（不設上限）
+- n: 5
+  action: 取消排程 RP-AUD-B；新增『RP-AUD-C』（同上）稽核倍數填 2.5，儲存
+  expected: 建立成功（1 位小數）
+- n: 6
+  action: 清理：測試結束後於『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 稽核倍數 0、100、2.5 可建立（可為 0、不設上限、最多 1 位小數）；2.55 提示『最多 1 位小數』；－1 提示『稽核倍數須大於或等於 0』，皆不建立活動。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+decision_refs:
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q03
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-REDPACKET-057
+    answer_rev: 0
+    answer_sha256: 0841572729cc0a175f78a645d34b385271a6eeea0e93963363c8c81153c7db93
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 410 行）
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-002
+    spec_version: '0.2'
+    content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+    location: L885
+- requirement_id: REQ-REDPACKET-003
+  question_id: Q06
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §新增優惠活動 — 紅包（第 98 行）
+source_refs:
+- type: clarification
+  clarification_id: CLR-REDPACKET-057
+  answer_rev: 0
+  answer_sha256: 0841572729cc0a175f78a645d34b385271a6eeea0e93963363c8c81153c7db93
+  quote: 依紅包 spec v02（目標）第 415 行的提示文字
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L885
+  quote: setErr(`pf-${i}-audit`,'稽核倍數須大於或等於 0')
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 98 行）
+  quote: 可填 0、最多 1 位小數、不設上限
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: change_workflow
+source_ref: 'new_required: REQ-REDPACKET-039/AC-0392'
+testcase_id: TC-REDPACKET-146
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+created_at: '2026-10-12T09:37:17Z'
+updated_at: '2026-10-12T09:37:17Z'
+history:
+- at: '2026-10-12T09:37:17Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4QQABRZC6X3NVW3SM20A0DD
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261012-001
+- at: '2026-10-12T09:37:17Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4QQHD48N1VCZADPPPFVVTKF
+  run_id: RUN-20261012-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
