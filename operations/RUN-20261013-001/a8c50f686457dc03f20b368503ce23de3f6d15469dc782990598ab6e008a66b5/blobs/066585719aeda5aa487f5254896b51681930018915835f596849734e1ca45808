@@ -1,0 +1,151 @@
+title: 機台場館重置前 1 小時起提示：有待開啟紅包時，距場館日結時間 62 分鐘不提示、59 分鐘提示『未開啟的紅包將於重置時作廢』；領完後不提示
+description: 機台場館重置前 1 小時起提示：有待開啟紅包時，距場館日結時間 62 分鐘不提示、59 分鐘提示『未開啟的紅包將於重置時作廢』；領完後不提示
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-031
+- REQ-REDPACKET-011
+acceptance_criteria_ids:
+- AC-REDPACKET-0318
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+- 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+- 【時間窗】本案必須在場館日結時間（記為 Tc，於『後台管理員系統 > 站台列表』該機台站台查得，單位 UTC+0）前約 1 小時內完成，且不得更動日結時間。下文以 Tc＝UTC+0 20:00 為例，觀察點為 Tc−62 分鐘（18:58）與
+  Tc−59 分鐘（19:01）；Tc 不同時依實際值換算。請於 Tc−70 分鐘前備妥活動與待開啟紅包，並在 Tc 之前結束（不要等到重置）
+- 使用專用的測試場館或確認該場館沒有其他進行中的紅包活動；M1 在整個測試期間保持分數足以下注（不足時由店員補開分）
+test_data:
+- name: 場館日結時間 Tc
+  value: 以 UTC+0 20:00 為例（依站台列表實際值換算）
+- name: 觀察點
+  value: Tc−62 分鐘（不提示）、Tc−59 分鐘（提示）
+- name: 活動
+  value: 每日重置；門檻 100／上限 5／固定 20／稽核 0
+steps:
+- n: 1
+  action: （Tc−70 分鐘前，例 UTC+0 18:50 前）建立機台場館紅包活動『RP-WARN-ARC』（永久）：重置方式『每日』；預設規則門檻 100／單週期上限 5／固定 20／稽核倍數 0；儲存；店員對 M1 開分 200；M1
+    結算有效流水貢獻 100
+  expected: 產生 1 個待開啟紅包 P1；M1 紅包圖示亮起
+- n: 2
+  action: （Tc−62 分鐘，例 UTC+0 18:58）M1 點紅包圖示開啟紅包視窗，檢視視窗內容
+  expected: 視窗不顯示『未開啟的紅包將於重置時作廢』提示（距重置超過 1 小時）；視窗內其他資料只記錄
+- n: 3
+  action: （Tc−59 分鐘，例 UTC+0 19:01）M1 再開啟紅包視窗
+  expected: 視窗顯示提示『未開啟的紅包將於重置時作廢』（重置前 1 小時內、有待開啟紅包）
+- n: 4
+  action: M1 依領取流程領取 P1（已無其他待開啟紅包），再開啟紅包視窗
+  expected: 視窗不再顯示該提示（無待開啟紅包時不提示）
+- n: 5
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 機台場館有待開啟紅包時，距場館日結時間（重置點）62 分鐘開啟紅包視窗不顯示作廢提示，59 分鐘內開啟顯示『未開啟的紅包將於重置時作廢』；無待開啟紅包時不提示。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §前台呈現說明（第 199 行）
+  quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」；重置方式為「不重置」的活動，於活動結束前 1 小時起提示
+decision_refs:
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 199 行）
+- requirement_id: REQ-REDPACKET-011
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 382 行）
+- requirement_id: REQ-REDPACKET-031
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §前台呈現說明（第 178 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 199 行）
+  quote: 有待開啟紅包時，於重置前 1 小時起提示「未開啟的紅包將於重置時作廢」；重置方式為「不重置」的活動，於活動結束前 1 小時起提示
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 382 行）
+  quote: 週期與場館日結報表的營業日對齊：每日＝一個營業日，每週自週一的營業日起算，每月自 1 日的營業日起算
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 178 行）
+  quote: 線上與機台使用同一個紅包活動視窗，顯示以下資料；不顯示規則名稱
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-02（機台提示邊界）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-239
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+created_at: '2026-10-12T17:50:40Z'
+updated_at: '2026-10-12T17:53:18Z'
+history:
+- at: '2026-10-12T17:50:40Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:53:18Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

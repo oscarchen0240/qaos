@@ -1,0 +1,96 @@
+artifact_id: ART-TRR-01M4RKXQ8RSM8MDBFQ74K8422S
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-001
+task_id: T3RR
+iteration: 1
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-12T17:52:45Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+- entity_type: Artifact
+  id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+- entity_type: Artifact
+  id: ART-TRR-01M4RJPPNAZY4DEEXW3S4PBQAP
+requires_approval: null
+dispatch_packet_sha256: ca03a77042ddd5868368776c789e2030f98e224d34be315a3a9bb4778caf9acd
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+    validation_report_artifact_id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+    functional_area: REDPACKET
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4RKEBA94KQV6EDMG1K25EP5
+    - TC-DRAFT-01M4RKEBBRSJHNQC3GXQPEM3GV
+    - TC-DRAFT-01M4RKEBD7DNAQR3FXGEN6QM45
+    - TC-DRAFT-01M4RKEBF3H1GAGCF76DVYZGS5
+    - TC-DRAFT-01M4RKEBH4X4YQ6G15ANK65AFQ
+    - TC-DRAFT-01M4RKEBJN2Z05MCF3SB7R5XE9
+    - TC-DRAFT-01M4RKEBM6EQ0GHS0ABCC94W7K
+    - TC-DRAFT-01M4RKEBNN6JV3XZ6CDPTS0PE9
+    - TC-DRAFT-01M4RKEBQAMFTMQXDYSJKWTJQ7
+    - TC-DRAFT-01M4RKEBRSBH6VG5MV4ZKHNWQJ
+    - TC-DRAFT-01M4RKEBT9JVME28JDQVCM1Y8B
+    - TC-DRAFT-01M4RKEBVSPXXDD27VESNTMWHN
+    - TC-DRAFT-01M4RKEBX8WHN814XT1CBS5EXV
+    - TC-DRAFT-01M4RKEBYPKDXD1P0Y1M7QVBEC
+    - TC-DRAFT-01M4RKEC054YY3QB1NGVZKA7V4
+    - TC-DRAFT-01M4RKEC1NH1AY78ZDX847N929
+    - TC-DRAFT-01M4RKEC35X9QG8QCQVYEZKJ44
+    - TC-DRAFT-01M4RKEC3ACKB9MC3TTYCGWMHF
+    - TC-DRAFT-01M4RKEC4SBD5SD0S9K2D43DTA
+    - TC-DRAFT-01M4RKEC69CAHNAG0P6B6JWG9S
+    - TC-DRAFT-01M4RKEC7SFGJ7WEH2WKZWQ67X
+    - TC-DRAFT-01M4RKEC9BDKSYP3FBXA0YYK3R
+    - TC-DRAFT-01M4RKECAYBSGXAPCV5YG41TPY
+    active_testcases_consulted:
+    - TC-REDPACKET-057
+    - TC-REDPACKET-068
+    - TC-REDPACKET-089
+    - TC-REDPACKET-185
+    - TC-REDPACKET-213
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: T03～T06 的邊界內容延續上一輪已判定完整的結論：重置前 1 小時提示的 62／59 分鐘、日結時間調晚後提示窗跟著移、每月 1 日依場館日結時間重置、舊活動注單取消不扣到新活動。T01、T02 因 CLR-REDPACKET-058
+      未答，已改為 exploratory，只記錄不判定；它們的 AC 掛載與 assumption，Validator 已列。邊界不是本輪重點，也沒有新的邊界缺口。
+  - dimension: exception_flow
+    status: covered
+    rationale: T10、T11（確認領取視窗開著時跨過重置或活動到期）延續上一輪已判定完整的結論；T11 刪掉已結束活動的取消排程步驟，Validator 已確認處理。領取中途失敗屬 CLR-REDPACKET-059，不重複列。本輪沒有新的異常流程缺口。
+  - dimension: concurrency
+    status: covered
+    rationale: 【RF-01 已完整補上】T12、T14、T16、T17 都改成以 API 腳本並行送出，而且用不同帳號：T12 是玩家與管理員，T14、T16、T17 是兩個不同的後台帳號。T13、T15 是同一帳號重放，本來就不需要不同帳號。六張都逐請求記錄送出與回應時間，只有所有請求都在任一回應回來前送出才算有效輪，無效輪作廢重做；有效輪不足下限記為未完成、不得判通過；人工口令同時按下只當補充觀察。T12
+      的最終狀態限定只能是（甲）領取先成立或（乙）取消先成立，錢包、交易紀錄、稽核明細與預算占用都要對上同一種結果，符合上輪建議。【RF-02 已完整補上】T07～T09 新增前提，先請工程確認結算是否經單一佇列序列化：若是，照做但改列『循序一致性驗證』、不宣稱驗證了併發；若是並行處理，除了請求時間要重疊，還要取得後端處理時間證據，處理時間區間也必須重疊才算有效輪。『注單非同步計入時，回應時間不代表處理時間』的問題因此解決。【RF-03
+      已完整補上】新增 T22（領取對洗分 req-keyout，mode=all、throshold=0）與 T23（領取對出金 req-cashout，再以 end-cashout 完成），各至少 5 個有效輪。兩張都以最終狀態判定只能是兩種結果之一，並用守恆式核對：最終分數＝S1＋入帳金額－核可金額＝0。T23
+      另外檢查出金待確認期間領取被拒，以及出金完成後紅包作廢、原因為機台出金，對得到第 398、400 行。同一機台帳號無法用不同帳號區分勝方，案例改用請求識別、回應與最終狀態判定，做法合理。用回應歸類（甲）（乙）、T23（乙）的畫面斷言、T22
+      與 ACTIVE TC-REDPACKET-213 重疊，這三點 Validator 已列，不重複。附記兩條觀察，不列 finding：(1) medium：同一個紅包被兩個領取請求並行送出（雙重入帳）沒有案例，這和 CLR-REDPACKET-060
+      問的領取冪等是同一個問題，等 CLR 答覆後一併補；(2) low：第 400 行『出金被取消或被新出金取代後，紅包恢復可開啟』與領取並行的情境沒有案例，其中管理員手動取消涉及 CLR-CASHFLOW-012，留待該 CLR 答覆。
+  - dimension: duplicate_submission
+    status: covered
+    rationale: T13（追加預算：連點、重放、並送）、T15（線上建立活動）、T17（機台建立活動）的並送都已補上逐請求時間記錄與有效輪判定，並設有效輪下限（T13、T15 各 3 輪，T17 的兩人並行 2 輪）。斷言仍是『只有一個請求成立、7.4
+      操作紀錄只多一筆、只產生一個紅包』。領取請求的重放與冪等屬 CLR-REDPACKET-060，不重複列。沒有新的 high 缺口。
+  - dimension: permission
+    status: covered
+    rationale: T18～T21（線上站長操作子站台、無權限或範圍外帳號匯出、機台站長操作管轄外場館、操作員匯出非自身場館）延續上一輪已判定完整的結論：以 API 為主要驗證，並有有權限身分的對照組。T19、T21 與既有 TC 的佈置重疊，屬
+      Validator 的可選建議。線上財務的子站台範圍屬 CLR-REDPACKET-062、領取 API 的歸屬檢查屬 CLR-REDPACKET-061，都不重複列。沒有新的權限缺口。
+  findings: []
+  summary: 本輪只確認上一輪抽查（ART-TRR-01M4RJPPNAZY4DEEXW3S4PBQAP）的 RF-01～03 有沒有補齊，三條都已完整補上。RF-01：T12～T17 都改成 API 並行、逐請求記錄時間，請求確實重疊才算有效輪，有效輪不足不得判通過；T12、T14、T16、T17
+    用不同帳號。RF-02：T07～T09 先請工程確認結算是否序列化，序列化就改列循序一致性驗證，並行處理則另外要求後端處理時間重疊的證據。RF-03：新增 T22（領取對洗分）與 T23（領取對出金），以兩種結果之一加上分數守恆式判定。新建議
+    0 條（high 0、medium 0、low 0）。另有兩條觀察只記在 dimension_results，不列 finding：medium 1 條（同一紅包被並行重複領取，與 CLR-REDPACKET-060 相關）、low 1
+    條（出金被取消或被取代後恢復可領取的並行情境，與 CLR-CASHFLOW-012 相關）。CLR-REDPACKET-058～063 與 Validator 的 9 條 minor 都不重複列。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-12T17:53:15Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-001

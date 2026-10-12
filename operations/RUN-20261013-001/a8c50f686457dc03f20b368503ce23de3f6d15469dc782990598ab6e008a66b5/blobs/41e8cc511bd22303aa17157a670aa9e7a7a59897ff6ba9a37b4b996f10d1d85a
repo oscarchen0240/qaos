@@ -1,0 +1,150 @@
+title: 無權限帳號與管轄範圍外的帳號以 API 呼叫紅包明細『匯出 CSV』：被後端拒絕『無權限』、不回傳資料
+description: 無權限帳號與管轄範圍外的帳號以 API 呼叫紅包明細『匯出 CSV』：被後端拒絕『無權限』、不回傳資料
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-023
+acceptance_criteria_ids:
+- AC-REDPACKET-0235
+- AC-REDPACKET-0233
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: api
+test_types:
+- security
+- negative
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】測試用玩家帳號可於前台以指定幣種下注並結算出指定的有效投注額；所用遊戲的貢獻系數已確認為 100%（確認方式：後台 遊戲商管理 > 遊戲貢獻值設定；該頁在線上站台的存在與操作為依機台場館選單推測，需確認），下文稱為『100%
+  遊戲』
+- 主站台 A（線上、核心貨幣 USDT）底下有子站台 A1；A 目前沒有進行中或排程中的紅包活動。由 A 的管理員在 A 建立活動『RP-CSV-A』（永久、活動幣種 USDT、預設規則門檻 100／上限 5／固定 10／稽核 1、總預算 5000），並讓
+  A 的一名既有會員結算有效流水貢獻 100，使紅包明細至少有 1 筆紅包；記下 RP-CSV-A 的活動識別（取得方式由工程告知）
+- 【身分一】無優惠活動管理權限的後台帳號（自行從環境中選定，例如 TC-REDPACKET-056 使用的角色），所屬站台為 A
+- 【身分二】子站台 A1 的管理員帳號（其管轄範圍不含上層站台 A，A 對它是管轄範圍外）
+- 【對照組身分】A 的管理員帳號
+test_data:
+- name: 身分一
+  value: 無優惠活動管理權限的後台帳號（所屬站台 A）
+- name: 身分二
+  value: 子站台 A1 的管理員（對 A 為管轄範圍外）
+- name: 動作
+  value: 匯出 CSV API
+steps:
+- n: 1
+  action: 【對照組】以 A 的管理員身分用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+  expected: 成功，CSV 資料列數等於紅包明細筆數（至少 1 筆）；確認 API 呼叫方式正確
+- n: 2
+  action: 以身分一（無權限帳號）用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+  expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+- n: 3
+  action: 以身分二（子站台 A1 的管理員，對 A 是管轄範圍外）用 API 工具對 RP-CSV-A 呼叫『匯出 CSV』API
+  expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+- n: 4
+  action: 以 A 的管理員檢視 RP-CSV-A 的狀態與紅包明細筆數
+  expected: 狀態『進行中』、紅包明細筆數與步驟 1 相同（資料不變）
+- n: 5
+  action: 清理：A 的管理員對 RP-CSV-A 點『取消排程』並於確認視窗點『確認取消』
+  expected: 已取消排程
+expected_result: 匯出 CSV 與新增活動同權限：無優惠活動管理權限的帳號、以及管轄範圍外的帳號（子站台 A1 的管理員對上層站台 A）直接呼叫匯出 CSV API，後端拒絕並回傳『無權限』、不回傳資料；有權限的管理員（對照組）可匯出。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §角色與權限（第 305 行）
+  quote: 追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限
+decision_refs:
+- requirement_id: REQ-REDPACKET-023
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 305 行）
+- requirement_id: REQ-REDPACKET-023
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+    location: §十、業務規則（第 265 行）
+- requirement_id: REQ-REDPACKET-023
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+    location: §四、管轄範圍（scope）（第 120 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 305 行）
+  quote: 追加預算、取消排程、紅包明細與匯出 CSV 皆與新增活動同權限
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §十、業務規則（第 265 行）
+  quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §四、管轄範圍（scope）（第 120 行）
+  quote: 越權操作一律回「無權限」
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+source_ref: RF-15（匯出 CSV API）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-255
+version: 1
+supersedes: null
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+created_at: '2026-10-12T17:50:40Z'
+updated_at: '2026-10-12T17:53:18Z'
+history:
+- at: '2026-10-12T17:50:40Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:53:18Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
