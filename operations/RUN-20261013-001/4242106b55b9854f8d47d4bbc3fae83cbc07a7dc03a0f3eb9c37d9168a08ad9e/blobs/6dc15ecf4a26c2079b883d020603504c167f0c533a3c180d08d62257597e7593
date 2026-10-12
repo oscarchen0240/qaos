@@ -1,0 +1,181 @@
+title: 機台場館權重表紅包金額帶 1 位小數：0.55 被擋；0.5／10.5 的入帳分數與日結報表紅包金額僅記錄（CLR-REDPACKET-058 待覆）
+description: 機台場館權重表紅包金額帶 1 位小數：0.55 被擋；0.5／10.5 的入帳分數與日結報表紅包金額僅記錄（CLR-REDPACKET-058 待覆）
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-025
+- REQ-REDPACKET-032
+- REQ-REDPACKET-039
+acceptance_criteria_ids:
+- AC-REDPACKET-0391
+- AC-REDPACKET-0253
+- AC-REDPACKET-0321
+- AC-REDPACKET-0323
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: ui_e2e
+test_types:
+- functional
+- boundary
+- negative
+design_techniques:
+- boundary_value
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 以管理員或站長角色登入後台，站台切換下拉選單選到機台場館（站台類型＝機台，核心貨幣 TWD）；紅包版本已隨版本對所有機台場館上線、不設場館開關（場館建立紅包活動即參加），不需另行啟用場館
+- 【先清空】確認該機台場館目前沒有進行中或排程中的紅包活動（後台站台切換選到該機台場館 > 優惠活動管理 > 活動排程 > 紅包活動子分頁，看『狀態』欄；若有，逐一於該列點『取消排程』並於確認視窗點『確認取消』，直到沒有狀態為『進行中』或『排程中』的活動；狀態為『已結束』『已取消』的活動仍會列在列表，不影響）；依據：同一站台同一時間僅能有一個進行中的紅包活動，否則後續『儲存』會被阻擋。本案需要的活動一律在清空之後建立，不沿用其他案例留下的活動；除步驟另有指定『區間』者外，活動時間一律選『永久』，建立後若狀態欄顯示『排程中』，等其變為『進行中』再開始下注（永久活動建立後多久生效，spec
+  未明講，狀態文字與位置只記錄）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】場館店員（持鑰匙）可透過機台鑰匙選單對測試機台帳號開分，使機台帳號有分數可下注；開分流程與開分對紅包的影響 spec 本案未定義（spec 只規定洗分／出金完成才會作廢待開啟紅包），本案除指定步驟外不洗分、不出金
+- 機台帳號 M1（自行從環境中選定，本週期無注單）；領取流程＝點機台畫面上亮起的紅包圖示 → 紅包視窗 → 點『領取獎勵（N）』→ 確認領取視窗點［確認領取］
+- 整個測試須在同一個營業日內完成，且避開場館日結時間前後 30 分鐘（日結時間見『後台管理員系統 > 站台列表』該機台站台的『日結時間』），否則日結結算會結束進行中的場次、每日重置會干擾累計與待開啟紅包
+- 【狀態註記】CLR-REDPACKET-058（機台場館的紅包金額是否應限制為整數；若允許 1 位小數，機台入帳後的分數、4.1／4.4 金額、日結報表紅包金額是否都照記含小數）尚未回答，所以本案除步驟 1 的『2 位小數被擋』（spec
+  明文：紅包金額最多 1 位小數）外，其餘斷言都是 exploratory：只記錄實際結果、不判定 PASS／FAIL。CLR-058 答覆為『機台限整數』時，本案步驟 2 起失效
+- 【範圍註記】本案只驗紅包入帳後的機台分數、4.1／4.4 與場館日結報表；玩家之後以帶小數的餘額結算出金（收據面額、付現、小數殘值）屬機台金流範圍（CLR-CASHFLOW-007 的收據小數處理），不在本案斷言範圍
+test_data:
+- name: 權重表
+  value: 先 0.55／10.5（應被擋）；再 0.5（50.0%）／10.5（50.0%）（CLR-058 待覆，只記錄）
+- name: 活動
+  value: 門檻 100／單週期上限 5／稽核倍數 0／每日重置
+- name: 下注
+  value: M1 有效流水貢獻 200（產生 2 個紅包）
+steps:
+- n: 1
+  action: 【精度上限的另一側】建立機台場館紅包活動『RP-ARC-DEC-W』（永久）：每日重置；預設規則門檻 100／單週期上限 5／獎勵方式『隨機金額』權重表兩列：紅包金額 0.55 機率 50.0%、紅包金額 10.5 機率 50.0%；稽核倍數
+    0；點『儲存』
+  expected: 不建立活動；權重表中 0.55 這一列的紅包金額標紅框並提示（2 位小數違反『紅包金額最多 1 位小數』）。提示的確切文字：權重表的提示文字在 spec 與 proto 之間有衝突（REQ-039 Q03），只記錄、不判定
+- n: 2
+  action: 把 0.55 改為 0.5（兩列：0.5 機率 50.0%、10.5 機率 50.0%），再點『儲存』
+  expected: 【exploratory，僅記錄】記錄是否可建立；若 0.5 或 10.5 被擋下，記錄提示並結束本案（回報 CLR-058 的實際行為）
+- n: 3
+  action: 店員對 M1 開分 200，使 M1 進入進行中場次；M1 結算有效流水貢獻 200（跨 2 個門檻）
+  expected: 【僅記錄】是否產生 2 個待開啟紅包 P1、P2；紅包明細中兩筆的『紅包金額』各為多少（參考：0.5 或 10.5 其中之一，抽到哪個不判定），記為 a1、a2
+- n: 4
+  action: 記下 M1 目前分數 S1；至『各式報表 > 場館日結報表』（統計維度『依場次明細』、機台帳號 M1、結算日期含此刻），找到 M1 進行中場次那一列，記下『紅包金額』R0、期初餘額、開分金額、進鈔金額、損益、洗分金額、收據金額、期末餘額
+  expected: 已記錄。自此步驟起 M1 不再下注、不洗分、不出金
+- n: 5
+  action: M1 依領取流程只領取一個紅包（領取獎勵（2）→ 確認領取），再看紅包明細確認被領取的是 P1 或 P2，記為 Pk（金額 ak）；另一個保持待開啟，記下領取後的 M1 分數 S2
+  expected: 【僅記錄】S2 與 S1 的差值（參考：ak，是否被取整）；Pk 的狀態、另一個紅包是否仍為『待開啟』
+- n: 6
+  action: 重新查詢『場館日結報表』（同『入帳前基準』條件、同一個場次列）
+  expected: 【僅記錄】『紅包金額』與 R0 的差值（參考：ak；待開啟的另一個紅包是否未計入）；以該列顯示的數字驗算 期初餘額＋開分金額＋進鈔金額＋紅包金額＋損益－洗分金額－收據金額 是否等於期末餘額，記下驗算結果與差額
+- n: 7
+  action: M1 領取剩下的紅包（金額 a'）後，再次查詢同一列
+  expected: 【僅記錄】分數是否再增加 a'；『紅包金額』與 R0 的差值（參考：a1＋a2）；餘額驗算結果
+- n: 8
+  action: 清理：測試結束後於機台場館『活動排程 > 紅包活動』對該活動點『取消排程』，於確認視窗點『確認取消』，避免占用同站台唯一的紅包活動名額
+  expected: 已取消排程
+expected_result: 權重表紅包金額 0.55（2 位小數）被擋下、不建立活動（確定斷言）。其餘為 exploratory、僅記錄不判定：0.5／10.5 能否建立、領取後機台分數增量、日結報表紅包金額（待 CLR-REDPACKET-058
+  答覆後轉為斷言）。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+decision_refs:
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 410 行）
+- requirement_id: REQ-REDPACKET-039
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §業務規則與驗證（第 415 行）
+- requirement_id: REQ-REDPACKET-025
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §線上與機台的差異（第 38 行）
+- requirement_id: REQ-REDPACKET-032
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §對既有章節的影響（第 431 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 410 行）
+  quote: 累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數；稽核倍數可為 0、不設上限
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 415 行）
+  quote: 以上驗證不通過時，前端於該欄位標紅框並於下方提示，點擊「儲存」時整體再檢查一次並捲動至第一個錯誤欄位
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 38 行）
+  quote: 固定 TWD（場館僅此一種），不顯示選項
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 431 行）
+  quote: 當日已入帳紅包合計，營業日依入帳時間歸屬
+assumptions:
+- text: 【CLR-REDPACKET-058 未答，非 spec 明文】機台場館權重表可設定 0.5、10.5 這類 1 位小數的紅包金額並正常抽出、入帳，機台分數照記含小數
+  requirement_id: REQ-REDPACKET-025
+  needs_human_confirmation: true
+- text: 【CLR-REDPACKET-058 未答，非 spec 明文】場館日結報表『紅包金額』照記含小數、只計已入帳，且帶小數時餘額驗算式成立
+  requirement_id: REQ-REDPACKET-032
+  needs_human_confirmation: true
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: high
+stability: unknown
+source: spec_workflow
+source_ref: RF-01（部分，權重表輪）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T；APR-0205 退回：CLR-058 未答改 exploratory
+testcase_id: TC-REDPACKET-238
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+created_at: '2026-10-12T17:50:40Z'
+updated_at: '2026-10-12T17:50:40Z'
+history:
+- at: '2026-10-12T17:50:40Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

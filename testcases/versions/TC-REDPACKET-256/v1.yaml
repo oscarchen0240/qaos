@@ -1,0 +1,162 @@
+title: 機台場館站長以 API 直接操作管轄範圍外的場館 V3：新增、追加預算、取消排程、查詢紅包明細、匯出 CSV 一律被後端拒絕『無權限』、V3 資料不變
+description: 機台場館站長以 API 直接操作管轄範圍外的場館 V3：新增、追加預算、取消排程、查詢紅包明細、匯出 CSV 一律被後端拒絕『無權限』、V3 資料不變
+product: ba-admin
+functional_area: REDPACKET
+requirement_ids:
+- REQ-REDPACKET-024
+acceptance_criteria_ids:
+- AC-REDPACKET-0243
+spec_id: SPEC-REDPACKET-001
+spec_version: '0.2'
+test_level: api
+test_types:
+- security
+- negative
+design_techniques:
+- security_rule
+priority: high
+risk: high
+execution_mode: manual
+preconditions:
+- 【環境前提，spec 未定義，需工程提供】測試人員可用 API 工具（例如 REST 客戶端或瀏覽器開發者工具）以指定後台帳號的登入身分直接呼叫後端 API；各 API 的端點、參數與認證方式 spec 未定義，由工程提供。錯誤代碼與 HTTP
+  狀態碼由後端定義，本案只核對『被拒絕』與『資料不變』
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】機台前台遊戲畫面（以機台帳號登入）可讓測試人員以 TWD 下注並結算出指定的有效投注額；所用遊戲貢獻系數已確認為 100%（遊戲商管理 > 遊戲貢獻值設定）
+- 站長 S 的管轄範圍內有兩個機台場館 V1、V2；另有一個不在 S 管轄範圍內的機台場館 V3（皆自行從環境中選定）；若環境中找不到站長 S 管轄範圍外的機台場館，本案無法執行，記錄為環境不足
+- V1、V3 兩個場館各一個進行中的紅包活動（各場館建立前先確認沒有進行中或排程中的紅包活動）：V1 的『RP-S-V1』由站長 S 建立；V3 的『RP-S-V3』由可管轄 V3 的角色（例如 V3 所屬的管理員或站長，自行選定）建立；兩者皆為永久、重置方式每日、預設規則門檻
+  300／上限 5／固定 20／稽核 0、總預算 5000；各場館內一台機台帳號結算有效流水貢獻 300，使紅包明細至少有 1 筆紅包；記下兩個活動的識別（取得方式由工程告知）
+test_data:
+- name: 場館
+  value: V1、V2 在站長 S 管轄內；V3 在管轄外
+- name: 站長 API 動作（V3）
+  value: 追加預算 6000、取消排程、查詢紅包明細、匯出 CSV、新增活動
+steps:
+- n: 1
+  action: 【對照組】以站長 S 的身分用 API 工具對 V1 的 RP-S-V1 呼叫『查詢紅包明細』API
+  expected: 成功回傳 RP-S-V1 的紅包資料（V1 在 S 的管轄範圍內）；確認 API 呼叫方式正確
+- n: 2
+  action: 站長 S 用 API 工具對 V3 的 RP-S-V3 呼叫『追加預算』API（新總預算 6000）
+  expected: 後端拒絕並回傳『無權限』；RP-S-V3 總預算仍 5000
+- n: 3
+  action: 站長 S 對 RP-S-V3 呼叫『取消排程』API
+  expected: 後端拒絕並回傳『無權限』；RP-S-V3 仍為進行中
+- n: 4
+  action: 站長 S 對 RP-S-V3 呼叫『查詢紅包明細』API
+  expected: 後端拒絕並回傳『無權限』，不回傳任何紅包資料
+- n: 5
+  action: 站長 S 對 RP-S-V3 呼叫『匯出 CSV』API
+  expected: 後端拒絕並回傳『無權限』，不回傳 CSV 內容
+- n: 6
+  action: 站長 S 呼叫『新增紅包活動』API，目標為 V3（合法資料：活動名稱『RP-S-V3-NEW』、區間約 100 天後～約 130 天後、其餘設定同 RP-S-V3，時段不與 RP-S-V3 重疊）
+  expected: 後端拒絕並回傳『無權限』；V3 沒有新增活動
+- n: 7
+  action: 以可管轄 V3 的角色檢視 V3 的『活動排程 > 紅包活動』與 RP-S-V3 紅包明細
+  expected: RP-S-V3 總預算 5000、狀態『進行中』、紅包明細筆數與設定時相同；沒有『RP-S-V3-NEW』（資料不變）
+- n: 8
+  action: 清理：以各場館有權限的角色，分別對 V1 的 RP-S-V1 與 V3 的 RP-S-V3 取消排程（確認視窗點『確認取消』）
+  expected: 已取消排程
+expected_result: 機台場館站長的權限範圍為其管轄範圍：對不在管轄範圍內的場館 V3，直接呼叫新增紅包活動、追加預算、取消排程、查詢紅包明細、匯出 CSV API，後端一律拒絕並回傳『無權限』，V3 的活動資料不變、不回傳資料；對管轄範圍內的
+  V1 查詢則可成功。
+expected_result_spec_reference:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  location: §角色與權限（第 315 行）
+  quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+decision_refs:
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 312 行）
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 311 行）
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+    location: §角色與權限（第 315 行）
+- requirement_id: REQ-REDPACKET-024
+  question_id: Q03
+  basis_ref:
+    type: spec
+    spec_id: SPEC-ROLEPERM-001
+    spec_version: '0.2'
+    content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+    location: §十、業務規則（第 265 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 312 行）
+  quote: '| 活動排程列表、紅包明細、匯出 CSV | 管轄範圍 | 管轄範圍 | 自身場館（唯讀，可匯出 CSV） |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 311 行）
+  quote: '| 新增紅包活動／追加預算／取消排程 | 可操作 | 可操作 | 不可 |'
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 315 行）
+  quote: 越權操作（含直接呼叫 API）一律由後端拒絕並回傳「無權限」、資料不變
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §十、業務規則（第 265 行）
+  quote: 越權操作一律拒絕並回傳「無權限」錯誤、資料不變；錯誤代碼由後端定義
+assumptions: []
+automation_status: not_automated
+ci_eligible: false
+hotfix_eligible: false
+execution_cost: medium
+stability: unknown
+source: spec_workflow
+source_ref: RF-16（站長）；RUN-20261012-002 TCRiskReview ART-TRR-01M4QS6XAG0068DH4QNEGTA01T
+testcase_id: TC-REDPACKET-256
+version: 1
+supersedes: null
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+created_at: '2026-10-12T17:50:40Z'
+updated_at: '2026-10-12T17:50:40Z'
+history:
+- at: '2026-10-12T17:50:40Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-001
+- at: '2026-10-12T17:50:40Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4RKPETF8KSRP4XZRF23NDQD
+  run_id: RUN-20261013-001
+requirement_model_revision:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  revision: R001
+  sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d

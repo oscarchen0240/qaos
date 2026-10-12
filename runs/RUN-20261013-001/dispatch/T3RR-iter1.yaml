@@ -1,0 +1,2811 @@
+packet_version: 1
+run_id: RUN-20261013-001
+task_id: T3RR
+iteration: 1
+agent_id: agent-tc-risk-reviewer
+workflow_id: spec-to-testcase
+created_at: '2026-10-12T17:50:44Z'
+target:
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+target_decl_rev: 11
+closure:
+- spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-SYSADMIN-001
+  spec_version: '0.1'
+  content_hash: 688ddf35ab0362bfb177867a315d8899c65a70d5ada5d6d9cb647c9379d2368a
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-REPORTS-001
+  spec_version: '0.1'
+  content_hash: a4ec6b0d93efe5d0c024d4cfc4dbfae33585788650ad0d760ed28c2548ab8dde
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  content_hash: c6001a294a5a6bb9c37effd3e2e46df53a5405db0efff2db0d5537df144897a2
+  decl_rev: 3
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-ARCADE-001
+  spec_version: '0.8'
+  content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  decl_rev: 0
+  role: normative
+  depth: 1
+  required: true
+- spec_id: SPEC-COMMON-001
+  spec_version: '0.2'
+  content_hash: d31569007fd53ede5eb1730bcd2eba1cdb0d8edb17bbc95bc175612b752f0ffc
+  decl_rev: 0
+  role: informative
+  depth: 1
+  required: false
+basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+rm_pins:
+  target:
+    spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    revision: R001
+    sha256: 9fcf8af05ba16225344b6d647529ce8a0a0de66da0dfa1aaf3fcd5a292880a6d
+  from: null
+  pin_groups: []
+resolutions:
+- clarification_id: CLR-CASHFLOW-004
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 005cce0a33de80ab70b66eab5f3ea8a14ac98e03f5f69f5643441eaf1f981f2e
+  answer: 交易紀錄查詢頁確實不存在任何手動取消功能（REQ-TXLOG-028確認正確，維持不變）。所有待核實的交易一律要在「洗分出金核實」頁操作，但該頁的「作廢」操作僅適用於已完成、已生成收據的出金交易（REQ-CASHOUT-007），不處理待確認狀態的PENDING死單，範圍對不上正本裡「手動取消待確認交易」原本要處理的情境。REQ-CASHFLOW-008（入金預留釋放）與REQ-CASHFLOW-026（出金15秒逾時死單）裡「Admin/站長手動取消」這條收斂路徑需要移除：出金死單仍有「新請求取代」與REQ-CASHFLOW-027「人工出金連動取消」兩條路徑可收斂；入金死單僅剩「PENDING逾時24小時自動釋放」，不是資金卡死風險，只是少了立即處理的手動路徑，直接修正REQ即可，不需開Bug
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability: []
+- clarification_id: CLR-CASHFLOW-005
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-007
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 7796efd44b060bd2c884b0826757ec59691100c336efc59845e62e7c28a67ae7
+  answer: A：以 RD 確認為準。額度上限實際於 end-cashin（入鈔機清點確認完成後）判定，這是防禦性設計——req-cashin 階段客戶端回報的金額未經實體清點確認、不可信，若此時依此數字判斷額度上限，攻擊者可宣稱鉅額數字（如
+    1000000000000）讓機台卡在等待中造成整台機台無法入金的 DoS。spec v07「額度上限判定與預留移至 req-cashin」一條應正式作廢，改回：req-cashin 僅建立 PENDING（不做額度上限判斷或僅做極寬鬆的防禦性預檢），end-cashin
+    才依入鈔機實際清點金額判定額度上限，超限則退鈔。開分（req-keyin，純數字輸入非實體入鈔）不受影響，維持單階段立即判定。REQ-CASHFLOW-007／009 statement 需依此回寫；TC-CASHFLOW-008／009／011
+    需修訂。BUG-CASHFLOW-002 的判定時機部分（症狀①）依此不再成立，紀錄消失部分（症狀②）維持有效，Oscar 決定如何處理該 bug。
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-007
+      subject: cashflow.cashin.quota_check_stage
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 94、249、325 行仍寫 req-cashin 判定並預留額度，以 CLR-005（RD 2026-09-23 確認 end-cashin 依實際清點判定、不預留）為準，v0.2
+      寫法屬文件未同步
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:25Z'
+    op_id: a8b4d4d550370d9f9076ab85b01b3d89bb29d901ee01fb4e41fe12393e2092a1
+    sha256: 2a86ee6760b40450590e7bae4524f10a9ad6aeced1960d0e649a95fb81f3d0aa
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-009
+      subject: cashflow.cashin.end_cashin_quota_check
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 327、386 行寫 end-cashin 不判定額度，以 CLR-005（end-cashin 才依實際清點金額判定，超限退鈔）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:27Z'
+    op_id: 8d890dbb920a78042215a2e78573bae0a09497111fce1c4e6d4fd041aaca71e2
+    sha256: fa293e0687f890a3b196dabe8f4b4c3110999b46ccfb5a08b926f5bd1cfe552d
+- clarification_id: CLR-CASHFLOW-006
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-030
+  question_id: null
+  answer_rev: 0
+  answer_sha256: dd8f557b0d7f20ffc857e2b14d50511d948f738beb7e7cf3dd2513f28768673a
+  answer: B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種狀態；「未成立」不會有任何紀錄可查，「未成立原因」欄實質上永遠不會顯示內容。理由：req-cashin／req-keyin
+    階段對客戶端輸入的檢核（額度、格式、機台狀態、憑證）若都要在被拒絕時寫入紀錄，等同把資料庫暴露在客戶端可輕易高頻觸發的灌爆風險下，與 CLR-CASHFLOW-005 的整體防禦設計一致（不信任未經驗證的客戶端輸入）。
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-030
+      subject: cashflow.txlog.rejected_reason_recording
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 180、185 行寫餘額不足以外的拒絕留「未成立」紀錄，以 CLR-006（所有未成立原因一律不寫入交易紀錄）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:30Z'
+    op_id: e7ff24ea7b9a012de3fe8aaf823760a1ff9638f7262eb466660d276de644ff5b
+    sha256: 131d24bb5b8457529981d3524e2999effc4d9a27ca896d8f0554aa028d8f7681
+- clarification_id: CLR-CASHFLOW-007
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-020
+  question_id: null
+  answer_rev: 0
+  answer_sha256: de80663944c912ec96c997b81f9f7ea523f29a87d5b81bfc06ff9bef326478d6
+  answer: 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）：餘額帶小數時出金照樣全額清空，核可金額與收據面額照記實際餘額含小數、不取整（例：餘額 399.6 → 收據面額
+    399.60，機台餘額歸 0）；平台只記錄面額，不管現場實際付現多少，零頭如何付由場館自行決定，平台也不記錄面額與實付的差額；門檻 0（throshold=0）的全額洗分比照出金，洗分金額照記含小數（例 399.6），機台餘額歸 0。報表一律以面額計。
+  resolution: spec_updated
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope: null
+  applicability: []
+- clarification_id: CLR-CASHFLOW-008
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-026
+  question_id: null
+  answer_rev: 1
+  answer_sha256: 415feda40ad5c18cc551ba6bd8eba86ac40b3cdd5cd64510b3332af5f5fadff3
+  answer: 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理員手動取消（於 4.1 交易紀錄查詢機台視角操作；僅管理員，RD 已確認；取消後交易標記為「已取消」，分數不異動）。Operator
+    Reset 後機台停止重送、機台報廢等死單，由管理員手動取消清理。後端已開發完成，前端尚未開發。入金沒有手動取消：待確認入金只依 24 小時逾時轉「已逾時」收斂；入金額度上限的判定時機依 CLR-CASHFLOW-005（end-cashin
+    依實際清點金額判定、req-cashin 不預留額度），REQ-CASHFLOW-008 維持 2026-09-15 移除「手動取消釋放預留」的結論。2026-09-15 CLR-CASHFLOW-004 對出金「移除 Admin 手動取消路徑」的部分不再適用。（rev
+    1：刪除 rev 0 中「預留額度於入帳或逾時釋放」一句，該句與 CLR-CASHFLOW-005 不一致）
+  resolution: requirement_clarified
+  basis_hash: 69a079991bb77f21e1d3a41f3451d81e279e0cd5461a945fc0f315344b4ae7a6
+  scope:
+    spec_id: SPEC-CASHFLOW-001
+    requirement_id: REQ-CASHFLOW-026
+    subject: cashflow.arcade.pending_cashout_admin_cancel
+    role_scope:
+    - '*'
+    params: {}
+  applicability:
+  - answer_rev: 1
+    scope:
+      spec_id: SPEC-CASHFLOW-001
+      requirement_id: REQ-CASHFLOW-008
+      subject: cashflow.cashin.pending_manual_cancel
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 8742a49fb7abcf30751906ca98514ae987277fd2d5b41f0dde52c5cc7e43d205
+    rationale: Oscar 2026-10-12 決定：v0.2 第 326、249 行寫管理員／站長可手動取消待確認入金並釋放額度，以 CLR-008 rev 1（入金沒有手動取消）為準
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T13:55:28Z'
+    op_id: 91b2470ad63ec30221dfcd26d3c04df11bc0151abdf28bcf0bded01281224475
+    sha256: 7a0cd4739e9477b3945e18470fe1ad4d81d2ed43cbe7681ff68aaf4b5a6b59cb
+- clarification_id: CLR-DAILYREPORT-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 0dbe45df3608cf3fc1a5b892dd7c00ad6ff10b438cb8c028af02d166b228549c
+  answer: '操作員無權限切換到非自身的場館，前端已擋（站台切換選單不提供其他場館）。註：未回答直接呼叫 API 帶其他站台參數的後端行為，TC-DAILYREPORT-004 的假設仍待確認。
+
+    【2026-09-14 補充】後端也擋了：直接呼叫 API 帶非自身場館參數會被後端拒絕。→ TC-DAILYREPORT-004 的假設已解。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-001
+      subject: dailyreport.access.out_of_scope_venue
+      role_scope:
+      - operator
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:12Z'
+    op_id: 12a23e778ac5bb9da4ef2aa3844a15308f2633d13b3beb7ae12c918e6b8d5b33
+    sha256: d9935c498118a86a6440c0f2855e88c409298a15e6a8b9f7dd2deadd5ccb3f36
+- clarification_id: CLR-DAILYREPORT-002
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-003
+  question_id: null
+  answer_rev: 0
+  answer_sha256: f235f3dd41624d829006324395b0da2c57d830b60860fe021f95412f4816c060
+  answer: '輸入不存在或非本場館的機台帳號：找不到用戶即可，API 回 rows: []（空列表，不報錯）。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-003
+      subject: dailyreport.filter.machine_account_not_found
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:26Z'
+    op_id: 38fba07a7b350cd6df78de54cc3646b46ccb1d6c0d52d3b1e97462206e0222c6
+    sha256: d332c3dbb3a069c3cf857fd426358745084fce208f7cea3c82f9a62ea636c98f
+- clarification_id: CLR-DAILYREPORT-003
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-004
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 2458cd0e03f998bebd08732838c212fc1bf46538cee1d40116a71f6f0dd89eeb
+  answer: '結算日期異常（起日晚於迄日等）：找不到資料即可，API 回 rows: []。註：與 Spec「必填」的關係——未填時是否也回空列表而非阻擋，建議 spec v0.2 明寫。
+
+    【2026-09-14 補充】未填結算日期時，前端 popup 警示「失敗：結算日期為必填」（截圖）；不送出查詢。→ TC-DAILYREPORT-009 的假設已解（阻擋方式＝popup）。'
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-004
+      subject: dailyreport.filter.settle_date_invalid
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:30Z'
+    op_id: faddf583d7b6afb8aec51d55984293530014f68f3450f1968326e47baf793fec
+    sha256: 35bdb0422044238297de44e19029cd708aaafe315340f47b7f1eba3ec3f4a5a3
+- clarification_id: CLR-DAILYREPORT-004
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-007
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 6dcaec8f8873e6a2f5c5e30b408467f7e5ad821901e145767d7ae293f66cb6af
+  answer: 日結時間為場館設定欄位（每日結算的截止時刻，UTC+0），畫面截圖顯示欄位有預設值「上午 12:00」（即 00:00 UTC+0）。→ 未設定時以 00:00 UTC+0 切分營業日。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-007
+      subject: dailyreport.business_day.default_cutoff
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:40Z'
+    op_id: 4f4627d51a319b960197ff2a1fcf314b81b2f3b4b4afb060883c2dceeb1db4dc
+    sha256: 4cacd793675c313a90e777d4890ddb3618d9cfecd3d5ae40421f705b77a9fa2c
+- clarification_id: CLR-DAILYREPORT-005
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 359e0362135c06c5224efca5517a09b53dc2f2c85ad685c331b4e6c600f56ac8
+  answer: 提醒標示的呈現方式如截圖：交易列表中待核實的機台洗分列顯示黃色標籤「⚠ 現金未確認」，核實狀態欄為藍色「待核實」；已核實者為綠色「已核實」。報表的待核實洗分提醒沿用同款黃色警示標籤。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-011
+      subject: dailyreport.washout.pending_reminder_style
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:43Z'
+    op_id: 0db744b1dbec3b762b4c36a96860b0fbe4f9e2585d831aa557e23207307665a6
+    sha256: d9c1f5dab5e68b2de691e0f084f409f47699f1a9c2af7f3653a2b623a2e36302
+- clarification_id: CLR-DAILYREPORT-006
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 50eeeed9f7247bcab8e7160a12ac5df8385e6c65f34258508f561e19f9ea696b
+  answer: 無資料時列表仍列出，日期正常顯示、各欄位顯示 0。欄位清單（PM 提供）：場館、場次數、開分金額、洗分金額、已核實洗分、待核實洗分、進鈔金額、收據金額、已兌現金額、未兌現金額、現金淨收、注單數、有效投注額、損益、期末餘額。註：此清單含「注單數」，Spec
+    v0.1 列表欄位無此欄 → spec 需補；匯出 CSV 無資料時的行為未明說，推定同列表（一列 0）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-007
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-009
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 0ecb66079c64cb54fe57c01c8511e0654958afb4b9b57149b9c9ba234aa7203c
+  answer: 逾時結束的時間會超過日結時間；而 Spec 規定日結時間到達時強制結束所有進行中的場次，因此當日內場次只會以「已結束」或「日結結算」收尾，兩者都計入當日場次數（場次數計算在今日）。→ TC-DAILYREPORT-031 的假設「含所有非進行中狀態、日結結算歸屬開始的營業日」已確認。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-008
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-005
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 93118bcd237fa1fc198d157363d85e311ae8361d441b838bb15c62fd4da5d85e
+  answer: 不完整週照實際範圍顯示（截圖：結算日期 09-03 起、按週 → 列出「2026-09-07 ~ 2026-09-13」與「2026-09-03 ~ 2026-09-06」兩列），只要完整週以週一為週起即可；範圍外的營業日（08-31～09-02）不計入第一列合計。→
+    TC-014 的兩條假設已確認（顯示格式＝實際起迄；只計結算日期範圍內）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-005
+      subject: dailyreport.period.partial_period_range
+      role_scope:
+      - '*'
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:36Z'
+    op_id: bda18717794a1f20903ddb3e18adcd13473a514cdf157e4349528c541d167db7
+    sha256: 870aee91b40267d0cccd1633696028aeb8b6b44637741dab742196757dd03cb7
+- clarification_id: CLR-DAILYREPORT-009
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-015
+  question_id: null
+  answer_rev: 0
+  answer_sha256: acff34834ada1db42a387f922eb05396a36c1c38ad151b0b69c15a8069445ce7
+  answer: 受結算日期範圍限制：結算日期仍是篩選條件，未兌現金額只算範圍內；只是不受統計週期切分影響。例：9/10 未兌現 200；(a) 結算 09-03～09-09 按週 → 09-07～09-09 列未兌現 1000、09-03～09-06
+    列 0；(b) 結算 09-03～09-10 → 09-07～09-10 列 1200、09-03～09-06 列 0。→ **TC-DAILYREPORT-046 的假設（不受結算日期限制）是錯的**，該案 expected 需改為「不包含範圍外的
+    200」；建議 APR-0003 逐項 reject TC-046，待 spec v0.2 走 WF-C 重寫。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-010
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 98800f6b3a1ac5bb86c4045cc4e23acb9a861b36fd6415ae7e8d6e75d1d5a523
+  answer: A：已兌現金額以收據日歸屬——「當日出金的收據中，已核實（核銷）者的金額合計」，記在出收據那天，不論實際付現是哪一天（同 AC-DAILYREPORT-0113）。因此單列內 收據金額＝已兌現＋未兌現＋已作廢 成立；現金淨收（開分＋進鈔－已核實洗分－已兌現）含未來才付現的收據金額，不是當日實際現金增減。作廢在報表的呈現另見
+    CLR-DAILYREPORT-011（待回）。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-011
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 1291e5d88a01595f8b788c86d61ff37237fbc126de16b4febc11a5b33c59ff48
+  answer: 依 SPEC-DAILYREPORT-001 v0.3（2026-10-05 定案，第 53、54 行）：出金在洗分出金核實頁被作廢後，該筆收據金額仍計入出收據那天的「收據金額」，並計入新增的「已作廢金額」欄（以出收據的日期歸屬，不論作廢是哪一天）；每列
+    收據金額 ＝ 已兌現金額 ＋ 未兌現金額 ＋ 已作廢金額。即原問題的選項 B。
+  resolution: spec_updated
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-012
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 93a09b95b9590aea15898a41140e25afce3fda35ace31e1b3508f473711690fd
+  answer: B：場館日結報表「依場次明細」只列已結束／逾時結束／日結結算的場次，進行中場次不列。現行實作（時長僅於結算時計算一次、明細不列進行中）符合。→ AC-DAILYREPORT-0083 作廢、TC-DAILYREPORT-027
+    retire；REQ-008 statement 移除「進行中場次結束時間顯示「—」、時長為累計至查詢當下」。附帶題「會員詳細頁機台資訊區塊的進行中場次摘要是否顯示即時時長」本次未決，留待 ACCOUNT／ARCADE 處理。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-013
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.1'
+  requirement_id: REQ-DAILYREPORT-008
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 8fc28e161f226ff67131d4b0a1ac80cdc6e6eb53a94e81f47c567a0a3a9177fd
+  answer: A：以 spec 2026-09-17 為準。①依場次明細列出進行中場次：結束時間「—」，場次時長與期末餘額為累計到查詢當下的值；②期末餘額一律計入進行中場次累計到查詢當下的分數（已結算的營業日仍為結算時點的值）。CLR-DAILYREPORT-012
+    的 B 作廢。現行實作（進行中場次在日結報表查不到任何資料）為缺陷。
+  resolution: requirement_clarified
+  basis_hash: 16393525216693f380ce340482e5aeac450e8095a26b7e866c6ab34e86e8d105
+  scope: null
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-014
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.2'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 8d11dd3ead777b893984a15b62c03a41b46a52e760d8d5eb950f1881e433166c
+  answer: 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項，後端拒絕並回傳「無權限」錯誤、資料不變；不採用「當作不存在／回空結果」。錯誤代碼由後端定義（截至 2026-10-09
+    後端尚未定案）。依 QA 問題單回覆 CLR-SITELIST-015「全系統的越權處理一致，CLR-DAILYREPORT-014 同樣適用」；規則寫在開發包⑧（SPEC-ROLEPERM-001 v0.2），場館日結報表 spec
+    本身未為此改版。
+  resolution: requirement_clarified
+  basis_hash: 9eda473d5ba24446f3468f6a2fd420e698c5aadf2b1ab953aed165e4a39a01fe
+  scope: null
+  applicability:
+  - answer_rev: 0
+    scope:
+      spec_id: SPEC-DAILYREPORT-001
+      requirement_id: REQ-DAILYREPORT-001
+      subject: dailyreport.access.out_of_scope_venue
+      role_scope:
+      - admin
+      - site_manager
+      params: {}
+    basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+    rationale: Oscar 2026-10-12 決定：v0.3 本文未定義此事項，沿用已回答的 CLR 答案
+    by: oscarchen@blockaction.tech
+    at: '2026-10-12T15:22:22Z'
+    op_id: 9f3f48df792422f9bfdaeb19eed4e4b5b9484198f3b52b5043d3f96f787205aa
+    sha256: a61eb6e0e9deb431dcf38bf8eba154c3114c8c231e7ebebd0c4da0a7130f0f1d
+- clarification_id: CLR-DAILYREPORT-015
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-011
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: b40db737b492e2dc4b8add3a201608c75de6a0ccaf773345033d01da166d01ab
+  answer: 以 v0.3 為準：未兌現金額以出收據的日期歸屬——每列只含當日（週期列為該週期內各營業日）出的收據中、截至查詢當下仍為待核實者的金額合計，直到核實或作廢才轉出；與洗分出金核實 REQ-CASHOUT-032 一致。CLR-DAILYREPORT-009「未兌現不受統計週期切分」的結論不再適用（只算結算日期範圍內出的收據、狀態以查詢當下為準這兩點不變）。
+  resolution: requirement_clarified
+  basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+  scope:
+    spec_id: SPEC-DAILYREPORT-001
+    requirement_id: REQ-DAILYREPORT-011
+    subject: dailyreport.unredeemed.row_attribution
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-DAILYREPORT-016
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: d6a13eb9dc6ced8b2888a6cf8a82a18587c816ccd7e15175488f67b292373799
+  answer: 以 v0.3 為準：查詢期間沒有任何交易與場次時，列表仍列出該結算期間，各金額與筆數欄顯示 0；期初／期末餘額依時點值規則，沿用最近一個營業日的結算值（從未有分數者為 0）；匯出 CSV 同此規則。CLR-DAILYREPORT-006「各欄位顯示
+    0」對期初／期末餘額不再適用（該 CLR 回答時尚無期初餘額欄），其餘欄位為 0 的結論不變。
+  resolution: requirement_clarified
+  basis_hash: 629d539ec14a5ca22f04b90e108bddb8d77c2529e75d56bf8faff31279eac208
+  scope:
+    spec_id: SPEC-DAILYREPORT-001
+    requirement_id: REQ-DAILYREPORT-016
+    subject: dailyreport.empty_period.balance_display
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-PLATFORMRULE-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  requirement_id: null
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 5b47a477c061c81634b3d32e23f50f2bfab6f0bd76ce0e68f1f64163e457b441
+  answer: 以功能 spec 三層模型為準：管理員（最高）＞站長＞操作員。原則：可見範圍由所屬站台決定、權限層級由角色決定，兩者分開。ZZAA00264 案確認為 bug（站長不應有自由選取上層站台的管理員專屬能力）。前言「站長＝最高權限」已過時。
+  resolution: requirement_clarified
+  basis_hash: cab9a4a2d529d239f7948769c3bfd9aaaf836f193444758cdf954641910da5a2
+  scope: null
+  applicability: []
+- clarification_id: CLR-PLATFORMRULE-002
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  requirement_id: REQ-PLATFORMRULE-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: e04ec55448fa0dd5b553fbe1fcfca1435ec8771402d31858b8a598d94f9c6bf1
+  answer: 此為架構層要求（選單顯示規則需與排除規則同一來源，不得各自寫死），非使用者可觀察行為，且目前無任何排除項目被實際解除、無真實案例可測。維持 rejection_contract.defined=false；Test Design
+    階段不強行湊負向 TC，於 TestDesignReport 註記「架構要求，待未來有排除項目實際解除時再補測試」；未來若要驗證，走「先解除某排除項目→驗證對應頁面恢復顯示」的真實案例，而非現在憑空模擬。
+  resolution: requirement_clarified
+  basis_hash: cab9a4a2d529d239f7948769c3bfd9aaaf836f193444758cdf954641910da5a2
+  scope: null
+  applicability: []
+- clarification_id: CLR-PLATFORMRULE-003
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.1'
+  requirement_id: REQ-PLATFORMRULE-014
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 092c5afd5792087d7824f10dbbacefb206a36c3762205e00466c535251eda40b
+  answer: 新需求：操作員有權限進入「注單查詢」與「稽核明細」（可見範圍比照其他報表頁限自身場館）。→ 權限表須補兩列（操作員：自身場館）；現行實機操作員選單無此兩頁，屬未實作／須補。REQ-PLATFORMRULE-014 statement
+    所記「操作員選單僅含四頁」的實機描述已過時，須更新。
+  resolution: requirement_clarified
+  basis_hash: cab9a4a2d529d239f7948769c3bfd9aaaf836f193444758cdf954641910da5a2
+  scope: null
+  applicability: []
+- clarification_id: CLR-REDPACKET-026
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-003
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: c1b452cb0d3f42a9611c637295d0c36ba951b40fd4ec6825fa9075d08c5a7755
+  answer: PM 2026-10-10 回覆（原題 001，已寫入紅包 spec v02）：前端在該欄位標紅框、下方顯示提示；按「儲存」時整體再檢查並捲到第一個錯誤欄位。後端同樣驗證，不通過即拒絕、資料不寫入（錯誤代碼由後端定義）。全部提示文字列在
+    spec。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-003
+    subject: redpacket.validation.other_rules_reject
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-027
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-003
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: b9b2adcfe454d933f87b2cfa08360e2c61b6cb5a85fa34912f138a82ae93ac2d
+  answer: PM 2026-10-10 回覆（原題 002，已寫入紅包 spec v02）：累積門檻、紅包金額、中獎機率、總預算、稽核倍數最多 1 位小數。稽核倍數可為 0、不設上限。單週期發放上限維持大於 0 的整數。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-003
+    subject: redpacket.validation.numeric_precision
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-028
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-008
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: b8fa1f82c94644eafdc38426e3b95b9c6b81aaca2ae1c58520f834f470a8081f
+  answer: PM 2026-10-10 回覆（原題 003，已寫入紅包 spec v02）：換算後四捨五入至小數 2 位再計入累計；畫面顯示與達標判斷都用這個值。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-008
+    subject: redpacket.accumulation.conversion_rounding
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-029
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-008
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 1d2c30986b5921bf023525fe2101214e1fd6d825ba7439a34e2f31ac6a440bed
+  answer: PM 2026-10-10 回覆（原題 004，已寫入紅包 spec v02）：負值有效流水貢獻照實扣減，累計可暫時為負；只扣在原注單所屬的週期，原週期已重置或活動已結束時不扣。已產生的紅包（待開啟、已入帳）不作廢、不追回。前台進度最低顯示
+    0。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-008
+    subject: redpacket.accumulation.bet_reversal
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-030
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-010
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 34f9ec51f85af0c6749c28ae704d702d95a61314c265238c71a85c6d2cebae54
+  answer: PM 2026-10-10 回覆（原題 005，已寫入紅包 spec v02）：循環產生到上限為止；產生達上限的那一個紅包時，超出的餘數保留（例：門檻 1,000、上限 5，第 5 個產生時累計 1,084，保留 84），之後結算的注單不再計入。明細「週期累計」顯示產生當下的本週期總額（1,084）。會員等級變動使上限調高時，自保留的餘數續計。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-010
+    subject: redpacket.cycle.cap_reached_overflow
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-031
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-011
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: ff5911fca999ce16d774c4d60713ff1d8bf0652fb640d7575cba3fd478f582a1
+  answer: PM 2026-10-10 回覆（原題 006，已寫入紅包 spec v02）：立即生效，週期只往前、不倒退。調早：本週期起點之後已經過新重置時點就立即重置，否則延到該時點結束。調晚：延到原結束點之後的第一個新重置時點，不立即重置、不產生短週期。已重置過的週期不重來。待開啟紅包於本週期實際結束時作廢。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-011
+    subject: redpacket.reset.venue_cutoff_changed
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-032
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-011
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: ff5911fca999ce16d774c4d60713ff1d8bf0652fb640d7575cba3fd478f582a1
+  answer: PM 2026-10-10 回覆（原題 006，已寫入紅包 spec v02）：立即生效，週期只往前、不倒退。調早：本週期起點之後已經過新重置時點就立即重置，否則延到該時點結束。調晚：延到原結束點之後的第一個新重置時點，不立即重置、不產生短週期。已重置過的週期不重來。待開啟紅包於本週期實際結束時作廢。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-011
+    subject: redpacket.reset.venue_cutoff_change_effective_time
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-033
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-014
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 448ca3708dd06252e154734dcb93b91f896cbff729f1ba6a3daadc8d37e4991d
+  answer: PM 2026-10-10 回覆（原題 007，已寫入紅包 spec v02）：4.1 機台視角交易類型下拉新增「紅包」；紅包列的場次編號為入帳歸屬的場次，交易狀態固定「已完成」，核實狀態「不適用」，其餘機台專屬欄位顯示「—」。4.4
+    稽核明細機台帳號的紅包列單位為TWD。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-014
+    subject: redpacket.credit.arcade_txlog_view
+    role_scope:
+    - admin
+    - site_manager
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-034
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-016
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 27479007233ee12195da8f1c6d94764dbe0266d60fcb1684a7dc39d1aec34bef
+  answer: PM 2026-10-10 回覆（原題 008，已寫入紅包 spec v02）：「確認」鈕停用，欄位下方提示「新的總預算須大於目前總預算」；後端同樣拒絕、資料不變。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-016
+    subject: redpacket.budget_topup.invalid_amount
+    role_scope:
+    - admin
+    - site_manager
+    - finance
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-035
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-016
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: 50eb7c4046917c65c3b4708cb9d3d7731fb2b2a877849687406e30f0ad320bc7
+  answer: PM 2026-10-10 回覆（原題 010，已寫入紅包 spec v02）：寫入7.4 操作紀錄（操作人員、時間、活動名稱、調整前後金額），紅包明細不另顯示。7.4 為實體機台正本規劃新增的頁面，手冊 v01 尚未定義，可檢視角色隨該頁定義。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-016
+    subject: redpacket.budget_topup.operation_log
+    role_scope:
+    - admin
+    - site_manager
+    - finance
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-036
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-017
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 7b9000e77277a8c8c6129626074b8cb715ebfe80cca36900e952eee2e09908a5
+  answer: PM 2026-10-10 回覆（原題 011，已寫入紅包 spec v02）：各站台獨立：主站台與子站台各自判斷時段重疊、可各自辦一個；活動只涵蓋建立活動之站台的會員，不涵蓋子站台。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-017
+    subject: redpacket.activity.site_scope
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-037
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-022
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: c20f4d7d8879339f7b5e1107f3a18853eed3af0e9c02321bf163dc68ed60cb4c
+  answer: PM 2026-10-10 回覆（原題 014，已寫入紅包 spec v02）：欄位與順序同列表（紅包編號 → 作廢原因）；狀態與作廢原因輸出畫面文字，未入帳／未作廢輸出「—」；時間 UTC+0YYYY-MM-DD HH:mm:ss；不含總計列。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-022
+    subject: redpacket.detail.csv_format
+    role_scope:
+    - admin
+    - site_manager
+    - finance
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-039
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-023
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 0d1063db981e75d34d92b0d2c9981f92e08e698e3d972e5e939adda1e2fd0e15
+  answer: PM 2026-10-10 回覆（原題 015，已寫入紅包 spec v02）：三項都與新增活動同權限（財務、站長、管理員）。範圍依管轄範圍：管理員含其子站台，站長為自身站台。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-023
+    subject: redpacket.permission.online_detail_and_scope
+    role_scope:
+    - admin
+    - finance
+    - site_manager
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-040
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-023
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 27453768759181d13e2a27947c3b507b400535bd7bbbd279bb277571bf83a14c
+  answer: PM 2026-10-10 回覆（原題 016，已寫入紅包 spec v02）：後端拒絕並回傳「無權限」、資料不變。錯誤代碼與 HTTP 狀態碼由後端定義（後台角色與權限 v02 10-05 定案）。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-023
+    subject: redpacket.permission.online_unauthorized
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-041
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-024
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 15d367312057d27b74cee33fb579fd14ffb51e6f1e682646a57ddf32014ee728
+  answer: PM 2026-10-10 回覆（原題 017，已寫入紅包 spec v02）：操作員可進入優惠活動管理、活動排程列表與紅包明細，唯讀，可匯出 CSV（範圍限自身場館）；不顯示新增、追加預算、取消排程按鈕。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-024
+    subject: redpacket.permission.arcade_operator_other_actions
+    role_scope:
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-043
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-025
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 0ee11dd21f2fde60b1c8051dcecbdbaf751c2fd6117506dc5de9c49b7bde86e7
+  answer: PM 2026-10-10 回覆（原題 019，已寫入紅包 spec v02）：入帳歸屬入帳當下進行中的場次；沒有場次時建立新場次（期初餘額＝當下機台分數）。紅包明細的「場次編號」仍記產生當下的場次，僅供追溯。日結報表「依場次明細」該場次的紅包金額、期末餘額與餘額驗算都含此筆。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-025
+    subject: redpacket.arcade.session_attribution
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-044
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-026
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 9279730895ca89023b83cce59a49d37a18faf1645b3ec49273bcc6ffc640cc2e
+  answer: PM 2026-10-10 回覆（原題 020，已寫入紅包 spec v02）：隨版本對所有機台場館一次上線，不設場館開關；場館建立紅包活動即參加。上線前機台場館的選單與機台帳號維持完全排除，機台正本與開發包隨上線同步改版。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-026
+    subject: redpacket.arcade.enablement_timing
+    role_scope:
+    - admin
+    - site_manager
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-045
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-027
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: ad7f9097b63e122a4e7abee6ef51864796fe5082f8746606652c66fe63089220
+  answer: PM 2026-10-10 回覆（原題 021，已寫入紅包 spec v02）：可取消的確認視窗：［返回開啟紅包］關閉視窗、不送出交易；［繼續結算］送出交易。店員以鑰匙選單洗分時，機台畫面跳出同一視窗，由店員確認。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-027
+    subject: redpacket.arcade.pending_prompt_behavior
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-046
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-028
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 660988fb28b895d82a93fdc5d8f0bc81e55be2a2cb1be1cae97e92adaccb3f54
+  answer: PM 2026-10-10 回覆（原題 022，已寫入紅包 spec v02）：櫃檯人工出金視同出金完成，作廢待開啟紅包（作廢原因「機台出金」）；人工入金不影響。出金停在「待確認」期間紅包不可開啟；被管理員手動取消、被新出金取代或未成立時，原交易視為未成立、紅包恢復可開啟，新出金送出後再次鎖定。過渡期由前台完成的出金同樣適用。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-028
+    subject: redpacket.arcade.void_on_manual_and_pending
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-048
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-030
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 50408fdeb7094a568a0a3d3bcf81000304735bc206ce0b44548f51d995694590
+  answer: (1) 已定案——PM 2026-10-10 回覆（原題 023，已寫入紅包 spec v02）：扣減。扣除條件改為「帳號有未完成稽核（含紅包稽核）」，不再以出金設定 TWD 倍數大於 0 為前提。開發包③「機台帳號的稽核」隨上線同步修改。
+    (2) 扣除的金額如何計算、出金一律清空餘額時扣除後剩餘分數如何處理，v02 與回覆都未定義，轉由 CLR-REDPACKET-056 追問。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-030
+    subject: redpacket.arcade.audit_effect_on_cashout
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-049
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-031
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 0716a554735f45d6c92e335f46ee4218f0f666d67e71a9899ad74ab6aba86d3d
+  answer: PM 2026-10-10 回覆（原題 024，已寫入紅包 spec v02）：有待開啟紅包時進度顯示滿格「已達有效流水門檻」；全部領完後，「目前累計」為距下一個紅包的進度（門檻 1,000、本週期累計 1,084、已領 1
+    個 → 顯示 84 ／ 1,000）；後台明細「週期累計」仍為本週期總額。有待開啟紅包時，重置前 1 小時起提示；「不重置」的活動於活動結束前 1 小時起提示。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-031
+    subject: redpacket.online.reset_warning_and_progress
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-050
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.1'
+  requirement_id: REQ-REDPACKET-032
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 655428e933feb43151406e06c3d29ec52dfb3b6b7beecfd523094a97e51d59b1
+  answer: PM 2026-10-10 回覆（原題 025，已寫入紅包 spec v02）：位於「有效投注額」之後、「損益」之前；列入總計列與 CSV。「依場次明細」為該場次入帳的紅包合計（歸屬見 019）。營業日依入帳時間歸屬。
+  resolution: spec_updated
+  basis_hash: ed058bb904288a831aae1effbd54294900227f8a076a9d807cd2eeea97e7e6a0
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-032
+    subject: redpacket.dailyreport.column_details
+    role_scope:
+    - admin
+    - site_manager
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-052
+  status: ANSWERED
+  kind: conflict_resolution
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-021
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 902e1b4c55ea635f4515e54ec01556df872f265b68a83396699b0d6db2d947e4
+  answer: 依 proto（SPEC-REDPACKET-002@0.2）：PM 2026-10-10 回覆原題 013 明定差異百分比「照 proto」——照 proto：（實際 − 期望）÷ 期望 × 100，取 1 位小數，正值前加「+」；高於期望紅色、低於綠色、相等灰色。
+    因此差異 ≥ 0 時一律加「+」（恰為 0 顯示「+0.0%」），以 proto 的判斷顯示色標（絕對值小於 0.005 視為相等、灰色）。
+  resolution: requirement_clarified
+  basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-021
+    subject: redpacket.detail.actual_vs_expected_diff
+    role_scope:
+    - admin
+    - site_manager
+    - finance
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-053
+  status: ANSWERED
+  kind: conflict_resolution
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-022
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: 9f85e585d4fad091da367ab65662fdc3bf7ebd4d8c235ce6f156101ac8a06315
+  answer: 依紅包 spec v02（目標）第 272 行：規則篩選「僅有等級規則的活動顯示」——預設規則關閉、只有一組等級規則的活動也有等級規則，因此顯示「規則」篩選（選項為「全部」與該等級規則名稱）。proto v02 以規則數大於
+    1 判斷的寫法不採用。
+  resolution: requirement_clarified
+  basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-022
+    subject: redpacket.detail.rule_filter_visibility
+    role_scope:
+    - admin
+    - site_manager
+    - finance
+    - operator
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-054
+  status: ANSWERED
+  kind: conflict_resolution
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-023
+  question_id: Q04
+  answer_rev: 0
+  answer_sha256: 69116d15d17ce9ff5b5ae9017ff34b4e6294ffceda1bae181521b986c17c5f0c
+  answer: 依紅包 spec v02（目標）：PM 2026-10-10 回覆原題 015 明定——三項都與新增活動同權限（財務、站長、管理員）。範圍依管轄範圍：管理員含其子站台，站長為自身站台。 線上站長在紅包功能的範圍為自身站台、不含子站台；與
+    SPEC-ROLEPERM-001@0.2 通則（站長管轄含子站台）的不一致，另以文件問題回報 PM。
+  resolution: requirement_clarified
+  basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-023
+    subject: redpacket.permission.online_site_manager_scope
+    role_scope:
+    - site_manager
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-055
+  status: ANSWERED
+  kind: conflict_resolution
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-028
+  question_id: Q04
+  answer_rev: 1
+  answer_sha256: 03aae6a9a3c46e95992a94f37a6f9615abab2255a89a7938bf3af6ffee9b193c
+  answer: '依紅包 spec v02 與 PM 最新回覆（2026-10-10，原題 022）：櫃檯人工出金視同出金完成，作廢待開啟紅包（作廢原因「機台出金」）；人工入金不影響。出金停在「待確認」期間紅包不可開啟；被管理員手動取消、被新出金取代或未成立時，原交易視為未成立、紅包恢復可開啟，新出金送出後再次鎖定。過渡期由前台完成的出金同樣適用。
+
+
+    2026-10-12 Oscar 確認：待確認出金的管理員手動取消是要做的功能，後端已開發完成，僅前端尚未開發（4.1 交易紀錄查詢機台視角目前沒有入口）；可操作角色僅管理員（RD 已確認）。CLR-CASHFLOW-004（2026-09-15）「移除手動取消收斂路徑」的定案因此不再適用，交易紀錄（REQ-TXLOG-028）與機台金流（REQ-CASHFLOW-008、026）需求另開單修訂。前端上線前，紅包相關案例執行到手動取消時記為未實作。'
+  resolution: requirement_clarified
+  basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-028
+    subject: redpacket.arcade.pending_cashout_admin_cancel
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-REDPACKET-057
+  status: ANSWERED
+  kind: conflict_resolution
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-039
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 0841572729cc0a175f78a645d34b385271a6eeea0e93963363c8c81153c7db93
+  answer: 依紅包 spec v02（目標）第 415 行的提示文字：PM 2026-10-10 回覆原題 001 明定「全部提示文字列在 spec」——前端在該欄位標紅框、下方顯示提示；按「儲存」時整體再檢查並捲到第一個錯誤欄位。後端同樣驗證，不通過即拒絕、資料不寫入（錯誤代碼由後端定義）。全部提示文字列在
+    spec。 proto 的不同文字（等級規則缺漏、適用等級未勾、權重表合併訊息）以 spec 為準。「此等級已屬於其他規則」「活動名稱最多 25 字元」在前端無法觸發（已屬其他規則的等級為停用、名稱欄 maxlength 25），視為後端驗證的回應，前端測試只記錄。
+  resolution: requirement_clarified
+  basis_hash: 4022002fb538f5e093adaadcca63ba679431a3f693a48729d6e4281b1695a2a2
+  scope:
+    spec_id: SPEC-REDPACKET-001
+    requirement_id: REQ-REDPACKET-039
+    subject: redpacket.validation.message_text
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-SITELIST-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-002
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 05688610d4117f663271560694859c8f432a8851683277c448e98465174d7c60
+  answer: 後端也會拒絕：若透過 API 帶入與上層站台不同的站台類型，後端會擋下，不只是前端唯讀限制。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-002
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-005
+  question_id: null
+  answer_rev: 0
+  answer_sha256: d367753b5930491f3ef94bb39aaefed33d73a1d972886d48eda99de3a32bba57
+  answer: 額度上限輸入負數：前端顯示「值必須大於或等於 0」，後端也會拒絕（雙層驗證）。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-003
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-006
+  question_id: null
+  answer_rev: 0
+  answer_sha256: efcd1d282c809060a590b592bd78a937aa187fe40fdddea4f621f918d344ebe0
+  answer: 場次逾時時間：後端設計最低值為 1 小時（低於 1 小時會被拒絕）。輸入超過 17 位數（極端格式）時，前端跳格式錯誤，後端阻擋並回傳通用錯誤代碼 COMMON_INVALID_REQUEST_FORMAT。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-004
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-011
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 1d29cee7f000f930d0676cad5599636f286323f37f2f85dc7c05596c59891961
+  answer: 以「三個角色的關係」權限範圍圖為準（同 CLR-PLATFORMRULE-001 附圖）：範圍由所屬站台決定，不是角色本身。站長掛在主站台 A → 可見範圍＝A 及其子樹；操作員只看自身場館。層級可指派範圍：管理員可指派管理員/站長及以下，站長只能指派站長以下，操作員不可指派。站長嘗試存取平行或上層站台（含直接以站台
+    ID 呼叫查詢），依此範圍模型應無法取得資料。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-005
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-012
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 27fe98ef0652aeb98f9a6f80893ba978c8ac9003552601d0b622c0b1c086d82d
+  answer: 已修改：站長不可自由選取上層站台，需點進不同子站後新增站台，上層站台選單會自動帶入其選擇的站台；後端已拒絕（不接受繞過前端指定其他上層站台）。此前 RD 回報的「直接呼叫 API 仍會成功」風險已修復。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-006
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-013
+  question_id: null
+  answer_rev: 0
+  answer_sha256: a7c5353578aa961cb461bdca9991c678d9f8a6fb01a852db0e2634bfe719c50f
+  answer: 同 CLR-SITELIST-005：站長於編輯時的上層站台唯讀限制，後端已拒絕繞過前端的修改。（本次確認聚焦於站長權限；Admin 編輯時的循環防護是否也有對應後端驗證，未在本次回覆中明確涵蓋，若後續測試發現可繞過，需另案處理）
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-007
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-023
+  question_id: null
+  answer_rev: 0
+  answer_sha256: c1277f1cff0af36324bebf0cc1281eaedf0e43b5f65ad3a507ab3ff4251d0028
+  answer: 機台類型站台不提供刪除操作，只能停用（暫停／關閉）；不會出現在確認刪除的流程裡。（原問題「有子站台時如何刪除」對機台類型不再適用，因為機台本來就不能刪除；線上類型站台若帶有子站台時的刪除行為，本次回覆未涵蓋，另開單追蹤）
+  resolution: spec_updated
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-008
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-023
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 30deea3f7b85dbdbc7e777e243058401d93d8df3223206112c6ee02d562b3af3
+  answer: 不論線上或機台類型，站台皆不支援刪除功能，僅能暫停或關閉（停用）。此為對 spec 原文「刪除站台」一節（點擊列表刪除、二次確認、不可復原）的重大修正——該流程實際上不存在於任何站台類型，CLR-SITELIST-007 先前確認的「機台類型不可刪除」應擴大為「所有類型皆不可刪除」。
+  resolution: spec_updated
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-009
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-023
+  question_id: null
+  answer_rev: 0
+  answer_sha256: a47566a5140a282a4a8003908a6c8915c6bfe70cc649feae39969775a87d28ae
+  answer: 已確認：前端與後端皆拒絕刪除站台，不論線上或機台類型皆同（與 CLR-SITELIST-008 的結論一致，非誤答）。原因是刪除站台會影響站台樹狀結構（子站台歸屬、上下層關係），故刻意不提供刪除功能，僅能暫停／關閉（停用）。spec.md
+    v0.4 原文「刪除站台可正常執行」一節與此結論牴觸，屬 spec 需修正的錯誤敘述，非目前產品行為。
+  resolution: spec_updated
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-010
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-002
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 526a6e109699d3a76f01695362571a18bcf9d5a7ac1399aa39a20ea15b0e2df1
+  answer: admin 例外規則為 PM 最終決定，非資料錯誤或臆測：根層站台（無上層站台）建立時，型別可自由選擇（機台或線上），核心貨幣依所選類型連動建立，不受REQ-SITELIST-002子站台強制跟隨規則約束。此為PM已定案且已開發完成上線的產品行為，非待定或實驗性設計。spec.md原文尚未反映此例外，屬spec文件落後於實際已上線行為的已知落差。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-011
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-002
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 20fa3106bee64e2928e539212b7e74eb3b64a6d1a6523fea85ee2c611ad1ab26
+  answer: 鏈上錢包管理與站台核心貨幣是兩個完全不同、互不相依的概念。鏈上錢包管理管理的是「此平台整體能使用的幣種有哪些」，啟用/禁用代表該幣種能否出入金，目的是作為平台出問題時的即時止損開關（platform級風險控管，不分站台）。站台的核心貨幣則是站台建立時依站台類型連動決定的設定欄位（例如機台類型連動TWD），屬SITELIST頁面自身的站台設定，跟鏈上錢包管理的啟用狀態無關、不互相依賴。因此AC-SITELIST-0023「不需admin自身的鏈上錢包管理預先啟用該幣別」這句話，本質是在說明這兩個系統彼此獨立、互不閘門——站台核心貨幣的連動建立不需要、也不會去檢查鏈上錢包管理的任何狀態。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-012
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.4'
+  requirement_id: REQ-SITELIST-002
+  question_id: null
+  answer_rev: 0
+  answer_sha256: ff7f4bb8c28db569fd3ae8029b55923358da7c673534ee13bb2a0a910c35c167
+  answer: 修正CLR-SITELIST-011：鏈上錢包管理與站台核心貨幣不是「完全無關」，而是「性質不同但有連動關係」。(1)鏈上錢包管理是每個站台各自獨立一份的設定，管理該站台能使用的幣種之啟用/禁用（代表能否出入金），目的是平台/站台出問題時的即時止損開關，此開關可在建立後隨時調整。(2)站台核心貨幣則是站台建立時就依類型決定的corecurrency欄位，不可更改、也不能在後台關閉，屬於站台建立當下就定案的不可變屬性。(3)兩者的連動關係：新站台建立時，核心貨幣連動建立的同時，會自動在該站台自己的鏈上錢包管理啟用對應幣別（例如機台類型建立時TWD會自動連動啟用）；此連動不需要admin自身的鏈上錢包管理預先啟用對應幣別（即不依賴上層/admin的狀態，是該新站台自己獨立產生的初始啟用狀態）。此修正有獨立既有證據佐證：TC-SITELIST-063（ACTIVE，建立時間早於本次CLR-010/011/012的討論）已完整斷言此機制，並非本次對話中臨時產生的說法。
+  resolution: requirement_clarified
+  basis_hash: 63cf9770cb9c1c1a9932c5595983212235c87591dafc926f5a3576418eb1b1bd
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-013
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  requirement_id: REQ-SITELIST-035
+  question_id: null
+  answer_rev: 0
+  answer_sha256: ab4acbc8ce95c5aa14d323ac1790f6c5c0566332f10c70a0c25d0aec3cc0fe8b
+  answer: 選 A：前端限制，後端也拒絕，資料不變；所有權限限制都在後端每一支 API 強制執行（開發包⑧既有規則，站台列表已補註）。因站台不可刪除，限制由三項變為兩項：不可修改自身站台的上層站台、不可將自身站台切為「開通」（含由「更新待審」切回）；站長同樣適用。越權時回傳「無權限」，與
+    CLR-SITELIST-015 相同。
+  resolution: spec_updated
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-014
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  requirement_id: REQ-SITELIST-036
+  question_id: null
+  answer_rev: 0
+  answer_sha256: e3069abe2fb3f639145d37f22a9c49648577dd427218e92270df4eba033ab27c
+  answer: 站長不可指派站長，也不可指派管理員：角色下拉選單依操作者自身角色過濾，站長的畫面不會出現「管理員」與「站長」選項；直接呼叫 API 越權指派時，後端拒絕並回傳「無權限」（選 A）。站長可以指派操作員；管理員可指派所有角色，含管理員與操作員（可指派的角色須低於操作者自身角色，唯管理員可指派管理員）。指派在「系統使用者列表」操作：點列表中的角色欄位，從下拉選單選擇新角色（手冊
+    7.1.2）。
+  resolution: spec_updated
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-015
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  requirement_id: REQ-SITELIST-037
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 860eeb8f957afe6bea18f8b7423b061d17d185420a50c5728db465fe5c91f86c
+  answer: 選 A：後端拒絕並回傳「無權限」錯誤，資料不變；不採用「當作不存在／回空結果」。spec 只規定「無權限」這個語意，錯誤代碼由後端定義（截至 2026-10-09 後端尚未定案），實際代碼須向後端確認後再寫入預期結果。全系統的越權處理一致。
+  resolution: spec_updated
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-016
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  requirement_id: REQ-SITELIST-022
+  question_id: null
+  answer_rev: 1
+  answer_sha256: da30cb79fcb3f1ee4bc3d45cf1d03a97d92bc823c2a2d12b27f890cacb598bfa
+  answer: 選 A：任何站台都不能刪除，線上、機台、根站台皆同。畫面沒有刪除按鈕，以 API 直接呼叫後端也拒絕；要停止服務一律切「暫停」或「關閉」。v06 的刪除寫法（權限表兩列、列表操作欄、刪除站台小節、刪除確認規則）已全部從 v07
+    移除，proto 也拿掉刪除按鈕與確認彈窗。CLR-SITELIST-008／009 的定案維持有效。
+  resolution: spec_updated
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-017
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.6'
+  requirement_id: REQ-SITELIST-023
+  question_id: null
+  answer_rev: 1
+  answer_sha256: 4cbaddfb8dd1ff7b382270a8d932aad6d677ed945c573a648fbae56f49a834dc
+  answer: 選 A：任何站台都不能刪除，因此「刪除仍有子站台的站台時子樹如何處理」的情境不會發生，B1～B3 的追問不適用，本條僅供追溯。
+  resolution: spec_updated
+  basis_hash: 304c29ee5c1dbc7d90e1138bb20ad60d0040530cdaaed23589e6f8a4b8f65727
+  scope: null
+  applicability: []
+- clarification_id: CLR-SITELIST-018
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-002
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 003f7dc16777299de02a6df389603b768684f5d365e2f5a5c5ff65fa451bab53
+  answer: 後端拒絕：以 API 建立子站台並帶入與主站台（上層站台）不同的站台類型時，後端會擋下，不只是前端唯讀限制。回應內容（錯誤代碼、訊息、HTTP 狀態）原答覆未定義，另開 CLR 追問。沿用 CLR-SITELIST-001
+    rev 0。
+  resolution: requirement_clarified
+  basis_hash: c2d58a12dd274a678be25a4d5cbfaa75b5e5067d4db2759f6069b5b287a8e906
+  scope:
+    spec_id: SPEC-SITELIST-001
+    requirement_id: REQ-SITELIST-002
+    subject: sitelist.site_type.inheritance.api_mismatch_reject
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-SITELIST-019
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-002
+  question_id: Q03
+  answer_rev: 0
+  answer_sha256: 6f82dfe5880bd1b03b6c5778b698de57888c313649da705be0d06bc533afb95b
+  answer: 會自動啟用，且不依賴上層：新站台建立時，核心貨幣連動建立的同時，會自動在該站台自己的「鏈上錢包管理」啟用對應幣別（例如機台類型建立時 TWD 會自動啟用）；此連動不需要根站台 admin 或上層站台的鏈上錢包管理預先啟用該幣別，是新站台自己獨立產生的初始啟用狀態。鏈上錢包管理是每個站台各自一份的設定，管理該站台可使用幣種的啟用／禁用（代表能否出入金），建立後可隨時調整；核心貨幣則於建立時依類型決定、不可更改。沿用
+    CLR-SITELIST-012 rev 0（修正 CLR-SITELIST-011）。
+  resolution: requirement_clarified
+  basis_hash: c2d58a12dd274a678be25a4d5cbfaa75b5e5067d4db2759f6069b5b287a8e906
+  scope:
+    spec_id: SPEC-SITELIST-001
+    requirement_id: REQ-SITELIST-002
+    subject: sitelist.core_currency.wallet_auto_enable
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-SITELIST-020
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-005
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 3d49dd7294f5d7d0808331349d6e769cecb3f40ac4d48d2253f25f0df5eb4645
+  answer: 負數拒絕：額度上限輸入負數時，前端顯示「值必須大於或等於 0」，後端也會拒絕（雙層驗證）。上限值、可否帶小數，原答覆未定義，另開 CLR 追問。沿用 CLR-SITELIST-002 rev 0。
+  resolution: requirement_clarified
+  basis_hash: c2d58a12dd274a678be25a4d5cbfaa75b5e5067d4db2759f6069b5b287a8e906
+  scope:
+    spec_id: SPEC-SITELIST-001
+    requirement_id: REQ-SITELIST-005
+    subject: sitelist.venue.credit_limit.input_range
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-SITELIST-021
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-006
+  question_id: Q02
+  answer_rev: 0
+  answer_sha256: 6a830e6336a784edd39431f3eb79e2853aba28d286807bea87037ca71844d8e2
+  answer: 單位為小時，後端最低值為 1 小時（低於 1 小時會被拒絕）；輸入超過 17 位數（極端格式）時，前端跳格式錯誤，後端阻擋並回傳通用錯誤代碼 COMMON_INVALID_REQUEST_FORMAT。上限值原答覆未定義，另開
+    CLR 追問。沿用 CLR-SITELIST-003 rev 0。
+  resolution: requirement_clarified
+  basis_hash: c2d58a12dd274a678be25a4d5cbfaa75b5e5067d4db2759f6069b5b287a8e906
+  scope:
+    spec_id: SPEC-SITELIST-001
+    requirement_id: REQ-SITELIST-006
+    subject: sitelist.venue.session_timeout.input_range
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+- clarification_id: CLR-TXLOG-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirement_id: REQ-TXLOG-029
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 7c3aba8ff95bacdc8ca39e2d6445b3ef8f2231a47dede487cd6a45bba147490a
+  answer: 此問題已 moot：交易紀錄查詢頁（本包）實際上並不提供『手動取消』這個操作，spec.md §操作 描述的『手動取消：僅 Admin 可對待確認狀態的交易執行』這段是錯誤敘述，非現行產品行為。凡是待確認/待核實交易需要的人工處理，一律在『洗分出金核實』頁（SPEC-CASHOUT-001）進行，不在本頁。REQ-TXLOG-028/029
+    需回頭修正。
+  resolution: spec_updated
+  basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+  scope: null
+  applicability: []
+- clarification_id: CLR-TXLOG-002
+  status: ANSWERED
+  kind: spec_question
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirement_id: REQ-TXLOG-028
+  question_id: null
+  answer_rev: 0
+  answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+  answer: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+    24 小時逾時轉「已逾時」收斂）。後端已開發完成，前端尚未開發（2026-10-12 實機：列表操作欄只有「明細」，明細面板標示「本頁只讀」）。2026-09-14（CLR-TXLOG-001）與 2026-09-15（CLR-CASHFLOW-004）「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028
+    改回提供（限出金、限管理員），REQ-TXLOG-029 的限制（非管理員、非待確認、入金）恢復為有效需求。
+  resolution: requirement_clarified
+  basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+  scope:
+    spec_id: SPEC-TXLOG-001
+    requirement_id: REQ-TXLOG-028
+    subject: txlog.arcade.pending_cashout_admin_cancel
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+run_decisions: []
+open_questions:
+- clarification_id: CLR-CASHFLOW-001
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-042
+  question_id: null
+  question: REQ-CASHFLOW-042 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+- clarification_id: CLR-CASHFLOW-002
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.1'
+  requirement_id: REQ-CASHFLOW-043
+  question_id: null
+  question: REQ-CASHFLOW-043 不符合時系統應如何反應？（Spec 未定義拒絕行為）
+- clarification_id: CLR-CASHFLOW-009
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-042
+  question_id: Q01
+  question: 過渡期由前台呼叫 req-cashout／end-cashout 時使用何種認證：沿用機台憑證（JWT）或另立前台認證？
+- clarification_id: CLR-CASHFLOW-010
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-043
+  question_id: Q01
+  question: 過渡期 req-cashout 成功後 end-cashout 失敗時，前台的重送策略為何（重試次數、間隔、放棄條件）？
+- clarification_id: CLR-CASHFLOW-011
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-045
+  question_id: Q02
+  question: 入金的 order_id 由廠商於 req-cashin 帶入，還是由平台產生（暫定比照出金由平台產生）？
+- clarification_id: CLR-CASHFLOW-012
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-026
+  question_id: null
+  question: 管理員手動取消待確認出金的防護規則：(1) 收據已印出才取消時，管理員事前要核對什麼、收據怎麼處理、機台與平台分數怎麼對齊？(2) 對已完成出金、已取消出金、待確認入金等非「待確認出金」目標呼叫取消 API 時的回應？(3)
+    手動取消與機台遲到的 end-cashout 同時到達時以哪個為準、輸的一方回什麼？(4) 重複送出取消請求時阻擋提示還是冪等？(5) 管理員能否取消其他站台機台的待確認出金？
+- clarification_id: CLR-CASHFLOW-013
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-020
+  question_id: null
+  question: 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？
+- clarification_id: CLR-CASHFLOW-014
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-007
+  question_id: null
+  question: 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin
+    清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token
+    回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？
+- clarification_id: CLR-CASHFLOW-015
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-049
+  question_id: null
+  question: 機台請求中的機台帳號與 token 所屬機台不一致時（M1 的 token 對 M2、或對其他場館的 M3 發請求），是否一律拒絕？回覆碼為何？
+- clarification_id: CLR-CASHFLOW-016
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  requirement_id: REQ-CASHFLOW-013
+  question_id: null
+  question: 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？
+- clarification_id: CLR-DAILYREPORT-017
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-017
+  question_id: Q02
+  question: 「逾時結束」的場次結束後機台仍留有分數時：日結時是否承接成隔日新場次的期初餘額、是否計入期末餘額？（v0.3 第 128 行只列「承接洗分餘數或日結結算轉入者」，第 151 行只涵蓋進行中的場次；可能定義於開發包③ 機台金流與場次
+    v02，本包未宣告引用）
+- clarification_id: CLR-DAILYREPORT-018
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-007
+  question_id: null
+  question: 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4)
+    結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？
+- clarification_id: CLR-DAILYREPORT-019
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-016
+  question_id: null
+  question: 長區間條件下連點匯出 CSV 或重複送出查詢時，系統是否防連點、有無同時匯出的併發上限？
+- clarification_id: CLR-DAILYREPORT-020
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-001
+  question_id: null
+  question: (1) 操作員能否查看場館日結報表？可看哪些場館？(2) 使用者登入後管轄範圍被調整（站長移出某子站台、操作員改調場館），既有工作階段是否立即套用新範圍、已開啟的報表頁再查詢或匯出會不會取得舊範圍資料？
+- clarification_id: CLR-DAILYREPORT-021
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-021
+  question_id: null
+  question: 櫃檯對機台帳號的人工入金（補分）、人工出金（結清待確認出金），以及被取消（新請求取代、人工出金連動、管理員手動取消）的待確認出金，在日結報表各欄與餘額驗算式中如何計入？
+- clarification_id: CLR-DAILYREPORT-022
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-014
+  question_id: null
+  question: 機台停用、報廢（只停用不刪除）或改歸屬其他場館時，它的留存分數是否繼續計入原場館的期初／期末餘額？歷史列會不會跟著搬？
+- clarification_id: CLR-DAILYREPORT-023
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  requirement_id: REQ-DAILYREPORT-028
+  question_id: null
+  question: 注單數是否計入取消或退款的注單？歸屬營業日依下注時間還是結算時間？
+- clarification_id: CLR-REDPACKET-051
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-014
+  question_id: Q04
+  question: 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義
+- clarification_id: CLR-REDPACKET-056
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-030
+  question_id: Q03
+  question: 機台扣除「未完成稽核的部分」的計算與出金後的處理：(1) 扣除的是什麼金額——剩餘未達的所需有效投注額、尚未完成稽核的紅包金額，或其他（例：30 TWD 紅包、稽核 1 倍、已打 10，扣 20 或 30）；(2) 出金依
+    SPEC-CASHFLOW-001@0.2 一律清空餘額，扣除後核可金額小於餘額時，被扣除的分數留在機台（不清空、不結束場次？）或作廢；洗分扣除後的餘數是否照洗分留餘數規則開新場次承接。目標與 SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8
+    皆未定義（原機台預設 0 倍不會觸發，紅包稽核使其可達）
+- clarification_id: CLR-REDPACKET-058
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-025
+  question_id: null
+  question: 機台場館的紅包金額是否應限制為整數？若允許 1 位小數（例 10.5），機台入帳後的分數、4.1／4.4 金額、日結報表紅包金額是否都照記含小數？
+- clarification_id: CLR-REDPACKET-059
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-036
+  question_id: null
+  question: 紅包領取送出後中途失敗（前端逾時、連線中斷、後端寫入錢包／交易紀錄／稽核明細其中一步失敗）時：是否保證全部寫入或全部不寫？能否安全重試？前台顯示什麼？
+- clarification_id: CLR-REDPACKET-060
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-036
+  question_id: null
+  question: 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？
+- clarification_id: CLR-REDPACKET-061
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-036
+  question_id: null
+  question: 領取 API 是否檢查紅包屬於呼叫者？玩家 A 帶玩家 B 的紅包編號、或機台 M2 帶 M1 的紅包編號呼叫領取時，回應為何（拒絕與錯誤碼）？
+- clarification_id: CLR-REDPACKET-062
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-023
+  question_id: null
+  question: 線上站台的財務在紅包功能的管轄範圍是否含子站台（檢視、追加預算、取消排程、匯出明細）？
+- clarification_id: CLR-REDPACKET-063
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  requirement_id: REQ-REDPACKET-038
+  question_id: null
+  question: 「洗分／出金後才達標」的紅包直接以已作廢建立；若此時活動預算已用罄（剩餘預算小於抽出金額），要不要建立這個已作廢紅包？是否計入本期已獲得與單週期上限？
+- clarification_id: CLR-SITELIST-022
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-011
+  question_id: Q03
+  question: 根站台 admin 底下能否存在站長帳號；若存在，其起始層與能否看到根站台這一列（v0.7 與開發包⑧只寫根站台自身的管理員看得到根站台列）
+- clarification_id: CLR-SITELIST-023
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-011
+  question_id: Q04
+  question: 客服、清稽核客服、財務三種角色能否進入站台列表、能否操作、可見範圍是否同為管轄範圍（開發包⑧第九節列為尚未定案，不阻擋開工）
+- clarification_id: CLR-SITELIST-024
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-013
+  question_id: Q03
+  question: 管理員略過前端，以 API 將子站台的上層站台設為其自身或其子孫站台時，後端是否拒絕、回應為何（第 59 行後端強制只列管轄範圍、自身站台限制、角色指派上限，未列循環防護；CLR-SITELIST-006 亦註明未涵蓋）
+- clarification_id: CLR-SITELIST-025
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-013
+  question_id: Q04
+  question: 管理員（尤其根站台 admin 的管理員）把站台改掛到不同類型或不同核心貨幣的主站台底下、或改掛到根站台底下使其成為主站台時，系統如何處理：禁止？允許且類型／貨幣如何變化？與「類型建立後不可修改」「子站台一律與主站台同類型」如何調和
+- clarification_id: CLR-SITELIST-026
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-016
+  question_id: Q03
+  question: 「上層站台的管理員」是僅指直屬上層站台的管理員，還是任一管轄範圍涵蓋該站台的祖先站台管理員（例如根站台 admin 的管理員對孫層站台）；§角色與權限寫管理員對管轄範圍內所有子站台可切任意狀態
+- clarification_id: CLR-SITELIST-027
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-016
+  question_id: Q04
+  question: 操作員能否進入站台列表（例如唯讀檢視自身場館的額度上限、場次逾時時間）；v0.7 與開發包⑧第五節的站台列表權限只列管理員與站長，開發包⑧第八節卻寫操作員對額度上限、場次逾時時間「唯讀」，未說明在哪個頁面檢視。前版 AC-SITELIST-0164
+    沿用 v0.4 RM 的「站台列表不對操作員開放」，v0.7 無原文依據
+- clarification_id: CLR-SITELIST-028
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-029
+  question_id: Q02
+  question: 對主站台以下的使用者（看不到根站台），點擊路徑列「站台列表」回到的「根層」是指其起始層（自身所屬站台這一列）還是其他；路徑列是否顯示其上層站台節點
+- clarification_id: CLR-SITELIST-029
+  status: OPEN
+  kind: conflict_resolution
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-032
+  question_id: Q02
+  question: 根站台 admin 新增或刪除網域時：(A) 不觸發更新待審、維持開通；(B) 觸發更新待審（則由誰、如何切回開通）；(C) 根站台的網域不可異動
+- clarification_id: CLR-SITELIST-030
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-037
+  question_id: Q03
+  question: 「無權限」錯誤的實際錯誤代碼與回應格式（HTTP 狀態、錯誤代碼、訊息）；v0.7 與開發包⑧只規定語意、錯誤代碼由後端定義，CLR-SITELIST-015 註明截至 2026-10-09 後端尚未定案，須向後端確認後才能寫入
+    Test Case 的預期結果
+- clarification_id: CLR-SITELIST-031
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-037
+  question_id: Q04
+  question: 「每個站台皆有管理員」的管理員帳號由誰、在什麼時機建立：(a) 沿用現行流程（自行註冊後由上層站台的管理員指派）；(b) 站台建立時由系統一併產生。若為 (b)，站台列表「新增站台」流程須多一步（產生帳號並一次性顯示帳密），SPEC-SITELIST-001
+    需再進版（開發包⑧第九節，不阻擋開工）
+- clarification_id: CLR-SITELIST-032
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-002
+  question_id: null
+  question: 以 API 建立子站台並帶入與主站台不同的站台類型時，後端拒絕的回應內容為何（錯誤代碼、訊息、HTTP 狀態）？
+- clarification_id: CLR-SITELIST-033
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-005
+  question_id: null
+  question: 額度上限的上限值為何？可否帶小數（幾位）？超出時前後端如何回應？
+- clarification_id: CLR-SITELIST-034
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-SITELIST-001
+  spec_version: '0.7'
+  requirement_id: REQ-SITELIST-006
+  question_id: null
+  question: 場次逾時時間（單位：小時）的上限值為何？超出上限時前後端如何回應？
+decision_sources:
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 382 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L934
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §計算範例（第 336 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 391 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 128 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 410 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 174 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 171 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 173 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §機台帳號的稽核（第 59 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L790
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 311 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L904
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L999
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 195 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L772
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 298 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 425 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 64 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 187 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 390 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L862
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 394 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 403 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 225 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 204 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 65 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 186 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 67 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 401 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 98 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 294 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 415 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 77 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 63 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 183 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 125 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L885
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 381 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 398 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 388 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 107 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 126 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包狀態（第 159 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §列表欄位（第 74 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 314 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 210 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 235 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（第 57 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 242 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 264 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 272 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 48 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 41 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 38 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L808
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 136 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 431 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L715
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 379 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 117 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 419 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 141 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 402 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 71 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 400 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 43 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L379
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 86 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 409 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 184 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 243 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 429 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 386 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 84 行）
+- type: spec
+  spec_id: SPEC-PLATFORMRULE-001
+  spec_version: '0.2'
+  content_hash: b36b764b775645ab44d5d128916e5560d6e94157fc2f5ebf95048c10ae22cc0a
+  location: §既有功能對機台帳號的排除規則（第 32 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 411 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 251 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 280 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 399 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 378 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 189 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 404 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L438
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 229 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 70 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 405 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 45 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 265 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 124 行）
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §四、管轄範圍（scope）（第 104 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 36 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 396 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L434
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 407 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 271 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 178 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 413 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 194 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 406 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 182 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 199 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 315 行）
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §十、業務規則（第 265 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 83 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 312 行）
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 262 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 233 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 190 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 217 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 273 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 385 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 389 行）
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §四、管轄範圍（scope）（第 120 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 198 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §角色與權限（第 305 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 228 行）
+- type: spec
+  spec_id: SPEC-DAILYREPORT-001
+  spec_version: '0.3'
+  content_hash: 535d360df2afe72602ff397f6fcd1f329b9225472aaba13b798b95f590c3fc6d
+  location: §列表欄位（第 62 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 384 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 383 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 261 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 209 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 31 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 196 行）
+- type: spec
+  spec_id: SPEC-ARCADE-001
+  spec_version: '0.8'
+  content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  location: §交易狀態（第 590 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L821
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 224 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 68 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 37 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 395 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L757
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 151 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 100 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 185 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 203 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 301 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 123 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 137 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 300 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §線上與機台的差異（第 50 行）
+- type: clarification
+  clarification_id: CLR-CASHFLOW-004
+  answer_rev: 0
+  answer_sha256: 005cce0a33de80ab70b66eab5f3ea8a14ac98e03f5f69f5643441eaf1f981f2e
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 287 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 132 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包狀態（第 160 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L871
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 62 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L900
+- type: spec
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  location: §業務規則與驗證（本包相關）（第 260 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 170 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §列表欄位（第 73 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 412 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 211 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 66 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 208 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 387 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 246 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 414 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 377 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 247 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §功能說明（第 23 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §功能說明（第 27 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 392 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L380
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 213 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L820
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §對既有章節的影響（第 424 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 289 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 263 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 231 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 299 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 245 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 223 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 166 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 393 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L865
+- type: spec
+  spec_id: SPEC-REDPACKET-002
+  spec_version: '0.2'
+  content_hash: fab2e7c53adf1176738a358d2c3ee2c79438f659a713a7f439042f9370280cf6
+  location: L777
+- type: spec
+  spec_id: SPEC-ROLEPERM-001
+  spec_version: '0.2'
+  content_hash: d47f01840f02a548141f47834702a8fb277f6f69f9119d1f037d209c48408c66
+  location: §2.3 主站台（第 67 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 79 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §業務規則與驗證（第 397 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §紅包明細（第 286 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §前台呈現說明（第 188 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §新增優惠活動 — 紅包（第 96 行）
+- type: spec
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  location: §活動排程（第 226 行）
+extra_inputs: []
+references_status: declared
+review_drafts:
+- artifact_id: ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2
+  path: runs/RUN-20261013-001/dispatch/T3RR-iter1-ART-TCD-01M4RKECAYC2V0TMV2FME5ENH2.yaml
+  sha256: 4edd572c2a380da3ead897eb28bded2ff66d5bf7b06194d06cd14bf80565afce
+  source_sha256: e99dee4b1f18b47e548e757fdc65a208d33fa32a397d18948deef8187b065cc7
+  stripped_fields:
+  - design_rationale
