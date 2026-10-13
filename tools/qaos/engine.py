@@ -1,7 +1,7 @@
 """Workflow 引擎：Run 建立、Artifact 提交（Permission Guard + Structural Gate）、Gate 評估與效果、Approval、Commit。
 Agent 永遠不呼叫這裡的 commit；只有 approve() 在 Human 決定後觸發。"""
 import pathlib
-from . import store, schema, ids, state, refs, gates, operation, rm, dispatch, decisions, sources, clr_lifecycle, clarification as clr
+from . import store, schema, ids, state, refs, gates, operation, rm, dispatch, decisions, sources, clr_lifecycle, clarification as clr, run_scope
 from .state import TransitionError
 
 SYSTEM = "system"
@@ -213,6 +213,9 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
     if missing: raise EngineError(f"缺少必要 input：{missing}")
     if wf.get("risk_review") and store.run_area(inputs) is None:
         raise EngineError("無法判定本 run 的 functional area（需 spec_id，或 functional_area 有值的 manual_record_id），無法決定是否需要高風險抽查（ADR-009）")
+    if workflow_id in run_scope.WORKFLOWS:
+        try: run_scope.parse(inputs.get("scope"))
+        except run_scope.ScopeError as e: raise EngineError(str(e))
     if workflow_id == "spec-to-bug" and not inputs.get("evidence_ids"):
         raise EngineError("No Evidence, No Formal Bug：spec-to-bug 需要 evidence_ids")
     for eid in inputs.get("evidence_ids", []):
@@ -238,7 +241,18 @@ def new_run(workflow_id: str, inputs: dict, by: str) -> dict:
         note = _decision_added_note(run.get("requirement_model_revision"))
         if note: store.audit(run_id, by, "WARN_DECISION_ADDED", note)
     _advance(run)
+    _check_scope_pin(run)
     return run
+
+def _check_scope_pin(run: dict):
+    """建立時已綁定 revision（T1 跳過）就核對 scope 的需求（ADR-013）：不在 revision 或全部不可設計 → 拒絕建立（整個操作不寫入），
+    不讓 run 建好後才在派發時卡住。T1 要重新分析時 revision 尚未產生，留給派發時檢查。"""
+    rs = run_scope.requirement_ids(run)
+    if not rs: return
+    try: pin = rm.run_pin(run)
+    except rm.RMError: return
+    errs = run_scope.pin_issues(rs, rm.requirements_of(pin), f"{pin['spec_id']}@{pin['spec_version']} {pin['revision']}")
+    if errs: raise EngineError(errs[0])
 
 def load_run(run_id: str) -> dict:
     return store.load(f"runs/{run_id}/run.yaml")

@@ -31,6 +31,7 @@ run_id、task_id、輸入 artifact、輸出路徑由派發訊息提供。缺任�
 - 開工前先讀派發包 `runs/<run_id>/dispatch/<task_id>-iter<N>.yaml`（由 `bin/qaos dispatch <run_id> <task_id>` 產生、不可變；派發訊息會給路徑）。沒有派發包就停下來回報，不要自己找資料開工。
 - **只能使用派發包範圍內的來源**：目標 spec、閉包（`closure`，`required: true` 的是必讀）、決議快照（`resolutions`）、本 run 已決的裁決（`run_decisions`）、綁定 revision 決策點已用的來源（`decision_sources`）、登記的額外來源（`extra_inputs`）。需要其他來源時回報 Supervisor，由派發時以 `--extra <來源> --reason <理由>` 登記。
 - 產出的 envelope 一律填 `dispatch_packet_sha256`（等於 task 的 `dispatch_packets[]` 中本次 iteration 那筆的 sha256）。iteration 改變（退回、核准後重開）時要用新的派發包重做；沿用舊派發包的產出會被拒絕。
+- 派發包有 `run_scope` 且 `requirement_ids` 不是 null 時（ADR-013），本 run 只補清單內的需求：coverage 只檢查清單內需求（`coverage_summary` 也以清單內需求計），清單外需求沒有覆蓋不是 issue。派發包沒有 `run_scope` 欄位（ADR-013 之前產生的）時，以 run 的 `input.scope` 判斷。
 
 ## 派發包範圍的檢查
 

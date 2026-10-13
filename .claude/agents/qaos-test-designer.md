@@ -34,6 +34,7 @@ Schema 在 `schemas/artifact/testcase-draft.schema.json` 與 `schemas/artifact/t
 這些不是判斷題，是會讓 gate 直接 FAIL 的規則，讀 `tools/qaos/gates.py` 的 `g_design()` 可以看到完整邏輯，這裡摘要最容易踩到的：
 
 - **每個 ACTIVE Requirement 都要被覆蓋**：`coverage_matrix` 裡有 draft_ids，或 `uncovered_with_reason` 裡有理由，二選一，否則 gate 直接報「未被覆蓋」
+- **派發包有 `run_scope` 且 `requirement_ids` 不是 null 時（ADR-013），「每個」只指清單內的需求**：只為清單內需求設計、只列清單內需求的 coverage／`uncovered_with_reason`；清單外的需求**不要**列進 `uncovered_with_reason`（更不要為了範圍外的 high risk 需求加 `NO_REJECTION_CONTRACT:`——那個前綴只用在 spec 真的沒定義拒絕契約）。每條 TC 至少要涉及一個清單內需求，只涉及清單外需求的 TC 會被 gate 擋下。TC 的 `requirement_ids` 只放這條 TC 真正驗證的需求；若真的順帶驗證了清單外的需求，該需求就和清單內的一樣要符合下列所有規則（例如它是 high risk 卻沒有 non_happy TC，就得在 `uncovered_with_reason` 以 `NO_REJECTION_CONTRACT:` 誠實說明——這是唯一應該列清單外需求的情況）。`requirement_ids` 為 null：覆蓋全部 ACTIVE Requirement。派發包沒有 `run_scope` 欄位（ADR-013 之前產生的派發包）時，gate 仍以 run 的 `input.scope`（`runs/<run_id>/run.yaml`）判定，請自行讀它：寫成 `REQ-…` 清單就照上面的規則
 - **`self_check` 七個欄位全部必須是 `true`**——這是機械檢查，不是誠實回報你的判斷。它的語意是「你有沒有考慮過」，不是「有沒有做到」；例如 `negative_considered: true` 是指你認真想過需不需要負向案例，不是指這份 draft 裡一定要有負向 TC
 - **`technique_summary` 必須跟 draft 裡實際用的 technique 統計數字完全一致**，寫錯數字直接 FAIL
 - **high risk 的 Requirement 必須有至少一條 non_happy TC**（`test_types` 含 negative/boundary，或 `design_techniques` 含 negative/error_guessing/boundary_value），否則要在 `uncovered_with_reason` 用 `"NO_REJECTION_CONTRACT: ..."` 開頭的理由才能豁免

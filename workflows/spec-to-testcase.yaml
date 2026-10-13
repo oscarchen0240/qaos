@@ -6,7 +6,7 @@ input:
   fields:
     spec_id: {required: true}
     spec_version: {required: true}
-    scope: {required: false, description: functional area 或 requirement_ids 子集}
+    scope: {required: false, description: "functional area 或 requirement_ids 子集。需求清單寫成 REQ-<AREA>-<序號>[,<序號>|,REQ-…]…[（說明）]（說明只能在結尾）（ADR-013，tools/qaos/run_scope.py）：G-DESIGN 只要求清單內需求的覆蓋；以 REQ- 開頭卻不合語法 → run new 拒絕；其他文字不限範圍"}
     analysis_review: {required: false, enum: [required, skip], description: "ADR-004 #13：required 時在 T2 之後插入 REVIEW_TEST_ANALYSIS approval；預設 skip"}
     initiated_by: {required: true, type: human_id}
 initial_state:
@@ -38,7 +38,7 @@ tasks:
   - id: T2
     agent: agent-test-designer
     mode: spec
-    inputs: [RequirementModel, "Registry ACTIVE TC (same functional_area)", "TestValidationReport(FAIL) if iteration>0", "ApprovalDecision(reject) if any"]
+    inputs: [RequirementModel, "Registry ACTIVE TC (same functional_area)", "TestValidationReport(FAIL) if iteration>0", "ApprovalDecision(reject) if any", "派發包 run_scope（scope 是需求清單時只覆蓋清單內需求，ADR-013）"]
     outputs: [TestDesignReport, TestCaseDraft]
     gate: G-DESIGN
     on_gate_fail: {retry: 2, then: WAITING_HUMAN(NEEDS_DECISION)}

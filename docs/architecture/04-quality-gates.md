@@ -7,7 +7,7 @@
 | Gate ID | 位置 | Structural（Runtime） | Semantic（執行者） | FAIL 時產物 | FAIL 路由 |
 |---|---|---|---|---|---|
 | **G-SPEC** Spec Analysis Gate | Spec Analyst 之後 | SpecAnalysis + RequirementModel 通過 schema；每個 REQ 有 ≥1 AC；`spec_id@spec_version` 存在且 `content_hash` 相符；每個 REQ 有 `spec_reference`（章節/行）；REQ ID：同 spec 已持久化的可沿用，新 ID 須為 `REQ-<AREA>-<序號>`、不超過計數器、不屬於同 area 其他 spec（`requirement_id_issues`）；AC ID 依所屬 REQ 推導（見 `02-data-model.md` §5；`ac_id_issues`），一條 REQ 有 10 個以上 AC 只記 advisory 不擋 | Supervisor checklist（非 LLM 判斷，僅結構 checklist）：Requirements identified、AC identified、Ambiguities identified（可為空但欄位必存在）、Constraints identified | `GateFailure` 附缺項 | 回 Spec Analyst，max 2 次後 Human |
-| **G-DESIGN** Test Design Gate（self-check） | Test Designer 之後、Validator 之前 | TestCaseDraft + TestDesignReport schema；change 模式且 run 有 CIR：`supersedes_testcase` 只能取代 CIR 判定 affected 的 TC（見下方「change 模式的取代範圍」）；每個 TC 有 ≥1 `requirement_ids` 且 ID 存在於 RequirementModel；`expected_result` 非空；`steps` ≥1；`design_technique[]` 非空；Report 的 coverage matrix 覆蓋所有 ACTIVE Requirement（未覆蓋者需列於 `uncovered_with_reason`）；Draft 內無同 `title+steps` hash 重複 | Test Designer 自檢 checklist（記錄在 TestDesignReport.self_check）：negative 考慮、boundary 考慮、無 unsupported assumption 宣告 | `GateFailure` | 回 Test Designer（不計入 Validation 迭代） |
+| **G-DESIGN** Test Design Gate（self-check） | Test Designer 之後、Validator 之前 | TestCaseDraft + TestDesignReport schema；change 模式且 run 有 CIR：`supersedes_testcase` 只能取代 CIR 判定 affected 的 TC（見下方「change 模式的取代範圍」）；每個 TC 有 ≥1 `requirement_ids` 且 ID 存在於 RequirementModel；`expected_result` 非空；`steps` ≥1；`design_technique[]` 非空；Report 的 coverage matrix 覆蓋所有 ACTIVE Requirement（未覆蓋者需列於 `uncovered_with_reason`；spec-to-testcase 的 run scope 是需求清單時只要求清單內的需求，見下方「run scope」）；Draft 內無同 `title+steps` hash 重複 | Test Designer 自檢 checklist（記錄在 TestDesignReport.self_check）：negative 考慮、boundary 考慮、無 unsupported assumption 宣告 | `GateFailure` | 回 Test Designer（不計入 Validation 迭代） |
 | **G-TVAL** Test Validation Gate | Test Validator 之後 | TestValidationReport schema；`result ∈ {PASS, FAIL}`；FAIL 時 `issues[]` ≥1 且每個 issue 含 8 個必填欄位（Brief §7.4）；每個 issue 的 `testcase_id` 存在於被驗證的 Draft | Test Validator：No SPEC mismatch、No requirement mismatch、Expected Result 有 spec 依據、Steps 可執行、Traceability 完整、無 critical ambiguity、無重複、Negative/Boundary 合理 | TestValidationReport(FAIL) | 回 Test Designer；iteration > max → Human Override |
 | **G-BVAL** Bug Validation Gate | Bug Validator 之後 | BugDraft schema；`spec_id@spec_version`、`requirement_id` 存在；`evidence_ids` ≥1 且每筆 Evidence 檔案存在、sha256 相符；`reproduction_steps` ≥1；`severity`、`priority` 在 enum 內 | Bug Validator：真的違反 SPEC、expected 有 SPEC 依據、actual 被 Evidence 支撐、步驟足以重現、severity/priority 合理、無 duplicate（查 `bugs/`）、非單純 ambiguity | BugValidationReport(FAIL / AMBIGUITY / DUPLICATE) | 回 Bug Analyst / 升級 Human |
 | **G-IMPACT** Change Impact Gate | Change Impact Analyst 之後 | ChangeImpactReport schema；from/to SpecVersion 皆存在；每個 ACTIVE Requirement 都出現在 `requirement_diff`；每個引用該 spec 的 ACTIVE TC 都出現在 `testcase_impact`（完整性檢查由 Runtime 用 trace 反查） | Supervisor checklist：每個 `affected` 有 reason 與 affected_requirement_ids | GateFailure | 回 Change Impact Analyst |
@@ -32,9 +32,20 @@
 | 整份 | 沒有任何非 happy-path 案例 | FAIL |
 | 佔比 | `mode=spec` 且 ≥ 5 條時 exploratory > 50% | 不 FAIL；PASS 後建立 `NEEDS_DECISION`（先補 Spec 還是繼續）。manual / change 模式不套用 |
 
-補充：`mode=manual` / `change` 的覆蓋範圍只看本 Draft 涉及的 REQ（不要求覆蓋整份 RequirementModel）；manual 模式下 Validator 另要求「Designer 不得補充人工紀錄中不存在的行為」，這一項只能由 Semantic 層判斷。
+補充：`mode=manual` / `change` 的覆蓋範圍只看本 Draft 涉及的 REQ（不要求覆蓋整份 RequirementModel）；`mode=spec` 的 run scope 是需求清單時見下節；manual 模式下 Validator 另要求「Designer 不得補充人工紀錄中不存在的行為」，這一項只能由 Semantic 層判斷。
 
 配套：G-SPEC PASS 時，`rejection_contract.defined=false` 的 REQ 自動開一張不阻塞的 Clarification 問 PM；ACTIVATE approve 時 Runtime 把該 TC 的 `assumptions[].resolved_by_approval` 填上。
+
+## run scope（2026-10-13 新增，ADR-013）
+
+spec-to-testcase 的 `input.scope` 寫成需求清單（`REQ-<AREA>-<序號>,<序號>,…（說明）`，`tools/qaos/run_scope.py` 解析）時，G-DESIGN（`mode=spec`）的範圍由 `gates.design_scope` 決定：
+
+- 必須覆蓋或列 `uncovered_with_reason` 的只有 scope 內的需求；scope 外的需求不必列，列了也不檢查（不需要再用 `NO_REJECTION_CONTRACT:` 前綴豁免範圍外的 high-risk 需求）。
+- 上表的行為契約規則套用到 scope 內的需求，加上 TC 實際涉及的需求。
+- `gates.run_scope_issues` 另外 FAIL：scope 列的需求不在綁定的 revision、或 scope 內沒有任何可設計的需求（非 ACTIVE 或未解決的 critical ambiguity）；某條 TC 的 `requirement_ids` 全部在 scope 外。
+- scope 不是需求清單（functional area 或其他文字）或沒有 scope：全部需求（原本的行為）。
+
+Designer、Validator 的派發包帶 `run_scope: {raw, requirement_ids}`。scope 對不上綁定的 revision（同上兩種情況）時，`run new` 在建立時已綁定 revision（T1 跳過）就拒絕建立；T1 重新分析的 run 由 `dispatch` 拒絕。測試：`tests/test_design_run_scope.py`。
 
 ## change 模式的取代範圍（2026-10-12 新增，RUN-20261012-001 事故）
 

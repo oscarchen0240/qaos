@@ -37,7 +37,7 @@ flowchart TD
 
 | 項目 | 定義 |
 |---|---|
-| Input | `spec_id`, `spec_version`, 可選 `scope`（functional area / requirement 子集） |
+| Input | `spec_id`, `spec_version`, 可選 `scope`（functional area / requirement 子集）。需求子集寫成 `REQ-<AREA>-<序號>,<序號>,…（說明）`（序號至少三位，後面的項目可只寫序號；說明只能是結尾的一段（））：G-DESIGN 只要求清單內需求的覆蓋，範圍外需求不必列 `uncovered_with_reason`；以 `REQ-` 開頭卻不合語法 → `run new` 拒絕；其他文字不限範圍（ADR-013） |
 | Initial State | WorkflowRun CREATED；TC 不存在 |
 | Agents | Spec Analyst、Test Designer、Test Validator（Supervisor 編排） |
 | Artifacts | SpecAnalysis、RequirementModel、TestDesignReport、TestCaseDraft、TestValidationReport、ApprovalRequest、WorkflowSummary |
