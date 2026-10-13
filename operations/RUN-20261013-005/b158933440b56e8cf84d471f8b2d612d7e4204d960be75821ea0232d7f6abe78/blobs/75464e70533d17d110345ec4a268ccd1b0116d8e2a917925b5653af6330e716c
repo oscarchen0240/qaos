@@ -1,0 +1,139 @@
+product: ba-admin
+functional_area: TXLOG
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+test_level: ui_e2e
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+execution_cost: medium
+stability: unknown
+title: 出金待確認超過 24 小時不會自動逾時，持續保留待確認，僅能靠補完回報、新出金取代、櫃檯人工出金連動取消或管理員手動取消收斂
+description: TC-TXLOG-148 修訂：收斂途徑改為補完回報／新出金取代／櫃檯人工出金連動取消／管理員手動取消，移除『轉介洗分出金核實頁』（AC-TXLOG-0171）
+requirement_ids:
+- REQ-TXLOG-017
+acceptance_criteria_ids:
+- AC-TXLOG-0171
+test_types:
+- functional
+- boundary
+design_techniques:
+- state_transition
+- boundary_value
+priority: high
+risk: high
+hotfix_eligible: true
+critical_path: true
+preconditions:
+- 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X，其交易時間（UTC+0）距今已超過 24 小時，且機台從未補送完成回報（自行從環境中選定；若環境沒有，需先在機台端造出待確認出金並等待超過
+  24 小時，如何造出不在 spec 範圍）。spec 提到現場在機台 Operator 選單執行過 Reset 後，機台不再回報該筆交易，這是待確認長期留著的一種情境，但不代表可作為佈置手法。
+- 本案只觀察、不對 X 做任何取消或核實操作（手動取消由 REQ-TXLOG-028 的案例驗證），測試期間不要讓 X 被新的出金取代或人工出金連動取消
+test_data:
+- name: X 的交易時間距今
+  value: 超過 24 小時（越過入金逾時時限後的一側；選環境既有紀錄，例如 25 小時以上）
+- name: X 的交易狀態（預期全程）
+  value: 待確認
+steps:
+- n: 1
+  action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，找到符合前提的 X，記下交易編號、交易時間、交易狀態與完成時間
+  expected: X 的交易狀態為『待確認』（轉換前狀態），完成時間顯示『—』，交易時間距今超過 24 小時
+- n: 2
+  action: 檢視 X 目前的交易狀態；另把『交易狀態』篩選改為『已逾時』、『交易類型』維持機台出金再搜尋，確認 X 的交易編號不在結果中
+  expected: X 仍是『待確認』，不是『已逾時』（出金的 待確認→已逾時 不會發生）；『已逾時』的結果中沒有 X
+- n: 3
+  action: 隔一段時間後（時間長度由執行者自行決定，建議至少 1 小時）重新用交易編號查詢 X
+  expected: X 仍保留為『待確認』，沒有自動轉為『已逾時』
+expected_result: 機台出金交易處於待確認、機台從未補送完成回報，超過 24 小時後不會自動轉為『已逾時』，持續保留為『待確認』，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由管理員於本頁手動取消（REQ-TXLOG-028）為止。（本案實際驗證的是『超過
+  24 小時仍持續待確認、不自動逾時』；四種收斂途徑只作為 spec 列出的允許結束條件，不在本案逐一觸發；已不再斷言『轉介至洗分出金核實頁』。）
+expected_result_spec_reference:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  location: §交易狀態（第 57 行）；§相關業務規則（第 122 行）
+  quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+decision_refs:
+- requirement_id: REQ-TXLOG-017
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §交易狀態（第 57 行）
+- requirement_id: REQ-TXLOG-017
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §相關業務規則（交易保留期限）（第 122 行）
+- requirement_id: REQ-TXLOG-017
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §交易狀態（第 52 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §交易狀態（第 57 行）
+  quote: 入金與出金的收斂方式不同：入金超過 24 小時自動轉「已逾時」；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §相關業務規則（交易保留期限）（第 122 行）
+  quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §交易狀態（第 52 行）
+  quote: 僅入金會出現：超過 24 小時仍未收到機台回報而自動關閉；分數未異動。出金不設逾時
+assumptions: []
+source: change_workflow
+source_ref: 'affected: TC-TXLOG-148 v1（CI-SPEC-TXLOG-001-0.1-0.1，R000→R001）'
+testcase_id: TC-TXLOG-148
+version: 2
+supersedes: 1
+status: PENDING_APPROVAL
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+created_at: '2026-10-13T07:57:31Z'
+updated_at: '2026-10-13T08:02:39Z'
+history:
+- at: '2026-10-13T07:57:31Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+  run_id: RUN-20261013-005
+- at: '2026-10-13T08:02:39Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-005
+requirement_model_revision:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
