@@ -1,7 +1,7 @@
 run_id: RUN-20261013-005
 workflow_id: spec-change-impact
 workflow_version: 1.0.0
-status: RUNNING
+status: WAITING_HUMAN
 input:
   spec_id: SPEC-TXLOG-001
   from_version: '0.1'
@@ -11,7 +11,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-13T07:31:15Z'
-updated_at: '2026-10-13T09:28:25Z'
+updated_at: '2026-10-13T09:29:38Z'
 tasks:
 - task_id: T0
   type: agent
@@ -445,11 +445,12 @@ tasks:
   ended_at: '2026-10-13T09:28:22Z'
 - task_id: T4
   type: agent
-  status: READY
+  status: DONE
   iteration: 1
   input_artifact_ids: []
   input_entity_refs: []
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-VCR-01M4T9G8MCFNY31RR0GG4AGPTZ
   agent_id: agent-change-impact-analyst
   mode: compare
   gate: G-COMPARE
@@ -474,6 +475,16 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-13T09:29:30Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-13T09:29:38Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: G-COMPARE PASS
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261013-005/dispatch/T4-iter0.yaml
@@ -483,7 +494,7 @@ tasks:
     path: runs/RUN-20261013-005/dispatch/T4-iter1.yaml
     sha256: 291dfc385eed62119b110529d7610524d79d0936f58e885cf228ba57682db9ce
     at: '2026-10-13T09:28:25Z'
-  started_at: '2026-10-13T08:02:36Z'
+  started_at: '2026-10-13T09:29:30Z'
   gate_results:
   - at: '2026-10-13T08:02:36Z'
     layer: structural
@@ -495,13 +506,53 @@ tasks:
     result: PASS
     details:
     - G-COMPARE structural PASS
-  ended_at: '2026-10-13T08:02:39Z'
+  - at: '2026-10-13T09:29:30Z'
+    layer: structural
+    result: PASS
+    details:
+    - VersionComparisonReport ART-VCR-01M4T9G8MCFNY31RR0GG4AGPTZ VALID
+  - at: '2026-10-13T09:29:38Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-COMPARE structural PASS
+  ended_at: '2026-10-13T09:29:38Z'
 - task_id: T5
   type: approval
-  status: PENDING
+  status: RUNNING
   iteration: 0
   input_artifact_ids: []
-  input_entity_refs: []
+  input_entity_refs:
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-148
+    version: 3
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-165
+    version: 3
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-218
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-219
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-220
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-221
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-222
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-223
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-224
+    version: 1
+  - entity_type: TestCaseVersion
+    id: TC-TXLOG-225
+    version: 1
   output_artifact_ids: []
   history:
   - at: '2026-10-13T08:02:39Z'
@@ -519,7 +570,17 @@ tasks:
     to_status: DONE
     by: system
     trigger: decided
-  approval_id: APR-0211
+  - at: '2026-10-13T09:29:38Z'
+    from_status: PENDING
+    to_status: READY
+    by: system
+    trigger: advance
+  - at: '2026-10-13T09:29:38Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: advance
+  approval_id: APR-0213
 - task_id: T6
   type: agent
   status: PENDING
@@ -565,6 +626,12 @@ history:
   by: oscarchen@blockaction.tech
   trigger: APR-0212
   run_id: RUN-20261013-005
+- at: '2026-10-13T09:29:38Z'
+  from_status: RUNNING
+  to_status: WAITING_HUMAN
+  by: system
+  trigger: APR-0213
+  run_id: RUN-20261013-005
 from_requirement_model_revision:
   spec_id: SPEC-TXLOG-001
   spec_version: '0.1'
@@ -576,3 +643,4 @@ requirement_model_revision:
   spec_version: '0.1'
   revision: R001
   sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
+waiting_on_approval_id: APR-0213

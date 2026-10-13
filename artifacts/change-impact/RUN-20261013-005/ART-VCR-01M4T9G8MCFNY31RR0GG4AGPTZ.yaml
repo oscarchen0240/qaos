@@ -1,0 +1,245 @@
+artifact_id: ART-VCR-01M4T9G8MCFNY31RR0GG4AGPTZ
+artifact_type: VersionComparisonReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T4
+iteration: 1
+created_by: agent-change-impact-analyst
+created_at: '2026-10-13T09:29:07Z'
+status: VALID
+source:
+  type: ChangeImpactReport
+  ids:
+  - ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+  - ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+references:
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Artifact
+  id: ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+dispatch_packet_sha256: 291dfc385eed62119b110529d7610524d79d0936f58e885cf228ba57682db9ce
+payload:
+  change_impact_id: CI-SPEC-TXLOG-001-0.1-0.1
+  comparisons:
+  - testcase_id: TC-TXLOG-148
+    old_version: 1
+    new_draft_id: TC-DRAFT-01M4T96S52Z4DZPWG9PFP8815V
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 出金待確認不會自動逾時，只能靠新請求取代、人工出金連動取消，或轉介洗分出金核實頁收斂
+      new: 出金待確認超過 24 小時不會自動逾時，持續保留待確認，僅能靠補完回報、新出金取代、櫃檯人工出金連動取消或管理員手動取消收斂
+    - field: description
+      old: null
+      new: TC-TXLOG-148 修訂：收斂途徑改為補完回報／新出金取代／櫃檯人工出金連動取消／管理員手動取消，移除『轉介洗分出金核實頁』（AC-TXLOG-0171）
+    - field: design_techniques
+      old:
+      - scenario
+      new:
+      - state_transition
+      - boundary_value
+    - field: preconditions
+      old:
+      - 以 Admin 登入後台
+      - 進入 各式報表 > 交易紀錄查詢，站台切換選單已選定一個機台場館站台
+      new:
+      - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+      - 【一輪執行所需的待確認測試資料數量（供執行計畫備料）】不可逆消耗（取消或完成後不得再用）的待確認機台出金共 7 筆：AC-0282 案 1 筆、手動取消後遲到 end-cashout 案 2 筆（取消目標 X 與對照出金 V）、AC-0291
+        站長案 1 筆、AC-0291 操作員案 1 筆、AC-0292 案對照出金 W1 1 筆、AC-0293 案對照出金 W2 1 筆；另需可共用、不被取消的待確認機台出金 1 筆（AC-0281、AC-0283、TC-TXLOG-165
+        修訂版共用），TC-TXLOG-148 修訂版需另一筆超過 24 小時且全程不被取消者 1 筆，AC-0293 案需待確認的機台入金 Y 1 筆（24 小時內）；AC-0292 案另需已完成與已取消的機台出金各 1 筆（不消耗）。各筆都是測試機台帳號的測試資料，佈置方式
+        spec 未定義，需環境負責人確認
+      - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X，其交易時間（UTC+0）距今已超過 24 小時，且機台從未補送完成回報（自行從環境中選定；若環境沒有，需先在機台端造出待確認出金並等待超過
+        24 小時，如何造出不在 spec 範圍）。spec 提到現場在機台 Operator 選單執行過 Reset 後，機台不再回報該筆交易，這是待確認長期留著的一種情境，但不代表可作為佈置手法。
+      - 本案只觀察、不對 X 做任何取消或核實操作（手動取消由 REQ-TXLOG-028 的案例驗證），測試期間不要讓 X 被新的出金取代或人工出金連動取消
+    - field: test_data
+      old: []
+      new:
+      - name: X 的交易時間距今
+        value: 超過 24 小時（越過入金逾時時限後的一側；選環境既有紀錄，例如 25 小時以上）
+      - name: X 的交易狀態（預期全程）
+        value: 待確認
+    - field: steps
+      old:
+      - n: 1
+        action: 一筆出金交易長期處於待確認狀態，機台從未補送完成回報（超過入金逾時時限的 24 小時）
+      - n: 2
+        action: 持續檢視其狀態
+      new:
+      - n: 1
+        action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，找到符合前提的 X，記下交易編號、交易時間、交易狀態與完成時間
+        expected: X 的交易狀態為『待確認』（轉換前狀態），完成時間顯示『—』，交易時間距今超過 24 小時
+      - n: 2
+        action: 檢視 X 目前的交易狀態；另把『交易狀態』篩選改為『已逾時』、『交易類型』維持機台出金再搜尋，確認 X 的交易編號不在結果中
+        expected: X 仍是『待確認』，不是『已逾時』（出金的 待確認→已逾時 不會發生）；『已逾時』的結果中沒有 X
+      - n: 3
+        action: 隔一段時間後（時間長度由執行者自行決定，建議至少 1 小時）重新用交易編號查詢 X
+        expected: X 仍保留為『待確認』，沒有自動轉為『已逾時』
+    - field: expected_result
+      old: 不會自動轉為已逾時，持續保留為待確認，直到被新出金取代、櫃檯人工出金連動取消，或轉介至「洗分出金核實」頁（SPEC-CASHOUT-001）由人工處理
+      new: 機台出金交易處於待確認、機台從未補送完成回報，超過 24 小時後不會自動轉為『已逾時』，持續保留為『待確認』，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由管理員於本頁手動取消（REQ-TXLOG-028）為止。（本案實際驗證的是『超過
+        24 小時仍持續待確認、不自動逾時』；四種收斂途徑只作為 spec 列出的允許結束條件，不在本案逐一觸發；已不再斷言『轉介至洗分出金核實頁』。）
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §相關業務規則
+      new:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §交易狀態（第 57 行）；§相關業務規則（第 122 行）
+        quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    impacted_requirement_ids:
+    - REQ-TXLOG-017
+    recommendation: 修訂 TC-TXLOG-148 v1（CIR 判 affected）：收斂途徑移除「轉介洗分出金核實頁」，改為補完回報、新出金取代、櫃檯人工出金連動取消或管理員手動取消，對應 REQ-TXLOG-017／AC-TXLOG-0171
+      R001；「超過 24 小時不自動逾時、持續待確認」的核心斷言保留；核准後以新版取代現行 ACTIVE 版本（舊版保留）
+  - testcase_id: TC-TXLOG-165
+    old_version: 1
+    new_draft_id: TC-DRAFT-01M4T96S52K168CQ3VTEHAN012
+    verdict: changed
+    field_diffs:
+    - field: title
+      old: 本頁不提供任何核實或取消相關的人工操作
+      new: 交易紀錄查詢頁的可用操作僅有查看明細與管理員對待確認機台出金的手動取消，不存在任何核實操作
+    - field: description
+      old: null
+      new: TC-TXLOG-165 修訂：可用操作改為查看明細＋管理員對待確認機台出金的手動取消；『不存在核實操作』保留（AC-TXLOG-0301）
+    - field: preconditions
+      old:
+      - 以 Admin 登入後台
+      - 進入 各式報表 > 交易紀錄查詢，站台切換選單已選定一個機台場館站台
+      new:
+      - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+      - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+        描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+        spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+      - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+      - 【環境前提，需環境負責人確認】本站台有：一筆『待確認』的機台出金 X（可與其他案例的 X 同一筆，本案不做取消）；一筆核實狀態為『待核實』的機台洗分或機台出金 Z（自行從環境中選定，用來檢查核實狀態列上有無核實操作）。待確認出金的佈置方式不在
+        spec 範圍
+    - field: test_data
+      old: []
+      new:
+      - name: 檢視的列
+        value: X（待確認的機台出金）、Z（核實狀態為待核實的洗分或出金）
+    - field: steps
+      old:
+      - n: 1
+        action: 檢視本頁（交易紀錄查詢）的所有可用操作
+      new:
+      - n: 1
+        action: 檢視 Z 所在列的列表操作欄，再點擊該列開啟右側明細面板，檢視面板上所有可操作的按鈕與連結，尋找任何『核實』相關操作（含同義的『確認收款』『核銷』等入口）
+        expected: 找不到任何核實操作（核實狀態欄僅供查看，唯讀）；可用的操作有查看明細。若 Z 列還出現『手動取消』（顯示但停用等），只記錄現象，不判定（不符合條件時的阻擋方式 spec 未定義）
+      - n: 2
+        action: （UI，前端上線前記『受阻』）以管理員身分檢視 X 所在列的列表操作欄與右側明細面板（兩處都看，入口位置 spec 未定義）
+        expected: 可用操作為查看明細，以及『手動取消』（管理員對待確認機台出金）；仍沒有任何核實操作。前端上線前實機只看到『明細』是 BUG-TXLOG-001 的現況，本步驟記『受阻』並備註實際觀察
+    - field: expected_result
+      old: 本頁不存在任何核實或手動取消操作，僅有查看明細一項；核實與待確認交易的人工處理一律於「洗分出金核實」頁（SPEC-CASHOUT-001）進行
+      new: 交易紀錄查詢頁不存在任何核實操作（核實一律於帳務管理『洗分出金核實』執行）；本頁可用操作僅有查看明細，以及管理員對待確認機台出金的手動取消。（步驟 1『無核實操作』在前端未上線時即可判定；步驟 2 的手動取消入口需前端上線，之前記受阻。）
+    - field: expected_result_spec_reference
+      old:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §操作
+      new:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §操作（第 91 行）；§對既有章節的影響（第 109 行）
+        quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+    - field: execution_cost
+      old: low
+      new: medium
+    impacted_requirement_ids:
+    - REQ-TXLOG-030
+    recommendation: 修訂 TC-TXLOG-165 v1（CIR 判 affected）：可用操作改為查看明細加管理員對待確認機台出金的手動取消，仍不存在任何核實操作，對應 REQ-TXLOG-030／AC-TXLOG-0301
+      R001；移除「一律於洗分出金核實頁處理」的斷言；核准後以新版取代現行 ACTIVE 版本（舊版保留）
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S52WBZKXS6YETBMC879
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-028
+    recommendation: 全新 TC：AC-TXLOG-0281（改寫為正向：管理員於待確認機台出金可見手動取消操作）；原 TC-TXLOG-164 斷言相反，建議退役，本案取代其覆蓋
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S53HXNS1ZX6PVKH42YR
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-028
+    recommendation: 全新 TC：AC-TXLOG-0282（新增：二次確認後標已取消、分數不異動）；前端未開發（BUG-TXLOG-001），草稿要求 UI 步驟記受阻、以 API 判定後端行為，前端上線後須重跑 UI 步驟；同時是
+      REQ-029 四案對照組的前置條件
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S53JEHHF5AK194KCCR2
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-028
+    recommendation: 全新 TC：AC-TXLOG-0283（新增：未完成二次確認不標記為已取消）；同樣以 API／UI 分開判定，前端上線後重跑
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S53J8QG5A12M90Z1R12
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-028
+    recommendation: 全新 TC：REQ-TXLOG-028 風險補強（本輪新增，對應上一輪風險抽查 RF-01，無對應 AC）：管理員手動取消待確認出金 X 之後，X 自己的完成回報（end-cashout）才遲到，X 仍為已取消，分數與紀錄筆數不變，沒有多出已完成的出金；TVR
+      minor：採路徑 (2) 時請 RD 確認該請求格式在交易仍為待確認時會被受理並記入執行紀錄；建議下次 RM 修訂時為「取消後遲到回報」補一條 AC，補齊前此案 acceptance_criteria_ids 為空
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S5300Q06JB6HEFPW2QT
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-029
+    recommendation: 全新 TC：AC-TXLOG-0291（站長身分，非管理員不可取消）；阻擋方式未定義（Q04，CLR-TXLOG-003 OPEN），只斷言無法完成取消、狀態與分數不變
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S53ZQDQY3MTXF66QWPJ
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-029
+    recommendation: 全新 TC：AC-TXLOG-0291（操作員身分）；上一輪 TVR 的預檢與步驟參照問題已修正（憑證預檢改用確定有權限的請求，只有未通過身分驗證才算無效）
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S536VXC9V6F4K30SQFV
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-029
+    recommendation: 全新 TC：AC-TXLOG-0292（管理員對非待確認機台出金不可取消）；對照交易已改名 W1、W2，備料數量已列於前提
+  - testcase_id: null
+    old_version: null
+    new_draft_id: TC-DRAFT-01M4T96S534CZ6ZW37GG132R65
+    verdict: added
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-029
+    recommendation: 全新 TC：AC-TXLOG-0293（管理員對待確認機台入金不可取消，維持待確認直到逾時或補完回報）；阻擋方式同 Q04 未定義
+  - testcase_id: TC-TXLOG-164
+    old_version: 1
+    new_draft_id: null
+    verdict: removed
+    field_diffs: []
+    impacted_requirement_ids:
+    - REQ-TXLOG-028
+    recommendation: 建議退役（只建議，不自行判定）：REQ-TXLOG-028 在 R001 整條反轉（CLR-TXLOG-002）：管理員對待確認機台出金提供手動取消，AC-TXLOG-0281 改寫為正向。本案驗證「本頁不提供手動取消、待確認交易須至洗分出金核實頁處理」，斷言與
+      spec 直接相反，沒有可保留的步驟；本輪沒有 Draft 取代它，新情境由新增 TC（AC-TXLOG-0281／0282／0283）涵蓋。建議退役，退役由核准決定。提醒：前端尚未開發（BUG-TXLOG-001），實機目前仍符合本案觀察，但屬缺陷，不應保留為預期行為
+  retire_recommendations:
+  - testcase_id: TC-TXLOG-164
+    reason: REQ-TXLOG-028 在 R001 整條反轉（CLR-TXLOG-002）：管理員對待確認機台出金提供手動取消，AC-TXLOG-0281 改寫為正向。本案驗證「本頁不提供手動取消、待確認交易須至洗分出金核實頁處理」，斷言與
+      spec 直接相反，沒有可保留的步驟；本輪沒有 Draft 取代它，新情境由新增 TC（AC-TXLOG-0281／0282／0283）涵蓋。建議退役，退役由核准決定。提醒：前端尚未開發（BUG-TXLOG-001），實機目前仍符合本案觀察，但屬缺陷，不應保留為預期行為
+  summary:
+    unchanged: 0
+    changed: 2
+    added: 8
+    removed: 1
+history:
+- at: '2026-10-13T09:29:30Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
