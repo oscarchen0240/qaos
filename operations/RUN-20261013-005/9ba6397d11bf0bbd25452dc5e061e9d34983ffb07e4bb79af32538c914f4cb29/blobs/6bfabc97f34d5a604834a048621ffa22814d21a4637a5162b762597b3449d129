@@ -1,0 +1,114 @@
+product: ba-admin
+functional_area: TXLOG
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+test_level: ui_e2e
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+execution_cost: medium
+stability: unknown
+title: 交易紀錄查詢頁的可用操作僅有查看明細與管理員對待確認機台出金的手動取消，不存在任何核實操作
+description: TC-TXLOG-165 修訂：可用操作改為查看明細＋管理員對待確認機台出金的手動取消；『不存在核實操作』保留（AC-TXLOG-0301）
+requirement_ids:
+- REQ-TXLOG-030
+acceptance_criteria_ids:
+- AC-TXLOG-0301
+test_types:
+- negative
+design_techniques:
+- negative
+priority: low
+risk: low
+hotfix_eligible: true
+critical_path: false
+preconditions:
+- 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+- 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec 描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品
+  FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式 spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造
+  API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+- 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+- 【環境前提，需環境負責人確認】本站台有：一筆『待確認』的機台出金 X（可與其他案例的 X 同一筆，本案不做取消）；一筆核實狀態為『待核實』的機台洗分或機台出金 Z（自行從環境中選定，用來檢查核實狀態列上有無核實操作）。待確認出金的佈置方式不在
+  spec 範圍
+test_data:
+- name: 檢視的列
+  value: X（待確認的機台出金）、Z（核實狀態為待核實的洗分或出金）
+steps:
+- n: 1
+  action: 檢視 Z 所在列的列表操作欄，再點擊該列開啟右側明細面板，檢視面板上所有可操作的按鈕與連結，尋找任何『核實』相關操作（含同義的『確認收款』『核銷』等入口）
+  expected: 找不到任何核實操作（核實狀態欄僅供查看，唯讀）；可用的操作有查看明細。若 Z 列還出現『手動取消』（顯示但停用等），只記錄現象，不判定（不符合條件時的阻擋方式 spec 未定義）
+- n: 2
+  action: （UI，前端上線前記『受阻』）以管理員身分檢視 X 所在列的列表操作欄與右側明細面板（兩處都看，入口位置 spec 未定義）
+  expected: 可用操作為查看明細，以及『手動取消』（管理員對待確認機台出金）；仍沒有任何核實操作。前端上線前實機只看到『明細』是 BUG-TXLOG-001 的現況，本步驟記『受阻』並備註實際觀察
+expected_result: 交易紀錄查詢頁不存在任何核實操作（核實一律於帳務管理『洗分出金核實』執行）；本頁可用操作僅有查看明細，以及管理員對待確認機台出金的手動取消。（步驟 1『無核實操作』在前端未上線時即可判定；步驟 2 的手動取消入口需前端上線，之前記受阻。）
+expected_result_spec_reference:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  location: §操作（第 91 行）；§對既有章節的影響（第 109 行）
+  quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+decision_refs:
+- requirement_id: REQ-TXLOG-030
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §操作（第 91 行）
+- requirement_id: REQ-TXLOG-030
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §對既有章節的影響（第 109 行）
+source_refs:
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 91 行）
+  quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §對既有章節的影響（第 109 行）
+  quote: 並提供明細查看與手動取消操作（核實一律於帳務管理「洗分出金核實」執行，本頁的核實狀態欄位唯讀）
+assumptions: []
+source: change_workflow
+source_ref: 'affected: TC-TXLOG-165 v1（CI-SPEC-TXLOG-001-0.1-0.1，R000→R001）'
+testcase_id: TC-TXLOG-165
+version: 2
+supersedes: 1
+status: VALIDATED
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+created_at: '2026-10-13T07:57:31Z'
+updated_at: '2026-10-13T07:57:31Z'
+history:
+- at: '2026-10-13T07:57:31Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+  run_id: RUN-20261013-005
+requirement_model_revision:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571

@@ -1,0 +1,142 @@
+artifact_id: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T3
+iteration: 1
+created_by: agent-test-validator
+created_at: '2026-10-13T07:57:03Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+- entity_type: Artifact
+  id: ART-TDR-01M4T43E6MPRHK00CTGB10ZME5
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Artifact
+  id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+requires_approval: null
+dispatch_packet_sha256: 2331e56bae269ddf7669c0a03a5915c0c22cbe90df48ed1221c0133b0b974186
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4T43E6MVYG1V3TH0TFGA80Y
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-029
+    spec_reference: &id001
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: 上一輪 4 個 major 已解決。REQ-029 四案都補上：(a) 前提要求同一環境已用同一份 RD 範本成功執行過 AC-0282，本案只替換身分或目標，並附範本與實際請求供比對；(b) 憑證唯讀預檢；(c)
+      回應為格式錯誤、路由不存在、欄位錯誤或憑證無效時，記為無效／受阻；(d) 最後以管理員、同一範本做對照取消。對照的對象：兩張 AC-0291 案用 X 本身，在步驟 5 判定狀態與分數之後才做；AC-0292、0293 案用另備的待確認出金
+      W。expected_result 也明寫結論只在以上條件都成立時才有效。
+    explanation: 假通過途徑已消除：對照組證明同一份請求在合法條件下確實會造成取消，所以「狀態沒變」可以歸因到權限或狀態檢查，而不是請求本身無效。AC-0291 案用 X 本身做對照最強，同時證明 X 確實是可被取消的目標；對照放在斷言之後，不影響步驟
+      5 的判定。對照組走的是正向路徑（AC-0282），排除條件也只針對請求格式或憑證層，不涉及阻擋方式、錯誤碼或文案，所以不依賴 CLR-TXLOG-003（Q04 E5）。如果後端用同一種回應同時表示「格式錯誤」與「業務拒絕」，執行者分不出來時會記為無效，這是保守方向，只會造成受阻，不會假通過。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4T43E6MYYQHQEV571X8B8BD
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-TXLOG-029
+    spec_reference: *id001
+    evidence: 操作員案與站長案的步驟 2 寫「若該帳號無法進入『交易紀錄查詢』或看不到 X……改以 API 通道（該帳號的身分）進行步驟 3」，但新增的步驟 3 是「憑證預檢：以該帳號憑證對唯讀查詢（例如查詢 X 的交易紀錄）發出一次請求；失敗則記無效／受阻」，原本的嘗試取消已順延為步驟
+      4。另外，前提把「操作員／站長能否進入頁面、資料範圍」列為環境前提。
+    explanation: 有兩點：(1) 步驟 2 引用的步驟號碼沒有跟著更新。(2) 如果該角色本來就不能進入本頁或看不到 X（這正是步驟 2 預留的分支），以「查詢 X」做預檢會因權限不足（不是憑證無效）而失敗，整案會被記為受阻，API
+      通道的備案就走不通。這是保守方向，不會假通過，但可能讓操作員案在合理環境下永遠受阻。
+    recommended_change: 步驟 2 的「進行步驟 3」改為「進行步驟 3～4」。憑證預檢改用該身分確定有權限的唯讀請求（例如取得目前登入者資訊，或該角色可進入的任一頁的查詢），並明寫只有「未通過身分驗證」（例如 401 或
+      token 失效）才記無效；「已通過驗證但無權限」不算預檢失敗。
+  - testcase_id: TC-DRAFT-01M4T43E6M2R4Z6G6GBJST4Z0G
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-029
+    spec_reference: *id001
+    evidence: 不可逆消耗的待確認測試出金：AC-0282 案 1 筆（X）、AC-0291 站長案與操作員案各 1 筆（X，前提已註明不得共用）、AC-0292 與 AC-0293 案各 1 筆對照用的 W（都註明取消後不得再用），合計至少
+      5 筆。AC-0283 與 TC-165 修訂案的 X 註明可與其他案例共用；TC-148 修訂案需要另一筆超過 24 小時的待確認出金，且全程不得被取消。
+    explanation: 消耗關係已在各案標明，沒有案例在取消後被重用，不構成錯誤。只是 AC-0292、0293 兩案都把對照交易叫作「W」，如果環境負責人在同一輪只準備一筆 W，第二案就會受阻；而且 AC-0283／TC-165 可共用的
+      X 如果先被 AC-0282 或 AC-0291 的對照取消，這兩案也需要另一筆。
+    recommended_change: 不阻擋。建議在 TDR 或執行計畫中列出一輪回歸需要的待確認出金數量（至少 5 筆不可逆消耗，另加可共用的 1 筆，以及 TC-148 的 1 筆超過 24 小時者），並把兩案的 W 改名（例如
+      W2、W3）以免混用。
+  - testcase_id: TC-DRAFT-01M4T43E6KSMEBW054QGCWGYDP
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    evidence: 上一輪 advisory 2 已處理：AC-0282、0283 兩案都新增【判定記錄】，前端上線前以 API 步驟判定後端行為、UI 步驟記受阻，整案記為「後端通過、UI 待前端上線後重跑」，前端上線後須重跑 UI
+      步驟才算完整通過；expected_result 也同步註明。
+    explanation: 處理正確。AC-0282 案同時是 REQ-029 四案對照組的前置條件 (a)，判定記錄一致。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4T43E6KP010FJGSEFQJFJ2W
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    evidence: 修訂仍只限 TC-TXLOG-148 v1 與 TC-TXLOG-165 v1，兩案內容與上一輪相同；TC-TXLOG-164（CIR 判為 obsolete）沒有修訂，但目前仍是 ACTIVE。
+    explanation: TC-TXLOG-164 的斷言「本頁不提供手動取消」與新的 AC-0281 案相反，落地時要依 CIR 退役。
+    recommended_change: 不阻擋。請主 session 在核准落地時一併處理 TC-TXLOG-164 的退役。
+  coverage_summary:
+    requirements_total: 4
+    requirements_covered: 4
+    ac_total: 8
+    ac_covered: 8
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: true
+    no_entry_location_assumption: true
+    no_false_pass_on_blocked_frontend: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4T43E6KP010FJGSEFQJFJ2W
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6K5SEENWGM108VT4ZW
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6KV7ZFAADXNA51F2YA
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6KSMEBW054QGCWGYDP
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6KSD6N70XS3XKW7SHY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6MVYG1V3TH0TFGA80Y
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6MYYQHQEV571X8B8BD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6M2R4Z6G6GBJST4Z0G
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T43E6MVDXW9Q6BTNCWV4BV
+    verdict: ok
+history:
+- at: '2026-10-13T07:57:27Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
