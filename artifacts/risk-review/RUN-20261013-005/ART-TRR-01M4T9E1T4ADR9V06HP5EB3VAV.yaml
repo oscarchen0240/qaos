@@ -1,0 +1,80 @@
+artifact_id: ART-TRR-01M4T9E1T4ADR9V06HP5EB3VAV
+artifact_type: TCRiskReview
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T3RR
+iteration: 1
+created_by: agent-tc-risk-reviewer
+created_at: '2026-10-13T09:27:55Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+- entity_type: Artifact
+  id: ART-TVR-01M4T9989QMSN73M8D9A0G4CRW
+- entity_type: Artifact
+  id: ART-TRR-01M4T4DRGGHMDQCTEG0DX4A7BV
+requires_approval: null
+dispatch_packet_sha256: 1d7b081083b3389cd1eb6b8ac29e18f372548a55c80a5f4fad1ec143b006517c
+payload:
+  reviewed:
+    testcase_draft_artifact_id: ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+    validation_report_artifact_id: ART-TVR-01M4T9989QMSN73M8D9A0G4CRW
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    testcase_draft_ids:
+    - TC-DRAFT-01M4T96S52Z4DZPWG9PFP8815V
+    - TC-DRAFT-01M4T96S52K168CQ3VTEHAN012
+    - TC-DRAFT-01M4T96S52WBZKXS6YETBMC879
+    - TC-DRAFT-01M4T96S53HXNS1ZX6PVKH42YR
+    - TC-DRAFT-01M4T96S53JEHHF5AK194KCCR2
+    - TC-DRAFT-01M4T96S53J8QG5A12M90Z1R12
+    - TC-DRAFT-01M4T96S5300Q06JB6HEFPW2QT
+    - TC-DRAFT-01M4T96S53ZQDQY3MTXF66QWPJ
+    - TC-DRAFT-01M4T96S536VXC9V6F4K30SQFV
+    - TC-DRAFT-01M4T96S534CZ6ZW37GG132R65
+    active_testcases_consulted:
+    - TC-TXLOG-148
+    - TC-TXLOG-164
+    - TC-TXLOG-165
+  dimension_results:
+  - dimension: boundary
+    status: covered
+    rationale: 我依標題把 iter0 與 iter1 的 TC 逐欄對齊比較：原有 9 張的斷言都沒有改變。…815V（修訂 TC-TXLOG-148）只多了一段備料前提；出金超過 24 小時不逾時、入金 24 小時內測試，以及已完成、已取消出金這兩種狀態邊界，都和上一輪相同。…SQFV、…R65
+      的對照出金分別改名為 W1、W2，屬文字修正，沒有削弱。沒有新的邊界缺口。
+  - dimension: exception_flow
+    status: covered
+    rationale: 【RF-01 已完整補上】新增 TC-DRAFT-…R12。取消完成後，由 X 所屬機台 M_X 送出 X 自己的完成回報，連送 3 次：優先用模擬器送出原本那筆未完成的回報，否則用 RD 工具，以 M_X 的身分、憑證和
+      R_X 的原始欄位送出，並先逐欄核對，確認請求確實對應 M_X 與 X。斷言 X 仍為『已取消』、分數 S2＝S1（S1＝S0），而且已完成出金筆數、待核實筆數、T_X 是否出現在待核實結果，都和取消後的基準相同。這已涵蓋上一輪擔心的『從已取消翻成已完成、扣分、產生可兌現收據』。設計上另外處理了三件事：(1)
+      用另一台機台上的 V 驗證重送工具有效，避免同一台機台的新出金依第 51 行取代 X；(2) 斷言只比較重送前後的變化，不依賴已取消出金的核實狀態（spec 未定義）；(3)【範圍】明寫不斷言、也不製造『同時到達』，留給 CLR-CASHFLOW-012
+      第 (3) 點。RD 工具路徑可能被重放保護擋下、沒有對應 AC 只追溯到 REQ-028 Q02，這兩點 Validator 已列，不重複。收據已印出才取消、取消 API 部分失敗等觀察已由 CLR-CASHFLOW-012 涵蓋或已於上一輪註記，不再列。
+  - dimension: concurrency
+    status: not_applicable
+    rationale: 和上一輪相同：本批沒有並行案例，spec 也沒有定義手動取消的並行結果。取消與 end-cashout 同時到達、重複送出取消，都已由 CLR-CASHFLOW-012 涵蓋。上一輪附記的 medium 觀察（取消與櫃檯人工出金、或與新出金同時發生）維持原狀，不再展開。…R12
+      也明寫不製造同時到達，沒有越界斷言。
+  - dimension: duplicate_submission
+    status: covered
+    rationale: 對已取消的出金再取消，仍由 …SQFV（AC-0292，X2）以 API 實送並附對照組涵蓋，內容沒有變。取消後遲到的機台完成回報重送 3 次，由新的 …R12 涵蓋（見 exception_flow）。連點或同時送出取消屬
+      CLR-CASHFLOW-012 第 (4) 點，不重複列。
+  - dimension: permission
+    status: covered
+    rationale: 站長（…2QT）與操作員（…QWPJ）兩張只改了兩處：憑證預檢改用該身分確定有權限的唯讀請求，並明訂只有未通過身分驗證（例如 401、token 失效）才算無效；步驟 2 的參照改為『步驟 3～4』。修改後，原本可能永遠受阻的情況可以執行。『格式錯誤或憑證無效就記無效』的防假通過條件，以及管理員對照組都還在，所以沒有削弱，反而讓案例可以執行。跨站台屬
+      CLR-CASHFLOW-012 第 (5) 點，阻擋方式屬 CLR-TXLOG-003；TC-TXLOG-164 落地時要退役，Validator 已提醒。都不重複列。沒有新的權限缺口。
+  findings: []
+  summary: RUN-20261013-005 T3RR 第二輪（iteration 1）只確認上一輪（ART-TRR-01M4T4DRGGHMDQCTEG0DX4A7BV）的 RF-01 有沒有補齊，以及原有 9 張有沒有被削弱。RF-01
+    已完整補上：新增 TC-DRAFT-…R12，取消完成後由 X 所屬機台送出 X 自己的完成回報 3 次，並逐欄核對；斷言 X 維持已取消、分數不變、已完成與待核實筆數不變。它用另一台機台上的 V 驗證重送工具，不斷言同時到達，也不依賴未定義的核實狀態。原有
+    9 張依標題對齊、逐欄比較後，只有文字或可執行性修正：備料數量前提、W 改名為 W1、W2、憑證預檢改用確定有權限的請求並明訂只有未通過身分驗證才算無效、步驟參照更正。斷言都沒有削弱。新建議 0 條（high 0、medium 0、low
+    0）。CLR-TXLOG-003、CLR-CASHFLOW-012 與 Validator 的 minor 都不重複列。本審查只提建議，不修改 TC、不判定 PASS／FAIL。
+history:
+- at: '2026-10-13T09:28:17Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
