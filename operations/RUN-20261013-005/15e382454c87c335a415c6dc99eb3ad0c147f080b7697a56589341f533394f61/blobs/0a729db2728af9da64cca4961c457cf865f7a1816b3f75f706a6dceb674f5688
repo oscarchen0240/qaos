@@ -1,0 +1,982 @@
+artifact_id: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+artifact_type: TestCaseDraft
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T2
+iteration: 1
+created_by: agent-test-designer
+created_at: '2026-10-13T07:54:44Z'
+status: VALID
+source:
+  type: ChangeImpactReport
+  ids:
+  - ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+references:
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Requirement
+  id: REQ-TXLOG-017
+- entity_type: Requirement
+  id: REQ-TXLOG-028
+- entity_type: Requirement
+  id: REQ-TXLOG-029
+- entity_type: Requirement
+  id: REQ-TXLOG-030
+- entity_type: TestCase
+  id: TC-TXLOG-148
+- entity_type: TestCase
+  id: TC-TXLOG-165
+requires_approval: null
+dispatch_packet_sha256: 266f3134ab3fe82d9d4c2cedd9744aacd065b8478c23e386317dfbbf3d00d135
+payload:
+  mode: change
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  change_impact_id: CI-SPEC-TXLOG-001-0.1-0.1
+  testcases:
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    draft_id: TC-DRAFT-01M4T43E6KP010FJGSEFQJFJ2W
+    supersedes_testcase:
+      testcase_id: TC-TXLOG-148
+      version: 1
+    title: 出金待確認超過 24 小時不會自動逾時，持續保留待確認，僅能靠補完回報、新出金取代、櫃檯人工出金連動取消或管理員手動取消收斂
+    description: TC-TXLOG-148 修訂：收斂途徑改為補完回報／新出金取代／櫃檯人工出金連動取消／管理員手動取消，移除『轉介洗分出金核實頁』（AC-TXLOG-0171）
+    requirement_ids:
+    - REQ-TXLOG-017
+    acceptance_criteria_ids:
+    - AC-TXLOG-0171
+    test_types:
+    - functional
+    - boundary
+    design_techniques:
+    - state_transition
+    - boundary_value
+    priority: high
+    risk: high
+    hotfix_eligible: true
+    critical_path: true
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X，其交易時間（UTC+0）距今已超過 24 小時，且機台從未補送完成回報（自行從環境中選定；若環境沒有，需先在機台端造出待確認出金並等待超過
+      24 小時，如何造出不在 spec 範圍）。spec 提到現場在機台 Operator 選單執行過 Reset 後，機台不再回報該筆交易，這是待確認長期留著的一種情境，但不代表可作為佈置手法。
+    - 本案只觀察、不對 X 做任何取消或核實操作（手動取消由 REQ-TXLOG-028 的案例驗證），測試期間不要讓 X 被新的出金取代或人工出金連動取消
+    test_data:
+    - name: X 的交易時間距今
+      value: 超過 24 小時（越過入金逾時時限後的一側；選環境既有紀錄，例如 25 小時以上）
+    - name: X 的交易狀態（預期全程）
+      value: 待確認
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，找到符合前提的 X，記下交易編號、交易時間、交易狀態與完成時間
+      expected: X 的交易狀態為『待確認』（轉換前狀態），完成時間顯示『—』，交易時間距今超過 24 小時
+    - n: 2
+      action: 檢視 X 目前的交易狀態；另把『交易狀態』篩選改為『已逾時』、『交易類型』維持機台出金再搜尋，確認 X 的交易編號不在結果中
+      expected: X 仍是『待確認』，不是『已逾時』（出金的 待確認→已逾時 不會發生）；『已逾時』的結果中沒有 X
+    - n: 3
+      action: 隔一段時間後（時間長度由執行者自行決定，建議至少 1 小時）重新用交易編號查詢 X
+      expected: X 仍保留為『待確認』，沒有自動轉為『已逾時』
+    expected_result: 機台出金交易處於待確認、機台從未補送完成回報，超過 24 小時後不會自動轉為『已逾時』，持續保留為『待確認』，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由管理員於本頁手動取消（REQ-TXLOG-028）為止。（本案實際驗證的是『超過
+      24 小時仍持續待確認、不自動逾時』；四種收斂途徑只作為 spec 列出的允許結束條件，不在本案逐一觸發；已不再斷言『轉介至洗分出金核實頁』。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）；§相關業務規則（第 122 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    decision_refs:
+    - requirement_id: REQ-TXLOG-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §交易狀態（第 57 行）
+    - requirement_id: REQ-TXLOG-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §相關業務規則（交易保留期限）（第 122 行）
+    - requirement_id: REQ-TXLOG-017
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §交易狀態（第 52 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §交易狀態（第 57 行）
+      quote: 入金與出金的收斂方式不同：入金超過 24 小時自動轉「已逾時」；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §相關業務規則（交易保留期限）（第 122 行）
+      quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §交易狀態（第 52 行）
+      quote: 僅入金會出現：超過 24 小時仍未收到機台回報而自動關閉；分數未異動。出金不設逾時
+    assumptions: []
+    source: change_workflow
+    source_ref: 'affected: TC-TXLOG-148 v1（CI-SPEC-TXLOG-001-0.1-0.1，R000→R001）'
+    design_rationale: 修訂範圍嚴格依 CIR：只改收斂途徑，移除 v1 的『轉介洗分出金核實頁』（CLR-TXLOG-001 加入、被 CLR-TXLOG-002 推翻），改為 spec 第 57、122 行的『機台補完回報／新出金取代／櫃檯人工出金連動取消／管理員手動取消』；『不會自動逾時、持續待確認』的核心斷言保留。REQ-TXLOG-017
+      在 RM 定義了 states（待確認→已逾時：入金 allowed、出金 not allowed；待確認→已取消 allowed），本案驗證其中『出金 待確認→已逾時 不被允許』這一條，所以標 state_transition；spec
+      明定 24 小時為入金逾時時限，本案取越過邊界之後的一側（超過 24 小時），故同時標 boundary_value，但只驗證單側（無法在環境中精確構造剛好 24 小時），入金側（24 小時內外）屬 REQ-TXLOG-015 的既有案例，不在本案。expected
+      只斷言 AC then 已驗證的部分，不把四種收斂途徑逐一觸發的結果寫成已驗證。環境假設：環境中存在超過 24 小時的待確認出金為我的推測，已在 precondition 標為需環境負責人確認，並未假設佈置方式。
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    draft_id: TC-DRAFT-01M4T43E6K5SEENWGM108VT4ZW
+    supersedes_testcase:
+      testcase_id: TC-TXLOG-165
+      version: 1
+    title: 交易紀錄查詢頁的可用操作僅有查看明細與管理員對待確認機台出金的手動取消，不存在任何核實操作
+    description: TC-TXLOG-165 修訂：可用操作改為查看明細＋管理員對待確認機台出金的手動取消；『不存在核實操作』保留（AC-TXLOG-0301）
+    requirement_ids:
+    - REQ-TXLOG-030
+    acceptance_criteria_ids:
+    - AC-TXLOG-0301
+    test_types:
+    - negative
+    design_techniques:
+    - negative
+    priority: low
+    risk: low
+    hotfix_eligible: true
+    critical_path: false
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，需環境負責人確認】本站台有：一筆『待確認』的機台出金 X（可與其他案例的 X 同一筆，本案不做取消）；一筆核實狀態為『待核實』的機台洗分或機台出金 Z（自行從環境中選定，用來檢查核實狀態列上有無核實操作）。待確認出金的佈置方式不在
+      spec 範圍
+    test_data:
+    - name: 檢視的列
+      value: X（待確認的機台出金）、Z（核實狀態為待核實的洗分或出金）
+    steps:
+    - n: 1
+      action: 檢視 Z 所在列的列表操作欄，再點擊該列開啟右側明細面板，檢視面板上所有可操作的按鈕與連結，尋找任何『核實』相關操作（含同義的『確認收款』『核銷』等入口）
+      expected: 找不到任何核實操作（核實狀態欄僅供查看，唯讀）；可用的操作有查看明細。若 Z 列還出現『手動取消』（顯示但停用等），只記錄現象，不判定（不符合條件時的阻擋方式 spec 未定義）
+    - n: 2
+      action: （UI，前端上線前記『受阻』）以管理員身分檢視 X 所在列的列表操作欄與右側明細面板（兩處都看，入口位置 spec 未定義）
+      expected: 可用操作為查看明細，以及『手動取消』（管理員對待確認機台出金）；仍沒有任何核實操作。前端上線前實機只看到『明細』是 BUG-TXLOG-001 的現況，本步驟記『受阻』並備註實際觀察
+    expected_result: 交易紀錄查詢頁不存在任何核實操作（核實一律於帳務管理『洗分出金核實』執行）；本頁可用操作僅有查看明細，以及管理員對待確認機台出金的手動取消。（步驟 1『無核實操作』在前端未上線時即可判定；步驟 2 的手動取消入口需前端上線，之前記受阻。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 91 行）；§對既有章節的影響（第 109 行）
+      quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+    decision_refs:
+    - requirement_id: REQ-TXLOG-030
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 91 行）
+    - requirement_id: REQ-TXLOG-030
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §對既有章節的影響（第 109 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 91 行）
+      quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §對既有章節的影響（第 109 行）
+      quote: 並提供明細查看與手動取消操作（核實一律於帳務管理「洗分出金核實」執行，本頁的核實狀態欄位唯讀）
+    assumptions: []
+    source: change_workflow
+    source_ref: 'affected: TC-TXLOG-165 v1（CI-SPEC-TXLOG-001-0.1-0.1，R000→R001）'
+    design_rationale: 修訂範圍依 CIR：移除 v1 的『不存在手動取消』與『待確認交易人工處理一律於洗分出金核實頁』兩個已被 CLR-TXLOG-002 推翻的斷言，改為 AC-0301 的『查看明細＋管理員對待確認機台出金的手動取消』；『本頁不存在核實操作』保留。技術仍標
+      negative：核心斷言是負面事實（沒有核實操作）；對照基準是 Z（待核實列）與 X 兩類列的操作欄與明細面板，兩處都看。範圍收窄（避免過度外推）：我不斷言『手動取消只出現在待確認機台出金列』——那屬 REQ-TXLOG-029
+      與阻擋方式 Q04（尚未決定），所以 Z 列若出現手動取消只記錄；也不斷言入口在哪裡（Q01 detail_gaps）。步驟 2 依賴前端，前端未上線時整步記受阻，步驟 1 與核實操作不存在的斷言不受影響，可獨立判定。依 CLR-TXLOG-002
+      的實機描述，目前實機只有『明細』，與步驟 2 的 spec 預期不符，屬 BUG-TXLOG-001，不寫成預期結果。
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: &id001 []
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6KV7ZFAADXNA51F2YA
+    title: 管理員檢視待確認的機台出金：提供『手動取消』操作
+    description: 驗證管理員對待確認機台出金可見手動取消操作（AC-TXLOG-0281）；入口位置 spec 未定義，不假設
+    requirement_ids:
+    - REQ-TXLOG-028
+    acceptance_criteria_ids:
+    - AC-TXLOG-0281
+    test_types:
+    - functional
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+      Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+    test_data:
+    - name: 登入角色
+      value: 管理員
+    - name: 目標交易
+      value: 交易類型＝機台出金、交易狀態＝待確認的 X
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，找到 X
+      expected: 列表出現 X，交易狀態『待確認』
+    - n: 2
+      action: （UI，前端上線前記『受阻』）檢視 X 所在列的列表操作欄；再點擊該列開啟右側明細面板，檢視面板上的操作（入口位置 spec 未定義，兩處都看，記下實際出現在哪裡）
+      expected: X 提供『手動取消』操作（出現在哪一處不作預期，只記錄）。前端上線前實機看不到此操作（只有『明細』）屬 BUG-TXLOG-001，本步驟記『受阻』並備註實際觀察，不當作預期結果
+    expected_result: 以管理員身分檢視交易狀態為『待確認』的機台出金時，該筆提供『手動取消』操作（入口位置 spec 未定義，不作預期）。
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    decision_refs:
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: clarification
+      clarification_id: CLR-TXLOG-002
+      answer_rev: 0
+      answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+      quote: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+        24 小時逾時轉「已逾時」收斂）
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    source_ref: 'new_required: REQ-TXLOG-028 AC-TXLOG-0281（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0281 的 then 只要求『提供手動取消操作』，括號明說入口位置 spec 未定義（Q01 detail_gaps），所以 expected 不寫位置、步驟要求兩處都看並記錄。依據：第 89
+      行『僅 Admin 可對待確認狀態的交易執行…』，並以 CLR-TXLOG-002（RD 確認：僅管理員、僅待確認的機台出金）為決策點 Q01 的裁決來源；兩者在 RM 都是 E1 已定。標 requirement_based：單一情境（管理員＋待確認出金），沒有多條件矩陣。本案不測其他角色與狀態（REQ-TXLOG-029
+      的案例負責），也不測取消結果（AC-0282）。介面邊界：這是後台交易紀錄查詢頁的操作，前端未開發，目前唯一通道是 UI 而 UI 不存在，因此整案在前端上線前記受阻；API 無法驗證『操作被提供』，所以沒有 API 步驟，不編造。『待確認出金
+      X』的佈置方式 spec 未定義，是需環境負責人提供的環境前提，不是 spec 明文。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6KSMEBW054QGCWGYDP
+    title: 管理員對待確認的機台出金手動取消並完成二次確認：交易狀態由待確認轉為已取消，機台帳號分數不異動
+    description: 驗證手動取消的狀態轉換 待確認→已取消 與分數不異動（AC-TXLOG-0282）
+    requirement_ids:
+    - REQ-TXLOG-028
+    acceptance_criteria_ids:
+    - AC-TXLOG-0282
+    test_types:
+    - functional
+    design_techniques:
+    - state_transition
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定記錄】前端上線前以 API 步驟判定後端行為，UI 步驟記受阻；後端通過、UI 受阻時，整案記為『後端通過、UI 待前端上線後重跑』，前端上線後須重跑 UI 步驟才算完整通過
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+      Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+    - 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+    - 執行手動取消前，依 spec 警示先與現場確認實體狀況（紙鈔是否已進錢箱、收據或過渡期的結算結果畫面是否已出現）；本案使用測試機台，確認無實際金流後才執行
+    test_data:
+    - name: 登入角色
+      value: 管理員
+    - name: 轉換前狀態
+      value: 待確認
+    - name: 預期轉換後狀態
+      value: 已取消
+    - name: 預期分數變化
+      value: 0（取消前後相同）
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，選定 X，記下交易編號、機台帳號；依前提的來源讀取該機台帳號的分數 S0
+      expected: X 的交易狀態為『待確認』（轉換前狀態）；取得 S0
+    - n: 2
+      action: （UI，前端上線前記『受阻』）對 X 執行『手動取消』（入口位置 spec 未定義，列表操作欄與右側明細面板都找）；（API）以管理員身分對 X 發出手動取消，二次確認的表達方式依 RD 提供的 API 說明
+      expected: 系統要求二次確認（對話框文案與按鈕 spec 未定義，只記錄）；此時尚不執行下一步
+    - n: 3
+      action: 完成二次確認（UI：點確認；API：依 RD 說明送出確認）
+      expected: 請求成功完成（回應內容 spec 未定義，只記錄）
+    - n: 4
+      action: 回到交易紀錄查詢，以 X 的交易編號重新查詢；依同一來源再讀取該機台帳號的分數 S1
+      expected: X 的交易狀態為『已取消』（轉換：待確認→已取消，觸發＝管理員手動取消並完成二次確認）；S1 等於 S0，分數不異動
+    expected_result: 管理員對待確認的機台出金執行手動取消並完成二次確認後，該筆交易狀態標記為『已取消』，機台帳號的分數（餘額）不異動。（判定記錄：前端上線前後端通過、UI 受阻時，整案記『後端通過、UI 待前端上線後重跑』。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    decision_refs:
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: clarification
+      clarification_id: CLR-TXLOG-002
+      answer_rev: 0
+      answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+      quote: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+        24 小時逾時轉「已逾時」收斂）
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    source_ref: 'new_required: REQ-TXLOG-028 AC-TXLOG-0282（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: REQ-TXLOG-028 在 RM 定義了唯一的狀態轉換『待確認→已取消（觸發：管理員手動取消並完成二次確認，分數不異動）』，本案的 step 1 取得轉換前狀態、step 4 驗證轉換後狀態與分數，真的走完這條轉換，所以標
+      state_transition。依據：第 89 行與 CLR-TXLOG-002（Q01 已裁決、Q02 已定）；expected 只斷言 AC 的 then（已取消、分數不異動），不斷言取消後完成時間欄或實際金額欄如何顯示（RM
+      detail_gaps 指出 spec 未定義），也不斷言是否寫入操作紀錄（同為未定義）。分數『不異動』是負面事實，比對基準是取消前後用同一來源讀取、期間不做其他交易（precondition 已要求），來源本身 spec 未定義，標為需環境負責人確認。介面邊界：UI
+      前端未開發，所以 step 2 同時給 UI 與 API 通道；API 細節 spec 未定義，取不到就記受阻，不編造。若 API 通道可用，step 4 的查詢結果仍可用現有列表 UI 觀察，不受前端缺口影響。此案不可復原，使用測試資料並先確認現場實體狀況（spec
+      警示）。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6KSD6N70XS3XKW7SHY
+    title: 管理員點擊手動取消但未完成二次確認：系統先要求二次確認，該筆交易不會被標記為已取消
+    description: 驗證二次確認完成前不會執行取消（AC-TXLOG-0283）
+    requirement_ids:
+    - REQ-TXLOG-028
+    acceptance_criteria_ids:
+    - AC-TXLOG-0283
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定記錄】前端上線前以 API 步驟判定後端行為，UI 步驟記受阻；後端通過、UI 受阻時，整案記為『後端通過、UI 待前端上線後重跑』，前端上線後須重跑 UI 步驟才算完整通過
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+      Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+    - 本案刻意不完成二次確認，X 結束時仍應是待確認，可繼續供其他案例使用；二次確認對話框的文案與按鈕 spec 未定義，放棄確認的做法（關閉或取消該提示）以實際介面為準並記錄
+    test_data:
+    - name: 登入角色
+      value: 管理員
+    - name: 預期狀態（全程）
+      value: 待確認
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，選定 X，記下交易編號
+      expected: X 的交易狀態為『待確認』
+    - n: 2
+      action: （UI，前端上線前記『受阻』）對 X 點擊『手動取消』（入口位置 spec 未定義，列表操作欄與右側明細面板都找），先不要確認；（API）只執行請求手動取消的第一段而不送出確認，若 API 沒有可停留在『尚未確認』的流程，此
+        API 步驟記『受阻』，不要推測
+      expected: 系統先要求二次確認，沒有直接取消
+    - n: 3
+      action: 在二次確認提示仍開啟（尚未確認）時，另開一個瀏覽器分頁重新以 X 的交易編號查詢
+      expected: X 仍為『待確認』，未被標記為『已取消』
+    - n: 4
+      action: 放棄確認（關閉或取消該二次確認提示，不點確認），重新查詢 X
+      expected: X 仍為『待確認』，未被標記為『已取消』
+    expected_result: 管理員對待確認的機台出金點擊手動取消後，系統先要求二次確認；未完成二次確認前，該筆交易不會被標記為『已取消』（維持待確認）。（判定記錄：前端上線前後端通過、UI 受阻時，整案記『後端通過、UI 待前端上線後重跑』。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    decision_refs:
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    - requirement_id: REQ-TXLOG-028
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: clarification
+      clarification_id: CLR-TXLOG-002
+      answer_rev: 0
+      answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+      quote: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+        24 小時逾時轉「已逾時」收斂）
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    source_ref: 'new_required: REQ-TXLOG-028 AC-TXLOG-0283（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0283 的核心是負面事實：未完成二次確認前不會標記已取消。對照基準是同一筆 X 在三個時點（尚未點取消、二次確認提示開啟中、放棄確認後）的交易狀態都為待確認，所以 test_types 含 negative；它不是
+      spec 定義的拒絕路徑，技術標 requirement_based。這張同時是 REQ-TXLOG-028（high risk）的非 happy 覆蓋，來自 AC 明文，不是為了湊規則硬造。依據：第 89 行『二次確認後標記為已取消』（反面為未確認不標記）與
+      CLR-TXLOG-002。expected 不斷言對話框文案或按鈕名稱（spec 未定義）。介面邊界與通道限制同 AC-0282：UI 未開發；API 是否支援停留在尚未確認的狀態不明，取不到就記受阻，不編造。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6MVYG1V3TH0TFGA80Y
+    title: 以站長（非管理員）嘗試對待確認的機台出金手動取消：無法完成取消，交易維持待確認、分數不異動
+    description: 驗證非管理員（站長）無法完成手動取消（AC-TXLOG-0291）
+    requirement_ids:
+    - REQ-TXLOG-029
+    acceptance_criteria_ids:
+    - AC-TXLOG-0291
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定基準】前端未開發期間，任何角色、任何狀態在實機 UI 都看不到手動取消入口，因此『UI 看不到入口』不能作為本案通過的依據；本案的通過判定以『API 通道實際送出取消請求後，交易狀態與分數不變』為準。API 通道取不到時，本案記『受阻』，不用
+      UI 現象代替。不符合條件時系統如何阻擋（不顯示入口、顯示但停用、送出後後端拒絕及提示文案）spec 未定義（CLR-TXLOG-003 待回覆），只記錄實際看到的阻擋方式，不判定對錯，也不比較各情況是否一致。
+    - 【API 通道有效性對照（必要，用來排除『請求格式錯誤所以狀態沒變』的假通過）】(a) 同一環境、同一版本已用同一份 RD 請求範本成功執行過 AC-TXLOG-0282 的案例（管理員對待確認機台出金取消成功、交易狀態轉為已取消）；本案送出的請求只替換『身分』或『目標交易』，其餘路徑、方法、標頭、欄位、二次確認的表達方式與範本逐字相同，執行時附上範本與實際請求供比對。若環境尚無該成功執行紀錄，先執行
+      AC-0282 案例，否則本案記『受阻』。(b) 本案最後以管理員身分、同一份範本，對一筆待確認的測試出金取消成功，作為對照組。(c) 若取消請求的回應顯示請求格式錯誤、路由不存在、欄位缺漏或錯誤，或憑證無效／過期（未通過身分驗證，與『已通過驗證但無權限／不符條件』不同），本次執行記為『無效／受阻』，不判通過，也不得因為狀態與分數沒變就判通過。不符合條件時如何阻擋（不顯示入口、停用、後端拒絕及文案）仍未定義（CLR-TXLOG-003
+      待回覆），本對照只確認請求有效，阻擋方式與回應內容只記錄，不判定。
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+      Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+    - 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+    - 本案最後的對照步驟會由管理員取消 X（X 取消後不得再供其他案例使用）；因此 X 不要與其他案例共用
+    - 【環境前提，需環境負責人確認】另備一個既有的站長帳號（自行從環境中選定，不是管理員）；站長能否進入交易紀錄查詢頁以及頁面資料範圍，spec 與派發包均未定義，以實際環境為準並記錄
+    - 以管理員（spec 原文稱 Admin）登入後台作為觀察者，用來讀取 X 的狀態；站台切換選單切到 X 所屬的機台場館站台
+    test_data:
+    - name: 嘗試取消的角色
+      value: 站長
+    - name: 目標交易
+      value: 交易類型＝機台出金、交易狀態＝待確認的 X
+    steps:
+    - n: 1
+      action: 以管理員身分在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』，選定 X，記下交易編號、機台帳號；依前提的來源讀取分數 S0
+      expected: X 的交易狀態為『待確認』；取得 S0
+    - n: 2
+      action: 切換登入為上述站長帳號，進入『各式報表 > 交易紀錄查詢』，站台切換選單切到 X 所屬的機台場館站台，用 X 的交易編號查詢
+      expected: 取得該帳號對 X 的操作管道；若該帳號無法進入『交易紀錄查詢』或看不到 X，記錄實際現象，並改以 API 通道（該帳號的身分）進行步驟 3，不自行判定
+    - n: 3
+      action: 憑證預檢：以站長帳號的同一組憑證，對唯讀查詢（例如查詢 X 的交易紀錄）發出一次請求
+      expected: 唯讀查詢成功（證明該身分的憑證有效）；若失敗，本次執行記『無效／受阻』，不進入下一步
+    - n: 4
+      action: （UI）以站長帳號對 X 嘗試手動取消，記下看到的情況（沒有入口／入口停用／可點擊並被拒絕等）；（API，判定依據）使用 AC-TXLOG-0282 案例成功執行過的同一份 RD 範本，只把身分換成站長帳號、目標為
+        X，其餘逐字相同，對 X 發出手動取消請求
+      expected: 請求被受理並處理，但無法完成手動取消（阻擋方式與回應內容只記錄，不判定）。若回應是請求格式錯誤、路由不存在、欄位錯誤或憑證無效，本次執行記『無效／受阻』，不進入下一步判通過。UI 步驟在前端上線前記『受阻』且不作為通過依據
+    - n: 5
+      action: 以管理員身分重新以 X 的交易編號查詢，並依同一來源再讀取機台帳號分數 S1
+      expected: X 仍為『待確認』，S1 等於 S0，分數不異動
+    - n: 6
+      action: 對照組：以管理員身分，使用同一份 RD 範本（只換身分為管理員，目標為 X），對 X 送出手動取消並完成二次確認，再重新查詢 X
+      expected: 取消成功，X 轉為『已取消』，證明範本與通道有效、X 是可取消的目標（此為對照結果，不屬 AC-0291 的斷言）。若對照組失敗，步驟 4 的結果無效，本次執行記『無效／受阻』
+    expected_result: 以站長（非管理員）對交易狀態為『待確認』的機台出金嘗試手動取消，無法完成取消；該筆交易維持『待確認』，機台帳號分數不異動。（阻擋方式未定義，不作預期。本結論須在憑證預檢通過、取消請求不是格式錯誤／路由不存在／憑證無效，且步驟
+      6 管理員對照組取消成功時才成立，否則記無效／受阻。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    decision_refs:
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    source_ref: 'new_required: REQ-TXLOG-029 AC-TXLOG-0291（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0291 的 given 以『非管理員帳號（如一般站長）』為例。非管理員包含站長與操作員，兩種角色在系統裡是不同帳號、可能對頁面有不同的進入權限（操作員能否進入此頁 spec 未定義），所以分成兩張
+      TC 各測一種，結果才能分開判定；兩張 TC 設計方式相同，技術標籤一致（requirement_based）。斷言只取 AC 的 then：無法完成取消、狀態維持待確認、分數不異動。阻擋方式屬 REQ-TXLOG-029 決策點
+      Q04（E5，major，CLR-TXLOG-003 OPEN），本案的 decision_refs 刻意不引用 Q04，expected 也不寫任何阻擋機制，只依賴已定的 Q01（僅管理員）與 Q02（僅待確認）。依據：第 89
+      行『僅 Admin 可對待確認狀態的交易執行』；這是負面事實，比對基準是管理員觀察者在嘗試前後讀取同一筆 X 的狀態與同一來源的分數。判定基準的重點：前端未開發，UI 對所有人都沒有入口，如果以『看不到入口』判通過會是假通過，因此以
+      API 實際送出後的結果為準；API 細節 spec 未定義，取不到就記受阻，不編造。API 通道本身也可能假通過（請求格式、路徑、欄位或憑證錯誤時，狀態與分數同樣不變），所以加三道對照（依 Validator 回饋 iteration
+      1）：憑證預檢、與 AC-0282 成功案例同一份範本只換身分、最後以管理員對同一目標取消成功；格式／路由／憑證錯誤記無效而不是通過。對照只確認請求有效，不依賴也不判定阻擋方式（Q04、CLR-TXLOG-003）。環境假設（我的推測，非
+      spec 明文）：站長帳號的佈置、待確認出金的佈置、分數讀取來源，均已標為需環境負責人確認。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6MYYQHQEV571X8B8BD
+    title: 以操作員（非管理員）嘗試對待確認的機台出金手動取消：無法完成取消，交易維持待確認、分數不異動
+    description: 驗證非管理員（操作員）無法完成手動取消（AC-TXLOG-0291）
+    requirement_ids:
+    - REQ-TXLOG-029
+    acceptance_criteria_ids:
+    - AC-TXLOG-0291
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定基準】前端未開發期間，任何角色、任何狀態在實機 UI 都看不到手動取消入口，因此『UI 看不到入口』不能作為本案通過的依據；本案的通過判定以『API 通道實際送出取消請求後，交易狀態與分數不變』為準。API 通道取不到時，本案記『受阻』，不用
+      UI 現象代替。不符合條件時系統如何阻擋（不顯示入口、顯示但停用、送出後後端拒絕及提示文案）spec 未定義（CLR-TXLOG-003 待回覆），只記錄實際看到的阻擋方式，不判定對錯，也不比較各情況是否一致。
+    - 【API 通道有效性對照（必要，用來排除『請求格式錯誤所以狀態沒變』的假通過）】(a) 同一環境、同一版本已用同一份 RD 請求範本成功執行過 AC-TXLOG-0282 的案例（管理員對待確認機台出金取消成功、交易狀態轉為已取消）；本案送出的請求只替換『身分』或『目標交易』，其餘路徑、方法、標頭、欄位、二次確認的表達方式與範本逐字相同，執行時附上範本與實際請求供比對。若環境尚無該成功執行紀錄，先執行
+      AC-0282 案例，否則本案記『受阻』。(b) 本案最後以管理員身分、同一份範本，對一筆待確認的測試出金取消成功，作為對照組。(c) 若取消請求的回應顯示請求格式錯誤、路由不存在、欄位缺漏或錯誤，或憑證無效／過期（未通過身分驗證，與『已通過驗證但無權限／不符條件』不同），本次執行記為『無效／受阻』，不判通過，也不得因為狀態與分數沒變就判通過。不符合條件時如何阻擋（不顯示入口、停用、後端拒絕及文案）仍未定義（CLR-TXLOG-003
+      待回覆），本對照只確認請求有效，阻擋方式與回應內容只記錄，不判定。
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+      Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+    - 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+    - 本案最後的對照步驟會由管理員取消 X（X 取消後不得再供其他案例使用）；因此 X 不要與其他案例共用
+    - 【環境前提，需環境負責人確認】另備一個既有的操作員帳號（自行從環境中選定，不是管理員）；操作員能否進入交易紀錄查詢頁（含是否限自身場館）spec 與派發包均未定義，以實際環境為準並記錄；X 應屬於該操作員的自身場館，若不屬於則記錄後改用
+      API 通道
+    - 以管理員（spec 原文稱 Admin）登入後台作為觀察者，用來讀取 X 的狀態；站台切換選單切到 X 所屬的機台場館站台
+    test_data:
+    - name: 嘗試取消的角色
+      value: 操作員
+    - name: 目標交易
+      value: 交易類型＝機台出金、交易狀態＝待確認的 X
+    steps:
+    - n: 1
+      action: 以管理員身分在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』，選定 X，記下交易編號、機台帳號；依前提的來源讀取分數 S0
+      expected: X 的交易狀態為『待確認』；取得 S0
+    - n: 2
+      action: 切換登入為上述操作員帳號，進入『各式報表 > 交易紀錄查詢』，用 X 的交易編號查詢（若無法進入頁面或查不到 X，記錄實際現象）
+      expected: 取得該帳號對 X 的操作管道；若該帳號無法進入『交易紀錄查詢』或看不到 X，記錄實際現象，並改以 API 通道（該帳號的身分）進行步驟 3，不自行判定
+    - n: 3
+      action: 憑證預檢：以操作員帳號的同一組憑證，對唯讀查詢（例如查詢 X 的交易紀錄）發出一次請求
+      expected: 唯讀查詢成功（證明該身分的憑證有效）；若失敗，本次執行記『無效／受阻』，不進入下一步
+    - n: 4
+      action: （UI）以操作員帳號對 X 嘗試手動取消，記下看到的情況（沒有入口／入口停用／可點擊並被拒絕等）；（API，判定依據）使用 AC-TXLOG-0282 案例成功執行過的同一份 RD 範本，只把身分換成操作員帳號、目標為
+        X，其餘逐字相同，對 X 發出手動取消請求
+      expected: 請求被受理並處理，但無法完成手動取消（阻擋方式與回應內容只記錄，不判定）。若回應是請求格式錯誤、路由不存在、欄位錯誤或憑證無效，本次執行記『無效／受阻』，不進入下一步判通過。UI 步驟在前端上線前記『受阻』且不作為通過依據
+    - n: 5
+      action: 以管理員身分重新以 X 的交易編號查詢，並依同一來源再讀取機台帳號分數 S1
+      expected: X 仍為『待確認』，S1 等於 S0，分數不異動
+    - n: 6
+      action: 對照組：以管理員身分，使用同一份 RD 範本（只換身分為管理員，目標為 X），對 X 送出手動取消並完成二次確認，再重新查詢 X
+      expected: 取消成功，X 轉為『已取消』，證明範本與通道有效、X 是可取消的目標（此為對照結果，不屬 AC-0291 的斷言）。若對照組失敗，步驟 4 的結果無效，本次執行記『無效／受阻』
+    expected_result: 以操作員（非管理員）對交易狀態為『待確認』的機台出金嘗試手動取消，無法完成取消；該筆交易維持『待確認』，機台帳號分數不異動。（阻擋方式未定義，不作預期。本結論須在憑證預檢通過、取消請求不是格式錯誤／路由不存在／憑證無效，且步驟
+      6 管理員對照組取消成功時才成立，否則記無效／受阻。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    decision_refs:
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q01
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    source_ref: 'new_required: REQ-TXLOG-029 AC-TXLOG-0291（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0291 的 given 以『非管理員帳號（如一般站長）』為例。非管理員包含站長與操作員，兩種角色在系統裡是不同帳號、可能對頁面有不同的進入權限（操作員能否進入此頁 spec 未定義），所以分成兩張
+      TC 各測一種，結果才能分開判定；兩張 TC 設計方式相同，技術標籤一致（requirement_based）。斷言只取 AC 的 then：無法完成取消、狀態維持待確認、分數不異動。阻擋方式屬 REQ-TXLOG-029 決策點
+      Q04（E5，major，CLR-TXLOG-003 OPEN），本案的 decision_refs 刻意不引用 Q04，expected 也不寫任何阻擋機制，只依賴已定的 Q01（僅管理員）與 Q02（僅待確認）。依據：第 89
+      行『僅 Admin 可對待確認狀態的交易執行』；這是負面事實，比對基準是管理員觀察者在嘗試前後讀取同一筆 X 的狀態與同一來源的分數。判定基準的重點：前端未開發，UI 對所有人都沒有入口，如果以『看不到入口』判通過會是假通過，因此以
+      API 實際送出後的結果為準；API 細節 spec 未定義，取不到就記受阻，不編造。API 通道本身也可能假通過（請求格式、路徑、欄位或憑證錯誤時，狀態與分數同樣不變），所以加三道對照（依 Validator 回饋 iteration
+      1）：憑證預檢、與 AC-0282 成功案例同一份範本只換身分、最後以管理員對同一目標取消成功；格式／路由／憑證錯誤記無效而不是通過。對照只確認請求有效，不依賴也不判定阻擋方式（Q04、CLR-TXLOG-003）。環境假設（我的推測，非
+      spec 明文）：操作員帳號的佈置、待確認出金的佈置、分數讀取來源，均已標為需環境負責人確認。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6M2R4Z6G6GBJST4Z0G
+    title: 管理員嘗試對非待確認（已完成、已取消）的機台出金手動取消：無法完成取消，狀態與分數不變
+    description: 驗證手動取消僅限待確認狀態，已完成與已取消的機台出金不可取消（AC-TXLOG-0292）
+    requirement_ids:
+    - REQ-TXLOG-029
+    acceptance_criteria_ids:
+    - AC-TXLOG-0292
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定基準】前端未開發期間，任何角色、任何狀態在實機 UI 都看不到手動取消入口，因此『UI 看不到入口』不能作為本案通過的依據；本案的通過判定以『API 通道實際送出取消請求後，交易狀態與分數不變』為準。API 通道取不到時，本案記『受阻』，不用
+      UI 現象代替。不符合條件時系統如何阻擋（不顯示入口、顯示但停用、送出後後端拒絕及提示文案）spec 未定義（CLR-TXLOG-003 待回覆），只記錄實際看到的阻擋方式，不判定對錯，也不比較各情況是否一致。
+    - 【API 通道有效性對照（必要，用來排除『請求格式錯誤所以狀態沒變』的假通過）】(a) 同一環境、同一版本已用同一份 RD 請求範本成功執行過 AC-TXLOG-0282 的案例（管理員對待確認機台出金取消成功、交易狀態轉為已取消）；本案送出的請求只替換『身分』或『目標交易』，其餘路徑、方法、標頭、欄位、二次確認的表達方式與範本逐字相同，執行時附上範本與實際請求供比對。若環境尚無該成功執行紀錄，先執行
+      AC-0282 案例，否則本案記『受阻』。(b) 本案最後以管理員身分、同一份範本，對一筆待確認的測試出金取消成功，作為對照組。(c) 若取消請求的回應顯示請求格式錯誤、路由不存在、欄位缺漏或錯誤，或憑證無效／過期（未通過身分驗證，與『已通過驗證但無權限／不符條件』不同），本次執行記為『無效／受阻』，不判通過，也不得因為狀態與分數沒變就判通過。不符合條件時如何阻擋（不顯示入口、停用、後端拒絕及文案）仍未定義（CLR-TXLOG-003
+      待回覆），本對照只確認請求有效，阻擋方式與回應內容只記錄，不判定。
+    - 【環境前提，需環境負責人確認】另備一筆待確認的機台出金 W（測試機台帳號的測試資料，與目標交易不同筆），專供本案最後的對照步驟由管理員取消；取消不可復原，W 取消後不得再供其他案例使用
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+    - 【環境前提，需環境負責人確認】本站台有兩筆測試機台帳號的機台出金：一筆交易狀態為『已完成』（X1），一筆為『已取消』（X2）（自行從環境中選定；『已取消』是出金被新出金取代或櫃檯人工出金連動取消後的狀態，也可能是其他案例手動取消後的結果，佈置方式不在本案
+      spec 範圍）。兩筆都不可復原，僅用測試資料
+    test_data:
+    - name: 登入角色
+      value: 管理員
+    - name: X1 交易狀態
+      value: 已完成
+    - name: X2 交易狀態
+      value: 已取消
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台出金』並分別以『交易狀態＝已完成』『已取消』搜尋，選定 X1、X2，記下交易編號與機台帳號；依前提的來源讀取兩個機台帳號的分數 S1_0、S2_0（若兩筆屬同一機台帳號則讀一次）
+      expected: X1 為『已完成』、X2 為『已取消』；取得分數基準
+    - n: 2
+      action: 憑證預檢：以管理員的同一組憑證，對唯讀查詢（例如查詢 X1）發出一次請求
+      expected: 唯讀查詢成功（證明憑證有效）；失敗則本次執行記『無效／受阻』，不進入下一步
+    - n: 3
+      action: （UI，前端上線前記『受阻』且不作為通過依據）以管理員對 X1、X2 分別尋找並嘗試手動取消，記下看到的情況；（API，判定依據）使用 AC-TXLOG-0282 案例成功執行過的同一份 RD 範本，身分同為管理員，只把目標分別換成
+        X1、X2，其餘逐字相同，各發出一次手動取消請求
+      expected: 兩筆都被受理處理，但無法完成手動取消（阻擋方式與回應內容只記錄，不判定）。若回應是請求格式錯誤、路由不存在、欄位錯誤或憑證無效，本次執行記『無效／受阻』，不判通過
+    - n: 4
+      action: 重新以 X1、X2 的交易編號查詢，並依同一來源再讀取分數 S1_1、S2_1
+      expected: X1 仍為『已完成』、X2 仍為『已取消』；S1_1 等於 S1_0、S2_1 等於 S2_0
+    - n: 5
+      action: 對照組：以管理員身分、同一份 RD 範本（只把目標換成待確認的 W），對 W 送出手動取消並完成二次確認，再重新查詢 W
+      expected: 取消成功，W 轉為『已取消』，證明範本與通道有效（此為對照結果，不屬 AC-0292 的斷言）。若對照組失敗，步驟 3 的結果無效，本次執行記『無效／受阻』
+    expected_result: 管理員對交易狀態不是『待確認』的機台出金（已完成、已取消）嘗試手動取消，無法完成取消；該筆交易的狀態與機台帳號分數皆不變。（阻擋方式未定義，不作預期。本結論須在憑證預檢通過、取消請求不是格式錯誤／路由不存在／憑證無效，且步驟
+      5 對照組取消成功時才成立，否則記無效／受阻。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    decision_refs:
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q02
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §操作（第 89 行）
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    source_ref: 'new_required: REQ-TXLOG-029 AC-TXLOG-0292（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0292 以『如已完成、已取消』為例，所以我取這兩個明確的非待確認狀態各一筆（X1、X2）放在同一張 TC，不另猜其他狀態（如未成立）也被擋——AC 沒有列舉，Q02 只說『僅待確認』，我不外推範圍之外的結論。標
+      requirement_based：兩筆是 AC 例子的逐一驗證，不是矩陣或等價類推導。依賴 Q02（僅待確認，E1 已定）；不依賴 Q04，expected 不寫阻擋機制。負面事實的基準：取消嘗試前後同一筆交易的狀態與同一來源的分數。判定基準同
+      AC-0291：以 API 實際結果為準，UI 在前端未開發時看不到入口不構成通過。API 通道對照（依 Validator 回饋 iteration 1）：憑證預檢、與 AC-0282 同一份範本只換目標、最後對待確認的 W 取消成功；格式／路由／憑證錯誤記無效而非通過，不依賴也不判定阻擋方式（Q04）。環境假設：X1、X2
+      的佈置方式 spec 未定義；X2 可能來自其他案例手動取消的結果，但本案不依賴其他案例的執行順序，已標為環境前提。
+    critical_path: false
+  - product: ba-admin
+    functional_area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    test_level: ui_e2e
+    execution_mode: manual
+    automation_status: not_automated
+    ci_eligible: false
+    execution_cost: medium
+    stability: unknown
+    priority: high
+    risk: high
+    hotfix_eligible: false
+    assumptions: *id001
+    source: change_workflow
+    draft_id: TC-DRAFT-01M4T43E6MVDXW9Q6BTNCWV4BV
+    title: 管理員嘗試對待確認的機台入金手動取消：無法取消，該筆入金維持待確認
+    description: 驗證機台入金（含待確認入金）沒有手動取消（AC-TXLOG-0293）
+    requirement_ids:
+    - REQ-TXLOG-029
+    acceptance_criteria_ids:
+    - AC-TXLOG-0293
+    test_types:
+    - functional
+    - negative
+    design_techniques:
+    - requirement_based
+    preconditions:
+    - 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+    - 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec
+      描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品 FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式
+      spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造 API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+    - 【判定基準】前端未開發期間，任何角色、任何狀態在實機 UI 都看不到手動取消入口，因此『UI 看不到入口』不能作為本案通過的依據；本案的通過判定以『API 通道實際送出取消請求後，交易狀態與分數不變』為準。API 通道取不到時，本案記『受阻』，不用
+      UI 現象代替。不符合條件時系統如何阻擋（不顯示入口、顯示但停用、送出後後端拒絕及提示文案）spec 未定義（CLR-TXLOG-003 待回覆），只記錄實際看到的阻擋方式，不判定對錯，也不比較各情況是否一致。
+    - 【API 通道有效性對照（必要，用來排除『請求格式錯誤所以狀態沒變』的假通過）】(a) 同一環境、同一版本已用同一份 RD 請求範本成功執行過 AC-TXLOG-0282 的案例（管理員對待確認機台出金取消成功、交易狀態轉為已取消）；本案送出的請求只替換『身分』或『目標交易』，其餘路徑、方法、標頭、欄位、二次確認的表達方式與範本逐字相同，執行時附上範本與實際請求供比對。若環境尚無該成功執行紀錄，先執行
+      AC-0282 案例，否則本案記『受阻』。(b) 本案最後以管理員身分、同一份範本，對一筆待確認的測試出金取消成功，作為對照組。(c) 若取消請求的回應顯示請求格式錯誤、路由不存在、欄位缺漏或錯誤，或憑證無效／過期（未通過身分驗證，與『已通過驗證但無權限／不符條件』不同），本次執行記為『無效／受阻』，不判通過，也不得因為狀態與分數沒變就判通過。不符合條件時如何阻擋（不顯示入口、停用、後端拒絕及文案）仍未定義（CLR-TXLOG-003
+      待回覆），本對照只確認請求有效，阻擋方式與回應內容只記錄，不判定。
+    - 【環境前提，需環境負責人確認】另備一筆待確認的機台出金 W（測試機台帳號的測試資料，與目標交易不同筆），專供本案最後的對照步驟由管理員取消；取消不可復原，W 取消後不得再供其他案例使用
+    - 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+    - 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+    - 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台入金 Y（測試機台帳號；機台已受理入金、平台尚未收到完成回報），且其交易時間距今尚未滿 24 小時，測試須在滿 24 小時之前完成（滿 24
+      小時未回報會自動轉為『已逾時』，狀態會因逾時而改變，與本案無關）。待確認入金的佈置方式不在 spec 範圍
+    test_data:
+    - name: 登入角色
+      value: 管理員
+    - name: 目標交易
+      value: 交易類型＝機台入金、交易狀態＝待確認的 Y（交易時間距今未滿 24 小時）
+    steps:
+    - n: 1
+      action: 在交易紀錄查詢篩選『交易類型＝機台入金』『交易狀態＝待確認』並搜尋，選定 Y，記下交易編號、交易時間、機台帳號；依前提的來源讀取分數 S0
+      expected: Y 的交易狀態為『待確認』，交易時間距今未滿 24 小時；取得 S0
+    - n: 2
+      action: 憑證預檢：以管理員的同一組憑證，對唯讀查詢（例如查詢 Y）發出一次請求
+      expected: 唯讀查詢成功（證明憑證有效）；失敗則本次執行記『無效／受阻』，不進入下一步
+    - n: 3
+      action: （UI，前端上線前記『受阻』且不作為通過依據）以管理員尋找並嘗試對 Y 手動取消，記下看到的情況；（API，判定依據）使用 AC-TXLOG-0282 案例成功執行過的同一份 RD 範本，身分同為管理員，只把目標換成
+        Y，其餘逐字相同，發出手動取消請求
+      expected: 請求被受理處理，但無法完成手動取消（阻擋方式與回應內容只記錄，不判定）。若回應是請求格式錯誤、路由不存在、欄位錯誤或憑證無效，本次執行記『無效／受阻』，不判通過
+    - n: 4
+      action: （確認仍在 Y 交易時間後 24 小時內）重新以 Y 的交易編號查詢，並依同一來源再讀取分數 S1
+      expected: Y 仍為『待確認』，沒有變成『已取消』；S1 等於 S0
+    - n: 5
+      action: 對照組：以管理員身分、同一份 RD 範本（只把目標換成待確認的機台出金 W），對 W 送出手動取消並完成二次確認，再重新查詢 W
+      expected: 取消成功，W 轉為『已取消』，證明範本與通道有效（此為對照結果，不屬 AC-0293 的斷言）。若對照組失敗，步驟 3 的結果無效，本次執行記『無效／受阻』
+    expected_result: 管理員對交易狀態為『待確認』的機台入金嘗試手動取消，無法手動取消；該筆入金維持『待確認』（之後依 24 小時逾時轉『已逾時』或機台補完回報收斂）。（阻擋方式未定義，不作預期。本結論須在憑證預檢通過、取消請求不是格式錯誤／路由不存在／憑證無效，且步驟
+      5 對照組取消成功時才成立，否則記無效／受阻。）
+    expected_result_spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）；§相關業務規則（第 122 行）
+      quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+    decision_refs:
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §交易狀態（第 57 行）
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q03
+      basis_ref:
+        type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §相關業務規則（交易保留期限）（第 122 行）
+    - requirement_id: REQ-TXLOG-029
+      question_id: Q03
+      basis_ref:
+        type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+    source_refs:
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §交易狀態（第 57 行）
+      quote: 入金與出金的收斂方式不同：入金超過 24 小時自動轉「已逾時」；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §相關業務規則（交易保留期限）（第 122 行）
+      quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+    - type: clarification
+      clarification_id: CLR-TXLOG-002
+      answer_rev: 0
+      answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+      quote: 機台入金沒有手動取消（待確認入金依 24 小時逾時轉「已逾時」收斂）
+    source_ref: 'new_required: REQ-TXLOG-029 AC-TXLOG-0293（CI-SPEC-TXLOG-001-0.1-0.1）'
+    design_rationale: AC-0293 的依據是推論加澄清：spec 第 89 行『僅 Admin 可對待確認狀態的交易執行』沒有限定交易類型；第 57、122 行把『Admin 手動取消』只列在出金的收斂途徑，入金以 24
+      小時逾時收斂；CLR-TXLOG-002 明確寫『機台入金沒有手動取消』。RM 的決策點 Q03（minor，E1）也註記第 89 行未限定類型、CLR-TXLOG-002 的答案範圍是 REQ-TXLOG-028，所以我在 source_refs
+      同時列出第 57／122 行原文與 CLR-TXLOG-002 的原句，expected 在文字裡把『原文推論』與『澄清明示』分開，不宣稱第 89 行就明寫了入金不可取消。expected 只斷言 AC then：無法手動取消、維持待確認；『直到逾時或補完回報』是
+      AC 的補述，本案不等待 24 小時去驗證逾時（那屬 REQ-TXLOG-015 的既有案例），也不斷言阻擋機制（Q04）。負面事實比對基準：Y 取消嘗試前後的交易狀態與分數；Y 必須在 24 小時內，避免與逾時混淆（precondition
+      已要求）。判定基準同其他 REQ-TXLOG-029 案例：API 實際結果為準，UI 不構成通過依據。API 通道對照（依 Validator 回饋 iteration 1）：憑證預檢、與 AC-0282 同一份範本只換目標、最後對待確認出金
+      W 取消成功；格式／路由／憑證錯誤記無效而非通過，不依賴也不判定阻擋方式（Q04）。待確認入金的佈置方式為我的推測，需環境負責人確認。
+    critical_path: false
+history:
+- at: '2026-10-13T07:55:07Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
