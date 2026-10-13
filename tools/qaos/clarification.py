@@ -235,7 +235,8 @@ def answer(clr_id, answer_text, answered_by, resolution, by, resulting_spec_vers
     except (spec_ops.SpecError, sources.SourceError) as e:
         raise ClarificationError(f"{clr_id} 的 spec 版本無法建立 basis（{e}）；答案修訂必須記錄回答當時的依據，請先匯入或修正該 spec 版本")
     revs.append({"rev": len(revs), "answer": answer_text, "answered_by": answered_by, "answered_at": store.now(), "resolution": resolution, "answer_sources": srcs,
-                 "basis": b, "basis_hash": sources.basis_hash(b), "sha256": store.sha256_text(answer_text), "op_id": store.capturing().op_id})
+                 "basis": b, "basis_hash": sources.basis_hash(b), "sha256": store.sha256_text(answer_text),
+                 "resulting_spec_version": resulting_spec_version or None, "op_id": store.capturing().op_id})      # 這筆答案自己的落地版本（頂層值只在有帶時更新，會殘留；ADR-012）
     c["answer_revisions"] = revs
     c.update({"answer": answer_text, "answered_by": answered_by, "answered_at": store.now(), "resolution": resolution})
     if resulting_spec_version: c["resulting_spec_version"] = resulting_spec_version
