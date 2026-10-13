@@ -1,7 +1,7 @@
 run_id: RUN-20261013-005
 workflow_id: spec-change-impact
 workflow_version: 1.0.0
-status: RUNNING
+status: WAITING_HUMAN
 input:
   spec_id: SPEC-TXLOG-001
   from_version: '0.1'
@@ -11,7 +11,7 @@ input:
   initiated_by: oscarchen@blockaction.tech
 initiated_by: oscarchen@blockaction.tech
 created_at: '2026-10-13T07:31:15Z'
-updated_at: '2026-10-13T08:40:21Z'
+updated_at: '2026-10-13T08:42:49Z'
 tasks:
 - task_id: T0
   type: agent
@@ -111,9 +111,10 @@ tasks:
 - task_id: T2
   type: agent
   status: DONE
-  iteration: 2
+  iteration: 3
   input_artifact_ids:
   - ART-TVR-01M4T3Y4TVH9HANJT6R3X5TA21
+  - ART-TVR-01M4T6S0WVPDBJ2K738R5MSE25
   input_entity_refs: []
   output_artifact_ids:
   - ART-TCD-01M4T6NYW649HK8EQBMVEYRFX5
@@ -205,7 +206,7 @@ tasks:
     trigger: G-DESIGN PASS
 - task_id: T3
   type: agent
-  status: READY
+  status: DONE
   iteration: 2
   input_artifact_ids: []
   input_entity_refs:
@@ -236,7 +237,8 @@ tasks:
   - entity_type: TestCaseVersion
     id: TC-TXLOG-217
     version: 1
-  output_artifact_ids: []
+  output_artifact_ids:
+  - ART-TVR-01M4T6S0WVPDBJ2K738R5MSE25
   agent_id: agent-test-validator
   gate: G-TVAL
   history:
@@ -275,6 +277,16 @@ tasks:
     to_status: READY
     by: system
     trigger: advance
+  - at: '2026-10-13T08:42:46Z'
+    from_status: READY
+    to_status: RUNNING
+    by: system
+    trigger: first submit
+  - at: '2026-10-13T08:42:49Z'
+    from_status: RUNNING
+    to_status: DONE
+    by: system
+    trigger: validator FAIL (ART-TVR-01M4T6S0WVPDBJ2K738R5MSE25)
   dispatch_packets:
   - iteration: 0
     path: runs/RUN-20261013-005/dispatch/T3-iter0.yaml
@@ -288,7 +300,7 @@ tasks:
     path: runs/RUN-20261013-005/dispatch/T3-iter2.yaml
     sha256: d4115d501dc119b286fe83113128ccb891e4cd6b31bb8a427fc18193f7497c9f
     at: '2026-10-13T08:40:21Z'
-  started_at: '2026-10-13T07:57:27Z'
+  started_at: '2026-10-13T08:42:46Z'
   gate_results:
   - at: '2026-10-13T07:53:11Z'
     layer: structural
@@ -320,7 +332,23 @@ tasks:
     result: PASS
     details:
     - validator result = PASS
+  - at: '2026-10-13T08:42:46Z'
+    layer: structural
+    result: PASS
+    details:
+    - TestValidationReport ART-TVR-01M4T6S0WVPDBJ2K738R5MSE25 VALID
+  - at: '2026-10-13T08:42:49Z'
+    layer: structural
+    result: PASS
+    details:
+    - G-TVAL structural PASS
+  - at: '2026-10-13T08:42:49Z'
+    layer: semantic
+    result: FAIL
+    details:
+    - validator result = FAIL
   ended_at: '2026-10-13T07:57:31Z'
+  approval_id: APR-0212
 - task_id: T3RR
   type: agent
   agent_id: agent-tc-risk-reviewer
@@ -465,6 +493,12 @@ history:
   by: oscarchen@blockaction.tech
   trigger: APR-0211
   run_id: RUN-20261013-005
+- at: '2026-10-13T08:42:49Z'
+  from_status: RUNNING
+  to_status: WAITING_HUMAN
+  by: system
+  trigger: APR-0212
+  run_id: RUN-20261013-005
 from_requirement_model_revision:
   spec_id: SPEC-TXLOG-001
   spec_version: '0.1'
@@ -476,3 +510,4 @@ requirement_model_revision:
   spec_version: '0.1'
   revision: R001
   sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
+waiting_on_approval_id: APR-0212

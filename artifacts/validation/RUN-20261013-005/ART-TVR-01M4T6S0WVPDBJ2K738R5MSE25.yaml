@@ -1,0 +1,154 @@
+artifact_id: ART-TVR-01M4T6S0WVPDBJ2K738R5MSE25
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T3
+iteration: 2
+created_by: agent-test-validator
+created_at: '2026-10-13T08:42:17Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4T6NYW649HK8EQBMVEYRFX5
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4T6NYW649HK8EQBMVEYRFX5
+- entity_type: Artifact
+  id: ART-TDR-01M4T6NYW6G6WHC239PN94TY1A
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Artifact
+  id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+requires_approval: null
+dispatch_packet_sha256: d4115d501dc119b286fe83113128ccb891e4cd6b31bb8a427fc18193f7497c9f
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4T6NYW649HK8EQBMVEYRFX5
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+  issues:
+  - testcase_id: TC-DRAFT-01M4T6NYW6BWYF0W0Y69FZGRVD
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位／核實狀態（第 76 行）
+      quote: 洗分與出金顯示「待核實／已核實／已作廢」，其餘交易類型顯示「—」
+    evidence: 步驟 1 在手動取消之前記錄基準：「(b) 以『核實狀態＝待核實』『交易類型＝機台出金』篩選時，結果中是否含 T_X 及該機台帳號的筆數 P0」。步驟 3 執行手動取消，但沒有重新記錄這個基準。步驟 5 的 expected
+      卻斷言「『核實狀態＝待核實』的結果中沒有 T_X，該機台帳號的筆數 P2 等於 P0」。
+    explanation: P0 是在取消之前量的，P2 是在「取消＋遲到重送」之後量的，兩者的差同時混入了取消本身的影響。spec 沒有定義待確認或已取消的出金的核實狀態：第 76 行字面上是「出金顯示待核實／已核實／已作廢」，依此讀法，待確認的
+      X 與取消後的 X 都會顯示待核實，T_X 就會出現在結果中，與「沒有 T_X」直接牴觸；如果系統改為把已取消的出金顯示為不適用，P2 又會等於 P0－1，與「P2＝P0」不符。不論是哪一種，正確實作都可能被判 FAIL，而本案要驗證的「遲到回報沒有新增紀錄」反而沒被隔離出來。這是斷言建立在未定義事項上。
+    recommended_change: 在步驟 3 取消成功之後，重新記錄基準：T_X 是否在待核實結果中，以及該機台帳號的待核實筆數 P1（已完成出金數 C1 也可一併重記）。步驟 5 改為斷言「T_X 是否在待核實結果中，與取消後（步驟
+      3）相同；P2＝P1；C2＝C1」，只衡量遲到重送帶來的變化，不斷言已取消出金的核實狀態。
+  - testcase_id: TC-DRAFT-01M4T6NYW6BWYF0W0Y69FZGRVD
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 93 行）
+      quote: 取消後平台會告知機台這筆交易不存在，機台就會停止重試
+    evidence: 前提：X 與 V「屬於兩個不同的測試機台帳號」。步驟 4：「用步驟 2 驗證過的同一份 end-cashout 範本，只把交易編號換成 T_X，其餘逐字相同，對平台連續送出 3 次完成回報」；回應「只記錄、不判定」；只有格式錯誤、路由不存在或憑證無效才記無效。
+    explanation: V 的範本帶的是 V 那台機台的身分（機台帳號、機台憑證），以及 V 的金額等欄位。只把交易編號換成 T_X，送出的就不是 X 那台機台對 X 的真正完成回報，而是「V 的機台宣稱完成 X」。平台如果有任何一層核對交易與機台的對應（或金額），就會以「查無此交易」之類的訊息拒絕。這和
+      spec 第 93 行預期的「告知機台這筆交易不存在」外觀相同，X 也同樣維持已取消，於是本案會在根本沒驗到「已取消交易拒收遲到回報」的情況下判 PASS。V 的對照只證明工具能對 V 送出有效回報，不能證明改寫後的請求對 X 有效。依第
+      51 行，同一台機台新的出金請求會取代舊的待確認出金，所以 X、V 只能放在不同機台。這個限制本身正確，但正因如此，範本必須連同機台身分一起換成 X 的。
+    recommended_change: 步驟 4 改為「以 X 所屬機台的身分與憑證、X 的原始欄位（交易編號、金額等，依 RD 範本說明哪些欄位要換），送出 X 的完成回報」，執行時附上 V 與 X 兩份實際請求，逐欄對照只差在交易／機台識別與該筆的固有欄位。如果工具能讓
+      X 那台機台（模擬器）在取消後直接送出它原本那筆未完成的回報，優先採用。無法確認請求對應到 X 的機台時，本案記為受阻。回應內容仍然只記錄，不判定。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4T6NYW6BWYF0W0Y69FZGRVD
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 93 行）
+      quote: 取消後平台會告知機台這筆交易不存在，機台就會停止重試
+    evidence: 第 10 張的推論依據是第 93 行與第 89 行；acceptance_criteria_ids 留空，decision_refs 只引 REQ-028 Q02（E1）。【範圍】明寫只驗證「取消完成之後」才到達的回報，不斷言、也不製造「同時到達」（CLR-CASHFLOW-012）。另外，重送工具的對照出金
+      V 放在另一個機台帳號。
+    explanation: 推論有依據，不構成未定義假設：第 93 行規定取消後平台告知機台交易不存在、機台停止重試，也就是取消後再收到的完成回報不會讓該筆完成；第 89 行與第 51 行規定已取消的分數不異動。所以「仍為已取消、分數等於取消前、沒有多出已完成出金」都有依據（核實狀態那一項除外，見
+      issue）。步驟是循序的（取消成功後間隔數秒才重送），沒有誤斷言同時到達。V 放在另一個機台帳號，步驟 1、5 的分數與筆數也都只針對 X 的機台帳號，所以 V 完成後產生的已完成出金與待核實紀錄不會影響本案判定；V 也已列入消耗清單，不會被其他案例共用。只是本案沒有對應的
+      AC，追溯只到 REQ 層級。
+    recommended_change: 不阻擋。建議下次 RM 修訂時為「取消後遲到回報」補一條 AC（REQ-028），讓這張案例可以掛上 AC。
+  - testcase_id: TC-DRAFT-01M4T6NYW68QAZDRNX2SC04EX6
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: 上一輪 minor 都已處理：站長與操作員案的步驟 2 改為「進行步驟 3～4」；憑證預檢改用「該身分確定有權限的唯讀請求（例如取得目前登入者資訊）」，只有 401 或 token 失效才記無效，「已通過驗證但無權限」不算預檢失敗（操作員案
+      TC-DRAFT-01M4T6NYW6407WFT4QT0E9HY5A 同樣處理）；AC-0292、0293 案的對照交易改名為 W1、W2，並註明不混用；各案前提都加入一輪所需的測試資料清單（不可逆消耗 7 筆，另加可共用 1 筆、超過
+      24 小時 1 筆、待確認入金 1 筆、已完成與已取消出金各 1 筆）。
+    explanation: 處理正確。清單數量與各案的消耗情況相符。前一輪已確認的 REQ-029 對照組設計維持不變，仍不依賴 CLR-TXLOG-003。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4T6NYW5B6MDNB798D6ED4YG
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    evidence: 修訂仍只限 TC-TXLOG-148 v1 與 165 v1（148 只加了資料清單前提）；TC-TXLOG-164 沒有修訂，但目前仍是 ACTIVE。
+    explanation: TC-TXLOG-164 的斷言與新的 AC-0281 案相反，落地時要依 CIR 退役。
+    recommended_change: 不阻擋。請主 session 在核准落地時一併處理 TC-TXLOG-164 的退役。
+  coverage_summary:
+    requirements_total: 4
+    requirements_covered: 4
+    ac_total: 8
+    ac_covered: 8
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: true
+    no_entry_location_assumption: true
+    no_false_pass_on_blocked_frontend: false
+    no_simultaneous_arrival_assertion: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4T6NYW5B6MDNB798D6ED4YG
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW5QR3SE32YCA7FX2HF
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW5YVGKYCVGKEXKKMT1
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW66EM3T2Q3QV0J9VQY
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW6Q3MPNSCJMFP66TG9
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW6BWYF0W0Y69FZGRVD
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4T6NYW68QAZDRNX2SC04EX6
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW6407WFT4QT0E9HY5A
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW6Z49TXGW8RMG7S868
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T6NYW6J4NVTDSC114BPTR9
+    verdict: ok
+history:
+- at: '2026-10-13T08:42:46Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
