@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-021
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 餘額驗算式只含開分、進鈔、損益、洗分、收據五項（第 72 行）；人工入出金會改變機台分數，若不計入任何一欄，發生人工交易那天驗算式就不成立。（來源：2026-10-12／13 T3RR 風險抽查 DAILYREPORT RF-08；問題單 C 主題 C9）

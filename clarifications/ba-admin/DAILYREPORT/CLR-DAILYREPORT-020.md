@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-001
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 洗分出金核實的 TC 曾假設操作員可查日結報表（洗分出金核實 RF-19）；日結報表的管轄範圍沿用正本角色與權限，本包未附。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-19；DAILYREPORT RF-16；問題單 C 主題 C8）

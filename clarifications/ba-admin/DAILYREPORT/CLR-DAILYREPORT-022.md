@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-014
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 第 68 行期末餘額涵蓋「當期無場次但仍有留存分數」的機台；報廢機台若持續計入，場館期末餘額永遠含一筆不會再動的分數。（來源：2026-10-12／13 T3RR 風險抽查 DAILYREPORT RF-09；問題單 C 主題 C9）

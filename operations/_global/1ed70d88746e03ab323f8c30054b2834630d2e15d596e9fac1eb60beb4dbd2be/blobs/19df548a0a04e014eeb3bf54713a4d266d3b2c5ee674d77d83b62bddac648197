@@ -1,0 +1,49 @@
+clarification_id: CLR-CASHFLOW-014
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+question: 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin
+  清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token 回
+  9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？
+context: 依 CLR-CASHFLOW-005 入金額度改於 end-cashin 判定；第 371 行只列 1-NO RECORD、6-BAD DATA/FORMAT 會讓機台停止重送，1-OVER LIMIT、9-OTHER ERROR
+  不在其中——若持續重送，額度釋放後可能入帳，造成退鈔又加分。第 175、343 行與第 337、338 行對出金期間投鈔的餘額說法矛盾。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-06/03/10/13；問題單
+  C 主題 C5）
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-10-12T16:51:35Z'
+status: ASKED
+history:
+- at: '2026-10-12T16:51:35Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-10-13T07:29:53Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked PM
+  note: sent_at 2026-10-13T07:29:00Z channel 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+requirement_id: REQ-CASHFLOW-007
+impact_if_unanswered: 機台金流 RF-06、03、10、13
+kind: spec_question
+topic: state_transition
+subject: cashflow.cashin.over_limit_aftermath
+level: major
+role_scope:
+- '*'
+params: {}
+coverage:
+  consulted:
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+issue_key: 39cd951d9ecd697f3f92b6dc73d25ad500b0634c7302d45ac4fb1f3e3ae4129c
+related_clarifications:
+- id: CLR-CASHFLOW-005
+  relation: possible_duplicate
+asked_to: PM
+asked_at: '2026-10-13T07:29:53Z'
+sent_at: '2026-10-13T07:29:00Z'
+channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）

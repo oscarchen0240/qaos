@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-028
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 第 56 行只定義「當日該場館／機台產生的注單筆數」。（注單跨場次切換點的歸屬見 BUG-DAILYREPORT-004，不在本題。）（來源：2026-10-12／13 T3RR 風險抽查 DAILYREPORT RF-06；問題單 C 主題 C9）

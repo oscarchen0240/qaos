@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-10-12
+- 更新：2026-10-13
 
 ## ba-admin / ACCOUNT
 
@@ -31,14 +31,14 @@
 | [CLR-CASHFLOW-006](ba-admin/CASHFLOW/CLR-CASHFLOW-006.md) | APPLIED | SPEC-CASHFLOW-001 v0.1 | 額度上限被拒絕（1-OVER LIMIT）是否比照餘額不足（1-NO CREDITS），不寫入交易紀錄？ | B：所有未成立原因一律不寫入交易紀錄，不只額度上限。交易紀錄查詢／機台交易紀錄僅會顯示已完成、待確認、已取消、已逾時四種 |
 | [CLR-CASHFLOW-007](ba-admin/CASHFLOW/CLR-CASHFLOW-007.md) | ANSWERED | SPEC-CASHFLOW-001 v0.1 | 機台餘額帶小數（例如 399.6）時出金，收據面額與櫃檯付現要怎麼處理？櫃檯只能付到個位數，小數部分（0.6）要捨去、四捨五入、進位，還是留在機台上？門檻為 0 的全額洗分是否比照？ | 依 SPEC-CASHFLOW-001 v0.2（2026-10-05 定案，第 127、168、336、360 行）： |
 | [CLR-CASHFLOW-008](ba-admin/CASHFLOW/CLR-CASHFLOW-008.md) | INCORPORATED | SPEC-CASHFLOW-001 v0.1 | 待確認出金（PENDING）是否可由管理員手動取消收斂？REQ-CASHFLOW-026 依 2026-09-15 CLR-CASHFLOW-004 移除了「Admin 手動取消」路徑，只剩新 req-cashout 取代與人工出金連動取消，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；入金 PENDING 是否同樣可手動取消？ | 可以。待確認出金（PENDING）的收斂路徑恢復為三條：被新的 req-cashout 取代、櫃檯人工出金連動取消、管理 |
-| [CLR-CASHFLOW-009](ba-admin/CASHFLOW/CLR-CASHFLOW-009.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 過渡期由前台呼叫 req-cashout／end-cashout 時使用何種認證：沿用機台憑證（JWT）或另立前台認證？ |  |
-| [CLR-CASHFLOW-010](ba-admin/CASHFLOW/CLR-CASHFLOW-010.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 過渡期 req-cashout 成功後 end-cashout 失敗時，前台的重送策略為何（重試次數、間隔、放棄條件）？ |  |
-| [CLR-CASHFLOW-011](ba-admin/CASHFLOW/CLR-CASHFLOW-011.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 入金的 order_id 由廠商於 req-cashin 帶入，還是由平台產生（暫定比照出金由平台產生）？ |  |
-| [CLR-CASHFLOW-012](ba-admin/CASHFLOW/CLR-CASHFLOW-012.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 管理員手動取消待確認出金的防護規則：(1) 收據已印出才取消時，管理員事前要核對什麼、收據怎麼處理、機台與平台分數怎麼對齊？(2) 對已完成出金、已取消出金、待確認入金等非「待確認出金」目標呼叫取消 API 時的回應？(3) 手動取消與機台遲到的 end-cashout 同時到達時以哪個為準、輸的一方回什麼？(4) 重複送出取消請求時阻擋提示還是冪等？(5) 管理員能否取消其他站台機台的待確認出金？ |  |
-| [CLR-CASHFLOW-013](ba-admin/CASHFLOW/CLR-CASHFLOW-013.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？ |  |
-| [CLR-CASHFLOW-014](ba-admin/CASHFLOW/CLR-CASHFLOW-014.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin 清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token 回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？ |  |
-| [CLR-CASHFLOW-015](ba-admin/CASHFLOW/CLR-CASHFLOW-015.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 機台請求中的機台帳號與 token 所屬機台不一致時（M1 的 token 對 M2、或對其他場館的 M3 發請求），是否一律拒絕？回覆碼為何？ |  |
-| [CLR-CASHFLOW-016](ba-admin/CASHFLOW/CLR-CASHFLOW-016.md) | OPEN | SPEC-CASHFLOW-001 v0.2 | 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？ |  |
+| [CLR-CASHFLOW-009](ba-admin/CASHFLOW/CLR-CASHFLOW-009.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 過渡期由前台呼叫 req-cashout／end-cashout 時使用何種認證：沿用機台憑證（JWT）或另立前台認證？ |  |
+| [CLR-CASHFLOW-010](ba-admin/CASHFLOW/CLR-CASHFLOW-010.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 過渡期 req-cashout 成功後 end-cashout 失敗時，前台的重送策略為何（重試次數、間隔、放棄條件）？ |  |
+| [CLR-CASHFLOW-011](ba-admin/CASHFLOW/CLR-CASHFLOW-011.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 入金的 order_id 由廠商於 req-cashin 帶入，還是由平台產生（暫定比照出金由平台產生）？ |  |
+| [CLR-CASHFLOW-012](ba-admin/CASHFLOW/CLR-CASHFLOW-012.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 管理員手動取消待確認出金的防護規則：(1) 收據已印出才取消時，管理員事前要核對什麼、收據怎麼處理、機台與平台分數怎麼對齊？(2) 對已完成出金、已取消出金、待確認入金等非「待確認出金」目標呼叫取消 API 時的回應？(3) 手動取消與機台遲到的 end-cashout 同時到達時以哪個為準、輸的一方回什麼？(4) 重複送出取消請求時阻擋提示還是冪等？(5) 管理員能否取消其他站台機台的待確認出金？ |  |
+| [CLR-CASHFLOW-013](ba-admin/CASHFLOW/CLR-CASHFLOW-013.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 金額小數精度與進位規則：餘額為 399.65、399.655 等兩位以上小數時，核可金額、收據面額、交易紀錄、日結報表各保留幾位、四捨五入或截斷？整數面額是否顯示 .00？throshold 能否帶小數（例 0.5）？ |  |
+| [CLR-CASHFLOW-014](ba-admin/CASHFLOW/CLR-CASHFLOW-014.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin 清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token 回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？ |  |
+| [CLR-CASHFLOW-015](ba-admin/CASHFLOW/CLR-CASHFLOW-015.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 機台請求中的機台帳號與 token 所屬機台不一致時（M1 的 token 對 M2、或對其他場館的 M3 發請求），是否一律拒絕？回覆碼為何？ |  |
+| [CLR-CASHFLOW-016](ba-admin/CASHFLOW/CLR-CASHFLOW-016.md) | ASKED | SPEC-CASHFLOW-001 v0.2 | 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？ |  |
 
 ## ba-admin / CASHOUT
 
@@ -46,12 +46,12 @@
 |---|---|---|---|---|
 | [CLR-CASHOUT-001](ba-admin/CASHOUT/CLR-CASHOUT-001.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | TC-DRAFT-01M2R6NEJ7BJH8707E9B1MM8SH / ...VDDAW6 / ...YDRNZ（AC-CASHOUT-0251/0252/0291）的assumption標註『操作員角色的權限範圍(含是否限定單一場館)定義於開發包⑥PLATFORMRULE，該包尚未完成Phase 3測試設計』，此權限規則本身（操作員無權切換場館）是否為過去已規劃定案的既有設計，而非待PLATFORMRULE補完才會定義的規則？ | 操作員無權限切換至其他場館，切換場館的設定在後台管理員系統，此權限只有站長跟admin有權限，這是過去就規劃好的權限事宜 |
 | [CLR-CASHOUT-002](ba-admin/CASHOUT/CLR-CASHOUT-002.md) | APPLIED | SPEC-CASHOUT-001 v0.1 | 機台洗分（單階段交易）實際上會不會出現「待處理／等待中」（＝spec 概念的待確認）狀態？若不會，TC-CASHOUT-044「尚未完成的洗分不會出現在核實頁」如何驗證？ | A：洗分一送出就完成，不會有中間狀態。機台洗分為單階段交易（req-keyout，帳務立即生效），不會停在「待處理／等待 |
-| [CLR-CASHOUT-003](ba-admin/CASHOUT/CLR-CASHOUT-003.md) | OPEN | SPEC-CASHOUT-001 v0.2 | 已核實（已兌現）的出金收據還能不能作廢？若同一張待核實收據被櫃檯核實、同時被站長作廢，最終以哪個為準、輸的一方看到什麼？ |  |
-| [CLR-CASHOUT-004](ba-admin/CASHOUT/CLR-CASHOUT-004.md) | OPEN | SPEC-CASHOUT-001 v0.2 | 洗分出金核實的金額範圍篩選是否接受小數輸入？邊界是否含等號（min＝max＝399.60 能否查到該筆）？ |  |
-| [CLR-CASHOUT-005](ba-admin/CASHOUT/CLR-CASHOUT-005.md) | OPEN | SPEC-CASHOUT-001 v0.2 | (1)「出收據那天」以什麼切日：場館日結時間（營業日）還是 UTC+0 00:00？(2) 跨日核實（D 日出收據、D+n 日核實）的兌現金額（現金淨收的扣除項）記在 D 日列還是核實那天的列？(3) 收據永久有效，日結報表結算日期若有上限或資料保留期，最早的未兌現收據超出時怎麼呈現？ |  |
-| [CLR-CASHOUT-006](ba-admin/CASHOUT/CLR-CASHOUT-006.md) | OPEN | SPEC-CASHOUT-001 v0.2 | 出金核實按下確認後請求逾時、網路中斷或後端部分失敗時：核實狀態、機台交易紀錄核實欄位、會員列表提款次數／金額三處是否同進同退？畫面如何提示？櫃檯如何判斷可否付現？ |  |
-| [CLR-CASHOUT-007](ba-admin/CASHOUT/CLR-CASHOUT-007.md) | OPEN | SPEC-CASHOUT-001 v0.2 | 作廢送出鈕連點或作廢請求重送時，系統要阻擋提示還是冪等忽略？作廢原因與後台操作紀錄是否保留第一次的內容、不重複追加？ |  |
-| [CLR-CASHOUT-008](ba-admin/CASHOUT/CLR-CASHOUT-008.md) | OPEN | SPEC-CASHOUT-001 v0.2 | 過渡期以前台結算結果畫面照片代替收據：畫面上的結算分數顯示到小數第幾位？照片金額（例 399.6、399 或 400）與核實彈窗面額（399.60）不一致時，櫃檯以哪個為準、照付、拒付或轉人工？ |  |
+| [CLR-CASHOUT-003](ba-admin/CASHOUT/CLR-CASHOUT-003.md) | ASKED | SPEC-CASHOUT-001 v0.2 | 已核實（已兌現）的出金收據還能不能作廢？若同一張待核實收據被櫃檯核實、同時被站長作廢，最終以哪個為準、輸的一方看到什麼？ |  |
+| [CLR-CASHOUT-004](ba-admin/CASHOUT/CLR-CASHOUT-004.md) | ASKED | SPEC-CASHOUT-001 v0.2 | 洗分出金核實的金額範圍篩選是否接受小數輸入？邊界是否含等號（min＝max＝399.60 能否查到該筆）？ |  |
+| [CLR-CASHOUT-005](ba-admin/CASHOUT/CLR-CASHOUT-005.md) | ASKED | SPEC-CASHOUT-001 v0.2 | (1)「出收據那天」以什麼切日：場館日結時間（營業日）還是 UTC+0 00:00？(2) 跨日核實（D 日出收據、D+n 日核實）的兌現金額（現金淨收的扣除項）記在 D 日列還是核實那天的列？(3) 收據永久有效，日結報表結算日期若有上限或資料保留期，最早的未兌現收據超出時怎麼呈現？ |  |
+| [CLR-CASHOUT-006](ba-admin/CASHOUT/CLR-CASHOUT-006.md) | ASKED | SPEC-CASHOUT-001 v0.2 | 出金核實按下確認後請求逾時、網路中斷或後端部分失敗時：核實狀態、機台交易紀錄核實欄位、會員列表提款次數／金額三處是否同進同退？畫面如何提示？櫃檯如何判斷可否付現？ |  |
+| [CLR-CASHOUT-007](ba-admin/CASHOUT/CLR-CASHOUT-007.md) | ASKED | SPEC-CASHOUT-001 v0.2 | 作廢送出鈕連點或作廢請求重送時，系統要阻擋提示還是冪等忽略？作廢原因與後台操作紀錄是否保留第一次的內容、不重複追加？ |  |
+| [CLR-CASHOUT-008](ba-admin/CASHOUT/CLR-CASHOUT-008.md) | ASKED | SPEC-CASHOUT-001 v0.2 | 過渡期以前台結算結果畫面照片代替收據：畫面上的結算分數顯示到小數第幾位？照片金額（例 399.6、399 或 400）與核實彈窗面額（399.60）不一致時，櫃檯以哪個為準、照付、拒付或轉人工？ |  |
 
 ## ba-admin / DAILYREPORT
 
@@ -73,13 +73,13 @@
 | [CLR-DAILYREPORT-014](ba-admin/DAILYREPORT/CLR-DAILYREPORT-014.md) | INCORPORATED | SPEC-DAILYREPORT-001 v0.2 | REQ-DAILYREPORT-001 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 比照操作員：管理員或站長查詢、匯出管轄範圍外的場館（含直接呼叫 API 帶範圍外場館參數）時，前端不提供範圍外場館選項， |
 | [CLR-DAILYREPORT-015](ba-admin/DAILYREPORT/CLR-DAILYREPORT-015.md) | INCORPORATED | SPEC-DAILYREPORT-001 v0.3 | 未兌現金額如何歸屬到各列：v0.3 第 53、70 行定為以出收據的日期歸屬（週期列為各營業日合計），CLR-DAILYREPORT-009（v0.1 時回答）定為不受統計週期切分、範圍內較早日期出的未兌現收據不落在該日／該週的列。以哪一邊為準？ | 以 v0.3 為準：未兌現金額以出收據的日期歸屬——每列只含當日（週期列為該週期內各營業日）出的收據中、截至查詢當下仍為 |
 | [CLR-DAILYREPORT-016](ba-admin/DAILYREPORT/CLR-DAILYREPORT-016.md) | INCORPORATED | SPEC-DAILYREPORT-001 v0.3 | 查詢期間沒有任何交易與場次、但機台留有分數時，期初／期末餘額顯示什麼：v0.3 第 64、68 行定為沿用最近一個營業日的結算值（從未有分數者為 0），CLR-DAILYREPORT-006（當時尚無期初餘額欄）定為各欄位顯示 0。以哪一邊為準？ | 以 v0.3 為準：查詢期間沒有任何交易與場次時，列表仍列出該結算期間，各金額與筆數欄顯示 0；期初／期末餘額依時點值規 |
-| [CLR-DAILYREPORT-017](ba-admin/DAILYREPORT/CLR-DAILYREPORT-017.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 「逾時結束」的場次結束後機台仍留有分數時：日結時是否承接成隔日新場次的期初餘額、是否計入期末餘額？（v0.3 第 128 行只列「承接洗分餘數或日結結算轉入者」，第 151 行只涵蓋進行中的場次；可能定義於開發包③ 機台金流與場次 v02，本包未宣告引用） |  |
-| [CLR-DAILYREPORT-018](ba-admin/DAILYREPORT/CLR-DAILYREPORT-018.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4) 結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？ |  |
-| [CLR-DAILYREPORT-019](ba-admin/DAILYREPORT/CLR-DAILYREPORT-019.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 長區間條件下連點匯出 CSV 或重複送出查詢時，系統是否防連點、有無同時匯出的併發上限？ |  |
-| [CLR-DAILYREPORT-020](ba-admin/DAILYREPORT/CLR-DAILYREPORT-020.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | (1) 操作員能否查看場館日結報表？可看哪些場館？(2) 使用者登入後管轄範圍被調整（站長移出某子站台、操作員改調場館），既有工作階段是否立即套用新範圍、已開啟的報表頁再查詢或匯出會不會取得舊範圍資料？ |  |
-| [CLR-DAILYREPORT-021](ba-admin/DAILYREPORT/CLR-DAILYREPORT-021.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 櫃檯對機台帳號的人工入金（補分）、人工出金（結清待確認出金），以及被取消（新請求取代、人工出金連動、管理員手動取消）的待確認出金，在日結報表各欄與餘額驗算式中如何計入？ |  |
-| [CLR-DAILYREPORT-022](ba-admin/DAILYREPORT/CLR-DAILYREPORT-022.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 機台停用、報廢（只停用不刪除）或改歸屬其他場館時，它的留存分數是否繼續計入原場館的期初／期末餘額？歷史列會不會跟著搬？ |  |
-| [CLR-DAILYREPORT-023](ba-admin/DAILYREPORT/CLR-DAILYREPORT-023.md) | OPEN | SPEC-DAILYREPORT-001 v0.3 | 注單數是否計入取消或退款的注單？歸屬營業日依下注時間還是結算時間？ |  |
+| [CLR-DAILYREPORT-017](ba-admin/DAILYREPORT/CLR-DAILYREPORT-017.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 「逾時結束」的場次結束後機台仍留有分數時：日結時是否承接成隔日新場次的期初餘額、是否計入期末餘額？（v0.3 第 128 行只列「承接洗分餘數或日結結算轉入者」，第 151 行只涵蓋進行中的場次；可能定義於開發包③ 機台金流與場次 v02，本包未宣告引用） |  |
+| [CLR-DAILYREPORT-018](ba-admin/DAILYREPORT/CLR-DAILYREPORT-018.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 場館修改日結時間後：(1) 只影響之後的營業日，還是回溯重切過去？(2) 切換當天營業日的長度（例 00:00 改 06:00，是 30 小時還是 18 小時）？(3) 已以收據日歸屬的未兌現／已作廢／已兌現與日結結算場次的歸屬營業日會不會跳列？(4) 結算日期區間沒有上限、匯出不分頁，長區間（數年、依場次明細）的查詢與匯出有無效能目標、逾時或筆數上限？ |  |
+| [CLR-DAILYREPORT-019](ba-admin/DAILYREPORT/CLR-DAILYREPORT-019.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 長區間條件下連點匯出 CSV 或重複送出查詢時，系統是否防連點、有無同時匯出的併發上限？ |  |
+| [CLR-DAILYREPORT-020](ba-admin/DAILYREPORT/CLR-DAILYREPORT-020.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | (1) 操作員能否查看場館日結報表？可看哪些場館？(2) 使用者登入後管轄範圍被調整（站長移出某子站台、操作員改調場館），既有工作階段是否立即套用新範圍、已開啟的報表頁再查詢或匯出會不會取得舊範圍資料？ |  |
+| [CLR-DAILYREPORT-021](ba-admin/DAILYREPORT/CLR-DAILYREPORT-021.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 櫃檯對機台帳號的人工入金（補分）、人工出金（結清待確認出金），以及被取消（新請求取代、人工出金連動、管理員手動取消）的待確認出金，在日結報表各欄與餘額驗算式中如何計入？ |  |
+| [CLR-DAILYREPORT-022](ba-admin/DAILYREPORT/CLR-DAILYREPORT-022.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 機台停用、報廢（只停用不刪除）或改歸屬其他場館時，它的留存分數是否繼續計入原場館的期初／期末餘額？歷史列會不會跟著搬？ |  |
+| [CLR-DAILYREPORT-023](ba-admin/DAILYREPORT/CLR-DAILYREPORT-023.md) | ASKED | SPEC-DAILYREPORT-001 v0.3 | 注單數是否計入取消或退款的注單？歸屬營業日依下注時間還是結算時間？ |  |
 
 ## ba-admin / PLATFORMRULE
 
@@ -144,19 +144,19 @@
 | [CLR-REDPACKET-048](ba-admin/REDPACKET/CLR-REDPACKET-048.md) | ANSWERED | SPEC-REDPACKET-001 v0.1 | 機台紅包稽核倍數大於 0 時，紅包產生的未完成稽核是否扣減洗分／出金的核可金額。SPEC-CASHFLOW-001@0.1 的扣除規則以「出金設定的 TWD 稽核倍數大於 0」為觸發條件（第 245、363 行），計入交易只有開分與入金（第 57 行），未提到紅包：(1) 出金設定為 0 倍、紅包倍數大於 0 時是否仍扣除；(2) 出金一律以全部餘額核可、清空餘額（第 332 行），扣除稽核後的出金如何處理（核可金額減少後餘額是否仍清空、剩餘分數去向） | (1) 已定案——PM 2026-10-10 回覆（原題 023，已寫入紅包 spec v02）：扣減。扣除條件改為「帳 |
 | [CLR-REDPACKET-049](ba-admin/REDPACKET/CLR-REDPACKET-049.md) | ANSWERED | SPEC-REDPACKET-001 v0.1 | 「週期即將重置」提示從重置前多久開始顯示（SPEC-REDPACKET-002@0.1 不含前台）；「目前累計」的定義見 Q03 | PM 2026-10-10 回覆（原題 024，已寫入紅包 spec v02）：有待開啟紅包時進度顯示滿格「已達有效流水 |
 | [CLR-REDPACKET-050](ba-admin/REDPACKET/CLR-REDPACKET-050.md) | ANSWERED | SPEC-REDPACKET-001 v0.1 | 紅包金額欄在列表中的位置；「依場次明細」維度的紅包金額與期初／期末餘額如何計入（依 REQ-REDPACKET-025 Q02 的場次歸屬）。營業日依入帳歸屬（第 350 行「當日已入帳」）見 Q01，總計列與 CSV 見 Q03 | PM 2026-10-10 回覆（原題 025，已寫入紅包 spec v02）：位於「有效投注額」之後、「損益」之前；列 |
-| [CLR-REDPACKET-051](ba-admin/REDPACKET/CLR-REDPACKET-051.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義 |  |
+| [CLR-REDPACKET-051](ba-admin/REDPACKET/CLR-REDPACKET-051.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 4.1 機台視角紅包列的「其餘機台專屬欄位」指哪些欄位：SPEC-TXLOG-001@0.1 列表另有訂單編號、機台帳號（來源機台）、幣別、請求金額、實際金額、核實人員／時間、未成立原因、交易時間、完成時間、重送次數、來源；其中請求金額、實際金額、完成時間是否顯示紅包金額與入帳時間，或一律顯示「—」，目標未逐欄定義 |  |
 | [CLR-REDPACKET-052](ba-admin/REDPACKET/CLR-REDPACKET-052.md) | ANSWERED | SPEC-REDPACKET-001 v0.2 | 紅包明細「實際平均紅包金額」差異百分比：差異恰為 0 時顯示「0.0%」或「+0.0%」；差異絕對值小於 0.005% 時以紅／綠（依高低）或灰色標示 | 依 proto（SPEC-REDPACKET-002@0.2）：PM 2026-10-10 回覆原題 013 明定差異百 |
 | [CLR-REDPACKET-053](ba-admin/REDPACKET/CLR-REDPACKET-053.md) | ANSWERED | SPEC-REDPACKET-001 v0.2 | 預設規則關閉且只有一組等級規則的活動，紅包明細是否顯示「規則」篩選 | 依紅包 spec v02（目標）第 272 行：規則篩選「僅有等級規則的活動顯示」——預設規則關閉、只有一組等級規則的活 |
 | [CLR-REDPACKET-054](ba-admin/REDPACKET/CLR-REDPACKET-054.md) | ANSWERED | SPEC-REDPACKET-001 v0.2 | 線上站台的站長能否檢視、操作（新增、追加預算、取消排程、紅包明細、匯出 CSV）其子站台的紅包活動：依目標限自身站台，或依 SPEC-ROLEPERM-001@0.2 含整棵子樹 | 依紅包 spec v02（目標）：PM 2026-10-10 回覆原題 015 明定——三項都與新增活動同權限（財務、站 |
 | [CLR-REDPACKET-055](ba-admin/REDPACKET/CLR-REDPACKET-055.md) | ANSWERED | SPEC-REDPACKET-001 v0.2 | 待確認出金能否由管理員手動取消（並因此使紅包恢復可開啟），以 spec 原文（目標、SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8）或 CLR-CASHFLOW-004 為準；若存在，操作入口為何 | 依紅包 spec v02 與 PM 最新回覆（2026-10-10，原題 022）：櫃檯人工出金視同出金完成，作廢待開啟 |
-| [CLR-REDPACKET-056](ba-admin/REDPACKET/CLR-REDPACKET-056.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 機台扣除「未完成稽核的部分」的計算與出金後的處理：(1) 扣除的是什麼金額——剩餘未達的所需有效投注額、尚未完成稽核的紅包金額，或其他（例：30 TWD 紅包、稽核 1 倍、已打 10，扣 20 或 30）；(2) 出金依 SPEC-CASHFLOW-001@0.2 一律清空餘額，扣除後核可金額小於餘額時，被扣除的分數留在機台（不清空、不結束場次？）或作廢；洗分扣除後的餘數是否照洗分留餘數規則開新場次承接。目標與 SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8 皆未定義（原機台預設 0 倍不會觸發，紅包稽核使其可達） |  |
+| [CLR-REDPACKET-056](ba-admin/REDPACKET/CLR-REDPACKET-056.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 機台扣除「未完成稽核的部分」的計算與出金後的處理：(1) 扣除的是什麼金額——剩餘未達的所需有效投注額、尚未完成稽核的紅包金額，或其他（例：30 TWD 紅包、稽核 1 倍、已打 10，扣 20 或 30）；(2) 出金依 SPEC-CASHFLOW-001@0.2 一律清空餘額，扣除後核可金額小於餘額時，被扣除的分數留在機台（不清空、不結束場次？）或作廢；洗分扣除後的餘數是否照洗分留餘數規則開新場次承接。目標與 SPEC-CASHFLOW-001@0.2、SPEC-ARCADE-001@0.8 皆未定義（原機台預設 0 倍不會觸發，紅包稽核使其可達） |  |
 | [CLR-REDPACKET-057](ba-admin/REDPACKET/CLR-REDPACKET-057.md) | ANSWERED | SPEC-REDPACKET-001 v0.2 | 表單驗證提示文字以目標第 415 行或 SPEC-REDPACKET-002@0.2 為準（等級規則缺漏、適用等級未勾、權重表三處）；「此等級已屬於其他規則」「活動名稱最多 25 字元」在前端何時顯示（或僅為後端回應） | 依紅包 spec v02（目標）第 415 行的提示文字：PM 2026-10-10 回覆原題 001 明定「全部提示文 |
-| [CLR-REDPACKET-058](ba-admin/REDPACKET/CLR-REDPACKET-058.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 機台場館的紅包金額是否應限制為整數？若允許 1 位小數（例 10.5），機台入帳後的分數、4.1／4.4 金額、日結報表紅包金額是否都照記含小數？ |  |
-| [CLR-REDPACKET-059](ba-admin/REDPACKET/CLR-REDPACKET-059.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 紅包領取送出後中途失敗（前端逾時、連線中斷、後端寫入錢包／交易紀錄／稽核明細其中一步失敗）時：是否保證全部寫入或全部不寫？能否安全重試？前台顯示什麼？ |  |
-| [CLR-REDPACKET-060](ba-admin/REDPACKET/CLR-REDPACKET-060.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？ |  |
-| [CLR-REDPACKET-061](ba-admin/REDPACKET/CLR-REDPACKET-061.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 領取 API 是否檢查紅包屬於呼叫者？玩家 A 帶玩家 B 的紅包編號、或機台 M2 帶 M1 的紅包編號呼叫領取時，回應為何（拒絕與錯誤碼）？ |  |
-| [CLR-REDPACKET-062](ba-admin/REDPACKET/CLR-REDPACKET-062.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 線上站台的財務在紅包功能的管轄範圍是否含子站台（檢視、追加預算、取消排程、匯出明細）？ |  |
-| [CLR-REDPACKET-063](ba-admin/REDPACKET/CLR-REDPACKET-063.md) | OPEN | SPEC-REDPACKET-001 v0.2 | 「洗分／出金後才達標」的紅包直接以已作廢建立；若此時活動預算已用罄（剩餘預算小於抽出金額），要不要建立這個已作廢紅包？是否計入本期已獲得與單週期上限？ |  |
+| [CLR-REDPACKET-058](ba-admin/REDPACKET/CLR-REDPACKET-058.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 機台場館的紅包金額是否應限制為整數？若允許 1 位小數（例 10.5），機台入帳後的分數、4.1／4.4 金額、日結報表紅包金額是否都照記含小數？ |  |
+| [CLR-REDPACKET-059](ba-admin/REDPACKET/CLR-REDPACKET-059.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 紅包領取送出後中途失敗（前端逾時、連線中斷、後端寫入錢包／交易紀錄／稽核明細其中一步失敗）時：是否保證全部寫入或全部不寫？能否安全重試？前台顯示什麼？ |  |
+| [CLR-REDPACKET-060](ba-admin/REDPACKET/CLR-REDPACKET-060.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？ |  |
+| [CLR-REDPACKET-061](ba-admin/REDPACKET/CLR-REDPACKET-061.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 領取 API 是否檢查紅包屬於呼叫者？玩家 A 帶玩家 B 的紅包編號、或機台 M2 帶 M1 的紅包編號呼叫領取時，回應為何（拒絕與錯誤碼）？ |  |
+| [CLR-REDPACKET-062](ba-admin/REDPACKET/CLR-REDPACKET-062.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 線上站台的財務在紅包功能的管轄範圍是否含子站台（檢視、追加預算、取消排程、匯出明細）？ |  |
+| [CLR-REDPACKET-063](ba-admin/REDPACKET/CLR-REDPACKET-063.md) | ASKED | SPEC-REDPACKET-001 v0.2 | 「洗分／出金後才達標」的紅包直接以已作廢建立；若此時活動預算已用罄（剩餘預算小於抽出金額），要不要建立這個已作廢紅包？是否計入本期已獲得與單週期上限？ |  |
 
 ## ba-admin / SCREENMGMT
 

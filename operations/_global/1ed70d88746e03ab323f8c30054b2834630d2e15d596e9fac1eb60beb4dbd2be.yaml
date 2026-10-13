@@ -1,0 +1,119 @@
+plan_schema: 1
+op_id: 1ed70d88746e03ab323f8c30054b2834630d2e15d596e9fac1eb60beb4dbd2be
+action: clarification_ask
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_ask
+  params:
+    args:
+    - CLR-CASHFLOW-014
+    - PM
+    - oscarchen@blockaction.tech
+    kwargs:
+      sent_at: '2026-10-13T07:29:00Z'
+      channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  request_key: ask-CLR-CASHFLOW-014-20261013
+request_hash: 1ed70d88746e03ab323f8c30054b2834630d2e15d596e9fac1eb60beb4dbd2be
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-13T07:29:53Z'
+allocated_ids: []
+steps:
+- seq: 1
+  step_id: s1
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-014.yaml
+  kind: business
+  expected_before: 45788da65346157867afbd317bcc2c686e9112957c4888dc621f963468e16772
+  expected_after: 19df548a0a04e014eeb3bf54713a4d266d3b2c5ee674d77d83b62bddac648197
+  blob: 19df548a0a04e014eeb3bf54713a4d266d3b2c5ee674d77d83b62bddac648197
+- seq: 2
+  step_id: event1
+  path: runs/_audit.d/1ed70d88746e03ab323f8c30054b2834630d2e15d596e9fac1eb60beb4dbd2be-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 69e4859745439b35399336cc3e4f50b27790b341ac54e409f9bea457878c9deb
+  blob: 69e4859745439b35399336cc3e4f50b27790b341ac54e409f9bea457878c9deb
+- seq: 3
+  step_id: derived3
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-014.md
+  kind: business
+  expected_before: 21458e98f30f2a8d2d1916c725ca5280e74d17063f0f27a598dacf7c6ec81f3a
+  expected_after: 868bb57eeb4a11db70754eae4e55e9c9a522c2531681d9c33673a0e539a2cd81
+  blob: 868bb57eeb4a11db70754eae4e55e9c9a522c2531681d9c33673a0e539a2cd81
+- seq: 4
+  step_id: render4
+  path: runs/_audit.log
+  kind: business
+  expected_before: 3f8a16dea81d8a104aed9eeff4ec63f5ed4aca71c1b81d52ebf00893b635c4d8
+  expected_after: 06ff661a456964042a6d588ee6e428bbdfe22871a4acb140a99904e9b8d9ef5f
+  blob: 06ff661a456964042a6d588ee6e428bbdfe22871a4acb140a99904e9b8d9ef5f
+- seq: 5
+  step_id: completed
+  path: operations/_global/status.d/1ed70d88746e03ab323f8c30054b2834630d2e15d596e9fac1eb60beb4dbd2be-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 91301579664112adc91b96a497c3893a1ef33e9d27cb5b474c26f5cec46430c9
+  blob: 91301579664112adc91b96a497c3893a1ef33e9d27cb5b474c26f5cec46430c9
+no_change: []
+audit_events:
+- at: '2026-10-13T07:29:53Z'
+  actor: system
+  action: REQUEST_KEY
+  detail: ask-CLR-CASHFLOW-014-20261013 → clarification_ask
+  op_id: 1ed70d88746e03ab323f8c30054b2834630d2e15d596e9fac1eb60beb4dbd2be
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-014
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  question: 入金與出金的異常收斂：(1) end-cashin 超限回 1-OVER LIMIT、退鈔後，該筆 PENDING 轉成什麼狀態？機台會不會重送？平台收到重送是否必須固定拒絕（不得在額度釋放後轉為成功）？(2) end-cashin
+    清點金額為 0、大於 req-cashin 聲稱金額、帶小數時以哪個入帳、是否拒絕？req-cashin 有無防禦性預檢、門檻多少？(3) 有未完成 PENDING 時重置機台憑證，新 token 能否完成舊 TXID？舊 token
+    回 9-OTHER ERROR 時機台是否持續重送？(4) req-cashout 與 end-cashout 之間完成一筆入金時，end-cashout 後餘額是 0 還是該筆入金、屬於哪個場次？
+  context: 依 CLR-CASHFLOW-005 入金額度改於 end-cashin 判定；第 371 行只列 1-NO RECORD、6-BAD DATA/FORMAT 會讓機台停止重送，1-OVER LIMIT、9-OTHER ERROR
+    不在其中——若持續重送，額度釋放後可能入帳，造成退鈔又加分。第 175、343 行與第 337、338 行對出金期間投鈔的餘額說法矛盾。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-06/03/10/13；問題單
+    C 主題 C5）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:35Z'
+  status: ASKED
+  history:
+  - at: '2026-10-12T16:51:35Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  - at: '2026-10-13T07:29:53Z'
+    from_status: OPEN
+    to_status: ASKED
+    by: oscarchen@blockaction.tech
+    trigger: asked PM
+    note: sent_at 2026-10-13T07:29:00Z channel 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  requirement_id: REQ-CASHFLOW-007
+  impact_if_unanswered: 機台金流 RF-06、03、10、13
+  kind: spec_question
+  topic: state_transition
+  subject: cashflow.cashin.over_limit_aftermath
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  issue_key: 39cd951d9ecd697f3f92b6dc73d25ad500b0634c7302d45ac4fb1f3e3ae4129c
+  related_clarifications:
+  - id: CLR-CASHFLOW-005
+    relation: possible_duplicate
+  asked_to: PM
+  asked_at: '2026-10-13T07:29:53Z'
+  sent_at: '2026-10-13T07:29:00Z'
+  channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）

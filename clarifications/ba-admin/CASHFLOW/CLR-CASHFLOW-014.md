@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.2
 - 相關需求：REQ-CASHFLOW-007
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 依 CLR-CASHFLOW-005 入金額度改於 end-cashin 判定；第 371 行只列 1-NO RECORD、6-BAD DATA/FORMAT 會讓機台停止重送，1-OVER LIMIT、9-OTHER ERROR 不在其中——若持續重送，額度釋放後可能入帳，造成退鈔又加分。第 175、343 行與第 337、338 行對出金期間投鈔的餘額說法矛盾。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-06/03/10/13；問題單 C 主題 C5）

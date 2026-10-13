@@ -1,0 +1,113 @@
+plan_schema: 1
+op_id: dc99342132ac2d45c29361d3eef41dc8ef4e7ab950d8d0dceea43388fa440de6
+action: clarification_ask
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_ask
+  params:
+    args:
+    - CLR-REDPACKET-060
+    - PM
+    - oscarchen@blockaction.tech
+    kwargs:
+      sent_at: '2026-10-13T07:29:00Z'
+      channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  request_key: ask-CLR-REDPACKET-060-20261013
+request_hash: dc99342132ac2d45c29361d3eef41dc8ef4e7ab950d8d0dceea43388fa440de6
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-13T07:30:14Z'
+allocated_ids: []
+steps:
+- seq: 1
+  step_id: s1
+  path: clarifications/ba-admin/REDPACKET/CLR-REDPACKET-060.yaml
+  kind: business
+  expected_before: bbaaeefc5d290e91f39dc15f9c744322b08483eb0eeea25374f4f9e0796babcc
+  expected_after: b899ba97b6bf4d21d6b82d79628b4a309d9d3a86ee70bea4325643b8dbdec4a8
+  blob: b899ba97b6bf4d21d6b82d79628b4a309d9d3a86ee70bea4325643b8dbdec4a8
+- seq: 2
+  step_id: event1
+  path: runs/_audit.d/dc99342132ac2d45c29361d3eef41dc8ef4e7ab950d8d0dceea43388fa440de6-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: b8429e959cf609657dc4d17fcdb85cbe0c48e0bd57dc622710ddc7f7548b3cb2
+  blob: b8429e959cf609657dc4d17fcdb85cbe0c48e0bd57dc622710ddc7f7548b3cb2
+- seq: 3
+  step_id: derived3
+  path: clarifications/ba-admin/REDPACKET/CLR-REDPACKET-060.md
+  kind: business
+  expected_before: 89db71691e2c2c41e5948dbe54f6ae65fb2c6746f05ee68d227c85aa759ddf7a
+  expected_after: 7e2b2f0c07827a463cf6880ea555602216ff82daa82017af32d5cf4b0aa5a7ba
+  blob: 7e2b2f0c07827a463cf6880ea555602216ff82daa82017af32d5cf4b0aa5a7ba
+- seq: 4
+  step_id: render4
+  path: runs/_audit.log
+  kind: business
+  expected_before: 75a660985c20e57db7a917d3e69ca054a4da313b3e0c6398eb9c3d36a5edc242
+  expected_after: 1f5b0e074928670f76f2424c9a9ff5cfaa152d79340957d39001d083a2fbbee7
+  blob: 1f5b0e074928670f76f2424c9a9ff5cfaa152d79340957d39001d083a2fbbee7
+- seq: 5
+  step_id: completed
+  path: operations/_global/status.d/dc99342132ac2d45c29361d3eef41dc8ef4e7ab950d8d0dceea43388fa440de6-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 69e135781bde1a974d9b3d52a0801c83794de13bec9b5fb3382f05473802c439
+  blob: 69e135781bde1a974d9b3d52a0801c83794de13bec9b5fb3382f05473802c439
+no_change: []
+audit_events:
+- at: '2026-10-13T07:30:14Z'
+  actor: system
+  action: REQUEST_KEY
+  detail: ask-CLR-REDPACKET-060-20261013 → clarification_ask
+  op_id: dc99342132ac2d45c29361d3eef41dc8ef4e7ab950d8d0dceea43388fa440de6
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-REDPACKET-060
+  product: ba-admin
+  functional_area: REDPACKET
+  spec_id: SPEC-REDPACKET-001
+  spec_version: '0.2'
+  question: 重送與重放：(1) 對已入帳的紅包事後再送一次相同的領取請求（或機台重送），回應為何？是否以紅包編號冪等、絕不重複入帳？(2) 同一筆注單的結算通知被重送（相同注單編號再送一次正值）時，紅包累計是否以注單編號去重？
+  context: spec 只定義遊戲商取消（負值）與重結算（－300＋300）；連點與兩裝置同時領取的「只入帳一次」目前是推得的預期（TC-REDPACKET-202 exploratory）。重複計入會讓帳號提早或多產生紅包。（來源：2026-10-12／13
+    T3RR 風險抽查 REDPACKET RF-10/13；問題單 C 主題 C7）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T16:51:49Z'
+  status: ASKED
+  history:
+  - at: '2026-10-12T16:51:49Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  - at: '2026-10-13T07:30:14Z'
+    from_status: OPEN
+    to_status: ASKED
+    by: oscarchen@blockaction.tech
+    trigger: asked PM
+    note: sent_at 2026-10-13T07:29:00Z channel 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  requirement_id: REQ-REDPACKET-036
+  impact_if_unanswered: 紅包 RF-10、RF-13；TC-REDPACKET-202 的假設
+  kind: spec_question
+  topic: rejection_response
+  subject: redpacket.claim.replay_idempotency
+  level: major
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-REDPACKET-001
+      spec_version: '0.2'
+      content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+  issue_key: f7ea8e8555c55b9cb312b570be0cffc915f2b4124dbb5bb1b1d62aa4e6fdc499
+  asked_to: PM
+  asked_at: '2026-10-13T07:30:14Z'
+  sent_at: '2026-10-13T07:29:00Z'
+  channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）

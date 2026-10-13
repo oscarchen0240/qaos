@@ -4,7 +4,7 @@
 - 規格：SPEC-REDPACKET-001 v0.2
 - 相關需求：REQ-REDPACKET-038
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 第 392 行規定預算用罄不產生紅包，第 399 行規定洗分／出金後才達標照常建立已作廢紅包，兩條同時成立時未定義。（來源：2026-10-12／13 T3RR 風險抽查 REDPACKET RF-06；問題單 C 主題 C10）

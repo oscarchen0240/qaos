@@ -1,0 +1,113 @@
+plan_schema: 1
+op_id: 93b971fad679e206b1be8c68d8b05f234093db93a116e23fa20926c30a090541
+action: clarification_ask
+scope: _global
+canonical_request:
+  request_schema: 1
+  action: clarification_ask
+  params:
+    args:
+    - CLR-CASHFLOW-016
+    - PM
+    - oscarchen@blockaction.tech
+    kwargs:
+      sent_at: '2026-10-13T07:29:00Z'
+      channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  request_key: ask-CLR-CASHFLOW-016-20261013
+request_hash: 93b971fad679e206b1be8c68d8b05f234093db93a116e23fa20926c30a090541
+admitted_state: S_post
+resume_states:
+  kind: fixed
+  states:
+  - S_post
+clock: '2026-10-13T07:29:57Z'
+allocated_ids: []
+steps:
+- seq: 1
+  step_id: s1
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-016.yaml
+  kind: business
+  expected_before: fdd22a59986fdd1df4ae1ee9370b0b600d8ffbdd65856805fb5d2e635dc5c273
+  expected_after: 3fc46d6f9524c7812f5fbfb31ad0c4a580827df7302366c58d566e8927fcd737
+  blob: 3fc46d6f9524c7812f5fbfb31ad0c4a580827df7302366c58d566e8927fcd737
+- seq: 2
+  step_id: event1
+  path: runs/_audit.d/93b971fad679e206b1be8c68d8b05f234093db93a116e23fa20926c30a090541-1.yaml
+  kind: event
+  expected_before: null
+  expected_after: 694ad2cb52ac5bb68195c4678a863075ebff89191dda115ee8ba05c018659eaf
+  blob: 694ad2cb52ac5bb68195c4678a863075ebff89191dda115ee8ba05c018659eaf
+- seq: 3
+  step_id: derived3
+  path: clarifications/ba-admin/CASHFLOW/CLR-CASHFLOW-016.md
+  kind: business
+  expected_before: 3be365ff25a1e6532e5ab4c3e27f758b127f0e56048d243d4631a536c3c9709b
+  expected_after: 09813f331c9ecb076724c34ad52049efc070e86f836c8d889d1ca75c6ac62f17
+  blob: 09813f331c9ecb076724c34ad52049efc070e86f836c8d889d1ca75c6ac62f17
+- seq: 4
+  step_id: render4
+  path: runs/_audit.log
+  kind: business
+  expected_before: bb29ec4e7ee5f4f83c51a565fd7cd1ec44ef1d808f0e892c966946eb7860f088
+  expected_after: 201d7e173cc8b219fb7b4559fdecc3fdd7f15f5c897bed42cbe5b276694be628
+  blob: 201d7e173cc8b219fb7b4559fdecc3fdd7f15f5c897bed42cbe5b276694be628
+- seq: 5
+  step_id: completed
+  path: operations/_global/status.d/93b971fad679e206b1be8c68d8b05f234093db93a116e23fa20926c30a090541-completed.yaml
+  kind: status_final
+  expected_before: null
+  expected_after: 7d1fa21c9e87fa8268600d4caece03473e29c99391de511cee463b8e151f8e4b
+  blob: 7d1fa21c9e87fa8268600d4caece03473e29c99391de511cee463b8e151f8e4b
+no_change: []
+audit_events:
+- at: '2026-10-13T07:29:57Z'
+  actor: system
+  action: REQUEST_KEY
+  detail: ask-CLR-CASHFLOW-016-20261013 → clarification_ask
+  op_id: 93b971fad679e206b1be8c68d8b05f234093db93a116e23fa20926c30a090541
+  step: 1
+  run_id: null
+result:
+  clarification_id: CLR-CASHFLOW-016
+  product: ba-admin
+  functional_area: CASHFLOW
+  spec_id: SPEC-CASHFLOW-001
+  spec_version: '0.2'
+  question: 洗分請求同時帶 throshold=0 與 mode=value（指定金額，例如洗 100）時，以哪一條為準：第 360 行「throshold=0 表示洗出當前全部餘額」，還是第 364 行「mode=value 時以請求金額核可、餘額不清空」？
+  context: 兩行對同一組合的結果相反。現場風險：店員在門檻 0 的機台指定洗 100，若實作照第 360 行把全部餘額洗走，付出的現金與帳對不上；測試案例以此組合還原分數時也會因結果不同而卡住。（來源：2026-10-13 RUN-20261013-003
+    補強 TC 的二次風險抽查 RF-02；問題單 C 增補）
+  options: []
+  raised_by: oscarchen@blockaction.tech
+  raised_at: '2026-10-12T17:25:51Z'
+  status: ASKED
+  history:
+  - at: '2026-10-12T17:25:51Z'
+    from_status: null
+    to_status: OPEN
+    by: oscarchen@blockaction.tech
+    trigger: new
+  - at: '2026-10-13T07:29:57Z'
+    from_status: OPEN
+    to_status: ASKED
+    by: oscarchen@blockaction.tech
+    trigger: asked PM
+    note: sent_at 2026-10-13T07:29:00Z channel 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+  requirement_id: REQ-CASHFLOW-013
+  impact_if_unanswered: 機台金流門檻 0 洗分相關案例；RUN-20261013-003 的開分／end-cashin 併發案例（以此組合還原分數）
+  kind: spec_question
+  topic: calculation
+  subject: cashflow.washout.threshold0_with_value
+  level: minor
+  role_scope:
+  - '*'
+  params: {}
+  coverage:
+    consulted:
+    - spec_id: SPEC-CASHFLOW-001
+      spec_version: '0.2'
+      content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+  issue_key: 8be4a194fb3e06ed0063b7043bcdb7d90d3cabcdadb7f75d2d2151e60a50ccdc
+  asked_to: PM
+  asked_at: '2026-10-13T07:29:57Z'
+  sent_at: '2026-10-13T07:29:00Z'
+  channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）

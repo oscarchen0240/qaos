@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.2
 - 相關需求：REQ-CASHFLOW-049
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 第 282 行只寫比對「該機台」現行的憑證識別，未明確規定請求帳號必須與 token 所屬機台一致；若不檢查，持有 A 機台憑證即可替 B 機台開分或出金。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-19；問題單 C 主題 C8）

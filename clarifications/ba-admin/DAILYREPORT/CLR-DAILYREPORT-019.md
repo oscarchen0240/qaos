@@ -4,7 +4,7 @@
 - 規格：SPEC-DAILYREPORT-001 v0.3
 - 相關需求：REQ-DAILYREPORT-016
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 匯出一律涵蓋整個查詢結果、結算日期沒有上限（第 34、62、89 行），重複的大型匯出可能拖垮報表服務。（來源：2026-10-12／13 T3RR 風險抽查 DAILYREPORT RF-14；問題單 C 主題 C7）

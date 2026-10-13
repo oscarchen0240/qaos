@@ -4,7 +4,7 @@
 - 規格：SPEC-REDPACKET-001 v0.2
 - 相關需求：REQ-REDPACKET-023
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 spec 只定義管理員（含子站台）與站長（自身站台，CLR-REDPACKET-054）的範圍；財務可新增、追加、取消、匯出，但範圍未定義。（來源：2026-10-12／13 T3RR 風險抽查 REDPACKET RF-17；問題單 C 主題 C8）

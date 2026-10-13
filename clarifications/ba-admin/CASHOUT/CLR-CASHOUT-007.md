@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHOUT-001 v0.2
 - 相關需求：REQ-CASHOUT-028
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 spec 只規定已作廢不能再核實（第 95 行）；處理不當時，出收據日的已作廢金額可能被計入兩次。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-16；問題單 C 主題 C7）

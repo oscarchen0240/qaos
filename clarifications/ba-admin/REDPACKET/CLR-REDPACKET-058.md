@@ -4,7 +4,7 @@
 - 規格：SPEC-REDPACKET-001 v0.2
 - 相關需求：REQ-REDPACKET-025
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 紅包金額允許 1 位小數（固定金額、權重表），機台場館入帳後分數會帶小數；出金收據的小數處理已由 CLR-CASHFLOW-007 定案（照記含小數、平台只記面額）。（來源：2026-10-12／13 T3RR 風險抽查 REDPACKET RF-01；問題單 C 主題 C3）

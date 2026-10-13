@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.2
 - 相關需求：REQ-CASHFLOW-026
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 依 CLR-CASHFLOW-008 rev 1，手動取消只限管理員、只限待確認出金，後端已完成、前端未開發（BUG-TXLOG-001），目前 API 是唯一操作面。正式流程中收據送入列印佇列後才送 end-cashout（第 151、344 行），Operator Reset 時收據多半已印出；取消後收據無對應已完成交易、無法核銷。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-07/08/11/15/18；問題單 C 主題 C2）

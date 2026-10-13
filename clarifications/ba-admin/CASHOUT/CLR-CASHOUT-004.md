@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHOUT-001 v0.2
 - 相關需求：REQ-CASHOUT-014
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 v0.2 起實際金額可能帶小數，第 57 行只寫「範圍輸入（min ～ max）」。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-06；問題單 C 主題 C3）

@@ -1,0 +1,44 @@
+clarification_id: CLR-CASHFLOW-012
+product: ba-admin
+functional_area: CASHFLOW
+spec_id: SPEC-CASHFLOW-001
+spec_version: '0.2'
+question: 管理員手動取消待確認出金的防護規則：(1) 收據已印出才取消時，管理員事前要核對什麼、收據怎麼處理、機台與平台分數怎麼對齊？(2) 對已完成出金、已取消出金、待確認入金等非「待確認出金」目標呼叫取消 API 時的回應？(3)
+  手動取消與機台遲到的 end-cashout 同時到達時以哪個為準、輸的一方回什麼？(4) 重複送出取消請求時阻擋提示還是冪等？(5) 管理員能否取消其他站台機台的待確認出金？
+context: 依 CLR-CASHFLOW-008 rev 1，手動取消只限管理員、只限待確認出金，後端已完成、前端未開發（BUG-TXLOG-001），目前 API 是唯一操作面。正式流程中收據送入列印佇列後才送 end-cashout（第
+  151、344 行），Operator Reset 時收據多半已印出；取消後收據無對應已完成交易、無法核銷。（來源：2026-10-12／13 T3RR 風險抽查 CASHFLOW RF-07/08/11/15/18；問題單 C 主題 C2）
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-10-12T16:51:18Z'
+status: ASKED
+history:
+- at: '2026-10-12T16:51:18Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-10-13T07:29:48Z'
+  from_status: OPEN
+  to_status: ASKED
+  by: oscarchen@blockaction.tech
+  trigger: asked PM
+  note: sent_at 2026-10-13T07:29:00Z channel 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）
+requirement_id: REQ-CASHFLOW-026
+impact_if_unanswered: 機台金流 RF-07、08、11、15、18 的案例依此定案；前端上線前 API 的防護是唯一屏障
+kind: spec_question
+topic: state_transition
+subject: cashflow.cashout.admin_cancel_guard
+level: major
+role_scope:
+- '*'
+params: {}
+coverage:
+  consulted:
+  - spec_id: SPEC-CASHFLOW-001
+    spec_version: '0.2'
+    content_hash: b1e2c55628b9b349616e9fea62804602a77c425e5e5bfbfe91714ad50ea6a1cc
+issue_key: 8fbadecb2d6d950ccd76cf1534d8dcc65ad3de320a044cd8cbd3f6f2d2370b85
+asked_to: PM
+asked_at: '2026-10-13T07:29:48Z'
+sent_at: '2026-10-13T07:29:00Z'
+channel: 問題單 C（Artifact https://claude.ai/artifact/7XMBy4xFv7q5LoMWc7qzZB）

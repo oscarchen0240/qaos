@@ -4,7 +4,7 @@
 - 規格：SPEC-REDPACKET-001 v0.2
 - 相關需求：REQ-REDPACKET-036
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 spec 只定義遊戲商取消（負值）與重結算（－300＋300）；連點與兩裝置同時領取的「只入帳一次」目前是推得的預期（TC-REDPACKET-202 exploratory）。重複計入會讓帳號提早或多產生紅包。（來源：2026-10-12／13 T3RR 風險抽查 REDPACKET RF-10/13；問題單 C 主題 C7）

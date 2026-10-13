@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.2  §§出金（`req-cashout` → `end-cashout`）（第 347 行）
 - 相關需求：REQ-CASHFLOW-043
 - 提出者：agent-spec-analyst（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 REQ-CASHFLOW-043：req-cashout 成功後，若前台呼叫 end-cashout 失敗，前台的重送策略 spec 明確標註待確認；前台無法補送時交易停在 PENDING，依既有人工出金連動取消處理

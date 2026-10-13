@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHOUT-001 v0.2
 - 相關需求：REQ-CASHOUT-023
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 第 30 行過渡期以結算結果畫面照片代替收據，spec 未規定結算分數的小數顯示；櫃檯「核對無誤後點擊確認」會遇到金額對不上。（來源：2026-10-12／13 T3RR 風險抽查 CASHOUT RF-11；問題單 C 主題 C10）

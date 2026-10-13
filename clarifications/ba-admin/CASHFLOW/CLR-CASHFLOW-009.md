@@ -4,7 +4,7 @@
 - 規格：SPEC-CASHFLOW-001 v0.2  §§出金（`req-cashout` → `end-cashout`）（第 347 行）
 - 相關需求：REQ-CASHFLOW-042
 - 提出者：agent-spec-analyst（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 REQ-CASHFLOW-042：機台暫無印表機期間，出金改由前台依序呼叫 req-cashout／end-cashout；前台呼叫時使用的認證方式（是否沿用機台憑證）spec 明確標註待確認

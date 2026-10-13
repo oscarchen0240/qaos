@@ -4,7 +4,7 @@
 - 規格：SPEC-REDPACKET-001 v0.2
 - 相關需求：REQ-REDPACKET-036
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：OPEN
+- 狀態：ASKED
 
 ## 背景
 領取是直接入帳、不經審核的金流，部分寫入會造成只加錢不掛稽核，或紅包已入帳但錢包沒加；spec 只定義成功路徑。（來源：2026-10-12／13 T3RR 風險抽查 REDPACKET RF-04；問題單 C 主題 C6）
