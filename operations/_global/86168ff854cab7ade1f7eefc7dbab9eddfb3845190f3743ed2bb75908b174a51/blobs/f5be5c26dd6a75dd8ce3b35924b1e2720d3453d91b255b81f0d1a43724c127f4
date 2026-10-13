@@ -1,0 +1,149 @@
+product: ba-admin
+functional_area: TXLOG
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+test_level: ui_e2e
+execution_mode: manual
+automation_status: not_automated
+ci_eligible: false
+execution_cost: medium
+stability: unknown
+priority: high
+risk: high
+hotfix_eligible: false
+assumptions: []
+source: change_workflow
+title: 管理員對待確認的機台出金手動取消並完成二次確認：交易狀態由待確認轉為已取消，機台帳號分數不異動
+description: 驗證手動取消的狀態轉換 待確認→已取消 與分數不異動（AC-TXLOG-0282）
+requirement_ids:
+- REQ-TXLOG-028
+acceptance_criteria_ids:
+- AC-TXLOG-0282
+test_types:
+- functional
+design_techniques:
+- state_transition
+preconditions:
+- 以管理員（spec 原文稱 Admin）登入後台，進入『各式報表 > 交易紀錄查詢』，頁面標題下方的站台切換下拉選單切到機台場館所屬站台（資料範圍跟隨該選單，一次僅顯示所選站台）
+- 【執行通道，前端未開發】依 CLR-TXLOG-002，手動取消的後端已完成、前端尚未開發（BUG-TXLOG-001；2026-10-12 實機：列表操作欄只有『明細』，明細面板標示『本頁只讀』）。標記『UI』的步驟照 spec 描述撰寫，前端上線前實機看不到手動取消入口，這些步驟記為『受阻』（不是本案的產品
+  FAIL，也不要把『實機沒有入口』當成預期結果）；標記『API』的步驟以後端為準。手動取消後端 API 的路徑、方法、參數、身分驗證與二次確認的表達方式 spec 與派發包都未定義，需向 RD／環境負責人取得；取不到時 API 步驟一併記『受阻』，不得自行推測或編造
+  API，也不得改用資料庫直接修改來替代。列表查詢本身（篩選、交易狀態欄）不受前端缺手動取消影響，可正常用來觀察結果。
+- 【判定記錄】前端上線前以 API 步驟判定後端行為，UI 步驟記受阻；後端通過、UI 受阻時，整案記為『後端通過、UI 待前端上線後重跑』，前端上線後須重跑 UI 步驟才算完整通過
+- 手動取消的入口位置 spec 未定義（列表操作欄或右側明細面板，REQ-TXLOG-028 Q01 detail_gaps），不得假設；兩處都要檢視
+- 【環境前提，spec 未定義佈置方式，需環境負責人確認】本站台有一筆交易狀態為『待確認』的機台出金 X（自行從環境中選定；機台已受理出金、平台尚未收到完成回報）。spec 只定義待確認的意義，並提到一種會讓待確認長期留著的情境（現場在機台
+  Operator 選單執行過 Reset 後，機台不再回報該筆交易）；如何製造待確認出金（機台端中斷回報、後端測試工具等）不在 spec 範圍，是需環境負責人提供的資訊。X 須是測試機台帳號的測試資料：手動取消後平台會告知機台這筆交易不存在，無法復原，不得對正式營運資料執行。
+- 【環境前提，spec 未定義，需環境負責人確認】機台帳號分數（餘額）以哪個來源讀取：機台端畫面，或在列表點擊『機台帳號』進入的會員詳細資料頁（該頁是否顯示分數 spec 未定義）。取消前後固定用同一個來源讀取，且測試期間不要對該機台帳號進行其他開分、洗分、入金、出金，否則分數差異無法歸因。
+- 執行手動取消前，依 spec 警示先與現場確認實體狀況（紙鈔是否已進錢箱、收據或過渡期的結算結果畫面是否已出現）；本案使用測試機台，確認無實際金流後才執行
+test_data:
+- name: 登入角色
+  value: 管理員
+- name: 轉換前狀態
+  value: 待確認
+- name: 預期轉換後狀態
+  value: 已取消
+- name: 預期分數變化
+  value: 0（取消前後相同）
+steps:
+- n: 1
+  action: 在交易紀錄查詢篩選『交易類型＝機台出金』『交易狀態＝待確認』並搜尋，選定 X，記下交易編號、機台帳號；依前提的來源讀取該機台帳號的分數 S0
+  expected: X 的交易狀態為『待確認』（轉換前狀態）；取得 S0
+- n: 2
+  action: （UI，前端上線前記『受阻』）對 X 執行『手動取消』（入口位置 spec 未定義，列表操作欄與右側明細面板都找）；（API）以管理員身分對 X 發出手動取消，二次確認的表達方式依 RD 提供的 API 說明
+  expected: 系統要求二次確認（對話框文案與按鈕 spec 未定義，只記錄）；此時尚不執行下一步
+- n: 3
+  action: 完成二次確認（UI：點確認；API：依 RD 說明送出確認）
+  expected: 請求成功完成（回應內容 spec 未定義，只記錄）
+- n: 4
+  action: 回到交易紀錄查詢，以 X 的交易編號重新查詢；依同一來源再讀取該機台帳號的分數 S1
+  expected: X 的交易狀態為『已取消』（轉換：待確認→已取消，觸發＝管理員手動取消並完成二次確認）；S1 等於 S0，分數不異動
+expected_result: 管理員對待確認的機台出金執行手動取消並完成二次確認後，該筆交易狀態標記為『已取消』，機台帳號的分數（餘額）不異動。（判定記錄：前端上線前後端通過、UI 受阻時，整案記『後端通過、UI 待前端上線後重跑』。）
+expected_result_spec_reference:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  location: §操作（第 89 行）
+  quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+decision_refs:
+- requirement_id: REQ-TXLOG-028
+  question_id: Q01
+  basis_ref:
+    type: clarification
+    clarification_id: CLR-TXLOG-002
+    answer_rev: 0
+    answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+- requirement_id: REQ-TXLOG-028
+  question_id: Q01
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §操作（第 89 行）
+- requirement_id: REQ-TXLOG-028
+  question_id: Q02
+  basis_ref:
+    type: spec
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    location: §操作（第 89 行）
+source_refs:
+- type: clarification
+  clarification_id: CLR-TXLOG-002
+  answer_rev: 0
+  answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+  quote: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+    24 小時逾時轉「已逾時」收斂）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 89 行）
+  quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+source_ref: 'new_required: REQ-TXLOG-028 AC-TXLOG-0282（CI-SPEC-TXLOG-001-0.1-0.1）'
+critical_path: false
+testcase_id: TC-TXLOG-212
+version: 1
+supersedes: null
+status: DRAFT
+created_by: agent-test-designer
+validated_by: agent-test-validator
+validation_report_id: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+created_at: '2026-10-13T07:57:31Z'
+updated_at: '2026-10-13T08:36:29Z'
+history:
+- at: '2026-10-13T07:57:31Z'
+  from_status: null
+  to_status: DRAFT
+  by: system
+  trigger: ART-TCD-01M4T43E6MND93S5EXBGWZA4FP
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: DRAFT
+  to_status: VALIDATING
+  by: system
+  trigger: dispatch validator
+  run_id: RUN-20261013-005
+- at: '2026-10-13T07:57:31Z'
+  from_status: VALIDATING
+  to_status: VALIDATED
+  by: system
+  trigger: ART-TVR-01M4T466A6M77FVBASYW5N4ZX6
+  run_id: RUN-20261013-005
+- at: '2026-10-13T08:02:39Z'
+  from_status: VALIDATED
+  to_status: PENDING_APPROVAL
+  by: system
+  trigger: approval requested
+  run_id: RUN-20261013-005
+- at: '2026-10-13T08:36:29Z'
+  from_status: PENDING_APPROVAL
+  to_status: DRAFT
+  by: oscarchen@blockaction.tech
+  trigger: APR-0211
+  run_id: RUN-20261013-005
+  note: rejected
+requirement_model_revision:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  revision: R001
+  sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
