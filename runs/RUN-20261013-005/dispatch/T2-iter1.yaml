@@ -1,0 +1,124 @@
+packet_version: 1
+run_id: RUN-20261013-005
+task_id: T2
+iteration: 1
+agent_id: agent-test-designer
+workflow_id: spec-change-impact
+created_at: '2026-10-13T07:53:16Z'
+target:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+target_decl_rev: 0
+closure: []
+basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+rm_pins:
+  target:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    revision: R001
+    sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
+  from:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    revision: R000
+    sha256: 5cdb9fd66c0d884ca6c339917119ab5a08aced1d824b443e003b1e4b0d6c8475
+  pin_groups:
+  - spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    revision: R000
+    sha256: 5cdb9fd66c0d884ca6c339917119ab5a08aced1d824b443e003b1e4b0d6c8475
+resolutions:
+- clarification_id: CLR-TXLOG-001
+  status: APPLIED
+  kind: spec_question
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirement_id: REQ-TXLOG-029
+  question_id: null
+  answer_rev: 0
+  answer_sha256: 7c3aba8ff95bacdc8ca39e2d6445b3ef8f2231a47dede487cd6a45bba147490a
+  answer: 此問題已 moot：交易紀錄查詢頁（本包）實際上並不提供『手動取消』這個操作，spec.md §操作 描述的『手動取消：僅 Admin 可對待確認狀態的交易執行』這段是錯誤敘述，非現行產品行為。凡是待確認/待核實交易需要的人工處理，一律在『洗分出金核實』頁（SPEC-CASHOUT-001）進行，不在本頁。REQ-TXLOG-028/029
+    需回頭修正。
+  resolution: spec_updated
+  basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+  scope: null
+  applicability: []
+- clarification_id: CLR-TXLOG-002
+  status: INCORPORATED
+  kind: spec_question
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirement_id: REQ-TXLOG-028
+  question_id: null
+  answer_rev: 0
+  answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+  answer: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+    24 小時逾時轉「已逾時」收斂）。後端已開發完成，前端尚未開發（2026-10-12 實機：列表操作欄只有「明細」，明細面板標示「本頁只讀」）。2026-09-14（CLR-TXLOG-001）與 2026-09-15（CLR-CASHFLOW-004）「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028
+    改回提供（限出金、限管理員），REQ-TXLOG-029 的限制（非管理員、非待確認、入金）恢復為有效需求。
+  resolution: requirement_clarified
+  basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+  scope:
+    spec_id: SPEC-TXLOG-001
+    requirement_id: REQ-TXLOG-028
+    subject: txlog.arcade.pending_cashout_admin_cancel
+    role_scope:
+    - '*'
+    params: {}
+  applicability: []
+run_decisions: []
+open_questions:
+- clarification_id: CLR-TXLOG-003
+  status: OPEN
+  kind: spec_question
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirement_id: REQ-TXLOG-029
+  question_id: Q04
+  question: 不符合手動取消條件時（非管理員帳號、交易狀態不是「待確認」、機台入金），系統如何阻擋：不顯示手動取消入口、顯示但停用，或允許送出後由後端拒絕並提示錯誤？三種情況是否一致？若由後端拒絕，提示文案為何？
+decision_sources:
+- type: clarification
+  clarification_id: CLR-TXLOG-001
+  answer_rev: 0
+  answer_sha256: 7c3aba8ff95bacdc8ca39e2d6445b3ef8f2231a47dede487cd6a45bba147490a
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §對既有章節的影響（第 109 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 89 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §相關業務規則（交易保留期限）（第 122 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §交易狀態（第 51 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §交易狀態（第 57 行）
+- type: clarification
+  clarification_id: CLR-TXLOG-002
+  answer_rev: 0
+  answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §交易狀態（第 52 行）
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 91 行）
+extra_inputs: []
+references_status: undeclared

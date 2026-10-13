@@ -1,0 +1,186 @@
+artifact_id: ART-TVR-01M4T3Y4TVH9HANJT6R3X5TA21
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T3
+iteration: 0
+created_by: agent-test-validator
+created_at: '2026-10-13T07:52:40Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4T3RXDQV28YWBCWKV16EQ97
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4T3RXDQV28YWBCWKV16EQ97
+- entity_type: Artifact
+  id: ART-TDR-01M4T3RXDQFJXHB7E80N1S0XKM
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Artifact
+  id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+requires_approval: null
+dispatch_packet_sha256: 5989bbd48f0af408cd65464edb0ba1a39cb9b96c968d97ca35a9bcc1d1e866ec
+payload:
+  result: FAIL
+  testcase_draft_artifact_id: ART-TCD-01M4T3RXDQV28YWBCWKV16EQ97
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+  issues:
+  - testcase_id: TC-DRAFT-01M4T3RXDPBWQZM8F863C6F7GX
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: 站長案（AC-0291）步驟 3：「（API，判定依據）以站長帳號的身分對 X 發出手動取消請求……expected：無法完成手動取消（阻擋方式與回應內容只記錄，不判定）」；步驟 4 以 X 仍為待確認、S1＝S0
+      判定。全案沒有任何證明請求格式有效的對照步驟。
+    explanation: 本案已正確排除「UI 看不到入口」造成的假通過：【判定基準】明定只以 API 通道實際送出後狀態與分數不變為準，取不到 API 時記為受阻。但 API 這條通道本身沒有對照組：步驟只要求依 RD 說明送出請求，回應「只記錄、不判定」，接著就以「狀態與分數不變」判通過。如果請求因路徑、參數、二次確認欄位或
+      token 用錯而被當成格式錯誤（例如 400／404，或根本沒進到取消邏輯），狀態與分數同樣不會變，本案會在完全沒有驗到權限或狀態檢查的情況下判 PASS。REQ-TXLOG-029 是 high risk 的安全／資料完整性限制，這是實質的假通過途徑。要排除它，不需要知道
+      Q04（E5）的阻擋方式或錯誤碼，只需要證明同一份請求格式在合法條件下確實能取消成功。
+    recommended_change: 加入對照，擇一或並用：(a) 前提要求同一環境、同一版本中，已用同一份 RD 請求範本成功執行過 AC-0282（管理員對待確認出金取消成功、狀態轉為已取消）；本案的請求只替換身分或目標交易，其餘逐字相同。(b)
+      在本案最後加一步：以管理員身分、同一範本，對一筆待確認的測試出金（例如本案的 X，或另備的犧牲用測試資料）送出取消，確認轉為已取消，證明通道有效。另外，回應顯示請求格式錯誤或路由不存在時（不涉及阻擋方式的語意），本次執行記為無效或受阻，不判通過。這兩點都不依賴
+      CLR-TXLOG-003。
+  - testcase_id: TC-DRAFT-01M4T3RXDPSNR9XZ0QV1WGYZ37
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: 操作員案（AC-0291）步驟 3、4 的寫法與站長案相同：API 回應只記錄，以 X 仍為待確認、S1＝S0 判定，沒有對照步驟。
+    explanation: 本案已正確排除「UI 看不到入口」造成的假通過：【判定基準】明定只以 API 通道實際送出後狀態與分數不變為準，取不到 API 時記為受阻。但 API 這條通道本身沒有對照組：步驟只要求依 RD 說明送出請求，回應「只記錄、不判定」，接著就以「狀態與分數不變」判通過。如果請求因路徑、參數、二次確認欄位或
+      token 用錯而被當成格式錯誤（例如 400／404，或根本沒進到取消邏輯），狀態與分數同樣不會變，本案會在完全沒有驗到權限或狀態檢查的情況下判 PASS。REQ-TXLOG-029 是 high risk 的安全／資料完整性限制，這是實質的假通過途徑。要排除它，不需要知道
+      Q04（E5）的阻擋方式或錯誤碼，只需要證明同一份請求格式在合法條件下確實能取消成功。
+    recommended_change: 加入對照，擇一或並用：(a) 前提要求同一環境、同一版本中，已用同一份 RD 請求範本成功執行過 AC-0282（管理員對待確認出金取消成功、狀態轉為已取消）；本案的請求只替換身分或目標交易，其餘逐字相同。(b)
+      在本案最後加一步：以管理員身分、同一範本，對一筆待確認的測試出金（例如本案的 X，或另備的犧牲用測試資料）送出取消，確認轉為已取消，證明通道有效。另外，回應顯示請求格式錯誤或路由不存在時（不涉及阻擋方式的語意），本次執行記為無效或受阻，不判通過。這兩點都不依賴
+      CLR-TXLOG-003。
+  - testcase_id: TC-DRAFT-01M4T3RXDPCNB6JPEN5S5AXVBE
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: AC-0292 案步驟 2：「（API，判定依據）以管理員身分分別對 X1、X2 發出手動取消請求……expected：兩筆都無法完成手動取消（阻擋方式與回應內容只記錄，不判定）」；步驟 3 以狀態與分數不變判定，沒有對照步驟。
+    explanation: 本案已正確排除「UI 看不到入口」造成的假通過：【判定基準】明定只以 API 通道實際送出後狀態與分數不變為準，取不到 API 時記為受阻。但 API 這條通道本身沒有對照組：步驟只要求依 RD 說明送出請求，回應「只記錄、不判定」，接著就以「狀態與分數不變」判通過。如果請求因路徑、參數、二次確認欄位或
+      token 用錯而被當成格式錯誤（例如 400／404，或根本沒進到取消邏輯），狀態與分數同樣不會變，本案會在完全沒有驗到權限或狀態檢查的情況下判 PASS。REQ-TXLOG-029 是 high risk 的安全／資料完整性限制，這是實質的假通過途徑。要排除它，不需要知道
+      Q04（E5）的阻擋方式或錯誤碼，只需要證明同一份請求格式在合法條件下確實能取消成功。
+    recommended_change: 加入對照，擇一或並用：(a) 前提要求同一環境、同一版本中，已用同一份 RD 請求範本成功執行過 AC-0282（管理員對待確認出金取消成功、狀態轉為已取消）；本案的請求只替換身分或目標交易，其餘逐字相同。(b)
+      在本案最後加一步：以管理員身分、同一範本，對一筆待確認的測試出金（例如本案的 X，或另備的犧牲用測試資料）送出取消，確認轉為已取消，證明通道有效。另外，回應顯示請求格式錯誤或路由不存在時（不涉及阻擋方式的語意），本次執行記為無效或受阻，不判通過。這兩點都不依賴
+      CLR-TXLOG-003。
+  - testcase_id: TC-DRAFT-01M4T3RXDQ8CJ1T68W6S9CZ2J1
+    issue_type: invalid_expected_result
+    severity: major
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §相關業務規則（交易保留期限）（第 122 行）
+      quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+    evidence: AC-0293 案步驟 2：「（API，判定依據）以管理員身分對 Y 發出手動取消請求……expected：無法完成手動取消（阻擋方式與回應內容只記錄，不判定）」；步驟 3 以 Y 仍為待確認、S1＝S0 判定，沒有對照步驟。
+    explanation: 本案已正確排除「UI 看不到入口」造成的假通過：【判定基準】明定只以 API 通道實際送出後狀態與分數不變為準，取不到 API 時記為受阻。但 API 這條通道本身沒有對照組：步驟只要求依 RD 說明送出請求，回應「只記錄、不判定」，接著就以「狀態與分數不變」判通過。如果請求因路徑、參數、二次確認欄位或
+      token 用錯而被當成格式錯誤（例如 400／404，或根本沒進到取消邏輯），狀態與分數同樣不會變，本案會在完全沒有驗到權限或狀態檢查的情況下判 PASS。REQ-TXLOG-029 是 high risk 的安全／資料完整性限制，這是實質的假通過途徑。要排除它，不需要知道
+      Q04（E5）的阻擋方式或錯誤碼，只需要證明同一份請求格式在合法條件下確實能取消成功。
+    recommended_change: 加入對照，擇一或並用：(a) 前提要求同一環境、同一版本中，已用同一份 RD 請求範本成功執行過 AC-0282（管理員對待確認出金取消成功、狀態轉為已取消）；本案的請求只替換身分或目標交易，其餘逐字相同。(b)
+      在本案最後加一步：以管理員身分、同一範本，對一筆待確認的測試出金（例如本案的 X，或另備的犧牲用測試資料）送出取消，確認轉為已取消，證明通道有效。另外，回應顯示請求格式錯誤或路由不存在時（不涉及阻擋方式的語意），本次執行記為無效或受阻，不判通過。這兩點都不依賴
+      CLR-TXLOG-003。
+  advisories:
+  - testcase_id: TC-DRAFT-01M4T3RXDPBWQZM8F863C6F7GX
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-029
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    evidence: 派發指示要求判斷的幾點：(1) REQ-029 四案都沒有引用 Q04（E5），只斷言「無法完成取消、狀態與分數不變」，阻擋方式只記錄、不判對錯，也不比較各情況是否一致；(2) API 細節寫成「向 RD／環境負責人取得，取不到記受阻，不得推測或編造、不得改資料庫」；(3)
+      「站長／操作員能否進入頁面」「分數讀取來源」「待確認交易如何佈置」都標為環境前提。
+    explanation: (1) 合法：「無法完成取消、狀態與分數不變」由第 89 行（僅 Admin、僅待確認）、第 51／57／122 行與 CLR-TXLOG-002（Q01～Q03 皆 E1）定義；Q04 只涉及阻擋的形式與文案，這幾案沒有對
+      Q04 作任何斷言，所以不依賴 E5、不需要 exploratory。(2) 不構成未定義假設：API 只是執行通道，斷言的依據仍是 spec 定義的結果（狀態、分數），而且已禁止推測。只是這條通道需要對照組，見各 issue。(3)
+      都只當執行條件，沒有進入斷言：無法進入頁面時改走 API、並記錄現象，沒有以「進不了頁面」判通過。入口位置也沒有假設：兩處都看，只記錄實際出現在哪裡。
+    recommended_change: 不阻擋。
+  - testcase_id: TC-DRAFT-01M4T3RXDPWKDZ65991V3WB91Q
+    issue_type: non_executable_steps
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    evidence: AC-0282 案步驟 2、3 同時列出 UI（前端上線前記受阻）與 API 兩條通道，但沒有說明 UI 受阻、API 通過時整案的判定（通過、部分通過，或維持受阻）。AC-0283 案也有同樣情況（API 若沒有「尚未確認」的流程則記受阻）。
+    explanation: 前端上線前，執行結果的記錄方式可能不一致。這不影響斷言的正確性。AC-0281 案全部是 UI 步驟，上線前整案受阻，不會假通過。
+    recommended_change: 註明「前端上線前以 API 步驟判定後端行為，UI 步驟記受阻；整案標示為『後端通過、UI 受阻』，前端上線後須重跑 UI 步驟」，或採用主 session 既有的部分受阻記錄慣例。
+  - testcase_id: TC-DRAFT-01M4T3RXDPC2ZYG88JY0P5RSQ3
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    evidence: 修訂只限 CIR affected 的 TC-TXLOG-148 v1 與 TC-TXLOG-165 v1（supersedes 版本與 registry 的 active_version 一致），沒有修訂 TC-TXLOG-164。148
+      已移除「轉介洗分出金核實頁」，收斂途徑依 R001 AC-0171 改寫並註明不逐一觸發；165 改為「不存在核實操作；可用操作為查看明細＋管理員對待確認出金的手動取消」，步驟 1（無核實操作）現在就可判定，步驟 2 受阻。另外，TC-TXLOG-164（CIR
+      判為 obsolete）目前仍是 ACTIVE，它的斷言「本頁不提供手動取消」與新的 AC-0281 案相反。
+    explanation: 兩張修訂都正確。164 不在本 run 的修訂範圍內，但它在 APPLY_CHANGE 時要依 CIR 建議退役，否則回歸套件會同時存在互相矛盾的兩張 ACTIVE 案例。
+    recommended_change: 不阻擋。請主 session 在核准落地時一併處理 TC-TXLOG-164 的退役。
+  coverage_summary:
+    requirements_total: 4
+    requirements_covered: 4
+    ac_total: 8
+    ac_covered: 8
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: false
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: true
+    no_entry_location_assumption: true
+    no_false_pass_on_blocked_frontend: false
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4T3RXDPC2ZYG88JY0P5RSQ3
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T3RXDPPRSN9EV41PYV7TY5
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T3RXDPWPQ58Q0PEXJ6PX0M
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T3RXDPWKDZ65991V3WB91Q
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T3RXDP0EQ4RYA31TEEYQZD
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T3RXDPBWQZM8F863C6F7GX
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4T3RXDPSNR9XZ0QV1WGYZ37
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4T3RXDPCNB6JPEN5S5AXVBE
+    verdict: issue
+  - draft_id: TC-DRAFT-01M4T3RXDQ8CJ1T68W6S9CZ2J1
+    verdict: issue
+history:
+- at: '2026-10-13T07:53:11Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
