@@ -1,0 +1,120 @@
+artifact_id: ART-TVR-01M4T9989QMSN73M8D9A0G4CRW
+artifact_type: TestValidationReport
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T3
+iteration: 3
+created_by: agent-test-validator
+created_at: '2026-10-13T09:25:47Z'
+status: VALID
+source:
+  type: TestCaseDraft
+  ids:
+  - ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+references:
+- entity_type: Artifact
+  id: ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+- entity_type: Artifact
+  id: ART-TDR-01M4T96S531YE1ZB53QQ3G0H65
+- entity_type: Artifact
+  id: ART-CIR-01M4T3D7CNHV1H890FSMM7AVEE
+- entity_type: Artifact
+  id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+requires_approval: null
+dispatch_packet_sha256: abc67b851f474c8043f6f5a901b56d8adf895eb0acd305be9baa5f0a35d03eb0
+payload:
+  result: PASS
+  testcase_draft_artifact_id: ART-TCD-01M4T96S53P9DQ7S5J93QFFA27
+  validated_against:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_model_artifact_id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+  issues: []
+  advisories:
+  - testcase_id: TC-DRAFT-01M4T96S53J8QG5A12M90Z1R12
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference: &id001
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 93 行）
+      quote: 取消後平台會告知機台這筆交易不存在，機台就會停止重試
+    evidence: 上一輪兩個 major 都已解決。(1) 步驟 3 取消成功後重新記錄 S1、C1、P1、F1（T_X 是否在待核實結果中）；步驟 5 只斷言 S2＝S1、C2＝C1、P2＝P1、F2＝F1；新增【斷言範圍】明寫不對已取消出金的核實狀態作任何斷言。(2)
+      重送改為 X 自己的回報：優先讓 M_X 的模擬器直接送出原本那筆未完成的回報，否則以 M_X 的身分與憑證、R_X 的原始欄位送出；送出前做逐欄對照表，只允許 RD 說明為每次必變的欄位（時間戳、序號）不同；取不到 R_X、無法確認請求對應到
+      M_X 與 X，或對照不符時記受阻、不得判通過；V 明寫只用來驗證工具，不作為 X 請求有效的依據。另外補了「取消後到重送完成之前，M_X 不得送新的出金請求」。
+    explanation: (1) 斷言只衡量遲到重送帶來的變化，不再依賴「已取消出金顯示什麼核實狀態」這個未定義事項；S1＝S0 仍由第 89 行（分數不異動）支持。(2) 重送請求在身分與內容上都等同 X 的真正完成回報，所以平台回覆「交易不存在」、X
+      維持已取消，可以歸因到第 93 行的行為，而不是請求對錯了機台；上輪的假通過途徑已消除。剩下一點風險：如果走 RD 工具路徑 (2)，平台可能有重放保護（例如時間戳或簽章），而以不同於「交易已取消」的理由拒收。但同一台機台無法另外保有一筆待確認出金來做正向對照（第
+      51 行），這已是 spec 可支持的最嚴謹作法；優先採用模擬器路徑 (1) 可以避開這個問題，所以不阻擋。
+    recommended_change: 不阻擋。可補一句：採路徑 (2) 時，請 RD 確認該請求格式在交易仍為待確認時會被受理（例如工具文件或 V 的同類請求），並記入執行紀錄。
+  - testcase_id: TC-DRAFT-01M4T96S53J8QG5A12M90Z1R12
+    issue_type: missing_traceability
+    severity: minor
+    violated_requirement: REQ-TXLOG-028
+    spec_reference: *id001
+    evidence: 第 10 張的 acceptance_criteria_ids 仍為空，只追溯到 REQ-028 Q02；推論依據是第 93、89、51 行；【範圍】仍明寫不斷言、也不製造「同時到達」（CLR-CASHFLOW-012）。
+    explanation: 推論有依據，沒有誤斷言同時到達，V 放在另一台機台，也不影響其他案例（與上一輪的判定相同）。只是沒有對應的 AC，追溯只到 REQ 層級。
+    recommended_change: 不阻擋。建議下次 RM 修訂時為「取消後遲到回報」補一條 AC。
+  - testcase_id: TC-DRAFT-01M4T96S52Z4DZPWG9PFP8815V
+    issue_type: other
+    severity: minor
+    violated_requirement: REQ-TXLOG-017
+    spec_reference:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    evidence: 其餘 9 張我已自行逐欄比對，除了 draft_id 之外與上一版（iteration 2）完全相同，上一輪對這 9 張的判定沿用。修訂仍只限 TC-TXLOG-148 v1 與 165 v1；TC-TXLOG-164
+      沒有修訂，但目前仍是 ACTIVE。
+    explanation: TC-TXLOG-164 的斷言與新的 AC-0281 案相反，落地時要依 CIR 退役。
+    recommended_change: 不阻擋。請主 session 在核准落地時一併處理 TC-TXLOG-164 的退役。
+  coverage_summary:
+    requirements_total: 4
+    requirements_covered: 4
+    ac_total: 8
+    ac_covered: 8
+    uncovered_accepted: []
+  checks:
+    no_spec_mismatch: true
+    no_requirement_mismatch: true
+    expected_result_valid: true
+    steps_executable: true
+    traceability_complete: true
+    no_critical_ambiguity: true
+    no_duplicates: true
+    edge_cases_reasonable: true
+    sources_within_dispatch_scope: true
+    revisions_limited_to_cir_affected: true
+    no_open_clr_dependency: true
+    no_entry_location_assumption: true
+    no_false_pass_on_blocked_frontend: true
+    no_simultaneous_arrival_assertion: true
+  per_testcase:
+  - draft_id: TC-DRAFT-01M4T96S52Z4DZPWG9PFP8815V
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S52K168CQ3VTEHAN012
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S52WBZKXS6YETBMC879
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S53HXNS1ZX6PVKH42YR
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S53JEHHF5AK194KCCR2
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S53J8QG5A12M90Z1R12
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S5300Q06JB6HEFPW2QT
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S53ZQDQY3MTXF66QWPJ
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S536VXC9V6F4K30SQFV
+    verdict: ok
+  - draft_id: TC-DRAFT-01M4T96S534CZ6ZW37GG132R65
+    verdict: ok
+history:
+- at: '2026-10-13T09:26:10Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
