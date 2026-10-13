@@ -1,0 +1,1459 @@
+artifact_id: ART-RM-01M4T37HR39TJAMW96XV78SM7N
+artifact_type: RequirementModel
+schema_version: '1.0'
+version: 1
+run_id: RUN-20261013-005
+task_id: T0
+iteration: 0
+created_by: agent-spec-analyst
+created_at: '2026-10-13T07:39:30Z'
+status: VALID
+source:
+  type: SpecVersion
+  ids:
+  - SPEC-TXLOG-001@0.1
+  - RequirementModel:ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+references:
+- entity_type: SpecVersion
+  id: SPEC-TXLOG-001
+  version: '0.1'
+- entity_type: Artifact
+  id: ART-SA-01M4T37HR3GRP3CW8N3GH2XR0K
+- entity_type: Artifact
+  id: ART-RM-01M2FCA0BEZ56SZGSE770SFW6H
+- entity_type: Clarification
+  id: CLR-TXLOG-001
+- entity_type: Clarification
+  id: CLR-TXLOG-002
+requires_approval: null
+payload:
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  requirements:
+  - requirement_id: REQ-TXLOG-001
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易紀錄查詢擴充機台視角，含未完成/取消/未成立交易
+    statement: 併入既有 4.1 交易紀錄查詢後，查詢範圍在機台交易時額外顯示尚未完成（待確認）、被取消、已逾時的交易；「未成立」的交易因不寫入紀錄，查詢結果不會出現（CLR-CASHFLOW-006，2026-09-23）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0011
+      given: 查詢範圍包含機台交易
+      when: 檢視查詢結果
+      then: 除已完成（已生效）的交易外，也列出待確認、已取消、已逾時的機台交易；未成立的交易不會出現
+    spec_reference: &id009
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明
+      quote: 既有的 4.1 只顯示已經生效的錢包異動；併入後，查詢範圍含機台交易時另外顯示尚未完成、被取消與被拒絕的交易
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §功能說明
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-002
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: constraint
+    title: 非機台交易的既有查詢行為不變
+    statement: 本包只擴充機台交易的查詢與呈現，非機台（線上會員）交易的既有查詢行為維持不變
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0021
+      given: 查詢結果包含線上會員的既有交易
+      when: 檢視這些交易的呈現方式
+      then: 與擴充前的既有 4.1 行為一致，不受本包影響
+    spec_reference: &id010
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §功能說明
+      quote: 非機台交易的既有行為不變
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §功能說明
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-003
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 頁面資料範圍跟隨站台切換選單，不另設場館篩選欄位
+    statement: 頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（一次僅顯示所選站台），不提供獨立的「場館」篩選欄位
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0031
+      given: 切換頁面標題下方的站台選單至站台 A
+      when: 檢視篩選器與查詢結果
+      then: 篩選器不存在「場館」欄位；查詢結果僅限站台 A 範圍內的交易
+    spec_reference: &id011
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 頁面資料範圍跟隨頁面標題下方的站台切換下拉選單（後台各頁皆有，一次僅顯示所選站台），不另設「場館」篩選欄位
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: constraint
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-004
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 機台帳號篩選支援輸入會員編號、逗號分隔查詢多筆
+    statement: 機台帳號篩選欄為文字輸入，輸入會員編號查詢，且支援以「,」分隔輸入多筆會員編號一次查詢
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0041
+      given: 以「,」分隔輸入兩個機台帳號的會員編號
+      when: 點擊搜尋
+      then: 查詢結果同時包含這兩個機台帳號的交易
+    spec_reference: &id012
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 機台帳號 | 文字輸入 | 輸入會員編號查詢；支援多筆，以「,」分隔
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-005
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易編號篩選可查詢特定一筆交易
+    statement: 交易編號篩選欄為文字輸入，用於查詢特定一筆交易
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0051
+      given: 輸入一筆已知的交易編號
+      when: 點擊搜尋
+      then: 查詢結果僅顯示該筆交易
+    spec_reference: &id013
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 交易編號 | 文字輸入 | 查詢特定一筆交易
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-006
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 場次編號可篩選同場次所有交易，線上帳號交易此欄顯示橫線
+    statement: 場次編號篩選欄（文字輸入或點擊列表中該欄位值）可查出同一場次內的所有交易；線上帳號沒有場次，其交易的場次編號欄一律顯示「—」
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0061
+      given: 輸入一個已知的場次編號
+      when: 點擊搜尋
+      then: 查詢結果為該場次內的所有交易
+    - ac_id: AC-TXLOG-0062
+      given: 在列表中點擊某筆機台交易的場次編號值
+      when: 檢視結果
+      then: 自動篩出同一場次的所有交易
+    - ac_id: AC-TXLOG-0063
+      given: 查詢結果包含線上會員的交易
+      when: 檢視其場次編號欄
+      then: 顯示「—」
+    spec_reference: &id014
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器 + §列表欄位
+      quote: 場次編號 | 文字輸入 | 查詢某個場次內的所有交易 ｜ 場次編號 | 該筆交易所屬的場次；可點擊篩出同場次的所有交易。線上帳號的交易無場次，統一顯示「—」（2026-09-03 定案）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-007
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 訂單編號篩選僅出金交易適用
+    statement: 訂單編號篩選欄用於查詢出金交易（即收據上印製的編號），其餘交易類型無訂單編號可查
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0071
+      given: 輸入一筆機台出金交易的訂單編號
+      when: 點擊搜尋
+      then: 查詢結果顯示該筆出金交易；其餘交易類型（開分/洗分/入金）的訂單編號欄一律顯示「—」
+    spec_reference: &id015
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器 + §列表欄位
+      quote: 訂單編號 | 文字輸入 | 出金專用，即收據上印製的編號 ｜ 訂單編號 | 出金交易顯示收據上的編號，其餘顯示「—」
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器 + §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-008
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易類型篩選為多選 chip，實際標籤為開分/入鈔/出鈔/洗分
+    statement: 交易類型篩選實際為多選 chip 選擇器（可同時勾選多種類型，非單選下拉），未勾選時預設顯示全部類型；可選項目的實際標籤為「開分」「入鈔」「出鈔」「洗分」，不含 spec.md 原文的「機台」字首（已由 Oscar
+      2026-09-14 依實際畫面截圖確認）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0081
+      given: 開啟交易類型篩選
+      when: 檢視可選項目
+      then: 顯示「開分」「入鈔」「出鈔」「洗分」四個項目，可同時複選多個，非單選
+    - ac_id: AC-TXLOG-0082
+      given: 勾選「出鈔」與「洗分」兩個交易類型
+      when: 點擊搜尋
+      then: 查詢結果同時包含這兩種類型的交易
+    spec_reference: &id016
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 交易類型 | 下拉選單 | 全部 / 機台開分 / 機台洗分 / 機台入金 / 機台出金（＊實際為多選 chip，標籤不含「機台」字首）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已由實際畫面截圖確認
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: Oscar 2026-09-14 截圖確認
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-009
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易狀態篩選依交易類型分兩組，選項為後端技術值
+    statement: 交易狀態篩選實際為多選 chip 選擇器，且可選項目依交易類型篩選而分為兩組技術值（非 spec.md 描述的單一 5 種分類文字）：交易類型為「開分」或「入鈔」時，可選「已逾時、錯誤、無、成功、等待中、已取消、無效」共
+      7 項；交易類型為「出鈔」或「洗分」時，可選「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項（已由 Oscar 2026-09-14 確認並補上原先遺漏的「已處理」）。這些技術值對應 spec.md 定義的 5 種概念分類（待確認/已完成/已取消/已逾時/未成立），大致對應關係（已由
+      Oscar 2026-09-14 依實際畫面截圖確認）：開分/入鈔＝等待中→待確認、成功→已完成、已取消→已取消、已逾時→已逾時、錯誤→未成立、無效→未成立（「無」的語意尚未確認）；出鈔/洗分＝待處理→待確認、等待中→待確認、已拒絕→未成立、失效→已取消、錯誤→未成立、已處理→已完成
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0091
+      given: 交易類型篩選勾選「開分」或「入鈔」
+      when: 開啟交易狀態篩選
+      then: 可選項目為「已逾時、錯誤、無、成功、等待中、已取消、無效」共 7 項
+    - ac_id: AC-TXLOG-0092
+      given: 交易類型篩選勾選「出鈔」或「洗分」
+      when: 開啟交易狀態篩選
+      then: 可選項目為「失效、待處理、已拒絕、等待中、錯誤、已處理」共 6 項
+    spec_reference: &id017
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 交易狀態 | 下拉選單 | 全部 / 待確認 / 已完成 / 已取消 / 已逾時 / 未成立（＊實際依交易類型分兩組技術值，非此單一清單）
+    ambiguity:
+      level: minor
+      description: 開分/入鈔類型的交易狀態選項中「無」這個技術值對應 spec.md 哪個概念分類尚未確認
+      options:
+      - 對應「未成立」（與「錯誤」「無效」同類）
+      - 對應其他尚未定義的情況
+      - 純粹的 UI 佔位/邊界情況，實務上不會出現
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已由實際畫面截圖確認
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: Oscar 2026-09-14 截圖確認
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-010
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 核實狀態篩選僅對機台洗分與機台出金有意義
+    statement: 核實狀態篩選實際只有 3 個可選值：「待核實」「已核實」「已作廢」，不含 spec.md 原文的「不適用」（「不適用」僅為列表欄位的顯示值，非篩選器的可選項目）；此篩選僅對機台洗分與機台出金兩種交易類型有意義（已由
+      Oscar 2026-09-14 依實際畫面截圖確認）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0101
+      given: 開啟核實狀態篩選
+      when: 檢視可選項目
+      then: 僅有「待核實」「已核實」「已作廢」三個可選值，不含「不適用」
+    - ac_id: AC-TXLOG-0102
+      given: 篩選核實狀態為「待核實」並搜尋
+      when: 檢視結果
+      then: 僅顯示核實狀態為待核實的機台洗分或機台出金交易
+    spec_reference: &id018
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器（實際畫面與 spec.md 原文不同，見 Oscar 2026-09-14 截圖確認）
+      quote: 核實狀態 | 下拉選單 | 全部 / 待核實 / 已核實 / 已作廢 / 不適用（＊實際篩選器無「不適用」選項）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已由實際畫面截圖確認
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: Oscar 2026-09-14 截圖確認
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-011
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易時間與金額範圍篩選
+    statement: 交易時間篩選為日期範圍，依交易發生時間篩選；金額篩選為 min～max 範圍輸入
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0111
+      given: 設定交易時間範圍並搜尋
+      when: 檢視結果
+      then: 僅顯示交易發生時間落在該範圍內的交易
+    - ac_id: AC-TXLOG-0112
+      given: 設定金額範圍（min～max）並搜尋
+      when: 檢視結果
+      then: 僅顯示金額落在該範圍內的交易
+    spec_reference: &id019
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 交易時間 | 日期範圍 | 依交易發生時間篩選 ｜ 金額 | 範圍輸入（min ～ max） | —
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-012
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 搜尋與清除按鈕行為
+    statement: 設定篩選條件後點擊「搜尋」執行查詢；點擊「清除」重置所有篩選條件
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0121
+      given: 設定多個篩選條件後點擊清除
+      when: 檢視篩選器與查詢結果
+      then: 所有篩選條件重置為預設值，查詢結果回到未篩選狀態
+    spec_reference: &id020
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §篩選器
+      quote: 設定後點擊「搜尋」執行，點擊「清除」重置所有條件
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §篩選器
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-013
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易狀態「待確認」定義
+    statement: 待確認狀態代表交易已受理但尚未收到機台的完成回報，分數尚未異動
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0131
+      given: 一筆交易處於待確認狀態
+      when: 檢視其分數異動情形
+      then: 分數尚未異動
+    spec_reference: &id021
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 待確認 | 交易已受理，但尚未收到機台的完成回報；分數尚未異動
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §交易狀態
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-014
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易狀態「已完成」與「已取消」定義
+    statement: 已完成代表交易完成、分數已異動；已取消代表出金交易被新的出金請求或櫃檯人工出金取代而作廢，分數未異動
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0141
+      given: 一筆交易處於已完成狀態
+      when: 檢視其分數異動情形
+      then: 分數已異動
+    - ac_id: AC-TXLOG-0142
+      given: 一筆出金交易被新的出金請求或櫃檯人工出金取代
+      when: 檢視其狀態與分數
+      then: 狀態顯示已取消，分數未異動
+    spec_reference: &id022
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已完成 | 交易完成，分數已異動 ｜ 已取消 | 出金交易被新的出金請求或櫃檯人工出金取代而作廢；分數未異動
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §交易狀態
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-015
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易狀態「已逾時」僅入金會出現
+    statement: 已逾時狀態僅入金交易會出現：超過 24 小時仍未收到機台回報而自動關閉，分數未異動；出金不設逾時
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0151
+      given: 一筆入金交易超過 24 小時未收到機台回報
+      when: 檢視其狀態
+      then: 自動轉為已逾時，分數未異動
+    - ac_id: AC-TXLOG-0152
+      given: 篩選交易狀態為「已逾時」
+      when: 檢視結果
+      then: 只會出現入金交易，不會出現出金交易
+    spec_reference: &id023
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 已逾時 | 僅入金會出現：超過 24 小時仍未收到機台回報而自動關閉；分數未異動。出金不設逾時，見下方說明
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: state_change
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §交易狀態
+        quote: ''
+    states:
+    - from: 待確認
+      to: 已逾時
+      trigger: 入金超過 24 小時未回報
+    history: []
+  - requirement_id: REQ-TXLOG-016
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易狀態「未成立」不會有任何紀錄可查（不只餘額不足）
+    statement: 未成立狀態代表平台拒絕了這筆請求，分數未異動；所有未成立原因（含額度上限、資料格式錯誤、機台停用/場館未開通、憑證失效、餘額不足）皆不寫入交易紀錄，故「未成立」狀態實質上不會出現在交易紀錄查詢中（CLR-CASHFLOW-006，2026-09-23，擴大原僅排除餘額不足的規則）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0161
+      given: 一筆交易因額度上限等任一未成立原因被平台拒絕
+      when: 檢視其狀態
+      then: 查無此筆交易，不會以未成立狀態出現在列表中（與 AC-TXLOG-0162 餘額不足同一待遇）
+    - ac_id: AC-TXLOG-0162
+      given: 一筆洗分或出金因餘額不足被拒絕
+      when: 檢視交易紀錄
+      then: 查無此筆交易，不會以未成立狀態出現在列表中
+    spec_reference: &id024
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態
+      quote: 未成立 | 平台拒絕了這筆請求；分數未異動，原因見「未成立原因」欄（餘額不足不寫入紀錄，故本狀態不含餘額不足）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: rejection
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，且與 SPEC-CASHFLOW-001 的餘額不足不寫入紀錄規則一致
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §交易狀態
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-017
+    version: 2
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 入金與出金的待確認收斂機制不同
+    statement: 入金的待確認超過 24 小時自動轉為「已逾時」；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由管理員於本頁手動取消（REQ-TXLOG-028）為止（收據永久有效，對應的交易不先於收據關閉）。依
+      CLR-TXLOG-002（2026-10-12）恢復原文的「管理員手動取消」路徑；原依 CLR-TXLOG-001 改寫的「轉介至洗分出金核實頁人工處理」不是 spec 定義的收斂途徑，已移除。
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0171
+      given: 一筆機台出金交易處於待確認狀態，機台從未補送完成回報
+      when: 持續檢視其狀態（超過 24 小時）
+      then: 不會自動轉為已逾時，持續保留為待確認，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由管理員於本頁手動取消（REQ-TXLOG-028）為止
+    spec_reference: &id025
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §交易狀態（第 57 行）；§相關業務規則（第 122 行）
+      quote: 出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    behavior_kind: constraint
+    history: []
+    supersedes_version: 1
+    created_by: agent-spec-analyst
+    created_at: '2026-10-13T07:39:30Z'
+    states:
+    - from: 待確認
+      to: 已逾時
+      trigger: 機台入金超過 24 小時未收到機台回報
+      allowed: true
+    - from: 待確認
+      to: 已逾時
+      trigger: 機台出金超過 24 小時未收到機台回報（出金不設逾時）
+      allowed: false
+    - from: 待確認
+      to: 已取消
+      trigger: 機台出金被新的出金取代、櫃檯人工出金連動取消，或管理員手動取消
+      allowed: true
+    related_requirement_ids:
+    - REQ-TXLOG-015
+    - REQ-TXLOG-028
+    source_refs:
+    - &id001
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §交易狀態（第 57 行）
+      quote: 入金與出金的收斂方式不同：入金超過 24 小時自動轉「已逾時」；出金不設逾時，待確認會一直保留，直到機台補完回報、被新的出金取代、櫃檯人工出金連動取消，或由 Admin 手動取消為止
+    - &id002
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §相關業務規則（交易保留期限）（第 122 行）
+      quote: 入金：尚未完成的交易超過 24 小時自動轉為「已逾時」。出金：不設逾時，待確認保留至完成、被新出金取代、人工出金連動取消或 Admin 手動取消為止
+    decision_points:
+    - question_id: Q01
+      topic: state_transition
+      subject: txlog.arcade.pending_convergence
+      role_scope:
+      - '*'
+      params: {}
+      level: none
+      basis: defined_in_target
+      known_rules:
+      - *id001
+      - *id002
+      - type: spec
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        location: §交易狀態（第 52 行）
+        quote: 僅入金會出現：超過 24 小時仍未收到機台回報而自動關閉；分數未異動。出金不設逾時
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+  - requirement_id: REQ-TXLOG-018
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 列表底部依交易類型分列顯示金額總計
+    statement: 列表底部顯示當前篩選結果的金額總計，依交易類型分列呈現
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0181
+      given: 篩選出一批包含多種交易類型的結果
+      when: 檢視列表底部
+      then: 顯示依交易類型分列的金額總計，且與該類型交易的金額加總一致
+    spec_reference: &id026
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 列表底部顯示當前篩選結果的金額總計（依交易類型分列）
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-019
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 機台帳號（來源機台）欄位規則
+    statement: 機台帳號欄顯示會員編號，可點擊進入會員詳細資料頁；非機台交易顯示「—」；場館名稱不顯示於此欄或其他欄位（已由站台切換限定）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0191
+      given: 點擊一筆機台交易的機台帳號欄位值
+      when: 檢視結果
+      then: 導向該機台帳號的會員詳細資料頁
+    - ac_id: AC-TXLOG-0192
+      given: 查詢結果包含線上會員的交易
+      when: 檢視其機台帳號欄
+      then: 顯示「—」
+    - ac_id: AC-TXLOG-0193
+      given: 檢視列表任一欄位
+      when: 確認是否顯示場館名稱
+      then: 列表中不存在場館名稱欄位或顯示
+    spec_reference: &id027
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 機台帳號（來源機台） | 會員編號，可點擊進入會員詳細資料頁；非機台交易顯示「—」。場館名稱不顯示——場館已由頁面標題下方的站台切換限定，每列相同、屬冗餘資訊
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-020
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 請求金額與實際金額欄位規則
+    statement: 請求金額為機台送出的金額（出金則為平台核算的可出金額）；實際金額為實際異動的金額，洗分因門檻計算可能小於請求金額，出金一律為全額清空餘額，尚未完成者實際金額顯示「—」
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0201
+      given: 一筆洗分交易門檻計算後實際扣款小於機台請求的金額
+      when: 檢視請求金額與實際金額欄
+      then: 請求金額為機台送出值，實際金額為門檻計算後的較小值
+    - ac_id: AC-TXLOG-0202
+      given: 一筆出金交易
+      when: 檢視請求金額與實際金額欄
+      then: 兩者皆為當下全部餘額（全額清空）
+    - ac_id: AC-TXLOG-0203
+      given: 一筆交易尚未完成（待確認）
+      when: 檢視其實際金額欄
+      then: 顯示「—」
+    spec_reference: &id028
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 請求金額 | 機台送出的金額；出金則為平台核算的可出金額 ｜ 實際金額 | 實際異動的金額；洗分因門檻計算可能小於請求金額（門檻採機台隨請求送上的值，2026-09-01 定案），尚未完成者顯示「—」；出金一律為全額清空餘額
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接關係到現場核帳正確性
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-021
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 核實狀態欄位規則
+    statement: 核實狀態欄僅機台洗分與機台出金顯示值（待核實／已核實／已作廢），其餘交易類型顯示「—」；待核實的洗分以醒目色標提示，待核實的出金屬正常不提示；此欄唯讀，由「洗分出金核實」頁的操作回寫
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0211
+      given: 檢視一筆機台開分交易的核實狀態欄
+      when: 確認顯示值
+      then: 顯示「—」
+    - ac_id: AC-TXLOG-0212
+      given: 檢視一筆待核實的機台洗分交易
+      when: 確認呈現方式
+      then: 以醒目色標提示
+    - ac_id: AC-TXLOG-0213
+      given: 檢視一筆待核實的機台出金交易
+      when: 確認呈現方式
+      then: 正常顯示，不特別提示
+    - ac_id: AC-TXLOG-0214
+      given: 嘗試在本頁直接修改核實狀態
+      when: 檢視是否可操作
+      then: 本頁不提供修改核實狀態的操作，此欄純顯示
+    spec_reference: &id029
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實狀態 | 洗分與出金顯示「待核實／已核實／已作廢」，其餘交易類型顯示「—」；待核實的洗分以醒目色標提示（待核實的出金屬正常，不提示）。狀態由「洗分出金核實」頁的操作回寫，本頁唯讀
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-022
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 核實人員／時間欄位規則
+    statement: 核實人員／時間欄記錄於「洗分出金核實」頁執行核實的後台帳號與時間（UTC+0），待核實時顯示「—」
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0221
+      given: 一筆交易已於核實頁被核實
+      when: 檢視此欄
+      then: 顯示執行核實的後台帳號與時間（UTC+0）
+    - ac_id: AC-TXLOG-0222
+      given: 一筆交易仍待核實
+      when: 檢視此欄
+      then: 顯示「—」
+    spec_reference: &id030
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 核實人員／時間 | 於「洗分出金核實」頁執行核實的後台帳號與時間（UTC+0）；待核實顯示「—」
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-023
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 未成立原因欄位僅未成立狀態顯示
+    statement: 未成立原因欄僅在交易狀態為「未成立」時顯示內容，其餘狀態不顯示；內容依 SPEC-CASHFLOW-001 定義的對照表。【2026-09-23 補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證。【2026-09-23
+      補充】因所有未成立原因皆不寫入交易紀錄（CLR-CASHFLOW-006），「未成立」狀態實務上不會出現在查詢結果中，本欄位的正向顯示情境（AC-TXLOG-0231）無法以黑箱測試建立前置條件，僅負向分支（AC-TXLOG-0232）可驗證
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0231
+      given: 一筆交易狀態為未成立
+      when: 檢視未成立原因欄
+      then: 顯示對應的拒絕原因文字
+    - ac_id: AC-TXLOG-0232
+      given: 一筆交易狀態非未成立（如已完成）
+      when: 檢視未成立原因欄
+      then: 不顯示內容（或顯示「—」）
+    spec_reference: &id031
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 未成立原因 | 僅「未成立」狀態顯示，內容見「交易不成立的原因」對照表（定義於開發包③／正本）
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-024
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 交易時間與完成時間欄位規則
+    statement: 交易時間與完成時間皆以 UTC+0 呈現；完成時間於交易尚未完成時顯示「—」
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0241
+      given: 一筆交易已完成
+      when: 檢視完成時間欄
+      then: 顯示以 UTC+0 表示的完成時間
+    - ac_id: AC-TXLOG-0242
+      given: 一筆交易尚未完成（待確認）
+      when: 檢視完成時間欄
+      then: 顯示「—」
+    spec_reference: &id032
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位
+      quote: 交易時間 | 交易發生時間（UTC+0） ｜ 完成時間 | 交易完成時間（UTC+0）；尚未完成者顯示「—」
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-025
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 重送次數欄位目前固定顯示橫線，不顯示實際次數
+    statement: spec.md v0.1 描述「重送次數欄記錄機台重複回報同一筆交易的次數」為現行產品尚未實作的敘述：目前此欄位不論是否曾被重複回報，一律固定顯示「—」，不會顯示實際次數（已由 Oscar 與 PM／RD 於 2026-09-14
+      共同確認）。機台重複回報同一筆交易時分數只異動一次、不會重複加減，此底層冪等性規則仍然成立且已由 SPEC-CASHFLOW-001 驗證，僅本欄位的「顯示次數」呈現尚未實作
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0251
+      given: 一筆交易曾被機台重複回報完成
+      when: 檢視該筆交易的重送次數欄
+      then: 欄位固定顯示「—」，不顯示實際重複次數（分數本身仍只異動一次，不受此欄位顯示問題影響）
+    - ac_id: AC-TXLOG-0252
+      given: 一筆交易從未被重複回報
+      when: 檢視重送次數欄
+      then: 同樣顯示「—」
+    spec_reference: &id033
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位（此節「重送次數」描述已由 Oscar／PM／RD 於 2026-09-14 確認為現行產品尚未實作，非目前行為）
+      quote: 重送次數 | 機台重複回報同一筆交易的次數；為 0 時顯示「—」（＊目前不論次數多少，欄位一律固定顯示「—」，見 Oscar 2026-09-14 與 PM/RD 確認）
+    ambiguity: null
+    risk: high
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義，直接對應 SPEC-CASHFLOW-001 的 end-cashin/end-cashout 冪等性機制
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §相關業務規則
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-026
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 來源欄位目前固定顯示橫線，不顯示實際位置
+    statement: spec.md v0.1 描述「來源欄記錄交易發生的位置，空值時顯示大廳」為現行產品尚未實作的敘述：目前此欄位一律固定顯示「—」，不論交易實際發生位置為何、也不會顯示「大廳」（已由 Oscar 與 PM／RD 於
+      2026-09-14 共同確認）
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0261
+      given: 檢視任一筆交易
+      when: 檢視來源欄
+      then: 固定顯示「—」，不顯示「大廳」或其他實際位置值
+    spec_reference: &id034
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §列表欄位（此節「來源」描述已由 Oscar／PM／RD 於 2026-09-14 確認為現行產品尚未實作，非目前行為）
+      quote: 來源 | 交易發生的位置；空值顯示「大廳」（＊目前一律固定顯示「—」，見 Oscar 2026-09-14 與 PM/RD 確認）
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §列表欄位
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-027
+    version: 1
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 查看明細操作區分摘要與技術欄位
+    statement: 點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄；面板下半部為技術欄位供開發團隊排查用，站務人員以上半部的摘要為準
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0271
+      given: 點擊列表中任一筆交易
+      when: 檢視開啟的右側面板
+      then: 顯示該筆交易的完整往來紀錄，區分上半部摘要區塊與下半部技術欄位區塊
+    spec_reference: &id035
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作
+      quote: 查看明細：點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄。⚠️ 面板下半部為技術欄位，供開發團隊排查用，站務人員以上半部的摘要為準即可
+    ambiguity: null
+    risk: medium
+    status: DRAFT
+    behavior_kind: success
+    rejection_contract:
+      defined: true
+      description: 規則已明確定義
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §操作
+        quote: ''
+    history: []
+  - requirement_id: REQ-TXLOG-028
+    version: 2
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 管理員可手動取消待確認的機台出金（二次確認後標已取消、分數不異動）
+    statement: 交易紀錄查詢（4.1 機台視角）對交易狀態為「待確認」的機台出金提供「手動取消」操作：僅管理員可執行；執行時須經二次確認，確認後該筆交易標記為「已取消」，分數不異動；用途為清理機台故障造成的卡單。機台入金沒有手動取消（待確認入金依
+      24 小時逾時轉「已逾時」收斂），限制條件見 REQ-TXLOG-029。依 CLR-TXLOG-002（2026-10-12，角色經 RD 確認）落地，推翻 2026-09-14 CLR-TXLOG-001 與 2026-09-15
+      CLR-CASHFLOW-004「本頁不提供手動取消」的結論；後端已完成、前端尚未開發。
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0281
+      given: 以管理員身分登入，查詢結果中有一筆交易狀態為「待確認」的機台出金
+      when: 檢視該筆交易可用的操作
+      then: 提供「手動取消」操作（入口位置 spec 未定義，見 REQ-TXLOG-028 Q01 detail_gaps）
+    - ac_id: AC-TXLOG-0282
+      given: 管理員對一筆待確認的機台出金執行手動取消
+      when: 系統要求二次確認，管理員完成確認
+      then: 該筆交易狀態標記為「已取消」，機台帳號的分數（餘額）不異動
+    - ac_id: AC-TXLOG-0283
+      given: 管理員對一筆待確認的機台出金執行手動取消
+      when: 點擊手動取消、尚未完成二次確認
+      then: 系統先要求二次確認；未完成確認前，該筆交易不會被標記為「已取消」
+    spec_reference: &id036
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    ambiguity:
+      level: none
+      raised_level: major
+      description: spec 第 89 行定義手動取消（未限交易類型），CLR-TXLOG-001 曾裁定本頁不提供手動取消，兩者衝突；已由 CLR-TXLOG-002 rev 0 裁決為提供、限待確認機台出金、限管理員（決策點
+        Q01 已解決）
+    risk: high
+    status: DRAFT
+    behavior_kind: state_change
+    history: []
+    supersedes_version: 1
+    created_by: agent-spec-analyst
+    created_at: '2026-10-13T07:39:30Z'
+    states:
+    - from: 待確認
+      to: 已取消
+      trigger: 管理員對待確認機台出金執行手動取消並完成二次確認（分數不異動）
+      allowed: true
+    related_requirement_ids:
+    - REQ-TXLOG-029
+    - REQ-TXLOG-017
+    - REQ-TXLOG-014
+    - REQ-TXLOG-030
+    source_refs:
+    - &id003
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動。用於機台故障造成的卡單清理
+    - *id001
+    - *id002
+    decision_points:
+    - question_id: Q01
+      topic: state_transition
+      subject: txlog.arcade.pending_cashout_admin_cancel
+      role_scope:
+      - '*'
+      params: {}
+      level: major
+      basis: conflict
+      known_rules:
+      - *id003
+      - *id001
+      - *id002
+      conflict_sides:
+      - *id003
+      - type: clarification
+        clarification_id: CLR-TXLOG-001
+        answer_rev: 0
+        answer_sha256: 7c3aba8ff95bacdc8ca39e2d6445b3ef8f2231a47dede487cd6a45bba147490a
+        quote: 交易紀錄查詢頁（本包）實際上並不提供『手動取消』這個操作，spec.md §操作 描述的『手動取消：僅 Admin 可對待確認狀態的交易執行』這段是錯誤敘述，非現行產品行為
+      conflict_note: 目標 spec 第 89 行（及第 57、99、109、122 行）定義本頁提供手動取消（僅 Admin、僅待確認、二次確認後標已取消、分數不異動，未限交易類型）；CLR-TXLOG-001 rev 0（2026-09-14）裁定該段為錯誤敘述、本頁不提供手動取消。CLR-TXLOG-002
+        rev 0（2026-10-12）裁決：提供，限交易狀態「待確認」的機台出金、限管理員，機台入金沒有手動取消，並明示 CLR-TXLOG-001 的結論不再適用。裁決不完全採用任一側（較 spec 原文多限定機台出金），adopted_side_index
+        為 null。
+      resolution:
+        source:
+          type: clarification
+          clarification_id: CLR-TXLOG-002
+          answer_rev: 0
+          answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+          quote: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+            24 小時逾時轉「已逾時」收斂）
+        decided_at: '2026-10-12T12:58:06Z'
+        adopted_side_index: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+      detail_gaps:
+      - 手動取消的入口位置未定義（列表操作欄或右側明細面板）；前端尚未開發
+      - 二次確認對話框的文案與按鈕未定義
+      - 手動取消是否記錄執行者與時間、是否寫入後台操作紀錄未定義
+      - 手動取消後該筆交易的完成時間欄、實際金額欄如何顯示未定義（第 74、80 行僅定義「尚未完成者顯示「—」」）
+      prior_clarifications:
+      - CLR-TXLOG-001
+    - question_id: Q02
+      topic: state_transition
+      subject: txlog.arcade.pending_cashout_admin_cancel.result
+      role_scope:
+      - '*'
+      params: {}
+      level: none
+      basis: defined_in_target
+      known_rules:
+      - *id003
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+    doc_issues:
+    - kind: missing_definition
+      location:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        line: 51
+      note: §交易狀態「已取消」的說明只列「出金交易被新的出金請求或櫃檯人工出金取代而作廢」，未包含管理員手動取消（第 89 行）這個來源；建議補上「或由管理員手動取消」
+      status: open
+  - requirement_id: REQ-TXLOG-029
+    version: 2
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: functional
+    title: 手動取消限管理員、限待確認的機台出金：非管理員、非待確認、機台入金皆不可手動取消
+    statement: 手動取消僅限管理員對交易狀態為「待確認」的機台出金執行；非管理員帳號、交易狀態不是「待確認」的交易（如已完成、已取消）、以及機台入金（含待確認的入金）都不能手動取消，這些情況下交易狀態與分數皆不異動。依 CLR-TXLOG-002（2026-10-12）恢復為有效需求（原依
+      CLR-TXLOG-001 僅供追溯的註記不再適用）。spec 未定義不符合條件時系統如何阻擋（不顯示入口、顯示但停用、或送出後由後端拒絕並提示），列為決策點 Q04 待確認。
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0291
+      given: 以非管理員帳號（如一般站長）登入，查詢結果中有一筆待確認的機台出金
+      when: 嘗試對該筆交易執行手動取消
+      then: 無法完成手動取消，該筆交易維持「待確認」、分數不異動（阻擋方式未定義，見 Q04）
+    - ac_id: AC-TXLOG-0292
+      given: 以管理員身分登入，查詢結果中有一筆交易狀態不是「待確認」（如已完成、已取消）的機台出金
+      when: 嘗試對該筆交易執行手動取消
+      then: 無法完成手動取消，該筆交易的狀態與分數不變（阻擋方式未定義，見 Q04）
+    - ac_id: AC-TXLOG-0293
+      given: 以管理員身分登入，查詢結果中有一筆交易狀態為「待確認」的機台入金
+      when: 嘗試對該筆交易執行手動取消
+      then: 無法手動取消，該筆入金維持「待確認」直到逾時（超過 24 小時自動轉「已逾時」）或機台補完回報（阻擋方式未定義，見 Q04）
+    spec_reference: &id037
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 89 行）；§交易狀態（第 51、57 行）；§相關業務規則（第 122 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    ambiguity:
+      level: major
+      raised_level: major
+      description: 不符合手動取消條件（非管理員、非待確認、機台入金）時系統的阻擋方式 spec 未定義（決策點 Q04）
+      options:
+      - 不顯示手動取消入口
+      - 顯示但停用（disabled），無法點擊
+      - 允許點擊，送出後由後端拒絕並顯示錯誤訊息
+    risk: high
+    status: DRAFT
+    behavior_kind: rejection
+    history: []
+    supersedes_version: 1
+    created_by: agent-spec-analyst
+    created_at: '2026-10-13T07:39:30Z'
+    rejection_contract:
+      defined: false
+      description: spec 只定義誰可以執行（僅 Admin）與對什麼狀態執行（待確認），CLR-TXLOG-002 補充僅限機台出金；未定義不符合條件時系統的阻擋方式（入口隱藏／停用／送出後拒絕）與提示文案
+      spec_reference:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        location: §操作（第 89 行）
+        quote: 僅 Admin 可對「待確認」狀態的交易執行
+    related_requirement_ids:
+    - REQ-TXLOG-028
+    - REQ-TXLOG-015
+    - REQ-TXLOG-017
+    source_refs:
+    - &id004
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 89 行）
+      quote: 僅 Admin 可對「待確認」狀態的交易執行
+    - &id006
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §交易狀態（第 51 行）
+      quote: 出金交易被新的出金請求或櫃檯人工出金取代而作廢；分數未異動
+    - *id001
+    - *id002
+    decision_points:
+    - question_id: Q01
+      topic: permission
+      subject: txlog.arcade.manual_cancel.allowed_role
+      role_scope:
+      - '*'
+      params: {}
+      level: none
+      basis: defined_in_target
+      known_rules:
+      - *id004
+      - &id005
+        type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+        quote: 僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+    - question_id: Q02
+      topic: state_transition
+      subject: txlog.arcade.manual_cancel.allowed_status
+      role_scope:
+      - '*'
+      params: {}
+      level: none
+      basis: defined_in_target
+      known_rules:
+      - *id004
+      - *id005
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+    - question_id: Q03
+      topic: data_scope
+      subject: txlog.arcade.manual_cancel.allowed_tx_type
+      role_scope:
+      - '*'
+      params: {}
+      level: minor
+      basis: defined_in_target
+      known_rules:
+      - *id006
+      - *id001
+      - *id002
+      - type: clarification
+        clarification_id: CLR-TXLOG-002
+        answer_rev: 0
+        answer_sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+        quote: 機台入金沒有手動取消（待確認入金依 24 小時逾時轉「已逾時」收斂）
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+      detail_gaps:
+      - 第 89 行原文未限定交易類型；僅由第 51 行（已取消只定義於出金）、第 57／122 行（手動取消只列在出金的收斂途徑，入金以逾時收斂）推得限機台出金，並經 CLR-TXLOG-002 確認（CLR-TXLOG-002 的答案範圍為
+        REQ-TXLOG-028，未建立對本需求的 applicability，故此處不作為決定性依據）
+    - question_id: Q04
+      topic: rejection_response
+      subject: txlog.arcade.manual_cancel.rejection
+      role_scope:
+      - '*'
+      params: {}
+      level: major
+      basis: undefined
+      known_rules:
+      - *id004
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+      decision_needed: 不符合手動取消條件時（非管理員帳號、交易狀態不是「待確認」、機台入金），系統如何阻擋：不顯示手動取消入口、顯示但停用，或允許送出後由後端拒絕並提示錯誤？三種情況是否一致？若由後端拒絕，提示文案為何？
+      detail_gaps:
+      - 非管理員：入口是否可見
+      - 非待確認狀態的機台出金：入口是否可見或停用
+      - 機台入金：入口是否可見或停用
+      - 後端已完成、前端未開發：後端對不符合條件的請求回應（錯誤碼／訊息）未定義
+      - 二次確認期間交易狀態已改變（如機台補完回報）時的處理未定義
+      prior_clarifications:
+      - CLR-TXLOG-001
+    doc_issues:
+    - kind: wording_conflict
+      location:
+        spec_id: SPEC-TXLOG-001
+        spec_version: '0.1'
+        content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        line: 89
+      note: 第 89 行「僅 Admin 可對「待確認」狀態的交易執行」與第 99 行「該待確認會永遠留著，必須由 Admin 手動取消清理」未限定交易類型，與第 57、122 行（手動取消只列在出金的收斂途徑）及 CLR-TXLOG-002（僅機台出金，入金沒有手動取消）不一致；建議第
+        89、99 行補上「機台出金」
+      status: open
+  - requirement_id: REQ-TXLOG-030
+    version: 2
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    type: constraint
+    title: 本頁不提供核實操作
+    statement: 本頁不提供核實操作，洗分與出金的核實一律於帳務管理「洗分出金核實」頁執行，本頁的核實狀態欄位僅供查帳。本頁提供的操作為查看明細，以及管理員對待確認機台出金的手動取消（REQ-TXLOG-028）。
+    acceptance_criteria:
+    - ac_id: AC-TXLOG-0301
+      given: 檢視本頁（交易紀錄查詢）的所有可用操作
+      when: 確認是否有核實相關操作
+      then: 本頁不存在任何核實操作；可用操作僅有查看明細，以及管理員對待確認機台出金的手動取消（REQ-TXLOG-028）
+    spec_reference: &id038
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      location: §操作（第 91 行）；§對既有章節的影響（第 109 行）
+      quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+    ambiguity: null
+    risk: low
+    status: DRAFT
+    behavior_kind: success
+    history: []
+    supersedes_version: 1
+    created_by: agent-spec-analyst
+    created_at: '2026-10-13T07:39:30Z'
+    related_requirement_ids:
+    - REQ-TXLOG-021
+    - REQ-TXLOG-027
+    - REQ-TXLOG-028
+    source_refs:
+    - &id007
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 91 行）
+      quote: 本頁不提供核實操作——洗分與出金的核實一律於 帳務管理 \>「洗分出金核實」執行（見該小節），本頁的核實狀態欄位僅供查帳
+    - &id008
+      type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §對既有章節的影響（第 109 行）
+      quote: 並提供明細查看與手動取消操作（核實一律於帳務管理「洗分出金核實」執行，本頁的核實狀態欄位唯讀）
+    - type: spec
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+      location: §操作（第 88 行）
+      quote: 點擊任一列開啟右側面板，顯示該筆交易的完整往來紀錄
+    decision_points:
+    - question_id: Q01
+      topic: data_scope
+      subject: txlog.arcade.page_operations
+      role_scope:
+      - '*'
+      params: {}
+      level: none
+      basis: defined_in_target
+      known_rules:
+      - *id007
+      - *id008
+      resolution: null
+      coverage:
+        references_status: undeclared
+        consulted:
+        - spec_id: SPEC-TXLOG-001
+          spec_version: '0.1'
+          content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+        unconsulted_normative: []
+        missing_sources: []
+        waivers: []
+  traceability:
+  - requirement_id: REQ-TXLOG-001
+    spec_reference: *id009
+  - requirement_id: REQ-TXLOG-002
+    spec_reference: *id010
+  - requirement_id: REQ-TXLOG-003
+    spec_reference: *id011
+  - requirement_id: REQ-TXLOG-004
+    spec_reference: *id012
+  - requirement_id: REQ-TXLOG-005
+    spec_reference: *id013
+  - requirement_id: REQ-TXLOG-006
+    spec_reference: *id014
+  - requirement_id: REQ-TXLOG-007
+    spec_reference: *id015
+  - requirement_id: REQ-TXLOG-008
+    spec_reference: *id016
+  - requirement_id: REQ-TXLOG-009
+    spec_reference: *id017
+  - requirement_id: REQ-TXLOG-010
+    spec_reference: *id018
+  - requirement_id: REQ-TXLOG-011
+    spec_reference: *id019
+  - requirement_id: REQ-TXLOG-012
+    spec_reference: *id020
+  - requirement_id: REQ-TXLOG-013
+    spec_reference: *id021
+  - requirement_id: REQ-TXLOG-014
+    spec_reference: *id022
+  - requirement_id: REQ-TXLOG-015
+    spec_reference: *id023
+  - requirement_id: REQ-TXLOG-016
+    spec_reference: *id024
+  - requirement_id: REQ-TXLOG-017
+    spec_reference: *id025
+  - requirement_id: REQ-TXLOG-018
+    spec_reference: *id026
+  - requirement_id: REQ-TXLOG-019
+    spec_reference: *id027
+  - requirement_id: REQ-TXLOG-020
+    spec_reference: *id028
+  - requirement_id: REQ-TXLOG-021
+    spec_reference: *id029
+  - requirement_id: REQ-TXLOG-022
+    spec_reference: *id030
+  - requirement_id: REQ-TXLOG-023
+    spec_reference: *id031
+  - requirement_id: REQ-TXLOG-024
+    spec_reference: *id032
+  - requirement_id: REQ-TXLOG-025
+    spec_reference: *id033
+  - requirement_id: REQ-TXLOG-026
+    spec_reference: *id034
+  - requirement_id: REQ-TXLOG-027
+    spec_reference: *id035
+  - requirement_id: REQ-TXLOG-028
+    spec_reference: *id036
+  - requirement_id: REQ-TXLOG-029
+    spec_reference: *id037
+  - requirement_id: REQ-TXLOG-030
+    spec_reference: *id038
+dispatch_packet_sha256: 3f371db4582e407b5bc1fb734830df83e06f053847e115bff7fd0f3a390f2eb7
+history:
+- at: '2026-10-13T07:40:16Z'
+  from_status: SUBMITTED
+  to_status: VALID
+  by: system
+  trigger: structural gate
+  run_id: RUN-20261013-005
