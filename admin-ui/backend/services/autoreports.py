@@ -197,12 +197,13 @@ def upsert_auto(kind: str, source_key: str, title: str, summary: str, auto_md: s
 def sync_outputs() -> int:
     """每個產出群組對應一份 kind=output 的報告；產出檔／審閱／run 有變就重生自動段落。回傳異動數。"""
     n = 0
-    for g in out_svc.scan():
-        runs = runs_for_group(g["key"])
-        sig = _signature(g, runs)
-        main = main_run(runs)
-        summary = f"{g['label']} · {g['meta'].get('case_count') or '?'} 條 TC · 審閱 {g['review_status']}" + (f" · {main['run_id']} {RUN_LABEL.get(main['status'], main['status'])}" if main else "")
-        md = output_md(g) + "\n" + workflow_md(runs)
-        if upsert_auto("output", g["key"], f"{g['label']} 產出報告", summary, md, sig, [g["key"]]):
-            n += 1
+    with sf_svc.frozen_signature():           # 每個群組都會呼叫 run_phase；不釘住的話每次都重新 stat 全部 run 檔
+        for g in out_svc.scan():
+            runs = runs_for_group(g["key"])
+            sig = _signature(g, runs)
+            main = main_run(runs)
+            summary = f"{g['label']} · {g['meta'].get('case_count') or '?'} 條 TC · 審閱 {g['review_status']}" + (f" · {main['run_id']} {RUN_LABEL.get(main['status'], main['status'])}" if main else "")
+            md = output_md(g) + "\n" + workflow_md(runs)
+            if upsert_auto("output", g["key"], f"{g['label']} 產出報告", summary, md, sig, [g["key"]]):
+                n += 1
     return n
