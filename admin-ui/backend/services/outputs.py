@@ -158,8 +158,10 @@ def list_files() -> list[dict]:
     entries = [(p, p.stat()) for p in sorted(FINAL_DIR.iterdir()) if p.is_file() and not p.name.startswith(".")]
     # rel_of 的結果取決於「解析後的實際路徑」，所以指紋要涵蓋路徑解析的依賴：目錄本身解析後的位置（上層符號連結改指向），
     # 以及符號連結項目解析後的目標（只看目標檔的 mtime／大小，連結改指向另一個同 metadata 的檔案就偵測不到）。一般檔案沒有解析成本，只靠名稱。
-    fp = (os.path.realpath(FINAL_DIR), os.path.realpath(PROJECT_ROOT),
-          tuple((p.name, st.st_mtime_ns, st.st_size, os.path.realpath(p) if p.is_symlink() else None) for p, st in entries))
+    # 用 Path.resolve()（和 rel_of 同一個函式）而不是 os.path.realpath：循環符號連結時 resolve 會丟 RuntimeError，realpath 不會，
+    # 換成 realpath 會讓熱快取略過原本的例外。兩個目錄各解析一次，一般檔案不逐檔解析。
+    fp = (str(FINAL_DIR.resolve()), str(PROJECT_ROOT.resolve()),
+          tuple((p.name, st.st_mtime_ns, st.st_size, str(p.resolve()) if p.is_symlink() else None) for p, st in entries))
     cached = _list_cache                     # 本地參考：比較與取值用同一份 tuple（多執行緒下全域可能在兩次讀取之間被換掉）
     if cached is not None and cached[0] == fp:
         return [dict(x) for x in cached[1]]

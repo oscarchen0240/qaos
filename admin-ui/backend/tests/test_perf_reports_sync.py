@@ -190,3 +190,24 @@ def test_list_files_hit_returns_the_items_it_just_validated_even_if_the_global_i
             return fp == rhs
     monkeypatch.setattr(o, "_list_cache", (SwapOnCompare(), items))
     assert [f["name"] for f in o.list_files()] == ["A-final-active.json"]
+
+
+def test_a_project_root_symlink_loop_still_raises_on_a_hot_cache(full_sandbox, monkeypatch):
+    """FINAL_DIR 在專案外、PROJECT_ROOT 預熱後被改成指向自身的符號連結：原本 rel_of 的 resolve 會丟 RuntimeError，熱快取不能略過它。"""
+    o = full_sandbox.outputs
+    root = full_sandbox.root
+    project = root / "project"
+    project.mkdir()
+    final = root / "external" / "final"
+    final.mkdir(parents=True)
+    p = final / "notes.json"
+    p.write_text("[]")
+    monkeypatch.setattr(o, "PROJECT_ROOT", project)
+    monkeypatch.setattr(o, "FINAL_DIR", final)
+    o.list_files()                                                  # 預熱
+    project.rename(root / "project_saved")
+    project.symlink_to("project")                                   # 指向自己的循環連結
+    with pytest.raises(RuntimeError, match="Symlink loop"):
+        o.rel_of(p)
+    with pytest.raises(RuntimeError, match="Symlink loop"):
+        o.list_files()                                              # 舊（realpath 指紋）：直接回傳快取
