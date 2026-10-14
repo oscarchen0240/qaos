@@ -32,12 +32,19 @@ def max_iterations(workflow_id: str | None) -> int:
 
 
 @lru_cache(maxsize=65536)      # 純函式；pipeline 對每個 session 把每個 run 的每筆歷史都轉一次（數十萬次 strptime），同一個字串重複出現
-def _ts(s: str | None) -> float:
+def _ts_cached(s: str | None) -> float:
     if not s:
         return 0.0
     try:
         return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
     except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def _ts(s: str | None) -> float:
+    try:
+        return _ts_cached(s)
+    except TypeError:          # run.yaml 的 at 欄位是 list／dict 等不可 hash 的異常值：和以前一樣當成 0，不讓整頁壞掉
         return 0.0
 
 

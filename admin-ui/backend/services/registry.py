@@ -35,16 +35,17 @@ def signature() -> tuple:
     if not REG_DIR.exists():
         return ()
     # 一次 scandir 同時取數量與最新 mtime（舊寫法 glob 兩遍＋逐檔 stat；registry 有上千個檔，呼叫端又常在迴圈裡呼叫）
-    n, latest = 0, 0
+    n, latest = 0, None
     with os.scandir(REG_DIR) as it:
         for e in it:
             if e.name.startswith("TC-") and e.name.endswith(".yaml"):
                 n += 1
                 try:
-                    latest = max(latest, e.stat().st_mtime)
+                    mt = e.stat().st_mtime
                 except OSError:
-                    pass
-    return (n, latest)
+                    continue
+                latest = mt if latest is None or mt > latest else latest      # 不以 0 當初值：mtime 全為負時要和舊版一樣回負值
+    return (n, 0 if latest is None else latest)
 
 
 def active_index(area_prefix: str | None = None) -> dict[str, dict]:

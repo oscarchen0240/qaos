@@ -123,8 +123,25 @@ def test_pipeline_final_files_uses_the_light_listing(full_sandbox, monkeypatch):
 
 # ---------------------------------------------------------------- runs._ts
 def test_ts_is_memoized_and_behaves_as_before():
-    runs_mod._ts.cache_clear()
+    runs_mod._ts_cached.cache_clear()
     assert runs_mod._ts("2026-10-13T00:00:00Z") == 1791849600.0
     assert runs_mod._ts("2026-10-13T00:00:00Z") == 1791849600.0
-    assert runs_mod._ts.cache_info().hits >= 1
+    assert runs_mod._ts_cached.cache_info().hits >= 1
     assert runs_mod._ts(None) == 0.0 and runs_mod._ts("") == 0.0 and runs_mod._ts("not a time") == 0.0
+
+
+@pytest.mark.parametrize("bad", [["2026-10-13T00:00:00Z"], {"at": 1}, [[]]])
+def test_ts_keeps_tolerating_malformed_yaml_values_that_are_not_hashable(bad):
+    """run.yaml 的 at 若被寫成 list／dict，舊版（沒有快取）當成 0；lru_cache 會對不可 hash 的輸入丟 TypeError，要接住。"""
+    assert runs_mod._ts(bad) == 0.0
+
+
+def test_signature_with_only_negative_mtimes_matches_the_old_definition(full_sandbox):
+    import os
+    reg = full_sandbox.root / "testcases" / "registry"
+    for i, mt in ((1, -500.0), (2, -100.0)):
+        p = reg / f"TC-A-{i:03d}.yaml"
+        p.write_text("x: 1", encoding="utf-8")
+        os.utime(p, (mt, mt))
+    old = (len(list(reg.glob("TC-*.yaml"))), max((p.stat().st_mtime for p in reg.glob("TC-*.yaml")), default=0))
+    assert registry_mod.signature() == old == (2, -100.0)
