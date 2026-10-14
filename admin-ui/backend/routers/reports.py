@@ -31,7 +31,8 @@ class PreviewIn(BaseModel):
 
 @router.get("")
 def list_reports(q: str = "", kind: str = "", page: int = 1, page_size: int = 20, sort: str = "updated_at", desc: bool = True):
-    rs = svc.list_all()
+    all_rs = svc.list_all()            # 每次呼叫都會 sync_outputs（掃整個 final、重生報告），整個請求只呼叫一次
+    rs = list(all_rs)
     ql = q.strip().lower()
     if kind:
         rs = [r for r in rs if r["kind"] == kind]
@@ -43,7 +44,7 @@ def list_reports(q: str = "", kind: str = "", page: int = 1, page_size: int = 20
     page = max(1, page); page_size = max(1, min(100, page_size))
     start = (page - 1) * page_size
     return {"items": rs[start:start + page_size], "total": total, "page": page, "page_size": page_size,
-            "counts": {"all": len(svc.list_all()), **{k: sum(1 for r in svc.list_all() if r["kind"] == k) for k in ("output", "automation", "manual")}}}
+            "counts": {"all": len(all_rs), **{k: sum(1 for r in all_rs if r["kind"] == k) for k in ("output", "automation", "manual")}}}
 
 
 @router.post("", status_code=201)

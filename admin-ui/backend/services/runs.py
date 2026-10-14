@@ -1,4 +1,5 @@
 """唯讀讀取 runs/<RUN>/run.yaml（Runtime 的事實來源）。"""
+import os
 import pathlib
 from functools import lru_cache
 from datetime import datetime, timezone
@@ -86,7 +87,16 @@ def _load(p: pathlib.Path) -> dict | None:
 def signature() -> tuple:
     if not RUNS_DIR.exists():
         return ()
-    return tuple((p.name, (p / "run.yaml").stat().st_mtime) for p in sorted(RUNS_DIR.glob("RUN-*")) if (p / "run.yaml").exists())
+    out = []
+    with os.scandir(RUNS_DIR) as it:
+        for e in sorted(it, key=lambda e: e.name):
+            if not e.name.startswith("RUN-"):
+                continue
+            try:                          # 一次 stat（舊寫法 exists＋stat 各一次）；run.yaml 不存在就略過，同舊行為
+                out.append((e.name, os.stat(os.path.join(e.path, "run.yaml")).st_mtime))
+            except OSError:
+                continue
+    return tuple(out)
 
 
 def all_runs() -> list[dict]:

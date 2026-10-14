@@ -13,8 +13,10 @@ Phase 判定：shadow 文件點名的 run 為 Phase 3；同 spec 更早的 COMPL
 from __future__ import annotations
 
 import datetime as dt
+import contextlib
 import pathlib
 import re
+import threading
 import time
 
 from ..config import PROJECT_ROOT
@@ -72,7 +74,28 @@ def _shadow_docs() -> list[dict]:
     return out
 
 
+_frozen = threading.local()
+
+
+@contextlib.contextmanager
+def frozen_signature():
+    """在這個區塊內（只對目前的執行緒）把簽章釘住：build() 不再每次重算（每次都要 stat 所有 run 檔、shadow 文件與 final 檔）。
+    給「一次處理很多個 run／群組、每個都會呼叫 run_phase」的呼叫端（autoreports.sync_outputs、pipeline.snapshot）；
+    區塊內不會看到區塊進行中才發生的檔案變動，離開區塊後下一次呼叫就會重算。"""
+    outer = getattr(_frozen, "sig", None)
+    if outer is None:
+        _frozen.sig = _signature()
+    try:
+        yield
+    finally:
+        if outer is None:
+            _frozen.sig = None
+
+
 def _signature() -> tuple:
+    pinned = getattr(_frozen, "sig", None)
+    if pinned is not None:
+        return pinned
     docs = tuple((p.name, p.stat().st_mtime) for p in SHADOW_DIR.glob("*.md")) if SHADOW_DIR.exists() else ()
     fin = tuple((q.name, q.stat().st_mtime) for q in out_svc.FINAL_DIR.iterdir() if q.is_file()) if out_svc.FINAL_DIR.exists() else ()
     return (run_svc.signature(), docs, fin)
