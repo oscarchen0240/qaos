@@ -142,3 +142,51 @@ def test_list_files_returns_copies_so_callers_cannot_corrupt_the_cache(full_sand
     a[0]["name"] = "MUTATED"; a.append({"x": 1})
     b = o.list_files()
     assert [f["name"] for f in b] == ["A-final-active.json"]
+
+
+# ================================================================ 第 01 輪審查（list_files 快取的路徑解析依賴）
+def test_list_files_notices_a_symlink_repointed_to_a_file_with_identical_metadata(full_sandbox):
+    o = full_sandbox.outputs
+    d = o.FINAL_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    for name, text in ((".a", "aa"), (".b", "bb")):                     # 隱藏檔不會自己進清單；大小與 mtime 完全相同
+        (d / name).write_text(text)
+        os.utime(d / name, ns=(1_000_000_000_000, 1_000_000_000_000))
+    link = d / "A-final-active.json"
+    link.symlink_to(d / ".a")
+    assert o.list_files()[0]["path"] == o.rel_of(link) == "testcases/final/.a"
+    link.unlink()
+    link.symlink_to(d / ".b")
+    assert o.list_files()[0]["path"] == o.rel_of(link) == "testcases/final/.b"      # 舊（第一版快取）：永遠是 .a
+
+
+def test_list_files_notices_the_final_directory_itself_being_repointed(full_sandbox, monkeypatch):
+    o = full_sandbox.outputs
+    base = full_sandbox.root / "testcases"
+    for d in ("finalA", "finalB"):
+        (base / d).mkdir(parents=True, exist_ok=True)
+        (base / d / "A-final-active.json").write_text("[]")
+        os.utime(base / d / "A-final-active.json", ns=(1_000_000_000_000, 1_000_000_000_000))
+    link = base / "final_link"
+    link.symlink_to(base / "finalA")
+    monkeypatch.setattr(o, "FINAL_DIR", link)
+    assert o.list_files()[0]["path"] == "testcases/finalA/A-final-active.json"
+    link.unlink()
+    link.symlink_to(base / "finalB")
+    assert o.list_files()[0]["path"] == "testcases/finalB/A-final-active.json"
+
+
+def test_list_files_hit_returns_the_items_it_just_validated_even_if_the_global_is_swapped_meanwhile(full_sandbox, monkeypatch):
+    """比較指紋之後、取值之前，另一個執行緒換掉全域快取：命中時要回傳剛驗證過的那份，不是被換進來的別人的。"""
+    o = full_sandbox.outputs
+    _final(full_sandbox.root, "A-final-active.json", [_case(1, "A")])
+    o.list_files()
+    fp, items = o._list_cache
+    other = (("other-dir", "x", ()), [{"name": "SWAPPED"}])
+
+    class SwapOnCompare:
+        def __eq__(self, rhs):
+            monkeypatch.setattr(o, "_list_cache", other)               # 比較的當下，別的執行緒換了全域
+            return fp == rhs
+    monkeypatch.setattr(o, "_list_cache", (SwapOnCompare(), items))
+    assert [f["name"] for f in o.list_files()] == ["A-final-active.json"]

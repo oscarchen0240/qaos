@@ -4,6 +4,7 @@
 """
 import datetime
 import json
+import os
 import pathlib
 import re
 from collections import Counter
@@ -150,14 +151,18 @@ _list_cache: tuple[tuple, list[dict]] | None = None
 def list_files() -> list[dict]:
     """輕量清單：只有檔名、路徑、群組、種類、mtime（stat 而已）。不解析內容、不寫 output_files 追蹤表。
     給只需要「有哪些檔、多新」的呼叫端（pipeline 每個 session 都要查一次）；要 meta／未讀狀態請用 scan_files。
-    以（目錄、每個檔的名稱／mtime／大小）當指紋記憶化：沒變就不重做 rel_of 的 resolve（每個檔四次 realpath）。"""
+    以（目錄實際位置、每個檔的名稱／mtime／大小、符號連結的解析目標）當指紋記憶化：沒變就不重做 rel_of 的 resolve（每個檔四次 realpath）。"""
     global _list_cache
     if not FINAL_DIR.exists():
         return []
     entries = [(p, p.stat()) for p in sorted(FINAL_DIR.iterdir()) if p.is_file() and not p.name.startswith(".")]
-    fp = (str(FINAL_DIR), str(PROJECT_ROOT), tuple((p.name, st.st_mtime_ns, st.st_size) for p, st in entries))
-    if _list_cache and _list_cache[0] == fp:
-        return [dict(x) for x in _list_cache[1]]
+    # rel_of 的結果取決於「解析後的實際路徑」，所以指紋要涵蓋路徑解析的依賴：目錄本身解析後的位置（上層符號連結改指向），
+    # 以及符號連結項目解析後的目標（只看目標檔的 mtime／大小，連結改指向另一個同 metadata 的檔案就偵測不到）。一般檔案沒有解析成本，只靠名稱。
+    fp = (os.path.realpath(FINAL_DIR), os.path.realpath(PROJECT_ROOT),
+          tuple((p.name, st.st_mtime_ns, st.st_size, os.path.realpath(p) if p.is_symlink() else None) for p, st in entries))
+    cached = _list_cache                     # 本地參考：比較與取值用同一份 tuple（多執行緒下全域可能在兩次讀取之間被換掉）
+    if cached is not None and cached[0] == fp:
+        return [dict(x) for x in cached[1]]
     items = []
     for p, st in entries:
         rel = rel_of(p)
