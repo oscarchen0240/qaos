@@ -389,8 +389,10 @@ def test_test_clock_must_be_well_formed():
 
 def test_too_many_same_second_diagnostics_need_manual_check():
     root, _ = rich(); xc = clock(root, x_of(root))
+    pre = [p for pat in ("runs/_audit.d/adhoc-*-0.yaml", "runs/*/audit.d/adhoc-*-0.yaml") for p in P(root, "").glob(pat)]
+    n = sum(yaml.safe_load(p.read_text(encoding="utf-8"))["at"] == xc for p in pre)   # rich() 的診斷事件在機器較慢時可能與 X 同秒
     for _ in range(11): diag_file(root, at=xc)
-    vfail(root, "與 X 同秒的診斷事件太多（11）")
+    vfail(root, f"與 X 同秒的診斷事件太多（{n + 11}）")
 
 def test_c04_malformed_registration_reports_instead_of_crashing():
     root, _ = rich(); o = _end_op(root)
