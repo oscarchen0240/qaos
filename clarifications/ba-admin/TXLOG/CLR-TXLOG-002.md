@@ -4,7 +4,7 @@
 - 規格：SPEC-TXLOG-001 v0.1
 - 相關需求：REQ-TXLOG-028
 - 提出者：oscarchen@blockaction.tech（2026-10-12）
-- 狀態：INCORPORATED
+- 狀態：APPLIED
 
 ## 背景
 SPEC-TXLOG-001 v0.1 §操作與實體機台 v08 第 618 行皆定義交易紀錄查詢提供「手動取消」（僅管理員、僅待確認、二次確認後標為已取消、分數不異動）。2026-09-14 Oscar 確認該段為錯誤敘述（CLR-TXLOG-001），REQ-TXLOG-028 改為不提供、REQ-TXLOG-029 僅供追溯；2026-09-15 CLR-CASHFLOW-004 依 RD 畫面維持。2026-10-12 Oscar 確認（CLR-REDPACKET-055 rev 1）待確認出金的管理員手動取消是要做的功能，後端已完成、前端未開發。

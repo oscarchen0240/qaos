@@ -1,0 +1,226 @@
+clarification_id: CLR-TXLOG-002
+product: ba-admin
+functional_area: TXLOG
+spec_id: SPEC-TXLOG-001
+spec_version: '0.1'
+question: 交易紀錄查詢（機台視角）是否提供待確認交易的手動取消？REQ-TXLOG-028 目前依 2026-09-14／09-15 的確認（CLR-TXLOG-001、CLR-CASHFLOW-004）寫為「本頁不提供手動取消」，與
+  spec 原文及 CLR-REDPACKET-055 最新答案不一致；適用範圍（出金／入金）與可操作角色為何？
+context: SPEC-TXLOG-001 v0.1 §操作與實體機台 v08 第 618 行皆定義交易紀錄查詢提供「手動取消」（僅管理員、僅待確認、二次確認後標為已取消、分數不異動）。2026-09-14 Oscar 確認該段為錯誤敘述（CLR-TXLOG-001），REQ-TXLOG-028
+  改為不提供、REQ-TXLOG-029 僅供追溯；2026-09-15 CLR-CASHFLOW-004 依 RD 畫面維持。2026-10-12 Oscar 確認（CLR-REDPACKET-055 rev 1）待確認出金的管理員手動取消是要做的功能，後端已完成、前端未開發。
+options: []
+raised_by: oscarchen@blockaction.tech
+raised_at: '2026-10-12T12:57:35Z'
+status: APPLIED
+history:
+- at: '2026-10-12T12:57:35Z'
+  from_status: null
+  to_status: OPEN
+  by: oscarchen@blockaction.tech
+  trigger: new
+- at: '2026-10-12T12:58:06Z'
+  from_status: OPEN
+  to_status: ANSWERED
+  by: oscarchen@blockaction.tech
+  trigger: answered by Oscar（2026-10-12；角色經 RD 確認）
+- at: '2026-10-13T07:40:19Z'
+  from_status: ANSWERED
+  to_status: INCORPORATED
+  by: system
+  trigger: A4
+  run_id: RUN-20261013-005
+- at: '2026-10-14T14:25:59Z'
+  from_status: INCORPORATED
+  to_status: APPLIED
+  by: oscarchen@blockaction.tech
+  trigger: apply --path a6
+  note: 10 張候選；確認 1、延後 0 個目標；掃描 TXLOG area ACTIVE TC（關鍵字「手動取消」＋目標需求 REQ-TXLOG-028）共 10 張候選，全為 RUN-20261013-005（APR-0213 核准）依
+    CLR-TXLOG-002 修訂或新增的版本：TC-148 v3、165 v3、218～225 v1；TC-164（本頁不提供手動取消）已退役。另有 stale_decision_ref 標記係因 218～220 對 Q01 同時引用
+    spec 第 89 行，CLR-TXLOG-002 引用為最新 rev 0，無需處理
+requirement_id: REQ-TXLOG-028
+impact_if_unanswered: REQ-TXLOG-028／029 與引用手動取消的 TXLOG TC（約 14 張）需重新判定；前端未開發的缺陷無法以 spec-to-bug 對照需求開單
+kind: spec_question
+topic: state_transition
+subject: txlog.arcade.pending_cashout_admin_cancel
+level: major
+role_scope:
+- '*'
+params: {}
+known_rules:
+- type: spec
+  spec_id: SPEC-TXLOG-001
+  spec_version: '0.1'
+  content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  location: §操作（第 89 行）
+  quote: 手動取消：** 僅 Admin 可對「待確認」狀態的交易執行；二次確認後標記為「已取消」，分數不異動
+- type: clarification
+  clarification_id: CLR-REDPACKET-055
+  answer_rev: 1
+  answer_sha256: 03aae6a9a3c46e95992a94f37a6f9615abab2255a89a7938bf3af6ffee9b193c
+  quote: 待確認出金的管理員手動取消是要做的功能，後端已開發完成，僅前端尚未開發
+coverage:
+  consulted:
+  - spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+  - spec_id: SPEC-ARCADE-001
+    spec_version: '0.8'
+    content_hash: 7cbe9808a64164f485ddfb0a84cf73ebf0b55fd126e7e360ddfda384f3293c4e
+  - spec_id: SPEC-REDPACKET-001
+    spec_version: '0.2'
+    content_hash: 75afb8365acd507227a69c28bcb44390f3bffbfd7df71ef308461017a161978b
+issue_key: 2e5cb3f47b971c890adc358b106781e3c201b0005c4ef7b51a217516d4dfb336
+answer_revisions:
+- rev: 0
+  answer: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+    24 小時逾時轉「已逾時」收斂）。後端已開發完成，前端尚未開發（2026-10-12 實機：列表操作欄只有「明細」，明細面板標示「本頁只讀」）。2026-09-14（CLR-TXLOG-001）與 2026-09-15（CLR-CASHFLOW-004）「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028
+    改回提供（限出金、限管理員），REQ-TXLOG-029 的限制（非管理員、非待確認、入金）恢復為有效需求。
+  answered_by: Oscar（2026-10-12；角色經 RD 確認）
+  answered_at: '2026-10-12T12:58:06Z'
+  resolution: requirement_clarified
+  answer_sources:
+  - type: message
+    channel: Claude Code 對話（Oscar 2026-10-12）
+    sent_by: Oscar
+    at: '2026-10-12'
+  basis:
+    target:
+      spec_id: SPEC-TXLOG-001
+      spec_version: '0.1'
+      content_hash: 1ae5eb708878966a3b20c8ac0302919b5f79d19c8a3b49f98e99fd841895dc63
+    target_decl_rev: 0
+    closure: []
+  basis_hash: 30f4a725649d0fd6a3d0f5cfdbcd46bffa41419301261e7732d789d11c4cf4cb
+  sha256: ece76a3c8c11b7de3f4ded894bf3d0d12f802143df78919236986b7aad9d7547
+  op_id: d6b71681842265b61ea59e94ac9d81ab8a443f3340605679e018ddf7f6f90755
+answer: 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待確認」的機台出金；二次確認後標記為「已取消」，分數不異動；用於機台故障造成的卡單清理。機台入金沒有手動取消（待確認入金依
+  24 小時逾時轉「已逾時」收斂）。後端已開發完成，前端尚未開發（2026-10-12 實機：列表操作欄只有「明細」，明細面板標示「本頁只讀」）。2026-09-14（CLR-TXLOG-001）與 2026-09-15（CLR-CASHFLOW-004）「本頁不提供手動取消」的確認不再適用；REQ-TXLOG-028
+  改回提供（限出金、限管理員），REQ-TXLOG-029 的限制（非管理員、非待確認、入金）恢復為有效需求。
+answered_by: Oscar（2026-10-12；角色經 RD 確認）
+answered_at: '2026-10-12T12:58:06Z'
+resolution: requirement_clarified
+landings:
+- type: incorporated
+  rm_pin:
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    revision: R001
+    sha256: 37c4923e660cd30366ea0681433d96599ab56c289c10761650c51cd2ccbf2571
+  run_id: RUN-20261013-005
+  op_id: dfaae400a8af1766d8219993eebb9fbae8c62f08121af06e439cefa027099890
+  at: '2026-10-13T07:40:19Z'
+- type: applied
+  path: a6
+  answer_rev: 0
+  landed_in:
+  - RUN-20261013-005
+  targets_confirmed:
+  - product: ba-admin
+    area: TXLOG
+    spec_id: SPEC-TXLOG-001
+    spec_version: '0.1'
+    requirement_id: REQ-TXLOG-028
+    question_id: Q01
+    via: own_scope
+  targets_deferred: []
+  scan_units:
+  - product: ba-admin
+    area: TXLOG
+  final_keywords:
+  - 手動取消
+  scan_id: SCAN-01M4XCW0D0D0QC1WWA8NGN0PB4
+  scan_answer_rev: 0
+  scan_reused: full
+  rule_version: '2'
+  candidates:
+  - tc_id: TC-TXLOG-148
+    active_version: 3
+    tc_version_sha256: 8e01c8bfda044c1e5a296ac981fab21dfa955d6d6f653d06353fdbe90ce7685b
+    reasons:
+    - keyword:手動取消
+  - tc_id: TC-TXLOG-165
+    active_version: 3
+    tc_version_sha256: 5b878ef0b51dd05c204c1f92c0550195900f2777559e1ef51dd2ab40ff4e1a70
+    reasons:
+    - keyword:手動取消
+  - tc_id: TC-TXLOG-218
+    active_version: 1
+    tc_version_sha256: ea81a751f980ef8fb064bc8391d47c236d400cbe8901a740be44719feb77a682
+    reasons:
+    - clr_requirement
+    - keyword:手動取消
+    - stale_decision_ref:REQ-TXLOG-028#Q01
+    - target_requirement
+  - tc_id: TC-TXLOG-219
+    active_version: 1
+    tc_version_sha256: ad7ed43b6b6e3b737181b13bd4494959a09e6877f69f7e4740eb2b8e160bf54e
+    reasons:
+    - clr_requirement
+    - keyword:手動取消
+    - stale_decision_ref:REQ-TXLOG-028#Q01
+    - target_requirement
+  - tc_id: TC-TXLOG-220
+    active_version: 1
+    tc_version_sha256: 26662e1ea8e3d3ae670572089416b810ecfa9821dbcbbdf090bcd3a3b7c69210
+    reasons:
+    - clr_requirement
+    - keyword:手動取消
+    - stale_decision_ref:REQ-TXLOG-028#Q01
+    - target_requirement
+  - tc_id: TC-TXLOG-221
+    active_version: 1
+    tc_version_sha256: aebf3e59a3ae211d942a4c666eaf9f9a7d73031ca009b13c94df6a1a437cae9c
+    reasons:
+    - clr_requirement
+    - keyword:手動取消
+    - target_requirement
+  - tc_id: TC-TXLOG-222
+    active_version: 1
+    tc_version_sha256: 6553af92abbbb43b5c2701ea6c683fd3dab746e7236fb0d315dc5b17fc20e4ef
+    reasons:
+    - keyword:手動取消
+  - tc_id: TC-TXLOG-223
+    active_version: 1
+    tc_version_sha256: 59e99dad0f986a0fc64162fe9d8a80379549684ce97983429fec8843d55076f5
+    reasons:
+    - keyword:手動取消
+  - tc_id: TC-TXLOG-224
+    active_version: 1
+    tc_version_sha256: 1a50f6f2de5672ef3d345b87a8f3a393a0969020ca605ad6e5303d7f76b7e429
+    reasons:
+    - keyword:手動取消
+  - tc_id: TC-TXLOG-225
+    active_version: 1
+    tc_version_sha256: e7bd77879864f637f6ba5badd2c384ff58516da88551bb422d08380bd46d0fa2
+    reasons:
+    - keyword:手動取消
+  conclusions:
+  - tc_id: TC-TXLOG-148
+    conclusion: updated
+  - tc_id: TC-TXLOG-165
+    conclusion: updated
+  - tc_id: TC-TXLOG-218
+    conclusion: updated
+  - tc_id: TC-TXLOG-219
+    conclusion: updated
+  - tc_id: TC-TXLOG-220
+    conclusion: updated
+  - tc_id: TC-TXLOG-221
+    conclusion: updated
+  - tc_id: TC-TXLOG-222
+    conclusion: updated
+  - tc_id: TC-TXLOG-223
+    conclusion: updated
+  - tc_id: TC-TXLOG-224
+    conclusion: updated
+  - tc_id: TC-TXLOG-225
+    conclusion: updated
+  scan_sha256: 87e92006c609ae9df15b8e08e26fc601af5b5664196e8ad0bbe7e04e9a38cbec
+  impact_reviewed: 掃描 TXLOG area ACTIVE TC（關鍵字「手動取消」＋目標需求 REQ-TXLOG-028）共 10 張候選，全為 RUN-20261013-005（APR-0213 核准）依 CLR-TXLOG-002
+    修訂或新增的版本：TC-148 v3、165 v3、218～225 v1；TC-164（本頁不提供手動取消）已退役。另有 stale_decision_ref 標記係因 218～220 對 Q01 同時引用 spec 第 89 行，CLR-TXLOG-002
+    引用為最新 rev 0，無需處理
+  op_id: 5913189e4a49c097429c2564dfc509dc9a10febca856bd3b23ed91f3c1c690b0
+  at: '2026-10-14T14:25:59Z'
+  by: oscarchen@blockaction.tech
+scan_ids:
+- SCAN-01M4XCVE1VGJVZ4KSMN8XZ3RVP
+- SCAN-01M4XCW0D0D0QC1WWA8NGN0PB4

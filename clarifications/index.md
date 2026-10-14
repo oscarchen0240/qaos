@@ -1,6 +1,6 @@
 # Clarifications（待 PM 釐清的需求）
 
-- 更新：2026-10-13
+- 更新：2026-10-14
 
 ## ba-admin / ACCOUNT
 
@@ -209,5 +209,5 @@
 | ID | 狀態 | 規格 | 問題 | PM 回覆 |
 |---|---|---|---|---|
 | [CLR-TXLOG-001](ba-admin/TXLOG/CLR-TXLOG-001.md) | APPLIED | SPEC-TXLOG-001 v0.1 | REQ-TXLOG-029 不符合時系統應如何反應？（Spec 未定義拒絕行為） | 此問題已 moot：交易紀錄查詢頁（本包）實際上並不提供『手動取消』這個操作，spec.md §操作 描述的『手動取消： |
-| [CLR-TXLOG-002](ba-admin/TXLOG/CLR-TXLOG-002.md) | INCORPORATED | SPEC-TXLOG-001 v0.1 | 交易紀錄查詢（機台視角）是否提供待確認交易的手動取消？REQ-TXLOG-028 目前依 2026-09-14／09-15 的確認（CLR-TXLOG-001、CLR-CASHFLOW-004）寫為「本頁不提供手動取消」，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；適用範圍（出金／入金）與可操作角色為何？ | 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待 |
+| [CLR-TXLOG-002](ba-admin/TXLOG/CLR-TXLOG-002.md) | APPLIED | SPEC-TXLOG-001 v0.1 | 交易紀錄查詢（機台視角）是否提供待確認交易的手動取消？REQ-TXLOG-028 目前依 2026-09-14／09-15 的確認（CLR-TXLOG-001、CLR-CASHFLOW-004）寫為「本頁不提供手動取消」，與 spec 原文及 CLR-REDPACKET-055 最新答案不一致；適用範圍（出金／入金）與可操作角色為何？ | 提供。交易紀錄查詢（4.1 機台視角）提供待確認「機台出金」的手動取消：僅管理員可操作（RD 已確認）、僅對交易狀態「待 |
 | [CLR-TXLOG-003](ba-admin/TXLOG/CLR-TXLOG-003.md) | OPEN | SPEC-TXLOG-001 v0.1 | 不符合手動取消條件時（非管理員帳號、交易狀態不是「待確認」、機台入金），系統如何阻擋：不顯示手動取消入口、顯示但停用，或允許送出後由後端拒絕並提示錯誤？三種情況是否一致？若由後端拒絕，提示文案為何？ |  |
