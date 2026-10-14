@@ -2,6 +2,7 @@
 
 用途：比對 testcases/final/ 的 JSON 是否已過期（registry 有新版本／新 TC／退役 TC，但 final 還沒重新匯出）。
 """
+import os
 import pathlib
 
 import yaml
@@ -33,7 +34,18 @@ def _load(path: pathlib.Path, cache: dict) -> dict | None:
 def signature() -> tuple:
     if not REG_DIR.exists():
         return ()
-    return (len(list(REG_DIR.glob("TC-*.yaml"))), max((p.stat().st_mtime for p in REG_DIR.glob("TC-*.yaml")), default=0))
+    # 一次 scandir 同時取數量與最新 mtime（舊寫法 glob 兩遍＋逐檔 stat；registry 有上千個檔，呼叫端又常在迴圈裡呼叫）
+    n, latest = 0, None
+    with os.scandir(REG_DIR) as it:
+        for e in it:
+            if e.name.startswith("TC-") and e.name.endswith(".yaml"):
+                n += 1
+                try:
+                    mt = e.stat().st_mtime
+                except OSError:
+                    continue
+                latest = mt if latest is None or mt > latest else latest      # 不以 0 當初值：mtime 全為負時要和舊版一樣回負值
+    return (n, 0 if latest is None else latest)
 
 
 def active_index(area_prefix: str | None = None) -> dict[str, dict]:

@@ -240,7 +240,7 @@ def _final_files(run: dict | None, s: dict) -> dict:
     area = _area_of(run)
     files = []
     try:
-        for f in out_svc.scan_files():
+        for f in out_svc.list_files():          # 只要檔名與 mtime；scan_files 會解析每個 final 的內容，每個 session 都跑一次太慢
             fa = f.get("area") or ""
             if area is None or fa == area or fa.startswith(area + "-"):  # BONUSCCY 也對得上 BONUSCCY-001
                 files.append({"name": f["name"], "path": f["path"], "group_key": f["group_key"], "kind": f["kind"], "modified_at": f["modified_at"], "mtime": f["mtime"]})

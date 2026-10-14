@@ -92,11 +92,12 @@ def _parse_html(p: pathlib.Path) -> dict:
     return {"title": m.group(1).strip() if m else None, "case_count": len(set(TC_ID_RE.findall(text))) or None}
 
 
-def _meta(p: pathlib.Path, st) -> dict:
+def _meta(p: pathlib.Path, st, reg_sig: tuple | None = None) -> dict:
+    """reg_sig：呼叫端（scan_files）已算好的 registry 簽章。簽章要掃整個 registry 目錄，每個檔案各算一次會是 O(檔數×registry 檔數)。"""
     from . import registry
     key = str(p)
     cached = _meta_cache.get(key)
-    sig = (st.st_mtime, st.st_size, registry.signature())
+    sig = (st.st_mtime, st.st_size, registry.signature() if reg_sig is None else reg_sig)
     if cached and cached[0] == sig:
         return cached[2]
     meta = _parse_json(p) if p.suffix == ".json" else _parse_html(p) if p.suffix == ".html" else {}
@@ -109,7 +110,9 @@ def scan_files() -> list[dict]:
     """每個檔案一筆，並同步 output_files 追蹤表。"""
     if not FINAL_DIR.exists():
         return []
+    from . import registry
     files = [(p, p.stat()) for p in sorted(FINAL_DIR.iterdir()) if p.is_file() and not p.name.startswith(".")]
+    reg_sig = registry.signature()          # 整次掃描只算一次
     now = db.now()
     items = []
     with db.connect() as con:
@@ -134,10 +137,28 @@ def scan_files() -> list[dict]:
                 "path": rel, "name": p.name, "group_key": gkey, "area": area,
                 "kind": "json" if p.suffix == ".json" else "html" if p.suffix == ".html" else "other",
                 "size": st.st_size, "mtime": st.st_mtime, "modified_at": _iso(st.st_mtime),
-                "meta": _meta(p, st),
+                "meta": _meta(p, st, reg_sig),
                 "first_seen_at": t["first_seen_at"], "acknowledged_at": t["acknowledged_at"],
                 "unread": t["acknowledged_at"] is None, "changed_now": changed,
             })
+    return items
+
+
+def list_files() -> list[dict]:
+    """輕量清單：只有檔名、路徑、群組、種類、mtime（stat 而已）。不解析內容、不寫 output_files 追蹤表。
+    給只需要「有哪些檔、多新」的呼叫端（pipeline 每個 session 都要查一次）；要 meta／未讀狀態請用 scan_files。"""
+    if not FINAL_DIR.exists():
+        return []
+    items = []
+    for p in sorted(FINAL_DIR.iterdir()):
+        if not p.is_file() or p.name.startswith("."):
+            continue
+        st = p.stat()
+        rel = rel_of(p)
+        gkey, area = group_key_of(p.name, rel)
+        items.append({"path": rel, "name": p.name, "group_key": gkey, "area": area,
+                      "kind": "json" if p.suffix == ".json" else "html" if p.suffix == ".html" else "other",
+                      "size": st.st_size, "mtime": st.st_mtime, "modified_at": _iso(st.st_mtime)})
     return items
 
 
