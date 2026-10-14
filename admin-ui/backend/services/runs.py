@@ -1,5 +1,6 @@
 """唯讀讀取 runs/<RUN>/run.yaml（Runtime 的事實來源）。"""
 import pathlib
+from functools import lru_cache
 from datetime import datetime, timezone
 
 import yaml
@@ -30,6 +31,7 @@ def max_iterations(workflow_id: str | None) -> int:
     return n
 
 
+@lru_cache(maxsize=65536)      # 純函式；pipeline 對每個 session 把每個 run 的每筆歷史都轉一次（數十萬次 strptime），同一個字串重複出現
 def _ts(s: str | None) -> float:
     if not s:
         return 0.0
